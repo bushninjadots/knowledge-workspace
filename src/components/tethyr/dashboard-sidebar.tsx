@@ -27,7 +27,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="mt-6 flex flex-1 flex-col gap-1">
         {nav.map((item) => {
-          const active = pathname === item.to;
+          const active = pathname === item.to && item.label === "Overview";
           const Icon = item.icon;
           return (
             <Link
