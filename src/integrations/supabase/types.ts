@@ -14,7 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profile_skills_learn: {
+        Row: {
+          created_at: string
+          profile_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_learn_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_skills_learn_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_skills_teach: {
+        Row: {
+          created_at: string
+          profile_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_teach_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_skills_teach_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          available_days: string[]
+          available_times: string[]
+          avatar_url: string | null
+          bio: string | null
+          category: string | null
+          country: string | null
+          created_at: string
+          display_name: string | null
+          handle: string | null
+          id: string
+          languages: string[]
+          learning_goals: string | null
+          portfolio_links: Json
+          social_links: Json
+          teaching_style: string | null
+          timezone: string | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          available_days?: string[]
+          available_times?: string[]
+          avatar_url?: string | null
+          bio?: string | null
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id: string
+          languages?: string[]
+          learning_goals?: string | null
+          portfolio_links?: Json
+          social_links?: Json
+          teaching_style?: string | null
+          timezone?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          available_days?: string[]
+          available_times?: string[]
+          avatar_url?: string | null
+          bio?: string | null
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          languages?: string[]
+          learning_goals?: string | null
+          portfolio_links?: Json
+          social_links?: Json
+          teaching_style?: string | null
+          timezone?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
