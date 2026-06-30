@@ -11,11 +11,11 @@ import { Logo } from "./logo";
 
 const nav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { to: "/dashboard/explore", label: "Explore", icon: Compass },
-  { to: "/dashboard/sessions", label: "Sessions", icon: MessagesSquare },
-  { to: "/dashboard/library", label: "Library", icon: BookOpen },
-  { to: "/dashboard/community", label: "Community", icon: Users },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard", label: "Explore", icon: Compass },
+  { to: "/dashboard", label: "Sessions", icon: MessagesSquare },
+  { to: "/dashboard", label: "Library", icon: BookOpen },
+  { to: "/dashboard", label: "Community", icon: Users },
+  { to: "/dashboard", label: "Settings", icon: Settings },
 ];
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
