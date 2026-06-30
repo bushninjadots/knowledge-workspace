@@ -31,7 +31,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           const Icon = item.icon;
           return (
             <Link
-              key={item.to}
+              key={item.label}
               to={item.to}
               onClick={onNavigate}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
