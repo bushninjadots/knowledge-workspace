@@ -5,7 +5,7 @@ import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Tethyr" },
@@ -21,12 +21,10 @@ function DashboardLayout() {
   const isIndex = pathname === "/dashboard";
   return (
     <div className="flex min-h-screen bg-background">
-      {/* desktop sidebar */}
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
 
-      {/* mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
@@ -105,55 +103,21 @@ function DashboardHome() {
           skill you want to learn. That's it — Tethyr does the rest.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button variant="default">Complete profile</Button>
+          <Button variant="default" asChild>
+            <a href="/profile">Complete profile</a>
+          </Button>
           <Button variant="outline">Browse creators</Button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-2xl border border-border/60 bg-surface p-5"
-          >
+          <div key={s.label} className="rounded-2xl border border-border/60 bg-surface p-5">
             <p className="text-xs text-muted-foreground">{s.label}</p>
             <p className="mt-2 font-display text-3xl font-semibold">{s.value}</p>
             <p className="mt-1 text-xs text-muted-foreground">{s.hint}</p>
           </div>
         ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-border/60 bg-surface p-6 lg:col-span-2">
-          <h2 className="font-display text-lg font-semibold">Suggested for you</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            We'll surface creators teaching what you want to learn — once your
-            profile is set up.
-          </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-xl border border-dashed border-border/60 bg-background/40 p-4"
-              >
-                <div className="h-10 w-10 rounded-full bg-surface-elevated" />
-                <div className="space-y-1.5">
-                  <div className="h-3 w-24 rounded-full bg-surface-elevated" />
-                  <div className="h-2 w-32 rounded-full bg-surface-elevated/70" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border/60 bg-surface p-6">
-          <h2 className="font-display text-lg font-semibold">Activity</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sessions, messages and endorsements will show up here.
-          </p>
-          <div className="mt-6 rounded-xl border border-dashed border-border/60 bg-background/40 p-6 text-center text-xs text-muted-foreground">
-            Nothing yet. Make some noise ✨
-          </div>
-        </div>
       </div>
     </div>
   );

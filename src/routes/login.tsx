@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -17,6 +19,23 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Welcome back");
+    navigate({ to: "/dashboard" });
+  }
+
   return (
     <AuthShell
       title="Welcome back"
@@ -30,26 +49,30 @@ function LoginPage() {
         </>
       }
     >
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setLoading(true);
-          setTimeout(() => setLoading(false), 600);
-        }}
-      >
+      <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@studio.com" required />
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@studio.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground">
-              Forgot?
-            </Link>
           </div>
-          <Input id="password" type="password" placeholder="••••••••" required />
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in..." : "Log in"}
