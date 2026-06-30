@@ -1029,7 +1029,7 @@ function TextCard({
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("profiles")
-      .update({ [field]: text || null })
+      .update({ [field]: text || null } as any)
       .eq("id", u.user!.id);
     setSaving(false);
     if (error) return toast.error(error.message);
