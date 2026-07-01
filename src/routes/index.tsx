@@ -76,10 +76,9 @@ function HomePage() {
       <section className="relative overflow-hidden">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-40" />
         <div
-          className="pointer-events-none absolute -top-32 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full opacity-30 blur-3xl"
+          className="pointer-events-none absolute -top-32 left-1/2 h-150 w-200 -translate-x-1/2 rounded-full opacity-30 blur-3xl"
           style={{
-            background:
-              "radial-gradient(circle, var(--brand-purple), transparent 60%)",
+            background: "radial-gradient(circle, var(--brand-purple), transparent 60%)",
           }}
         />
         <div className="relative mx-auto max-w-7xl px-4 pt-20 pb-24 sm:px-6 sm:pt-28 sm:pb-32">
@@ -89,13 +88,11 @@ function HomePage() {
               Now in early access for creators
             </span>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl">
-              Connected by{" "}
-              <span className="text-gradient-brand">what you know</span>
+              Connected by <span className="text-gradient-brand">what you know</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Tethyr is a trusted knowledge network where creators teach each
-              other and learn from each other. Skills for skills — not money,
-              not gigs, not noise.
+              Tethyr is a trusted knowledge network where creators teach each other and learn from
+              each other. Skills for skills — not money, not gigs, not noise.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" variant="default">
@@ -141,8 +138,8 @@ function HomePage() {
             People share knowledge instead of paying money.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Every creator is a teacher and a student. Tethyr makes that trade
-            simple, safe, and genuinely fun.
+            Every creator is a teacher and a student. Tethyr makes that trade simple, safe, and
+            genuinely fun.
           </p>
         </div>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
@@ -160,9 +157,7 @@ function HomePage() {
               >
                 <p.icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-5 font-display text-lg font-semibold">
-                {p.title}
-              </h3>
+              <h3 className="mt-5 font-display text-lg font-semibold">{p.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{p.body}</p>
             </div>
           ))}
@@ -171,7 +166,7 @@ function HomePage() {
 
       {/* CTA */}
       <section className="px-4 pb-24 sm:px-6">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-border/60 bg-surface p-10 text-center sm:p-16">
+        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-4xl border border-border/60 bg-surface p-10 text-center sm:p-16">
           <div
             className="pointer-events-none absolute inset-0 opacity-40"
             style={{
@@ -184,8 +179,7 @@ function HomePage() {
               Ready to teach something. Ready to learn something else.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Claim your handle and join the first wave of creators building
-              Tethyr together.
+              Claim your handle and join the first wave of creators building Tethyr together.
             </p>
             <div className="mt-8 flex justify-center">
               <Button asChild size="lg" variant="brand">
