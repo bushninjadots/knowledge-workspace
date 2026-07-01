@@ -1,5 +1,9 @@
 # Tethyr
 
+
+> 🚧 **Project Status:** Tethyr is currently in active MVP development. Features and functionality may change frequently as the platform evolves.
+
+
 Tethyr is a skill-sharing platform that helps people connect locally and online to teach, learn, and exchange skills without traditional tutoring barriers.
 
 The goal is to make learning more accessible by matching people who have skills with people who want to learn them, while building trust through profiles, reviews, and community features.
