@@ -21,6 +21,9 @@ import {
   Twitch,
   Github,
   Link as LinkIcon,
+  Wrench,
+  Layers,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,9 +36,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
+import {
+  BannerStrip,
+  ChipListCard,
+  ProjectsCard,
+  TimelineCard,
+  type ProjectRow,
+  type ActivityRow,
+} from "@/components/tethyr/profile-sections";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -51,8 +61,10 @@ type Profile = {
   id: string;
   handle: string | null;
   display_name: string | null;
+  creator_title: string | null;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   country: string | null;
   timezone: string | null;
   languages: string[];
@@ -64,6 +76,8 @@ type Profile = {
   available_times: string[];
   teaching_style: string | null;
   learning_goals: string | null;
+  favourite_tools: string[];
+  software_stack: string[];
 };
 
 type Skill = { id: string; slug: string; name: string; category: string };
@@ -107,9 +121,12 @@ function ProfilePage() {
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
-      const [teach, learn] = await Promise.all([
+      const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
         supabase.from("profile_skills_teach").select("skill_id").eq("profile_id", userId),
         supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+        supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
+        supabase.from("projects").select("*").eq("profile_id", userId).order("is_featured", { ascending: false }).order("created_at", { ascending: false }),
+        supabase.from("activity_events").select("*").eq("profile_id", userId).order("created_at", { ascending: false }).limit(30),
       ]);
       let avatarSigned: string | null = null;
       if (profile?.avatar_url) {
@@ -118,12 +135,36 @@ function ProfilePage() {
           .createSignedUrl(profile.avatar_url, 60 * 60 * 24);
         avatarSigned = signed?.signedUrl ?? null;
       }
+      let bannerSigned: string | null = null;
+      if (profile?.banner_url) {
+        const { data: signed } = await supabase.storage
+          .from("banners")
+          .createSignedUrl(profile.banner_url, 60 * 60 * 24);
+        bannerSigned = signed?.signedUrl ?? null;
+      }
+      const projects = (projectsRes.data ?? []) as ProjectRow[];
+      const coverUrls: Record<string, string> = {};
+      await Promise.all(
+        projects
+          .filter((p) => p.cover_url)
+          .map(async (p) => {
+            const { data: s } = await supabase.storage
+              .from("project-media")
+              .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
+            if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
+          }),
+      );
       return {
         userId,
         profile: (profile ?? null) as Profile | null,
         avatarSigned,
+        bannerSigned,
         teachIds: (teach.data ?? []).map((r: any) => r.skill_id) as string[],
         learnIds: (learn.data ?? []).map((r: any) => r.skill_id) as string[],
+        wishlistIds: (wishlist.data ?? []).map((r: any) => r.skill_id) as string[],
+        projects,
+        coverUrls,
+        activity: (activityRes.data ?? []) as ActivityRow[],
       };
     },
   });
@@ -152,22 +193,25 @@ function ProfilePage() {
     );
   }
 
-  const { profile, teachIds, learnIds, avatarSigned, userId } = profileQuery.data;
+  const { profile, teachIds, learnIds, wishlistIds, avatarSigned, bannerSigned, userId, projects, coverUrls, activity } =
+    profileQuery.data;
   const skills = skillsQuery.data ?? [];
   const skillById = new Map(skills.map((s) => [s.id, s]));
 
   const teachSkills = teachIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
   const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
+  const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
 
-  const completeness = computeCompleteness(profile, teachSkills, learnSkills);
+  const completeness = computeCompleteness(profile, teachSkills, learnSkills, projects.length);
 
   return (
     <Shell>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
-        {/* HEADER */}
+        {/* HEADER + BANNER */}
         <HeaderCard
           profile={profile}
           avatarSigned={avatarSigned}
+          bannerSigned={bannerSigned}
           userId={userId}
           completeness={completeness}
           onChange={refresh}
@@ -176,8 +220,8 @@ function ProfilePage() {
         {/* ABOUT */}
         <AboutCard profile={profile} onChange={refresh} />
 
-        {/* SKILLS */}
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* SKILLS — teach / currently learning / wishlist */}
+        <div className="grid gap-6 md:grid-cols-3">
           <SkillsCard
             title="Skills I teach"
             accent="green"
@@ -189,16 +233,53 @@ function ProfilePage() {
             onChange={refresh}
           />
           <SkillsCard
-            title="Skills I want to learn"
+            title="Currently learning"
             accent="purple"
-            icon={<Sparkles className="h-4 w-4" />}
+            icon={<BookOpen className="h-4 w-4" />}
             selected={learnSkills}
             allSkills={skills}
             userId={userId}
             table="profile_skills_learn"
             onChange={refresh}
           />
+          <SkillsCard
+            title="Want next"
+            accent="purple"
+            icon={<Sparkles className="h-4 w-4" />}
+            selected={wishSkills}
+            allSkills={skills}
+            userId={userId}
+            table="profile_skills_wishlist"
+            onChange={refresh}
+          />
         </div>
+
+        {/* TOOLS + STACK */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <ChipListCard
+            title="Favourite tools"
+            icon={<Wrench className="h-4 w-4" />}
+            field="favourite_tools"
+            values={profile?.favourite_tools ?? []}
+            userId={userId}
+            accent="green"
+            placeholder="Figma, Notion, Runway…"
+            onChange={refresh}
+          />
+          <ChipListCard
+            title="Software stack"
+            icon={<Layers className="h-4 w-4" />}
+            field="software_stack"
+            values={profile?.software_stack ?? []}
+            userId={userId}
+            accent="purple"
+            placeholder="Photoshop, Blender, Ableton…"
+            onChange={refresh}
+          />
+        </div>
+
+        {/* PROJECTS */}
+        <ProjectsCard projects={projects} coverUrls={coverUrls} userId={userId} onChange={refresh} />
 
         {/* AVAILABILITY */}
         <AvailabilityCard profile={profile} onChange={refresh} />
@@ -223,6 +304,9 @@ function ProfilePage() {
 
         {/* LINKS */}
         <LinksCard profile={profile} onChange={refresh} />
+
+        {/* ACTIVITY TIMELINE */}
+        <TimelineCard events={activity} />
       </div>
     </Shell>
   );
@@ -264,11 +348,14 @@ function computeCompleteness(
   profile: Profile | null,
   teach: Skill[],
   learn: Skill[],
+  projectsCount: number,
 ): number {
   if (!profile) return 0;
   const checks = [
     !!profile.avatar_url,
+    !!profile.banner_url,
     !!profile.display_name,
+    !!profile.creator_title,
     !!profile.bio,
     !!profile.country,
     !!profile.timezone,
@@ -277,6 +364,8 @@ function computeCompleteness(
     profile.years_experience != null,
     teach.length > 0,
     learn.length > 0,
+    (profile.favourite_tools?.length ?? 0) > 0 || (profile.software_stack?.length ?? 0) > 0,
+    projectsCount > 0,
     profile.available_days.length > 0 && profile.available_times.length > 0,
     !!profile.teaching_style,
     !!profile.learning_goals,
@@ -291,12 +380,14 @@ function computeCompleteness(
 function HeaderCard({
   profile,
   avatarSigned,
+  bannerSigned,
   userId,
   completeness,
   onChange,
 }: {
   profile: Profile | null;
   avatarSigned: string | null;
+  bannerSigned: string | null;
   userId: string;
   completeness: number;
   onChange: () => void;
@@ -330,10 +421,11 @@ function HeaderCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+      <BannerStrip bannerSigned={bannerSigned} userId={userId} onChange={onChange} />
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="relative shrink-0">
-          <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand sm:h-32 sm:w-32">
+        <div className="relative shrink-0 -mt-16 sm:-mt-20">
+          <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface sm:h-32 sm:w-32">
             {avatarSigned ? (
               <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -365,6 +457,9 @@ function HeaderCard({
               <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
                 {profile?.display_name || "Untitled creator"}
               </h1>
+              {profile?.creator_title && (
+                <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+              )}
               <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
             </div>
             <Button
@@ -475,6 +570,7 @@ function EditIdentityDialog({
   const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
     handle: profile?.handle ?? "",
+    creator_title: profile?.creator_title ?? "",
     category: profile?.category ?? "",
     years_experience: profile?.years_experience?.toString() ?? "",
     country: profile?.country ?? "",
@@ -485,6 +581,7 @@ function EditIdentityDialog({
       setForm({
         display_name: profile?.display_name ?? "",
         handle: profile?.handle ?? "",
+        creator_title: profile?.creator_title ?? "",
         category: profile?.category ?? "",
         years_experience: profile?.years_experience?.toString() ?? "",
         country: profile?.country ?? "",
@@ -501,6 +598,7 @@ function EditIdentityDialog({
       .update({
         display_name: form.display_name || null,
         handle: form.handle.replace(/^@/, "").trim() || null,
+        creator_title: form.creator_title || null,
         category: form.category || null,
         years_experience: form.years_experience ? parseInt(form.years_experience, 10) : null,
         country: form.country || null,
@@ -531,6 +629,13 @@ function EditIdentityDialog({
             <Input
               value={form.handle}
               onChange={(e) => setForm({ ...form, handle: e.target.value })}
+            />
+          </Field>
+          <Field label="Creator title">
+            <Input
+              placeholder="Motion designer & YouTube educator"
+              value={form.creator_title}
+              onChange={(e) => setForm({ ...form, creator_title: e.target.value })}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -724,7 +829,7 @@ function SkillsCard({
   selected: Skill[];
   allSkills: Skill[];
   userId: string;
-  table: "profile_skills_teach" | "profile_skills_learn";
+  table: "profile_skills_teach" | "profile_skills_learn" | "profile_skills_wishlist";
   onChange: () => void;
 }) {
   const [open, setOpen] = useState(false);

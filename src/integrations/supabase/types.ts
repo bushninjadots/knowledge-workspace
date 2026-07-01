@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_skills_learn: {
         Row: {
           created_at: string
@@ -80,22 +112,59 @@ export type Database = {
           },
         ]
       }
+      profile_skills_wishlist: {
+        Row: {
+          created_at: string
+          profile_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_skills_wishlist_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_skills_wishlist_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           available_days: string[]
           available_times: string[]
           avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           category: string | null
           country: string | null
           created_at: string
+          creator_title: string | null
           display_name: string | null
+          favourite_tools: string[]
           handle: string | null
           id: string
           languages: string[]
           learning_goals: string | null
           portfolio_links: Json
           social_links: Json
+          software_stack: string[]
           teaching_style: string | null
           timezone: string | null
           updated_at: string
@@ -105,17 +174,21 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           category?: string | null
           country?: string | null
           created_at?: string
+          creator_title?: string | null
           display_name?: string | null
+          favourite_tools?: string[]
           handle?: string | null
           id: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
           social_links?: Json
+          software_stack?: string[]
           teaching_style?: string | null
           timezone?: string | null
           updated_at?: string
@@ -125,23 +198,83 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           category?: string | null
           country?: string | null
           created_at?: string
+          creator_title?: string | null
           display_name?: string | null
+          favourite_tools?: string[]
           handle?: string | null
           id?: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
           social_links?: Json
+          software_stack?: string[]
           teaching_style?: string | null
           timezone?: string | null
           updated_at?: string
           years_experience?: number | null
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_featured: boolean
+          links: Json
+          looking_for_collaborators: boolean
+          looking_for_feedback: boolean
+          media: Json
+          profile_id: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          links?: Json
+          looking_for_collaborators?: boolean
+          looking_for_feedback?: boolean
+          media?: Json
+          profile_id: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          links?: Json
+          looking_for_collaborators?: boolean
+          looking_for_feedback?: boolean
+          media?: Json
+          profile_id?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       skills: {
         Row: {
@@ -172,7 +305,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_activity: {
+        Args: { _kind: string; _metadata?: Json; _profile_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
