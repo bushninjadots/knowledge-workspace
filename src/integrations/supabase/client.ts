@@ -27,6 +27,53 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+function createMissingSupabaseClient(message: string) {
+  const errorResult = { data: null, error: new Error(message) };
+
+  const createQueryBuilder = () => {
+    const builder = {
+      select: () => builder,
+      insert: () => builder,
+      update: () => builder,
+      delete: () => builder,
+      eq: () => builder,
+      single: async () => errorResult,
+      maybeSingle: async () => errorResult,
+      then: (resolve: (value: typeof errorResult) => unknown) =>
+        Promise.resolve(errorResult).then(resolve),
+      catch: (onRejected: (reason: unknown) => unknown) =>
+        Promise.resolve(errorResult).catch(onRejected),
+    };
+
+    return builder;
+  };
+
+  return {
+    auth: {
+      onAuthStateChange: () => ({
+        data: {
+          subscription: {
+            unsubscribe: () => undefined,
+          },
+        },
+      }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+      getUser: async () => ({ data: { user: null }, error: null }),
+      getClaims: async () => ({ data: null, error: null }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: new Error(message),
+      }),
+      signUp: async () => ({
+        data: { user: null, session: null },
+        error: new Error(message),
+      }),
+      signOut: async () => ({ error: null }),
+    },
+    from: () => createQueryBuilder(),
+  } as unknown as ReturnType<typeof createSupabaseClient>;
+}
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -39,8 +86,8 @@ function createSupabaseClient() {
       ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    console.warn(`[Supabase] ${message}`);
+    return createMissingSupabaseClient(message);
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
