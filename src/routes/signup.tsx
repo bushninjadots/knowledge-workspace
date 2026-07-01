@@ -85,20 +85,46 @@ function SignupPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" placeholder="Alex" required value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              id="name"
+              placeholder="Alex"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="handle">Handle</Label>
-            <Input id="handle" placeholder="@alex" required value={handle} onChange={(e) => setHandle(e.target.value)} />
+            <Input
+              id="handle"
+              placeholder="@alex"
+              required
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+            />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@studio.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@studio.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="At least 8 characters" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input
+            id="password"
+            type="password"
+            placeholder="At least 8 characters"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label>Your main craft</Label>

@@ -70,9 +70,7 @@ function DashboardLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8">
-          {isIndex ? <DashboardHome /> : <Outlet />}
-        </main>
+        <main className="flex-1 p-4 sm:p-8">{isIndex ? <DashboardHome /> : <Outlet />}</main>
       </div>
     </div>
   );
@@ -99,8 +97,8 @@ function DashboardHome() {
           Let's get you <span className="text-gradient-brand">connected</span>.
         </h1>
         <p className="mt-3 max-w-xl text-muted-foreground">
-          Finish your profile, list one skill you can teach, and tell us one
-          skill you want to learn. That's it — Tethyr does the rest.
+          Finish your profile, list one skill you can teach, and tell us one skill you want to
+          learn. That's it — Tethyr does the rest.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button variant="default" asChild>

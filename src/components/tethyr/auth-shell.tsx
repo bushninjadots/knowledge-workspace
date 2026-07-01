@@ -33,7 +33,9 @@ export function AuthShell({
         </div>
         <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">← Back to home</Link>
+          <Link to="/" className="hover:text-foreground">
+            ← Back to home
+          </Link>
         </p>
       </div>
     </div>

@@ -48,9 +48,9 @@
   --radius: 1rem;
 
   /* Tethyr palette — dark first */
-  --background: oklch(0.18 0.018 264);          /* #0E1117 */
-  --foreground: oklch(0.97 0.005 250);          /* #F5F7FA */
-  --surface: oklch(0.22 0.015 260);             /* #151A1F */
+  --background: oklch(0.18 0.018 264); /* #0E1117 */
+  --foreground: oklch(0.97 0.005 250); /* #F5F7FA */
+  --surface: oklch(0.22 0.015 260); /* #151A1F */
   --surface-elevated: oklch(0.26 0.018 260);
 
   --card: oklch(0.22 0.015 260);
@@ -58,8 +58,8 @@
   --popover: oklch(0.22 0.015 260);
   --popover-foreground: oklch(0.97 0.005 250);
 
-  --brand-green: oklch(0.92 0.23 142);          /* #7CFF6E */
-  --brand-purple: oklch(0.65 0.26 305);         /* #A64DFF */
+  --brand-green: oklch(0.92 0.23 142); /* #7CFF6E */
+  --brand-purple: oklch(0.65 0.26 305); /* #A64DFF */
 
   --primary: oklch(0.92 0.23 142);
   --primary-foreground: oklch(0.18 0.018 264);
@@ -83,7 +83,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);

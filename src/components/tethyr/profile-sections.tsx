@@ -301,7 +301,12 @@ export function ProjectsCard({
         </span>
       }
       action={
-        <Button size="sm" variant="outline" className="rounded-full" onClick={() => setCreating(true)}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-full"
+          onClick={() => setCreating(true)}
+        >
           <Plus className="mr-1 h-3 w-3" />
           New
         </Button>
@@ -498,13 +503,23 @@ function ProjectDialog({
               </div>
             )}
           </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={uploadCover} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={uploadCover}
+          />
 
           <Field label="Title">
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
           <Field label="Description">
-            <Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </Field>
 
           <Field label="Links">
@@ -556,9 +571,24 @@ function ProjectDialog({
           </Field>
 
           <div className="grid gap-2 rounded-xl border border-border/60 bg-background/40 p-4">
-            <Toggle label="Featured" description="Pin to top of your profile" checked={featured} onChange={setFeatured} />
-            <Toggle label="Looking for feedback" description="Invite reviews from other creators" checked={feedback} onChange={setFeedback} />
-            <Toggle label="Looking for collaborators" description="Open to team-ups" checked={collab} onChange={setCollab} />
+            <Toggle
+              label="Featured"
+              description="Pin to top of your profile"
+              checked={featured}
+              onChange={setFeatured}
+            />
+            <Toggle
+              label="Looking for feedback"
+              description="Invite reviews from other creators"
+              checked={feedback}
+              onChange={setFeedback}
+            />
+            <Toggle
+              label="Looking for collaborators"
+              description="Open to team-ups"
+              checked={collab}
+              onChange={setCollab}
+            />
           </div>
         </div>
         <DialogFooter>
@@ -621,7 +651,14 @@ export type ActivityRow = {
   created_at: string;
 };
 
-const KIND_META: Record<string, { label: (m: Record<string, unknown>) => string; icon: typeof Sparkles; tone: "green" | "purple" | "muted" }> = {
+const KIND_META: Record<
+  string,
+  {
+    label: (m: Record<string, unknown>) => string;
+    icon: typeof Sparkles;
+    tone: "green" | "purple" | "muted";
+  }
+> = {
   joined_tethyr: { label: () => "Joined Tethyr", icon: Sparkles, tone: "purple" },
   avatar_updated: { label: () => "Updated avatar", icon: Camera, tone: "muted" },
   banner_updated: { label: () => "Updated banner", icon: ImageIcon, tone: "muted" },
@@ -682,8 +719,8 @@ export function TimelineCard({ events }: { events: ActivityRow[] }) {
               meta.tone === "green"
                 ? "bg-primary/15 text-primary ring-primary/30"
                 : meta.tone === "purple"
-                ? "bg-[var(--brand-purple)]/15 text-[var(--brand-purple)] ring-[var(--brand-purple)]/30"
-                : "bg-background text-muted-foreground ring-border";
+                  ? "bg-[var(--brand-purple)]/15 text-[var(--brand-purple)] ring-[var(--brand-purple)]/30"
+                  : "bg-background text-muted-foreground ring-border";
             return (
               <li key={e.id} className="relative">
                 <span

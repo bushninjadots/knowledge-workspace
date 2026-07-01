@@ -59,10 +59,14 @@ export function Navbar() {
             ))}
             <div className="mt-2 flex gap-2">
               <Button asChild variant="outline" className="flex-1">
-                <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
+                <Link to="/login" onClick={() => setOpen(false)}>
+                  Log in
+                </Link>
               </Button>
               <Button asChild variant="default" className="flex-1">
-                <Link to="/signup" onClick={() => setOpen(false)}>Join</Link>
+                <Link to="/signup" onClick={() => setOpen(false)}>
+                  Join
+                </Link>
               </Button>
             </div>
           </div>

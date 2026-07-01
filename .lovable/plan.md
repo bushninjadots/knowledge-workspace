@@ -26,6 +26,7 @@ Tables in `public`:
 - `profile_skills_learn` — `(profile_id, skill_id)` join.
 
 RLS:
+
 - `profiles`: public SELECT (so profiles are viewable), owner-only INSERT/UPDATE/DELETE.
 - `skills`: public SELECT, no writes from clients.
 - join tables: public SELECT, owner-only writes (where `profile_id = auth.uid()`).

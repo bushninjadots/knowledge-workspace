@@ -6,9 +6,7 @@ export function Logo({ className = "" }: { className?: string }) {
       <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-brand glow-purple">
         <span className="font-display text-base font-bold text-background">T</span>
       </span>
-      <span className="font-display text-xl font-semibold tracking-tight">
-        Tethyr
-      </span>
+      <span className="font-display text-xl font-semibold tracking-tight">Tethyr</span>
     </Link>
   );
 }
