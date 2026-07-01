@@ -121,9 +121,12 @@ function ProfilePage() {
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
-      const [teach, learn] = await Promise.all([
+      const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
         supabase.from("profile_skills_teach").select("skill_id").eq("profile_id", userId),
         supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+        supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
+        supabase.from("projects").select("*").eq("profile_id", userId).order("is_featured", { ascending: false }).order("created_at", { ascending: false }),
+        supabase.from("activity_events").select("*").eq("profile_id", userId).order("created_at", { ascending: false }).limit(30),
       ]);
       let avatarSigned: string | null = null;
       if (profile?.avatar_url) {
@@ -132,12 +135,36 @@ function ProfilePage() {
           .createSignedUrl(profile.avatar_url, 60 * 60 * 24);
         avatarSigned = signed?.signedUrl ?? null;
       }
+      let bannerSigned: string | null = null;
+      if (profile?.banner_url) {
+        const { data: signed } = await supabase.storage
+          .from("banners")
+          .createSignedUrl(profile.banner_url, 60 * 60 * 24);
+        bannerSigned = signed?.signedUrl ?? null;
+      }
+      const projects = (projectsRes.data ?? []) as ProjectRow[];
+      const coverUrls: Record<string, string> = {};
+      await Promise.all(
+        projects
+          .filter((p) => p.cover_url)
+          .map(async (p) => {
+            const { data: s } = await supabase.storage
+              .from("project-media")
+              .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
+            if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
+          }),
+      );
       return {
         userId,
         profile: (profile ?? null) as Profile | null,
         avatarSigned,
+        bannerSigned,
         teachIds: (teach.data ?? []).map((r: any) => r.skill_id) as string[],
         learnIds: (learn.data ?? []).map((r: any) => r.skill_id) as string[],
+        wishlistIds: (wishlist.data ?? []).map((r: any) => r.skill_id) as string[],
+        projects,
+        coverUrls,
+        activity: (activityRes.data ?? []) as ActivityRow[],
       };
     },
   });
