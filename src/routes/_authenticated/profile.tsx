@@ -380,12 +380,14 @@ function computeCompleteness(
 function HeaderCard({
   profile,
   avatarSigned,
+  bannerSigned,
   userId,
   completeness,
   onChange,
 }: {
   profile: Profile | null;
   avatarSigned: string | null;
+  bannerSigned: string | null;
   userId: string;
   completeness: number;
   onChange: () => void;
