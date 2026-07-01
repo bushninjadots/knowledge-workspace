@@ -21,6 +21,9 @@ import {
   Twitch,
   Github,
   Link as LinkIcon,
+  Wrench,
+  Layers,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,9 +36,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
+import {
+  BannerStrip,
+  ChipListCard,
+  ProjectsCard,
+  TimelineCard,
+  type ProjectRow,
+  type ActivityRow,
+} from "@/components/tethyr/profile-sections";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
