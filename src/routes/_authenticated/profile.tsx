@@ -631,6 +631,13 @@ function EditIdentityDialog({
               onChange={(e) => setForm({ ...form, handle: e.target.value })}
             />
           </Field>
+          <Field label="Creator title">
+            <Input
+              placeholder="Motion designer & YouTube educator"
+              value={form.creator_title}
+              onChange={(e) => setForm({ ...form, creator_title: e.target.value })}
+            />
+          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Category">
               <select
