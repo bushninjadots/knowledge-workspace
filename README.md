@@ -78,8 +78,8 @@ Create a `.env` file in the project root.
 Required variables:
 
 ```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_URL=https://mfeinmphbsnjcchkmldi.supabase.co/rest/v1/
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZWlubXBoYnNuamNjaGttbGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzE1NDQsImV4cCI6MjA5ODQwNzU0NH0.VVWk78hea10PTxWn5AYZDGe0yS2G37c7noCjTp517G4
 ```
 
 ---
