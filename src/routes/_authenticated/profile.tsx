@@ -421,10 +421,11 @@ function HeaderCard({
   }
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+      <BannerStrip bannerSigned={bannerSigned} userId={userId} onChange={onChange} />
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="relative shrink-0">
-          <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand sm:h-32 sm:w-32">
+        <div className="relative shrink-0 -mt-16 sm:-mt-20">
+          <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface sm:h-32 sm:w-32">
             {avatarSigned ? (
               <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
             ) : (
