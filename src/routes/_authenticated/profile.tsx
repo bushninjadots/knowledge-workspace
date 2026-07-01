@@ -457,6 +457,9 @@ function HeaderCard({
               <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
                 {profile?.display_name || "Untitled creator"}
               </h1>
+              {profile?.creator_title && (
+                <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+              )}
               <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
             </div>
             <Button
