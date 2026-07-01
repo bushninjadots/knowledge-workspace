@@ -193,22 +193,25 @@ function ProfilePage() {
     );
   }
 
-  const { profile, teachIds, learnIds, avatarSigned, userId } = profileQuery.data;
+  const { profile, teachIds, learnIds, wishlistIds, avatarSigned, bannerSigned, userId, projects, coverUrls, activity } =
+    profileQuery.data;
   const skills = skillsQuery.data ?? [];
   const skillById = new Map(skills.map((s) => [s.id, s]));
 
   const teachSkills = teachIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
   const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
+  const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
 
-  const completeness = computeCompleteness(profile, teachSkills, learnSkills);
+  const completeness = computeCompleteness(profile, teachSkills, learnSkills, projects.length);
 
   return (
     <Shell>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
-        {/* HEADER */}
+        {/* HEADER + BANNER */}
         <HeaderCard
           profile={profile}
           avatarSigned={avatarSigned}
+          bannerSigned={bannerSigned}
           userId={userId}
           completeness={completeness}
           onChange={refresh}
@@ -217,8 +220,8 @@ function ProfilePage() {
         {/* ABOUT */}
         <AboutCard profile={profile} onChange={refresh} />
 
-        {/* SKILLS */}
-        <div className="grid gap-6 md:grid-cols-2">
+        {/* SKILLS — teach / currently learning / wishlist */}
+        <div className="grid gap-6 md:grid-cols-3">
           <SkillsCard
             title="Skills I teach"
             accent="green"
@@ -230,16 +233,53 @@ function ProfilePage() {
             onChange={refresh}
           />
           <SkillsCard
-            title="Skills I want to learn"
+            title="Currently learning"
             accent="purple"
-            icon={<Sparkles className="h-4 w-4" />}
+            icon={<BookOpen className="h-4 w-4" />}
             selected={learnSkills}
             allSkills={skills}
             userId={userId}
             table="profile_skills_learn"
             onChange={refresh}
           />
+          <SkillsCard
+            title="Want next"
+            accent="purple"
+            icon={<Sparkles className="h-4 w-4" />}
+            selected={wishSkills}
+            allSkills={skills}
+            userId={userId}
+            table="profile_skills_wishlist"
+            onChange={refresh}
+          />
         </div>
+
+        {/* TOOLS + STACK */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <ChipListCard
+            title="Favourite tools"
+            icon={<Wrench className="h-4 w-4" />}
+            field="favourite_tools"
+            values={profile?.favourite_tools ?? []}
+            userId={userId}
+            accent="green"
+            placeholder="Figma, Notion, Runway…"
+            onChange={refresh}
+          />
+          <ChipListCard
+            title="Software stack"
+            icon={<Layers className="h-4 w-4" />}
+            field="software_stack"
+            values={profile?.software_stack ?? []}
+            userId={userId}
+            accent="purple"
+            placeholder="Photoshop, Blender, Ableton…"
+            onChange={refresh}
+          />
+        </div>
+
+        {/* PROJECTS */}
+        <ProjectsCard projects={projects} coverUrls={coverUrls} userId={userId} onChange={refresh} />
 
         {/* AVAILABILITY */}
         <AvailabilityCard profile={profile} onChange={refresh} />
@@ -264,6 +304,9 @@ function ProfilePage() {
 
         {/* LINKS */}
         <LinksCard profile={profile} onChange={refresh} />
+
+        {/* ACTIVITY TIMELINE */}
+        <TimelineCard events={activity} />
       </div>
     </Shell>
   );
