@@ -114,7 +114,12 @@ function ProfilePage() {
     queryKey: ["my-profile"],
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user!.id;
+      const userId = userData.user?.id;
+
+      if (!userId) {
+        return null;
+      }
+
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
