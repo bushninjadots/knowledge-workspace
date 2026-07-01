@@ -81,6 +81,7 @@ type Profile = {
 };
 
 type Skill = { id: string; slug: string; name: string; category: string };
+type SkillSelectionRow = { skill_id: string };
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TIMES = ["Mornings", "Afternoons", "Evenings", "Late night"];
@@ -100,7 +101,12 @@ const CATEGORIES = [
 const SOCIAL_KEYS: { key: string; label: string; icon: typeof Youtube; placeholder: string }[] = [
   { key: "website", label: "Website", icon: Globe, placeholder: "https://yoursite.com" },
   { key: "youtube", label: "YouTube", icon: Youtube, placeholder: "https://youtube.com/@you" },
-  { key: "instagram", label: "Instagram", icon: Instagram, placeholder: "https://instagram.com/you" },
+  {
+    key: "instagram",
+    label: "Instagram",
+    icon: Instagram,
+    placeholder: "https://instagram.com/you",
+  },
   { key: "x", label: "X", icon: Twitter, placeholder: "https://x.com/you" },
   { key: "tiktok", label: "TikTok", icon: Sparkles, placeholder: "https://tiktok.com/@you" },
   { key: "twitch", label: "Twitch", icon: Twitch, placeholder: "https://twitch.tv/you" },
@@ -130,8 +136,18 @@ function ProfilePage() {
         supabase.from("profile_skills_teach").select("skill_id").eq("profile_id", userId),
         supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
         supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
-        supabase.from("projects").select("*").eq("profile_id", userId).order("is_featured", { ascending: false }).order("created_at", { ascending: false }),
-        supabase.from("activity_events").select("*").eq("profile_id", userId).order("created_at", { ascending: false }).limit(30),
+        supabase
+          .from("projects")
+          .select("*")
+          .eq("profile_id", userId)
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("activity_events")
+          .select("*")
+          .eq("profile_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(30),
       ]);
       let avatarSigned: string | null = null;
       if (profile?.avatar_url) {
@@ -164,9 +180,9 @@ function ProfilePage() {
         profile: (profile ?? null) as Profile | null,
         avatarSigned,
         bannerSigned,
-        teachIds: (teach.data ?? []).map((r: any) => r.skill_id) as string[],
-        learnIds: (learn.data ?? []).map((r: any) => r.skill_id) as string[],
-        wishlistIds: (wishlist.data ?? []).map((r: any) => r.skill_id) as string[],
+        teachIds: (teach.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
+        learnIds: (learn.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
+        wishlistIds: (wishlist.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
         projects,
         coverUrls,
         activity: (activityRes.data ?? []) as ActivityRow[],
@@ -198,8 +214,18 @@ function ProfilePage() {
     );
   }
 
-  const { profile, teachIds, learnIds, wishlistIds, avatarSigned, bannerSigned, userId, projects, coverUrls, activity } =
-    profileQuery.data;
+  const {
+    profile,
+    teachIds,
+    learnIds,
+    wishlistIds,
+    avatarSigned,
+    bannerSigned,
+    userId,
+    projects,
+    coverUrls,
+    activity,
+  } = profileQuery.data;
   const skills = skillsQuery.data ?? [];
   const skillById = new Map(skills.map((s) => [s.id, s]));
 
@@ -284,7 +310,12 @@ function ProfilePage() {
         </div>
 
         {/* PROJECTS */}
-        <ProjectsCard projects={projects} coverUrls={coverUrls} userId={userId} onChange={refresh} />
+        <ProjectsCard
+          projects={projects}
+          coverUrls={coverUrls}
+          userId={userId}
+          onChange={refresh}
+        />
 
         {/* AVAILABILITY */}
         <AvailabilityCard profile={profile} onChange={refresh} />
@@ -326,7 +357,10 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur" onClick={() => setOpen(false)} />
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur"
+            onClick={() => setOpen(false)}
+          />
           <div className="absolute inset-y-0 left-0">
             <DashboardSidebar onNavigate={() => setOpen(false)} />
           </div>
@@ -736,10 +770,7 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
   }
 
   return (
-    <SectionCard
-      title="About"
-      onEdit={() => setEditing(true)}
-    >
+    <SectionCard title="About" onEdit={() => setEditing(true)}>
       <p className="whitespace-pre-wrap text-sm text-muted-foreground">
         {profile?.bio || "Tell other creators who you are and what you make."}
       </p>
@@ -847,9 +878,7 @@ function SkillsCard({
   }, [open, selected]);
 
   const grouped = useMemo(() => {
-    const filtered = allSkills.filter((s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()),
-    );
+    const filtered = allSkills.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
     const g = new Map<string, Skill[]>();
     filtered.forEach((s) => {
       if (!g.has(s.category)) g.set(s.category, []);
@@ -912,10 +941,7 @@ function SkillsCard({
       ) : (
         <div className="flex flex-wrap gap-2">
           {selected.map((s) => (
-            <span
-              key={s.id}
-              className={`rounded-full border px-3 py-1 text-xs ${chipCls}`}
-            >
+            <span key={s.id} className={`rounded-full border px-3 py-1 text-xs ${chipCls}`}>
               {s.name}
             </span>
           ))}
@@ -974,9 +1000,7 @@ function SkillsCard({
             )}
           </div>
           <DialogFooter>
-            <span className="mr-auto text-xs text-muted-foreground">
-              {draft.size} selected
-            </span>
+            <span className="mr-auto text-xs text-muted-foreground">{draft.size} selected</span>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
@@ -992,7 +1016,13 @@ function SkillsCard({
 
 /* -------------------------- AVAILABILITY -------------------------- */
 
-function AvailabilityCard({ profile, onChange }: { profile: Profile | null; onChange: () => void }) {
+function AvailabilityCard({
+  profile,
+  onChange,
+}: {
+  profile: Profile | null;
+  onChange: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState<string[]>(profile?.available_days ?? []);
   const [times, setTimes] = useState<string[]>(profile?.available_times ?? []);
@@ -1103,9 +1133,7 @@ function AvailabilityCard({ profile, onChange }: { profile: Profile | null; onCh
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="w-16 text-xs uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
+      <span className="w-16 text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -1139,7 +1167,9 @@ function TextCard({
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("profiles")
-      .update({ [field]: text || null } as any)
+      .update({ [field]: text || null } as Partial<
+        Pick<Profile, "teaching_style" | "learning_goals">
+      >)
       .eq("id", u.user!.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1150,15 +1180,18 @@ function TextCard({
 
   return (
     <SectionCard title={title} onEdit={() => setOpen(true)}>
-      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-        {value || placeholder}
-      </p>
+      <p className="whitespace-pre-wrap text-sm text-muted-foreground">{value || placeholder}</p>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit {title.toLowerCase()}</DialogTitle>
           </DialogHeader>
-          <Textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} />
+          <Textarea
+            rows={6}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={placeholder}
+          />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
