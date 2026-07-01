@@ -61,8 +61,10 @@ type Profile = {
   id: string;
   handle: string | null;
   display_name: string | null;
+  creator_title: string | null;
   bio: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   country: string | null;
   timezone: string | null;
   languages: string[];
@@ -74,6 +76,8 @@ type Profile = {
   available_times: string[];
   teaching_style: string | null;
   learning_goals: string | null;
+  favourite_tools: string[];
+  software_stack: string[];
 };
 
 type Skill = { id: string; slug: string; name: string; category: string };
