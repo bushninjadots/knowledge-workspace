@@ -32,7 +32,10 @@ export default tseslint.config(
           ],
         },
       ],
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // This repo exports helper constants and utility values alongside
+      // component functions in several shared UI files. Those patterns are
+      // valid and useful here, so disable the React Fast Refresh rule.
+      "react-refresh/only-export-components": "off",
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
