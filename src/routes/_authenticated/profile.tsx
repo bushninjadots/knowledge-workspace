@@ -829,7 +829,7 @@ function SkillsCard({
   selected: Skill[];
   allSkills: Skill[];
   userId: string;
-  table: "profile_skills_teach" | "profile_skills_learn";
+  table: "profile_skills_teach" | "profile_skills_learn" | "profile_skills_wishlist";
   onChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
