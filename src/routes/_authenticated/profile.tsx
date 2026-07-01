@@ -348,11 +348,14 @@ function computeCompleteness(
   profile: Profile | null,
   teach: Skill[],
   learn: Skill[],
+  projectsCount: number,
 ): number {
   if (!profile) return 0;
   const checks = [
     !!profile.avatar_url,
+    !!profile.banner_url,
     !!profile.display_name,
+    !!profile.creator_title,
     !!profile.bio,
     !!profile.country,
     !!profile.timezone,
@@ -361,6 +364,8 @@ function computeCompleteness(
     profile.years_experience != null,
     teach.length > 0,
     learn.length > 0,
+    (profile.favourite_tools?.length ?? 0) > 0 || (profile.software_stack?.length ?? 0) > 0,
+    projectsCount > 0,
     profile.available_days.length > 0 && profile.available_times.length > 0,
     !!profile.teaching_style,
     !!profile.learning_goals,
