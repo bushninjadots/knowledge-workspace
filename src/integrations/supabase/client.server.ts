@@ -30,8 +30,8 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = process.env.SUPABASE_URL;https://mfeinmphbsnjcchkmldi.supabase.co/rest/v1/
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mZWlubXBoYnNuamNjaGttbGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzE1NDQsImV4cCI6MjA5ODQwNzU0NH0.VVWk78hea10PTxWn5AYZDGe0yS2G37c7noCjTp517G4
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
