@@ -570,6 +570,7 @@ function EditIdentityDialog({
   const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
     handle: profile?.handle ?? "",
+    creator_title: profile?.creator_title ?? "",
     category: profile?.category ?? "",
     years_experience: profile?.years_experience?.toString() ?? "",
     country: profile?.country ?? "",
@@ -580,6 +581,7 @@ function EditIdentityDialog({
       setForm({
         display_name: profile?.display_name ?? "",
         handle: profile?.handle ?? "",
+        creator_title: profile?.creator_title ?? "",
         category: profile?.category ?? "",
         years_experience: profile?.years_experience?.toString() ?? "",
         country: profile?.country ?? "",
@@ -596,6 +598,7 @@ function EditIdentityDialog({
       .update({
         display_name: form.display_name || null,
         handle: form.handle.replace(/^@/, "").trim() || null,
+        creator_title: form.creator_title || null,
         category: form.category || null,
         years_experience: form.years_experience ? parseInt(form.years_experience, 10) : null,
         country: form.country || null,
