@@ -59,31 +59,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
 });
 
-type Profile = {
-  id: string;
-  handle: string | null;
-  display_name: string | null;
-  creator_title: string | null;
-  bio: string | null;
-  avatar_url: string | null;
-  banner_url: string | null;
-  country: string | null;
-  timezone: string | null;
-  languages: string[];
-  category: string | null;
-  years_experience: number | null;
-  portfolio_links: { label: string; url: string }[];
-  social_links: Record<string, string>;
-  available_days: string[];
-  available_times: string[];
-  teaching_style: string | null;
-  learning_goals: string | null;
-  favourite_tools: string[];
-  software_stack: string[];
-};
-
 type Skill = { id: string; slug: string; name: string; category: string };
-type SkillSelectionRow = { skill_id: string };
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TIMES = ["Mornings", "Afternoons", "Evenings", "Late night"];
@@ -116,97 +92,9 @@ const SOCIAL_KEYS: { key: string; label: string; icon: typeof Youtube; placehold
 ];
 
 function ProfilePage() {
-  const queryClient = useQueryClient();
-
-  const profileQuery = useQuery({
-    queryKey: ["my-profile"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-
-      if (!userId) {
-        return null;
-      }
-
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
-      if (error) throw error;
-      const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
-        supabase.from("profile_skills_teach").select("skill_id").eq("profile_id", userId),
-        supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
-        supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
-        supabase
-          .from("projects")
-          .select("*")
-          .eq("profile_id", userId)
-          .order("is_featured", { ascending: false })
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("activity_events")
-          .select("*")
-          .eq("profile_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(30),
-      ]);
-      let avatarSigned: string | null = null;
-      if (profile?.avatar_url) {
-        const { data: signed } = await supabase.storage
-          .from("avatars")
-          .createSignedUrl(profile.avatar_url, 60 * 60 * 24);
-        avatarSigned = signed?.signedUrl ?? null;
-      }
-      let bannerSigned: string | null = null;
-      if (profile?.banner_url) {
-        const { data: signed } = await supabase.storage
-          .from("banners")
-          .createSignedUrl(profile.banner_url, 60 * 60 * 24);
-        bannerSigned = signed?.signedUrl ?? null;
-      }
-      const projects = (projectsRes.data ?? []) as ProjectRow[];
-      const coverUrls: Record<string, string> = {};
-      await Promise.all(
-        projects
-          .filter((p) => p.cover_url)
-          .map(async (p) => {
-            const { data: s } = await supabase.storage
-              .from("project-media")
-              .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
-            if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
-          }),
-      );
-      return {
-        userId,
-        profile: (profile ?? null) as Profile | null,
-        avatarSigned,
-        bannerSigned,
-        teachIds: (teach.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
-        learnIds: (learn.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
-        wishlistIds: (wishlist.data ?? []).map((r: SkillSelectionRow) => r.skill_id) as string[],
-        projects,
-        coverUrls,
-        activity: (activityRes.data ?? []) as ActivityRow[],
-      };
-    },
-  });
-
-  const skillsQuery = useQuery({
-    queryKey: ["skills"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skills")
-        .select("*")
-        .order("category")
-        .order("name");
-      if (error) throw error;
-      return (data ?? []) as Skill[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+  const profileQuery = useCurrentUser();
+  const skillsQuery = useSkillsCatalog();
+  const refresh = profileQuery.refresh;
 
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
