@@ -423,7 +423,7 @@ function ProjectDialog({
       supabase.storage
         .from("project-media")
         .createSignedUrl(project.cover_url, 60 * 60)
-        .then(({ data }) => setCoverPreview(data?.signedUrl ?? null));
+        .then(({ data }: { data: { signedUrl: string } | null }) => setCoverPreview(data?.signedUrl ?? null));
     }
   }, [open, project?.cover_url]);
 
