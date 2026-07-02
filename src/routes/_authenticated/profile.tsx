@@ -232,7 +232,15 @@ function ProfilePage() {
         <LinksCard profile={profile} onChange={refresh} />
 
         {/* ACTIVITY TIMELINE */}
-        <TimelineCard events={activity} />
+        <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+          <h2 className="font-display text-lg font-semibold">Activity</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your reputation history — every action becomes part of your story.
+          </p>
+          <div className="mt-5">
+            <ActivityTimeline events={activity} />
+          </div>
+        </div>
       </div>
     </Shell>
   );

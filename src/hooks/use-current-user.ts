@@ -1,8 +1,10 @@
 // Central source of truth for the signed-in creator.
 // Every page reads from the ["current-user"] query — mutations invalidate
 // this key and the whole app re-syncs automatically.
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
+
+export type { ProjectRow, ActivityRow };
 
 export type Profile = {
   id: string;
@@ -27,27 +29,8 @@ export type Profile = {
   software_stack: string[];
 };
 
-export type ActivityRow = {
-  id: string;
-  profile_id: string;
-  kind: string;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-};
+// ProjectRow and ActivityRow re-exported above from profile-sections.
 
-export type ProjectRow = {
-  id: string;
-  profile_id: string;
-  title: string;
-  description: string | null;
-  cover_url: string | null;
-  tags: string[] | null;
-  external_links: Record<string, string> | null;
-  looking_for_feedback: boolean | null;
-  looking_for_collaborators: boolean | null;
-  is_featured: boolean | null;
-  created_at: string;
-};
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
