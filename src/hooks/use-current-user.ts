@@ -1,6 +1,7 @@
 // Central source of truth for the signed-in creator.
 // Every page reads from the ["current-user"] query — mutations invalidate
 // this key and the whole app re-syncs automatically.
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
