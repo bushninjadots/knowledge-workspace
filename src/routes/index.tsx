@@ -11,13 +11,16 @@ import {
   Twitch,
   PencilRuler,
   ArrowRight,
-  HeartHandshake,
-  ShieldCheck,
-  Zap,
 } from "lucide-react";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
 import { Button } from "@/components/ui/button";
+import {
+  IconLearn,
+  IconTeach,
+  IconConnect,
+  IconGrow,
+} from "@/components/tethyr/icons-system";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,21 +51,21 @@ const audiences = [
 
 const pillars = [
   {
-    icon: HeartHandshake,
-    title: "Trade knowledge, not invoices",
-    body: "Swap a Premiere session for a Figma walkthrough. Everyone leaves richer — no money changes hands.",
+    icon: IconLearn,
+    title: "Discover new skills",
+    body: "Learn from creators who've mastered their craft. Every session is real knowledge from someone who's done the work.",
     accent: "green" as const,
   },
   {
-    icon: ShieldCheck,
-    title: "A trusted circle of creators",
-    body: "Profiles backed by real work and peer endorsements. No cold pitches, no spam — just people who know their craft.",
+    icon: IconTeach,
+    title: "Share what you know",
+    body: "You're an expert at something. Teach it, mentor through it, and help others level up while you deepen your own mastery.",
     accent: "purple" as const,
   },
   {
-    icon: Zap,
-    title: "Built for momentum",
-    body: "Find a mentor, book a session, ship the thing. Tethyr keeps the loop tight so you keep learning.",
+    icon: IconConnect,
+    title: "Build meaningful connections",
+    body: "Swap skills with other creators. Connect over shared interests and grow a network of people who actually get what you do.",
     accent: "green" as const,
   },
 ];
