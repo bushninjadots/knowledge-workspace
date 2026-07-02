@@ -1,12 +1,12 @@
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "./empty-state";
 
-// Placeholder creators — swap for real matches once matching lands.
-const PLACEHOLDER = [
+type Creator = { name: string; title: string; skills: string[]; hue: "green" | "purple" };
+const PLACEHOLDER: Creator[] = [
   { name: "Ari Nakamura", title: "Motion Designer", skills: ["After Effects", "Cinema 4D"], hue: "green" },
   { name: "Lena Ortiz", title: "YouTuber & Editor", skills: ["Premiere Pro", "YouTube Growth"], hue: "purple" },
   { name: "Sam Whitfield", title: "SEO Specialist", skills: ["SEO", "WordPress"], hue: "green" },
-] as const;
+];
 
 export function SuggestedCreators() {
   if (PLACEHOLDER.length === 0) {
