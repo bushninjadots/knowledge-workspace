@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { validateImageFile, isSafeUrl } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,12 +90,13 @@ export function BannerStrip({
   async function handle(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/banner-${Date.now()}.${ext}`;
+    const path = `${userId}/banner-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("banners")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, file, { upsert: true, contentType: check.contentType });
     if (upErr) {
       setUploading(false);
       return toast.error(upErr.message);
@@ -105,6 +107,7 @@ export function BannerStrip({
     toast.success("Banner updated");
     onChange();
   }
+
 
   return (
     <div className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl sm:-m-8 sm:mb-8 sm:h-56">
@@ -430,12 +433,13 @@ function ProjectDialog({
   async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const path = `${userId}/${crypto.randomUUID()}.${check.ext}`;
     const { error } = await supabase.storage
       .from("project-media")
-      .upload(path, file, { contentType: file.type });
+      .upload(path, file, { contentType: check.contentType });
     if (error) {
       setUploading(false);
       return toast.error(error.message);
@@ -446,15 +450,26 @@ function ProjectDialog({
     setUploading(false);
   }
 
+
   async function save() {
     if (!title.trim()) return toast.error("Title required");
     setSaving(true);
+    const cleanLinks: Record<string, string> = {};
+    for (const [k, v] of Object.entries(links)) {
+      const val = v?.trim();
+      if (!val) continue;
+      if (!isSafeUrl(val)) {
+        setSaving(false);
+        return toast.error(`"${k}" must be a valid http(s) URL`);
+      }
+      cleanLinks[k] = val;
+    }
     const payload = {
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
       cover_url: coverPath,
-      links: Object.fromEntries(Object.entries(links).filter(([, v]) => v?.trim())),
+      links: cleanLinks,
       tags,
       looking_for_feedback: feedback,
       looking_for_collaborators: collab,

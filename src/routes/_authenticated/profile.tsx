@@ -26,6 +26,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -336,17 +337,19 @@ function HeaderCard({
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/avatar-${Date.now()}.${ext}`;
+    const path = `${userId}/avatar-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, file, { upsert: true, contentType: check.contentType });
     if (upErr) {
       toast.error(upErr.message);
       setUploading(false);
       return;
     }
+
     const { error: profErr } = await supabase
       .from("profiles")
       .update({ avatar_url: path })
@@ -1124,10 +1127,25 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
   async function save() {
     setSaving(true);
     const cleanedSocial: Record<string, string> = {};
-    Object.entries(social).forEach(([k, v]) => {
-      if (v?.trim()) cleanedSocial[k] = v.trim();
-    });
-    const cleanedPortfolio = portfolio.filter((p) => p.url.trim());
+    for (const [k, v] of Object.entries(social)) {
+      const val = v?.trim();
+      if (!val) continue;
+      if (!isSafeUrl(val)) {
+        setSaving(false);
+        return toast.error(`${k} must be a valid http(s) URL`);
+      }
+      cleanedSocial[k] = val;
+    }
+    const cleanedPortfolio: { label: string; url: string }[] = [];
+    for (const p of portfolio) {
+      const url = p.url.trim();
+      if (!url) continue;
+      if (!isSafeUrl(url)) {
+        setSaving(false);
+        return toast.error(`Portfolio link "${p.label || url}" must be a valid http(s) URL`);
+      }
+      cleanedPortfolio.push({ label: p.label, url });
+    }
     const { error } = await supabase
       .from("profiles")
       .update({ social_links: cleanedSocial, portfolio_links: cleanedPortfolio })
@@ -1138,6 +1156,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
     onChange();
     setOpen(false);
   }
+
 
   const hasAny =
     (profile?.portfolio_links?.length ?? 0) > 0 ||
@@ -1152,7 +1171,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
           {profile?.portfolio_links?.map((p, i) => (
             <a
               key={i}
-              href={p.url}
+              href={safeHref(p.url)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
@@ -1166,7 +1185,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
               profile?.social_links?.[key] ? (
                 <a
                   key={key}
-                  href={profile.social_links[key]}
+                  href={safeHref(profile.social_links[key])}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
