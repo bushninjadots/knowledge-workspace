@@ -1185,7 +1185,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
               profile?.social_links?.[key] ? (
                 <a
                   key={key}
-                  href={profile.social_links[key]}
+                  href={safeHref(profile.social_links[key])}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
