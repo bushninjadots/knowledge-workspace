@@ -26,6 +26,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
