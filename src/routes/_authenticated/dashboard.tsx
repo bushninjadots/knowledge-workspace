@@ -10,6 +10,7 @@ import { NextStepsList } from "@/components/tethyr/next-steps";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
+import { ConnectionsCard } from "@/components/tethyr/connections-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -195,6 +196,9 @@ function DashboardHome() {
           <ActivityTimeline events={data.activity} limit={6} />
         </div>
       </section>
+
+      {/* Connections */}
+      <ConnectionsCard />
 
       {/* Suggested creators */}
       <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
