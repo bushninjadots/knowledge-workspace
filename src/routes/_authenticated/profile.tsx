@@ -48,6 +48,8 @@ import {
 } from "@/components/tethyr/profile-sections";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { useCurrentUser, useSkillsCatalog, type Profile } from "@/hooks/use-current-user";
+import { completenessPercent } from "@/lib/profile-completeness";
+
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
