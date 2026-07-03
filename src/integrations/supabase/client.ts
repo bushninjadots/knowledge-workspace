@@ -29,7 +29,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-function createMissingSupabaseClient(message: string) {
+function createMissingSupabaseClient(message: string): ReturnType<typeof createClient<Database>> {
   const errorResult = { data: null, error: new Error(message) };
 
   const createQueryBuilder = () => {
