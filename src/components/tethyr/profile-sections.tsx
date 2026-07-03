@@ -458,7 +458,10 @@ function ProjectDialog({
     for (const [k, v] of Object.entries(links)) {
       const val = v?.trim();
       if (!val) continue;
-      if (!isSafeUrl(val)) return toast.error(`"${k}" must be a valid http(s) URL`);
+      if (!isSafeUrl(val)) {
+        setSaving(false);
+        return toast.error(`"${k}" must be a valid http(s) URL`);
+      }
       cleanLinks[k] = val;
     }
     const payload = {
