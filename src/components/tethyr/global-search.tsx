@@ -108,7 +108,14 @@ export function GlobalSearch({ className }: { className?: string }) {
               {profileHits.map((p) => (
                 <button
                   key={p.id}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface"
+                  disabled={!p.handle}
+                  onClick={() => {
+                    if (!p.handle) return;
+                    setOpen(false);
+                    setQ("");
+                    navigate({ to: "/u/$handle", params: { handle: p.handle } });
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface disabled:opacity-50"
                 >
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div className="min-w-0">
