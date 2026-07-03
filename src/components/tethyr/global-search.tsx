@@ -31,6 +31,7 @@ export function GlobalSearch({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const debounced = useDebounced(q.trim(), 200);
   const rootRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
