@@ -340,7 +340,7 @@ function HeaderCard({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const path = `${userId}/avatar-${Date.now()}.${check.ext}`;
+    const path = `${userId}/avatar .${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true, contentType: check.contentType });

@@ -93,7 +93,7 @@ export function BannerStrip({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const path = `${userId}/banner-${Date.now()}.${check.ext}`;
+    const path = `${userId}/banner.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("banners")
       .upload(path, file, { upsert: true, contentType: check.contentType });
