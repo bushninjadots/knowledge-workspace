@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Clock, Languages, GraduationCap, Sparkles, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
+import { useDominantColor } from "@/lib/dominant-color";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { useState } from "react";
@@ -106,11 +107,23 @@ function PublicProfileRoute() {
     },
   });
 
+  // Called unconditionally (before the loading/error early-returns below) to
+  // satisfy the Rules of Hooks — falls back to null until data resolves.
+  const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
+
   if (isLoading) {
-    return <Shell><div className="p-8 text-sm text-muted-foreground">Loading…</div></Shell>;
+    return (
+      <Shell>
+        <div className="p-8 text-sm text-muted-foreground">Loading…</div>
+      </Shell>
+    );
   }
   if (error || !data) {
-    return <Shell><div className="p-8 text-sm text-muted-foreground">Creator not found.</div></Shell>;
+    return (
+      <Shell>
+        <div className="p-8 text-sm text-muted-foreground">Creator not found.</div>
+      </Shell>
+    );
   }
 
   const { profile, teachSkills, learnSkills, avatarSigned, bannerSigned } = data;
@@ -120,7 +133,10 @@ function PublicProfileRoute() {
     <Shell>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
         <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
-          <div className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl sm:-m-8 sm:mb-8 sm:h-56">
+          <div
+            className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border-2 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+            style={{ borderColor: bannerAccent ?? "transparent" }}
+          >
             {bannerSigned ? (
               <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -219,7 +235,8 @@ function PublicProfileRoute() {
           </SectionCard>
         </div>
 
-        {(profile.portfolio_links.length > 0 || Object.keys(profile.social_links ?? {}).length > 0) && (
+        {(profile.portfolio_links.length > 0 ||
+          Object.keys(profile.social_links ?? {}).length > 0) && (
           <SectionCard title="Links" icon={<LinkIcon className="h-4 w-4" />}>
             <div className="space-y-2">
               {profile.portfolio_links.map((p, i) => (

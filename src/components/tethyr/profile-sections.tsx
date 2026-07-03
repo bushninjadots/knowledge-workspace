@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile, isSafeUrl } from "@/lib/validators";
+import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,6 +87,7 @@ export function BannerStrip({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const accentColor = useDominantColor(bannerSigned);
 
   async function handle(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -109,7 +111,10 @@ export function BannerStrip({
   }
 
   return (
-    <div className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl sm:-m-8 sm:mb-8 sm:h-56">
+    <div
+      className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border-2 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+      style={{ borderColor: accentColor ?? "transparent" }}
+    >
       {bannerSigned ? (
         <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
       ) : (
