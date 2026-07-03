@@ -48,7 +48,6 @@ import {
 } from "@/components/tethyr/profile-sections";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { useCurrentUser, useSkillsCatalog, type Profile } from "@/hooks/use-current-user";
-import { completenessPercent } from "@/lib/profile-completeness";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -124,7 +123,12 @@ function ProfilePage() {
   const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
   const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
 
-  const completeness = computeCompleteness(profile, teachSkills, learnSkills, projects.length);
+  const completeness = completenessPercent({
+  profile,
+  teachCount: teachSkills.length,
+  learnCount: learnSkills.length,
+  projectsCount: projects.length,
+}
 
   return (
     <Shell>
@@ -280,37 +284,6 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
-}
-
-function computeCompleteness(
-  profile: Profile | null,
-  teach: Skill[],
-  learn: Skill[],
-  projectsCount: number,
-): number {
-  if (!profile) return 0;
-  const checks = [
-    !!profile.avatar_url,
-    !!profile.banner_url,
-    !!profile.display_name,
-    !!profile.creator_title,
-    !!profile.bio,
-    !!profile.country,
-    !!profile.timezone,
-    profile.languages.length > 0,
-    !!profile.category,
-    profile.years_experience != null,
-    teach.length > 0,
-    learn.length > 0,
-    (profile.favourite_tools?.length ?? 0) > 0 || (profile.software_stack?.length ?? 0) > 0,
-    projectsCount > 0,
-    profile.available_days.length > 0 && profile.available_times.length > 0,
-    !!profile.teaching_style,
-    !!profile.learning_goals,
-    Object.keys(profile.social_links ?? {}).length > 0 || profile.portfolio_links.length > 0,
-  ];
-  const done = checks.filter(Boolean).length;
-  return Math.round((done / checks.length) * 100);
 }
 
 /* -------------------------- HEADER -------------------------- */
@@ -1006,7 +979,7 @@ function AvailabilityCard({
                       onClick={() => setTimes(on ? times.filter((x) => x !== t) : [...times, t])}
                       className={`rounded-full border px-3 py-1.5 text-xs ${
                         on
-                          ? "border-[var(--brand-purple)] bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]"
+                          ? "border-[var(--brand-purple)] bg-[var(text-brand-purple)]/10 text-[var(--brand-purple)]"
                           : "border-border text-muted-foreground"
                       }`}
                     >
