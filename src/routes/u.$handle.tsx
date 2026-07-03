@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Clock, Languages, GraduationCap, Sparkles, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
-import { useDominantColor } from "@/lib/dominant-color";
+import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { useState } from "react";
@@ -19,6 +19,7 @@ type PublicProfile = {
   bio: string | null;
   avatar_url: string | null;
   banner_url: string | null;
+  banner_caption: string | null;
   country: string | null;
   timezone: string | null;
   languages: string[];
@@ -57,7 +58,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -130,9 +131,9 @@ function PublicProfileRoute() {
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
 
   return (
-    <Shell>
+    <Shell accentColor={bannerAccent}>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
-        <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div
             className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border-2 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
             style={{ borderColor: bannerAccent ?? "transparent" }}
@@ -143,6 +144,11 @@ function PublicProfileRoute() {
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
+            {profile.banner_caption && (
+              <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur sm:max-w-xs">
+                {profile.banner_caption}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
@@ -282,7 +288,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-border/60 bg-surface p-6">
+    <div className="card-border rounded-3xl border bg-surface p-6">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
         {icon}
         {title}
@@ -292,10 +298,19 @@ function SectionCard({
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({
+  children,
+  accentColor,
+}: {
+  children: React.ReactNode;
+  accentColor?: string | null;
+}) {
   const [open, setOpen] = useState(false);
+  const accentStyle = accentColor
+    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+    : undefined;
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" style={accentStyle}>
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>

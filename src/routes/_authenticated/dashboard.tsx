@@ -11,6 +11,7 @@ import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
+import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -31,9 +32,13 @@ function DashboardLayout() {
     data?.profile?.display_name?.charAt(0).toUpperCase() ??
     data?.profile?.handle?.charAt(0).toUpperCase() ??
     "T";
+  const cardAccent = useDominantColor(data?.bannerSigned ?? null);
+  const accentStyle = cardAccent
+    ? ({ "--accent-border": withAlpha(cardAccent, 0.35) } as React.CSSProperties)
+    : undefined;
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" style={accentStyle}>
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
@@ -118,30 +123,25 @@ function DashboardHome() {
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
 
-  const firstName =
-    data.profile?.display_name?.split(" ")[0] ??
-    data.profile?.handle ??
-    "creator";
+  const firstName = data.profile?.display_name?.split(" ")[0] ?? data.profile?.handle ?? "creator";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Welcome + completion */}
-      <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+      <section className="relative overflow-hidden card-border rounded-3xl border bg-surface p-6 sm:p-8">
         <div
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
           style={{ background: "radial-gradient(circle, var(--brand-purple), transparent 60%)" }}
         />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Welcome back
-            </p>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
             <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
               Hey {firstName}, let's <span className="text-gradient-brand">keep going</span>.
             </h1>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
-              Finish the last few steps on your profile so other creators can discover you and
-              start exchanging knowledge.
+              Finish the last few steps on your profile so other creators can discover you and start
+              exchanging knowledge.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Button asChild>
@@ -160,7 +160,7 @@ function DashboardHome() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Next steps */}
-        <section className="rounded-3xl border border-border/60 bg-surface p-5 lg:col-span-2 sm:p-6">
+        <section className="card-border rounded-3xl border bg-surface p-5 lg:col-span-2 sm:p-6">
           <SectionHeader
             icon={<Sparkles className="h-4 w-4 text-primary" />}
             title="Next steps"
@@ -172,21 +172,29 @@ function DashboardHome() {
         </section>
 
         {/* Quick links */}
-        <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
+        <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
           <SectionHeader
             icon={<Compass className="h-4 w-4 text-brand-purple" />}
             title="Quick links"
           />
           <div className="mt-4 space-y-2">
-            <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="View your profile" />
+            <QuickLink
+              to="/profile"
+              icon={<User className="h-4 w-4" />}
+              label="View your profile"
+            />
             <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="Continue editing" />
-            <QuickLink to="/dashboard" icon={<Compass className="h-4 w-4" />} label="Browse creators" />
+            <QuickLink
+              to="/dashboard"
+              icon={<Compass className="h-4 w-4" />}
+              label="Browse creators"
+            />
           </div>
         </section>
       </div>
 
       {/* Activity */}
-      <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
+      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
         <SectionHeader
           icon={<Clock className="h-4 w-4 text-primary" />}
           title="Recent activity"
@@ -201,7 +209,7 @@ function DashboardHome() {
       <ConnectionsCard />
 
       {/* Suggested creators */}
-      <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
+      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
         <SectionHeader
           icon={<Rocket className="h-4 w-4 text-brand-purple" />}
           title="Suggested creators"
@@ -213,7 +221,7 @@ function DashboardHome() {
       </section>
 
       {/* Discover skills */}
-      <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
+      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
         <SectionHeader
           icon={<Sparkles className="h-4 w-4 text-primary" />}
           title="Discover skills"
@@ -249,15 +257,7 @@ function SectionHeader({
   );
 }
 
-function QuickLink({
-  to,
-  icon,
-  label,
-}: {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
+function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   return (
     <Link
       to={to}
@@ -286,7 +286,14 @@ function CompletenessRing({
     <div className="flex items-center gap-4">
       <div className="relative h-28 w-28 shrink-0">
         <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-          <circle cx="60" cy="60" r={radius} stroke="var(--surface-elevated)" strokeWidth="10" fill="none" />
+          <circle
+            cx="60"
+            cy="60"
+            r={radius}
+            stroke="var(--surface-elevated)"
+            strokeWidth="10"
+            fill="none"
+          />
           <circle
             cx="60"
             cy="60"

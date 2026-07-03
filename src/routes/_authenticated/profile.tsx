@@ -49,6 +49,7 @@ import {
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { useCurrentUser, useSkillsCatalog, type Profile } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
+import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -96,6 +97,9 @@ function ProfilePage() {
   const profileQuery = useCurrentUser();
   const skillsQuery = useSkillsCatalog();
   const refresh = profileQuery.refresh;
+  // Called unconditionally, before the loading early-return below, to
+  // satisfy the Rules of Hooks.
+  const cardAccent = useDominantColor(profileQuery.data?.bannerSigned ?? null);
 
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
@@ -132,7 +136,7 @@ function ProfilePage() {
   });
 
   return (
-    <Shell>
+    <Shell accentColor={cardAccent}>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
         {/* HEADER + BANNER */}
         <HeaderCard
@@ -238,7 +242,7 @@ function ProfilePage() {
         <LinksCard profile={profile} onChange={refresh} />
 
         {/* ACTIVITY TIMELINE */}
-        <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+        <div className="card-border rounded-3xl border bg-surface p-6 sm:p-8">
           <h2 className="font-display text-lg font-semibold">Activity</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Your reputation history — every action becomes part of your story.
@@ -252,10 +256,19 @@ function ProfilePage() {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({
+  children,
+  accentColor,
+}: {
+  children: React.ReactNode;
+  accentColor?: string | null;
+}) {
   const [open, setOpen] = useState(false);
+  const accentStyle = accentColor
+    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+    : undefined;
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" style={accentStyle}>
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
@@ -335,8 +348,13 @@ function HeaderCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
-      <BannerStrip bannerSigned={bannerSigned} userId={userId} onChange={onChange} />
+    <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+      <BannerStrip
+        bannerSigned={bannerSigned}
+        bannerCaption={profile?.banner_caption ?? null}
+        userId={userId}
+        onChange={onChange}
+      />
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
         <div className="relative shrink-0 -mt-16 sm:-mt-20">
           <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface sm:h-32 sm:w-32">
@@ -1264,7 +1282,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-border/60 bg-surface p-6">
+    <div className="card-border rounded-3xl border bg-surface p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         {onEdit && (

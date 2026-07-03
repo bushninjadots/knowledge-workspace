@@ -15,6 +15,7 @@ export type Profile = {
   bio: string | null;
   avatar_url: string | null;
   banner_url: string | null;
+  banner_caption: string | null;
   country: string | null;
   timezone: string | null;
   languages: string[];
@@ -31,7 +32,6 @@ export type Profile = {
 };
 
 // ProjectRow and ActivityRow re-exported above from profile-sections.
-
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 

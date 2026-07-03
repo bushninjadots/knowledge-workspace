@@ -82,6 +82,11 @@
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.92 0.23 142 / 60%);
+
+  /* Overridden inline (as a CSS custom property) by pages that have a banner
+     image, using a color sampled from that image. Falls back to the normal
+     static card border when no banner accent is set. */
+  --accent-border: color-mix(in oklab, var(--border) 60%, transparent);
 }
 
 /* Gradient utilities */
@@ -144,4 +149,9 @@
 
 @utility glow-purple {
   box-shadow: var(--shadow-glow-purple);
+}
+
+@utility card-border {
+  border-color: var(--accent-border);
+  transition: border-color 500ms ease;
 }

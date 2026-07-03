@@ -5,11 +5,7 @@ import { UserPlus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "./empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import {
-  useConnections,
-  useRespondConnection,
-  useDeleteConnection,
-} from "@/hooks/use-connections";
+import { useConnections, useRespondConnection, useDeleteConnection } from "@/hooks/use-connections";
 
 export function ConnectionsCard() {
   const { data: me } = useCurrentUser();
@@ -24,14 +20,14 @@ export function ConnectionsCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl border border-border/60 bg-surface p-6">
+      <div className="card-border rounded-3xl border bg-surface p-6">
         <div className="h-6 w-32 animate-pulse rounded-full bg-surface-elevated" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-surface p-6 sm:p-8">
+    <div className="card-border rounded-3xl border bg-surface p-6 sm:p-8">
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-semibold">Connections</h2>
@@ -40,9 +36,7 @@ export function ConnectionsCard() {
           </p>
         </div>
         {accepted.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {accepted.length} connected
-          </span>
+          <span className="text-xs text-muted-foreground">{accepted.length} connected</span>
         )}
       </div>
 

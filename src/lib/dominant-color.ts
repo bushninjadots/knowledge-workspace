@@ -76,3 +76,14 @@ export function useDominantColor(url: string | null): string | null {
 
   return color;
 }
+
+// Turns an `rgb(r, g, b)` string into `rgba(r, g, b, alpha)` — used to get a
+// softer tint of the sampled banner color for card borders, distinct from
+// the fully-opaque color used on the banner's own border.
+export function withAlpha(rgb: string | null, alpha: number): string | null {
+  if (!rgb) return null;
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!match) return rgb;
+  const [, r, g, b] = match;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

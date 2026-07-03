@@ -41,10 +41,7 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-24 animate-pulse rounded-2xl border border-border/60 bg-surface"
-          />
+          <div key={i} className="card-border h-24 animate-pulse rounded-2xl border bg-surface" />
         ))}
       </div>
     );
@@ -68,7 +65,7 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
         return (
           <div
             key={c.id}
-            className="rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-primary/40"
+            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
           >
             <div className="flex items-center gap-3">
               <div
