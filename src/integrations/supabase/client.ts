@@ -73,7 +73,7 @@ function createMissingSupabaseClient(message: string): ReturnType<typeof createC
       signOut: async () => ({ error: null }),
     },
     from: () => createQueryBuilder(),
-  } as unknown as ReturnType<typeof createSupabaseClient>;
+  } as unknown as ReturnType<typeof createClient<Database>>;
 }
 
 function createSupabaseClient() {
