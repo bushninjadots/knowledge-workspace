@@ -41,8 +41,15 @@ export function GlobalSearch({ className }: { className?: string }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  // PostgREST's .or() treats commas, parens, and periods as filter syntax —
+  // escape them so user input can never break out of the intended filter.
+  function escapeForOr(value: string): string {
+    return value.replace(/[,()%]/g, (c) => `\\${c}`);
+  }
+
   const enabled = debounced.length >= 1;
-  const like = `%${debounced}%`;
+  const safeTerm = escapeForOr(debounced);
+  const like = `%${safeTerm}%`;
 
   const profiles = useQuery({
     queryKey: ["search", "profiles", debounced],
@@ -77,7 +84,11 @@ export function GlobalSearch({ className }: { className?: string }) {
   const profileHits = profiles.data ?? [];
   const skillHits = skills.data ?? [];
   const noResults =
-    enabled && !profiles.isLoading && !skills.isLoading && profileHits.length === 0 && skillHits.length === 0;
+    enabled &&
+    !profiles.isLoading &&
+    !skills.isLoading &&
+    profileHits.length === 0 &&
+    skillHits.length === 0;
 
   return (
     <div ref={rootRef} className={`relative ${className ?? ""}`}>
@@ -139,6 +150,11 @@ export function GlobalSearch({ className }: { className?: string }) {
               {skillHits.map((s) => (
                 <button
                   key={s.id}
+                  onClick={() => {
+                    setOpen(false);
+                    setQ("");
+                    navigate({ to: "/profile" });
+                  }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface"
                 >
                   <GraduationCap className="h-4 w-4 text-muted-foreground" />

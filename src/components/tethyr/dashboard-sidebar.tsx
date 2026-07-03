@@ -14,13 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const nav = [
-  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { to: "/profile", label: "Profile", icon: UserCircle },
-  { to: "/dashboard", label: "Explore", icon: Compass },
-  { to: "/dashboard", label: "Sessions", icon: MessagesSquare },
-  { to: "/dashboard", label: "Library", icon: BookOpen },
-  { to: "/dashboard", label: "Community", icon: Users },
-  { to: "/dashboard", label: "Settings", icon: Settings },
+  { to: "/dashboard", label: "Overview", icon: LayoutDashboard, live: true },
+  { to: "/profile", label: "Profile", icon: UserCircle, live: true },
+  { to: "/dashboard", label: "Explore", icon: Compass, live: false },
+  { to: "/dashboard", label: "Sessions", icon: MessagesSquare, live: false },
+  { to: "/dashboard", label: "Library", icon: BookOpen, live: false },
+  { to: "/dashboard", label: "Community", icon: Users, live: false },
+  { to: "/dashboard", label: "Settings", icon: Settings, live: false },
 ] as const;
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -40,8 +40,25 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="mt-6 flex flex-1 flex-col gap-1">
         {nav.map((item) => {
-          const active = pathname === item.to;
           const Icon = item.icon;
+
+          if (!item.live) {
+            return (
+              <div
+                key={item.label}
+                title="Coming soon"
+                className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground/40"
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+                <span className="ml-auto rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                  Soon
+                </span>
+              </div>
+            );
+          }
+
+          const active = pathname === item.to;
           return (
             <Link
               key={item.label}

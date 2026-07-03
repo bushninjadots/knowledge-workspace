@@ -50,7 +50,6 @@ import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { useCurrentUser, useSkillsCatalog, type Profile } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 
-
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
@@ -126,11 +125,11 @@ function ProfilePage() {
   const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
 
   const completeness = completenessPercent({
-  profile,
-  teachCount: teachSkills.length,
-  learnCount: learnSkills.length,
-  projectsCount: projects.length,
-}
+    profile,
+    teachCount: teachSkills.length,
+    learnCount: learnSkills.length,
+    projectsCount: projects.length,
+  });
 
   return (
     <Shell>
@@ -315,7 +314,7 @@ function HeaderCard({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const path = `${userId}/avatar .${check.ext}`;
+    const path = `${userId}/avatar.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true, contentType: check.contentType });
@@ -981,7 +980,7 @@ function AvailabilityCard({
                       onClick={() => setTimes(on ? times.filter((x) => x !== t) : [...times, t])}
                       className={`rounded-full border px-3 py-1.5 text-xs ${
                         on
-                          ? "border-[var(--brand-purple)] bg-[var(text-brand-purple)]/10 text-[var(--brand-purple)]"
+                          ? "border-[var(--brand-purple)] bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]"
                           : "border-border text-muted-foreground"
                       }`}
                     >
@@ -1131,7 +1130,6 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
     onChange();
     setOpen(false);
   }
-
 
   const hasAny =
     (profile?.portfolio_links?.length ?? 0) > 0 ||
