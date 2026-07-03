@@ -155,7 +155,7 @@ export function BannerStrip({
       ) : (
         <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
+      <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
 
       <div className="absolute right-4 top-4 flex items-center gap-2">
         <button
@@ -237,7 +237,7 @@ export function BannerStrip({
         bannerCaption && (
           <button
             onClick={openCaptionEditor}
-            className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur transition hover:bg-background/80 sm:max-w-xs"
+            className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur transition hover:bg-background/80 sm:max-w-xs"
             title="Click to edit caption"
           >
             {bannerCaption}
@@ -863,7 +863,7 @@ export function TimelineCard({ events }: { events: ActivityRow[] }) {
             return (
               <li key={e.id} className="relative">
                 <span
-                  className={`absolute -left-[34px] flex h-6 w-6 items-center justify-center rounded-full ring-2 ${toneCls}`}
+                  className={`absolute -left-8.5 flex h-6 w-6 items-center justify-center rounded-full ring-2 ${toneCls}`}
                 >
                   <Icon className="h-3 w-3" />
                 </span>
