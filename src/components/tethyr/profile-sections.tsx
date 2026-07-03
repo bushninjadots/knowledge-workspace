@@ -433,12 +433,13 @@ function ProjectDialog({
   async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const path = `${userId}/${crypto.randomUUID()}.${check.ext}`;
     const { error } = await supabase.storage
       .from("project-media")
-      .upload(path, file, { contentType: file.type });
+      .upload(path, file, { contentType: check.contentType });
     if (error) {
       setUploading(false);
       return toast.error(error.message);
@@ -448,6 +449,7 @@ function ProjectDialog({
     setCoverPreview(data?.signedUrl ?? null);
     setUploading(false);
   }
+
 
   async function save() {
     if (!title.trim()) return toast.error("Title required");
