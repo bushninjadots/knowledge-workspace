@@ -454,12 +454,19 @@ function ProjectDialog({
   async function save() {
     if (!title.trim()) return toast.error("Title required");
     setSaving(true);
+    const cleanLinks: Record<string, string> = {};
+    for (const [k, v] of Object.entries(links)) {
+      const val = v?.trim();
+      if (!val) continue;
+      if (!isSafeUrl(val)) return toast.error(`"${k}" must be a valid http(s) URL`);
+      cleanLinks[k] = val;
+    }
     const payload = {
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
       cover_url: coverPath,
-      links: Object.fromEntries(Object.entries(links).filter(([, v]) => v?.trim())),
+      links: cleanLinks,
       tags,
       looking_for_feedback: feedback,
       looking_for_collaborators: collab,
