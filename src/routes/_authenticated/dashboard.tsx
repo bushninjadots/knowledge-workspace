@@ -197,6 +197,9 @@ function DashboardHome() {
         </div>
       </section>
 
+      {/* Connections */}
+      <ConnectionsCard />
+
       {/* Suggested creators */}
       <section className="rounded-3xl border border-border/60 bg-surface p-5 sm:p-6">
         <SectionHeader
