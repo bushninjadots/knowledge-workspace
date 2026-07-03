@@ -337,17 +337,19 @@ function HeaderCard({
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${userId}/avatar-${Date.now()}.${ext}`;
+    const path = `${userId}/avatar-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, file, { upsert: true, contentType: check.contentType });
     if (upErr) {
       toast.error(upErr.message);
       setUploading(false);
       return;
     }
+
     const { error: profErr } = await supabase
       .from("profiles")
       .update({ avatar_url: path })
