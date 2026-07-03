@@ -1127,10 +1127,25 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
   async function save() {
     setSaving(true);
     const cleanedSocial: Record<string, string> = {};
-    Object.entries(social).forEach(([k, v]) => {
-      if (v?.trim()) cleanedSocial[k] = v.trim();
-    });
-    const cleanedPortfolio = portfolio.filter((p) => p.url.trim());
+    for (const [k, v] of Object.entries(social)) {
+      const val = v?.trim();
+      if (!val) continue;
+      if (!isSafeUrl(val)) {
+        setSaving(false);
+        return toast.error(`${k} must be a valid http(s) URL`);
+      }
+      cleanedSocial[k] = val;
+    }
+    const cleanedPortfolio: { label: string; url: string }[] = [];
+    for (const p of portfolio) {
+      const url = p.url.trim();
+      if (!url) continue;
+      if (!isSafeUrl(url)) {
+        setSaving(false);
+        return toast.error(`Portfolio link "${p.label || url}" must be a valid http(s) URL`);
+      }
+      cleanedPortfolio.push({ label: p.label, url });
+    }
     const { error } = await supabase
       .from("profiles")
       .update({ social_links: cleanedSocial, portfolio_links: cleanedPortfolio })
@@ -1141,6 +1156,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
     onChange();
     setOpen(false);
   }
+
 
   const hasAny =
     (profile?.portfolio_links?.length ?? 0) > 0 ||
