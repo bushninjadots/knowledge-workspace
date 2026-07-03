@@ -10,6 +10,7 @@ import { NextStepsList } from "@/components/tethyr/next-steps";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
+import { ConnectionsCard } from "@/components/tethyr/connections-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
