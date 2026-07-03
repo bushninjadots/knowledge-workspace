@@ -431,25 +431,28 @@ function ProjectDialog({
   }, [open, project?.cover_url]);
 
   async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const check = validateImageFile(file);
-    if (!check.ok) return toast.error(check.error);
-    setUploading(true);
-    const path = `${userId}/${crypto.randomUUID()}.${check.ext}`;
-    const { error } = await supabase.storage
-      .from("project-media")
-      .upload(path, file, { contentType: check.contentType });
-    if (error) {
-      setUploading(false);
-      return toast.error(error.message);
-    }
-    const { data } = await supabase.storage.from("project-media").createSignedUrl(path, 60 * 60);
-    setCoverPath(path);
-    setCoverPreview(data?.signedUrl ?? null);
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const check = validateImageFile(file);
+  if (!check.ok) return toast.error(check.error);
+  setUploading(true);
+  const previousPath = coverPath;
+  const path = `${userId}/${crypto.randomUUID()}.${check.ext}`;
+  const { error } = await supabase.storage
+    .from("project-media")
+    .upload(path, file, { contentType: check.contentType });
+  if (error) {
     setUploading(false);
+    return toast.error(error.message);
   }
-
+  const { data } = await supabase.storage.from("project-media").createSignedUrl(path, 60 * 60);
+  setCoverPath(path);
+  setCoverPreview(data?.signedUrl ?? null);
+  setUploading(false);
+  // Clean up the file we just replaced — best-effort, don't block the UI on it.
+  if (previousPath && previousPath !== path) {
+    supabase.storage.from("project-media").remove([previousPath]);
+  }
 
   async function save() {
     if (!title.trim()) return toast.error("Title required");
