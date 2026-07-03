@@ -29,7 +29,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
-function createMissingSupabaseClient(message: string) {
+function createMissingSupabaseClient(message: string): ReturnType<typeof createClient<Database>> {
   const errorResult = { data: null, error: new Error(message) };
 
   const createQueryBuilder = () => {
@@ -73,10 +73,10 @@ function createMissingSupabaseClient(message: string) {
       signOut: async () => ({ error: null }),
     },
     from: () => createQueryBuilder(),
-  } as unknown as ReturnType<typeof createSupabaseClient>;
+  } as unknown as ReturnType<typeof createClient<Database>>;
 }
 
-function createSupabaseClient() {
+function createSupabaseClient(): ReturnType<typeof createClient<Database>> {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
