@@ -51,6 +51,7 @@ export type Database = {
           addressee_id: string
           created_at: string
           id: string
+          intro_message: string | null
           requester_id: string
           status: Database["public"]["Enums"]["connection_status"]
           updated_at: string
@@ -59,6 +60,7 @@ export type Database = {
           addressee_id: string
           created_at?: string
           id?: string
+          intro_message?: string | null
           requester_id: string
           status?: Database["public"]["Enums"]["connection_status"]
           updated_at?: string
@@ -67,6 +69,7 @@ export type Database = {
           addressee_id?: string
           created_at?: string
           id?: string
+          intro_message?: string | null
           requester_id?: string
           status?: Database["public"]["Enums"]["connection_status"]
           updated_at?: string
@@ -84,6 +87,41 @@ export type Database = {
             columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          connection_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          connection_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          connection_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "connections"
             referencedColumns: ["id"]
           },
         ]
