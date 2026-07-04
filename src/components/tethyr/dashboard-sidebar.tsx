@@ -16,8 +16,9 @@ import { toast } from "sonner";
 const nav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, live: true },
   { to: "/profile", label: "Profile", icon: UserCircle, live: true },
+  { to: "/messages", label: "Messages", icon: MessagesSquare, live: true },
   { to: "/dashboard", label: "Explore", icon: Compass, live: false },
-  { to: "/dashboard", label: "Sessions", icon: MessagesSquare, live: false },
+  { to: "/dashboard", label: "Sessions", icon: BookOpen, live: false },
   { to: "/dashboard", label: "Library", icon: BookOpen, live: false },
   { to: "/dashboard", label: "Community", icon: Users, live: false },
   { to: "/dashboard", label: "Settings", icon: Settings, live: false },

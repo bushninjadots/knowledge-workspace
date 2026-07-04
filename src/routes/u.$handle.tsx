@@ -173,7 +173,10 @@ function PublicProfileRoute() {
                   )}
                   <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
                 </div>
-                <ConnectButton targetId={profile.id} />
+                <ConnectButton
+                  targetId={profile.id}
+                  targetName={profile.display_name ?? profile.handle}
+                />
               </div>
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {profile.category && (
