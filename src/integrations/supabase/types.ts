@@ -308,6 +308,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           description: string | null
+          goal: string | null
           id: string
           is_featured: boolean
           links: Json
@@ -315,6 +316,9 @@ export type Database = {
           looking_for_feedback: boolean
           media: Json
           profile_id: string
+          progress_percent: number
+          started_at: string
+          status: Database["public"]["Enums"]["project_status"]
           tags: string[]
           title: string
           updated_at: string
@@ -323,6 +327,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          goal?: string | null
           id?: string
           is_featured?: boolean
           links?: Json
@@ -330,6 +335,9 @@ export type Database = {
           looking_for_feedback?: boolean
           media?: Json
           profile_id: string
+          progress_percent?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title: string
           updated_at?: string
@@ -338,6 +346,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          goal?: string | null
           id?: string
           is_featured?: boolean
           links?: Json
@@ -345,6 +354,9 @@ export type Database = {
           looking_for_feedback?: boolean
           media?: Json
           profile_id?: string
+          progress_percent?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title?: string
           updated_at?: string
@@ -355,6 +367,75 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_contributors: {
+        Row: {
+          joined_at: string
+          profile_id: string
+          project_id: string
+          role: Database["public"]["Enums"]["project_contributor_role"]
+        }
+        Insert: {
+          joined_at?: string
+          profile_id: string
+          project_id: string
+          role?: Database["public"]["Enums"]["project_contributor_role"]
+        }
+        Update: {
+          joined_at?: string
+          profile_id?: string
+          project_id?: string
+          role?: Database["public"]["Enums"]["project_contributor_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_contributors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contributors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_skills: {
+        Row: {
+          created_at: string
+          project_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          project_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          project_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
             referencedColumns: ["id"]
           },
         ]
@@ -395,6 +476,8 @@ export type Database = {
     }
     Enums: {
       connection_status: "pending" | "accepted" | "declined"
+      project_contributor_role: "creator" | "contributor" | "mentor"
+      project_status: "planning" | "active" | "paused" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -523,6 +606,8 @@ export const Constants = {
   public: {
     Enums: {
       connection_status: ["pending", "accepted", "declined"],
+      project_contributor_role: ["creator", "contributor", "mentor"],
+      project_status: ["planning", "active", "paused", "completed"],
     },
   },
 } as const

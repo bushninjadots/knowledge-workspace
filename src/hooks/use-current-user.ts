@@ -45,6 +45,7 @@ export type CurrentUserData = {
   wishlistIds: string[];
   projects: ProjectRow[];
   coverUrls: Record<string, string>;
+  projectSkillIds: Record<string, string[]>;
   activity: ActivityRow[];
 };
 
@@ -108,6 +109,21 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
       }),
   );
 
+  const projectSkillIds: Record<string, string[]> = {};
+  if (projects.length > 0) {
+    const { data: projectSkillsData } = await supabase
+      .from("project_skills")
+      .select("project_id, skill_id")
+      .in(
+        "project_id",
+        projects.map((p) => p.id),
+      );
+    for (const row of (projectSkillsData ?? []) as { project_id: string; skill_id: string }[]) {
+      if (!projectSkillIds[row.project_id]) projectSkillIds[row.project_id] = [];
+      projectSkillIds[row.project_id].push(row.skill_id);
+    }
+  }
+
   return {
     userId,
     profile: (profile ?? null) as Profile | null,
@@ -118,6 +134,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
     wishlistIds: (wishlist.data ?? []).map((r: { skill_id: string }) => r.skill_id),
     projects,
     coverUrls,
+    projectSkillIds,
     activity: (activityRes.data ?? []) as ActivityRow[],
   };
 }

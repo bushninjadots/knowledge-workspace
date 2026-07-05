@@ -158,4 +158,60 @@ DO $$ BEGIN
   END;
 END $$;
 
+-- ---------------------------------------------------------------------------
+-- 6. project_contributors / project_skills: owner-only writes, public reads
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.projects(profile_id, title)
+  VALUES ('11111111-1111-1111-1111-111111111111', 'Alice''s SaaS')
+  ON CONFLICT DO NOTHING;
+
+-- EXPECT: creator row was auto-added by the insert trigger.
+SELECT count(*) AS should_be_1 FROM public.project_contributors
+  WHERE profile_id = '11111111-1111-1111-1111-111111111111' AND role = 'creator';
+
+-- Bob adds himself as a contributor (self-join is allowed).
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+INSERT INTO public.project_contributors(project_id, profile_id, role)
+  SELECT id, '22222222-2222-2222-2222-222222222222', 'contributor'
+    FROM public.projects WHERE title = 'Alice''s SaaS';
+
+-- EXPECT: eve cannot add bob (or anyone but herself) to alice's project.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.project_contributors(project_id, profile_id, role)
+      SELECT id, '22222222-2222-2222-2222-222222222222', 'mentor'
+        FROM public.projects WHERE title = 'Alice''s SaaS';
+    RAISE NOTICE 'REGRESSION: eve added bob to a project she does not own';
+  EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+    RAISE NOTICE 'OK: non-owner cannot add other contributors';
+  END;
+END $$;
+
+-- EXPECT: bob cannot delete alice's creator row (only alice or Bob's own row).
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+DO $$ BEGIN
+  BEGIN
+    DELETE FROM public.project_contributors
+      WHERE profile_id = '11111111-1111-1111-1111-111111111111' AND role = 'creator';
+    RAISE NOTICE 'REGRESSION: bob removed the project creator';
+  EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+    RAISE NOTICE 'OK: creator row protected from non-owner removal';
+  END;
+END $$;
+
+-- EXPECT: eve cannot attach skills to alice's project.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.project_skills(project_id, skill_id)
+      SELECT p.id, s.id FROM public.projects p, public.skills s
+        WHERE p.title = 'Alice''s SaaS' LIMIT 1;
+    RAISE NOTICE 'REGRESSION: eve tagged a skill on someone else''s project';
+  EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+    RAISE NOTICE 'OK: non-owner cannot manage project_skills';
+  END;
+END $$;
+
 ROLLBACK;

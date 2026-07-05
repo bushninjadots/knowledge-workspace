@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Pencil,
   Camera,
@@ -19,6 +20,9 @@ import {
   GraduationCap,
   ImageIcon,
   Trophy,
+  Target,
+  Check,
+  Search as SearchIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +40,25 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+export type ProjectStatus = "planning" | "active" | "paused" | "completed";
+
+export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
+  planning: "Planning",
+  active: "Active",
+  paused: "Paused",
+  completed: "Completed",
+};
+
+export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
+  planning: "border-border bg-background/60 text-muted-foreground",
+  active: "border-primary/40 bg-primary/10 text-primary",
+  paused: "border-amber-500/40 bg-amber-500/10 text-amber-500",
+  completed:
+    "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
+};
+
+export type ProjectSkill = { id: string; name: string; category: string };
 
 /* -------- shared card shell -------- */
 export function SectionCard({
@@ -381,6 +405,10 @@ export type ProjectRow = {
   profile_id: string;
   title: string;
   description: string | null;
+  goal: string | null;
+  status: ProjectStatus;
+  started_at: string;
+  progress_percent: number;
   cover_url: string | null;
   media: string[];
   links: Record<string, string>;
@@ -391,7 +419,7 @@ export type ProjectRow = {
   created_at: string;
 };
 
-const PROJECT_LINK_KEYS: { key: string; label: string; icon: typeof Github }[] = [
+export const PROJECT_LINK_KEYS: { key: string; label: string; icon: typeof Github }[] = [
   { key: "website", label: "Website", icon: Globe },
   { key: "github", label: "GitHub", icon: Github },
   { key: "figma", label: "Figma", icon: Figma },
@@ -403,11 +431,15 @@ export function ProjectsCard({
   projects,
   coverUrls,
   userId,
+  allSkills,
+  projectSkillIds,
   onChange,
 }: {
   projects: ProjectRow[];
   coverUrls: Record<string, string>;
   userId: string;
+  allSkills: ProjectSkill[];
+  projectSkillIds: Record<string, string[]>;
   onChange: () => void;
 }) {
   const [editing, setEditing] = useState<ProjectRow | null>(null);
@@ -418,7 +450,7 @@ export function ProjectsCard({
       title={
         <span className="flex items-center gap-2">
           <Rocket className="h-4 w-4" />
-          Featured projects
+          Projects
         </span>
       }
       action={
@@ -435,61 +467,76 @@ export function ProjectsCard({
     >
       {projects.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Showcase what you're building. Add images, links, and tag skills.
+          Start a project workspace for something you're building, learning, or working toward.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((p) => (
-            <button
+            <div
               key={p.id}
-              onClick={() => setEditing(p)}
-              className="card-border group overflow-hidden rounded-2xl border bg-background/40 text-left transition hover:border-primary/40"
+              className="card-border group relative overflow-hidden rounded-2xl border bg-background/40 transition hover:border-primary/40"
             >
-              <div className="aspect-video overflow-hidden bg-background">
-                {p.cover_url && coverUrls[p.cover_url] ? (
-                  <img
-                    src={coverUrls[p.cover_url]}
-                    alt=""
-                    className="h-full w-full object-cover transition group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                    <ImageIcon className="h-8 w-8" />
+              <Link to="/projects/$id" params={{ id: p.id }} className="block text-left">
+                <div className="aspect-video overflow-hidden bg-background">
+                  {p.cover_url && coverUrls[p.cover_url] ? (
+                    <img
+                      src={coverUrls[p.cover_url]}
+                      alt=""
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <ImageIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate font-display font-semibold">{p.title}</h3>
+                    {p.is_featured && <Trophy className="h-3.5 w-3.5 shrink-0 text-primary" />}
                   </div>
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="truncate font-display font-semibold">{p.title}</h3>
-                  {p.is_featured && <Trophy className="h-3.5 w-3.5 text-primary" />}
-                </div>
-                {p.description && (
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
-                )}
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {p.looking_for_feedback && (
-                    <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
-                      <MessageCircle className="mr-1 inline h-3 w-3" />
-                      Feedback
-                    </span>
+                  {p.goal && (
+                    <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
+                      <Target className="mt-0.5 h-3 w-3 shrink-0" />
+                      <span className="line-clamp-1">{p.goal}</span>
+                    </p>
                   )}
-                  {p.looking_for_collaborators && (
-                    <span className="rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2 py-0.5 text-[10px] text-[var(--brand-purple)]">
-                      <UserPlus className="mr-1 inline h-3 w-3" />
-                      Collab
+                  <div className="mt-3 flex items-center gap-2">
+                    <Progress value={p.progress_percent} className="h-1.5" />
+                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                      {p.progress_percent}%
                     </span>
-                  )}
-                  {p.tags.slice(0, 3).map((t) => (
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     <span
-                      key={t}
-                      className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                      className={`rounded-full border px-2 py-0.5 text-[10px] ${PROJECT_STATUS_STYLE[p.status]}`}
                     >
-                      {t}
+                      {PROJECT_STATUS_LABEL[p.status]}
                     </span>
-                  ))}
+                    {p.looking_for_feedback && (
+                      <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                        <MessageCircle className="mr-1 inline h-3 w-3" />
+                        Feedback
+                      </span>
+                    )}
+                    {p.looking_for_collaborators && (
+                      <span className="rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2 py-0.5 text-[10px] text-[var(--brand-purple)]">
+                        <UserPlus className="mr-1 inline h-3 w-3" />
+                        Collab
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setEditing(p)}
+                aria-label="Edit project"
+                className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur transition hover:text-foreground group-hover:opacity-100"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -498,6 +545,8 @@ export function ProjectsCard({
         <ProjectDialog
           project={editing}
           userId={userId}
+          allSkills={allSkills}
+          initialSkillIds={editing ? (projectSkillIds[editing.id] ?? []) : []}
           open={creating || !!editing}
           onOpenChange={(o) => {
             if (!o) {
@@ -512,32 +561,48 @@ export function ProjectsCard({
   );
 }
 
+const PROJECT_STATUSES: ProjectStatus[] = ["planning", "active", "paused", "completed"];
+
 function ProjectDialog({
   project,
   userId,
+  allSkills,
+  initialSkillIds,
   open,
   onOpenChange,
   onSaved,
 }: {
   project: ProjectRow | null;
   userId: string;
+  allSkills: ProjectSkill[];
+  initialSkillIds: string[];
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {
   const [title, setTitle] = useState(project?.title ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
+  const [goal, setGoal] = useState(project?.goal ?? "");
+  const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "planning");
+  const [progress, setProgress] = useState(project?.progress_percent ?? 0);
   const [coverPath, setCoverPath] = useState<string | null>(project?.cover_url ?? null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [links, setLinks] = useState<Record<string, string>>(project?.links ?? {});
   const [tags, setTags] = useState<string[]>(project?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
+  const [skillIds, setSkillIds] = useState<Set<string>>(new Set(initialSkillIds));
+  const [skillSearch, setSkillSearch] = useState("");
   const [feedback, setFeedback] = useState(project?.looking_for_feedback ?? true);
   const [collab, setCollab] = useState(project?.looking_for_collaborators ?? false);
   const [featured, setFeatured] = useState(project?.is_featured ?? false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const filteredSkills = useMemo(
+    () => allSkills.filter((s) => s.name.toLowerCase().includes(skillSearch.toLowerCase())),
+    [allSkills, skillSearch],
+  );
 
   useEffect(() => {
     if (open && project?.cover_url) {
@@ -592,6 +657,9 @@ function ProjectDialog({
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
+      goal: goal.trim() || null,
+      status,
+      progress_percent: progress,
       cover_url: coverPath,
       links: cleanLinks,
       tags,
@@ -599,12 +667,51 @@ function ProjectDialog({
       looking_for_collaborators: collab,
       is_featured: featured,
     };
-    const q = project
-      ? supabase.from("projects").update(payload).eq("id", project.id)
-      : supabase.from("projects").insert(payload);
-    const { error } = await q;
+
+    let projectId = project?.id;
+    if (project) {
+      const { error } = await supabase.from("projects").update(payload).eq("id", project.id);
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    } else {
+      const { data, error } = await supabase.from("projects").insert(payload).select("id").single();
+      if (error || !data) {
+        setSaving(false);
+        return toast.error(error?.message ?? "Could not create project");
+      }
+      projectId = data.id;
+    }
+
+    // Sync project_skills against the catalog picker — diff against what
+    // this project already had rather than blowing away and re-inserting.
+    const previousSkillIds = new Set(initialSkillIds);
+    const nextSkillIds = skillIds;
+    const toAdd = [...nextSkillIds].filter((id) => !previousSkillIds.has(id));
+    const toRemove = [...previousSkillIds].filter((id) => !nextSkillIds.has(id));
+    if (projectId && toRemove.length) {
+      const { error } = await supabase
+        .from("project_skills")
+        .delete()
+        .eq("project_id", projectId)
+        .in("skill_id", toRemove);
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    }
+    if (projectId && toAdd.length) {
+      const { error } = await supabase
+        .from("project_skills")
+        .insert(toAdd.map((skill_id) => ({ project_id: projectId, skill_id })));
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    }
+
     setSaving(false);
-    if (error) return toast.error(error.message);
     toast.success(project ? "Project updated" : "Project published");
     onSaved();
     onOpenChange(false);
@@ -659,6 +766,85 @@ function ProjectDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </Field>
+
+          <Field label="Goal">
+            <Input
+              placeholder="What does 'done' look like? e.g. Launch to first 10 users"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+            />
+          </Field>
+
+          <Field label="Status">
+            <div className="flex flex-wrap gap-2">
+              {PROJECT_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatus(s)}
+                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                    status === s
+                      ? PROJECT_STATUS_STYLE[s]
+                      : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  {PROJECT_STATUS_LABEL[s]}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={`Progress — ${progress}%`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={progress}
+              onChange={(e) => setProgress(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </Field>
+
+          <Field label="Skills involved">
+            <div className="relative mb-2">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search the skill catalog…"
+                value={skillSearch}
+                onChange={(e) => setSkillSearch(e.target.value)}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+            <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto pr-1">
+              {filteredSkills.map((s) => {
+                const on = skillIds.has(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      const next = new Set(skillIds);
+                      if (on) next.delete(s.id);
+                      else next.add(s.id);
+                      setSkillIds(next);
+                    }}
+                    className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
+                      on
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {on && <Check className="h-3 w-3" />}
+                    {s.name}
+                  </button>
+                );
+              })}
+              {filteredSkills.length === 0 && (
+                <p className="py-2 text-xs text-muted-foreground">No matches</p>
+              )}
+            </div>
           </Field>
 
           <Field label="Links">

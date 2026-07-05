@@ -119,6 +119,7 @@ function ProfilePage() {
     userId,
     projects,
     coverUrls,
+    projectSkillIds,
     activity,
   } = profileQuery.data;
   const skills = skillsQuery.data ?? [];
@@ -214,6 +215,8 @@ function ProfilePage() {
           projects={projects}
           coverUrls={coverUrls}
           userId={userId}
+          allSkills={skills}
+          projectSkillIds={projectSkillIds}
           onChange={refresh}
         />
 
