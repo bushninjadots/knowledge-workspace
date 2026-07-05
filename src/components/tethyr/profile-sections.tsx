@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { validateImageFile, isSafeUrl } from "@/lib/validators";
+import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,48 @@ export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
   completed:
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
+
+export type SkillVerificationLevel = "self_declared" | "proof_certified" | "community_recognized";
+
+export const VERIFICATION_LABEL: Record<SkillVerificationLevel, string> = {
+  self_declared: "Self-declared",
+  proof_certified: "Proof certified",
+  community_recognized: "Community recognized",
+};
+
+export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
+  self_declared: "border-border/60 bg-background/40 text-muted-foreground",
+  proof_certified: "border-primary/40 bg-primary/10 text-primary",
+  community_recognized:
+    "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
+};
+
+export function VerificationBadge({
+  level,
+  proofUrl,
+}: {
+  level: SkillVerificationLevel;
+  proofUrl?: string | null;
+}) {
+  const Icon =
+    level === "community_recognized" ? Trophy : level === "proof_certified" ? Check : null;
+  const content = (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${VERIFICATION_STYLE[level]}`}
+    >
+      {Icon && <Icon className="h-2.5 w-2.5" />}
+      {VERIFICATION_LABEL[level]}
+    </span>
+  );
+  if (level === "proof_certified" && proofUrl) {
+    return (
+      <a href={safeHref(proofUrl)} target="_blank" rel="noreferrer" className="hover:opacity-80">
+        {content}
+      </a>
+    );
+  }
+  return content;
+}
 
 export type ProjectSkill = { id: string; name: string; category: string };
 
@@ -171,7 +213,7 @@ export function BannerStrip({
 
   return (
     <div
-      className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border-2 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+      className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
       style={{ borderColor: accentColor ?? "transparent" }}
     >
       {bannerSigned ? (

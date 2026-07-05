@@ -35,12 +35,21 @@ export type Profile = {
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
+export type SkillVerificationLevel = "self_declared" | "proof_certified" | "community_recognized";
+
+export type TeachSkillMeta = {
+  verification_level: SkillVerificationLevel;
+  proof_url: string | null;
+  proof_note: string | null;
+};
+
 export type CurrentUserData = {
   userId: string;
   profile: Profile | null;
   avatarSigned: string | null;
   bannerSigned: string | null;
   teachIds: string[];
+  teachMeta: Record<string, TeachSkillMeta>;
   learnIds: string[];
   wishlistIds: string[];
   projects: ProjectRow[];
@@ -64,7 +73,10 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   if (error) throw error;
 
   const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
-    supabase.from("profile_skills_teach").select("skill_id").eq("profile_id", userId),
+    supabase
+      .from("profile_skills_teach")
+      .select("skill_id, verification_level, proof_url, proof_note")
+      .eq("profile_id", userId),
     supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
     supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
     supabase
@@ -124,12 +136,29 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
     }
   }
 
+  type TeachRow = {
+    skill_id: string;
+    verification_level: SkillVerificationLevel;
+    proof_url: string | null;
+    proof_note: string | null;
+  };
+  const teachRows = (teach.data ?? []) as TeachRow[];
+  const teachMeta: Record<string, TeachSkillMeta> = {};
+  for (const r of teachRows) {
+    teachMeta[r.skill_id] = {
+      verification_level: r.verification_level,
+      proof_url: r.proof_url,
+      proof_note: r.proof_note,
+    };
+  }
+
   return {
     userId,
     profile: (profile ?? null) as Profile | null,
     avatarSigned,
     bannerSigned,
-    teachIds: (teach.data ?? []).map((r: { skill_id: string }) => r.skill_id),
+    teachIds: teachRows.map((r) => r.skill_id),
+    teachMeta,
     learnIds: (learn.data ?? []).map((r: { skill_id: string }) => r.skill_id),
     wishlistIds: (wishlist.data ?? []).map((r: { skill_id: string }) => r.skill_id),
     projects,

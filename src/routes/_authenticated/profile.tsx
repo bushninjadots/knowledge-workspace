@@ -43,11 +43,18 @@ import {
   BannerStrip,
   ChipListCard,
   ProjectsCard,
+  VerificationBadge,
   type ProjectRow,
   type ActivityRow,
 } from "@/components/tethyr/profile-sections";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
-import { useCurrentUser, useSkillsCatalog, type Profile } from "@/hooks/use-current-user";
+import {
+  useCurrentUser,
+  useSkillsCatalog,
+  type Profile,
+  type TeachSkillMeta,
+  type SkillVerificationLevel,
+} from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 
@@ -112,6 +119,7 @@ function ProfilePage() {
   const {
     profile,
     teachIds,
+    teachMeta,
     learnIds,
     wishlistIds,
     avatarSigned,
@@ -125,7 +133,18 @@ function ProfilePage() {
   const skills = skillsQuery.data ?? [];
   const skillById = new Map(skills.map((s) => [s.id, s]));
 
-  const teachSkills = teachIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
+  const teachSkills = teachIds
+    .map((id) => {
+      const s = skillById.get(id);
+      if (!s) return null;
+      const meta: TeachSkillMeta = teachMeta[id] ?? {
+        verification_level: "self_declared" as SkillVerificationLevel,
+        proof_url: null,
+        proof_note: null,
+      };
+      return { ...s, meta };
+    })
+    .filter(Boolean) as (Skill & { meta: TeachSkillMeta })[];
   const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
   const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
 
@@ -154,14 +173,12 @@ function ProfilePage() {
 
         {/* SKILLS — teach / currently learning / wishlist */}
         <div className="grid gap-6 md:grid-cols-3">
-          <SkillsCard
+          <TeachSkillsCard
             title="Skills I teach"
-            accent="green"
             icon={<GraduationCap className="h-4 w-4" />}
             selected={teachSkills}
             allSkills={skills}
             userId={userId}
-            table="profile_skills_teach"
             onChange={refresh}
           />
           <SkillsCard
@@ -745,6 +762,8 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
 
 /* -------------------------- SKILLS -------------------------- */
 
+type TeachSkill = Skill & { meta: TeachSkillMeta };
+
 function SkillsCard({
   title,
   accent,
@@ -907,6 +926,258 @@ function SkillsCard({
         </DialogContent>
       </Dialog>
     </SectionCard>
+  );
+}
+
+function TeachSkillsCard({
+  title,
+  icon,
+  selected,
+  allSkills,
+  userId,
+  onChange,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  selected: TeachSkill[];
+  allSkills: Skill[];
+  userId: string;
+  onChange: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [draft, setDraft] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+  const [proofEditing, setProofEditing] = useState<TeachSkill | null>(null);
+
+  useEffect(() => {
+    if (open) setDraft(new Set(selected.map((s) => s.id)));
+  }, [open, selected]);
+
+  const grouped = useMemo(() => {
+    const filtered = allSkills.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
+    const g = new Map<string, Skill[]>();
+    filtered.forEach((s) => {
+      if (!g.has(s.category)) g.set(s.category, []);
+      g.get(s.category)!.push(s);
+    });
+    return Array.from(g.entries());
+  }, [allSkills, search]);
+
+  async function save() {
+    setSaving(true);
+    const current = new Set(selected.map((s) => s.id));
+    const toAdd = [...draft].filter((id) => !current.has(id));
+    const toRemove = [...current].filter((id) => !draft.has(id));
+
+    if (toRemove.length) {
+      const { error } = await supabase
+        .from("profile_skills_teach")
+        .delete()
+        .eq("profile_id", userId)
+        .in("skill_id", toRemove);
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    }
+    if (toAdd.length) {
+      const { error } = await supabase
+        .from("profile_skills_teach")
+        .insert(toAdd.map((skill_id) => ({ profile_id: userId, skill_id })));
+      if (error) {
+        setSaving(false);
+        return toast.error(error.message);
+      }
+    }
+    setSaving(false);
+    toast.success("Saved");
+    onChange();
+    setOpen(false);
+  }
+
+  return (
+    <SectionCard
+      title={
+        <span className="flex items-center gap-2">
+          {icon}
+          {title}
+        </span>
+      }
+      onEdit={() => setOpen(true)}
+    >
+      {selected.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No skills yet. Tap edit to pick from the catalog.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setProofEditing(s)}
+              className="group flex flex-col items-start gap-1 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-left transition hover:border-primary/70"
+            >
+              <span className="text-xs text-primary">{s.name}</span>
+              <VerificationBadge level={s.meta.verification_level} proofUrl={s.meta.proof_url} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {open && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Choose skills</DialogTitle>
+            </DialogHeader>
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search skills…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
+              {grouped.map(([category, items]) => (
+                <div key={category}>
+                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">{category}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((s) => {
+                      const on = draft.has(s.id);
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(draft);
+                            if (on) next.delete(s.id);
+                            else next.add(s.id);
+                            setDraft(next);
+                          }}
+                          className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+                            on
+                              ? "border-primary/40 bg-primary/10 text-primary"
+                              : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                          }`}
+                        >
+                          {on && <Check className="h-3 w-3" />}
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {proofEditing && (
+        <ProofDialog
+          userId={userId}
+          skill={proofEditing}
+          onOpenChange={(o) => !o && setProofEditing(null)}
+          onSaved={onChange}
+        />
+      )}
+    </SectionCard>
+  );
+}
+
+function ProofDialog({
+  userId,
+  skill,
+  onOpenChange,
+  onSaved,
+}: {
+  userId: string;
+  skill: TeachSkill;
+  onOpenChange: (o: boolean) => void;
+  onSaved: () => void;
+}) {
+  const [url, setUrl] = useState(skill.meta.proof_url ?? "");
+  const [note, setNote] = useState(skill.meta.proof_note ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const trimmedUrl = url.trim();
+    if (trimmedUrl && !isSafeUrl(trimmedUrl)) return toast.error("That link doesn't look valid.");
+    setSaving(true);
+    // Never downgrade a level the community already earned for this creator.
+    const nextLevel: SkillVerificationLevel =
+      skill.meta.verification_level === "community_recognized"
+        ? "community_recognized"
+        : trimmedUrl
+          ? "proof_certified"
+          : "self_declared";
+    const { error } = await supabase
+      .from("profile_skills_teach")
+      .update({
+        proof_url: trimmedUrl || null,
+        proof_note: note.trim() || null,
+        verification_level: nextLevel,
+      })
+      .eq("profile_id", userId)
+      .eq("skill_id", skill.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Proof updated");
+    onSaved();
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Back up "{skill.name}" with proof</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Link a certificate, portfolio piece, or published work. Adding a link marks this skill
+          "Proof certified" instead of self-declared.
+          {skill.meta.verification_level === "community_recognized" && (
+            <>
+              {" "}
+              This skill is already community recognized from peer endorsements — that stays either
+              way.
+            </>
+          )}
+        </p>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Proof link</Label>
+            <Input placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Note (optional)</Label>
+            <Textarea
+              rows={2}
+              placeholder="e.g. Adobe Certified Expert, 2024"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

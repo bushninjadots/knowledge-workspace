@@ -214,4 +214,44 @@ DO $$ BEGIN
   END;
 END $$;
 
+-- ---------------------------------------------------------------------------
+-- 7. skill_endorsements: no self-endorsement, no forging endorsed_by
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.profile_skills_teach(profile_id, skill_id)
+  SELECT '11111111-1111-1111-1111-111111111111', id FROM public.skills LIMIT 1
+  ON CONFLICT DO NOTHING;
+
+-- EXPECT: alice cannot endorse her own skill.
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.skill_endorsements(profile_id, skill_id, endorsed_by)
+      SELECT '11111111-1111-1111-1111-111111111111', id, '11111111-1111-1111-1111-111111111111'
+        FROM public.skills LIMIT 1;
+    RAISE NOTICE 'REGRESSION: alice endorsed her own skill';
+  EXCEPTION WHEN check_violation OR insufficient_privilege THEN
+    RAISE NOTICE 'OK: self-endorsement blocked';
+  END;
+END $$;
+
+-- EXPECT: bob cannot forge an endorsement claiming to be eve.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.skill_endorsements(profile_id, skill_id, endorsed_by)
+      SELECT '11111111-1111-1111-1111-111111111111', id, '33333333-3333-3333-3333-333333333333'
+        FROM public.skills LIMIT 1;
+    RAISE NOTICE 'REGRESSION: bob forged an endorsement as eve';
+  EXCEPTION WHEN check_violation OR insufficient_privilege THEN
+    RAISE NOTICE 'OK: cannot endorse on someone else''s behalf';
+  END;
+END $$;
+
+-- EXPECT: bob's real endorsement of alice succeeds.
+INSERT INTO public.skill_endorsements(profile_id, skill_id, endorsed_by)
+  SELECT '11111111-1111-1111-1111-111111111111', id, '22222222-2222-2222-2222-222222222222'
+    FROM public.skills LIMIT 1;
+SELECT count(*) AS should_be_1 FROM public.skill_endorsements
+  WHERE profile_id = '11111111-1111-1111-1111-111111111111';
+
 ROLLBACK;

@@ -3,12 +3,27 @@
 // see a Connect button.
 import { createFileRoute, notFound, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Clock, Languages, GraduationCap, Sparkles, Link as LinkIcon } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Languages,
+  GraduationCap,
+  Sparkles,
+  Link as LinkIcon,
+  ThumbsUp,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
+import {
+  VerificationBadge,
+  type SkillVerificationLevel,
+} from "@/components/tethyr/profile-sections";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
+import { toast } from "sonner";
 import { useState } from "react";
 
 type PublicProfile = {
@@ -34,6 +49,12 @@ type PublicProfile = {
 };
 
 type SkillLite = { id: string; name: string; category: string };
+type TeachSkillLite = SkillLite & {
+  verification_level: SkillVerificationLevel;
+  proof_url: string | null;
+  endorsementCount: number;
+  endorsedByIds: string[];
+};
 
 export const Route = createFileRoute("/u/$handle")({
   component: PublicProfileRoute,
@@ -68,13 +89,24 @@ function PublicProfileRoute() {
       const [teach, learn] = await Promise.all([
         supabase
           .from("profile_skills_teach")
-          .select("skill_id, skills(id, name, category)")
+          .select("skill_id, verification_level, proof_url, skills(id, name, category)")
           .eq("profile_id", profile.id),
         supabase
           .from("profile_skills_learn")
           .select("skill_id, skills(id, name, category)")
           .eq("profile_id", profile.id),
       ]);
+
+      const teachSkillIds = (teach.data ?? []).map((r) => r.skill_id);
+      let endorsementRows: { skill_id: string; endorsed_by: string }[] = [];
+      if (teachSkillIds.length > 0) {
+        const { data } = await supabase
+          .from("skill_endorsements")
+          .select("skill_id, endorsed_by")
+          .eq("profile_id", profile.id)
+          .in("skill_id", teachSkillIds);
+        endorsementRows = data ?? [];
+      }
 
       let avatarSigned: string | null = null;
       let bannerSigned: string | null = null;
@@ -92,8 +124,19 @@ function PublicProfileRoute() {
       }
 
       const teachSkills = (teach.data ?? [])
-        .map((r) => r.skills as unknown as SkillLite | null)
-        .filter((s): s is SkillLite => !!s);
+        .map((r) => {
+          const s = r.skills as unknown as SkillLite | null;
+          if (!s) return null;
+          const rowsForSkill = endorsementRows.filter((e) => e.skill_id === r.skill_id);
+          return {
+            ...s,
+            verification_level: r.verification_level as SkillVerificationLevel,
+            proof_url: r.proof_url as string | null,
+            endorsementCount: rowsForSkill.length,
+            endorsedByIds: rowsForSkill.map((e) => e.endorsed_by),
+          };
+        })
+        .filter((s): s is TeachSkillLite => !!s);
       const learnSkills = (learn.data ?? [])
         .map((r) => r.skills as unknown as SkillLite | null)
         .filter((s): s is SkillLite => !!s);
@@ -111,6 +154,9 @@ function PublicProfileRoute() {
   // Called unconditionally (before the loading/error early-returns below) to
   // satisfy the Rules of Hooks — falls back to null until data resolves.
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+  const endorse = useEndorseSkill();
 
   if (isLoading) {
     return (
@@ -135,7 +181,7 @@ function PublicProfileRoute() {
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div
-            className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border-2 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+            className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
             style={{ borderColor: bannerAccent ?? "transparent" }}
           >
             {bannerSigned ? (
@@ -215,14 +261,54 @@ function PublicProfileRoute() {
               <p className="text-sm text-muted-foreground">Not sharing any yet.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {teachSkills.map((s) => (
-                  <span
-                    key={s.id}
-                    className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary"
-                  >
-                    {s.name}
-                  </span>
-                ))}
+                {teachSkills.map((s) => {
+                  const alreadyEndorsed = !!meId && s.endorsedByIds.includes(meId);
+                  const canEndorse = !!meId && meId !== profile.id && !alreadyEndorsed;
+                  return (
+                    <div
+                      key={s.id}
+                      className="flex flex-col items-start gap-1 rounded-2xl border border-primary/30 bg-primary/5 px-3 py-1.5"
+                    >
+                      <span className="text-xs text-primary">{s.name}</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <VerificationBadge level={s.verification_level} proofUrl={s.proof_url} />
+                        {s.endorsementCount > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {s.endorsementCount}{" "}
+                            {s.endorsementCount === 1 ? "endorsement" : "endorsements"}
+                          </span>
+                        )}
+                        {canEndorse && (
+                          <button
+                            type="button"
+                            disabled={endorse.isPending}
+                            onClick={() =>
+                              endorse.mutate(
+                                {
+                                  profileId: profile.id,
+                                  skillId: s.id,
+                                  endorsedBy: meId as string,
+                                },
+                                {
+                                  onSuccess: () => toast.success(`Endorsed ${s.name}`),
+                                  onError: (e: Error) => toast.error(e.message),
+                                },
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary disabled:opacity-50"
+                          >
+                            <ThumbsUp className="h-3 w-3" /> Endorse
+                          </button>
+                        )}
+                        {alreadyEndorsed && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-primary">
+                            <ThumbsUp className="h-3 w-3" /> Endorsed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </SectionCard>

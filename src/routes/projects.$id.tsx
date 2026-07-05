@@ -182,7 +182,7 @@ function ProjectPage() {
         {/* HEADER / DASHBOARD */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
           <div
-            className="relative aspect-[21/9] w-full overflow-hidden border-b-2 transition-colors duration-500 sm:aspect-[3/1]"
+            className="relative aspect-[21/9] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
             style={{ borderColor: accent ?? "transparent" }}
           >
             {coverSigned ? (
