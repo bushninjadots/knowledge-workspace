@@ -1,7 +1,12 @@
-// Direct-message thread hook for an accepted connection.
-// Realtime: subscribes to INSERTs on messages filtered by connection_id.
-import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+// Direct-message hooks: paginated thread, typing broadcast, read receipts,
+// and per-connection unread counts. Realtime keeps everything in sync.
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -15,12 +20,17 @@ export type MessageRow = {
 };
 
 export const MESSAGES_KEY = ["messages"] as const;
+export const UNREAD_KEY = ["messages-unread"] as const;
+export const PAGE_SIZE = 25;
 
+// ---------- Paginated thread ----------
 export function useMessages(connectionId: string | null) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
+  const key = [...MESSAGES_KEY, connectionId ?? "none"] as const;
 
+  // Realtime → refetch first page (newest).
   useEffect(() => {
     if (!connectionId) return;
     const channel = supabase
@@ -33,51 +43,67 @@ export function useMessages(connectionId: string | null) {
           table: "messages",
           filter: `connection_id=eq.${connectionId}`,
         },
-        () => qc.invalidateQueries({ queryKey: [...MESSAGES_KEY, connectionId] }),
+        () => {
+          qc.invalidateQueries({ queryKey: key });
+          qc.invalidateQueries({ queryKey: UNREAD_KEY });
+        },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [connectionId, qc]);
+  }, [connectionId, qc, key]);
 
-  const query = useQuery({
-    queryKey: [...MESSAGES_KEY, connectionId ?? "none"],
+  const query = useInfiniteQuery({
+    queryKey: key,
     enabled: !!connectionId,
-    queryFn: async (): Promise<MessageRow[]> => {
-      const { data, error } = await supabase
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }): Promise<MessageRow[]> => {
+      let q = supabase
         .from("messages")
         .select("*")
         .eq("connection_id", connectionId as string)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
+      if (pageParam) q = q.lt("created_at", pageParam);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as MessageRow[];
     },
+    getNextPageParam: (last) =>
+      last.length === PAGE_SIZE ? last[last.length - 1].created_at : undefined,
     staleTime: 10_000,
   });
 
-  // Mark unread messages from the other side as read.
+  // Flatten newest→oldest pages into chronological ascending order.
+  const messages = (query.data?.pages ?? [])
+    .flat()
+    .slice()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  // Mark unread messages (from the other side) as read.
   useEffect(() => {
-    if (!connectionId || !meId || !query.data) return;
-    const unreadIds = query.data
-      .filter((m) => m.sender_id !== meId && !m.read_at)
+    if (!connectionId || !meId || messages.length === 0) return;
+    const unreadIds = messages
+      .filter((m) => m.sender_id !== meId && !m.read_at && !m.id.startsWith("optimistic-"))
       .map((m) => m.id);
     if (unreadIds.length === 0) return;
     supabase
       .from("messages")
       .update({ read_at: new Date().toISOString() })
       .in("id", unreadIds)
-      .then();
-  }, [connectionId, meId, query.data]);
+      .then(() => qc.invalidateQueries({ queryKey: UNREAD_KEY }));
+  }, [connectionId, meId, messages, qc]);
 
-  return query;
+  return { ...query, messages };
 }
 
+// ---------- Send ----------
 export function useSendMessage(connectionId: string | null) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
-  const key = [...MESSAGES_KEY, connectionId ?? "none"];
+  const key = [...MESSAGES_KEY, connectionId ?? "none"] as const;
 
   return useMutation({
     mutationFn: async (body: string) => {
@@ -92,7 +118,6 @@ export function useSendMessage(connectionId: string | null) {
     onMutate: async (body) => {
       if (!connectionId || !meId) return;
       await qc.cancelQueries({ queryKey: key });
-      const previous = qc.getQueryData<MessageRow[]>(key);
       const optimistic: MessageRow = {
         id: `optimistic-${Date.now()}`,
         connection_id: connectionId,
@@ -101,12 +126,102 @@ export function useSendMessage(connectionId: string | null) {
         read_at: null,
         created_at: new Date().toISOString(),
       };
-      qc.setQueryData<MessageRow[]>(key, (old) => [...(old ?? []), optimistic]);
-      return { previous };
+      qc.setQueryData<{ pages: MessageRow[][]; pageParams: unknown[] }>(key, (old) => {
+        if (!old) return { pages: [[optimistic]], pageParams: [null] };
+        const [first, ...rest] = old.pages;
+        return { ...old, pages: [[optimistic, ...(first ?? [])], ...rest] };
+      });
     },
-    onError: (_e, _v, ctx) => {
-      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
-    },
+    onError: () => qc.invalidateQueries({ queryKey: key }),
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
   });
+}
+
+// ---------- Unread counts across all conversations ----------
+export function useUnreadCounts() {
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+
+  useEffect(() => {
+    if (!meId) return;
+    const channel = supabase
+      .channel(`messages-unread:${meId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages" },
+        () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [meId, qc]);
+
+  return useQuery({
+    queryKey: [...UNREAD_KEY, meId ?? "anon"],
+    enabled: !!meId,
+    queryFn: async (): Promise<{ byConnection: Record<string, number>; total: number }> => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("connection_id, sender_id, read_at")
+        .is("read_at", null)
+        .neq("sender_id", meId as string);
+      if (error) throw error;
+      const byConnection: Record<string, number> = {};
+      for (const m of data ?? []) {
+        byConnection[m.connection_id] = (byConnection[m.connection_id] ?? 0) + 1;
+      }
+      const total = Object.values(byConnection).reduce((a, b) => a + b, 0);
+      return { byConnection, total };
+    },
+    staleTime: 15_000,
+  });
+}
+
+// ---------- Typing indicator (Realtime broadcast, no DB) ----------
+export function useTyping(connectionId: string | null) {
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+  const [otherTyping, setOtherTyping] = useState(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSent = useRef(0);
+
+  useEffect(() => {
+    if (!connectionId || !meId) return;
+    const channel = supabase.channel(`typing:${connectionId}`, {
+      config: { broadcast: { self: false } },
+    });
+    channel
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const from = (payload.payload as { from?: string } | undefined)?.from;
+        if (!from || from === meId) return;
+        setOtherTyping(true);
+        if (clearTimer.current) clearTimeout(clearTimer.current);
+        clearTimer.current = setTimeout(() => setOtherTyping(false), 3000);
+      })
+      .subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (clearTimer.current) clearTimeout(clearTimer.current);
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+      setOtherTyping(false);
+    };
+  }, [connectionId, meId]);
+
+  const notifyTyping = useCallback(() => {
+    if (!meId || !channelRef.current) return;
+    const now = Date.now();
+    if (now - lastSent.current < 1500) return; // throttle
+    lastSent.current = now;
+    channelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { from: meId },
+    });
+  }, [meId]);
+
+  return { otherTyping, notifyTyping };
 }

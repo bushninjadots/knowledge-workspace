@@ -45,6 +45,11 @@ function SignupPage() {
       toast.error("Password must be at least 8 characters");
       return;
     }
+    const cleanHandleCheck = handle.replace(/^@/, "").trim();
+    if (!/^[a-zA-Z0-9_-]{1,30}$/.test(cleanHandleCheck)) {
+      toast.error("Handle must be 1–30 characters: letters, numbers, _ or -");
+      return;
+    }
     setLoading(true);
     const cleanHandle = handle.replace(/^@/, "").trim();
     const { error } = await supabase.auth.signUp({

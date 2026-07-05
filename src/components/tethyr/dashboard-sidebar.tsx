@@ -12,21 +12,23 @@ import {
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUnreadCounts } from "@/hooks/use-messages";
 
 const nav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, live: true },
   { to: "/profile", label: "Profile", icon: UserCircle, live: true },
+  { to: "/explore", label: "Explore", icon: Compass, live: true },
   { to: "/messages", label: "Messages", icon: MessagesSquare, live: true },
-  { to: "/dashboard", label: "Explore", icon: Compass, live: false },
+  { to: "/community", label: "Community", icon: Users, live: true },
   { to: "/dashboard", label: "Sessions", icon: BookOpen, live: false },
   { to: "/dashboard", label: "Library", icon: BookOpen, live: false },
-  { to: "/dashboard", label: "Community", icon: Users, live: false },
   { to: "/dashboard", label: "Settings", icon: Settings, live: false },
 ] as const;
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const { data: unread } = useUnreadCounts();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -60,6 +62,8 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           }
 
           const active = pathname === item.to;
+          const badge =
+            item.label === "Messages" && unread && unread.total > 0 ? unread.total : null;
           return (
             <Link
               key={item.label}
@@ -73,7 +77,13 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
             >
               <Icon className="h-4 w-4" />
               {item.label}
-              {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />}
+              {badge != null ? (
+                <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                  {badge}
+                </span>
+              ) : active ? (
+                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+              ) : null}
             </Link>
           );
         })}
