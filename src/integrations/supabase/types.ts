@@ -201,52 +201,6 @@ export type Database = {
           },
         ]
       }
-      skill_endorsements: {
-        Row: {
-          created_at: string
-          endorsed_by: string
-          id: string
-          profile_id: string
-          skill_id: string
-        }
-        Insert: {
-          created_at?: string
-          endorsed_by: string
-          id?: string
-          profile_id: string
-          skill_id: string
-        }
-        Update: {
-          created_at?: string
-          endorsed_by?: string
-          id?: string
-          profile_id?: string
-          skill_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "skill_endorsements_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "skill_endorsements_endorsed_by_fkey"
-            columns: ["endorsed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "skill_endorsements_skill_id_fkey"
-            columns: ["skill_id"]
-            isOneToOne: false
-            referencedRelation: "skills"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profile_skills_wishlist: {
         Row: {
           created_at: string
@@ -358,74 +312,6 @@ export type Database = {
         }
         Relationships: []
       }
-      projects: {
-        Row: {
-          cover_url: string | null
-          created_at: string
-          description: string | null
-          goal: string | null
-          id: string
-          is_featured: boolean
-          links: Json
-          looking_for_collaborators: boolean
-          looking_for_feedback: boolean
-          media: Json
-          profile_id: string
-          progress_percent: number
-          started_at: string
-          status: Database["public"]["Enums"]["project_status"]
-          tags: string[]
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          goal?: string | null
-          id?: string
-          is_featured?: boolean
-          links?: Json
-          looking_for_collaborators?: boolean
-          looking_for_feedback?: boolean
-          media?: Json
-          profile_id: string
-          progress_percent?: number
-          started_at?: string
-          status?: Database["public"]["Enums"]["project_status"]
-          tags?: string[]
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          cover_url?: string | null
-          created_at?: string
-          description?: string | null
-          goal?: string | null
-          id?: string
-          is_featured?: boolean
-          links?: Json
-          looking_for_collaborators?: boolean
-          looking_for_feedback?: boolean
-          media?: Json
-          profile_id?: string
-          progress_percent?: number
-          started_at?: string
-          status?: Database["public"]["Enums"]["project_status"]
-          tags?: string[]
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       project_contributors: {
         Row: {
           joined_at: string
@@ -495,6 +381,120 @@ export type Database = {
           },
         ]
       }
+      projects: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          goal: string | null
+          id: string
+          is_featured: boolean
+          links: Json
+          looking_for_collaborators: boolean
+          looking_for_feedback: boolean
+          media: Json
+          profile_id: string
+          progress_percent: number
+          started_at: string
+          status: Database["public"]["Enums"]["project_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_featured?: boolean
+          links?: Json
+          looking_for_collaborators?: boolean
+          looking_for_feedback?: boolean
+          media?: Json
+          profile_id: string
+          progress_percent?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_featured?: boolean
+          links?: Json
+          looking_for_collaborators?: boolean
+          looking_for_feedback?: boolean
+          media?: Json
+          profile_id?: string
+          progress_percent?: number
+          started_at?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_endorsements: {
+        Row: {
+          created_at: string
+          endorsed_by: string
+          id: string
+          profile_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string
+          endorsed_by: string
+          id?: string
+          profile_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string
+          endorsed_by?: string
+          id?: string
+          profile_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_endorsements_endorsed_by_fkey"
+            columns: ["endorsed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_endorsements_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_endorsements_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       skills: {
         Row: {
           category: string
@@ -533,7 +533,10 @@ export type Database = {
       connection_status: "pending" | "accepted" | "declined"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_status: "planning" | "active" | "paused" | "completed"
-      skill_verification_level: "self_declared" | "proof_certified" | "community_recognized"
+      skill_verification_level:
+        | "self_declared"
+        | "proof_certified"
+        | "community_recognized"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -664,7 +667,11 @@ export const Constants = {
       connection_status: ["pending", "accepted", "declined"],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_status: ["planning", "active", "paused", "completed"],
-      skill_verification_level: ["self_declared", "proof_certified", "community_recognized"],
+      skill_verification_level: [
+        "self_declared",
+        "proof_certified",
+        "community_recognized",
+      ],
     },
   },
 } as const
