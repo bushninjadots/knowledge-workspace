@@ -31,8 +31,14 @@ export function useMessages(connectionId: string | null) {
   const key = [...MESSAGES_KEY, connectionId ?? "none"] as const;
 
   // Realtime → refetch first page (newest).
+  // NOTE: deps only include primitives (connectionId, qc) — never the `key`
+  // array above, which is a new reference every render. Including it here
+  // used to tear down and resubscribe the channel on every render, which
+  // hammers Supabase Realtime with duplicate subscriptions on the same topic
+  // and can crash the whole route.
   useEffect(() => {
     if (!connectionId) return;
+    const channelKey = [...MESSAGES_KEY, connectionId] as const;
     const channel = supabase
       .channel(`messages:${connectionId}`)
       .on(
@@ -44,7 +50,7 @@ export function useMessages(connectionId: string | null) {
           filter: `connection_id=eq.${connectionId}`,
         },
         () => {
-          qc.invalidateQueries({ queryKey: key });
+          qc.invalidateQueries({ queryKey: channelKey });
           qc.invalidateQueries({ queryKey: UNREAD_KEY });
         },
       )
@@ -52,7 +58,7 @@ export function useMessages(connectionId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [connectionId, qc, key]);
+  }, [connectionId, qc]);
 
   const query = useInfiniteQuery({
     queryKey: key,

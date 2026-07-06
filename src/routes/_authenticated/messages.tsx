@@ -63,9 +63,14 @@ function MessagesPage() {
             }`}
           >
             <header className="flex h-16 items-center justify-between border-b border-border/60 px-4">
-              <h1 className="font-display text-lg font-semibold">Messages</h1>
+              <div className="leading-tight">
+                <h1 className="font-display text-lg font-semibold">Messages</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  Where tethrs actually talk 💬
+                </p>
+              </div>
               {unread && unread.total > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
                   {unread.total}
                 </span>
               )}
@@ -76,9 +81,9 @@ function MessagesPage() {
               ) : accepted.length === 0 ? (
                 <div className="p-4">
                   <EmptyState
-                    icon={<MessageSquare className="h-5 w-5" />}
-                    title="No conversations yet"
-                    description="Once you're tethryd with someone you can message them here."
+                    icon={<span className="text-xl">👋</span>}
+                    title="It's quiet in here... too quiet"
+                    description="Once you're tethryd with someone, this is where the real talk (and probably some memes) happens."
                   />
                 </div>
               ) : (
@@ -103,8 +108,17 @@ function MessagesPage() {
             {active ? (
               <Thread conn={active} meId={meId} onBack={() => select(null)} />
             ) : (
-              <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-                Pick a conversation to start messaging.
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-purple/20 to-primary/20 text-3xl">
+                  🔗
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  Pick a conversation to start messaging
+                </p>
+                <p className="max-w-xs text-xs text-muted-foreground">
+                  Every great tether starts with "hey." Pick someone on the left and send
+                  yours.
+                </p>
               </div>
             )}
           </section>
@@ -274,9 +288,13 @@ function Thread({
             );
           })
         ) : (
-          <p className="pt-8 text-center text-sm text-muted-foreground">
-            Say hi — this is the beginning of your conversation.
-          </p>
+          <div className="pt-8 text-center">
+            <p className="text-2xl">✨</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This is the very beginning of your conversation with {name}.
+            </p>
+            <p className="text-xs text-muted-foreground/70">No pressure, but "hi" is a great opener.</p>
+          </div>
         )}
         {otherTyping && (
           <div className="flex items-start">
