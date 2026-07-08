@@ -18,12 +18,16 @@ import {
   Camera,
   Music2,
   Dumbbell,
+  HandHeart,
+  Handshake,
 } from "lucide-react";
-import { COMMUNITIES, type Community } from "@/lib/community-data";
+import { COMMUNITIES, ACTIVE_LEARNING_GOALS, type Community } from "@/lib/community-data";
 
 const NAV = [
   { id: "home", label: "Home Feed", icon: Home },
   { id: "communities", label: "Communities", icon: Users },
+  { id: "help", label: "Help Requests", icon: HandHeart },
+  { id: "collab", label: "Collaborations", icon: Handshake },
   { id: "projects", label: "Projects", icon: FolderKanban },
   { id: "questions", label: "Questions", icon: HelpCircle },
   { id: "resources", label: "Resources", icon: Library },
@@ -87,6 +91,22 @@ export function CommunityLeftSidebar({
           );
         })}
       </nav>
+
+      <div className="card-border rounded-3xl border bg-surface p-4">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Currently learning
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5 px-1">
+          {ACTIVE_LEARNING_GOALS.map((skill) => (
+            <span
+              key={skill}
+              className="rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-muted-foreground"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
 
       <div className="card-border rounded-3xl border bg-surface p-4">
         <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

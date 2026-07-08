@@ -19,8 +19,10 @@ import { CommunityRightSidebar } from "@/components/tethyr/community/right-sideb
 import {
   CHALLENGES,
   COMMUNITIES,
+  DISCOVERY_FILTERS,
   INITIAL_POSTS,
   POST_TYPE_LABEL,
+  type DiscoveryFocus,
   type Post,
   type PostType,
 } from "@/lib/community-data";
@@ -42,6 +44,8 @@ const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, PostType>> = {
   projects: "project_update",
   questions: "question",
   resources: "resource",
+  help: "help_request",
+  collab: "collaboration_request",
 };
 
 const TYPE_FILTERS: { label: string; value: PostType | "all" }[] = [
@@ -56,6 +60,7 @@ function CommunityPage() {
   const [nav, setNav] = useState<CommunityNavId>("home");
   const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<PostType | "all">("all");
+  const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">("all");
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
@@ -89,12 +94,15 @@ function CommunityPage() {
       if (effectiveTypeFilter && effectiveTypeFilter !== "all") {
         list = list.filter((p) => p.type === effectiveTypeFilter);
       }
+      if (focusFilter !== "all") {
+        list = list.filter((p) => p.focus === focusFilter);
+      }
     }
     if (nav === "trending") {
       list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
     }
     return list;
-  }, [posts, nav, communityName, effectiveTypeFilter, savedIds]);
+  }, [posts, nav, communityName, effectiveTypeFilter, focusFilter, savedIds]);
 
   const showComposer = nav === "home";
   const showTypeTabs = nav === "home";
@@ -132,7 +140,7 @@ function CommunityPage() {
             )}
 
             {showTypeTabs && (
-              <div className="mb-6 flex flex-wrap gap-2">
+              <div className="mb-3 flex flex-wrap gap-2">
                 {TYPE_FILTERS.map((f) => (
                   <button
                     key={f.value}
@@ -144,6 +152,34 @@ function CommunityPage() {
                     }`}
                   >
                     {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showTypeTabs && (
+              <div className="mb-6 flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setFocusFilter("all")}
+                  className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                    focusFilter === "all"
+                      ? "bg-surface-elevated text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Any focus
+                </button>
+                {DISCOVERY_FILTERS.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                      focusFilter === f
+                        ? "bg-surface-elevated text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {f}
                   </button>
                 ))}
               </div>
@@ -240,6 +276,10 @@ function navTitle(nav: CommunityNavId): string {
       return "Home Feed";
     case "communities":
       return "Communities";
+    case "help":
+      return "Help Requests";
+    case "collab":
+      return "Collaborations";
     case "projects":
       return "Projects";
     case "questions":

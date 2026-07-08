@@ -4,7 +4,7 @@ import {
   ThumbsUp,
   MessageCircle,
   Bookmark,
-  Share2,
+  HandHeart,
   CheckCircle2,
   FileText,
   Video,
@@ -13,13 +13,17 @@ import {
   BookMarked,
   Wrench,
   Trophy,
+  Sparkles,
+  Handshake,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   POST_TYPE_LABEL,
+  PROJECT_JOURNEY_STAGES,
   reputationLabel,
   type Post,
   type PostStats,
+  type ProjectJourneyStage,
 } from "@/lib/community-data";
 import { ReputationBadgePill, SkillBadge } from "./badges";
 
@@ -40,6 +44,9 @@ const TYPE_ACCENT: Record<Post["type"], string> = {
   resource: "text-brand-purple",
   achievement: "text-brand-green",
   discussion: "text-muted-foreground",
+  help_request: "text-primary",
+  collaboration_request: "text-brand-purple",
+  progress_update: "text-brand-green",
 };
 
 function coverClasses(gradient: "brand" | "green" | "purple") {
@@ -52,6 +59,24 @@ function coverClasses(gradient: "brand" | "green" | "purple") {
   return "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-green)_35%,transparent),color-mix(in_oklab,var(--brand-purple)_35%,transparent))]";
 }
 
+function JourneyStepper({ stage }: { stage: ProjectJourneyStage }) {
+  const currentIndex = PROJECT_JOURNEY_STAGES.indexOf(stage);
+  return (
+    <div className="flex items-center gap-1">
+      {PROJECT_JOURNEY_STAGES.map((s, i) => (
+        <div key={s} className="flex flex-1 items-center gap-1">
+          <div
+            className={`h-1.5 flex-1 rounded-full ${
+              i <= currentIndex ? "bg-gradient-brand" : "bg-surface-elevated"
+            }`}
+            title={s}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PostCard({
   post,
   saved,
@@ -62,12 +87,13 @@ export function PostCard({
   onToggleSave: () => void;
 }) {
   const [stats, setStats] = useState<PostStats>(post.stats);
-  const [liked, setLiked] = useState(false);
+  const [appreciated, setAppreciated] = useState(false);
   const [markedHelpful, setMarkedHelpful] = useState(false);
+  const [offered, setOffered] = useState(false);
 
-  function toggleLike() {
-    setLiked((v) => !v);
-    setStats((s) => ({ ...s, likes: s.likes + (liked ? -1 : 1) }));
+  function toggleAppreciate() {
+    setAppreciated((v) => !v);
+    setStats((s) => ({ ...s, likes: s.likes + (appreciated ? -1 : 1) }));
   }
   function toggleHelpful() {
     setMarkedHelpful((v) => !v);
@@ -78,12 +104,16 @@ export function PostCard({
     onToggleSave();
     toast.success(saved ? "Removed from saved" : "Saved for later");
   }
-  function share() {
-    toast.success("Link copied to clipboard");
+  function offerHelp() {
+    if (offered) return;
+    setOffered(true);
+    setStats((s) => ({ ...s, offers: s.offers + 1 }));
+    toast.success("They'll see that you offered to help");
   }
 
   const initial = post.author.name.charAt(0).toUpperCase();
   const avatarBg = post.author.accent === "green" ? "bg-brand-green text-background" : "bg-brand-purple text-background";
+  const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
 
   return (
     <article className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
@@ -135,6 +165,35 @@ export function PostCard({
           </span>
         </div>
       )}
+      {post.type === "progress_update" && post.progress && (
+        <div className="mt-3">
+          <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+            <Sparkles className="h-3 w-3" /> Progress in {post.progress.skill}
+          </span>
+        </div>
+      )}
+      {post.type === "help_request" && post.helpRequest && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+            <HandHeart className="h-3 w-3" /> Needs help with {post.helpRequest.skillNeeded}
+          </span>
+          <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+            {post.helpRequest.difficulty}
+          </span>
+        </div>
+      )}
+      {post.type === "collaboration_request" && post.collaboration && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {post.collaboration.rolesNeeded.map((role) => (
+            <span
+              key={role}
+              className="inline-flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-2 py-0.5 text-[11px] font-medium text-brand-purple"
+            >
+              <Handshake className="h-3 w-3" /> Looking for {role}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Body */}
       <h3 className="mt-3 text-base font-semibold leading-snug">{post.title}</h3>
@@ -163,6 +222,15 @@ export function PostCard({
 
       {post.type === "project_update" && post.project && (
         <div className="mt-3 rounded-2xl border border-border/60 bg-background/40 p-3">
+          {post.project.journeyStage && (
+            <div className="mb-3">
+              <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Project journal</span>
+                <span className="font-medium text-foreground">{post.project.journeyStage}</span>
+              </div>
+              <JourneyStepper stage={post.project.journeyStage} />
+            </div>
+          )}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Progress</span>
             <span>{post.project.progress}%</span>
@@ -202,11 +270,11 @@ export function PostCard({
       <div className="mt-4 flex flex-wrap items-center gap-1 border-t border-border/60 pt-3 text-xs text-muted-foreground">
         <ActionButton
           icon={Heart}
-          label="Like"
+          label="Appreciate"
           count={stats.likes}
-          active={liked}
+          active={appreciated}
           activeClass="text-brand-green"
-          onClick={toggleLike}
+          onClick={toggleAppreciate}
         />
         <ActionButton
           icon={ThumbsUp}
@@ -216,7 +284,7 @@ export function PostCard({
           activeClass="text-primary"
           onClick={toggleHelpful}
         />
-        <ActionButton icon={MessageCircle} label="Comment" count={stats.comments} onClick={() => toast.info("Comments coming soon")} />
+        <ActionButton icon={MessageCircle} label="Discuss" count={stats.comments} onClick={() => toast.info("Comments coming soon")} />
         <ActionButton
           icon={Bookmark}
           label="Save"
@@ -226,10 +294,17 @@ export function PostCard({
           onClick={toggleSave}
         />
         <button
-          onClick={share}
-          className="ml-auto flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-surface-elevated hover:text-foreground"
+          onClick={offerHelp}
+          disabled={offered}
+          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-colors ${
+            isRequestType
+              ? "border border-primary bg-primary/10 text-primary hover:bg-primary/20"
+              : "hover:bg-surface-elevated hover:text-foreground"
+          } ${offered ? "opacity-60" : ""}`}
         >
-          <Share2 className="h-3.5 w-3.5" /> Share
+          <HandHeart className={`h-3.5 w-3.5 ${offered ? "fill-current" : ""}`} />
+          {offered ? "Offered" : "Offer Help"}
+          <span className="tabular-nums">{stats.offers}</span>
         </button>
       </div>
     </article>

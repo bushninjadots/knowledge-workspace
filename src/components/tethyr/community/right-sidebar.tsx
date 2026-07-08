@@ -1,69 +1,64 @@
 import type { ReactNode } from "react";
-import { TrendingUp, CheckCircle2 } from "lucide-react";
+import { TrendingUp, HandHeart, Handshake, Trophy, Target, Users, Sparkles } from "lucide-react";
 import {
-  TOP_CONTRIBUTORS,
-  FEATURED_PROJECTS,
+  TRENDING_SKILLS,
   CHALLENGES,
-  RECENTLY_SOLVED,
-  TRENDING_TOPICS,
+  COMMUNITY_MILESTONES,
   SUGGESTED_COMMUNITIES,
-  reputationLabel,
+  SKILL_RECOMMENDATIONS,
+  INITIAL_POSTS,
 } from "@/lib/community-data";
-import { ReputationBadgePill } from "./badges";
 
-function SidebarCard({ title, children }: { title: string; children: ReactNode }) {
+function SidebarCard({ title, icon, children }: { title: string; icon: ReactNode; children: ReactNode }) {
   return (
     <div className="card-border rounded-3xl border bg-surface p-4">
-      <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {icon}
+        {title}
+      </p>
       <div className="mt-3 flex flex-col gap-2.5">{children}</div>
     </div>
   );
 }
 
 export function CommunityRightSidebar() {
+  const helpRequests = INITIAL_POSTS.filter((p) => p.type === "help_request").slice(0, 3);
+  const collabRequests = INITIAL_POSTS.filter((p) => p.type === "collaboration_request").slice(0, 3);
+
   return (
     <aside className="hidden w-72 shrink-0 flex-col gap-4 xl:flex">
-      <SidebarCard title="Trending topics">
-        {TRENDING_TOPICS.map((t) => (
-          <div key={t.label} className="flex items-center gap-2 px-1 text-sm">
-            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-brand-green" />
-            <span className="min-w-0 flex-1 truncate">{t.label}</span>
-            <span className="text-[11px] text-muted-foreground">{t.posts}</span>
+      <SidebarCard title="Trending skills" icon={<TrendingUp className="h-3.5 w-3.5 text-brand-green" />}>
+        {TRENDING_SKILLS.map((t) => (
+          <div key={t.skill} className="flex items-center gap-2 px-1 text-sm">
+            <span className="min-w-0 flex-1 truncate">{t.skill}</span>
+            <span className="text-[11px] text-muted-foreground">{t.posts} posts</span>
           </div>
         ))}
       </SidebarCard>
 
-      <SidebarCard title="Top contributors">
-        {TOP_CONTRIBUTORS.map((c) => (
-          <div key={c.name} className="flex items-center gap-2.5 px-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-purple text-xs font-semibold text-background">
-              {c.name.charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{c.name}</p>
-              <p className="truncate text-[11px] text-muted-foreground">{reputationLabel(c.reputation)}</p>
-            </div>
-            <ReputationBadgePill badge={c.badge} />
+      <SidebarCard title="People looking for help" icon={<HandHeart className="h-3.5 w-3.5 text-primary" />}>
+        {helpRequests.map((p) => (
+          <div key={p.id} className="px-1">
+            <p className="line-clamp-2 text-xs text-foreground/90">{p.title}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {p.helpRequest?.skillNeeded} · {p.helpRequest?.difficulty}
+            </p>
           </div>
         ))}
       </SidebarCard>
 
-      <SidebarCard title="Featured projects">
-        {FEATURED_PROJECTS.map((p) => (
-          <div key={p.title} className="px-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="truncate font-medium">{p.title}</span>
-              <span className="text-[11px] text-muted-foreground">{p.progress}%</span>
-            </div>
-            <p className="truncate text-[11px] text-muted-foreground">{p.creator}</p>
-            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-surface-elevated">
-              <div className="h-full rounded-full bg-gradient-brand" style={{ width: `${p.progress}%` }} />
-            </div>
+      <SidebarCard title="Active collaboration requests" icon={<Handshake className="h-3.5 w-3.5 text-brand-purple" />}>
+        {collabRequests.map((p) => (
+          <div key={p.id} className="px-1">
+            <p className="line-clamp-2 text-xs text-foreground/90">{p.title}</p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+              Needs: {p.collaboration?.rolesNeeded.join(", ")}
+            </p>
           </div>
         ))}
       </SidebarCard>
 
-      <SidebarCard title="Upcoming challenges">
+      <SidebarCard title="Upcoming challenges" icon={<Trophy className="h-3.5 w-3.5 text-brand-green" />}>
         {CHALLENGES.map((c) => (
           <div key={c.id} className="px-1">
             <div className="flex items-center justify-between text-sm">
@@ -75,23 +70,32 @@ export function CommunityRightSidebar() {
         ))}
       </SidebarCard>
 
-      <SidebarCard title="Recently solved">
-        {RECENTLY_SOLVED.map((q) => (
-          <div key={q.title} className="flex items-start gap-2 px-1">
-            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-green" />
-            <div className="min-w-0">
-              <p className="line-clamp-2 text-xs text-foreground/90">{q.title}</p>
-              <p className="text-[11px] text-muted-foreground">by {q.solver}</p>
-            </div>
+      <SidebarCard title="Learning milestones" icon={<Target className="h-3.5 w-3.5 text-primary" />}>
+        {COMMUNITY_MILESTONES.map((m) => (
+          <div key={m.label} className="flex items-center justify-between px-1 text-sm">
+            <span className="text-muted-foreground">{m.label}</span>
+            <span className="font-semibold tabular-nums">{m.value}</span>
           </div>
         ))}
       </SidebarCard>
 
-      <SidebarCard title="Suggested communities">
+      <SidebarCard title="Popular communities" icon={<Users className="h-3.5 w-3.5 text-brand-purple" />}>
         {SUGGESTED_COMMUNITIES.map((c) => (
           <div key={c.id} className="flex items-center justify-between px-1 text-sm">
             <span className="truncate">{c.name}</span>
             <span className="text-[11px] text-muted-foreground">{c.members.toLocaleString()}</span>
+          </div>
+        ))}
+      </SidebarCard>
+
+      <SidebarCard title="Recommended for you" icon={<Sparkles className="h-3.5 w-3.5 text-brand-green" />}>
+        {SKILL_RECOMMENDATIONS.map((r) => (
+          <div key={r.skill} className="px-1">
+            <p className="text-sm font-medium">Because you're learning {r.skill}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {r.tutorials} tutorials · {r.openQuestions} open questions · {r.projectsNeedingHelp}{" "}
+              project{r.projectsNeedingHelp === 1 ? "" : "s"} needing help
+            </p>
           </div>
         ))}
       </SidebarCard>

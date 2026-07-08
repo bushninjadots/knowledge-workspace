@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Rocket, HelpCircle, Link2, BookOpen, Trophy } from "lucide-react";
+import { Rocket, HelpCircle, Link2, BookOpen, Trophy, HandHeart, Handshake, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,9 @@ const ACTION_ICON: Record<PostType, typeof Rocket> = {
   resource: Link2,
   achievement: Trophy,
   discussion: HelpCircle,
+  help_request: HandHeart,
+  collaboration_request: Handshake,
+  progress_update: Sparkles,
 };
 
 export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
@@ -45,7 +48,7 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
       timestamp: "Just now",
       title: body.length > 80 ? `${body.slice(0, 77)}…` : body,
       body,
-      stats: { likes: 0, helpful: 0, comments: 0, saves: 0 },
+      stats: { likes: 0, helpful: 0, comments: 0, saves: 0, offers: 0 },
     });
     setDraft("");
     setType(null);
