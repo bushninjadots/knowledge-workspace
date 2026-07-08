@@ -24,13 +24,21 @@ import {
   Wrench,
   Layers,
   BookOpen,
+  UploadCloud,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
+import { validateImageFile, validateProofFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +52,8 @@ import {
   ChipListCard,
   ProjectsCard,
   VerificationBadge,
+  ExperienceBadge,
+  EXPERIENCE_LABEL,
   type ProjectRow,
   type ActivityRow,
 } from "@/components/tethyr/profile-sections";
@@ -54,6 +64,7 @@ import {
   type Profile,
   type TeachSkillMeta,
   type SkillVerificationLevel,
+  type SkillExperienceLevel,
 } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
@@ -139,6 +150,7 @@ function ProfilePage() {
       if (!s) return null;
       const meta: TeachSkillMeta = teachMeta[id] ?? {
         verification_level: "self_declared" as SkillVerificationLevel,
+        experience_level: "intermediate" as SkillExperienceLevel,
         proof_url: null,
         proof_note: null,
       };
@@ -1020,7 +1032,10 @@ function TeachSkillsCard({
               className="group flex flex-col items-start gap-1 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-left transition hover:border-primary/70"
             >
               <span className="text-xs text-primary">{s.name}</span>
-              <VerificationBadge level={s.meta.verification_level} proofUrl={s.meta.proof_url} />
+              <div className="flex flex-wrap items-center gap-1">
+                <VerificationBadge level={s.meta.verification_level} proofUrl={s.meta.proof_url} />
+                <ExperienceBadge level={s.meta.experience_level} />
+              </div>
             </button>
           ))}
         </div>
@@ -1105,9 +1120,30 @@ function ProofDialog({
   onOpenChange: (o: boolean) => void;
   onSaved: () => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(skill.meta.proof_url ?? "");
   const [note, setNote] = useState(skill.meta.proof_note ?? "");
+  const [experience, setExperience] = useState<SkillExperienceLevel>(skill.meta.experience_level);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const check = validateProofFile(file);
+    if (!check.ok) return toast.error(check.error);
+    setUploading(true);
+    const path = `${userId}/${skill.id}-${Date.now()}.${check.ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("skill-proofs")
+      .upload(path, file, { contentType: check.contentType });
+    setUploading(false);
+    if (upErr) return toast.error(upErr.message);
+    const { data } = supabase.storage.from("skill-proofs").getPublicUrl(path);
+    setUrl(data.publicUrl);
+    toast.success("File uploaded");
+  }
 
   async function save() {
     const trimmedUrl = url.trim();
@@ -1126,12 +1162,13 @@ function ProofDialog({
         proof_url: trimmedUrl || null,
         proof_note: note.trim() || null,
         verification_level: nextLevel,
+        experience_level: experience,
       })
       .eq("profile_id", userId)
       .eq("skill_id", skill.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Proof updated");
+    toast.success("Skill updated");
     onSaved();
     onOpenChange(false);
   }
@@ -1140,23 +1177,66 @@ function ProofDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Back up "{skill.name}" with proof</DialogTitle>
+          <DialogTitle>"{skill.name}" — how experienced are you?</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Link a certificate, portfolio piece, or published work. Adding a link marks this skill
-          "Proof certified" instead of self-declared.
+          Tell people where you're at, and back it up with a certificate, screenshot, or
+          portfolio file if you've got one.
           {skill.meta.verification_level === "community_recognized" && (
             <>
               {" "}
-              This skill is already community recognized from peer endorsements — that stays either
-              way.
+              This skill is already community recognized from peer endorsements — that stays
+              either way.
             </>
           )}
         </p>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Proof link</Label>
-            <Input placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+            <Label>Experience level</Label>
+            <Select
+              value={experience}
+              onValueChange={(v) => setExperience(v as SkillExperienceLevel)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(EXPERIENCE_LABEL) as SkillExperienceLevel[]).map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {EXPERIENCE_LABEL[level]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Proof</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+              >
+                <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
+                {uploading ? "Uploading…" : "Upload a file"}
+              </Button>
+              <span className="text-[11px] text-muted-foreground">JPG, PNG, WEBP or PDF</span>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+              onChange={handleFile}
+            />
+            <Input
+              placeholder="…or paste a link"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="mt-1.5"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Note (optional)</Label>
@@ -1172,7 +1252,7 @@ function ProofDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} disabled={saving || uploading}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

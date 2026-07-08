@@ -73,6 +73,23 @@ export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
 
+export type SkillExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
+
+export const EXPERIENCE_LABEL: Record<SkillExperienceLevel, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  expert: "Expert",
+};
+
+export function ExperienceBadge({ level }: { level: SkillExperienceLevel }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[10px] text-muted-foreground">
+      {EXPERIENCE_LABEL[level]}
+    </span>
+  );
+}
+
 export function VerificationBadge({
   level,
   proofUrl,

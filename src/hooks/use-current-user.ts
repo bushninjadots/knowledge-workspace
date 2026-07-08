@@ -36,9 +36,11 @@ export type Profile = {
 export type Skill = { id: string; slug: string; name: string; category: string };
 
 export type SkillVerificationLevel = "self_declared" | "proof_certified" | "community_recognized";
+export type SkillExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
 
 export type TeachSkillMeta = {
   verification_level: SkillVerificationLevel;
+  experience_level: SkillExperienceLevel;
   proof_url: string | null;
   proof_note: string | null;
 };
@@ -75,7 +77,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
     supabase
       .from("profile_skills_teach")
-      .select("skill_id, verification_level, proof_url, proof_note")
+      .select("skill_id, verification_level, experience_level, proof_url, proof_note")
       .eq("profile_id", userId),
     supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
     supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
@@ -139,6 +141,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   type TeachRow = {
     skill_id: string;
     verification_level: SkillVerificationLevel;
+    experience_level: SkillExperienceLevel;
     proof_url: string | null;
     proof_note: string | null;
   };
@@ -147,6 +150,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   for (const r of teachRows) {
     teachMeta[r.skill_id] = {
       verification_level: r.verification_level,
+      experience_level: r.experience_level,
       proof_url: r.proof_url,
       proof_note: r.proof_note,
     };

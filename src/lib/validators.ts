@@ -53,6 +53,46 @@ export function isSafeUrl(url: string): boolean {
   }
 }
 
+// Skill proof uploads: certificates and portfolio exports are commonly PDFs,
+// not just images, so this is a bit more permissive than validateImageFile.
+export const ALLOWED_PROOF_EXTS = ["jpg", "jpeg", "png", "webp", "pdf"] as const;
+export const ALLOWED_PROOF_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
+
+export type ProofFileValidation =
+  | { ok: true; ext: string; contentType: string }
+  | { ok: false; error: string };
+
+export function validateProofFile(file: File): ProofFileValidation {
+  const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
+  const ext = rawExt === "jpeg" ? "jpg" : rawExt;
+  if (!ALLOWED_PROOF_EXTS.includes(ext as (typeof ALLOWED_PROOF_EXTS)[number])) {
+    return { ok: false, error: "Only JPG, PNG, WEBP or PDF files are allowed." };
+  }
+  const type = (file.type || "").toLowerCase();
+  if (type && !ALLOWED_PROOF_MIMES.includes(type as (typeof ALLOWED_PROOF_MIMES)[number])) {
+    return { ok: false, error: "Unsupported file type." };
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    return { ok: false, error: "File must be under 15 MB." };
+  }
+  const contentType =
+    type && ALLOWED_PROOF_MIMES.includes(type as (typeof ALLOWED_PROOF_MIMES)[number])
+      ? type
+      : ext === "pdf"
+        ? "application/pdf"
+        : ext === "png"
+          ? "image/png"
+          : ext === "webp"
+            ? "image/webp"
+            : "image/jpeg";
+  return { ok: true, ext, contentType };
+}
+
 // Returns the URL when safe, otherwise "#" — for rendering hrefs from data
 // that may have been stored before validation was in place.
 export function safeHref(url: string | null | undefined): string {

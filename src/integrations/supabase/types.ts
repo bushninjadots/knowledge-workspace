@@ -162,6 +162,7 @@ export type Database = {
       profile_skills_teach: {
         Row: {
           created_at: string
+          experience_level: Database["public"]["Enums"]["skill_experience_level"]
           profile_id: string
           proof_note: string | null
           proof_url: string | null
@@ -170,6 +171,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          experience_level?: Database["public"]["Enums"]["skill_experience_level"]
           profile_id: string
           proof_note?: string | null
           proof_url?: string | null
@@ -178,6 +180,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          experience_level?: Database["public"]["Enums"]["skill_experience_level"]
           profile_id?: string
           proof_note?: string | null
           proof_url?: string | null
@@ -533,6 +536,7 @@ export type Database = {
       connection_status: "pending" | "accepted" | "declined"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_status: "planning" | "active" | "paused" | "completed"
+      skill_experience_level: "beginner" | "intermediate" | "advanced" | "expert"
       skill_verification_level:
         | "self_declared"
         | "proof_certified"
@@ -667,6 +671,7 @@ export const Constants = {
       connection_status: ["pending", "accepted", "declined"],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_status: ["planning", "active", "paused", "completed"],
+      skill_experience_level: ["beginner", "intermediate", "advanced", "expert"],
       skill_verification_level: [
         "self_declared",
         "proof_certified",

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
-import { MessageSquare, Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
+import { Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +21,7 @@ import {
 const searchSchema = z.object({ c: z.string().optional() });
 
 export const Route = createFileRoute("/_authenticated/messages")({
-  validateSearch: searchSchema,
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Messages — Tethyr" },

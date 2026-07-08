@@ -19,7 +19,9 @@ import { ConnectButton } from "@/components/tethyr/connect-button";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import {
   VerificationBadge,
+  ExperienceBadge,
   type SkillVerificationLevel,
+  type SkillExperienceLevel,
 } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
@@ -51,6 +53,7 @@ type PublicProfile = {
 type SkillLite = { id: string; name: string; category: string };
 type TeachSkillLite = SkillLite & {
   verification_level: SkillVerificationLevel;
+  experience_level: SkillExperienceLevel;
   proof_url: string | null;
   endorsementCount: number;
   endorsedByIds: string[];
@@ -89,7 +92,9 @@ function PublicProfileRoute() {
       const [teach, learn] = await Promise.all([
         supabase
           .from("profile_skills_teach")
-          .select("skill_id, verification_level, proof_url, skills(id, name, category)")
+          .select(
+            "skill_id, verification_level, experience_level, proof_url, skills(id, name, category)",
+          )
           .eq("profile_id", profile.id),
         supabase
           .from("profile_skills_learn")
@@ -131,6 +136,7 @@ function PublicProfileRoute() {
           return {
             ...s,
             verification_level: r.verification_level as SkillVerificationLevel,
+            experience_level: r.experience_level as SkillExperienceLevel,
             proof_url: r.proof_url as string | null,
             endorsementCount: rowsForSkill.length,
             endorsedByIds: rowsForSkill.map((e) => e.endorsed_by),
@@ -272,6 +278,7 @@ function PublicProfileRoute() {
                       <span className="text-xs text-primary">{s.name}</span>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <VerificationBadge level={s.verification_level} proofUrl={s.proof_url} />
+                        <ExperienceBadge level={s.experience_level} />
                         {s.endorsementCount > 0 && (
                           <span className="text-[10px] text-muted-foreground">
                             {s.endorsementCount}{" "}
