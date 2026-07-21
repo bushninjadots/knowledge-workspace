@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useId } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -260,6 +260,7 @@ function ProfilePage() {
             value={profile?.teaching_style ?? ""}
             placeholder="How do you teach? Hands-on, project-based, async reviews…"
             onChange={refresh}
+            userId={userId}
           />
           <TextCard
             title="Learning goals"
@@ -267,6 +268,7 @@ function ProfilePage() {
             value={profile?.learning_goals ?? ""}
             placeholder="What do you want to unlock in the next 6 months?"
             onChange={refresh}
+            userId={userId}
           />
         </div>
 
@@ -482,6 +484,7 @@ function Chip({ children }: { children: React.ReactNode }) {
 }
 
 function CompletenessRing({ value }: { value: number }) {
+  const gradientId = useId();
   const r = 32;
   const c = 2 * Math.PI * r;
   const offset = c - (value / 100) * c;
@@ -494,7 +497,7 @@ function CompletenessRing({ value }: { value: number }) {
             cx="40"
             cy="40"
             r={r}
-            stroke="url(#grad)"
+            stroke={`url(#${gradientId})`}
             strokeWidth="6"
             fill="none"
             strokeLinecap="round"
@@ -503,7 +506,7 @@ function CompletenessRing({ value }: { value: number }) {
             style={{ transition: "stroke-dashoffset 0.6s" }}
           />
           <defs>
-            <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="var(--brand-green)" />
               <stop offset="100%" stopColor="var(--brand-purple)" />
             </linearGradient>
@@ -564,7 +567,9 @@ function EditIdentityDialog({
         handle: form.handle.replace(/^@/, "").trim() || null,
         creator_title: form.creator_title || null,
         category: form.category || null,
-        years_experience: form.years_experience ? parseInt(form.years_experience, 10) : null,
+        years_experience: form.years_experience
+          ? Math.max(0, Math.min(100, parseInt(form.years_experience, 10) || 0))
+          : null,
         country: form.country || null,
         timezone: form.timezone || null,
       })
@@ -586,18 +591,21 @@ function EditIdentityDialog({
           <Field label="Display name">
             <Input
               value={form.display_name}
+              maxLength={50}
               onChange={(e) => setForm({ ...form, display_name: e.target.value })}
             />
           </Field>
           <Field label="Handle">
             <Input
               value={form.handle}
+              maxLength={30}
               onChange={(e) => setForm({ ...form, handle: e.target.value })}
             />
           </Field>
           <Field label="Creator title">
             <Input
               placeholder="Motion designer & YouTube educator"
+              maxLength={80}
               value={form.creator_title}
               onChange={(e) => setForm({ ...form, creator_title: e.target.value })}
             />
@@ -715,7 +723,13 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
           </DialogHeader>
           <div className="space-y-3">
             <Field label="Bio">
-              <Textarea rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
+              <Textarea
+                rows={5}
+                value={bio}
+                maxLength={1000}
+                onChange={(e) => setBio(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">{bio.length}/1000</p>
             </Field>
             <Field label="Languages">
               <div className="flex flex-wrap gap-2">
@@ -735,11 +749,13 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
                   value={langInput}
                   onChange={(e) => setLangInput(e.target.value)}
                   placeholder="English"
+                  maxLength={30}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       const v = langInput.trim();
-                      if (v && !languages.includes(v)) setLanguages([...languages, v]);
+                      if (v && !languages.includes(v) && languages.length < 10)
+                        setLanguages([...languages, v]);
                       setLangInput("");
                     }
                   }}
@@ -749,13 +765,17 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
                   variant="outline"
                   onClick={() => {
                     const v = langInput.trim();
-                    if (v && !languages.includes(v)) setLanguages([...languages, v]);
+                    if (v && !languages.includes(v) && languages.length < 10)
+                      setLanguages([...languages, v]);
                     setLangInput("");
                   }}
                 >
                   Add
                 </Button>
               </div>
+              {languages.length >= 10 && (
+                <p className="mt-1 text-xs text-muted-foreground">Maximum 10 languages</p>
+              )}
             </Field>
           </div>
           <DialogFooter>
@@ -1394,12 +1414,14 @@ function TextCard({
   value,
   placeholder,
   onChange,
+  userId,
 }: {
   title: string;
   field: "teaching_style" | "learning_goals";
   value: string;
   placeholder: string;
   onChange: () => void;
+  userId: string;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(value);
@@ -1411,13 +1433,12 @@ function TextCard({
 
   async function save() {
     setSaving(true);
-    const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("profiles")
       .update({ [field]: text || null } as Partial<
         Pick<Profile, "teaching_style" | "learning_goals">
       >)
-      .eq("id", u.user!.id);
+      .eq("id", userId);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");

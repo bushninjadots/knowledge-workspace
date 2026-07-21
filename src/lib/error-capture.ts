@@ -1,11 +1,17 @@
 // Captures the original Error out-of-band so server.ts can recover the stack
 // when h3 has already swallowed the throw into a generic 500 Response.
 
-let lastCapturedError: { error: unknown; at: number } | undefined;
+const capturedErrors = new Map<number, { error: unknown; at: number }>();
 const TTL_MS = 5_000;
 
 function record(error: unknown) {
-  lastCapturedError = { error, at: Date.now() };
+  const now = Date.now();
+  capturedErrors.set(now, { error, at: now });
+
+  // Clean up expired entries
+  for (const [key, entry] of capturedErrors) {
+    if (now - entry.at > TTL_MS) capturedErrors.delete(key);
+  }
 }
 
 if (typeof globalThis.addEventListener === "function") {
@@ -16,12 +22,17 @@ if (typeof globalThis.addEventListener === "function") {
 }
 
 export function consumeLastCapturedError(): unknown {
-  if (!lastCapturedError) return undefined;
-  if (Date.now() - lastCapturedError.at > TTL_MS) {
-    lastCapturedError = undefined;
-    return undefined;
+  const now = Date.now();
+  let latest: { error: unknown; at: number } | undefined;
+
+  for (const [, entry] of capturedErrors) {
+    if (now - entry.at > TTL_MS) continue;
+    if (!latest || entry.at > latest.at) latest = entry;
   }
-  const { error } = lastCapturedError;
-  lastCapturedError = undefined;
-  return error;
+
+  if (latest) {
+    capturedErrors.delete(latest.at);
+    return latest.error;
+  }
+  return undefined;
 }

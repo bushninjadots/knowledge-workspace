@@ -88,12 +88,20 @@ export function useMessages(connectionId: string | null) {
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   // Mark unread messages (from the other side) as read.
+  // Use a ref to track the last processed message IDs to avoid re-firing on every render.
+  const lastReadIdsRef = useRef<string>("");
+
   useEffect(() => {
     if (!connectionId || !meId || messages.length === 0) return;
     const unreadIds = messages
       .filter((m) => m.sender_id !== meId && !m.read_at && !m.id.startsWith("optimistic-"))
       .map((m) => m.id);
     if (unreadIds.length === 0) return;
+
+    const idsKey = unreadIds.join(",");
+    if (idsKey === lastReadIdsRef.current) return;
+    lastReadIdsRef.current = idsKey;
+
     supabase
       .from("messages")
       .update({ read_at: new Date().toISOString() })
@@ -155,7 +163,12 @@ export function useUnreadCounts() {
       .channel(`messages-unread:${meId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "messages" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `sender_id=neq.${meId}`,
+        },
         () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
       )
       .subscribe();

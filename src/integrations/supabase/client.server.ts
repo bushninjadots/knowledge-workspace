@@ -33,6 +33,13 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
+  if (typeof window !== "undefined") {
+    throw new Error(
+      "[Supabase] client.server.ts must not be imported on the client side. " +
+        "This module contains the service role key and bypasses RLS.",
+    );
+  }
+
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

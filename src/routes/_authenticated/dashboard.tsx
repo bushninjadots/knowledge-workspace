@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useRouterState, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { Menu, X, Bell, ArrowRight, Compass, User, Sparkles, Clock, Rocket } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     ],
   }),
   component: DashboardLayout,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </div>
+  ),
 });
 
 function DashboardLayout() {
@@ -279,6 +287,7 @@ function CompletenessRing({
   done: number;
   total: number;
 }) {
+  const gradientId = useId();
   const radius = 46;
   const c = 2 * Math.PI * radius;
   const offset = c - (percent / 100) * c;
@@ -298,7 +307,7 @@ function CompletenessRing({
             cx="60"
             cy="60"
             r={radius}
-            stroke="url(#g)"
+            stroke={`url(#${gradientId})`}
             strokeWidth="10"
             fill="none"
             strokeDasharray={c}
@@ -307,7 +316,7 @@ function CompletenessRing({
             className="transition-[stroke-dashoffset] duration-700 ease-out"
           />
           <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="var(--brand-green)" />
               <stop offset="1" stopColor="var(--brand-purple)" />
             </linearGradient>

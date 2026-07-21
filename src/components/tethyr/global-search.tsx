@@ -41,10 +41,11 @@ export function GlobalSearch({ className }: { className?: string }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // PostgREST's .or() treats commas, parens, and periods as filter syntax —
-  // escape them so user input can never break out of the intended filter.
+  // PostgREST's .or() treats commas, parens, periods, and backslashes as
+  // filter syntax — escape them so user input can never break out of the
+  // intended filter.
   function escapeForOr(value: string): string {
-    return value.replace(/[,()%]/g, (c) => `\\${c}`);
+    return value.replace(/[,%()\\|]/g, (c) => `\\${c}`);
   }
 
   const enabled = debounced.length >= 1;

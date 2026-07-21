@@ -69,7 +69,9 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select(
+      "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack",
+    )
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;

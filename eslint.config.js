@@ -36,7 +36,7 @@ export default tseslint.config(
       // component functions in several shared UI files. Those patterns are
       // valid and useful here, so disable the React Fast Refresh rule.
       "react-refresh/only-export-components": "off",
-      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
     },
   },
   eslintPluginPrettier,

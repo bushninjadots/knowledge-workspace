@@ -98,3 +98,12 @@ export function validateProofFile(file: File): ProofFileValidation {
 export function safeHref(url: string | null | undefined): string {
   return url && isSafeUrl(url) ? url : "#";
 }
+
+// Reject filenames that could enable path traversal or other injection.
+export function sanitizeFilename(name: string): string {
+  return name
+    .replace(/[\/\\]/g, "")
+    .replace(/\.\./g, "")
+    .replace(/^\.+/, "")
+    .trim();
+}

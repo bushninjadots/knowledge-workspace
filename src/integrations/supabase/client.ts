@@ -30,50 +30,8 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createMissingSupabaseClient(message: string): ReturnType<typeof createClient<Database>> {
-  const errorResult = { data: null, error: new Error(message) };
-
-  const createQueryBuilder = () => {
-    const builder = {
-      select: () => builder,
-      insert: () => builder,
-      update: () => builder,
-      delete: () => builder,
-      eq: () => builder,
-      single: async () => errorResult,
-      maybeSingle: async () => errorResult,
-      then: (resolve: (value: typeof errorResult) => unknown) =>
-        Promise.resolve(errorResult).then(resolve),
-      catch: (onRejected: (reason: unknown) => unknown) =>
-        Promise.resolve(errorResult).catch(onRejected),
-    };
-
-    return builder;
-  };
-
-  return {
-    auth: {
-      onAuthStateChange: () => ({
-        data: {
-          subscription: {
-            unsubscribe: () => undefined,
-          },
-        },
-      }),
-      getSession: async () => ({ data: { session: null }, error: null }),
-      getUser: async () => ({ data: { user: null }, error: null }),
-      getClaims: async () => ({ data: null, error: null }),
-      signInWithPassword: async () => ({
-        data: { user: null, session: null },
-        error: new Error(message),
-      }),
-      signUp: async () => ({
-        data: { user: null, session: null },
-        error: new Error(message),
-      }),
-      signOut: async () => ({ error: null }),
-    },
-    from: () => createQueryBuilder(),
-  } as unknown as ReturnType<typeof createClient<Database>>;
+  console.error(`[Supabase] ${message}`);
+  throw new Error(message);
 }
 
 function createSupabaseClient(): ReturnType<typeof createClient<Database>> {

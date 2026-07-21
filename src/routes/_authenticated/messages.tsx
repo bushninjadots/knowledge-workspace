@@ -29,6 +29,14 @@ export const Route = createFileRoute("/_authenticated/messages")({
     ],
   }),
   component: MessagesPage,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </div>
+  ),
 });
 
 function MessagesPage() {
