@@ -1,7 +1,7 @@
 // Central hook for the current user's connections (tethrs / friend requests).
 // Includes optimistic updates and realtime sync so the dashboard reflects
 // changes the instant they happen — for the current user and the other side.
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_USER_KEY, useCurrentUser } from "@/hooks/use-current-user";
@@ -57,12 +57,17 @@ export function useConnections() {
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
   const qc = useQueryClient();
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Realtime: any change to connections involving me → refetch.
   useEffect(() => {
     if (!meId) return;
-    const channel = supabase
-      .channel(`connections:${meId}`)
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const channel = supabase.channel(`connections:${meId}`);
+    channel
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "connections" },
@@ -77,8 +82,12 @@ export function useConnections() {
         () => qc.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
       );
     channel.subscribe();
+    channelRef.current = channel;
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [meId, qc]);
 

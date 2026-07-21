@@ -29,6 +29,7 @@ export function useMessages(connectionId: string | null) {
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
   const key = [...MESSAGES_KEY, connectionId ?? "none"] as const;
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Realtime → refetch first page (newest).
   // NOTE: deps only include primitives (connectionId, qc) — never the `key`
@@ -38,25 +39,32 @@ export function useMessages(connectionId: string | null) {
   // and can crash the whole route.
   useEffect(() => {
     if (!connectionId) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     const channelKey = [...MESSAGES_KEY, connectionId] as const;
-    const channel = supabase
-      .channel(`messages:${connectionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-          filter: `connection_id=eq.${connectionId}`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: channelKey });
-          qc.invalidateQueries({ queryKey: UNREAD_KEY });
-        },
-      );
+    const channel = supabase.channel(`messages:${connectionId}`);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "messages",
+        filter: `connection_id=eq.${connectionId}`,
+      },
+      () => {
+        qc.invalidateQueries({ queryKey: channelKey });
+        qc.invalidateQueries({ queryKey: UNREAD_KEY });
+      },
+    );
     channel.subscribe();
+    channelRef.current = channel;
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [connectionId, qc]);
 
@@ -156,24 +164,33 @@ export function useUnreadCounts() {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (!meId) return;
-    const channel = supabase
-      .channel(`messages-unread:${meId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `sender_id=neq.${meId}`,
-        },
-        () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
-      );
+    // Clean up any existing channel before creating a new one
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const channel = supabase.channel(`messages-unread:${meId}`);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `sender_id=neq.${meId}`,
+      },
+      () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
+    );
     channel.subscribe();
+    channelRef.current = channel;
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [meId, qc]);
 
@@ -209,6 +226,10 @@ export function useTyping(connectionId: string | null) {
 
   useEffect(() => {
     if (!connectionId || !meId) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     const channel = supabase.channel(`typing:${connectionId}`, {
       config: { broadcast: { self: false } },
     });
@@ -224,8 +245,10 @@ export function useTyping(connectionId: string | null) {
     channelRef.current = channel;
     return () => {
       if (clearTimer.current) clearTimeout(clearTimer.current);
-      supabase.removeChannel(channel);
-      channelRef.current = null;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
       setOtherTyping(false);
     };
   }, [connectionId, meId]);
