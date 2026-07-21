@@ -164,35 +164,6 @@ export function useUnreadCounts() {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  useEffect(() => {
-    if (!meId) return;
-    // Clean up any existing channel before creating a new one
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-    const channel = supabase.channel(`messages-unread:${meId}`);
-    channel.on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `sender_id=neq.${meId}`,
-      },
-      () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
-    );
-    channel.subscribe();
-    channelRef.current = channel;
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [meId, qc]);
 
   return useQuery({
     queryKey: [...UNREAD_KEY, meId ?? "anon"],
