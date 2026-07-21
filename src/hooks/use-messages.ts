@@ -53,8 +53,8 @@ export function useMessages(connectionId: string | null) {
           qc.invalidateQueries({ queryKey: channelKey });
           qc.invalidateQueries({ queryKey: UNREAD_KEY });
         },
-      )
-      .subscribe();
+      );
+    channel.subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -170,8 +170,8 @@ export function useUnreadCounts() {
           filter: `sender_id=neq.${meId}`,
         },
         () => qc.invalidateQueries({ queryKey: UNREAD_KEY }),
-      )
-      .subscribe();
+      );
+    channel.subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -219,8 +219,8 @@ export function useTyping(connectionId: string | null) {
         setOtherTyping(true);
         if (clearTimer.current) clearTimeout(clearTimer.current);
         clearTimer.current = setTimeout(() => setOtherTyping(false), 3000);
-      })
-      .subscribe();
+      });
+    channel.subscribe();
     channelRef.current = channel;
     return () => {
       if (clearTimer.current) clearTimeout(clearTimer.current);

@@ -75,8 +75,8 @@ export function useConnections() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "activity_events", filter: `profile_id=eq.${meId}` },
         () => qc.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
-      )
-      .subscribe();
+      );
+    channel.subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
