@@ -19,7 +19,10 @@ export type PostType =
   | "discussion"
   | "help_request"
   | "collaboration_request"
-  | "progress_update";
+  | "progress_update"
+  | "lesson_learned"
+  | "feedback_request"
+  | "open_role";
 
 export type PostRow = {
   id: string;

@@ -55,6 +55,9 @@ export const POST_TYPE_LABEL: Record<string, string> = {
   help_request: "Help Request",
   collaboration_request: "Collaboration Request",
   progress_update: "Learning Progress",
+  lesson_learned: "Lesson Learned",
+  feedback_request: "Feedback Request",
+  open_role: "Open Role",
 };
 
 export const DISCOVERY_FILTERS = [
@@ -84,6 +87,9 @@ export const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "resource", label: "Share Resource" },
   { type: "tutorial", label: "Write Tutorial" },
   { type: "achievement", label: "Share Achievement" },
+  { type: "lesson_learned", label: "Lesson Learned" },
+  { type: "feedback_request", label: "Request Feedback" },
+  { type: "open_role", label: "Post Open Role" },
 ];
 
 export function reputationLabel(_rep: number): string {

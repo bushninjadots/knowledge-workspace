@@ -13,6 +13,9 @@ import {
   Bold,
   Italic,
   X,
+  Lightbulb,
+  MessageSquareMore,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,9 @@ const ACTION_ICON: Record<string, typeof Rocket> = {
   help_request: HandHeart,
   collaboration_request: Handshake,
   progress_update: Sparkles,
+  lesson_learned: Lightbulb,
+  feedback_request: MessageSquareMore,
+  open_role: UserPlus,
 };
 
 const MAX_CHARS = 2000;

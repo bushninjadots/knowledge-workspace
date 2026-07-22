@@ -27,6 +27,9 @@ import {
   Trash2,
   BadgeCheck,
   Clock,
+  Lightbulb,
+  MessageSquareMore,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -59,6 +62,9 @@ const TYPE_ACCENT: Record<PostType, string> = {
   help_request: "text-primary",
   collaboration_request: "text-brand-purple",
   progress_update: "text-brand-green",
+  lesson_learned: "text-brand-purple",
+  feedback_request: "text-primary",
+  open_role: "text-brand-green",
 };
 
 const TYPE_BORDER: Record<PostType, string> = {
@@ -72,6 +78,9 @@ const TYPE_BORDER: Record<PostType, string> = {
   help_request: "border-l-primary",
   collaboration_request: "border-l-brand-purple",
   progress_update: "border-l-brand-green",
+  lesson_learned: "border-l-brand-purple",
+  feedback_request: "border-l-primary",
+  open_role: "border-l-brand-green",
 };
 
 const TYPE_ICON: Record<PostType, typeof Heart> = {
@@ -85,6 +94,9 @@ const TYPE_ICON: Record<PostType, typeof Heart> = {
   help_request: HandHeart,
   collaboration_request: Handshake,
   progress_update: Sparkles,
+  lesson_learned: Lightbulb,
+  feedback_request: MessageSquareMore,
+  open_role: UserPlus,
 };
 
 function HighlightText({ text, query }: { text: string; query?: string }) {
