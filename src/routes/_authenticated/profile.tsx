@@ -1380,9 +1380,16 @@ function AvailabilityCard({
         <Row label="Status">
           <AvailabilitySelector
             current={(profile?.availability as AvailabilityStatus) ?? "available"}
-            onSave={(s) => {
-              updateAvailability.mutate(s);
-              onChange();
+            onSave={async (s) => {
+              try {
+                await updateAvailability.mutateAsync(s);
+                toast.success("Status updated");
+                onChange();
+              } catch (e: any) {
+                toast.error(e?.message?.includes("column")
+                  ? "Availability status not available yet — run migration #23"
+                  : e?.message ?? "Failed to update status");
+              }
             }}
           />
         </Row>

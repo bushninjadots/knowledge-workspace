@@ -108,14 +108,16 @@ function ProjectPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["project-detail", id],
     queryFn: async () => {
-      const { data: project, error } = await sb
-        .from("projects")
-        .select(
-          "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured",
-        )
-        .eq("id", id)
-        .maybeSingle();
-      if (error) throw error;
+      // Try full column set first; fall back if extended columns are missing.
+      const FULL_COLS = "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+      const BASIC_COLS = "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+
+      let project: any = null;
+      for (const cols of [FULL_COLS, BASIC_COLS]) {
+        const res = await sb.from("projects").select(cols).eq("id", id).maybeSingle();
+        if (!res.error) { project = res.data; break; }
+        if (!res.error.message?.includes("column") && !res.error.message?.includes("schema") && !res.error.code?.startsWith("42")) throw res.error;
+      }
       if (!project) throw notFound();
 
       const [contributorsRes, skillsRes] = await Promise.all([

@@ -723,7 +723,7 @@ function ProjectDialog({
       }
       cleanLinks[k] = val;
     }
-    const payload = {
+    const fullPayload = {
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
@@ -741,20 +741,41 @@ function ProjectDialog({
       is_featured: featured,
     };
 
+    // Basic payload without Phase 2 columns — fallback if they don't exist yet.
+    const basicPayload = {
+      profile_id: userId,
+      title: title.trim(),
+      description: description.trim() || null,
+      goal: goal.trim() || null,
+      status,
+      progress_percent: progress,
+      cover_url: coverPath,
+      links: cleanLinks,
+      tags,
+      looking_for_feedback: feedback,
+      looking_for_collaborators: collab,
+      is_featured: featured,
+    };
+
+    async function trySave(payload: Record<string, any>) {
+      if (project) {
+        return await sb.from("projects").update(payload).eq("id", project.id);
+      }
+      return await sb.from("projects").insert(payload).select("id").single();
+    }
+
     let projectId = project?.id;
-    if (project) {
-      const { error } = await sb.from("projects").update(payload).eq("id", project.id);
-      if (error) {
-        setSaving(false);
-        return toast.error(error.message);
-      }
-    } else {
-      const { data, error } = await sb.from("projects").insert(payload).select("id").single();
-      if (error || !data) {
-        setSaving(false);
-        return toast.error(error?.message ?? "Could not create project");
-      }
-      projectId = data.id;
+    let saveResult = await trySave(fullPayload);
+    // If extended columns don't exist, retry with basic payload.
+    if (saveResult.error?.message?.includes("column")) {
+      saveResult = await trySave(basicPayload);
+    }
+    if (saveResult.error) {
+      setSaving(false);
+      return toast.error(saveResult.error.message);
+    }
+    if (!project && saveResult.data) {
+      projectId = saveResult.data.id;
     }
 
     // Sync project_skills against the catalog picker — diff against what
