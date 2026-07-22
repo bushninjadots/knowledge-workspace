@@ -24,6 +24,7 @@ export type Profile = {
   portfolio_links: { label: string; url: string }[];
   social_links: Record<string, string>;
   availability: string | null;
+  reputation_score: number | null;
   available_days: string[];
   available_times: string[];
   teaching_style: string | null;
@@ -71,7 +72,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const { data: profile, error } = await (supabase as any)
     .from("profiles")
     .select(
-      "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, availability, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack",
+      "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack",
     )
     .eq("id", userId)
     .maybeSingle();

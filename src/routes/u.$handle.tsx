@@ -48,6 +48,7 @@ type PublicProfile = {
   software_stack: string[];
   teaching_style: string | null;
   learning_goals: string | null;
+  reputation_score: number | null;
 };
 
 type SkillLite = { id: string; name: string; category: string };
@@ -79,10 +80,10 @@ function PublicProfileRoute() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-profile", handle],
     queryFn: async () => {
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await (supabase as any)
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -249,6 +250,11 @@ function PublicProfileRoute() {
                 {profile.languages.length > 0 && (
                   <span className="inline-flex items-center gap-1">
                     <Languages className="h-3.5 w-3.5" /> {profile.languages.join(", ")}
+                  </span>
+                )}
+                {profile.reputation_score != null && profile.reputation_score > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2.5 py-0.5 text-brand-green">
+                    <Sparkles className="h-3 w-3" /> {profile.reputation_score} rep
                   </span>
                 )}
               </div>

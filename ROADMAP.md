@@ -210,11 +210,11 @@ Dashboard shows:
 
 ---
 
-# PHASE 4 — Reputation
+# PHASE 4 — Reputation ✅ DONE
 
 No followers. No likes. Everything earned.
 
-## Reputation Categories
+## Reputation Categories ✅ DONE
 ```
 Collaboration
 Teaching
@@ -224,7 +224,7 @@ Community
 Project Impact
 ```
 
-## Contribution History Timeline
+## Contribution History Timeline ✅ DONE
 ```
 Joined Project
 Finished Milestone
@@ -234,7 +234,7 @@ Mentored
 Received Endorsement
 ```
 
-## Achievements
+## Achievements ✅ DONE
 ```
 First Mentor
 100 Hours Helped

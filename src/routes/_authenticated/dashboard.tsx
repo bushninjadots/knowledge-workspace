@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useRouterState, Link } from "@tanstack/react-router";
-import { useState, useId } from "react";
+import { useState, useId, useEffect } from "react";
 import { Menu, X, Bell, ArrowRight, Compass, User, Sparkles, Clock, Rocket, Zap, Folder } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { AvailabilitySelector, useUpdateAvailability } from "@/components/tethyr/availability-badge";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import type { AvailabilityStatus } from "@/lib/skill-match";
+import { checkAndAwardAchievements } from "@/lib/reputation";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -115,6 +116,13 @@ function DashboardLayout() {
 function DashboardHome() {
   const { data, isLoading } = useCurrentUser();
   const updateAvail = useUpdateAvailability();
+
+  // Check for newly earned achievements on mount
+  useEffect(() => {
+    if (data?.userId) {
+      checkAndAwardAchievements(data.userId);
+    }
+  }, [data?.userId]);
 
   if (isLoading || !data) {
     return (
@@ -242,7 +250,7 @@ function DashboardHome() {
           subtitle="Every meaningful action becomes part of your reputation history."
         />
         <div className="mt-4">
-          <ActivityTimeline events={data.activity} limit={6} />
+          <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
         </div>
       </section>
 

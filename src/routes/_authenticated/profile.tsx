@@ -68,6 +68,9 @@ import {
 } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import { ReputationCard } from "@/components/tethyr/reputation-display";
+import { AchievementGrid } from "@/components/tethyr/achievements";
+import { checkAndAwardAchievements } from "@/lib/reputation";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -252,6 +255,20 @@ function ProfilePage() {
         {/* AVAILABILITY */}
         <AvailabilityCard profile={profile} onChange={refresh} />
 
+        {/* REPUTATION + ACHIEVEMENTS */}
+        {profile?.reputation_score != null && profile.reputation_score > 0 && (
+          <ReputationCard profileId={userId} score={profile.reputation_score} />
+        )}
+        <div className="card-border rounded-3xl border bg-surface p-6 sm:p-8">
+          <h2 className="font-display text-lg font-semibold">Achievements</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Badges earned through your contributions on Tethyr.
+          </p>
+          <div className="mt-5">
+            <AchievementGrid profileId={userId} />
+          </div>
+        </div>
+
         {/* STYLE & GOALS */}
         <div className="grid gap-6 md:grid-cols-2">
           <TextCard
@@ -282,7 +299,7 @@ function ProfilePage() {
             Your reputation history — every action becomes part of your story.
           </p>
           <div className="mt-5">
-            <ActivityTimeline events={activity} />
+            <ActivityTimeline profileId={userId} events={activity} />
           </div>
         </div>
       </div>
