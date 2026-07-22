@@ -1,40 +1,135 @@
-// Real suggested creators — fetched from the profiles table via a public
-// SELECT policy. Excludes the current user and prioritises creators with a
-// filled-out profile (avatar + creator_title).
+// Skill-matched suggested creators — matches complementary teach/learn skills,
+// availability overlap, and language compatibility.
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Sparkles, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { computeMatchScore, type SkillMeta, type AvailabilityStatus } from "@/lib/skill-match";
+import { AvailabilityBadge } from "./availability-badge";
 import { EmptyState } from "./empty-state";
 
-type SuggestedCreator = {
+type CandidateProfile = {
   id: string;
   handle: string | null;
   display_name: string | null;
   creator_title: string | null;
   category: string | null;
   avatar_url: string | null;
+  availability: AvailabilityStatus;
+  languages: string[];
+};
+
+type CandidateSkills = {
+  profile_id: string;
+  skill_id: string;
+  name: string;
+  category: string;
+  experience_level: string;
+  verification_level: string;
 };
 
 export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
   const { data: me } = useCurrentUser();
-  const meId = me?.userId;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["suggested-creators", meId ?? "anon"],
-    queryFn: async (): Promise<SuggestedCreator[]> => {
-      let q = supabase
+    queryKey: ["suggested-creators-v2", me?.userId ?? "anon"],
+    queryFn: async () => {
+      if (!me) return [];
+
+      const targetLearnIds = new Set(me.learnIds);
+      const targetTeachIds = new Set(me.teachIds);
+      const targetAvail = me.profile?.availability as AvailabilityStatus;
+      const targetLangs = me.profile?.languages ?? [];
+
+      // Fetch candidate profiles (exclude self, must have a name)
+      const { data: profiles } = await (supabase as any)
         .from("profiles")
-        .select("id, handle, display_name, creator_title, category, avatar_url")
+        .select("id, handle, display_name, creator_title, category, avatar_url, availability, languages")
         .not("display_name", "is", null)
-        .order("updated_at", { ascending: false })
-        .limit(limit + 1);
-      if (meId) q = q.neq("id", meId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return ((data ?? []) as SuggestedCreator[]).slice(0, limit);
+        .neq("id", me.userId)
+        .limit(200);
+
+      if (!profiles || profiles.length === 0) return [];
+
+      const candidateIds = (profiles as any[]).map((p: any) => p.id);
+
+      // Fetch teach + learn skills for all candidates in parallel
+      const [teachRes, learnRes] = await Promise.all([
+        supabase
+          .from("profile_skills_teach")
+          .select("profile_id, skill_id, experience_level, verification_level, skills(name, category)")
+          .in("profile_id", candidateIds),
+        supabase
+          .from("profile_skills_learn")
+          .select("profile_id, skill_id, skills(name, category)")
+          .in("profile_id", candidateIds),
+      ]);
+
+      // Group skills by profile
+      const teachMap = new Map<string, CandidateSkills[]>();
+      for (const row of teachRes.data ?? []) {
+        const skills = row.skills as { name: string; category: string } | null;
+        if (!skills) continue;
+        const entry: CandidateSkills = {
+          profile_id: row.profile_id,
+          skill_id: row.skill_id,
+          name: skills.name,
+          category: skills.category,
+          experience_level: row.experience_level,
+          verification_level: row.verification_level,
+        };
+        const list = teachMap.get(row.profile_id) ?? [];
+        list.push(entry);
+        teachMap.set(row.profile_id, list);
+      }
+
+      const learnMap = new Map<string, SkillMeta[]>();
+      for (const row of learnRes.data ?? []) {
+        const skills = row.skills as { name: string; category: string } | null;
+        if (!skills) continue;
+        const entry: SkillMeta = {
+          skill_id: row.skill_id,
+          name: skills.name,
+          category: skills.category,
+        };
+        const list = learnMap.get(row.profile_id) ?? [];
+        list.push(entry);
+        learnMap.set(row.profile_id, list);
+      }
+
+      // Score each candidate
+      const scored = (profiles as any[])
+        .map((p: any) => {
+          const teach = teachMap.get(p.id) ?? [];
+          const learn = learnMap.get(p.id) ?? [];
+          const { score, reasons } = computeMatchScore({
+            candidateTeach: teach,
+            candidateLearn: learn,
+            candidateAvail: p.availability as AvailabilityStatus,
+            candidateLangs: (p.languages as string[]) ?? [],
+            targetLearnIds,
+            targetTeachIds,
+            targetAvail,
+            targetLangs,
+          });
+
+          return {
+            ...p,
+            teachSkills: teach,
+            learnSkills: learn,
+            matchScore: score,
+            matchReasons: reasons,
+          };
+        })
+        .filter((c) => c.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, limit);
+
+      return scored;
     },
     staleTime: 60_000,
+    enabled: !!me,
   });
 
   if (isLoading) {
@@ -51,28 +146,25 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
     return (
       <EmptyState
         icon={<Sparkles className="h-5 w-5" />}
-        title="No creators to suggest yet"
-        description="Once more creators join Tethyr you'll see them here."
+        title="No matches yet"
+        description="Add skills to your profile to see creators you match with."
       />
     );
   }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {data.map((c, i) => {
+      {data.map((c) => {
         const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
-        const purple = i % 2 === 1;
         return (
-          <div
+          <Link
             key={c.id}
+            to="/u/$handle"
+            params={{ handle: c.handle ?? "" }}
             className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
           >
             <div className="flex items-center gap-3">
-              <div
-                className={`flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold text-background ${
-                  purple ? "bg-brand-purple" : "bg-primary"
-                }`}
-              >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
                 {initial}
               </div>
               <div className="min-w-0">
@@ -80,16 +172,27 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
                   {c.display_name || c.handle || "Untitled creator"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {c.creator_title || c.category || "New creator"}
+                  {c.creator_title || c.category || "Creator"}
                 </p>
               </div>
             </div>
-            {c.handle && (
-              <p className="mt-3 truncate text-[11px] uppercase tracking-wider text-muted-foreground">
-                @{c.handle}
-              </p>
+
+            <AvailabilityBadge status={c.availability} size="xs" />
+
+            {c.matchReasons.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {c.matchReasons.slice(0, 2).map((reason: string) => (
+                  <span
+                    key={reason}
+                    className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green"
+                  >
+                    <Zap className="h-2.5 w-2.5" />
+                    {reason}
+                  </span>
+                ))}
+              </div>
             )}
-          </div>
+          </Link>
         );
       })}
     </div>

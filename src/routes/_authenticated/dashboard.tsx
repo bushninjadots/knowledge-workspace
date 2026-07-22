@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useRouterState, Link } from "@tanstack/react-router";
 import { useState, useId } from "react";
-import { Menu, X, Bell, ArrowRight, Compass, User, Sparkles, Clock, Rocket } from "lucide-react";
+import { Menu, X, Bell, ArrowRight, Compass, User, Sparkles, Clock, Rocket, Zap, Folder } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/tethyr/global-search";
@@ -9,9 +9,12 @@ import { completenessPercent, nextSteps, sections } from "@/lib/profile-complete
 import { NextStepsList } from "@/components/tethyr/next-steps";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
+import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
+import { AvailabilitySelector, useUpdateAvailability } from "@/components/tethyr/availability-badge";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import type { AvailabilityStatus } from "@/lib/skill-match";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -111,6 +114,7 @@ function DashboardLayout() {
 
 function DashboardHome() {
   const { data, isLoading } = useCurrentUser();
+  const updateAvail = useUpdateAvailability();
 
   if (isLoading || !data) {
     return (
@@ -135,7 +139,7 @@ function DashboardHome() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      {/* Welcome + completion */}
+      {/* Welcome + availability */}
       <section className="relative overflow-hidden card-border rounded-3xl border bg-surface p-6 sm:p-8">
         <div
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
@@ -143,22 +147,31 @@ function DashboardHome() {
         />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
+              <AvailabilitySelector
+                current={data.profile?.availability as AvailabilityStatus}
+                onSave={(s) => updateAvail.mutate(s)}
+              />
+            </div>
             <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
               Hey {firstName}, let's <span className="text-gradient-brand">keep going</span>.
             </h1>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
-              Finish the last few steps on your profile so other creators can discover you and start
-              exchanging knowledge.
+              {pct < 100
+                ? "Finish the last few steps on your profile so other creators can discover you and start exchanging knowledge."
+                : "Your profile is looking great. Here's what's happening on Tethyr right now."}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button asChild>
-                <Link to="/profile">
-                  Continue profile <ArrowRight className="ml-1.5 h-4 w-4" />
-                </Link>
-              </Button>
+              {pct < 100 && (
+                <Button asChild>
+                  <Link to="/profile">
+                    Continue profile <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline">
-                <Link to="/dashboard">Browse creators</Link>
+                <Link to="/community">Community feed</Link>
               </Button>
             </div>
           </div>
@@ -167,39 +180,59 @@ function DashboardHome() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Next steps */}
-        <section className="card-border rounded-3xl border bg-surface p-5 lg:col-span-2 sm:p-6">
+        {/* Next steps (only if incomplete) */}
+        {pct < 100 && (
+          <section className="card-border rounded-3xl border bg-surface p-5 lg:col-span-2 sm:p-6">
+            <SectionHeader
+              icon={<Sparkles className="h-4 w-4 text-primary" />}
+              title="Next steps"
+              subtitle="A few things to finish before other creators can find you."
+            />
+            <div className="mt-4">
+              <NextStepsList items={remaining} />
+            </div>
+          </section>
+        )}
+
+        {/* Suggested projects */}
+        <section className={`card-border rounded-3xl border bg-surface p-5 sm:p-6 ${pct < 100 ? "" : "lg:col-span-2"}`}>
           <SectionHeader
-            icon={<Sparkles className="h-4 w-4 text-primary" />}
-            title="Next steps"
-            subtitle="A few things to finish before other creators can find you."
+            icon={<Folder className="h-4 w-4 text-brand-green" />}
+            title="Projects for you"
+            subtitle="Projects matching your skills and interests."
           />
           <div className="mt-4">
-            <NextStepsList items={remaining} />
+            <SuggestedProjects />
           </div>
         </section>
 
         {/* Quick links */}
-        <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-          <SectionHeader
-            icon={<Compass className="h-4 w-4 text-brand-purple" />}
-            title="Quick links"
-          />
-          <div className="mt-4 space-y-2">
-            <QuickLink
-              to="/profile"
-              icon={<User className="h-4 w-4" />}
-              label="View your profile"
+        {pct < 100 && (
+          <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
+            <SectionHeader
+              icon={<Compass className="h-4 w-4 text-brand-purple" />}
+              title="Quick links"
             />
-            <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="Continue editing" />
-            <QuickLink
-              to="/dashboard"
-              icon={<Compass className="h-4 w-4" />}
-              label="Browse creators"
-            />
-          </div>
-        </section>
+            <div className="mt-4 space-y-2">
+              <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="View your profile" />
+              <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="Continue editing" />
+              <QuickLink to="/community" icon={<Sparkles className="h-4 w-4" />} label="Community feed" />
+            </div>
+          </section>
+        )}
       </div>
+
+      {/* Suggested creators — skill-matched */}
+      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
+        <SectionHeader
+          icon={<Zap className="h-4 w-4 text-brand-green" />}
+          title="Creators you match with"
+          subtitle="Based on complementary skills, availability, and language."
+        />
+        <div className="mt-4">
+          <SuggestedCreators />
+        </div>
+      </section>
 
       {/* Activity */}
       <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
@@ -215,18 +248,6 @@ function DashboardHome() {
 
       {/* Connections */}
       <ConnectionsCard />
-
-      {/* Suggested creators */}
-      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-        <SectionHeader
-          icon={<Rocket className="h-4 w-4 text-brand-purple" />}
-          title="Suggested creators"
-          subtitle="Handpicked for now — matching goes live once your profile is complete."
-        />
-        <div className="mt-4">
-          <SuggestedCreators />
-        </div>
-      </section>
 
       {/* Discover skills */}
       <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
