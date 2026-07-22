@@ -62,12 +62,16 @@ export function CommunityLeftSidebar({
   onSelect,
   activeCommunity,
   onSelectCommunity,
+  activeSkill,
+  onSelectSkill,
   mobile = false,
 }: {
   active: CommunityNavId;
   onSelect: (id: CommunityNavId) => void;
   activeCommunity: string | null;
   onSelectCommunity: (id: string | null) => void;
+  activeSkill: string | null;
+  onSelectSkill: (skill: string | null) => void;
   mobile?: boolean;
 }) {
   return (
@@ -99,15 +103,31 @@ export function CommunityLeftSidebar({
           Currently learning
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5 px-1">
-          {ACTIVE_LEARNING_GOALS.map((skill) => (
-            <span
-              key={skill}
-              className="rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-muted-foreground"
-            >
-              {skill}
-            </span>
-          ))}
+          {ACTIVE_LEARNING_GOALS.map((skill) => {
+            const isActive = activeSkill === skill;
+            return (
+              <button
+                key={skill}
+                onClick={() => onSelectSkill(isActive ? null : skill)}
+                className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  isActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/60 bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {skill}
+              </button>
+            );
+          })}
         </div>
+        {activeSkill && (
+          <button
+            onClick={() => onSelectSkill(null)}
+            className="mt-2 px-1 text-[11px] text-primary hover:underline"
+          >
+            Clear filter
+          </button>
+        )}
       </div>
 
       <div className="card-border rounded-3xl border bg-surface p-4">

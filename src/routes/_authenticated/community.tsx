@@ -4,7 +4,7 @@
 // can slot in later without reshaping these components.
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, Users, Trophy, SlidersHorizontal } from "lucide-react";
+import { Heart, Users, Trophy, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -18,6 +18,7 @@ import {
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
 import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 import {
   CHALLENGES,
   COMMUNITIES,
@@ -66,6 +67,14 @@ const TYPE_FILTERS: { label: string; value: PostType | "all" }[] = [
   })),
 ];
 
+type SortMode = "latest" | "helpful" | "discussed";
+
+const SORT_OPTIONS: { label: string; value: SortMode }[] = [
+  { label: "Latest", value: "latest" },
+  { label: "Most helpful", value: "helpful" },
+  { label: "Most discussed", value: "discussed" },
+];
+
 function CommunityPage() {
   const [nav, setNav] = useState<CommunityNavId>("home");
   const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
@@ -75,6 +84,9 @@ function CommunityPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("latest");
+  const [activeSkill, setActiveSkill] = useState<string | null>(null);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -109,15 +121,48 @@ function CommunityPage() {
       if (focusFilter !== "all") {
         list = list.filter((p) => p.focus === focusFilter);
       }
+      if (activeSkill) {
+        list = list.filter((p) =>
+          p.skills.some((s) => s.toLowerCase() === activeSkill.toLowerCase()),
+        );
+      }
     }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.body.toLowerCase().includes(q) ||
+          p.author.name.toLowerCase().includes(q) ||
+          p.skills.some((s) => s.toLowerCase().includes(q)),
+      );
+    }
+
     if (nav === "trending") {
       list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
+    } else if (sortMode === "helpful") {
+      list = [...list].sort((a, b) => b.stats.helpful - a.stats.helpful);
+    } else if (sortMode === "discussed") {
+      list = [...list].sort((a, b) => b.stats.comments - a.stats.comments);
     }
-    return list;
-  }, [posts, nav, communityName, effectiveTypeFilter, focusFilter, savedIds]);
 
-  const showComposer = nav === "home";
-  const showTypeTabs = nav === "home";
+    return list;
+  }, [
+    posts,
+    nav,
+    communityName,
+    effectiveTypeFilter,
+    focusFilter,
+    savedIds,
+    searchQuery,
+    sortMode,
+    activeSkill,
+  ]);
+
+  const isSearching = searchQuery.trim().length > 0;
+  const showComposer = nav === "home" && !isSearching;
+  const showTypeTabs = nav === "home" && !isSearching;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -131,27 +176,57 @@ function CommunityPage() {
             onSelect={setNav}
             activeCommunity={activeCommunity}
             onSelectCommunity={setActiveCommunity}
+            activeSkill={activeSkill}
+            onSelectSkill={setActiveSkill}
           />
 
           <div className="min-w-0 flex-1">
-            <header className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Community</p>
-                <h1 className="font-display text-2xl font-semibold">
-                  {communityName ?? navTitle(nav)}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Teach, learn, build and collaborate — everything here revolves around skills and
-                  growth, not popularity.
-                </p>
+            <header className="mb-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Community
+                  </p>
+                  <h1 className="font-display text-2xl font-semibold">
+                    {communityName ?? navTitle(nav)}
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Teach, learn, build and collaborate — everything here revolves around skills and
+                    growth, not popularity.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMobileTrendingOpen(true)}
+                  className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Trending
+                </button>
               </div>
-              <button
-                onClick={() => setMobileTrendingOpen(true)}
-                className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Trending
-              </button>
+
+              <div className="relative mt-4">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search posts, skills, or people..."
+                  className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm"
+                />
+                {isSearching && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {isSearching && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {feed.length} result{feed.length !== 1 ? "s" : ""} for "{searchQuery}"
+                </p>
+              )}
             </header>
 
             {showComposer && (
@@ -201,6 +276,25 @@ function CommunityPage() {
                     }`}
                   >
                     {f}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showTypeTabs && (
+              <div className="mb-4 flex items-center gap-1">
+                <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSortMode(opt.value)}
+                    className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
+                      sortMode === opt.value
+                        ? "bg-surface-elevated text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
                   </button>
                 ))}
               </div>
@@ -262,6 +356,12 @@ function CommunityPage() {
                 title="Following is coming soon"
                 description="Once you follow creators, their posts will show up here first."
               />
+            ) : feed.length === 0 && isSearching ? (
+              <EmptyState
+                icon={<Search className="h-5 w-5" />}
+                title="No results found"
+                description={`Nothing matches "${searchQuery}". Try a different search term.`}
+              />
             ) : feed.length === 0 ? (
               <EmptyState
                 icon={<Users className="h-5 w-5" />}
@@ -280,6 +380,7 @@ function CommunityPage() {
                     post={post}
                     saved={savedIds.has(post.id)}
                     onToggleSave={() => toggleSave(post.id)}
+                    searchQuery={isSearching ? searchQuery : undefined}
                   />
                 ))}
               </div>
@@ -311,6 +412,11 @@ function CommunityPage() {
               activeCommunity={activeCommunity}
               onSelectCommunity={(id) => {
                 setActiveCommunity(id);
+                setMobileSidebarOpen(false);
+              }}
+              activeSkill={activeSkill}
+              onSelectSkill={(skill) => {
+                setActiveSkill(skill);
                 setMobileSidebarOpen(false);
               }}
               mobile

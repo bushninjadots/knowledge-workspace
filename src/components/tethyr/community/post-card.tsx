@@ -108,14 +108,36 @@ function JourneyStepper({ stage }: { stage: ProjectJourneyStage }) {
   );
 }
 
+function HighlightText({ text, query }: { text: string; query?: string }) {
+  if (!query || !query.trim()) return <>{text}</>;
+  const q = query.trim();
+  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} className="rounded bg-primary/20 px-0.5 text-primary">
+            {part}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 export function PostCard({
   post,
   saved,
   onToggleSave,
+  searchQuery,
 }: {
   post: Post;
   saved: boolean;
   onToggleSave: () => void;
+  searchQuery?: string;
 }) {
   const [stats, setStats] = useState<PostStats>(post.stats);
   const [appreciated, setAppreciated] = useState(false);
@@ -242,8 +264,12 @@ export function PostCard({
       )}
 
       {/* Body */}
-      <h3 className="mt-3 text-base font-semibold leading-snug">{post.title}</h3>
-      <p className="mt-1.5 text-sm text-foreground/90">{post.body}</p>
+      <h3 className="mt-3 text-base font-semibold leading-snug">
+        <HighlightText text={post.title} query={searchQuery} />
+      </h3>
+      <p className="mt-1.5 text-sm text-foreground/90">
+        <HighlightText text={post.body} query={searchQuery} />
+      </p>
 
       {post.code && (
         <div className="relative mt-3">
