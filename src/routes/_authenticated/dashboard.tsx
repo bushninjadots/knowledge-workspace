@@ -120,7 +120,7 @@ function DashboardHome() {
   // Check for newly earned achievements on mount
   useEffect(() => {
     if (data?.userId) {
-      checkAndAwardAchievements(data.userId);
+      checkAndAwardAchievements(data.userId).catch(() => {});
     }
   }, [data?.userId]);
 

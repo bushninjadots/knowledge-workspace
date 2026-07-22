@@ -128,7 +128,13 @@ export function usePosts() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        // Table may not exist yet — return empty list instead of crashing
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as PostWithAuthor[];
+        }
+        throw error;
+      }
       const posts = rawPosts as PostRow[];
 
       // Fetch author profiles in parallel
@@ -270,7 +276,12 @@ export function useComments(postId: string) {
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as CommentRow[];
+        }
+        throw error;
+      }
       const comments = rawComments as { id: string; post_id: string; author_id: string; body: string; is_best_answer: boolean; created_at: string }[];
 
       const authorIds = [...new Set(comments.map((c) => c.author_id))];

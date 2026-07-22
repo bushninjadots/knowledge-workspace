@@ -30,14 +30,15 @@ export function AchievementBadge({ type }: { type: AchievementType }) {
 }
 
 export function AchievementGrid({ profileId }: { profileId: string }) {
-  const { data: earned, isLoading } = useQuery({
+  const { data: earned, isLoading, isError } = useQuery({
     queryKey: ["achievements", profileId],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("user_achievements")
         .select("achievement, awarded_at")
         .eq("profile_id", profileId)
         .order("awarded_at", { ascending: false });
+      if (error) return [] as { achievement: AchievementType; awarded_at: string }[];
       return (data ?? []) as { achievement: AchievementType; awarded_at: string }[];
     },
     staleTime: 60_000,
@@ -50,6 +51,16 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
           <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface/60" />
         ))}
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <EmptyState
+        icon={<Award className="h-5 w-5" />}
+        title="No achievements yet"
+        description="Earn badges by contributing, collaborating, and teaching on Tethyr."
+      />
     );
   }
 

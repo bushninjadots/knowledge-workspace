@@ -80,6 +80,17 @@ export const Route = createFileRoute("/_authenticated/profile")({
     ],
   }),
   component: ProfilePage,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Profile failed to load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <a href="/profile" className="mt-4 inline-block text-sm text-primary hover:underline">
+          Try again
+        </a>
+      </div>
+    </div>
+  ),
 });
 
 type Skill = { id: string; slug: string; name: string; category: string };
