@@ -122,6 +122,22 @@ function ProfilePage() {
   // satisfy the Rules of Hooks.
   const cardAccent = useDominantColor(profileQuery.data?.bannerSigned ?? null);
 
+  if (profileQuery.isError) {
+    return (
+      <Shell>
+        <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
+          <h2 className="text-lg font-semibold text-foreground">Couldn't load your profile</h2>
+          <p className="text-sm text-muted-foreground">
+            {profileQuery.error?.message ?? "Something went wrong. Please try again."}
+          </p>
+          <Button variant="outline" onClick={() => refresh()}>
+            Try again
+          </Button>
+        </div>
+      </Shell>
+    );
+  }
+
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
       <Shell>

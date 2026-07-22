@@ -114,7 +114,7 @@ function DashboardLayout() {
 }
 
 function DashboardHome() {
-  const { data, isLoading } = useCurrentUser();
+  const { data, isLoading, isError, error, refresh } = useCurrentUser();
   const updateAvail = useUpdateAvailability();
 
   // Check for newly earned achievements on mount
@@ -123,6 +123,20 @@ function DashboardHome() {
       checkAndAwardAchievements(data.userId);
     }
   }, [data?.userId]);
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-4 p-8 text-center">
+        <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
+        <p className="text-sm text-muted-foreground">
+          {error?.message ?? "Something went wrong loading your data. Please try again."}
+        </p>
+        <Button variant="outline" onClick={() => refresh()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (

@@ -246,8 +246,9 @@ export function ComposerBar({
       setImages([]);
       localStorage.removeItem(DRAFT_KEY);
       onCancelEdit?.();
-    } catch (err) {
-      toast.error("Something went wrong");
+    } catch (err: any) {
+      const msg = err?.message ?? err?.error?.message ?? "Something went wrong";
+      toast.error(msg);
     }
   }
 

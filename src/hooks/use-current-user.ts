@@ -64,39 +64,83 @@ export type CurrentUserData = {
 
 export const CURRENT_USER_KEY = ["current-user"] as const;
 
+// Columns that existed before Phase 3/4 migrations — guaranteed to exist.
+const PROFILE_COLS_BASIC =
+  "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links";
+
+// Columns added in Phase 3+4 — may not exist yet if migrations haven't run.
+const PROFILE_COLS_EXTENDED =
+  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack";
+
+async function fetchProfile(userId: string) {
+  // Try full column set first; fall back to basic columns if a column is missing.
+  for (const cols of [`${PROFILE_COLS_BASIC}, ${PROFILE_COLS_EXTENDED}`, PROFILE_COLS_BASIC]) {
+    const { data, error } = await (supabase as any)
+      .from("profiles")
+      .select(cols)
+      .eq("id", userId)
+      .maybeSingle();
+    if (!error) return data as Profile | null;
+    // Only retry if the error looks like a missing-column issue.
+    if (!error.message?.includes("column")) break;
+  }
+  // Last resort: return just the id so the app doesn't crash.
+  return { id: userId } as Profile;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function safeQuery<T>(fn: () => any, fallback: T): Promise<T> {
+  try {
+    return (await fn()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   if (!userId) return null;
 
-  const { data: profile, error } = await (supabase as any)
-    .from("profiles")
-    .select(
-      "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack",
-    )
-    .eq("id", userId)
-    .maybeSingle();
-  if (error) throw error;
+  const profile = await fetchProfile(userId);
 
   const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
-    supabase
-      .from("profile_skills_teach")
-      .select("skill_id, verification_level, experience_level, proof_url, proof_note")
-      .eq("profile_id", userId),
-    supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
-    supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
-    supabase
-      .from("projects")
-      .select("*")
-      .eq("profile_id", userId)
-      .order("is_featured", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("activity_events")
-      .select("*")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(30),
+    safeQuery(
+      () =>
+        supabase
+          .from("profile_skills_teach")
+          .select("skill_id, verification_level, experience_level, proof_url, proof_note")
+          .eq("profile_id", userId),
+      { data: [], error: null },
+    ),
+    safeQuery(
+      () => supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+      { data: [], error: null },
+    ),
+    safeQuery(
+      () => supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
+      { data: [], error: null },
+    ),
+    safeQuery(
+      () =>
+        supabase
+          .from("projects")
+          .select("*")
+          .eq("profile_id", userId)
+          .order("is_featured", { ascending: false })
+          .order("created_at", { ascending: false }),
+      { data: [], error: null },
+    ),
+    safeQuery(
+      () =>
+        supabase
+          .from("activity_events")
+          .select("*")
+          .eq("profile_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+      { data: [], error: null },
+    ),
   ]);
 
   let avatarSigned: string | null = null;
