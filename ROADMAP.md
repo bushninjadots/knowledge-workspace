@@ -291,20 +291,7 @@ Weekly Reputation
 
 ---
 
-# PHASE 9 — AI Assistant
-
-Invisible assistance, never ChatGPT-like:
-```
-Suggest Collaborators / Improve Project Description
-Recommend Skills / Summarize Discussion
-Generate Weekly Update / Suggest Mentors
-Find Missing Roles / Detect Stale Projects
-Recommend Challenges
-```
-
----
-
-# PHASE 10 — Knowledge Layer
+# PHASE 9 — Knowledge Layer
 
 Projects generate knowledge:
 ```
@@ -324,5 +311,4 @@ Lessons Learned / FAQ / Tutorials
 - [ ] Phase 6 — Community Evolution
 - [ ] Phase 7 — Opportunity Layer
 - [ ] Phase 8 — Dashboard
-- [ ] Phase 9 — AI Assistant
-- [ ] Phase 10 — Knowledge Layer
+- [ ] Phase 9 — Knowledge Layer

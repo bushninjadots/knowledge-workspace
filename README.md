@@ -22,7 +22,7 @@ The goal is to make learning more accessible by matching people who have skills 
 
 ### Planned
 
-- AI-powered skill matching
+- Skill matching
 - Local nearby discovery
 - Wishlists for skills
 - Messaging improvements
