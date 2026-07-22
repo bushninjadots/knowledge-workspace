@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Rocket,
   HelpCircle,
@@ -8,6 +8,11 @@ import {
   HandHeart,
   Handshake,
   Sparkles,
+  ImagePlus,
+  Code2,
+  Bold,
+  Italic,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,7 +33,18 @@ const ACTION_ICON: Record<PostType, typeof Rocket> = {
   progress_update: Sparkles,
 };
 
-const MAX_CHARS = 500;
+const MAX_CHARS = 2000;
+const DRAFT_KEY = "tethyr-community-draft";
+const CODE_LANGUAGES = [
+  "JavaScript",
+  "TypeScript",
+  "Python",
+  "Rust",
+  "Go",
+  "SQL",
+  "HTML/CSS",
+  "Other",
+];
 
 function CharCount({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? current / max : 0;
@@ -66,15 +82,123 @@ function CharCount({ current, max }: { current: number; max: number }) {
   );
 }
 
-export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
+function insertMarkdown(
+  textarea: HTMLTextAreaElement,
+  before: string,
+  after: string,
+  fallback?: string,
+) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selected = text.slice(start, end) || fallback || "";
+  const newText = text.slice(0, start) + before + selected + after + text.slice(end);
+  return {
+    text: newText,
+    cursorStart: start + before.length,
+    cursorEnd: start + before.length + selected.length,
+  };
+}
+
+export function ComposerBar({
+  onPost,
+  editingPost,
+  onCancelEdit,
+}: {
+  onPost: (post: Post) => void;
+  editingPost?: Post | null;
+  onCancelEdit?: () => void;
+}) {
   const { data: me } = useCurrentUser();
-  const [type, setType] = useState<PostType | null>(null);
-  const [draft, setDraft] = useState("");
+  const [type, setType] = useState<PostType | null>(editingPost?.type ?? null);
+  const [draft, setDraft] = useState(editingPost?.body ?? "");
+  const [images, setImages] = useState<string[]>(editingPost?.images ?? []);
+  const [showCodeInsert, setShowCodeInsert] = useState(false);
+  const [codeLang, setCodeLang] = useState("JavaScript");
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const name = me?.profile?.display_name || me?.profile?.handle || "You";
   const initial = name.charAt(0).toUpperCase();
+  const isEditing = !!editingPost;
+
+  // Draft autosave
+  useEffect(() => {
+    if (isEditing) return;
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.body) setDraft(parsed.body);
+        if (parsed.type) setType(parsed.type);
+        if (parsed.images) setImages(parsed.images);
+      } catch {
+        // ignore
+      }
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditing) return;
+    if (draft || type || images.length > 0) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ body: draft, type, images }));
+    } else {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+  }, [draft, type, images, isEditing]);
+
+  const handleImageUpload = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      if (images.length >= 4) {
+        toast.info("Maximum 4 images per post");
+        break;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImages((prev) => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = "";
+  }
+
+  function removeImage(index: number) {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleBold() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "**", "**", "bold text");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleItalic() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "_", "_", "italic text");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleCode() {
+    setShowCodeInsert((v) => !v);
+  }
+
+  function insertCodeBlock() {
+    if (!textareaRef.current) return;
+    const lang = codeLang.toLowerCase().replace("/", "");
+    const block = `\n\`\`\`${lang}\n// code here\n\`\`\`\n`;
+    const pos = textareaRef.current.selectionStart;
+    const newText = draft.slice(0, pos) + block + draft.slice(pos);
+    setDraft(newText.slice(0, MAX_CHARS));
+    setShowCodeInsert(false);
+  }
 
   function submit() {
     const body = draft.trim();
@@ -83,25 +207,29 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
       return;
     }
     onPost({
-      id: `local-${Date.now()}`,
+      id: isEditing ? editingPost.id : `local-${Date.now()}`,
       type,
-      author: {
+      author: editingPost?.author ?? {
         name,
         title: me?.profile?.creator_title || me?.profile?.category || "Tethyr creator",
         reputation: 0,
         badges: [],
         accent: "green",
       },
-      community: me?.profile?.category || "General",
-      skills: [],
+      community: editingPost?.community || me?.profile?.category || "General",
+      skills: editingPost?.skills ?? [],
       timestamp: "Just now",
-      title: body.length > 80 ? `${body.slice(0, 77)}…` : body,
+      title: body.length > 80 ? `${body.slice(0, 77)}` : body,
       body,
-      stats: { likes: 0, helpful: 0, comments: 0, saves: 0, offers: 0 },
+      images: images.length > 0 ? images : undefined,
+      stats: editingPost?.stats ?? { likes: 0, helpful: 0, comments: 0, saves: 0, offers: 0 },
     });
     setDraft("");
     setType(null);
-    toast.success("Posted to the community");
+    setImages([]);
+    localStorage.removeItem(DRAFT_KEY);
+    toast.success(isEditing ? "Post updated" : "Posted to the community");
+    onCancelEdit?.();
   }
 
   return (
@@ -112,6 +240,18 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
           : ""
       }`}
     >
+      {isEditing && (
+        <div className="mb-3 flex items-center justify-between rounded-xl bg-surface-elevated px-3 py-2">
+          <span className="text-xs font-medium text-muted-foreground">Editing post</span>
+          <button
+            onClick={onCancelEdit}
+            className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-green text-sm font-semibold text-background">
           {initial}
@@ -123,9 +263,9 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="What are you building or learning today?"
-            rows={focused || draft.length > 80 ? 4 : 2}
-            className="min-h-16 resize-none rounded-2xl border-border/60 bg-background/40 transition-all"
+            placeholder="What are you building or learning today? Supports **bold**, _italic_, and ```code```."
+            rows={focused || draft.length > 80 ? 5 : 2}
+            className="min-h-16 resize-none rounded-2xl border-border/60 bg-background/40 transition-all font-mono text-sm"
           />
           {focused && (
             <div className="mt-1.5 flex items-center justify-end gap-1.5">
@@ -139,7 +279,95 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
           )}
         </div>
       </div>
+
+      {images.length > 0 && (
+        <div className="mt-3 flex gap-2">
+          {images.map((src, i) => (
+            <div key={i} className="relative">
+              <img src={src} alt="" className="h-16 w-16 rounded-xl object-cover" />
+              <button
+                onClick={() => removeImage(i)}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface text-foreground shadow-md"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showCodeInsert && (
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-2">
+          <Code2 className="h-4 w-4 shrink-0 text-brand-purple" />
+          <select
+            value={codeLang}
+            onChange={(e) => setCodeLang(e.target.value)}
+            className="rounded-lg border border-border/60 bg-surface px-2 py-1 text-xs text-foreground"
+          >
+            {CODE_LANGUAGES.map((l) => (
+              <option key={l}>{l}</option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={insertCodeBlock}
+            className="ml-auto h-7 text-xs"
+          >
+            Insert
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowCodeInsert(false)}
+            className="h-7 text-xs"
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={onFileChange}
+        />
+        <button
+          onClick={handleImageUpload}
+          disabled={images.length >= 4}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95 disabled:opacity-40"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
+          Image
+        </button>
+        <button
+          onClick={handleBold}
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
+        >
+          <Bold className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={handleItalic}
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
+        >
+          <Italic className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={handleCode}
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
+            showCodeInsert
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          }`}
+        >
+          <Code2 className="h-3.5 w-3.5" />
+          Code
+        </button>
+        <div className="mx-1 h-4 w-px bg-border/60" />
         {QUICK_ACTIONS.map((a) => {
           const Icon = ACTION_ICON[a.type];
           const active = type === a.type;
@@ -159,7 +387,7 @@ export function ComposerBar({ onPost }: { onPost: (post: Post) => void }) {
           );
         })}
         <Button size="sm" className="ml-auto" onClick={submit} disabled={!draft.trim()}>
-          Post
+          {isEditing ? "Save" : "Post"}
         </Button>
       </div>
     </div>

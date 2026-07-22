@@ -105,6 +105,7 @@ export type Post = {
   body: string;
   cover?: { gradient: "brand" | "green" | "purple"; label: string };
   code?: { language: string; snippet: string };
+  images?: string[];
   stats: PostStats;
   project?: {
     progress: number;

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Heart,
   ThumbsUp,
@@ -375,9 +377,9 @@ export function PostCard({
       <h3 className="mt-3 text-base font-semibold leading-snug">
         <HighlightText text={post.title} query={searchQuery} />
       </h3>
-      <p className="mt-1.5 text-sm text-foreground/90">
-        <HighlightText text={post.body} query={searchQuery} />
-      </p>
+      <div className="prose-custom mt-1.5 text-sm text-foreground/90">
+        <Markdown remarkPlugins={[remarkGfm]}>{post.body}</Markdown>
+      </div>
 
       {post.code && (
         <div className="relative mt-3">
@@ -404,6 +406,22 @@ export function PostCard({
           <p className="font-display text-sm font-semibold text-background/90">
             {post.cover.label}
           </p>
+        </div>
+      )}
+
+      {post.images && post.images.length > 0 && (
+        <div
+          className={`mt-3 grid gap-2 ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+        >
+          {post.images.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`Image ${i + 1}`}
+              className="w-full rounded-2xl border border-border/60 object-cover"
+              style={{ maxHeight: post.images!.length === 1 ? "20rem" : "10rem" }}
+            />
+          ))}
         </div>
       )}
 

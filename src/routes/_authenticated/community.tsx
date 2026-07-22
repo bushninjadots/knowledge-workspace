@@ -100,6 +100,8 @@ function CommunityPage() {
   });
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
 
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+
   function toggleSave(id: string) {
     setSavedIds((prev) => {
       const next = new Set(prev);
@@ -110,7 +112,18 @@ function CommunityPage() {
   }
 
   function addPost(post: Post) {
-    setPosts((prev) => [post, ...prev]);
+    if (editingPost) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === editingPost.id
+            ? { ...p, body: post.body, type: post.type, images: post.images }
+            : p,
+        ),
+      );
+      setEditingPost(null);
+    } else {
+      setPosts((prev) => [post, ...prev]);
+    }
   }
 
   function deletePost(id: string) {
@@ -118,8 +131,16 @@ function CommunityPage() {
     toast.success("Post deleted");
   }
 
-  function editPost(_id: string) {
-    toast.info("Edit coming soon");
+  function editPost(id: string) {
+    const post = posts.find((p) => p.id === id);
+    if (post) {
+      setEditingPost(post);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function cancelEdit() {
+    setEditingPost(null);
   }
 
   function updateComments(postId: string, comments: Comment[]) {
@@ -195,7 +216,7 @@ function CommunityPage() {
   ]);
 
   const isSearching = searchQuery.trim().length > 0;
-  const showComposer = nav === "home" && !isSearching;
+  const showComposer = (nav === "home" && !isSearching) || !!editingPost;
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
@@ -265,7 +286,7 @@ function CommunityPage() {
 
             {showComposer && (
               <div className="mb-6">
-                <ComposerBar onPost={addPost} />
+                <ComposerBar onPost={addPost} editingPost={editingPost} onCancelEdit={cancelEdit} />
               </div>
             )}
 

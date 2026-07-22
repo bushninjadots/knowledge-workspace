@@ -21,6 +21,7 @@ export type MessageRow = {
 
 export const MESSAGES_KEY = ["messages"] as const;
 export const UNREAD_KEY = ["messages-unread"] as const;
+export const LAST_MESSAGES_KEY = ["messages-last"] as const;
 export const PAGE_SIZE = 25;
 
 // ---------- Paginated thread ----------
