@@ -129,7 +129,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_project_published ON public.projects;
+DROP TRIGGER IF EXISTS trg_reputation_project_published ON public.projects;
 CREATE TRIGGER trg_reputation_project_published
   AFTER INSERT ON public.projects
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_published();
@@ -155,7 +155,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_project_joined ON public.project_contributors;
+DROP TRIGGER IF EXISTS trg_reputation_project_joined ON public.project_contributors;
 CREATE TRIGGER trg_reputation_project_joined
   AFTER INSERT ON public.project_contributors
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_joined();
@@ -179,7 +179,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_endorsement ON public.skill_endorsements;
+DROP TRIGGER IF EXISTS trg_reputation_endorsement ON public.skill_endorsements;
 CREATE TRIGGER trg_reputation_endorsement
   AFTER INSERT ON public.skill_endorsements
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_endorsement();
@@ -203,7 +203,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_project_update ON public.project_updates;
+DROP TRIGGER IF EXISTS trg_reputation_project_update ON public.project_updates;
 CREATE TRIGGER trg_reputation_project_update
   AFTER INSERT ON public.project_updates
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_update();
@@ -229,7 +229,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_community_post ON public.posts;
+DROP TRIGGER IF EXISTS trg_reputation_community_post ON public.posts;
 CREATE TRIGGER trg_reputation_community_post
   AFTER INSERT ON public.posts
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_community_post();
@@ -253,7 +253,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_community_comment ON public.comments;
+DROP TRIGGER IF EXISTS trg_reputation_community_comment ON public.comments;
 CREATE TRIGGER trg_reputation_community_comment
   AFTER INSERT ON public.comments
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_community_comment();
@@ -279,7 +279,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF trg_reputation_milestone ON public.project_milestones;
+DROP TRIGGER IF EXISTS trg_reputation_milestone ON public.project_milestones;
 CREATE TRIGGER trg_reputation_milestone
   AFTER UPDATE ON public.project_milestones
   FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_milestone();
