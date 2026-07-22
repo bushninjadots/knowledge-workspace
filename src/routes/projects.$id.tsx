@@ -27,7 +27,6 @@ import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
 import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
-import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Progress } from "@/components/ui/progress";
 import {
   PROJECT_LINK_KEYS,
@@ -546,39 +545,19 @@ function Shell({
   children: React.ReactNode;
   accentColor?: string | null;
 }) {
-  const [open, setOpen] = useState(false);
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
     : undefined;
   return (
-    <div className="flex min-h-screen bg-background" style={accentStyle}>
-      <div className="hidden md:block">
-        <DashboardSidebar />
-      </div>
-      {open && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute inset-y-0 left-0">
-            <DashboardSidebar onNavigate={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6 md:hidden">
-          <button
-            className="rounded-full p-2 hover:bg-surface"
-            onClick={() => setOpen(true)}
-            aria-label="Open menu"
-          >
-            <span className="block h-0.5 w-5 bg-foreground" />
-          </button>
-          <span className="font-display font-semibold">Project</span>
-        </header>
-        <main className="flex-1">{children}</main>
-      </div>
+    <div className="min-h-screen bg-background" style={accentStyle}>
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <Link to="/" className="font-display text-lg font-semibold text-foreground">
+          Tethyr
+        </Link>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-sm text-muted-foreground">Project</span>
+      </header>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }
