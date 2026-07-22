@@ -67,8 +67,6 @@ import {
   type SkillExperienceLevel,
 } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
-import { AvailabilityBadge, AvailabilitySelector, useUpdateAvailability } from "@/components/tethyr/availability-badge";
-import type { AvailabilityStatus } from "@/lib/skill-match";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ReputationCard } from "@/components/tethyr/reputation-display";
 import { AchievementGrid } from "@/components/tethyr/achievements";
@@ -1352,7 +1350,6 @@ function AvailabilityCard({
   const [days, setDays] = useState<string[]>(profile?.available_days ?? []);
   const [times, setTimes] = useState<string[]>(profile?.available_times ?? []);
   const [saving, setSaving] = useState(false);
-  const updateAvailability = useUpdateAvailability();
 
   useEffect(() => {
     if (open) {
@@ -1377,22 +1374,6 @@ function AvailabilityCard({
   return (
     <SectionCard title="Availability" onEdit={() => setOpen(true)}>
       <div className="space-y-3">
-        <Row label="Status">
-          <AvailabilitySelector
-            current={(profile?.availability as AvailabilityStatus) ?? "available"}
-            onSave={async (s) => {
-              try {
-                await updateAvailability.mutateAsync(s);
-                toast.success("Status updated");
-                onChange();
-              } catch (e: any) {
-                toast.error(e?.message?.includes("column")
-                  ? "Availability status not available yet — run migration #23"
-                  : e?.message ?? "Failed to update status");
-              }
-            }}
-          />
-        </Row>
         <Row label="Days">
           {profile?.available_days?.length ? (
             profile.available_days.map((d) => <Chip key={d}>{d}</Chip>)

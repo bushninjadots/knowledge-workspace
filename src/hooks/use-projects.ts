@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 // Until Supabase types are regenerated after migration, cast new tables
@@ -523,6 +524,61 @@ export function useDeleteOpenRole() {
 }
 
 // ============================================================
+// Role Applications — Accept / Decline
+// ============================================================
+
+export function useAcceptRoleApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { applicationId: string; profileId: string; roleId: string; projectId: string }) => {
+      // Update application status
+      const { error } = await sb
+        .from("project_role_applications")
+        .update({ status: "accepted" })
+        .eq("id", input.applicationId);
+      if (error) throw error;
+
+      // Add as contributor
+      const { error: contribErr } = await sb
+        .from("project_contributors")
+        .insert({ project_id: input.projectId, profile_id: input.profileId, role: "contributor" });
+      if (contribErr && !contribErr.message?.includes("duplicate")) throw contribErr;
+
+      // Fill the role
+      const { error: roleErr } = await sb
+        .from("project_open_roles")
+        .update({ is_filled: true, filled_by: input.profileId })
+        .eq("id", input.roleId);
+      if (roleErr) throw roleErr;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
+      qc.invalidateQueries({ queryKey: OPEN_ROLES_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+      toast.success("Application accepted");
+    },
+  });
+}
+
+export function useDeclineRoleApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { applicationId: string; roleId: string; projectId: string }) => {
+      const { error } = await sb
+        .from("project_role_applications")
+        .update({ status: "declined" })
+        .eq("id", input.applicationId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
+      qc.invalidateQueries({ queryKey: OPEN_ROLES_KEY(variables.projectId) });
+      toast.success("Application declined");
+    },
+  });
+}
+
+// ============================================================
 // Project Stage
 // ============================================================
 
@@ -538,6 +594,7 @@ export function useUpdateProjectStage() {
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+      toast.success(`Stage updated to ${variables.stage}`);
     },
   });
 }

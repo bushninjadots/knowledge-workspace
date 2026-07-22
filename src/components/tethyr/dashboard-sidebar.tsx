@@ -13,6 +13,9 @@ import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUnreadCounts } from "@/hooks/use-messages";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
+import type { AvailabilityStatus } from "@/lib/skill-match";
 
 const nav = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, live: true },
@@ -29,6 +32,8 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { data: unread } = useUnreadCounts();
+  const { data: me } = useCurrentUser();
+  const updateAvailability = useUpdateAvailability();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -88,6 +93,15 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+      <div className="mt-2 border-t border-border/60 pt-3">
+        <p className="mb-1.5 px-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Status</p>
+        <div className="px-3">
+          <AvailabilitySelector
+            current={(me?.profile?.availability as AvailabilityStatus) ?? "available"}
+            onSave={(s) => updateAvailability.mutate(s)}
+          />
+        </div>
+      </div>
       <button
         onClick={handleSignOut}
         className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"

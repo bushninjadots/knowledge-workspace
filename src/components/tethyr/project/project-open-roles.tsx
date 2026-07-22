@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Trash2, HandHeart } from "lucide-react";
 import { toast } from "sonner";
 import type { OpenRoleRow } from "@/hooks/use-projects";
-import { useCreateOpenRole, useDeleteOpenRole } from "@/hooks/use-projects";
+import { useCreateOpenRole, useDeleteOpenRole, useAcceptRoleApplication, useDeclineRoleApplication } from "@/hooks/use-projects";
 import { ApplyToRoleButton, RoleApplicationsList } from "./project-role-applications";
 
 export function OpenRolesSection({
@@ -20,6 +20,8 @@ export function OpenRolesSection({
   const [skills, setSkills] = useState("");
   const createRole = useCreateOpenRole();
   const deleteRole = useDeleteOpenRole();
+  const acceptApp = useAcceptRoleApplication();
+  const declineApp = useDeclineRoleApplication();
 
   const handleAdd = async () => {
     if (!title.trim()) return;
@@ -140,7 +142,12 @@ export function OpenRolesSection({
                   </button>
                 )}
               </div>
-              <RoleApplicationsList roleId={r.id} isOwner={isOwner} />
+              <RoleApplicationsList
+                roleId={r.id}
+                isOwner={isOwner}
+                onAccept={(appId, profileId) => acceptApp.mutate({ applicationId: appId, profileId, roleId: r.id, projectId })}
+                onDecline={(appId) => declineApp.mutate({ applicationId: appId, roleId: r.id, projectId })}
+              />
             </div>
           ))}
         </div>

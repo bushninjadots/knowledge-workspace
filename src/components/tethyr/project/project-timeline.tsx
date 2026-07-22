@@ -1,4 +1,3 @@
-import { toast } from "sonner";
 import {
   Lightbulb,
   Hammer,
@@ -52,7 +51,6 @@ export function ProjectTimeline({
               onClick={() => {
                 if (isOwner && onStageChange) {
                   onStageChange(stage.id);
-                  toast.success(`Stage changed to ${stage.label}`);
                 }
               }}
               disabled={!isOwner}

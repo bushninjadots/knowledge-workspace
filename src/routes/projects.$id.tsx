@@ -120,11 +120,21 @@ function ProjectPage() {
       }
       if (!project) throw notFound();
 
-      const [contributorsRes, skillsRes] = await Promise.all([
-        supabase
+      const FULL_CONTRIB_COLS = "profile_id, role, contribution_score, skills_used, profiles(id, handle, display_name, creator_title, avatar_url)";
+      const BASIC_CONTRIB_COLS = "profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)";
+
+      let contributorsRes: any = null;
+      for (const cols of [FULL_CONTRIB_COLS, BASIC_CONTRIB_COLS]) {
+        const res = await (supabase as any)
           .from("project_contributors")
-          .select("profile_id, role, contribution_score, skills_used, profiles(id, handle, display_name, creator_title, avatar_url)")
-          .eq("project_id", id),
+          .select(cols)
+          .eq("project_id", id);
+        if (!res.error) { contributorsRes = res; break; }
+        if (!res.error.message?.includes("column") && !res.error.message?.includes("schema") && !res.error.code?.startsWith("42")) break;
+      }
+      contributorsRes ??= { data: [] };
+
+      const [skillsRes] = await Promise.all([
         supabase
           .from("project_skills")
           .select("skill_id, skills(id, slug, name, category)")
@@ -448,6 +458,7 @@ function ProjectPage() {
             discussions={discussions}
             projectId={id}
             isContributor={isContributor}
+            isOwner={isOwner}
           />
         )}
 

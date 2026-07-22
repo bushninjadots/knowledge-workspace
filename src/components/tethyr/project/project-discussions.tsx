@@ -11,6 +11,7 @@ import {
   useDiscussionReplies,
   useCreateDiscussionReply,
 } from "@/hooks/use-projects";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
@@ -40,12 +41,15 @@ function timeAgo(dateStr: string): string {
 function DiscussionThread({
   discussion,
   isContributor,
+  isOwner,
 }: {
   discussion: DiscussionRow;
   isContributor: boolean;
+  isOwner: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [replyBody, setReplyBody] = useState("");
+  const { data: me } = useCurrentUser();
   const { data: replies = [] } = useDiscussionReplies(open ? discussion.id : "");
   const createReply = useCreateDiscussionReply();
   const deleteDiscussion = useDeleteDiscussion();
@@ -97,7 +101,7 @@ function DiscussionThread({
             <Markdown remarkPlugins={[remarkGfm]}>{discussion.body}</Markdown>
           </div>
         </div>
-        {discussion.author_id === discussion.project_id && (
+        {(discussion.author_id === me?.userId || isOwner) && (
           <button
             onClick={handleDelete}
             className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
@@ -165,10 +169,12 @@ export function ProjectDiscussions({
   discussions,
   projectId,
   isContributor,
+  isOwner,
 }: {
   discussions: DiscussionRow[];
   projectId: string;
   isContributor: boolean;
+  isOwner: boolean;
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
@@ -256,7 +262,7 @@ export function ProjectDiscussions({
       ) : (
         <div className="space-y-3">
           {discussions.map((d) => (
-            <DiscussionThread key={d.id} discussion={d} isContributor={isContributor} />
+            <DiscussionThread key={d.id} discussion={d} isContributor={isContributor} isOwner={isOwner} />
           ))}
         </div>
       )}
