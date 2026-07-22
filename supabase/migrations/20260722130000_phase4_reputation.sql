@@ -110,6 +110,40 @@ BEGIN
 END;
 $$;
 
+-- Trigger functions are created unconditionally (they're just PL/pgSQL).
+-- Triggers are attached only if the target table exists, so this migration
+-- is safe to run even if earlier migrations haven't been applied yet.
+
+-- Helper: conditionally create a trigger only if the table exists
+CREATE OR REPLACE FUNCTION public._create_trigger_if_table_exists(
+  p_trigger_name text,
+  p_table_name text,
+  p_function_name text,
+  p_timing text DEFAULT 'AFTER',
+  p_event text DEFAULT 'INSERT',
+  p_level text DEFAULT 'FOR EACH ROW'
+) RETURNS void
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path = public
+AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = p_table_name
+  ) THEN
+    EXECUTE format(
+      'DROP TRIGGER IF EXISTS %I ON public.%I',
+      p_trigger_name, p_table_name
+    );
+    EXECUTE format(
+      'CREATE TRIGGER %I %s %s ON public.%I %s EXECUTE FUNCTION %I()',
+      p_trigger_name, p_timing, p_event, p_table_name, p_level, p_function_name
+    );
+  END IF;
+END;
+$$;
+
 -- Trigger: project published → +10 points
 CREATE OR REPLACE FUNCTION public.trg_reputation_project_published()
 RETURNS trigger
@@ -129,10 +163,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_project_published ON public.projects;
-CREATE TRIGGER trg_reputation_project_published
-  AFTER INSERT ON public.projects
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_published();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_project_published', 'projects',
+  'trg_reputation_project_published', 'AFTER', 'INSERT'
+);
 
 -- Trigger: project joined (non-creator) → +5 points
 CREATE OR REPLACE FUNCTION public.trg_reputation_project_joined()
@@ -155,10 +189,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_project_joined ON public.project_contributors;
-CREATE TRIGGER trg_reputation_project_joined
-  AFTER INSERT ON public.project_contributors
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_joined();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_project_joined', 'project_contributors',
+  'trg_reputation_project_joined', 'AFTER', 'INSERT'
+);
 
 -- Trigger: endorsement received → +2 points per endorsement
 CREATE OR REPLACE FUNCTION public.trg_reputation_endorsement()
@@ -179,10 +213,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_endorsement ON public.skill_endorsements;
-CREATE TRIGGER trg_reputation_endorsement
-  AFTER INSERT ON public.skill_endorsements
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_endorsement();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_endorsement', 'skill_endorsements',
+  'trg_reputation_endorsement', 'AFTER', 'INSERT'
+);
 
 -- Trigger: project update posted → +3 points
 CREATE OR REPLACE FUNCTION public.trg_reputation_project_update()
@@ -203,10 +237,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_project_update ON public.project_updates;
-CREATE TRIGGER trg_reputation_project_update
-  AFTER INSERT ON public.project_updates
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_project_update();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_project_update', 'project_updates',
+  'trg_reputation_project_update', 'AFTER', 'INSERT'
+);
 
 -- Trigger: community post created → +2 points
 CREATE OR REPLACE FUNCTION public.trg_reputation_community_post()
@@ -229,10 +263,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_community_post ON public.posts;
-CREATE TRIGGER trg_reputation_community_post
-  AFTER INSERT ON public.posts
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_community_post();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_community_post', 'posts',
+  'trg_reputation_community_post', 'AFTER', 'INSERT'
+);
 
 -- Trigger: community comment created → +1 point
 CREATE OR REPLACE FUNCTION public.trg_reputation_community_comment()
@@ -253,10 +287,10 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_community_comment ON public.comments;
-CREATE TRIGGER trg_reputation_community_comment
-  AFTER INSERT ON public.comments
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_community_comment();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_community_comment', 'comments',
+  'trg_reputation_community_comment', 'AFTER', 'INSERT'
+);
 
 -- Trigger: milestone completed → +5 points
 CREATE OR REPLACE FUNCTION public.trg_reputation_milestone()
@@ -279,7 +313,7 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reputation_milestone ON public.project_milestones;
-CREATE TRIGGER trg_reputation_milestone
-  AFTER UPDATE ON public.project_milestones
-  FOR EACH ROW EXECUTE FUNCTION public.trg_reputation_milestone();
+SELECT public._create_trigger_if_table_exists(
+  'trg_reputation_milestone', 'project_milestones',
+  'trg_reputation_milestone', 'AFTER', 'UPDATE'
+);

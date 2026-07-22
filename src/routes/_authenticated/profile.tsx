@@ -1375,14 +1375,14 @@ function AvailabilityCard({
     <SectionCard title="Availability" onEdit={() => setOpen(true)}>
       <div className="space-y-3">
         <Row label="Days">
-          {profile?.available_days.length ? (
+          {profile?.available_days?.length ? (
             profile.available_days.map((d) => <Chip key={d}>{d}</Chip>)
           ) : (
             <span className="text-sm text-muted-foreground">Not set</span>
           )}
         </Row>
         <Row label="Times">
-          {profile?.available_times.length ? (
+          {profile?.available_times?.length ? (
             profile.available_times.map((t) => <Chip key={t}>{t}</Chip>)
           ) : (
             <span className="text-sm text-muted-foreground">Not set</span>
