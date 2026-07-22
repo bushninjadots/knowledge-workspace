@@ -49,13 +49,17 @@ CREATE INDEX IF NOT EXISTS idx_user_achievements_profile ON public.user_achievem
 
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Achievements viewable by everyone"
-  ON public.user_achievements FOR SELECT
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Achievements viewable by everyone"
+    ON public.user_achievements FOR SELECT
+    USING (true);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-CREATE POLICY "System can insert achievements"
-  ON public.user_achievements FOR INSERT
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "System can insert achievements"
+    ON public.user_achievements FOR INSERT
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- ============================================================
 -- 3. Contribution log — unified timeline of reputation-eligible events
@@ -76,13 +80,17 @@ CREATE INDEX IF NOT EXISTS idx_contribution_log_category ON public.contribution_
 
 ALTER TABLE public.contribution_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Contribution log viewable by everyone"
-  ON public.contribution_log FOR SELECT
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Contribution log viewable by everyone"
+    ON public.contribution_log FOR SELECT
+    USING (true);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-CREATE POLICY "System can insert contributions"
-  ON public.contribution_log FOR INSERT
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "System can insert contributions"
+    ON public.contribution_log FOR INSERT
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- ============================================================
 -- 4. Trigger functions for automatic reputation updates

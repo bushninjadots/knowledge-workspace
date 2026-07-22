@@ -1,5 +1,6 @@
 -- Phase 2 remaining steps: visual timeline stages, contributor scores,
 -- role applications, and activity log for auto-publishing updates.
+-- Safe to re-run: all CREATE statements use IF NOT EXISTS / IF EXISTS / DO blocks.
 
 -- ============================================================
 -- 1. Timeline stages (replaces/augments project_status)
@@ -53,42 +54,51 @@ CREATE INDEX IF NOT EXISTS project_role_applications_profile_idx ON public.proje
 
 ALTER TABLE public.project_role_applications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Applications viewable by role owner and applicant"
-  ON public.project_role_applications FOR SELECT
-  USING (
-    auth.uid() = profile_id
-    OR EXISTS (
-      SELECT 1 FROM public.project_open_roles por
-      JOIN public.projects p ON p.id = por.project_id
-      WHERE por.id = project_role_applications.role_id
-        AND p.profile_id = auth.uid()
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "Applications viewable by role owner and applicant"
+    ON public.project_role_applications FOR SELECT
+    USING (
+      auth.uid() = profile_id
+      OR EXISTS (
+        SELECT 1 FROM public.project_open_roles por
+        JOIN public.projects p ON p.id = por.project_id
+        WHERE por.id = project_role_applications.role_id
+          AND p.profile_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-CREATE POLICY "Authenticated users can apply"
-  ON public.project_role_applications FOR INSERT
-  WITH CHECK (auth.uid() = profile_id);
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can apply"
+    ON public.project_role_applications FOR INSERT
+    WITH CHECK (auth.uid() = profile_id);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-CREATE POLICY "Owner can update application status"
-  ON public.project_role_applications FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.project_open_roles por
-      JOIN public.projects p ON p.id = por.project_id
-      WHERE por.id = project_role_applications.role_id
-        AND p.profile_id = auth.uid()
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "Owner can update application status"
+    ON public.project_role_applications FOR UPDATE
+    USING (
+      EXISTS (
+        SELECT 1 FROM public.project_open_roles por
+        JOIN public.projects p ON p.id = por.project_id
+        WHERE por.id = project_role_applications.role_id
+          AND p.profile_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-CREATE POLICY "Applicant can withdraw own application"
-  ON public.project_role_applications FOR DELETE
-  USING (auth.uid() = profile_id);
+DO $$ BEGIN
+  CREATE POLICY "Applicant can withdraw own application"
+    ON public.project_role_applications FOR DELETE
+    USING (auth.uid() = profile_id);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DROP TRIGGER IF EXISTS set_project_role_applications_updated_at ON public.project_role_applications;
 CREATE TRIGGER set_project_role_applications_updated_at
   BEFORE UPDATE ON public.project_role_applications
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
-GRANT SELECT ON public.project_role_applications TO anon;
+DO $$ BEGIN GRANT SELECT ON public.project_role_applications TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- ============================================================
 -- 4. Auto-increment contribution_score on updates and discussions
