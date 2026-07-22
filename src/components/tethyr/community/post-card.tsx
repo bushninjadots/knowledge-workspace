@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Heart,
   ThumbsUp,
@@ -20,12 +21,17 @@ import {
   Rocket,
   BookOpen,
   MessageSquare,
+  Pencil,
+  Trash2,
+  BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   POST_TYPE_LABEL,
   PROJECT_JOURNEY_STAGES,
   reputationLabel,
+  ACTIVE_LEARNING_GOALS,
   type Comment,
   type Post,
   type PostStats,
@@ -33,6 +39,7 @@ import {
 } from "@/lib/community-data";
 import { ReputationBadgePill, SkillBadge } from "./badges";
 import { CommentThread } from "./comment-thread";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 const RESOURCE_ICON = {
   Article: FileText,
@@ -139,6 +146,8 @@ export function PostCard({
   onCommentsChange,
   showComments,
   onToggleComments,
+  onDelete,
+  onEdit,
 }: {
   post: Post;
   saved: boolean;
@@ -148,11 +157,22 @@ export function PostCard({
   onCommentsChange: (comments: Comment[]) => void;
   showComments: boolean;
   onToggleComments: () => void;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }) {
+  const { data: me } = useCurrentUser();
   const [stats, setStats] = useState<PostStats>(post.stats);
   const [appreciated, setAppreciated] = useState(false);
   const [markedHelpful, setMarkedHelpful] = useState(false);
   const [offered, setOffered] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isOwner =
+    me?.profile?.display_name === post.author.name || me?.profile?.handle === post.author.name;
+
+  const matchedSkills = post.skills.filter((s) =>
+    ACTIVE_LEARNING_GOALS.some((g) => g.toLowerCase() === s.toLowerCase()),
+  );
 
   function toggleAppreciate() {
     setAppreciated((v) => !v);
@@ -194,7 +214,44 @@ export function PostCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="truncate text-sm font-medium">{post.author.name}</p>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Link to="/profile" className="truncate text-sm font-medium hover:underline">
+                  {post.author.name}
+                </Link>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64" side="top">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${avatarBg}`}
+                  >
+                    {initial}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{post.author.name}</p>
+                    <p className="text-xs text-muted-foreground">{post.author.title}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="text-xs font-semibold text-brand-green">
+                        {reputationLabel(post.author.reputation)}
+                      </span>
+                      {post.author.badges.length > 0 && (
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <BadgeCheck className="h-3 w-3" />
+                          {post.author.badges.length} badge
+                          {post.author.badges.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  to="/profile"
+                  className="mt-3 block w-full rounded-lg bg-surface-elevated py-1.5 text-center text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  View profile
+                </Link>
+              </HoverCardContent>
+            </HoverCard>
             <span className="text-xs text-muted-foreground">
               {reputationLabel(post.author.reputation)}
             </span>
@@ -212,15 +269,56 @@ export function PostCard({
             <span>{post.timestamp}</span>
           </div>
         </div>
-        <span
-          className={`flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
-        >
-          {(() => {
-            const TypeIcon = TYPE_ICON[post.type];
-            return <TypeIcon className="h-3 w-3" />;
-          })()}
-          {POST_TYPE_LABEL[post.type]}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {isOwner && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onEdit}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                title="Edit post"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              {confirmDelete ? (
+                <div className="flex items-center gap-1 rounded-lg border border-destructive/40 bg-destructive/10 px-2 py-1">
+                  <span className="text-[10px] text-destructive">Delete?</span>
+                  <button
+                    onClick={() => {
+                      onDelete?.();
+                      setConfirmDelete(false);
+                    }}
+                    className="text-[10px] font-semibold text-destructive hover:underline"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="text-[10px] text-muted-foreground hover:underline"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  title="Delete post"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+          <span
+            className={`flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
+          >
+            {(() => {
+              const TypeIcon = TYPE_ICON[post.type];
+              return <TypeIcon className="h-3 w-3" />;
+            })()}
+            {POST_TYPE_LABEL[post.type]}
+          </span>
+        </div>
       </div>
 
       {/* Type-specific top strip */}
@@ -348,7 +446,13 @@ export function PostCard({
       )}
 
       {post.skills.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {matchedSkills.length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+              <BadgeCheck className="h-3 w-3" />
+              {matchedSkills.length} skill{matchedSkills.length !== 1 ? "s" : ""} match
+            </span>
+          )}
           {post.skills.map((s) => (
             <SkillBadge key={s} label={s} />
           ))}

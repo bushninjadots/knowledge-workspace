@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Heart, Users, Trophy, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
+import { toast } from "sonner";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -110,6 +111,15 @@ function CommunityPage() {
 
   function addPost(post: Post) {
     setPosts((prev) => [post, ...prev]);
+  }
+
+  function deletePost(id: string) {
+    setPosts((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Post deleted");
+  }
+
+  function editPost(_id: string) {
+    toast.info("Edit coming soon");
   }
 
   function updateComments(postId: string, comments: Comment[]) {
@@ -409,6 +419,8 @@ function CommunityPage() {
                     onCommentsChange={(comments) => updateComments(post.id, comments)}
                     showComments={openComments.has(post.id)}
                     onToggleComments={() => toggleComments(post.id)}
+                    onDelete={() => deletePost(post.id)}
+                    onEdit={() => editPost(post.id)}
                   />
                 ))}
               </div>
