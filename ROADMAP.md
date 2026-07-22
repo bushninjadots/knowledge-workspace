@@ -305,10 +305,10 @@ Lessons Learned / FAQ / Tutorials
 
 - [x] Phase 1 — Community Foundation (Steps 1.1–1.6)
 - [x] Phase 2 — Living Projects (Steps 2.1–2.7)
-- [ ] Phase 3 — Collaboration Engine
-- [ ] Phase 4 — Reputation
-- [ ] Phase 5 — Skills Ecosystems
-- [ ] Phase 6 — Community Evolution
+- [x] Phase 3 — Collaboration Engine
+- [x] Phase 4 — Reputation
+- [x] Phase 5 — Skills Ecosystems
+- [ ] Phase 6 — Community Evolution (see PHASE6_ROADMAP.md)
 - [ ] Phase 7 — Opportunity Layer
 - [ ] Phase 8 — Dashboard
 - [ ] Phase 9 — Knowledge Layer
