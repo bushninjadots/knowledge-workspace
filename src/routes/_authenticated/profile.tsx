@@ -67,6 +67,8 @@ import {
   type SkillExperienceLevel,
 } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
+import { AvailabilityBadge, AvailabilitySelector, useUpdateAvailability } from "@/components/tethyr/availability-badge";
+import type { AvailabilityStatus } from "@/lib/skill-match";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ReputationCard } from "@/components/tethyr/reputation-display";
 import { AchievementGrid } from "@/components/tethyr/achievements";
@@ -343,7 +345,7 @@ function Shell({
 }) {
   const [open, setOpen] = useState(false);
   const accentStyle = accentColor
-    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+    ? ({ "--accent-border": withAlpha(accentColor, 0.55) } as React.CSSProperties)
     : undefined;
   return (
     <div className="flex min-h-screen bg-background" style={accentStyle}>
@@ -1350,6 +1352,7 @@ function AvailabilityCard({
   const [days, setDays] = useState<string[]>(profile?.available_days ?? []);
   const [times, setTimes] = useState<string[]>(profile?.available_times ?? []);
   const [saving, setSaving] = useState(false);
+  const updateAvailability = useUpdateAvailability();
 
   useEffect(() => {
     if (open) {
@@ -1374,6 +1377,15 @@ function AvailabilityCard({
   return (
     <SectionCard title="Availability" onEdit={() => setOpen(true)}>
       <div className="space-y-3">
+        <Row label="Status">
+          <AvailabilitySelector
+            current={(profile?.availability as AvailabilityStatus) ?? "available"}
+            onSave={(s) => {
+              updateAvailability.mutate(s);
+              onChange();
+            }}
+          />
+        </Row>
         <Row label="Days">
           {profile?.available_days?.length ? (
             profile.available_days.map((d) => <Chip key={d}>{d}</Chip>)
