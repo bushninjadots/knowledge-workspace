@@ -1,0 +1,546 @@
+// Skill ecosystem page at /skills/:slug. Each skill becomes a destination
+// with overview, people (teachers + learners), projects, and stats.
+import { useState } from "react";
+import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
+  Folder,
+  Star,
+  ArrowLeft,
+  MapPin,
+  Clock,
+  Sparkles,
+  Trophy,
+  ExternalLink,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
+import {
+  VerificationBadge,
+  ExperienceBadge,
+} from "@/components/tethyr/profile-sections";
+import { AvailabilityBadge } from "@/components/tethyr/availability-badge";
+import type { AvailabilityStatus } from "@/lib/skill-match";
+import { EmptyState } from "@/components/tethyr/empty-state";
+
+// Until Supabase types are regenerated
+const sb = supabase as any;
+
+export const Route = createFileRoute("/skills/$slug")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.slug} — Tethyr` },
+      { name: "description", content: `Discover ${params.slug} on Tethyr — teachers, learners, and projects.` },
+    ],
+  }),
+  component: SkillPage,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <Link to="/explore" className="mt-4 inline-block text-sm text-primary hover:underline">
+          Back to explore
+        </Link>
+      </div>
+    </div>
+  ),
+});
+
+type TabId = "overview" | "people" | "projects";
+
+const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
+  { id: "overview", label: "Overview", icon: Star },
+  { id: "people", label: "People", icon: Users },
+  { id: "projects", label: "Projects", icon: Folder },
+];
+
+function SkillPage() {
+  const { slug } = useParams({ from: "/skills/$slug" });
+  const [tab, setTab] = useState<TabId>("overview");
+
+  const { data: skill, isLoading: skillLoading } = useQuery({
+    queryKey: ["skill", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skills")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw notFound();
+      return data as { id: string; slug: string; name: string; category: string };
+    },
+  });
+
+  if (skillLoading || !skill) {
+    return (
+      <Shell>
+        <div className="mx-auto max-w-5xl p-8">
+          <div className="h-40 animate-pulse rounded-3xl bg-surface/60" />
+        </div>
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell>
+      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/explore"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated text-muted-foreground transition hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="font-display text-2xl font-semibold sm:text-3xl">{skill.name}</h1>
+            <p className="text-sm text-muted-foreground">{skill.category}</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 rounded-2xl border border-border/60 bg-surface p-1">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab content */}
+        {tab === "overview" && <SkillOverview skillId={skill.id} skillName={skill.name} />}
+        {tab === "people" && <SkillPeople skillId={skill.id} skillName={skill.name} />}
+        {tab === "projects" && <SkillProjects skillId={skill.id} skillName={skill.name} />}
+      </div>
+    </Shell>
+  );
+}
+
+// ── Overview Tab ──────────────────────────────────────────────
+
+function SkillOverview({
+  skillId,
+  skillName,
+}: {
+  skillId: string;
+  skillName: string;
+}) {
+  const { data: stats } = useQuery({
+    queryKey: ["skill-stats", skillId],
+    queryFn: async () => {
+      const [teachRes, learnRes, projectRes, endorseRes] = await Promise.all([
+        sb.from("profile_skills_teach").select("profile_id", { count: "exact", head: true }).eq("skill_id", skillId),
+        sb.from("profile_skills_learn").select("profile_id", { count: "exact", head: true }).eq("skill_id", skillId),
+        sb.from("project_skills").select("project_id", { count: "exact", head: true }).eq("skill_id", skillId),
+        sb.from("skill_endorsements").select("id", { count: "exact", head: true }).eq("skill_id", skillId),
+      ]);
+      return {
+        teachers: teachRes.count ?? 0,
+        learners: learnRes.count ?? 0,
+        projects: projectRes.count ?? 0,
+        endorsements: endorseRes.count ?? 0,
+      };
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard icon={<GraduationCap className="h-5 w-5 text-primary" />} label="Teachers" value={stats?.teachers ?? 0} />
+        <StatCard icon={<BookOpen className="h-5 w-5 text-brand-purple" />} label="Learners" value={stats?.learners ?? 0} />
+        <StatCard icon={<Folder className="h-5 w-5 text-brand-green" />} label="Projects" value={stats?.projects ?? 0} />
+        <StatCard icon={<Star className="h-5 w-5 text-amber-500" />} label="Endorsements" value={stats?.endorsements ?? 0} />
+      </div>
+
+      {/* Quick links */}
+      <div className="card-border rounded-3xl border bg-surface p-6">
+        <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {skillName} is one of the creative skills on Tethyr. Browse the People tab to find
+          teachers and learners, or check Projects to see what's being built with this skill.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            to="/skills/$slug"
+            params={{ slug: skillName.toLowerCase().replace(/\s+/g, "-") }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20"
+          >
+            Find teachers <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="card-border rounded-2xl border bg-surface p-4 text-center">
+      <div className="flex justify-center">{icon}</div>
+      <p className="mt-2 font-display text-2xl font-semibold">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+// ── People Tab ────────────────────────────────────────────────
+
+function SkillPeople({
+  skillId,
+  skillName,
+}: {
+  skillId: string;
+  skillName: string;
+}) {
+  const [filter, setFilter] = useState<"teachers" | "learners">("teachers");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <button
+          onClick={() => setFilter("teachers")}
+          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+            filter === "teachers"
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <GraduationCap className="mr-1.5 inline h-3.5 w-3.5" />
+          Teachers
+        </button>
+        <button
+          onClick={() => setFilter("learners")}
+          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+            filter === "learners"
+              ? "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BookOpen className="mr-1.5 inline h-3.5 w-3.5" />
+          Learners
+        </button>
+      </div>
+
+      {filter === "teachers" ? (
+        <SkillTeachers skillId={skillId} skillName={skillName} />
+      ) : (
+        <SkillLearners skillId={skillId} skillName={skillName} />
+      )}
+    </div>
+  );
+}
+
+function SkillTeachers({
+  skillId,
+  skillName,
+}: {
+  skillId: string;
+  skillName: string;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["skill-teachers", skillId],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("profile_skills_teach")
+        .select("profile_id, verification_level, experience_level, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)")
+        .eq("skill_id", skillId)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        icon={<GraduationCap className="h-5 w-5" />}
+        title="No teachers yet"
+        description={`Be the first to offer ${skillName} teaching on Tethyr.`}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {data.map((row) => {
+        const p = row.profiles;
+        if (!p) return null;
+        const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();
+        return (
+          <Link
+            key={row.profile_id}
+            to="/u/$handle"
+            params={{ handle: p.handle ?? "" }}
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">
+                {p.display_name || p.handle || "Creator"}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {p.creator_title || "Creator"}
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <VerificationBadge level={row.verification_level} />
+                <ExperienceBadge level={row.experience_level} />
+                <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
+              </div>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function SkillLearners({
+  skillId,
+  skillName,
+}: {
+  skillId: string;
+  skillName: string;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["skill-learners", skillId],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("profile_skills_learn")
+        .select("profile_id, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)")
+        .eq("skill_id", skillId)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        icon={<BookOpen className="h-5 w-5" />}
+        title="No learners yet"
+        description={`Be the first to start learning ${skillName} on Tethyr.`}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {data.map((row) => {
+        const p = row.profiles;
+        if (!p) return null;
+        const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();
+        return (
+          <Link
+            key={row.profile_id}
+            to="/u/$handle"
+            params={{ handle: p.handle ?? "" }}
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">
+                {p.display_name || p.handle || "Creator"}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {p.creator_title || "Creator"}
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
+              </div>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Projects Tab ──────────────────────────────────────────────
+
+function SkillProjects({
+  skillId,
+  skillName,
+}: {
+  skillId: string;
+  skillName: string;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["skill-projects", skillId],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("project_skills")
+        .select("project_id, projects(id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id)")
+        .eq("skill_id", skillId);
+      return (data ?? []) as any[];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-28 animate-pulse rounded-2xl bg-surface/60" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        icon={<Folder className="h-5 w-5" />}
+        title="No projects yet"
+        description={`No projects are using ${skillName} yet. Start one!`}
+      />
+    );
+  }
+
+  const STAGE_LABELS: Record<string, string> = {
+    planning: "Planning",
+    building: "Building",
+    testing: "Testing",
+    launch: "Launching",
+    growing: "Growing",
+  };
+
+  const STAGE_COLORS: Record<string, string> = {
+    planning: "border-muted-foreground/30 bg-muted-foreground/5 text-muted-foreground",
+    building: "border-primary/30 bg-primary/10 text-primary",
+    testing: "border-brand-purple/30 bg-brand-purple/10 text-brand-purple",
+    launch: "border-brand-green/30 bg-brand-green/10 text-brand-green",
+    growing: "border-brand-green/30 bg-brand-green/10 text-brand-green",
+  };
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {data.map((row) => {
+        const proj = row.projects;
+        if (!proj) return null;
+        return (
+          <Link
+            key={row.project_id}
+            to="/projects/$id"
+            params={{ id: proj.id }}
+            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="truncate text-sm font-medium">{proj.title}</p>
+              {proj.stage && (
+                <span
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
+                >
+                  {STAGE_LABELS[proj.stage] ?? proj.stage}
+                </span>
+              )}
+            </div>
+            {proj.description && (
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                {proj.description}
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-1">
+              {proj.looking_for_collaborators && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green">
+                  <Users className="h-2.5 w-2.5" />
+                  Seeking collaborators
+                </span>
+              )}
+              {proj.looking_for_feedback && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[10px] text-brand-purple">
+                  Wants feedback
+                </span>
+              )}
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Shell ─────────────────────────────────────────────────────
+
+function Shell({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex min-h-screen bg-background">
+      <div className="hidden md:block">
+        <DashboardSidebar />
+      </div>
+      {open && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0">
+            <DashboardSidebar onNavigate={() => setOpen(false)} />
+          </div>
+        </div>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6 md:hidden">
+          <button
+            className="rounded-full p-2 hover:bg-surface"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+          >
+            <span className="block h-0.5 w-5 bg-foreground" />
+          </button>
+          <span className="font-display font-semibold">Skill</span>
+        </header>
+        <main className="flex-1">{children}</main>
+      </div>
+    </div>
+  );
+}

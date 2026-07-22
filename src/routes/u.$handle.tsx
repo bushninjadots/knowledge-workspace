@@ -1,7 +1,7 @@
 // Public-facing profile at /u/:handle. Anyone can view — even signed-out —
 // because the profiles table has a public SELECT policy. Signed-in visitors
 // see a Connect button.
-import { createFileRoute, notFound, useParams } from "@tanstack/react-router";
+import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   MapPin,
@@ -51,7 +51,7 @@ type PublicProfile = {
   reputation_score: number | null;
 };
 
-type SkillLite = { id: string; name: string; category: string };
+type SkillLite = { id: string; slug: string; name: string; category: string };
 type TeachSkillLite = SkillLite & {
   verification_level: SkillVerificationLevel;
   experience_level: SkillExperienceLevel;
@@ -94,12 +94,12 @@ function PublicProfileRoute() {
         supabase
           .from("profile_skills_teach")
           .select(
-            "skill_id, verification_level, experience_level, proof_url, skills(id, name, category)",
+            "skill_id, verification_level, experience_level, proof_url, skills(id, slug, name, category)",
           )
           .eq("profile_id", profile.id),
         supabase
           .from("profile_skills_learn")
-          .select("skill_id, skills(id, name, category)")
+          .select("skill_id, skills(id, slug, name, category)")
           .eq("profile_id", profile.id),
       ]);
 
@@ -281,7 +281,13 @@ function PublicProfileRoute() {
                       key={s.id}
                       className="flex flex-col items-start gap-1 rounded-2xl border border-primary/30 bg-primary/5 px-3 py-1.5"
                     >
-                      <span className="text-xs text-primary">{s.name}</span>
+                      <Link
+                        to="/skills/$slug"
+                        params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {s.name}
+                      </Link>
                       <div className="flex flex-wrap items-center gap-1.5">
                         <VerificationBadge level={s.verification_level} proofUrl={s.proof_url} />
                         <ExperienceBadge level={s.experience_level} />

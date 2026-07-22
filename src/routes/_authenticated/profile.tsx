@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useId } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -905,9 +905,14 @@ function SkillsCard({
       ) : (
         <div className="flex flex-wrap gap-2">
           {selected.map((s) => (
-            <span key={s.id} className={`rounded-full border px-3 py-1 text-xs ${chipCls}`}>
+            <Link
+              key={s.id}
+              to="/skills/$slug"
+              params={{ slug: s.slug }}
+              className={`rounded-full border px-3 py-1 text-xs transition hover:opacity-80 ${chipCls}`}
+            >
               {s.name}
-            </span>
+            </Link>
           ))}
         </div>
       )}
@@ -1068,7 +1073,14 @@ function TeachSkillsCard({
               onClick={() => setProofEditing(s)}
               className="group flex flex-col items-start gap-1 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-left transition hover:border-primary/70"
             >
-              <span className="text-xs text-primary">{s.name}</span>
+              <Link
+                to="/skills/$slug"
+                params={{ slug: s.slug }}
+                className="text-xs text-primary hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {s.name}
+              </Link>
               <div className="flex flex-wrap items-center gap-1">
                 <VerificationBadge level={s.meta.verification_level} proofUrl={s.meta.proof_url} />
                 <ExperienceBadge level={s.meta.experience_level} />

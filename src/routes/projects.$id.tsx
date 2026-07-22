@@ -69,7 +69,7 @@ type Contributor = {
   profile: PersonLite | null;
 };
 
-type SkillLite = { id: string; name: string; category: string };
+type SkillLite = { id: string; slug: string; name: string; category: string };
 
 const ROLE_ORDER: Record<Contributor["role"], number> = { creator: 0, mentor: 1, contributor: 2 };
 const ROLE_LABEL: Record<Contributor["role"], string> = {
@@ -126,7 +126,7 @@ function ProjectPage() {
           .eq("project_id", id),
         supabase
           .from("project_skills")
-          .select("skill_id, skills(id, name, category)")
+          .select("skill_id, skills(id, slug, name, category)")
           .eq("project_id", id),
       ]);
 
@@ -364,12 +364,14 @@ function ProjectPage() {
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {skills.map((s) => (
-                      <span
+                      <Link
                         key={s.id}
-                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary"
+                        to="/skills/$slug"
+                        params={{ slug: s.slug }}
+                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition hover:opacity-80"
                       >
                         {s.name}
-                      </span>
+                      </Link>
                     ))}
                     {project.tags.map((t) => (
                       <span

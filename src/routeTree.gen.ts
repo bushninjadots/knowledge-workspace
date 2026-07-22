@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
+import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -43,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SkillsSlugRoute = SkillsSlugRouteImport.update({
+  id: '/skills/$slug',
+  path: '/skills/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/profile'
     | '/projects/$id'
+    | '/skills/$slug'
     | '/u/$handle'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/profile'
     | '/projects/$id'
+    | '/skills/$slug'
     | '/u/$handle'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_authenticated/messages'
     | '/_authenticated/profile'
     | '/projects/$id'
+    | '/skills/$slug'
     | '/u/$handle'
   fileRoutesById: FileRoutesById
 }
@@ -160,6 +172,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   ProjectsIdRoute: typeof ProjectsIdRoute
+  SkillsSlugRoute: typeof SkillsSlugRoute
   UHandleRoute: typeof UHandleRoute
 }
 
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       path: '/u/$handle'
       fullPath: '/u/$handle'
       preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/skills/$slug': {
+      id: '/skills/$slug'
+      path: '/skills/$slug'
+      fullPath: '/skills/$slug'
+      preLoaderRoute: typeof SkillsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects/$id': {
@@ -270,6 +290,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   ProjectsIdRoute: ProjectsIdRoute,
+  SkillsSlugRoute: SkillsSlugRoute,
   UHandleRoute: UHandleRoute,
 }
 export const routeTree = rootRouteImport
