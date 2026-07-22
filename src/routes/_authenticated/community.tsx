@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, Users, Trophy, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
+import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -8,7 +8,6 @@ import { ComposerBar } from "@/components/tethyr/community/composer-bar";
 import { PostCard } from "@/components/tethyr/community/post-card";
 import {
   CommunityLeftSidebar,
-  COMMUNITY_ICON,
   type CommunityNavId,
 } from "@/components/tethyr/community/left-sidebar";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
@@ -21,15 +20,12 @@ import {
   useComments,
   useTogglePostAction,
   type PostWithAuthor,
-  type CommentRow,
 } from "@/hooks/use-community";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
-  CHALLENGES,
   COMMUNITIES,
   DISCOVERY_FILTERS,
   POST_TYPE_LABEL,
-  type PostType,
   type DiscoveryFocus,
 } from "@/lib/community-data";
 
@@ -85,7 +81,6 @@ function CommunityPage() {
   const toggleAction = useTogglePostAction();
 
   const [nav, setNav] = useState<CommunityNavId>("home");
-  const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | "all">("all");
   const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">("all");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
@@ -93,7 +88,6 @@ function CommunityPage() {
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("latest");
-  const [activeSkill, setActiveSkill] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
 
@@ -144,10 +138,6 @@ function CommunityPage() {
     );
   }
 
-  const communityName = activeCommunity
-    ? (COMMUNITIES.find((c) => c.id === activeCommunity)?.name ?? null)
-    : null;
-
   const effectiveTypeFilter = NAV_TO_POST_TYPE[nav] ?? (nav === "home" ? typeFilter : null);
 
   const feed = useMemo(() => {
@@ -157,17 +147,11 @@ function CommunityPage() {
     } else if (nav === "following") {
       list = [];
     } else {
-      if (communityName) list = list.filter((p) => p.community === communityName);
       if (effectiveTypeFilter && effectiveTypeFilter !== "all") {
         list = list.filter((p) => p.type === effectiveTypeFilter);
       }
       if (focusFilter !== "all") {
         list = list.filter((p) => p.focus === focusFilter);
-      }
-      if (activeSkill) {
-        list = list.filter((p) =>
-          p.skills.some((s) => s.toLowerCase() === activeSkill.toLowerCase()),
-        );
       }
     }
 
@@ -195,13 +179,11 @@ function CommunityPage() {
   }, [
     posts,
     nav,
-    communityName,
     effectiveTypeFilter,
     focusFilter,
     savedIds,
     searchQuery,
     sortMode,
-    activeSkill,
   ]);
 
   const isSearching = searchQuery.trim().length > 0;
@@ -218,10 +200,6 @@ function CommunityPage() {
           <CommunityLeftSidebar
             active={nav}
             onSelect={setNav}
-            activeCommunity={activeCommunity}
-            onSelectCommunity={setActiveCommunity}
-            activeSkill={activeSkill}
-            onSelectSkill={setActiveSkill}
           />
 
           <div className="min-w-0 flex-1">
@@ -232,7 +210,7 @@ function CommunityPage() {
                     Community
                   </p>
                   <h1 className="font-display text-2xl font-semibold">
-                    {communityName ?? navTitle(nav)}
+                    {navTitle(nav)}
                   </h1>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Teach, learn, build and collaborate — everything here revolves around skills and
@@ -346,50 +324,15 @@ function CommunityPage() {
 
             {nav === "communities" ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {COMMUNITIES.map((c) => {
-                  const Icon = COMMUNITY_ICON[c.id] ?? Users;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setActiveCommunity(c.id);
-                        setNav("home");
-                      }}
-                      className="card-border flex items-center gap-3 rounded-3xl border bg-surface p-4 text-left transition hover:border-primary/40"
-                    >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-brand-purple">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {c.members.toLocaleString()} members
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : nav === "challenges" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {CHALLENGES.map((c) => (
-                  <div key={c.id} className="card-border rounded-3xl border bg-surface p-5">
-                    <div className="flex items-center gap-2">
-                      <Trophy className="h-4 w-4 text-brand-green" />
-                      <p className="font-medium">{c.title}</p>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{c.participants} participants</span>
-                      <span>{c.timeLeft}</span>
-                    </div>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-                      <div
-                        className="h-full rounded-full bg-gradient-brand"
-                        style={{ width: `${c.progress}%` }}
-                      />
-                    </div>
+                {COMMUNITIES.length === 0 ? (
+                  <div className="col-span-full">
+                    <EmptyState
+                      icon={<Users className="h-5 w-5" />}
+                      title="No communities yet"
+                      description="Communities will appear here once they're created."
+                    />
                   </div>
-                ))}
+                ) : null}
               </div>
             ) : nav === "following" ? (
               <EmptyState
@@ -476,17 +419,6 @@ function CommunityPage() {
                 setNav(id);
                 setMobileSidebarOpen(false);
               }}
-              activeCommunity={activeCommunity}
-              onSelectCommunity={(id) => {
-                setActiveCommunity(id);
-                setMobileSidebarOpen(false);
-              }}
-              activeSkill={activeSkill}
-              onSelectSkill={(skill) => {
-                setActiveSkill(skill);
-                setMobileSidebarOpen(false);
-              }}
-              mobile
             />
           </div>
         </DrawerContent>
