@@ -62,14 +62,16 @@ export function CommunityLeftSidebar({
   onSelect,
   activeCommunity,
   onSelectCommunity,
+  mobile = false,
 }: {
   active: CommunityNavId;
   onSelect: (id: CommunityNavId) => void;
   activeCommunity: string | null;
   onSelectCommunity: (id: string | null) => void;
+  mobile?: boolean;
 }) {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col gap-6 lg:flex">
+    <aside className={`${mobile ? "flex" : "hidden w-64 shrink-0 flex-col gap-6 lg:flex"}`}>
       <nav className="card-border rounded-3xl border bg-surface p-3">
         {NAV.map((item) => {
           const Icon = item.icon;
@@ -128,7 +130,9 @@ export function CommunityLeftSidebar({
               >
                 <Icon className="h-4 w-4 text-brand-purple" />
                 <span className="min-w-0 flex-1 truncate">{c.name}</span>
-                <span className="text-[11px] text-muted-foreground">{formatMembers(c.members)}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {formatMembers(c.members)}
+                </span>
               </button>
             );
           })}

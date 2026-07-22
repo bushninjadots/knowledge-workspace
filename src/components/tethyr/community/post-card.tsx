@@ -112,20 +112,27 @@ export function PostCard({
   }
 
   const initial = post.author.name.charAt(0).toUpperCase();
-  const avatarBg = post.author.accent === "green" ? "bg-brand-green text-background" : "bg-brand-purple text-background";
+  const avatarBg =
+    post.author.accent === "green"
+      ? "bg-brand-green text-background"
+      : "bg-brand-purple text-background";
   const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
 
   return (
     <article className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${avatarBg}`}>
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${avatarBg}`}
+        >
           {initial}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="truncate text-sm font-medium">{post.author.name}</p>
-            <span className="text-xs text-muted-foreground">{reputationLabel(post.author.reputation)}</span>
+            <span className="text-xs text-muted-foreground">
+              {reputationLabel(post.author.reputation)}
+            </span>
             {post.author.badges.map((b) => (
               <ReputationBadgePill key={b} badge={b} />
             ))}
@@ -140,7 +147,9 @@ export function PostCard({
             <span>{post.timestamp}</span>
           </div>
         </div>
-        <span className={`shrink-0 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}>
+        <span
+          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
+        >
           {POST_TYPE_LABEL[post.type]}
         </span>
       </div>
@@ -200,14 +209,19 @@ export function PostCard({
       <p className="mt-1.5 text-sm text-foreground/90">{post.body}</p>
 
       {post.code && (
-        <pre className="mt-3 overflow-x-auto rounded-2xl border border-border/60 bg-background/60 p-3 text-xs">
-          <code>{post.code.snippet}</code>
-        </pre>
+        <div className="relative mt-3">
+          <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-background/60 p-3 text-xs scrollbar-none">
+            <code>{post.code.snippet}</code>
+          </pre>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent rounded-r-2xl" />
+        </div>
       )}
 
       {post.question?.bestAnswer && (
         <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-3">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">Best answer</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
+            Best answer
+          </p>
           <p className="text-sm text-foreground/90">{post.question.bestAnswer}</p>
         </div>
       )}
@@ -216,7 +230,9 @@ export function PostCard({
         <div
           className={`mt-3 flex h-36 items-end rounded-2xl p-4 ${coverClasses(post.cover.gradient)}`}
         >
-          <p className="font-display text-sm font-semibold text-background/90">{post.cover.label}</p>
+          <p className="font-display text-sm font-semibold text-background/90">
+            {post.cover.label}
+          </p>
         </div>
       )}
 
@@ -284,7 +300,12 @@ export function PostCard({
           activeClass="text-primary"
           onClick={toggleHelpful}
         />
-        <ActionButton icon={MessageCircle} label="Discuss" count={stats.comments} onClick={() => toast.info("Comments coming soon")} />
+        <ActionButton
+          icon={MessageCircle}
+          label="Discuss"
+          count={stats.comments}
+          onClick={() => toast.info("Comments coming soon")}
+        />
         <ActionButton
           icon={Bookmark}
           label="Save"

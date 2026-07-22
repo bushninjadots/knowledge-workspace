@@ -105,7 +105,6 @@
   background-clip: text;
 }
 
-
 @layer base {
   * {
     border-color: var(--color-border);
@@ -149,6 +148,14 @@
 
 @utility glow-purple {
   box-shadow: var(--shadow-glow-purple);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility card-border {

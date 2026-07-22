@@ -4,7 +4,7 @@
 // can slot in later without reshaping these components.
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, Users, Trophy } from "lucide-react";
+import { Heart, Users, Trophy, SlidersHorizontal } from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -16,6 +16,8 @@ import {
   type CommunityNavId,
 } from "@/components/tethyr/community/left-sidebar";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
+import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import {
   CHALLENGES,
   COMMUNITIES,
@@ -71,6 +73,8 @@ function CommunityPage() {
   const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">("all");
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -86,7 +90,7 @@ function CommunityPage() {
   }
 
   const communityName = activeCommunity
-    ? COMMUNITIES.find((c) => c.id === activeCommunity)?.name ?? null
+    ? (COMMUNITIES.find((c) => c.id === activeCommunity)?.name ?? null)
     : null;
 
   const effectiveTypeFilter = NAV_TO_POST_TYPE[nav] ?? (nav === "home" ? typeFilter : null);
@@ -120,7 +124,7 @@ function CommunityPage() {
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
-      <main className="flex-1">
+      <main className="flex-1 pb-20 lg:pb-0">
         <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
           <CommunityLeftSidebar
             active={nav}
@@ -130,15 +134,24 @@ function CommunityPage() {
           />
 
           <div className="min-w-0 flex-1">
-            <header className="mb-6">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Community</p>
-              <h1 className="font-display text-2xl font-semibold">
-                {communityName ?? navTitle(nav)}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Teach, learn, build and collaborate — everything here revolves around skills and
-                growth, not popularity.
-              </p>
+            <header className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Community</p>
+                <h1 className="font-display text-2xl font-semibold">
+                  {communityName ?? navTitle(nav)}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Teach, learn, build and collaborate — everything here revolves around skills and
+                  growth, not popularity.
+                </p>
+              </div>
+              <button
+                onClick={() => setMobileTrendingOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Trending
+              </button>
             </header>
 
             {showComposer && (
@@ -148,12 +161,12 @@ function CommunityPage() {
             )}
 
             {showTypeTabs && (
-              <div className="mb-3 flex flex-wrap gap-2">
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {TYPE_FILTERS.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => setTypeFilter(f.value)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition-colors ${
                       typeFilter === f.value
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -166,10 +179,10 @@ function CommunityPage() {
             )}
 
             {showTypeTabs && (
-              <div className="mb-6 flex flex-wrap gap-1.5">
+              <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
-                  className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
                     focusFilter === "all"
                       ? "bg-surface-elevated text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -181,7 +194,7 @@ function CommunityPage() {
                   <button
                     key={f}
                     onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
                       focusFilter === f
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -237,7 +250,9 @@ function CommunityPage() {
                         style={{ width: `${c.progress}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">{c.progress}% of participants on track</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {c.progress}% of participants on track
+                    </p>
                   </div>
                 ))}
               </div>
@@ -274,6 +289,46 @@ function CommunityPage() {
           <CommunityRightSidebar />
         </div>
       </main>
+
+      <MobileBottomNav
+        active={nav}
+        onSelect={setNav}
+        onOpenSidebar={() => setMobileSidebarOpen(true)}
+      />
+
+      <Drawer open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Navigation</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-6">
+            <CommunityLeftSidebar
+              active={nav}
+              onSelect={(id) => {
+                setNav(id);
+                setMobileSidebarOpen(false);
+              }}
+              activeCommunity={activeCommunity}
+              onSelectCommunity={(id) => {
+                setActiveCommunity(id);
+                setMobileSidebarOpen(false);
+              }}
+              mobile
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={mobileTrendingOpen} onOpenChange={setMobileTrendingOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle>Trending & Discover</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-6">
+            <CommunityRightSidebar mobile />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
