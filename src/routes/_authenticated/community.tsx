@@ -1,7 +1,3 @@
-// Community — a knowledge-sharing feed built around skills and growth, not
-// popularity. Currently UI-first with realistic placeholder data (see
-// src/lib/community-data.ts); the shapes are chosen so a real posts table
-// can slot in later without reshaping these components.
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Heart, Users, Trophy, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
@@ -13,7 +9,6 @@ import { PostCard } from "@/components/tethyr/community/post-card";
 import {
   CommunityLeftSidebar,
   COMMUNITY_ICON,
-  formatMembers,
   type CommunityNavId,
 } from "@/components/tethyr/community/left-sidebar";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
@@ -21,16 +16,21 @@ import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import {
+  usePosts,
+  useDeletePost,
+  useComments,
+  useTogglePostAction,
+  type PostWithAuthor,
+  type CommentRow,
+} from "@/hooks/use-community";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import {
   CHALLENGES,
   COMMUNITIES,
   DISCOVERY_FILTERS,
-  INITIAL_POSTS,
-  INITIAL_COMMENTS,
   POST_TYPE_LABEL,
-  type Comment,
-  type DiscoveryFocus,
-  type Post,
   type PostType,
+  type DiscoveryFocus,
 } from "@/lib/community-data";
 
 export const Route = createFileRoute("/_authenticated/community")({
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/_authenticated/community")({
   ),
 });
 
-const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, PostType>> = {
+const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, string>> = {
   projects: "project_update",
   questions: "question",
   resources: "resource",
@@ -62,45 +62,40 @@ const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, PostType>> = {
   collab: "collaboration_request",
 };
 
-const TYPE_FILTERS: { label: string; value: PostType | "all" }[] = [
+const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
   { label: "All", value: "all" },
-  ...(Object.entries(POST_TYPE_LABEL) as [PostType, string][]).map(([value, label]) => ({
+  ...Object.entries(POST_TYPE_LABEL).map(([value, label]) => ({
     label,
     value,
   })),
 ];
 
-type SortMode = "latest" | "helpful" | "discussed";
+type SortMode = "latest" | "helpful" | "offers";
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
   { label: "Latest", value: "latest" },
   { label: "Most helpful", value: "helpful" },
-  { label: "Most discussed", value: "discussed" },
+  { label: "Most offers", value: "offers" },
 ];
 
 function CommunityPage() {
+  const { data: me } = useCurrentUser();
+  const { data: posts = [], isLoading } = usePosts();
+  const deletePost = useDeletePost();
+  const toggleAction = useTogglePostAction();
+
   const [nav, setNav] = useState<CommunityNavId>("home");
   const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<PostType | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<string | "all">("all");
   const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">("all");
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("latest");
   const [activeSkill, setActiveSkill] = useState<string | null>(null);
-  const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>(() => {
-    const map: Record<string, Comment[]> = {};
-    for (const c of INITIAL_COMMENTS) {
-      if (!map[c.postId]) map[c.postId] = [];
-      map[c.postId].push(c);
-    }
-    return map;
-  });
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
-
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -111,40 +106,20 @@ function CommunityPage() {
     });
   }
 
-  function addPost(post: Post) {
-    if (editingPost) {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === editingPost.id
-            ? { ...p, body: post.body, type: post.type, images: post.images }
-            : p,
-        ),
-      );
-      setEditingPost(null);
-    } else {
-      setPosts((prev) => [post, ...prev]);
-    }
+  function deletePostHandler(id: string) {
+    deletePost.mutate(id, {
+      onSuccess: () => toast.success("Post deleted"),
+      onError: () => toast.error("Failed to delete"),
+    });
   }
 
-  function deletePost(id: string) {
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-    toast.success("Post deleted");
-  }
-
-  function editPost(id: string) {
-    const post = posts.find((p) => p.id === id);
-    if (post) {
-      setEditingPost(post);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  function editPost(post: PostWithAuthor) {
+    setEditingPost(post);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function cancelEdit() {
     setEditingPost(null);
-  }
-
-  function updateComments(postId: string, comments: Comment[]) {
-    setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
   }
 
   function toggleComments(postId: string) {
@@ -154,6 +129,19 @@ function CommunityPage() {
       else next.add(postId);
       return next;
     });
+  }
+
+  function handleToggleAction(postId: string, action: "like" | "helpful" | "offer") {
+    if (!me?.userId) return;
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const isActive = post.myActions.includes(action);
+    toggleAction.mutate(
+      { postId, action, currentUserId: me.userId, isActive },
+      {
+        onError: () => toast.error("Failed"),
+      },
+    );
   }
 
   const communityName = activeCommunity
@@ -189,7 +177,8 @@ function CommunityPage() {
         (p) =>
           p.title.toLowerCase().includes(q) ||
           p.body.toLowerCase().includes(q) ||
-          p.author.name.toLowerCase().includes(q) ||
+          (p.author.display_name ?? "").toLowerCase().includes(q) ||
+          (p.author.handle ?? "").toLowerCase().includes(q) ||
           p.skills.some((s) => s.toLowerCase().includes(q)),
       );
     }
@@ -198,8 +187,8 @@ function CommunityPage() {
       list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
     } else if (sortMode === "helpful") {
       list = [...list].sort((a, b) => b.stats.helpful - a.stats.helpful);
-    } else if (sortMode === "discussed") {
-      list = [...list].sort((a, b) => b.stats.comments - a.stats.comments);
+    } else if (sortMode === "offers") {
+      list = [...list].sort((a, b) => b.stats.offers - a.stats.offers);
     }
 
     return list;
@@ -286,7 +275,7 @@ function CommunityPage() {
 
             {showComposer && (
               <div className="mb-6">
-                <ComposerBar onPost={addPost} editingPost={editingPost} onCancelEdit={cancelEdit} />
+                <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} />
               </div>
             )}
 
@@ -374,7 +363,7 @@ function CommunityPage() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{c.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatMembers(c.members)} members
+                          {c.members.toLocaleString()} members
                         </p>
                       </div>
                     </button>
@@ -399,9 +388,6 @@ function CommunityPage() {
                         style={{ width: `${c.progress}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {c.progress}% of participants on track
-                    </p>
                   </div>
                 ))}
               </div>
@@ -411,6 +397,27 @@ function CommunityPage() {
                 title="Following is coming soon"
                 description="Once you follow creators, their posts will show up here first."
               />
+            ) : isLoading ? (
+              <div className="flex flex-col gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-32 rounded bg-surface-elevated" />
+                        <div className="h-3 w-48 rounded bg-surface-elevated" />
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <div className="h-3 w-full rounded bg-surface-elevated" />
+                      <div className="h-3 w-3/4 rounded bg-surface-elevated" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : feed.length === 0 && isSearching ? (
               <EmptyState
                 icon={<Search className="h-5 w-5" />}
@@ -420,28 +427,27 @@ function CommunityPage() {
             ) : feed.length === 0 ? (
               <EmptyState
                 icon={<Users className="h-5 w-5" />}
-                title={nav === "saved" ? "Nothing saved yet" : "No posts match yet"}
+                title={nav === "saved" ? "Nothing saved yet" : "No posts yet"}
                 description={
                   nav === "saved"
                     ? "Tap Save on a post to keep it here for later."
-                    : "Try a different community or post type."
+                    : "Be the first to share something with the community."
                 }
               />
             ) : (
               <div className="flex flex-col gap-4">
                 {feed.map((post) => (
-                  <PostCard
+                  <PostCardWithComments
                     key={post.id}
                     post={post}
                     saved={savedIds.has(post.id)}
                     onToggleSave={() => toggleSave(post.id)}
                     searchQuery={isSearching ? searchQuery : undefined}
-                    comments={commentsByPost[post.id] ?? []}
-                    onCommentsChange={(comments) => updateComments(post.id, comments)}
                     showComments={openComments.has(post.id)}
                     onToggleComments={() => toggleComments(post.id)}
-                    onDelete={() => deletePost(post.id)}
-                    onEdit={() => editPost(post.id)}
+                    onDelete={() => deletePostHandler(post.id)}
+                    onEdit={() => editPost(post)}
+                    onToggleAction={(action) => handleToggleAction(post.id, action)}
                   />
                 ))}
               </div>
@@ -497,6 +503,45 @@ function CommunityPage() {
         </DrawerContent>
       </Drawer>
     </div>
+  );
+}
+
+function PostCardWithComments({
+  post,
+  saved,
+  onToggleSave,
+  searchQuery,
+  showComments,
+  onToggleComments,
+  onDelete,
+  onEdit,
+  onToggleAction,
+}: {
+  post: PostWithAuthor;
+  saved: boolean;
+  onToggleSave: () => void;
+  searchQuery?: string;
+  showComments: boolean;
+  onToggleComments: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onToggleAction: (action: "like" | "helpful" | "offer") => void;
+}) {
+  const { data: comments = [] } = useComments(showComments ? post.id : "");
+
+  return (
+    <PostCard
+      post={post}
+      saved={saved}
+      onToggleSave={onToggleSave}
+      searchQuery={searchQuery}
+      comments={comments}
+      showComments={showComments}
+      onToggleComments={onToggleComments}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onToggleAction={onToggleAction}
+    />
   );
 }
 

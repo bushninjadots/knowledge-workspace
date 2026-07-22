@@ -26,6 +26,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+// Until Supabase types are regenerated after migration, cast new columns
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
 import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
@@ -465,10 +469,14 @@ export type ProjectRow = {
   title: string;
   description: string | null;
   goal: string | null;
+  vision: string | null;
   status: ProjectStatus;
+  stage: "planning" | "building" | "testing" | "launch" | "growing";
   started_at: string;
   progress_percent: number;
   cover_url: string | null;
+  gallery: { url: string; caption?: string; type: "image" | "video" }[];
+  resources: { title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[];
   media: string[];
   links: Record<string, string>;
   tags: string[];
@@ -654,6 +662,9 @@ function ProjectDialog({
   const [feedback, setFeedback] = useState(project?.looking_for_feedback ?? true);
   const [collab, setCollab] = useState(project?.looking_for_collaborators ?? false);
   const [featured, setFeatured] = useState(project?.is_featured ?? false);
+  const [vision, setVision] = useState(project?.vision ?? "");
+  const [galleryItems, setGalleryItems] = useState<{ url: string; caption?: string; type: "image" | "video" }[]>(project?.gallery ?? []);
+  const [resourceItems, setResourceItems] = useState<{ title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[]>(project?.resources ?? []);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -717,9 +728,12 @@ function ProjectDialog({
       title: title.trim(),
       description: description.trim() || null,
       goal: goal.trim() || null,
+      vision: vision.trim() || null,
       status,
       progress_percent: progress,
       cover_url: coverPath,
+      gallery: galleryItems,
+      resources: resourceItems,
       links: cleanLinks,
       tags,
       looking_for_feedback: feedback,
@@ -729,13 +743,13 @@ function ProjectDialog({
 
     let projectId = project?.id;
     if (project) {
-      const { error } = await supabase.from("projects").update(payload).eq("id", project.id);
+      const { error } = await sb.from("projects").update(payload).eq("id", project.id);
       if (error) {
         setSaving(false);
         return toast.error(error.message);
       }
     } else {
-      const { data, error } = await supabase.from("projects").insert(payload).select("id").single();
+      const { data, error } = await sb.from("projects").insert(payload).select("id").single();
       if (error || !data) {
         setSaving(false);
         return toast.error(error?.message ?? "Could not create project");
@@ -832,6 +846,15 @@ function ProjectDialog({
               placeholder="What does 'done' look like? e.g. Launch to first 10 users"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
+            />
+          </Field>
+
+          <Field label="Vision">
+            <Textarea
+              rows={3}
+              placeholder="The longer-form why — what problem does this solve, who is it for?"
+              value={vision}
+              onChange={(e) => setVision(e.target.value)}
             />
           </Field>
 
@@ -951,6 +974,80 @@ function ProjectDialog({
                   }
                 }}
               />
+            </div>
+           </Field>
+
+          <Field label="Gallery images">
+            <div className="space-y-2">
+              {galleryItems.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  <img src={item.url} alt="" className="h-8 w-8 rounded object-cover" />
+                  <span className="min-w-0 flex-1 truncate">{item.caption ?? item.url}</span>
+                  <button
+                    onClick={() => setGalleryItems(galleryItems.filter((_, i) => i !== idx))}
+                    className="shrink-0 text-destructive hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <Input
+                placeholder="Paste an image URL and press Enter"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const v = (e.target as HTMLInputElement).value.trim();
+                    if (v) {
+                      setGalleryItems([...galleryItems, { url: v, type: "image" }]);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }}
+              />
+            </div>
+          </Field>
+
+          <Field label="Resources">
+            <div className="space-y-2">
+              {resourceItems.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  <span className="min-w-0 flex-1 truncate">
+                    {item.title} — {item.url}
+                  </span>
+                  <button
+                    onClick={() => setResourceItems(resourceItems.filter((_, i) => i !== idx))}
+                    className="shrink-0 text-destructive hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Title"
+                  id="resource-title"
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="URL"
+                  id="resource-url"
+                  className="flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const titleEl = document.getElementById("resource-title") as HTMLInputElement;
+                      const urlEl = e.target as HTMLInputElement;
+                      const t = titleEl?.value.trim();
+                      const u = urlEl.value.trim();
+                      if (t && u) {
+                        setResourceItems([...resourceItems, { title: t, url: u, type: "other" }]);
+                        if (titleEl) titleEl.value = "";
+                        urlEl.value = "";
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </Field>
 

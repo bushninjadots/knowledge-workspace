@@ -17,10 +17,15 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { QUICK_ACTIONS, type Post, type PostType } from "@/lib/community-data";
+import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  useCreatePost,
+  useUpdatePost,
+  type PostWithAuthor,
+} from "@/hooks/use-community";
 
-const ACTION_ICON: Record<PostType, typeof Rocket> = {
+const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
   question: HelpCircle,
   project_update: Rocket,
@@ -101,16 +106,17 @@ function insertMarkdown(
 }
 
 export function ComposerBar({
-  onPost,
   editingPost,
   onCancelEdit,
 }: {
-  onPost: (post: Post) => void;
-  editingPost?: Post | null;
+  editingPost?: PostWithAuthor | null;
   onCancelEdit?: () => void;
 }) {
   const { data: me } = useCurrentUser();
-  const [type, setType] = useState<PostType | null>(editingPost?.type ?? null);
+  const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
+  const [type, setType] = useState<string | null>(editingPost?.type ?? null);
+  const [title, setTitle] = useState(editingPost?.title ?? "");
   const [draft, setDraft] = useState(editingPost?.body ?? "");
   const [images, setImages] = useState<string[]>(editingPost?.images ?? []);
   const [showCodeInsert, setShowCodeInsert] = useState(false);
@@ -122,6 +128,7 @@ export function ComposerBar({
   const name = me?.profile?.display_name || me?.profile?.handle || "You";
   const initial = name.charAt(0).toUpperCase();
   const isEditing = !!editingPost;
+  const isSubmitting = createPost.isPending || updatePost.isPending;
 
   // Draft autosave
   useEffect(() => {
@@ -131,6 +138,7 @@ export function ComposerBar({
       try {
         const parsed = JSON.parse(saved);
         if (parsed.body) setDraft(parsed.body);
+        if (parsed.title) setTitle(parsed.title);
         if (parsed.type) setType(parsed.type);
         if (parsed.images) setImages(parsed.images);
       } catch {
@@ -142,11 +150,14 @@ export function ComposerBar({
   useEffect(() => {
     if (isEditing) return;
     if (draft || type || images.length > 0) {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ body: draft, type, images }));
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ body: draft, title, type, images }),
+      );
     } else {
       localStorage.removeItem(DRAFT_KEY);
     }
-  }, [draft, type, images, isEditing]);
+  }, [draft, title, type, images, isEditing]);
 
   const handleImageUpload = useCallback(() => {
     fileInputRef.current?.click();
@@ -200,36 +211,44 @@ export function ComposerBar({
     setShowCodeInsert(false);
   }
 
-  function submit() {
-    const body = draft.trim();
-    if (!body || !type) {
+  async function submit() {
+    const bodyText = draft.trim();
+    if (!bodyText || !type) {
       if (!type) toast.info("Pick a post type above first");
       return;
     }
-    onPost({
-      id: isEditing ? editingPost.id : `local-${Date.now()}`,
-      type,
-      author: editingPost?.author ?? {
-        name,
-        title: me?.profile?.creator_title || me?.profile?.category || "Tethyr creator",
-        reputation: 0,
-        badges: [],
-        accent: "green",
-      },
-      community: editingPost?.community || me?.profile?.category || "General",
-      skills: editingPost?.skills ?? [],
-      timestamp: "Just now",
-      title: body.length > 80 ? `${body.slice(0, 77)}` : body,
-      body,
-      images: images.length > 0 ? images : undefined,
-      stats: editingPost?.stats ?? { likes: 0, helpful: 0, comments: 0, saves: 0, offers: 0 },
-    });
-    setDraft("");
-    setType(null);
-    setImages([]);
-    localStorage.removeItem(DRAFT_KEY);
-    toast.success(isEditing ? "Post updated" : "Posted to the community");
-    onCancelEdit?.();
+
+    const postTitle = title.trim() || (bodyText.length > 80 ? bodyText.slice(0, 77) + "..." : bodyText);
+
+    try {
+      if (isEditing && editingPost) {
+        await updatePost.mutateAsync({
+          id: editingPost.id,
+          type: type as PostType,
+          title: postTitle,
+          body: bodyText,
+          images: images.length > 0 ? images : undefined,
+        });
+        toast.success("Post updated");
+      } else {
+        await createPost.mutateAsync({
+          type: type as PostType,
+          title: postTitle,
+          body: bodyText,
+          community: me?.profile?.category || "General",
+          images: images.length > 0 ? images : undefined,
+        });
+        toast.success("Posted to the community");
+      }
+      setDraft("");
+      setTitle("");
+      setType(null);
+      setImages([]);
+      localStorage.removeItem(DRAFT_KEY);
+      onCancelEdit?.();
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
   }
 
   return (
@@ -257,6 +276,13 @@ export function ComposerBar({
           {initial}
         </div>
         <div className="min-w-0 flex-1">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+            onFocus={() => setFocused(true)}
+            placeholder="Title (optional)"
+            className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          />
           <Textarea
             ref={textareaRef}
             value={draft}
@@ -369,7 +395,7 @@ export function ComposerBar({
         </button>
         <div className="mx-1 h-4 w-px bg-border/60" />
         {QUICK_ACTIONS.map((a) => {
-          const Icon = ACTION_ICON[a.type];
+          const Icon = ACTION_ICON[a.type] ?? HelpCircle;
           const active = type === a.type;
           return (
             <button
@@ -386,8 +412,13 @@ export function ComposerBar({
             </button>
           );
         })}
-        <Button size="sm" className="ml-auto" onClick={submit} disabled={!draft.trim()}>
-          {isEditing ? "Save" : "Post"}
+        <Button
+          size="sm"
+          className="ml-auto"
+          onClick={submit}
+          disabled={!draft.trim() || isSubmitting}
+        >
+          {isSubmitting ? "..." : isEditing ? "Save" : "Post"}
         </Button>
       </div>
     </div>

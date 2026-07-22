@@ -1,13 +1,14 @@
 // Public-facing project workspace at /projects/:id. Anyone can view — even
-// signed-out — because projects, project_contributors and project_skills
-// all carry public SELECT policies (mirrors how /u/:handle works for
-// profiles). This is Phase 1 of the Projects rebuild: dashboard header,
-// creator/contributors, skills involved, and progress. Milestones, journal,
-// discussion and resources are later phases and intentionally not here yet.
+// signed-out — because projects, project_contributors, project_skills,
+// milestones, updates, discussions and open roles all carry public SELECT
+// policies. Phase 2.1: expanded project model with vision, gallery,
+// resources, milestones, weekly updates, discussions, and open roles.
 import { useState } from "react";
 import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Target,
   Users as UsersIcon,
@@ -16,8 +17,14 @@ import {
   ImageIcon,
   Trophy,
   Clock,
+  Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Until Supabase types are regenerated after migration, cast new columns
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
 import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
@@ -28,23 +35,23 @@ import {
   PROJECT_STATUS_STYLE,
   type ProjectStatus,
 } from "@/components/tethyr/profile-sections";
-
-type ProjectDetail = {
-  id: string;
-  profile_id: string;
-  title: string;
-  description: string | null;
-  goal: string | null;
-  status: ProjectStatus;
-  started_at: string;
-  progress_percent: number;
-  cover_url: string | null;
-  links: Record<string, string>;
-  tags: string[];
-  looking_for_feedback: boolean;
-  looking_for_collaborators: boolean;
-  is_featured: boolean;
-};
+import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  useMilestones,
+  useProjectUpdates,
+  useDiscussions,
+  useOpenRoles,
+  useUpdateProjectStage,
+  type ProjectDetail,
+  type ProjectStage,
+} from "@/hooks/use-projects";
+import { MilestonesTimeline } from "@/components/tethyr/project/project-milestones";
+import { ProjectUpdatesJournal } from "@/components/tethyr/project/project-updates";
+import { ProjectDiscussions } from "@/components/tethyr/project/project-discussions";
+import { OpenRolesSection } from "@/components/tethyr/project/project-open-roles";
+import { GallerySection, ResourcesSection } from "@/components/tethyr/project/project-resources";
+import { ProjectTimeline } from "@/components/tethyr/project/project-timeline";
+import { ApplyToRoleButton, RoleApplicationsList } from "@/components/tethyr/project/project-role-applications";
 
 type PersonLite = {
   id: string;
@@ -57,6 +64,8 @@ type PersonLite = {
 type Contributor = {
   profile_id: string;
   role: "creator" | "contributor" | "mentor";
+  contribution_score: number;
+  skills_used: string[];
   profile: PersonLite | null;
 };
 
@@ -68,6 +77,15 @@ const ROLE_LABEL: Record<Contributor["role"], string> = {
   mentor: "Mentor",
   contributor: "Contributor",
 };
+
+type Tab = "overview" | "milestones" | "journal" | "discussion" | "contributors";
+const TABS: { id: Tab; label: string; icon: typeof Target }[] = [
+  { id: "overview", label: "Overview", icon: BookOpen },
+  { id: "milestones", label: "Milestones", icon: Target },
+  { id: "journal", label: "Journal", icon: Sparkles },
+  { id: "discussion", label: "Discussion", icon: MessageCircle },
+  { id: "contributors", label: "Contributors", icon: UsersIcon },
+];
 
 export const Route = createFileRoute("/projects/$id")({
   component: ProjectPage,
@@ -85,14 +103,16 @@ export const Route = createFileRoute("/projects/$id")({
 
 function ProjectPage() {
   const { id } = useParams({ from: "/projects/$id" });
+  const { data: me } = useCurrentUser();
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["project-detail", id],
     queryFn: async () => {
-      const { data: project, error } = await supabase
+      const { data: project, error } = await sb
         .from("projects")
         .select(
-          "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured",
+          "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured",
         )
         .eq("id", id)
         .maybeSingle();
@@ -102,7 +122,7 @@ function ProjectPage() {
       const [contributorsRes, skillsRes] = await Promise.all([
         supabase
           .from("project_contributors")
-          .select("profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)")
+          .select("profile_id, role, contribution_score, skills_used, profiles(id, handle, display_name, creator_title, avatar_url)")
           .eq("project_id", id),
         supabase
           .from("project_skills")
@@ -110,10 +130,12 @@ function ProjectPage() {
           .eq("project_id", id),
       ]);
 
-      const contributors = (contributorsRes.data ?? [])
+      const contributors = ((contributorsRes.data ?? []) as unknown as { profile_id: string; role: string; contribution_score: number; skills_used: string[]; profiles: unknown }[])
         .map((r) => ({
           profile_id: r.profile_id,
-          role: r.role,
+          role: r.role as Contributor["role"],
+          contribution_score: r.contribution_score ?? 0,
+          skills_used: r.skills_used ?? [],
           profile: (r.profiles as unknown as PersonLite) ?? null,
         }))
         .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]) as Contributor[];
@@ -142,7 +164,7 @@ function ProjectPage() {
       );
 
       return {
-        project: project as ProjectDetail,
+        project: project as unknown as ProjectDetail,
         contributors,
         skills,
         coverSigned,
@@ -152,6 +174,13 @@ function ProjectPage() {
   });
 
   const accent = useDominantColor(data?.coverSigned ?? null);
+  const updateStage = useUpdateProjectStage();
+
+  // Fetch new sections data
+  const { data: milestones = [] } = useMilestones(id);
+  const { data: updates = [] } = useProjectUpdates(id);
+  const { data: discussions = [] } = useDiscussions(id);
+  const { data: openRoles = [] } = useOpenRoles(id);
 
   if (isLoading) {
     return (
@@ -171,15 +200,18 @@ function ProjectPage() {
   const { project, contributors, skills, coverSigned, avatarSigned } = data;
   const creator = contributors.find((c) => c.role === "creator");
   const otherContributors = contributors.filter((c) => c.role !== "creator");
+  const isOwner = me?.userId === project.profile_id;
+  const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
   const timeSinceStart = formatDistanceToNowStrict(new Date(project.started_at), {
     addSuffix: true,
   });
   const links = Object.entries(project.links ?? {}).filter(([, url]) => !!url);
+  const doneCount = milestones.filter((m) => m.status === "done").length;
 
   return (
     <Shell accentColor={accent}>
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
-        {/* HEADER / DASHBOARD */}
+        {/* HERO / HEADER */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
           <div
             className="relative aspect-[21/9] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
@@ -231,16 +263,11 @@ function ProjectPage() {
               </p>
             )}
 
-            {project.description && (
-              <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {project.description}
-              </p>
-            )}
-
             <div className="mt-5 flex items-center gap-3">
               <Progress value={project.progress_percent} className="h-2" />
               <span className="shrink-0 text-xs text-muted-foreground">
                 {project.progress_percent}% complete
+                {milestones.length > 0 && ` · ${doneCount}/${milestones.length} milestones`}
               </span>
             </div>
 
@@ -268,92 +295,208 @@ function ProjectPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* CONTRIBUTORS */}
-          <SectionCard title="Contributors" icon={<UsersIcon className="h-4 w-4" />}>
-            {contributors.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No one listed yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {contributors.map((c) => (
-                  <Link
-                    key={c.profile_id}
-                    to="/u/$handle"
-                    params={{ handle: c.profile?.handle ?? "" }}
-                    className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-background/40"
-                  >
-                    <Avatar
-                      name={c.profile?.display_name ?? c.profile?.handle}
-                      src={avatarSigned[c.profile_id]}
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {c.profile?.display_name || c.profile?.handle || "Unknown"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role]}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </SectionCard>
+        {/* TIMELINE */}
+        <ProjectTimeline
+          currentStage={(project.stage ?? "planning") as ProjectStage}
+          isOwner={isOwner}
+          onStageChange={(stage) => updateStage.mutate({ projectId: id, stage })}
+        />
 
-          {/* SKILLS INVOLVED */}
-          <SectionCard title="Skills involved" icon={<Target className="h-4 w-4" />}>
-            {skills.length === 0 && project.tags.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No skills tagged yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {skills.map((s) => (
-                  <span
-                    key={s.id}
-                    className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary"
-                  >
-                    {s.name}
+        {/* TABS */}
+        <div className="flex gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-surface p-1">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium transition ${
+                  activeTab === tab.id
+                    ? "bg-surface-elevated text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+                {tab.id === "milestones" && milestones.length > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0 text-[10px] tabular-nums text-primary">
+                    {doneCount}/{milestones.length}
                   </span>
-                ))}
-                {project.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
-                  >
-                    {t}
+                )}
+                {tab.id === "discussion" && discussions.length > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0 text-[10px] tabular-nums text-primary">
+                    {discussions.length}
                   </span>
-                ))}
-              </div>
-            )}
-          </SectionCard>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {links.length > 0 && (
-          <SectionCard title="Links">
-            <div className="flex flex-wrap gap-2">
-              {links.map(([key, url]) => {
-                const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
-                const Icon = meta?.icon;
-                return (
-                  <a
-                    key={key}
-                    href={safeHref(url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    {Icon && <Icon className="h-3.5 w-3.5" />}
-                    {meta?.label ?? key}
-                  </a>
-                );
-              })}
+        {/* TAB CONTENT */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            {/* Vision */}
+            {project.vision && (
+              <div className="card-border rounded-3xl border bg-surface p-6">
+                <h3 className="mb-2 text-sm font-medium text-foreground/80">Vision</h3>
+                <div className="prose-custom text-sm text-foreground/90">
+                  <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {project.description && (
+              <div className="card-border rounded-3xl border bg-surface p-6">
+                <h3 className="mb-2 text-sm font-medium text-foreground/80">About</h3>
+                <div className="prose-custom text-sm leading-relaxed text-foreground/90">
+                  <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
+                </div>
+              </div>
+            )}
+
+            {/* Skills + Links row */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <SectionCard title="Skills involved" icon={<Target className="h-4 w-4" />}>
+                {skills.length === 0 && project.tags.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No skills tagged yet.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((s) => (
+                      <span
+                        key={s.id}
+                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary"
+                      >
+                        {s.name}
+                      </span>
+                    ))}
+                    {project.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+
+              {links.length > 0 && (
+                <SectionCard title="Links">
+                  <div className="flex flex-wrap gap-2">
+                    {links.map(([key, url]) => {
+                      const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
+                      const Icon = meta?.icon;
+                      return (
+                        <a
+                          key={key}
+                          href={safeHref(url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          {Icon && <Icon className="h-3.5 w-3.5" />}
+                          {meta?.label ?? key}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </SectionCard>
+              )}
             </div>
-          </SectionCard>
+
+            {/* Gallery */}
+            <GallerySection
+              gallery={(project.gallery ?? []) as { url: string; caption?: string; type: "image" | "video" }[]}
+              onUpdate={() => {}}
+              isOwner={isOwner}
+            />
+
+            {/* Resources */}
+            <ResourcesSection
+              resources={(project.resources ?? []) as { title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[]}
+              onUpdate={() => {}}
+              isOwner={isOwner}
+            />
+
+            {/* Open Roles */}
+            {openRoles.length > 0 && (
+              <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
+            )}
+          </div>
         )}
 
-        {/* Placeholder for what's coming next — sets expectations rather than
-            silently omitting the rest of the vision. */}
-        <div className="rounded-2xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
-          Milestones, a development journal, discussion and a resource library are coming to this
-          page next.
-        </div>
+        {activeTab === "milestones" && (
+          <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
+        )}
+
+        {activeTab === "journal" && (
+          <ProjectUpdatesJournal
+            updates={updates}
+            projectId={id}
+            isContributor={isContributor}
+          />
+        )}
+
+        {activeTab === "discussion" && (
+          <ProjectDiscussions
+            discussions={discussions}
+            projectId={id}
+            isContributor={isContributor}
+          />
+        )}
+
+        {activeTab === "contributors" && (
+          <div className="space-y-6">
+            <SectionCard title="Contributors" icon={<UsersIcon className="h-4 w-4" />}>
+              {contributors.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No one listed yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {contributors.map((c) => (
+                    <div key={c.profile_id} className="rounded-xl bg-background/40 p-3">
+                      <Link
+                        to="/u/$handle"
+                        params={{ handle: c.profile?.handle ?? "" }}
+                        className="flex items-center gap-3 transition hover:opacity-80"
+                      >
+                        <Avatar
+                          name={c.profile?.display_name ?? c.profile?.handle}
+                          src={avatarSigned[c.profile_id]}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {c.profile?.display_name || c.profile?.handle || "Unknown"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role]}</p>
+                        </div>
+                      </Link>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {c.contribution_score > 0 && (
+                          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary tabular-nums">
+                            Score: {c.contribution_score}
+                          </span>
+                        )}
+                        {c.skills_used.map((s) => (
+                          <span
+                            key={s}
+                            className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+
+            <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
+          </div>
+        )}
       </div>
     </Shell>
   );

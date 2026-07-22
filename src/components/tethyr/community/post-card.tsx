@@ -26,24 +26,20 @@ import {
   Pencil,
   Trash2,
   BadgeCheck,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   POST_TYPE_LABEL,
-  PROJECT_JOURNEY_STAGES,
-  reputationLabel,
   ACTIVE_LEARNING_GOALS,
-  type Comment,
-  type Post,
-  type PostStats,
-  type ProjectJourneyStage,
+  type PostType,
+  type CommentRow,
+  type PostWithAuthor,
 } from "@/lib/community-data";
-import { ReputationBadgePill, SkillBadge } from "./badges";
-import { CommentThread } from "./comment-thread";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-const RESOURCE_ICON = {
+const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
   Video: Video,
   "GitHub Repo": Github,
@@ -52,7 +48,7 @@ const RESOURCE_ICON = {
   Tool: Wrench,
 };
 
-const TYPE_ACCENT: Record<Post["type"], string> = {
+const TYPE_ACCENT: Record<PostType, string> = {
   showcase: "text-brand-green",
   question: "text-primary",
   project_update: "text-brand-green",
@@ -65,7 +61,7 @@ const TYPE_ACCENT: Record<Post["type"], string> = {
   progress_update: "text-brand-green",
 };
 
-const TYPE_BORDER: Record<Post["type"], string> = {
+const TYPE_BORDER: Record<PostType, string> = {
   showcase: "border-l-brand-green",
   question: "border-l-primary",
   project_update: "border-l-brand-green",
@@ -78,7 +74,7 @@ const TYPE_BORDER: Record<Post["type"], string> = {
   progress_update: "border-l-brand-green",
 };
 
-const TYPE_ICON: Record<Post["type"], typeof Heart> = {
+const TYPE_ICON: Record<PostType, typeof Heart> = {
   showcase: Rocket,
   question: HelpCircle,
   project_update: Zap,
@@ -90,34 +86,6 @@ const TYPE_ICON: Record<Post["type"], typeof Heart> = {
   collaboration_request: Handshake,
   progress_update: Sparkles,
 };
-
-function coverClasses(gradient: "brand" | "green" | "purple") {
-  if (gradient === "green") {
-    return "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-green)_55%,transparent),color-mix(in_oklab,var(--brand-purple)_15%,transparent))]";
-  }
-  if (gradient === "purple") {
-    return "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-purple)_55%,transparent),color-mix(in_oklab,var(--brand-green)_15%,transparent))]";
-  }
-  return "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--brand-green)_35%,transparent),color-mix(in_oklab,var(--brand-purple)_35%,transparent))]";
-}
-
-function JourneyStepper({ stage }: { stage: ProjectJourneyStage }) {
-  const currentIndex = PROJECT_JOURNEY_STAGES.indexOf(stage);
-  return (
-    <div className="flex items-center gap-1">
-      {PROJECT_JOURNEY_STAGES.map((s, i) => (
-        <div key={s} className="flex flex-1 items-center gap-1">
-          <div
-            className={`h-1.5 flex-1 rounded-full ${
-              i <= currentIndex ? "bg-gradient-brand" : "bg-surface-elevated"
-            }`}
-            title={s}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function HighlightText({ text, query }: { text: string; query?: string }) {
   if (!query || !query.trim()) return <>{text}</>;
@@ -139,69 +107,66 @@ function HighlightText({ text, query }: { text: string; query?: string }) {
   );
 }
 
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export function PostCard({
   post,
   saved,
   onToggleSave,
   searchQuery,
   comments,
-  onCommentsChange,
   showComments,
   onToggleComments,
   onDelete,
   onEdit,
+  onToggleAction,
+  currentUserId,
 }: {
-  post: Post;
+  post: PostWithAuthor;
   saved: boolean;
   onToggleSave: () => void;
   searchQuery?: string;
-  comments: Comment[];
-  onCommentsChange: (comments: Comment[]) => void;
+  comments: CommentRow[];
   showComments: boolean;
   onToggleComments: () => void;
   onDelete?: () => void;
   onEdit?: () => void;
+  onToggleAction?: (action: "like" | "helpful" | "offer") => void;
+  currentUserId?: string;
 }) {
   const { data: me } = useCurrentUser();
-  const [stats, setStats] = useState<PostStats>(post.stats);
-  const [appreciated, setAppreciated] = useState(false);
-  const [markedHelpful, setMarkedHelpful] = useState(false);
-  const [offered, setOffered] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const isOwner =
-    me?.profile?.display_name === post.author.name || me?.profile?.handle === post.author.name;
+  const isOwner = me?.userId === post.author_id;
+  const liked = post.myActions.includes("like");
+  const helpful = post.myActions.includes("helpful");
+  const offered = post.myActions.includes("offer");
+  const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
+
+  const authorName = post.author.display_name || post.author.handle || "Unknown";
+  const authorTitle = post.author.creator_title || post.author.category || "Creator";
+  const initial = authorName.charAt(0).toUpperCase();
+
+  const questionData = post.question_data as Record<string, unknown> | null;
+  const achievementData = post.achievement_data as Record<string, unknown> | null;
+  const progressData = post.progress_data as Record<string, unknown> | null;
+  const helpData = post.help_data as Record<string, unknown> | null;
+  const collabData = post.collaboration_data as Record<string, unknown> | null;
+  const projectData = post.project_data as Record<string, unknown> | null;
+  const resourceData = post.resource_data as Record<string, unknown> | null;
 
   const matchedSkills = post.skills.filter((s) =>
     ACTIVE_LEARNING_GOALS.some((g) => g.toLowerCase() === s.toLowerCase()),
   );
-
-  function toggleAppreciate() {
-    setAppreciated((v) => !v);
-    setStats((s) => ({ ...s, likes: s.likes + (appreciated ? -1 : 1) }));
-  }
-  function toggleHelpful() {
-    setMarkedHelpful((v) => !v);
-    setStats((s) => ({ ...s, helpful: s.helpful + (markedHelpful ? -1 : 1) }));
-  }
-  function toggleSave() {
-    setStats((s) => ({ ...s, saves: s.saves + (saved ? -1 : 1) }));
-    onToggleSave();
-    toast.success(saved ? "Removed from saved" : "Saved for later");
-  }
-  function offerHelp() {
-    if (offered) return;
-    setOffered(true);
-    setStats((s) => ({ ...s, offers: s.offers + 1 }));
-    toast.success("They'll see that you offered to help");
-  }
-
-  const initial = post.author.name.charAt(0).toUpperCase();
-  const avatarBg =
-    post.author.accent === "green"
-      ? "bg-brand-green text-background"
-      : "bg-brand-purple text-background";
-  const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
 
   return (
     <article
@@ -209,66 +174,52 @@ export function PostCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${avatarBg}`}
-        >
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-green text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <HoverCard>
               <HoverCardTrigger asChild>
-                <Link to="/profile" className="truncate text-sm font-medium hover:underline">
-                  {post.author.name}
+                <Link
+                  to="/u/$handle"
+                  params={{ handle: post.author.handle ?? "unknown" }}
+                  className="truncate text-sm font-medium hover:underline"
+                >
+                  {authorName}
                 </Link>
               </HoverCardTrigger>
               <HoverCardContent className="w-64" side="top">
                 <div className="flex items-start gap-3">
-                  <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${avatarBg}`}
-                  >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
                     {initial}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">{post.author.name}</p>
-                    <p className="text-xs text-muted-foreground">{post.author.title}</p>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <span className="text-xs font-semibold text-brand-green">
-                        {reputationLabel(post.author.reputation)}
-                      </span>
-                      {post.author.badges.length > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <BadgeCheck className="h-3 w-3" />
-                          {post.author.badges.length} badge
-                          {post.author.badges.length !== 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-sm font-medium">{authorName}</p>
+                    <p className="text-xs text-muted-foreground">{authorTitle}</p>
                   </div>
                 </div>
                 <Link
-                  to="/profile"
+                  to="/u/$handle"
+                  params={{ handle: post.author.handle ?? "unknown" }}
                   className="mt-3 block w-full rounded-lg bg-surface-elevated py-1.5 text-center text-xs font-medium text-foreground transition-colors hover:bg-surface"
                 >
                   View profile
                 </Link>
               </HoverCardContent>
             </HoverCard>
-            <span className="text-xs text-muted-foreground">
-              {reputationLabel(post.author.reputation)}
-            </span>
-            {post.author.badges.map((b) => (
-              <ReputationBadgePill key={b} badge={b} />
-            ))}
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-            <span>{post.author.title}</span>
+            <span>{authorTitle}</span>
             <span aria-hidden>·</span>
             <span className="rounded-full border border-border/60 px-1.5 py-0 text-[10px] uppercase tracking-wider">
               {post.community}
             </span>
             <span aria-hidden>·</span>
-            <span>{post.timestamp}</span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {timeAgo(post.created_at)}
+            </span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -324,45 +275,49 @@ export function PostCard({
       </div>
 
       {/* Type-specific top strip */}
-      {post.type === "question" && post.question && (
+      {post.type === "question" && questionData && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {post.question.solved && (
+          {!!questionData.solved && (
             <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
               <CheckCircle2 className="h-3 w-3" /> Solved
             </span>
           )}
-          <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
-            {post.question.difficulty}
-          </span>
+          {!!questionData.difficulty && (
+            <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+              {`${questionData.difficulty}`}
+            </span>
+          )}
         </div>
       )}
-      {post.type === "achievement" && post.achievement && (
+      {post.type === "achievement" && achievementData && (
         <div className="mt-3">
           <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
-            <Trophy className="h-3 w-3" /> {post.achievement.milestone}
+            <Trophy className="h-3 w-3" /> {String(achievementData.milestone)}
           </span>
         </div>
       )}
-      {post.type === "progress_update" && post.progress && (
+      {post.type === "progress_update" && progressData && (
         <div className="mt-3">
           <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
-            <Sparkles className="h-3 w-3" /> Progress in {post.progress.skill}
+            <Sparkles className="h-3 w-3" /> Progress in {String(progressData.skill)}
           </span>
         </div>
       )}
-      {post.type === "help_request" && post.helpRequest && (
+      {post.type === "help_request" && helpData && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-            <HandHeart className="h-3 w-3" /> Needs help with {post.helpRequest.skillNeeded}
+            <HandHeart className="h-3 w-3" /> Needs help with {String(helpData.skill_needed)}
           </span>
-          <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
-            {post.helpRequest.difficulty}
-          </span>
+          {!!helpData.difficulty && (
+            <span className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+              {`${helpData.difficulty}`}
+            </span>
+          )}
         </div>
       )}
-      {post.type === "collaboration_request" && post.collaboration && (
+      {post.type === "collaboration_request" && collabData && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {post.collaboration.rolesNeeded.map((role) => (
+          {(collabData.roles_needed as string[] | undefined)?.map((role) => (
             <span
               key={role}
               className="inline-flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-2 py-0.5 text-[11px] font-medium text-brand-purple"
@@ -381,31 +336,12 @@ export function PostCard({
         <Markdown remarkPlugins={[remarkGfm]}>{post.body}</Markdown>
       </div>
 
-      {post.code && (
-        <div className="relative mt-3">
-          <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-background/60 p-3 text-xs scrollbar-none">
-            <code>{post.code.snippet}</code>
-          </pre>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent rounded-r-2xl" />
-        </div>
-      )}
-
-      {post.question?.bestAnswer && (
+      {!!questionData?.best_answer && (
         <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-3">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
             Best answer
           </p>
-          <p className="text-sm text-foreground/90">{post.question.bestAnswer}</p>
-        </div>
-      )}
-
-      {post.cover && (
-        <div
-          className={`mt-3 flex h-36 items-end rounded-2xl p-4 ${coverClasses(post.cover.gradient)}`}
-        >
-          <p className="font-display text-sm font-semibold text-background/90">
-            {post.cover.label}
-          </p>
+          <p className="text-sm text-foreground/90">{String(questionData.best_answer)}</p>
         </div>
       )}
 
@@ -425,41 +361,32 @@ export function PostCard({
         </div>
       )}
 
-      {post.type === "project_update" && post.project && (
+      {post.type === "project_update" && projectData && (
         <div className="mt-3 rounded-2xl border border-border/60 bg-background/40 p-3">
-          {post.project.journeyStage && (
-            <div className="mb-3">
-              <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>Project journal</span>
-                <span className="font-medium text-foreground">{post.project.journeyStage}</span>
-              </div>
-              <JourneyStepper stage={post.project.journeyStage} />
-            </div>
-          )}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Progress</span>
-            <span>{post.project.progress}%</span>
+            <span>{String(projectData.progress ?? 0)}%</span>
           </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
             <div
               className="h-full rounded-full bg-gradient-brand"
-              style={{ width: `${post.project.progress}%` }}
+              style={{ width: `${Number(projectData.progress ?? 0)}%` }}
             />
           </div>
           <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-            <span>{post.project.contributors} contributors</span>
-            <span>{post.project.feedback} feedback notes</span>
+            <span>{String(projectData.contributors ?? 0)} contributors</span>
+            <span>{String(projectData.feedback ?? 0)} feedback notes</span>
           </div>
         </div>
       )}
 
-      {post.type === "resource" && post.resource && (
+      {post.type === "resource" && resourceData && (
         <div className="mt-3 flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 p-3 text-sm">
           {(() => {
-            const Icon = RESOURCE_ICON[post.resource.kind];
+            const Icon = RESOURCE_ICON[String(resourceData.kind)] ?? FileText;
             return <Icon className="h-4 w-4 text-brand-purple" />;
           })()}
-          <span className="text-muted-foreground">{post.resource.kind}</span>
+          <span className="text-muted-foreground">{String(resourceData.kind)}</span>
         </div>
       )}
 
@@ -472,7 +399,12 @@ export function PostCard({
             </span>
           )}
           {post.skills.map((s) => (
-            <SkillBadge key={s} label={s} />
+            <span
+              key={s}
+              className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+            >
+              {s}
+            </span>
           ))}
         </div>
       )}
@@ -482,18 +414,18 @@ export function PostCard({
         <ActionButton
           icon={Heart}
           label="Appreciate"
-          count={stats.likes}
-          active={appreciated}
+          count={post.stats.likes}
+          active={liked}
           activeClass="text-brand-green"
-          onClick={toggleAppreciate}
+          onClick={() => onToggleAction?.("like")}
         />
         <ActionButton
           icon={ThumbsUp}
           label="Helpful"
-          count={stats.helpful}
-          active={markedHelpful}
+          count={post.stats.helpful}
+          active={helpful}
           activeClass="text-primary"
-          onClick={toggleHelpful}
+          onClick={() => onToggleAction?.("helpful")}
         />
         <ActionButton
           icon={MessageCircle}
@@ -506,13 +438,13 @@ export function PostCard({
         <ActionButton
           icon={Bookmark}
           label="Save"
-          count={stats.saves}
+          count={post.stats.saves}
           active={saved}
           activeClass="text-brand-purple"
-          onClick={toggleSave}
+          onClick={onToggleSave}
         />
         <button
-          onClick={offerHelp}
+          onClick={() => onToggleAction?.("offer")}
           disabled={offered}
           className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-all active:scale-95 ${
             isRequestType
@@ -522,14 +454,71 @@ export function PostCard({
         >
           <HandHeart className={`h-3.5 w-3.5 ${offered ? "fill-current" : ""}`} />
           {offered ? "Offered" : "Offer Help"}
-          <span className="tabular-nums">{stats.offers}</span>
+          <span className="tabular-nums">{post.stats.offers}</span>
         </button>
       </div>
 
       {showComments && (
-        <CommentThread post={post} comments={comments} onCommentsChange={onCommentsChange} />
+        <CommentThreadInline
+          postId={post.id}
+          comments={comments}
+          isQuestion={post.type === "question"}
+        />
       )}
     </article>
+  );
+}
+
+function CommentThreadInline({
+  postId,
+  comments,
+  isQuestion,
+}: {
+  postId: string;
+  comments: CommentRow[];
+  isQuestion: boolean;
+}) {
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <p className="text-xs text-muted-foreground">
+        {comments.length} comment{comments.length !== 1 ? "s" : ""}
+      </p>
+      <div className="mt-2 flex flex-col gap-2">
+        {comments.slice(0, 5).map((c) => {
+          const name = c.author?.display_name || c.author?.handle || "Unknown";
+          const initial = name.charAt(0).toUpperCase();
+          return (
+            <div
+              key={c.id}
+              className={`rounded-xl p-3 ${
+                c.is_best_answer
+                  ? "border border-brand-green/30 bg-brand-green/5"
+                  : "bg-background/40"
+              }`}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-green/80 text-[11px] font-semibold text-background">
+                  {initial}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2">
+                    <span className="text-xs font-medium">{name}</span>
+                    <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
+                  </div>
+                  <p className="mt-1 text-sm text-foreground/90">{c.body}</p>
+                  {isQuestion && c.is_best_answer && (
+                    <span className="mt-1 flex items-center gap-1 text-[11px] font-medium text-brand-green">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Best answer
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

@@ -1,0 +1,404 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+// Until Supabase types are regenerated after migration, cast new tables
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
+
+// ============================================================
+// Types
+// ============================================================
+
+export type PostType =
+  | "showcase"
+  | "question"
+  | "project_update"
+  | "tutorial"
+  | "resource"
+  | "achievement"
+  | "discussion"
+  | "help_request"
+  | "collaboration_request"
+  | "progress_update";
+
+export type PostRow = {
+  id: string;
+  author_id: string;
+  type: PostType;
+  title: string;
+  body: string;
+  community: string;
+  skills: string[];
+  focus: string | null;
+  question_data: Record<string, unknown> | null;
+  resource_data: Record<string, unknown> | null;
+  achievement_data: Record<string, unknown> | null;
+  help_data: Record<string, unknown> | null;
+  collaboration_data: Record<string, unknown> | null;
+  progress_data: Record<string, unknown> | null;
+  project_data: Record<string, unknown> | null;
+  images: string[];
+  created_at: string;
+  updated_at: string;
+  // Joined from profiles
+  author?: {
+    display_name: string | null;
+    handle: string | null;
+    creator_title: string | null;
+    category: string | null;
+    avatar_url: string | null;
+  };
+};
+
+export type CommentRow = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  body: string;
+  is_best_answer: boolean;
+  created_at: string;
+  author?: {
+    display_name: string | null;
+    handle: string | null;
+    creator_title: string | null;
+    avatar_url: string | null;
+  };
+};
+
+export type PostActionRow = {
+  id: string;
+  post_id: string;
+  user_id: string;
+  action: "like" | "helpful" | "save" | "offer";
+  created_at: string;
+};
+
+export type PostWithAuthor = PostRow & {
+  author: NonNullable<PostRow["author"]>;
+  stats: { likes: number; helpful: number; saves: number; offers: number };
+  myActions: string[]; // actions the current user has taken
+};
+
+export type CreatePostInput = {
+  type: PostType;
+  title: string;
+  body: string;
+  community?: string;
+  skills?: string[];
+  focus?: string;
+  images?: string[];
+  question_data?: Record<string, unknown> | null;
+  resource_data?: Record<string, unknown> | null;
+  achievement_data?: Record<string, unknown> | null;
+  help_data?: Record<string, unknown> | null;
+  collaboration_data?: Record<string, unknown> | null;
+  progress_data?: Record<string, unknown> | null;
+  project_data?: Record<string, unknown> | null;
+};
+
+export type UpdatePostInput = {
+  id: string;
+  type?: PostType;
+  title?: string;
+  body?: string;
+  community?: string;
+  skills?: string[];
+  images?: string[];
+};
+
+// ============================================================
+// Query keys
+// ============================================================
+
+export const POSTS_KEY = ["posts"] as const;
+export const COMMENTS_KEY = (postId: string) => ["comments", postId] as const;
+export const POST_ACTIONS_KEY = (postId: string) => ["post-actions", postId] as const;
+
+// ============================================================
+// Hooks
+// ============================================================
+
+export function usePosts() {
+  return useQuery({
+    queryKey: POSTS_KEY,
+    queryFn: async () => {
+      const { data: rawPosts, error } = await sb
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      const posts = rawPosts as PostRow[];
+
+      // Fetch author profiles in parallel
+      const authorIds = [...new Set(posts.map((p: PostRow) => p.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, handle, creator_title, category, avatar_url")
+        .in("id", authorIds);
+
+      const profileMap = new Map<string, Record<string, unknown>>(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      // Fetch action counts for all posts
+      const postIds = posts.map((p: PostRow) => p.id);
+      const { data: rawActions } = await sb
+        .from("post_actions")
+        .select("post_id, action, user_id")
+        .in("post_id", postIds);
+      const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
+
+      // Get current user's actions
+      const { data: { user } } = await supabase.auth.getUser();
+      const myActions = actions.filter((a) => a.user_id === user?.id);
+
+      // Aggregate stats
+      const statsMap = new Map<string, { likes: number; helpful: number; saves: number; offers: number }>();
+      for (const a of actions) {
+        if (!statsMap.has(a.post_id)) {
+          statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
+        }
+        const s = statsMap.get(a.post_id)!;
+        if (a.action === "like") s.likes++;
+        if (a.action === "helpful") s.helpful++;
+        if (a.action === "save") s.saves++;
+        if (a.action === "offer") s.offers++;
+      }
+
+      return posts.map((p: PostRow): PostWithAuthor => ({
+        ...p,
+        author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          creator_title: "Creator",
+          category: "General",
+          avatar_url: null,
+        },
+        stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
+        myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+      }));
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useCreatePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreatePostInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await sb
+        .from("posts")
+        .insert({
+          author_id: user.id,
+          type: input.type,
+          title: input.title,
+          body: input.body,
+          community: input.community ?? "General",
+          skills: input.skills ?? [],
+          focus: input.focus ?? null,
+          images: input.images ?? [],
+          question_data: input.question_data ?? null,
+          resource_data: input.resource_data ?? null,
+          achievement_data: input.achievement_data ?? null,
+          help_data: input.help_data ?? null,
+          collaboration_data: input.collaboration_data ?? null,
+          progress_data: input.progress_data ?? null,
+          project_data: input.project_data ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+export function useUpdatePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpdatePostInput) => {
+      const { id, ...updates } = input;
+      const { data, error } = await sb
+        .from("posts")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+export function useDeletePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("posts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+// ============================================================
+// Comments
+// ============================================================
+
+export function useComments(postId: string) {
+  return useQuery({
+    queryKey: COMMENTS_KEY(postId),
+    queryFn: async () => {
+      const { data: rawComments, error } = await sb
+        .from("comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      const comments = rawComments as { id: string; post_id: string; author_id: string; body: string; is_best_answer: boolean; created_at: string }[];
+
+      const authorIds = [...new Set(comments.map((c) => c.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, handle, creator_title, avatar_url")
+        .in("id", authorIds);
+
+      const profileMap = new Map<string, Record<string, unknown>>(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return comments.map((c): CommentRow => ({
+        ...c,
+        author: (profileMap.get(c.author_id) as unknown as CommentRow["author"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          creator_title: "Creator",
+          avatar_url: null,
+        },
+      }));
+    },
+    enabled: !!postId,
+  });
+}
+
+export function useAddComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { postId: string; body: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await sb
+        .from("comments")
+        .insert({
+          post_id: input.postId,
+          author_id: user.id,
+          body: input.body,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { commentId: string; postId: string }) => {
+      const { error } = await sb.from("comments").delete().eq("id", input.commentId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
+    },
+  });
+}
+
+export function useMarkBestAnswer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { commentId: string; postId: string; isBest: boolean }) => {
+      // First unset any existing best answer for this post
+      await sb
+        .from("comments")
+        .update({ is_best_answer: false })
+        .eq("post_id", input.postId)
+        .eq("is_best_answer", true);
+
+      // Then set the new one
+      const { error } = await sb
+        .from("comments")
+        .update({ is_best_answer: input.isBest })
+        .eq("id", input.commentId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
+    },
+  });
+}
+
+// ============================================================
+// Post Actions (like, helpful, save, offer)
+// ============================================================
+
+export function useTogglePostAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      postId: string;
+      action: "like" | "helpful" | "save" | "offer";
+      currentUserId: string;
+      isActive: boolean;
+    }) => {
+      if (input.isActive) {
+        // Remove action
+        const { error } = await sb
+          .from("post_actions")
+          .delete()
+          .eq("post_id", input.postId)
+          .eq("user_id", input.currentUserId)
+          .eq("action", input.action);
+
+        if (error) throw error;
+      } else {
+        // Add action
+        const { error } = await sb
+          .from("post_actions")
+          .insert({
+            post_id: input.postId,
+            user_id: input.currentUserId,
+            action: input.action,
+          });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}

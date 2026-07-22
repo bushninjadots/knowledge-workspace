@@ -112,7 +112,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
     bannerSigned = s?.signedUrl ?? null;
   }
 
-  const projects = (projectsRes.data ?? []) as ProjectRow[];
+  const projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
   const coverUrls: Record<string, string> = {};
   await Promise.all(
     projects
