@@ -15,6 +15,11 @@ import {
   Trophy,
   Sparkles,
   Handshake,
+  Zap,
+  HelpCircle,
+  Rocket,
+  BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -47,6 +52,32 @@ const TYPE_ACCENT: Record<Post["type"], string> = {
   help_request: "text-primary",
   collaboration_request: "text-brand-purple",
   progress_update: "text-brand-green",
+};
+
+const TYPE_BORDER: Record<Post["type"], string> = {
+  showcase: "border-l-brand-green",
+  question: "border-l-primary",
+  project_update: "border-l-brand-green",
+  tutorial: "border-l-brand-purple",
+  resource: "border-l-brand-purple",
+  achievement: "border-l-brand-green",
+  discussion: "border-l-muted-foreground/40",
+  help_request: "border-l-primary",
+  collaboration_request: "border-l-brand-purple",
+  progress_update: "border-l-brand-green",
+};
+
+const TYPE_ICON: Record<Post["type"], typeof Heart> = {
+  showcase: Rocket,
+  question: HelpCircle,
+  project_update: Zap,
+  tutorial: BookOpen,
+  resource: FileText,
+  achievement: Trophy,
+  discussion: MessageSquare,
+  help_request: HandHeart,
+  collaboration_request: Handshake,
+  progress_update: Sparkles,
 };
 
 function coverClasses(gradient: "brand" | "green" | "purple") {
@@ -119,7 +150,9 @@ export function PostCard({
   const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
 
   return (
-    <article className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
+    <article
+      className={`card-border rounded-3xl border border-l-[3px] bg-surface p-5 sm:p-6 ${TYPE_BORDER[post.type]}`}
+    >
       {/* Header */}
       <div className="flex items-start gap-3">
         <div
@@ -148,8 +181,12 @@ export function PostCard({
           </div>
         </div>
         <span
-          className={`shrink-0 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
+          className={`flex shrink-0 items-center gap-1 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
         >
+          {(() => {
+            const TypeIcon = TYPE_ICON[post.type];
+            return <TypeIcon className="h-3 w-3" />;
+          })()}
           {POST_TYPE_LABEL[post.type]}
         </span>
       </div>
@@ -317,7 +354,7 @@ export function PostCard({
         <button
           onClick={offerHelp}
           disabled={offered}
-          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-colors ${
+          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-all active:scale-95 ${
             isRequestType
               ? "border border-primary bg-primary/10 text-primary hover:bg-primary/20"
               : "hover:bg-surface-elevated hover:text-foreground"
@@ -350,7 +387,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-surface-elevated hover:text-foreground ${
+      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-all active:scale-95 hover:bg-surface-elevated hover:text-foreground ${
         active ? activeClass : ""
       }`}
     >
