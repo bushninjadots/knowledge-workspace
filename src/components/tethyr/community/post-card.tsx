@@ -26,11 +26,13 @@ import {
   POST_TYPE_LABEL,
   PROJECT_JOURNEY_STAGES,
   reputationLabel,
+  type Comment,
   type Post,
   type PostStats,
   type ProjectJourneyStage,
 } from "@/lib/community-data";
 import { ReputationBadgePill, SkillBadge } from "./badges";
+import { CommentThread } from "./comment-thread";
 
 const RESOURCE_ICON = {
   Article: FileText,
@@ -133,11 +135,19 @@ export function PostCard({
   saved,
   onToggleSave,
   searchQuery,
+  comments,
+  onCommentsChange,
+  showComments,
+  onToggleComments,
 }: {
   post: Post;
   saved: boolean;
   onToggleSave: () => void;
   searchQuery?: string;
+  comments: Comment[];
+  onCommentsChange: (comments: Comment[]) => void;
+  showComments: boolean;
+  onToggleComments: () => void;
 }) {
   const [stats, setStats] = useState<PostStats>(post.stats);
   const [appreciated, setAppreciated] = useState(false);
@@ -366,8 +376,10 @@ export function PostCard({
         <ActionButton
           icon={MessageCircle}
           label="Discuss"
-          count={stats.comments}
-          onClick={() => toast.info("Comments coming soon")}
+          count={comments.length}
+          active={showComments}
+          activeClass="text-primary"
+          onClick={onToggleComments}
         />
         <ActionButton
           icon={Bookmark}
@@ -391,6 +403,10 @@ export function PostCard({
           <span className="tabular-nums">{stats.offers}</span>
         </button>
       </div>
+
+      {showComments && (
+        <CommentThread post={post} comments={comments} onCommentsChange={onCommentsChange} />
+      )}
     </article>
   );
 }

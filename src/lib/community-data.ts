@@ -431,10 +431,7 @@ export const COMMUNITIES: Community[] = [
 // much reputation they've stacked up.
 
 export type HelpAction =
-  | "answered_question"
-  | "reviewed_project"
-  | "helped_learner"
-  | "shared_resource";
+  "answered_question" | "reviewed_project" | "helped_learner" | "shared_resource";
 
 export const HELP_ACTION_LABEL: Record<HelpAction, string> = {
   answered_question: "Answered a question",
@@ -492,24 +489,69 @@ export type ProjectHighlight = {
 };
 
 export const TRENDING_PROJECTS: ProjectHighlight[] = [
-  { title: "Ashfall Keep", creator: "Diego Fernández", skills: ["Unity", "C#"], detail: "38 feedback notes this week" },
-  { title: "Habit tracker (no guilt)", creator: "Amara Okafor", skills: ["React Native"], detail: "7 offers to help" },
+  {
+    title: "Ashfall Keep",
+    creator: "Diego Fernández",
+    skills: ["Unity", "C#"],
+    detail: "38 feedback notes this week",
+  },
+  {
+    title: "Habit tracker (no guilt)",
+    creator: "Amara Okafor",
+    skills: ["React Native"],
+    detail: "7 offers to help",
+  },
 ];
 
 export const COMMUNITY_FAVORITES: ProjectHighlight[] = [
-  { title: "Kitchen Percussion Kit", creator: "Lucas Ferreira", skills: ["Sound Design"], detail: "63 saves" },
-  { title: "Tethyr design tokens v2", creator: "Tomás Ibáñez", skills: ["Design Systems"], detail: "41 in the comments" },
+  {
+    title: "Kitchen Percussion Kit",
+    creator: "Lucas Ferreira",
+    skills: ["Sound Design"],
+    detail: "63 saves",
+  },
+  {
+    title: "Tethyr design tokens v2",
+    creator: "Tomás Ibáñez",
+    skills: ["Design Systems"],
+    detail: "41 in the comments",
+  },
 ];
 
 export const RECENTLY_UPDATED_PROJECTS: ProjectHighlight[] = [
-  { title: "Ashfall Keep", creator: "Diego Fernández", skills: ["Unity"], detail: "Updated 9h ago" },
-  { title: "CTF practice platform", creator: "Helena Vidal", skills: ["Security"], detail: "Updated 1d ago" },
+  {
+    title: "Ashfall Keep",
+    creator: "Diego Fernández",
+    skills: ["Unity"],
+    detail: "Updated 9h ago",
+  },
+  {
+    title: "CTF practice platform",
+    creator: "Helena Vidal",
+    skills: ["Security"],
+    detail: "Updated 1d ago",
+  },
 ];
 
 export const LOOKING_FOR_CONTRIBUTORS_PROJECTS: ProjectHighlight[] = [
-  { title: "Habit tracker (no guilt)", creator: "Amara Okafor", skills: ["Node.js", "Postgres"], detail: "Needs a backend dev" },
-  { title: "Ashfall Keep", creator: "Diego Fernández", skills: ["Pixel Art"], detail: "Needs a pixel artist" },
-  { title: "CTF practice platform", creator: "Helena Vidal", skills: ["Backend", "Writing"], detail: "Needs 2 collaborators" },
+  {
+    title: "Habit tracker (no guilt)",
+    creator: "Amara Okafor",
+    skills: ["Node.js", "Postgres"],
+    detail: "Needs a backend dev",
+  },
+  {
+    title: "Ashfall Keep",
+    creator: "Diego Fernández",
+    skills: ["Pixel Art"],
+    detail: "Needs a pixel artist",
+  },
+  {
+    title: "CTF practice platform",
+    creator: "Helena Vidal",
+    skills: ["Backend", "Writing"],
+    detail: "Needs 2 collaborators",
+  },
 ];
 
 export type Challenge = {
@@ -521,16 +563,43 @@ export type Challenge = {
 };
 
 export const CHALLENGES: Challenge[] = [
-  { id: "c1", title: "30 Days of Python", participants: 842, timeLeft: "9 days left", progress: 70 },
-  { id: "c2", title: "Spanish Speaking Challenge", participants: 316, timeLeft: "3 days left", progress: 90 },
-  { id: "c3", title: "Game Jam: Tiny Worlds", participants: 214, timeLeft: "12 days left", progress: 20 },
-  { id: "c4", title: "UI Design Challenge", participants: 501, timeLeft: "5 days left", progress: 55 },
+  {
+    id: "c1",
+    title: "30 Days of Python",
+    participants: 842,
+    timeLeft: "9 days left",
+    progress: 70,
+  },
+  {
+    id: "c2",
+    title: "Spanish Speaking Challenge",
+    participants: 316,
+    timeLeft: "3 days left",
+    progress: 90,
+  },
+  {
+    id: "c3",
+    title: "Game Jam: Tiny Worlds",
+    participants: 214,
+    timeLeft: "12 days left",
+    progress: 20,
+  },
+  {
+    id: "c4",
+    title: "UI Design Challenge",
+    participants: 501,
+    timeLeft: "5 days left",
+    progress: 55,
+  },
 ];
 
 export type SolvedQuestion = { title: string; solver: string };
 
 export const RECENTLY_SOLVED: SolvedQuestion[] = [
-  { title: "Why does my Postgres query slow down only after ~50k rows?", solver: "Iker Etxeberria" },
+  {
+    title: "Why does my Postgres query slow down only after ~50k rows?",
+    solver: "Iker Etxeberria",
+  },
   { title: "Best way to structure a monorepo for 3 small apps?", solver: "Nuria Camps" },
   { title: "CSS grid vs flexbox for a masonry-style feed?", solver: "Marta Solà" },
 ];
@@ -601,3 +670,168 @@ export function reputationLabel(rep: number): string {
   if (rep >= 1000) return `${(rep / 1000).toFixed(rep % 1000 === 0 ? 0 : 1)}k rep`;
   return `${rep} rep`;
 }
+
+// -------- Comments — threaded discussion under posts ------------------------
+
+export type Comment = {
+  id: string;
+  postId: string;
+  author: PostAuthor;
+  body: string;
+  timestamp: string;
+  likes: number;
+  isBestAnswer?: boolean;
+};
+
+export const INITIAL_COMMENTS: Comment[] = [
+  // Comments on p2 (Postgres question — already has a bestAnswer)
+  {
+    id: "c1",
+    postId: "p2",
+    author: {
+      name: "Priya Nair",
+      title: "ML Engineer",
+      reputation: 5320,
+      badges: ["Expert", "Helpful Mentor"],
+      accent: "purple",
+    },
+    body: "The index is on user_id, but you're filtering on status and sorting by created_at — add a composite index on (status, created_at) and it'll stop scanning the whole table.",
+    timestamp: "3h ago",
+    likes: 18,
+    isBestAnswer: true,
+  },
+  {
+    id: "c2",
+    postId: "p2",
+    author: {
+      name: "Helena Vidal",
+      title: "Cybersecurity Analyst",
+      reputation: 990,
+      badges: ["Community Contributor"],
+      accent: "green",
+    },
+    body: "Also worth checking if you have autovacuum running — with 50k rows the default settings should be fine, but if it's been disabled the table stats could be stale.",
+    timestamp: "2h ago",
+    likes: 7,
+  },
+  {
+    id: "c3",
+    postId: "p2",
+    author: {
+      name: "Iker Etxeberria",
+      title: "Learning Backend Dev",
+      reputation: 340,
+      badges: ["Learner"],
+      accent: "purple",
+    },
+    body: "That was it — the composite index dropped the query from 800ms to 12ms. Thank you both!",
+    timestamp: "1h ago",
+    likes: 5,
+  },
+
+  // Comments on p1 (portfolio showcase)
+  {
+    id: "c4",
+    postId: "p1",
+    author: {
+      name: "Tomás Ibáñez",
+      title: "Product Designer",
+      reputation: 1720,
+      badges: ["Community Contributor", "Verified Teacher"],
+      accent: "purple",
+    },
+    body: "The easing between the case study sections feels really intentional. Did you use a custom spring curve or CSS scroll-driven animations?",
+    timestamp: "1h ago",
+    likes: 4,
+  },
+  {
+    id: "c5",
+    postId: "p1",
+    author: {
+      name: "Marta Solà",
+      title: "Frontend Developer",
+      reputation: 2140,
+      badges: ["Project Builder", "Verified Teacher"],
+      accent: "green",
+    },
+    body: "Custom spring via Framer Motion's useSpring — CSS scroll-driven didn't give me enough control over the stagger timing between the image and text layers.",
+    timestamp: "45m ago",
+    likes: 6,
+  },
+
+  // Comments on p4 (game dev project update)
+  {
+    id: "c6",
+    postId: "p4",
+    author: {
+      name: "Lucas Ferreira",
+      title: "Music Producer",
+      reputation: 860,
+      badges: ["Community Contributor"],
+      accent: "green",
+    },
+    body: "The stamina system sounds way more interesting than timing-based dodges. Would love to see a short clip of the boss fight pacing.",
+    timestamp: "8h ago",
+    likes: 3,
+  },
+  {
+    id: "c7",
+    postId: "p4",
+    author: {
+      name: "Amara Okafor",
+      title: "Product Designer",
+      reputation: 780,
+      badges: ["Project Builder"],
+      accent: "green",
+    },
+    body: "Have you considered a stamina regen that pauses during attacks? It creates a more deliberate combat loop where you have to commit to combos.",
+    timestamp: "6h ago",
+    likes: 9,
+  },
+
+  // Comments on p6 (Catalan streak)
+  {
+    id: "c8",
+    postId: "p6",
+    author: {
+      name: "Yuki Tanaka",
+      title: "Learning Spanish",
+      reputation: 60,
+      badges: ["Learner"],
+      accent: "purple",
+    },
+    body: "This is so motivating! I'm on day 12 of my Spanish streak. How did you handle the subjunctive early on?",
+    timestamp: "12h ago",
+    likes: 2,
+  },
+
+  // Comments on p12 (collab request — habit tracker)
+  {
+    id: "c9",
+    postId: "p12",
+    author: {
+      name: "Marcus Webb",
+      title: "Self-taught Python Dev",
+      reputation: 95,
+      badges: ["Learner"],
+      accent: "green",
+    },
+    body: "I've been looking for a small Node project to contribute to. I'm comfortable with Postgres and basic REST APIs — interested if you still need someone.",
+    timestamp: "1h ago",
+    likes: 3,
+  },
+  {
+    id: "c10",
+    postId: "p12",
+    author: {
+      name: "Amara Okafor",
+      title: "Product Designer",
+      reputation: 780,
+      badges: ["Project Builder"],
+      accent: "green",
+    },
+    body: "Absolutely — sent you a DM with the repo link and the current API spec. The sync layer is the main thing that needs work.",
+    timestamp: "30m ago",
+    likes: 2,
+  },
+];

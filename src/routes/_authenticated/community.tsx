@@ -24,7 +24,9 @@ import {
   COMMUNITIES,
   DISCOVERY_FILTERS,
   INITIAL_POSTS,
+  INITIAL_COMMENTS,
   POST_TYPE_LABEL,
+  type Comment,
   type DiscoveryFocus,
   type Post,
   type PostType,
@@ -87,6 +89,15 @@ function CommunityPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("latest");
   const [activeSkill, setActiveSkill] = useState<string | null>(null);
+  const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>(() => {
+    const map: Record<string, Comment[]> = {};
+    for (const c of INITIAL_COMMENTS) {
+      if (!map[c.postId]) map[c.postId] = [];
+      map[c.postId].push(c);
+    }
+    return map;
+  });
+  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -99,6 +110,19 @@ function CommunityPage() {
 
   function addPost(post: Post) {
     setPosts((prev) => [post, ...prev]);
+  }
+
+  function updateComments(postId: string, comments: Comment[]) {
+    setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
+  }
+
+  function toggleComments(postId: string) {
+    setOpenComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
   }
 
   const communityName = activeCommunity
@@ -381,6 +405,10 @@ function CommunityPage() {
                     saved={savedIds.has(post.id)}
                     onToggleSave={() => toggleSave(post.id)}
                     searchQuery={isSearching ? searchQuery : undefined}
+                    comments={commentsByPost[post.id] ?? []}
+                    onCommentsChange={(comments) => updateComments(post.id, comments)}
+                    showComments={openComments.has(post.id)}
+                    onToggleComments={() => toggleComments(post.id)}
                   />
                 ))}
               </div>
