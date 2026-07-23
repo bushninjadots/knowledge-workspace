@@ -1,5 +1,5 @@
-// Skill ecosystem page at /skills/:slug. Each skill becomes a destination
-// with overview, people (teachers + learners), projects, and stats.
+// Skill ecosystem page at /skills/:slug. Each skill becomes a creative
+// workshop — a dedicated learning space with teachers, learners, and projects.
 import { useState } from "react";
 import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -12,31 +12,35 @@ import {
   ArrowLeft,
   Sparkles,
   ExternalLink,
+  Wrench,
+  Hammer,
+  Palette,
+  Globe,
+  ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  VerificationBadge,
-  ExperienceBadge,
-} from "@/components/tethyr/profile-sections";
+import { VerificationBadge, ExperienceBadge } from "@/components/tethyr/profile-sections";
 import { AvailabilityBadge } from "@/components/tethyr/availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
 
-// Until Supabase types are regenerated
 const sb = supabase as any;
 
 export const Route = createFileRoute("/skills/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} — Tethyr` },
-      { name: "description", content: `Discover ${params.slug} on Tethyr — teachers, learners, and projects.` },
+      { title: `${params.slug} — Skills Workshop — Tethyr` },
+      {
+        name: "description",
+        content: `Enter the ${params.slug} workshop on Tethyr — meet teachers, learners, and discover projects.`,
+      },
     ],
   }),
   component: SkillPage,
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
+        <h1 className="text-xl font-semibold text-foreground">Workshop not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <Link to="/explore" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to explore
@@ -53,6 +57,14 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
   { id: "people", label: "People", icon: Users },
   { id: "projects", label: "Projects", icon: Folder },
 ];
+
+const CATEGORY_BADGES: Record<string, { icon: typeof Wrench; color: string }> = {
+  Creative: { icon: Palette, color: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple" },
+  Development: { icon: Hammer, color: "border-primary/40 bg-primary/10 text-primary" },
+  Community: { icon: Users, color: "border-brand-green/40 bg-brand-green/10 text-brand-green" },
+};
+
+const WORKSHOP_ICONS = [Wrench, Hammer, Palette, Sparkles, Globe];
 
 function SkillPage() {
   const { slug } = useParams({ from: "/skills/$slug" });
@@ -82,9 +94,12 @@ function SkillPage() {
     );
   }
 
+  const categoryBadge = CATEGORY_BADGES[skill.category] ?? CATEGORY_BADGES["Creative"];
+  const WorkshopIcon = WORKSHOP_ICONS[Math.abs(skill.name.charCodeAt(0)) % WORKSHOP_ICONS.length];
+
   return (
     <Shell>
-      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
@@ -93,32 +108,52 @@ function SkillPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div>
-            <h1 className="font-display text-2xl font-semibold sm:text-3xl">{skill.name}</h1>
-            <p className="text-sm text-muted-foreground">{skill.category}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+              <WorkshopIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-semibold sm:text-3xl">{skill.name}</h1>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${categoryBadge.color}`}
+                >
+                  <categoryBadge.icon className="h-2.5 w-2.5" />
+                  {skill.category}
+                </span>
+                <span className="text-xs text-muted-foreground">Workshop</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 rounded-2xl border border-border/60 bg-surface p-1">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                  active
-                    ? "bg-surface-elevated text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.label}</span>
-              </button>
-            );
-          })}
+        {/* Workshop divider */}
+        <div className="h-px bg-gradient-to-r from-primary/20 via-border to-brand-purple/20" />
+
+        {/* Tabs — Workshop sections */}
+        <div className="relative">
+          <div className="flex gap-1 rounded-2xl border border-border/60 bg-surface p-1">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                    active
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Room divider under tabs */}
+          <div className="mt-2 h-px bg-border/40" />
         </div>
 
         {/* Tab content */}
@@ -132,21 +167,27 @@ function SkillPage() {
 
 // ── Overview Tab ──────────────────────────────────────────────
 
-function SkillOverview({
-  skillId,
-  skillName,
-}: {
-  skillId: string;
-  skillName: string;
-}) {
+function SkillOverview({ skillId, skillName }: { skillId: string; skillName: string }) {
   const { data: stats } = useQuery({
     queryKey: ["skill-stats", skillId],
     queryFn: async () => {
       const [teachRes, learnRes, projectRes, endorseRes] = await Promise.all([
-        sb.from("profile_skills_teach").select("profile_id", { count: "exact", head: true }).eq("skill_id", skillId),
-        sb.from("profile_skills_learn").select("profile_id", { count: "exact", head: true }).eq("skill_id", skillId),
-        sb.from("project_skills").select("project_id", { count: "exact", head: true }).eq("skill_id", skillId),
-        sb.from("skill_endorsements").select("id", { count: "exact", head: true }).eq("skill_id", skillId),
+        sb
+          .from("profile_skills_teach")
+          .select("profile_id", { count: "exact", head: true })
+          .eq("skill_id", skillId),
+        sb
+          .from("profile_skills_learn")
+          .select("profile_id", { count: "exact", head: true })
+          .eq("skill_id", skillId),
+        sb
+          .from("project_skills")
+          .select("project_id", { count: "exact", head: true })
+          .eq("skill_id", skillId),
+        sb
+          .from("skill_endorsements")
+          .select("id", { count: "exact", head: true })
+          .eq("skill_id", skillId),
       ]);
       return {
         teachers: teachRes.count ?? 0,
@@ -157,22 +198,63 @@ function SkillOverview({
     },
   });
 
+  const { data: relatedSkills } = useQuery({
+    queryKey: ["related-skills", skillId],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("project_skills")
+        .select("skill_id, skills(id, name, slug, category)")
+        .neq("skill_id", skillId)
+        .limit(6);
+      if (!data) return [];
+      const seen = new Set<string>();
+      return (data as any[])
+        .filter((r) => {
+          if (seen.has(r.skill_id)) return false;
+          seen.add(r.skill_id);
+          return true;
+        })
+        .slice(0, 4)
+        .map((r) => r.skills) as { id: string; name: string; slug: string; category: string }[];
+    },
+  });
+
   return (
     <div className="space-y-6">
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard icon={<GraduationCap className="h-5 w-5 text-primary" />} label="Teachers" value={stats?.teachers ?? 0} />
-        <StatCard icon={<BookOpen className="h-5 w-5 text-brand-purple" />} label="Learners" value={stats?.learners ?? 0} />
-        <StatCard icon={<Folder className="h-5 w-5 text-brand-green" />} label="Projects" value={stats?.projects ?? 0} />
-        <StatCard icon={<Star className="h-5 w-5 text-amber-500" />} label="Endorsements" value={stats?.endorsements ?? 0} />
+      {/* Stats grid — pegboard items */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          icon={<GraduationCap className="h-5 w-5 text-primary" />}
+          label="Teachers"
+          value={stats?.teachers ?? 0}
+          delay={0}
+        />
+        <StatCard
+          icon={<BookOpen className="h-5 w-5 text-brand-purple" />}
+          label="Learners"
+          value={stats?.learners ?? 0}
+          delay={1}
+        />
+        <StatCard
+          icon={<Folder className="h-5 w-5 text-brand-green" />}
+          label="Projects"
+          value={stats?.projects ?? 0}
+          delay={2}
+        />
+        <StatCard
+          icon={<Star className="h-5 w-5 text-amber-500" />}
+          label="Endorsements"
+          value={stats?.endorsements ?? 0}
+          delay={3}
+        />
       </div>
 
-      {/* Quick links */}
+      {/* Workshop description */}
       <div className="card-border rounded-3xl border bg-surface p-6">
-        <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
+        <h2 className="font-display text-lg font-semibold">What is the {skillName} Workshop?</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          {skillName} is one of the creative skills on Tethyr. Browse the People tab to find
-          teachers and learners, or check Projects to see what's being built with this skill.
+          This is a dedicated learning space for {skillName}. Browse the People tab to find teachers
+          and learners, or check Projects to see what's being built with this skill.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
@@ -184,6 +266,28 @@ function SkillOverview({
           </Link>
         </div>
       </div>
+
+      {/* Related skills */}
+      {relatedSkills && relatedSkills.length > 0 && (
+        <div>
+          <h3 className="font-display text-sm font-semibold text-muted-foreground mb-3">
+            Related Skills
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {relatedSkills.map((rs) => (
+              <Link
+                key={rs.id}
+                to="/skills/$slug"
+                params={{ slug: rs.slug }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/5"
+              >
+                {rs.name}
+                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -192,13 +296,18 @@ function StatCard({
   icon,
   label,
   value,
+  delay,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
+  delay: number;
 }) {
   return (
-    <div className="card-border rounded-2xl border bg-surface p-4 text-center">
+    <div
+      className="card-border rounded-2xl border bg-surface p-4 text-center shadow-sm transition hover:shadow-md animate-room-enter"
+      style={{ animationDelay: `${delay * 75}ms` }}
+    >
       <div className="flex justify-center">{icon}</div>
       <p className="mt-2 font-display text-2xl font-semibold">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -208,13 +317,7 @@ function StatCard({
 
 // ── People Tab ────────────────────────────────────────────────
 
-function SkillPeople({
-  skillId,
-  skillName,
-}: {
-  skillId: string;
-  skillName: string;
-}) {
+function SkillPeople({ skillId, skillName }: { skillId: string; skillName: string }) {
   const [filter, setFilter] = useState<"teachers" | "learners">("teachers");
 
   return (
@@ -244,6 +347,9 @@ function SkillPeople({
         </button>
       </div>
 
+      {/* Section divider */}
+      <div className="h-px bg-border/40" />
+
       {filter === "teachers" ? (
         <SkillTeachers skillId={skillId} skillName={skillName} />
       ) : (
@@ -253,19 +359,15 @@ function SkillPeople({
   );
 }
 
-function SkillTeachers({
-  skillId,
-  skillName,
-}: {
-  skillId: string;
-  skillName: string;
-}) {
+function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["skill-teachers", skillId],
     queryFn: async () => {
       const { data } = await sb
         .from("profile_skills_teach")
-        .select("profile_id, verification_level, experience_level, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)")
+        .select(
+          "profile_id, verification_level, experience_level, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)",
+        )
         .eq("skill_id", skillId)
         .order("created_at", { ascending: false });
       return (data ?? []) as any[];
@@ -288,13 +390,14 @@ function SkillTeachers({
         icon={<GraduationCap className="h-5 w-5" />}
         title="No teachers yet"
         description={`Be the first to offer ${skillName} teaching on Tethyr.`}
+        variant="skills"
       />
     );
   }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((row) => {
+      {data.map((row, i) => {
         const p = row.profiles;
         if (!p) return null;
         const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();
@@ -303,7 +406,8 @@ function SkillTeachers({
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
               {initial}
@@ -321,6 +425,8 @@ function SkillTeachers({
                 <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
               </div>
             </div>
+            {/* Connection line */}
+            <div className="hidden h-6 w-px bg-primary/20 sm:block" />
           </Link>
         );
       })}
@@ -328,19 +434,15 @@ function SkillTeachers({
   );
 }
 
-function SkillLearners({
-  skillId,
-  skillName,
-}: {
-  skillId: string;
-  skillName: string;
-}) {
+function SkillLearners({ skillId, skillName }: { skillId: string; skillName: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["skill-learners", skillId],
     queryFn: async () => {
       const { data } = await sb
         .from("profile_skills_learn")
-        .select("profile_id, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)")
+        .select(
+          "profile_id, profiles(id, handle, display_name, creator_title, avatar_url, country, timezone, availability)",
+        )
         .eq("skill_id", skillId)
         .order("created_at", { ascending: false });
       return (data ?? []) as any[];
@@ -363,13 +465,14 @@ function SkillLearners({
         icon={<BookOpen className="h-5 w-5" />}
         title="No learners yet"
         description={`Be the first to start learning ${skillName} on Tethyr.`}
+        variant="skills"
       />
     );
   }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((row) => {
+      {data.map((row, i) => {
         const p = row.profiles;
         if (!p) return null;
         const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();
@@ -378,7 +481,8 @@ function SkillLearners({
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
               {initial}
@@ -394,6 +498,7 @@ function SkillLearners({
                 <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
               </div>
             </div>
+            <div className="hidden h-6 w-px bg-brand-purple/20 sm:block" />
           </Link>
         );
       })}
@@ -403,19 +508,15 @@ function SkillLearners({
 
 // ── Projects Tab ──────────────────────────────────────────────
 
-function SkillProjects({
-  skillId,
-  skillName,
-}: {
-  skillId: string;
-  skillName: string;
-}) {
+function SkillProjects({ skillId, skillName }: { skillId: string; skillName: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["skill-projects", skillId],
     queryFn: async () => {
       const { data } = await sb
         .from("project_skills")
-        .select("project_id, projects(id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id)")
+        .select(
+          "project_id, projects(id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id)",
+        )
         .eq("skill_id", skillId);
       return (data ?? []) as any[];
     },
@@ -437,6 +538,7 @@ function SkillProjects({
         icon={<Folder className="h-5 w-5" />}
         title="No projects yet"
         description={`No projects are using ${skillName} yet. Start one!`}
+        variant="projects"
       />
     );
   }
@@ -459,7 +561,7 @@ function SkillProjects({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((row) => {
+      {data.map((row, i) => {
         const proj = row.projects;
         if (!proj) return null;
         return (
@@ -467,7 +569,8 @@ function SkillProjects({
             key={row.project_id}
             to="/projects/$id"
             params={{ id: proj.id }}
-            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+            className="card-border rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">
               <p className="truncate text-sm font-medium">{proj.title}</p>
@@ -480,9 +583,7 @@ function SkillProjects({
               )}
             </div>
             {proj.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                {proj.description}
-              </p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{proj.description}</p>
             )}
             <div className="mt-2 flex flex-wrap gap-1">
               {proj.looking_for_collaborators && (
@@ -497,6 +598,8 @@ function SkillProjects({
                 </span>
               )}
             </div>
+            {/* Skill-project connection line */}
+            <div className="mt-3 h-px bg-gradient-to-r from-primary/20 to-transparent" />
           </Link>
         );
       })}
@@ -508,13 +611,13 @@ function SkillProjects({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background bg-noise">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
         <Link to="/" className="font-display text-lg font-semibold text-foreground">
           Tethyr
         </Link>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm text-muted-foreground">Skill</span>
+        <span className="text-sm text-muted-foreground">Workshop</span>
       </header>
       <main className="flex-1">{children}</main>
     </div>

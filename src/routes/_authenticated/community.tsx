@@ -32,10 +32,11 @@ import {
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
     meta: [
-      { title: "Community — Tethyr" },
+      { title: "Open Collaboration Space — Tethyr" },
       {
         name: "description",
-        content: "Teach, learn, build and collaborate — a feed built around skills and growth.",
+        content:
+          "An open workshop floor where creators share ideas, ask for help, and collaborate on projects.",
       },
     ],
   }),
@@ -65,6 +66,17 @@ const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
     value,
   })),
 ];
+
+const TYPE_ICONS: Record<string, string> = {
+  project_update: "🚀",
+  question: "❓",
+  resource: "📚",
+  help_request: "🤝",
+  collaboration_request: "🔨",
+  tip: "💡",
+  showcase: "✨",
+  discussion: "💬",
+};
 
 type SortMode = "latest" | "helpful" | "offers";
 
@@ -176,45 +188,33 @@ function CommunityPage() {
     }
 
     return list;
-  }, [
-    posts,
-    nav,
-    effectiveTypeFilter,
-    focusFilter,
-    savedIds,
-    searchQuery,
-    sortMode,
-  ]);
+  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode]);
 
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="animate-room-enter flex min-h-screen bg-background">
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
+
       <main className="flex-1 pb-20 lg:pb-0">
-        <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
-          <CommunityLeftSidebar
-            active={nav}
-            onSelect={setNav}
-          />
+        <div className="bg-noise mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
+          <CommunityLeftSidebar active={nav} onSelect={setNav} />
 
           <div className="min-w-0 flex-1">
             <header className="mb-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Community
+                  <p className="text-xs uppercase tracking-wider text-primary/70">
+                    Open Collaboration Space
                   </p>
-                  <h1 className="font-display text-2xl font-semibold">
-                    {navTitle(nav)}
-                  </h1>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Teach, learn, build and collaborate — everything here revolves around skills and
-                    growth, not popularity.
+                  <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
+                  <p className="mt-1 max-w-lg text-sm text-muted-foreground">
+                    An open workshop floor — share project updates, ask for help, request
+                    collaboration, or drop a resource. Every post has purpose.
                   </p>
                 </div>
                 <button
@@ -231,8 +231,8 @@ function CommunityPage() {
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search posts, skills, or people..."
-                  className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm"
+                  placeholder="Search projects, skills, people, or ideas..."
+                  className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
                 />
                 {isSearching && (
                   <button
@@ -259,19 +259,23 @@ function CommunityPage() {
 
             {showTypeTabs && (
               <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {TYPE_FILTERS.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setTypeFilter(f.value)}
-                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                      typeFilter === f.value
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+                {TYPE_FILTERS.map((f) => {
+                  const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
+                  return (
+                    <button
+                      key={f.value}
+                      onClick={() => setTypeFilter(f.value)}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition-all duration-200 ${
+                        typeFilter === f.value
+                          ? "border-primary bg-primary/10 text-primary shadow-sm"
+                          : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
+                      }`}
+                    >
+                      {icon && <span className="mr-1">{icon}</span>}
+                      {f.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -279,10 +283,10 @@ function CommunityPage() {
               <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-200 ${
                     focusFilter === "all"
-                      ? "bg-surface-elevated text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
                   }`}
                 >
                   Any focus
@@ -291,10 +295,10 @@ function CommunityPage() {
                   <button
                     key={f}
                     onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-200 ${
                       focusFilter === f
-                        ? "bg-surface-elevated text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
                     }`}
                   >
                     {f}
@@ -310,9 +314,9 @@ function CommunityPage() {
                   <button
                     key={opt.value}
                     onClick={() => setSortMode(opt.value)}
-                    className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
+                    className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-all duration-200 ${
                       sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground"
+                        ? "bg-surface-elevated text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -328,8 +332,8 @@ function CommunityPage() {
                   <div className="col-span-full">
                     <EmptyState
                       icon={<Users className="h-5 w-5" />}
-                      title="No communities yet"
-                      description="Communities will appear here once they're created."
+                      title="No workshops yet"
+                      description="Workshop spaces will appear here once they're created. Start a new one to bring people together."
                     />
                   </div>
                 ) : null}
@@ -338,7 +342,7 @@ function CommunityPage() {
               <EmptyState
                 icon={<Heart className="h-5 w-5" />}
                 title="Following is coming soon"
-                description="Once you follow creators, their posts will show up here first."
+                description="Once you follow collaborators, their posts will surface here first."
               />
             ) : isLoading ? (
               <div className="flex flex-col gap-4">
@@ -365,21 +369,29 @@ function CommunityPage() {
               <EmptyState
                 icon={<Search className="h-5 w-5" />}
                 title="No results found"
-                description={`Nothing matches "${searchQuery}". Try a different search term.`}
+                description={`Nothing matches "${searchQuery}". Try different keywords — project names, skill tags, or collaborator handles.`}
               />
             ) : feed.length === 0 ? (
               <EmptyState
                 icon={<Users className="h-5 w-5" />}
-                title={nav === "saved" ? "Nothing saved yet" : "No posts yet"}
+                title={
+                  nav === "saved"
+                    ? "Nothing saved yet"
+                    : nav === "help"
+                      ? "No help requests"
+                      : "The workshop is quiet"
+                }
                 description={
                   nav === "saved"
-                    ? "Tap Save on a post to keep it here for later."
-                    : "Be the first to share something with the community."
+                    ? "Save a post to pin it here for quick access."
+                    : nav === "help"
+                      ? "When someone needs a hand, their request will appear here."
+                      : "Be the first to share a project update, ask a question, or request collaboration."
                 }
               />
             ) : (
               <div className="flex flex-col gap-4">
-                {feed.map((post) => (
+                {feed.map((post, index) => (
                   <PostCardWithComments
                     key={post.id}
                     post={post}
@@ -391,6 +403,8 @@ function CommunityPage() {
                     onDelete={() => deletePostHandler(post.id)}
                     onEdit={() => editPost(post)}
                     onToggleAction={(action) => handleToggleAction(post.id, action)}
+                    className="transition-lift animate-stagger"
+                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
                   />
                 ))}
               </div>
@@ -448,6 +462,8 @@ function PostCardWithComments({
   onDelete,
   onEdit,
   onToggleAction,
+  className,
+  style,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -458,37 +474,41 @@ function PostCardWithComments({
   onDelete: () => void;
   onEdit: () => void;
   onToggleAction: (action: "like" | "helpful" | "offer") => void;
+  className?: string;
+  style?: React.CSSProperties;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
   return (
-    <PostCard
-      post={post}
-      saved={saved}
-      onToggleSave={onToggleSave}
-      searchQuery={searchQuery}
-      comments={comments}
-      showComments={showComments}
-      onToggleComments={onToggleComments}
-      onDelete={onDelete}
-      onEdit={onEdit}
-      onToggleAction={onToggleAction}
-    />
+    <div className={className} style={style}>
+      <PostCard
+        post={post}
+        saved={saved}
+        onToggleSave={onToggleSave}
+        searchQuery={searchQuery}
+        comments={comments}
+        showComments={showComments}
+        onToggleComments={onToggleComments}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onToggleAction={onToggleAction}
+      />
+    </div>
   );
 }
 
 function navTitle(nav: CommunityNavId): string {
   switch (nav) {
     case "home":
-      return "Home Feed";
+      return "Workshop Floor";
     case "communities":
-      return "Communities";
+      return "Workshops";
     case "help":
       return "Help Requests";
     case "collab":
-      return "Collaborations";
+      return "Collaboration Requests";
     case "projects":
-      return "Projects";
+      return "Project Updates";
     case "questions":
       return "Questions";
     case "resources":
@@ -502,6 +522,6 @@ function navTitle(nav: CommunityNavId): string {
     case "trending":
       return "Trending";
     default:
-      return "Community";
+      return "Open Collaboration Space";
   }
 }

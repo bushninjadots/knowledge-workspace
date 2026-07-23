@@ -45,6 +45,11 @@
   --shadow-glow-green: 0 10px 40px -10px color-mix(in oklab, var(--brand-green) 45%, transparent);
   --shadow-glow-purple: 0 10px 40px -10px color-mix(in oklab, var(--brand-purple) 45%, transparent);
   --shadow-card: 0 4px 24px -8px oklch(0 0 0 / 0.4);
+  --shadow-lifted: 0 8px 32px -4px oklch(0 0 0 / 0.5), 0 2px 8px -2px oklch(0 0 0 / 0.3);
+  --shadow-soft: 0 2px 12px -2px oklch(0 0 0 / 0.25);
+  --shadow-glow-green-soft: 0 4px 20px -4px color-mix(in oklab, var(--brand-green) 25%, transparent);
+  --shadow-glow-purple-soft: 0 4px 20px -4px
+    color-mix(in oklab, var(--brand-purple) 25%, transparent);
 }
 
 :root {
@@ -131,6 +136,28 @@
   background-size: 48px 48px;
 }
 
+/* Subtle paper texture overlay */
+@utility bg-noise {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+  }
+}
+
+/* Subtle inner glow for cards */
+@utility inner-glow {
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.06),
+    0 1px 3px -1px oklch(0 0 0 / 0.2);
+}
+
 @utility text-gradient-brand {
   background: linear-gradient(120deg, var(--brand-green), var(--brand-purple));
   -webkit-background-clip: text;
@@ -161,6 +188,85 @@
 @utility card-border {
   border-color: var(--accent-border);
   transition: border-color 500ms ease;
+}
+
+/* Smooth transition presets for premium feel */
+@utility transition-lift {
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms ease;
+}
+
+@utility transition-spatial {
+  transition: all 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility transition-fade {
+  transition:
+    opacity 300ms ease,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Room entrance animation */
+@keyframes room-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-room-enter {
+  animation: room-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered children entrance */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-stagger {
+  animation: stagger-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Subtle pulse for live indicators */
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@utility animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Connection line animation */
+@keyframes connection-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@utility animate-connection {
+  animation: connection-draw 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Markdown prose styles for community posts */

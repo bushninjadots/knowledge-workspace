@@ -11,6 +11,7 @@ import {
   Sparkles,
   Link as LinkIcon,
   ThumbsUp,
+  MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
@@ -19,13 +20,14 @@ import { ConnectButton } from "@/components/tethyr/connect-button";
 import {
   VerificationBadge,
   ExperienceBadge,
+  PROJECT_STATUS_LABEL,
+  PROJECT_STATUS_STYLE,
   type SkillVerificationLevel,
   type SkillExperienceLevel,
 } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
 import { toast } from "sonner";
-import { useState } from "react";
 
 type PublicProfile = {
   id: string;
@@ -57,6 +59,18 @@ type TeachSkillLite = SkillLite & {
   proof_url: string | null;
   endorsementCount: number;
   endorsedByIds: string[];
+};
+
+type ProjectLite = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  stage: string | null;
+  progress_percent: number | null;
+  cover_url: string | null;
+  tags: string[];
+  role: string;
 };
 
 export const Route = createFileRoute("/u/$handle")({
@@ -147,10 +161,44 @@ function PublicProfileRoute() {
         .map((r) => r.skills as unknown as SkillLite | null)
         .filter((s): s is SkillLite => !!s);
 
+      // Fetch projects this user has contributed to
+      let contributedProjects: ProjectLite[] = [];
+      try {
+        const { data: contribRows } = await (supabase as any)
+          .from("project_contributors")
+          .select(
+            "project_id, role, projects(id, title, description, status, stage, progress_percent, cover_url, tags)",
+          )
+          .eq("profile_id", profile.id)
+          .limit(6);
+        if (contribRows) {
+          contributedProjects = contribRows
+            .map((r: any) => {
+              const p = r.projects;
+              if (!p) return null;
+              return {
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                status: p.status,
+                stage: p.stage ?? null,
+                progress_percent: p.progress_percent ?? null,
+                cover_url: p.cover_url ?? null,
+                tags: p.tags ?? [],
+                role: r.role,
+              };
+            })
+            .filter((p: ProjectLite | null): p is ProjectLite => !!p);
+        }
+      } catch {
+        // project_contributors may not exist yet — safe to ignore
+      }
+
       return {
         profile: profile as PublicProfile,
         teachSkills,
         learnSkills,
+        contributedProjects,
         avatarSigned,
         bannerSigned,
       };
@@ -179,15 +227,17 @@ function PublicProfileRoute() {
     );
   }
 
-  const { profile, teachSkills, learnSkills, avatarSigned, bannerSigned } = data;
+  const { profile, teachSkills, learnSkills, contributedProjects, avatarSigned, bannerSigned } =
+    data;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
 
   return (
     <Shell accentColor={bannerAccent}>
-      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+        {/* ── Hero: Studio Backdrop ── */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div
-            className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+            className="relative -m-6 mb-6 h-44 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-60"
             style={{ borderColor: bannerAccent ?? "transparent" }}
           >
             {bannerSigned ? (
@@ -195,16 +245,19 @@ function PublicProfileRoute() {
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-surface" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
             {profile.banner_caption && (
               <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur sm:max-w-xs">
                 {profile.banner_caption}
               </span>
             )}
           </div>
+
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+            {/* Avatar — Creator Portrait */}
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
-              <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface sm:h-32 sm:w-32">
+              <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
                 {avatarSigned ? (
                   <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -214,6 +267,8 @@ function PublicProfileRoute() {
                 )}
               </div>
             </div>
+
+            {/* Name, Title, Meta — Secondary to Work */}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -225,11 +280,14 @@ function PublicProfileRoute() {
                   )}
                   <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
                 </div>
-                <ConnectButton
-                  targetId={profile.id}
-                  targetName={profile.display_name ?? profile.handle}
-                />
+                <div className="flex items-center gap-2">
+                  <ConnectButton
+                    targetId={profile.id}
+                    targetName={profile.display_name ?? profile.handle}
+                  />
+                </div>
               </div>
+
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {profile.category && (
                   <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
@@ -257,127 +315,271 @@ function PublicProfileRoute() {
                   </span>
                 )}
               </div>
-              {profile.bio && (
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                  {profile.bio}
-                </p>
+
+              {/* Start a Conversation CTA */}
+              {meId && meId !== profile.id && (
+                <Link
+                  to="/messages"
+                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm text-primary hover:bg-primary/10"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Start a conversation
+                </Link>
               )}
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <SectionCard title="Skills they teach" icon={<GraduationCap className="h-4 w-4" />}>
-            {teachSkills.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Not sharing any yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {teachSkills.map((s) => {
-                  const alreadyEndorsed = !!meId && s.endorsedByIds.includes(meId);
-                  const canEndorse = !!meId && meId !== profile.id && !alreadyEndorsed;
-                  return (
-                    <div
-                      key={s.id}
-                      className="flex flex-col items-start gap-1 rounded-2xl border border-primary/30 bg-primary/5 px-3 py-1.5"
-                    >
+        {/* ── Section 1: Skills They Teach (with endorsements) ── */}
+        <SectionCard
+          title="Workshops"
+          subtitle="Skills they teach and can help you with"
+          icon={<GraduationCap className="h-4 w-4" />}
+        >
+          {teachSkills.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Not sharing any workshops yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {teachSkills.map((s) => {
+                const alreadyEndorsed = !!meId && s.endorsedByIds.includes(meId);
+                const canEndorse = !!meId && meId !== profile.id && !alreadyEndorsed;
+                return (
+                  <div
+                    key={s.id}
+                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 hover:border-primary/40 hover:bg-primary/8"
+                  >
+                    <div className="flex items-center gap-3">
                       <Link
                         to="/skills/$slug"
                         params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
-                        className="text-xs text-primary hover:underline"
+                        className="text-sm font-medium text-primary hover:underline"
                       >
                         {s.name}
                       </Link>
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex items-center gap-1.5">
                         <VerificationBadge level={s.verification_level} proofUrl={s.proof_url} />
                         <ExperienceBadge level={s.experience_level} />
-                        {s.endorsementCount > 0 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {s.endorsementCount}{" "}
-                            {s.endorsementCount === 1 ? "endorsement" : "endorsements"}
-                          </span>
-                        )}
-                        {canEndorse && (
-                          <button
-                            type="button"
-                            disabled={endorse.isPending}
-                            onClick={() =>
-                              endorse.mutate(
-                                {
-                                  profileId: profile.id,
-                                  skillId: s.id,
-                                  endorsedBy: meId as string,
-                                },
-                                {
-                                  onSuccess: () => toast.success(`Endorsed ${s.name}`),
-                                  onError: (e: Error) => toast.error(e.message),
-                                },
-                              )
-                            }
-                            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary disabled:opacity-50"
-                          >
-                            <ThumbsUp className="h-3 w-3" /> Endorse
-                          </button>
-                        )}
-                        {alreadyEndorsed && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-primary">
-                            <ThumbsUp className="h-3 w-3" /> Endorsed
-                          </span>
-                        )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </SectionCard>
+                    <div className="flex items-center gap-2">
+                      {s.endorsementCount > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                          <ThumbsUp className="h-3 w-3" />
+                          {s.endorsementCount}
+                        </span>
+                      )}
+                      {canEndorse && (
+                        <button
+                          type="button"
+                          disabled={endorse.isPending}
+                          onClick={() =>
+                            endorse.mutate(
+                              {
+                                profileId: profile.id,
+                                skillId: s.id,
+                                endorsedBy: meId as string,
+                              },
+                              {
+                                onSuccess: () => toast.success(`Endorsed ${s.name}`),
+                                onError: (e: Error) => toast.error(e.message),
+                              },
+                            )
+                          }
+                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                        >
+                          <ThumbsUp className="h-3 w-3" /> Endorse
+                        </button>
+                      )}
+                      {alreadyEndorsed && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-primary">
+                          <ThumbsUp className="h-3 w-3" /> Endorsed
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </SectionCard>
+
+        {/* ── Section 2: Project Contributions ── */}
+        <SectionCard
+          title="Contributions"
+          subtitle="Projects this creator has worked on"
+          icon={
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+          }
+        >
+          {contributedProjects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No project contributions visible yet.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {contributedProjects.map((p) => (
+                <Link
+                  key={p.id}
+                  to="/projects/$id"
+                  params={{ id: p.id }}
+                  className="transition-lift group rounded-2xl border border-border/60 bg-background/40 p-4 hover:border-primary/30 hover:bg-primary/5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
+                      {p.title}
+                    </h3>
+                    {p.status && (
+                      <span
+                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${PROJECT_STATUS_STYLE[p.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
+                      >
+                        {PROJECT_STATUS_LABEL[p.status as keyof typeof PROJECT_STATUS_LABEL] ??
+                          p.status}
+                      </span>
+                    )}
+                  </div>
+                  {p.description && (
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {p.description}
+                    </p>
+                  )}
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[10px] text-muted-foreground">
+                      {p.role}
+                    </span>
+                    {p.progress_percent != null && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {p.progress_percent}%
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* ── Section 3: Currently Learning ── */}
           <SectionCard title="Currently learning" icon={<Sparkles className="h-4 w-4" />}>
             {learnSkills.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing yet.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {learnSkills.map((s) => (
-                  <span
+                  <Link
                     key={s.id}
-                    className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
+                    to="/skills/$slug"
+                    params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
+                    className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-primary"
                   >
                     {s.name}
-                  </span>
+                  </Link>
                 ))}
               </div>
             )}
           </SectionCard>
-        </div>
 
-        {(profile.portfolio_links.length > 0 ||
-          Object.keys(profile.social_links ?? {}).length > 0) && (
-          <SectionCard title="Links" icon={<LinkIcon className="h-4 w-4" />}>
-            <div className="space-y-2">
-              {profile.portfolio_links.map((p, i) => (
-                <a
-                  key={i}
-                  href={safeHref(p.url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
-                >
-                  <LinkIcon className="h-3.5 w-3.5" />
-                  {p.label || p.url}
-                </a>
-              ))}
-              <div className="flex flex-wrap gap-2 pt-2">
-                {Object.entries(profile.social_links ?? {}).map(([k, url]) => (
+          {/* ── Section 4: Links and Social ── */}
+          {(profile.portfolio_links.length > 0 ||
+            Object.keys(profile.social_links ?? {}).length > 0) && (
+            <SectionCard title="Links" icon={<LinkIcon className="h-4 w-4" />}>
+              <div className="space-y-2">
+                {profile.portfolio_links.map((p, i) => (
                   <a
-                    key={k}
-                    href={safeHref(url)}
+                    key={i}
+                    href={safeHref(p.url)}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    className="transition-lift flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-foreground hover:bg-primary/5 hover:text-primary"
                   >
-                    {k}
+                    <LinkIcon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{p.label || p.url}</span>
                   </a>
                 ))}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {Object.entries(profile.social_links ?? {}).map(([k, url]) => (
+                    <a
+                      key={k}
+                      href={safeHref(url)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                    >
+                      {k}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            </SectionCard>
+          )}
+        </div>
+
+        {/* ── Section 5: About (bio is secondary) ── */}
+        {profile.bio && (
+          <SectionCard
+            title="About"
+            icon={
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+            }
+          >
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+              {profile.bio}
+            </p>
+            {(profile.favourite_tools.length > 0 || profile.software_stack.length > 0) && (
+              <div className="mt-4 space-y-2">
+                {profile.favourite_tools.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Tools
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {profile.favourite_tools.map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {profile.software_stack.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Stack
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {profile.software_stack.map((s) => (
+                        <span
+                          key={s}
+                          className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </SectionCard>
         )}
       </div>
@@ -387,18 +589,23 @@ function PublicProfileRoute() {
 
 function SectionCard({
   title,
+  subtitle,
   icon,
   children,
 }: {
   title: string;
+  subtitle?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
-      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
-        {icon}
-        {title}
+    <div className="card-border bg-noise relative rounded-3xl border bg-surface p-6">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+          {icon}
+          {title}
+        </div>
+        {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
       </div>
       {children}
     </div>

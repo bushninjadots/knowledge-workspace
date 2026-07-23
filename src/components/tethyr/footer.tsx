@@ -1,77 +1,121 @@
+import { Link } from "@tanstack/react-router";
 import { Logo } from "./logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 bg-background">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-3 md:max-w-sm">
+    <footer className="border-t border-border/60 bg-surface/30 bg-noise">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-4 md:max-w-sm">
           <Logo variant="horizontal" size="md" />
-          <p className="text-sm text-muted-foreground">
-            A trusted knowledge network for creators. Learn, teach, connect, and grow together.
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The digital home where creators build together. Learn, teach, connect, and grow — skills
+            for skills, not money.
           </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
+            Active community
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:gap-12">
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide">Product</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+              Campus
+            </h3>
+            <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Dashboard
-                </a>
+                <Link
+                  to="/dashboard"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Reception
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Skills
-                </a>
+                <Link
+                  to="/explore"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Projects
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Profile
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
-                </a>
+                <Link
+                  to="/community"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Community
+                </Link>
               </li>
             </ul>
           </div>
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide">Legal</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+              Learn
+            </h3>
+            <ul className="space-y-2.5 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy
-                </a>
+                <Link
+                  to="/explore"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Explore Skills
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms
-                </a>
+                <Link
+                  to="/dashboard"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Find Teachers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/community"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Tutorials
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+              Connect
+            </h3>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link
+                  to="/signup"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Join Tethyr
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/login"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Log In
+                </Link>
+              </li>
+              <li>
+                <span className="text-muted-foreground/40">About (soon)</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
       <div className="border-t border-border/60 px-4 py-6 sm:px-6">
-        <p className="text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Tethyr. Connected by what you know.
-        </p>
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Tethyr. Connected by what you know.
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            A trusted knowledge network for creators
+          </p>
+        </div>
       </div>
     </footer>
   );

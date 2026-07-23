@@ -50,7 +50,10 @@ import { ProjectDiscussions } from "@/components/tethyr/project/project-discussi
 import { OpenRolesSection } from "@/components/tethyr/project/project-open-roles";
 import { GallerySection, ResourcesSection } from "@/components/tethyr/project/project-resources";
 import { ProjectTimeline } from "@/components/tethyr/project/project-timeline";
-import { ApplyToRoleButton, RoleApplicationsList } from "@/components/tethyr/project/project-role-applications";
+import {
+  ApplyToRoleButton,
+  RoleApplicationsList,
+} from "@/components/tethyr/project/project-role-applications";
 
 type PersonLite = {
   id: string;
@@ -109,19 +112,31 @@ function ProjectPage() {
     queryKey: ["project-detail", id],
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
-      const FULL_COLS = "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
-      const BASIC_COLS = "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+      const FULL_COLS =
+        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+      const BASIC_COLS =
+        "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
 
       let project: any = null;
       for (const cols of [FULL_COLS, BASIC_COLS]) {
         const res = await sb.from("projects").select(cols).eq("id", id).maybeSingle();
-        if (!res.error) { project = res.data; break; }
-        if (!res.error.message?.includes("column") && !res.error.message?.includes("schema") && !res.error.code?.startsWith("42")) throw res.error;
+        if (!res.error) {
+          project = res.data;
+          break;
+        }
+        if (
+          !res.error.message?.includes("column") &&
+          !res.error.message?.includes("schema") &&
+          !res.error.code?.startsWith("42")
+        )
+          throw res.error;
       }
       if (!project) throw notFound();
 
-      const FULL_CONTRIB_COLS = "profile_id, role, contribution_score, skills_used, profiles(id, handle, display_name, creator_title, avatar_url)";
-      const BASIC_CONTRIB_COLS = "profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)";
+      const FULL_CONTRIB_COLS =
+        "profile_id, role, contribution_score, skills_used, profiles(id, handle, display_name, creator_title, avatar_url)";
+      const BASIC_CONTRIB_COLS =
+        "profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)";
 
       let contributorsRes: any = null;
       for (const cols of [FULL_CONTRIB_COLS, BASIC_CONTRIB_COLS]) {
@@ -129,8 +144,16 @@ function ProjectPage() {
           .from("project_contributors")
           .select(cols)
           .eq("project_id", id);
-        if (!res.error) { contributorsRes = res; break; }
-        if (!res.error.message?.includes("column") && !res.error.message?.includes("schema") && !res.error.code?.startsWith("42")) break;
+        if (!res.error) {
+          contributorsRes = res;
+          break;
+        }
+        if (
+          !res.error.message?.includes("column") &&
+          !res.error.message?.includes("schema") &&
+          !res.error.code?.startsWith("42")
+        )
+          break;
       }
       contributorsRes ??= { data: [] };
 
@@ -141,7 +164,15 @@ function ProjectPage() {
           .eq("project_id", id),
       ]);
 
-      const contributors = ((contributorsRes.data ?? []) as unknown as { profile_id: string; role: string; contribution_score: number; skills_used: string[]; profiles: unknown }[])
+      const contributors = (
+        (contributorsRes.data ?? []) as unknown as {
+          profile_id: string;
+          role: string;
+          contribution_score: number;
+          skills_used: string[];
+          profiles: unknown;
+        }[]
+      )
         .map((r) => ({
           profile_id: r.profile_id,
           role: r.role as Contributor["role"],
@@ -422,14 +453,26 @@ function ProjectPage() {
 
             {/* Gallery */}
             <GallerySection
-              gallery={(project.gallery ?? []) as { url: string; caption?: string; type: "image" | "video" }[]}
+              gallery={
+                (project.gallery ?? []) as {
+                  url: string;
+                  caption?: string;
+                  type: "image" | "video";
+                }[]
+              }
               onUpdate={() => {}}
               isOwner={isOwner}
             />
 
             {/* Resources */}
             <ResourcesSection
-              resources={(project.resources ?? []) as { title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[]}
+              resources={
+                (project.resources ?? []) as {
+                  title: string;
+                  url: string;
+                  type: "article" | "tool" | "video" | "doc" | "other";
+                }[]
+              }
               onUpdate={() => {}}
               isOwner={isOwner}
             />
@@ -446,11 +489,7 @@ function ProjectPage() {
         )}
 
         {activeTab === "journal" && (
-          <ProjectUpdatesJournal
-            updates={updates}
-            projectId={id}
-            isContributor={isContributor}
-          />
+          <ProjectUpdatesJournal updates={updates} projectId={id} isContributor={isContributor} />
         )}
 
         {activeTab === "discussion" && (

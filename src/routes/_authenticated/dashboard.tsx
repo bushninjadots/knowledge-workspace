@@ -1,6 +1,18 @@
 import { createFileRoute, Outlet, useRouterState, Link } from "@tanstack/react-router";
 import { useState, useId, useEffect } from "react";
-import { Menu, X, Bell, ArrowRight, Compass, User, Sparkles, Clock, Rocket, Zap, Folder } from "lucide-react";
+import {
+  Menu,
+  X,
+  Bell,
+  ArrowRight,
+  Compass,
+  User,
+  Sparkles,
+  Clock,
+  Rocket,
+  Zap,
+  Folder,
+} from "lucide-react";
 import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/tethyr/global-search";
@@ -12,7 +24,10 @@ import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
 import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
-import { AvailabilitySelector, useUpdateAvailability } from "@/components/tethyr/availability-badge";
+import {
+  AvailabilitySelector,
+  useUpdateAvailability,
+} from "@/components/tethyr/availability-badge";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { checkAndAwardAchievements } from "@/lib/reputation";
@@ -170,7 +185,9 @@ function DashboardHome() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Welcome back
+              </p>
               <AvailabilitySelector
                 current={data.profile?.availability as AvailabilityStatus}
                 onSave={(s) => updateAvail.mutate(s)}
@@ -217,7 +234,9 @@ function DashboardHome() {
         )}
 
         {/* Suggested projects */}
-        <section className={`card-border rounded-3xl border bg-surface p-5 sm:p-6 ${pct < 100 ? "" : "lg:col-span-2"}`}>
+        <section
+          className={`card-border rounded-3xl border bg-surface p-5 sm:p-6 ${pct < 100 ? "" : "lg:col-span-2"}`}
+        >
           <SectionHeader
             icon={<Folder className="h-4 w-4 text-brand-green" />}
             title="Projects for you"
@@ -236,9 +255,21 @@ function DashboardHome() {
               title="Quick links"
             />
             <div className="mt-4 space-y-2">
-              <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="View your profile" />
-              <QuickLink to="/profile" icon={<User className="h-4 w-4" />} label="Continue editing" />
-              <QuickLink to="/community" icon={<Sparkles className="h-4 w-4" />} label="Community feed" />
+              <QuickLink
+                to="/profile"
+                icon={<User className="h-4 w-4" />}
+                label="View your profile"
+              />
+              <QuickLink
+                to="/profile"
+                icon={<User className="h-4 w-4" />}
+                label="Continue editing"
+              />
+              <QuickLink
+                to="/community"
+                icon={<Sparkles className="h-4 w-4" />}
+                label="Community feed"
+              />
             </div>
           </section>
         )}

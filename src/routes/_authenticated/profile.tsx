@@ -75,15 +75,18 @@ import { checkAndAwardAchievements } from "@/lib/reputation";
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Your profile — Tethyr" },
-      { name: "description", content: "Your Tethyr creator profile." },
+      { title: "Your Workshop — Tethyr" },
+      {
+        name: "description",
+        content: "Manage your skills, projects, and creative presence on Tethyr.",
+      },
     ],
   }),
   component: ProfilePage,
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Profile failed to load</h1>
+        <h1 className="text-xl font-semibold text-foreground">Workshop failed to load</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <a href="/profile" className="mt-4 inline-block text-sm text-primary hover:underline">
           Try again
@@ -137,7 +140,7 @@ function ProfilePage() {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
-          <h2 className="text-lg font-semibold text-foreground">Couldn't load your profile</h2>
+          <h2 className="text-lg font-semibold text-foreground">Couldn't load your workshop</h2>
           <p className="text-sm text-muted-foreground">
             {profileQuery.error?.message ?? "Something went wrong. Please try again."}
           </p>
@@ -152,7 +155,9 @@ function ProfilePage() {
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
       <Shell>
-        <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">Loading…</div>
+        <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">
+          Setting up your workshop…
+        </div>
       </Shell>
     );
   }
@@ -199,7 +204,7 @@ function ProfilePage() {
 
   return (
     <Shell accentColor={cardAccent}>
-      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
         {/* HEADER + BANNER */}
         <HeaderCard
           profile={profile}
@@ -210,39 +215,68 @@ function ProfilePage() {
           onChange={refresh}
         />
 
-        {/* ABOUT */}
-        <AboutCard profile={profile} onChange={refresh} />
+        {/* PROJECTS — prominent, at the top */}
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
+          <div className="relative">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="font-display text-lg font-semibold">Projects</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Your showcase — the work you're proud of.
+                </p>
+              </div>
+            </div>
+            <ProjectsCard
+              projects={projects}
+              coverUrls={coverUrls}
+              userId={userId}
+              allSkills={skills}
+              projectSkillIds={projectSkillIds}
+              onChange={refresh}
+            />
+          </div>
+        </div>
 
         {/* SKILLS — teach / currently learning / wishlist */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <TeachSkillsCard
-            title="Skills I teach"
-            icon={<GraduationCap className="h-4 w-4" />}
-            selected={teachSkills}
-            allSkills={skills}
-            userId={userId}
-            onChange={refresh}
-          />
-          <SkillsCard
-            title="Currently learning"
-            accent="purple"
-            icon={<BookOpen className="h-4 w-4" />}
-            selected={learnSkills}
-            allSkills={skills}
-            userId={userId}
-            table="profile_skills_learn"
-            onChange={refresh}
-          />
-          <SkillsCard
-            title="Want next"
-            accent="purple"
-            icon={<Sparkles className="h-4 w-4" />}
-            selected={wishSkills}
-            allSkills={skills}
-            userId={userId}
-            table="profile_skills_wishlist"
-            onChange={refresh}
-          />
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-primary/30 via-primary/10 to-transparent" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
+              Skill Station
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-l from-[var(--brand-purple)]/30 via-[var(--brand-purple)]/10 to-transparent" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <TeachSkillsCard
+              title="Skills I teach"
+              icon={<GraduationCap className="h-4 w-4" />}
+              selected={teachSkills}
+              allSkills={skills}
+              userId={userId}
+              onChange={refresh}
+            />
+            <SkillsCard
+              title="Currently learning"
+              accent="purple"
+              icon={<BookOpen className="h-4 w-4" />}
+              selected={learnSkills}
+              allSkills={skills}
+              userId={userId}
+              table="profile_skills_learn"
+              onChange={refresh}
+            />
+            <SkillsCard
+              title="Want next"
+              accent="purple"
+              icon={<Sparkles className="h-4 w-4" />}
+              selected={wishSkills}
+              allSkills={skills}
+              userId={userId}
+              table="profile_skills_wishlist"
+              onChange={refresh}
+            />
+          </div>
         </div>
 
         {/* TOOLS + STACK */}
@@ -269,30 +303,35 @@ function ProfilePage() {
           />
         </div>
 
-        {/* PROJECTS */}
-        <ProjectsCard
-          projects={projects}
-          coverUrls={coverUrls}
-          userId={userId}
-          allSkills={skills}
-          projectSkillIds={projectSkillIds}
-          onChange={refresh}
-        />
+        {/* AVAILABILITY — schedule board feel */}
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+          <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-bl from-[var(--brand-purple)]/10 to-transparent pointer-events-none rounded-bl-[100%]" />
+          <div className="absolute bottom-0 left-0 h-20 w-20 bg-gradient-to-tr from-primary/10 to-transparent pointer-events-none rounded-tr-[100%]" />
+          <div className="relative">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-display text-lg font-semibold">Schedule Board</h2>
+            </div>
+            <p className="mb-4 -mt-2 text-sm text-muted-foreground">
+              When your workshop doors are open.
+            </p>
+            <AvailabilityCard profile={profile} onChange={refresh} />
+          </div>
+        </div>
 
-        {/* AVAILABILITY */}
-        <AvailabilityCard profile={profile} onChange={refresh} />
-
-        {/* REPUTATION + ACHIEVEMENTS */}
+        {/* REPUTATION + ACHIEVEMENTS — trophy wall */}
         {profile?.reputation_score != null && profile.reputation_score > 0 && (
           <ReputationCard profileId={userId} score={profile.reputation_score} />
         )}
-        <div className="card-border rounded-3xl border bg-surface p-6 sm:p-8">
-          <h2 className="font-display text-lg font-semibold">Achievements</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Badges earned through your contributions on Tethyr.
-          </p>
-          <div className="mt-5">
-            <AchievementGrid profileId={userId} />
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-primary/5 pointer-events-none" />
+          <div className="relative">
+            <h2 className="font-display text-lg font-semibold">Trophy Wall</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Badges earned through your contributions — proof of craft.
+            </p>
+            <div className="mt-5">
+              <AchievementGrid profileId={userId} />
+            </div>
           </div>
         </div>
 
@@ -319,15 +358,30 @@ function ProfilePage() {
         {/* LINKS */}
         <LinksCard profile={profile} onChange={refresh} />
 
-        {/* ACTIVITY TIMELINE */}
-        <div className="card-border rounded-3xl border bg-surface p-6 sm:p-8">
-          <h2 className="font-display text-lg font-semibold">Activity</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your reputation history — every action becomes part of your story.
-          </p>
-          <div className="mt-5">
-            <ActivityTimeline profileId={userId} events={activity} />
+        {/* ACTIVITY TIMELINE — workshop journal */}
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-muted/30 pointer-events-none" />
+          <div className="relative">
+            <h2 className="font-display text-lg font-semibold">Workshop Journal</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Every action becomes part of your story — the chronicle of your craft.
+            </p>
+            <div className="mt-5">
+              <ActivityTimeline profileId={userId} events={activity} />
+            </div>
           </div>
+        </div>
+
+        {/* ABOUT — moved to bottom */}
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
+              About You
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-l from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
+          </div>
+          <AboutCard profile={profile} onChange={refresh} />
         </div>
       </div>
     </Shell>
@@ -346,7 +400,7 @@ function Shell({
     ? ({ "--accent-border": withAlpha(accentColor, 0.55) } as React.CSSProperties)
     : undefined;
   return (
-    <div className="flex min-h-screen bg-background" style={accentStyle}>
+    <div className="flex min-h-screen bg-background bg-noise" style={accentStyle}>
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
@@ -370,7 +424,7 @@ function Shell({
           >
             <span className="block h-0.5 w-5 bg-foreground" />
           </button>
-          <span className="font-display font-semibold">Profile</span>
+          <span className="font-display font-semibold">Workshop</span>
         </header>
         <main className="flex-1">{children}</main>
       </div>
@@ -427,84 +481,89 @@ function HeaderCard({
 
   return (
     <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-      <BannerStrip
-        bannerSigned={bannerSigned}
-        bannerCaption={profile?.banner_caption ?? null}
-        userId={userId}
-        onChange={onChange}
-      />
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="relative shrink-0 -mt-16 sm:-mt-20">
-          <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface sm:h-32 sm:w-32">
-            {avatarSigned ? (
-              <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
-                {(profile?.display_name ?? "?").charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105 disabled:opacity-50"
-            aria-label="Upload avatar"
-          >
-            <Camera className="h-4 w-4" />
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleUpload}
-          />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0">
-              <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                {profile?.display_name || "Untitled creator"}
-              </h1>
-              {profile?.creator_title && (
-                <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
+      <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[var(--brand-purple)]/5 blur-3xl pointer-events-none" />
+      <div className="relative">
+        <BannerStrip
+          bannerSigned={bannerSigned}
+          bannerCaption={profile?.banner_caption ?? null}
+          userId={userId}
+          onChange={onChange}
+        />
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="relative shrink-0 -mt-16 sm:-mt-20">
+            <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
+              {avatarSigned ? (
+                <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
+                  {(profile?.display_name ?? "?").charAt(0).toUpperCase()}
+                </div>
               )}
-              <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto rounded-full"
-              onClick={() => setEditOpen(true)}
-              aria-label="Edit identity"
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105 disabled:opacity-50"
+              aria-label="Upload avatar"
             >
-              <Pencil className="h-4 w-4" />
-            </Button>
+              <Camera className="h-4 w-4" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleUpload}
+            />
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {profile?.category && <Chip>{profile.category}</Chip>}
-            {profile?.years_experience != null && (
-              <Chip>{profile.years_experience} yrs experience</Chip>
-            )}
-            {profile?.country && (
-              <Chip>
-                <MapPin className="mr-1 inline h-3 w-3" />
-                {profile.country}
-              </Chip>
-            )}
-            {profile?.timezone && (
-              <Chip>
-                <Clock className="mr-1 inline h-3 w-3" />
-                {profile.timezone}
-              </Chip>
-            )}
-          </div>
-        </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
+                  {profile?.display_name || "Untitled creator"}
+                </h1>
+                {profile?.creator_title && (
+                  <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+                )}
+                <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ml-auto rounded-full"
+                onClick={() => setEditOpen(true)}
+                aria-label="Edit identity"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
 
-        <div className="shrink-0 sm:w-40">
-          <CompletenessRing value={completeness} />
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {profile?.category && <Chip>{profile.category}</Chip>}
+              {profile?.years_experience != null && (
+                <Chip>{profile.years_experience} yrs experience</Chip>
+              )}
+              {profile?.country && (
+                <Chip>
+                  <MapPin className="mr-1 inline h-3 w-3" />
+                  {profile.country}
+                </Chip>
+              )}
+              {profile?.timezone && (
+                <Chip>
+                  <Clock className="mr-1 inline h-3 w-3" />
+                  {profile.timezone}
+                </Chip>
+              )}
+            </div>
+          </div>
+
+          <div className="shrink-0 sm:w-40">
+            <CompletenessRing value={completeness} />
+          </div>
         </div>
       </div>
 
@@ -1256,13 +1315,13 @@ function ProofDialog({
           <DialogTitle>"{skill.name}" — how experienced are you?</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Tell people where you're at, and back it up with a certificate, screenshot, or
-          portfolio file if you've got one.
+          Tell people where you're at, and back it up with a certificate, screenshot, or portfolio
+          file if you've got one.
           {skill.meta.verification_level === "community_recognized" && (
             <>
               {" "}
-              This skill is already community recognized from peer endorsements — that stays
-              either way.
+              This skill is already community recognized from peer endorsements — that stays either
+              way.
             </>
           )}
         </p>
@@ -1372,7 +1431,7 @@ function AvailabilityCard({
   }
 
   return (
-    <SectionCard title="Availability" onEdit={() => setOpen(true)}>
+    <div>
       <div className="space-y-3">
         <Row label="Days">
           {profile?.available_days?.length ? (
@@ -1388,6 +1447,12 @@ function AvailabilityCard({
             <span className="text-sm text-muted-foreground">Not set</span>
           )}
         </Row>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+          <Pencil className="mr-1.5 h-3.5 w-3.5" />
+          Edit schedule
+        </Button>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -1449,7 +1514,7 @@ function AvailabilityCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SectionCard>
+    </div>
   );
 }
 
