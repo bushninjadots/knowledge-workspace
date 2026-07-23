@@ -73,7 +73,7 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
       role="img"
       aria-label="Tethyr loading"
     >
-      <svg viewBox="0 0 120 120" className="h-full w-full" fill="none">
+      <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" overflow="visible">
         <defs>
           <linearGradient id="ball-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--brand-green)" />
