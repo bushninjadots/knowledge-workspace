@@ -194,7 +194,7 @@ function CommunityPage() {
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
-    <div className="animate-room-enter bg-noise">
+    <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
         <CommunityLeftSidebar active={nav} onSelect={setNav} />
 

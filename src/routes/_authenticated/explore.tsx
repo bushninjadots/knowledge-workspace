@@ -38,11 +38,15 @@ type Creator = {
   country: string | null;
 };
 
-const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
-  active: { label: "Active", dot: "bg-brand-green" },
-  planning: { label: "Planning", dot: "bg-amber-400" },
-  paused: { label: "Paused", dot: "bg-muted-foreground/40" },
-  completed: { label: "Completed", dot: "bg-primary" },
+const STATUS_STYLES: Record<string, { label: string; dot: string; badge: string }> = {
+  active: { label: "Active", dot: "bg-brand-green", badge: "bg-brand-green/15 text-brand-green" },
+  planning: { label: "Planning", dot: "bg-amber-400", badge: "bg-amber-400/15 text-amber-400" },
+  paused: {
+    label: "Paused",
+    dot: "bg-muted-foreground/40",
+    badge: "bg-muted-foreground/10 text-muted-foreground",
+  },
+  completed: { label: "Completed", dot: "bg-primary", badge: "bg-primary/15 text-primary" },
 };
 
 const CATEGORIES = [
@@ -156,8 +160,13 @@ function ExplorePage() {
       </header>
 
       {/* Tab bar */}
-      <div className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit">
+      <div
+        role="tablist"
+        className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit"
+      >
         <button
+          role="tab"
+          aria-selected={tab === "projects"}
           onClick={() => setTab("projects")}
           className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
             tab === "projects"
@@ -169,6 +178,8 @@ function ExplorePage() {
           Projects
         </button>
         <button
+          role="tab"
+          aria-selected={tab === "creators"}
           onClick={() => setTab("creators")}
           className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
             tab === "creators"
@@ -257,7 +268,7 @@ function ExplorePage() {
                   <div className="p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${status.dot} bg-opacity-15`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${status.badge}`}
                       >
                         <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
                         {status.label}

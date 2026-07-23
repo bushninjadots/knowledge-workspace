@@ -233,7 +233,7 @@ function PublicProfileRoute() {
 
   return (
     <Shell accentColor={bannerAccent}>
-      <div className="animate-room-enter mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
         {/* ── Hero: Studio Backdrop ── */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div
@@ -241,7 +241,11 @@ function PublicProfileRoute() {
             style={{ borderColor: bannerAccent ?? "transparent" }}
           >
             {bannerSigned ? (
-              <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
+              <img
+                src={bannerSigned}
+                alt={`${profile.display_name ?? "Creator"} banner`}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
@@ -259,7 +263,11 @@ function PublicProfileRoute() {
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
               <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
                 {avatarSigned ? (
-                  <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={avatarSigned}
+                    alt={`${profile.display_name ?? "Creator"} avatar`}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
                     {initial}

@@ -158,7 +158,7 @@ function SignupPage() {
             ))}
           </div>
         </div>
-        <Button type="submit" variant="brand" className="w-full" disabled={loading}>
+        <Button type="submit" variant="default" className="w-full" disabled={loading}>
           {loading ? "Creating..." : "Create my profile"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">

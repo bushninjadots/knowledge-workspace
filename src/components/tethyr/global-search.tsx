@@ -26,9 +26,19 @@ function useDebounced<T>(value: T, ms = 200): T {
   return v;
 }
 
-export function GlobalSearch({ className }: { className?: string }) {
+export function GlobalSearch({
+  className,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
   const debounced = useDebounced(q.trim(), 200);
   const rootRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -154,7 +164,15 @@ export function GlobalSearch({ className }: { className?: string }) {
                   onClick={() => {
                     setOpen(false);
                     setQ("");
-                    navigate({ to: "/profile" });
+                    navigate({
+                      to: "/skills/$slug",
+                      params: {
+                        slug: s.name
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, "-")
+                          .replace(/(^-|-$)/g, ""),
+                      },
+                    });
                   }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface"
                 >

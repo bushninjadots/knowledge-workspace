@@ -52,7 +52,7 @@ function MessagesPage() {
   }
 
   return (
-    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl">
+    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl md:h-screen">
       {/* Seating chart — conversation list */}
       <aside
         className={`w-full flex-col border-r border-border/60 sm:w-80 ${
@@ -329,6 +329,7 @@ function Thread({
                 notifyTyping();
               }}
               placeholder={`Message ${name}…`}
+              aria-label={`Message ${name}`}
               rows={1}
               className="min-h-11 resize-none rounded-2xl border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => {

@@ -99,7 +99,7 @@ function SkillPage() {
 
   return (
     <Shell>
-      <div className="animate-room-enter mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
@@ -258,8 +258,7 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
-            to="/skills/$slug"
-            params={{ slug: skillName.toLowerCase().replace(/\s+/g, "-") }}
+            to="/explore"
             className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20"
           >
             Find teachers <ExternalLink className="h-3.5 w-3.5" />

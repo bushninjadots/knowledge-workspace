@@ -15,7 +15,7 @@ import {
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
 import { Button } from "@/components/ui/button";
-import { IconLearn, IconTeach, IconConnect, IconGrow } from "@/components/tethyr/icons-system";
+import { IconLearn, IconConnect, IconGrow } from "@/components/tethyr/icons-system";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -47,13 +47,6 @@ const rooms = [
     title: "Projects",
     desc: "Creative studios where ideas become reality",
     accent: "green" as const,
-    to: "/explore",
-  },
-  {
-    icon: Code,
-    title: "Skills",
-    desc: "Workshops for teaching and learning craft",
-    accent: "purple" as const,
     to: "/explore",
   },
   {
@@ -285,7 +278,7 @@ function HomePage() {
               <Button
                 asChild
                 size="lg"
-                variant="brand"
+                variant="default"
                 className="shadow-glow-green transition-lift"
               >
                 <Link to="/signup">

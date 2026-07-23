@@ -252,7 +252,7 @@ function ProjectPage() {
 
   return (
     <Shell accentColor={accent}>
-      <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
         {/* HERO / HEADER */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
           <div
@@ -260,7 +260,11 @@ function ProjectPage() {
             style={{ borderColor: accent ?? "transparent" }}
           >
             {coverSigned ? (
-              <img src={coverSigned} alt="" className="h-full w-full object-cover" />
+              <img
+                src={coverSigned}
+                alt={`${project.title} cover`}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40">
                 <ImageIcon className="h-8 w-8 text-background" />

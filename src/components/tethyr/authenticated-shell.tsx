@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { GlobalSearch } from "./global-search";
 
@@ -10,6 +10,7 @@ import { GlobalSearch } from "./global-search";
  */
 export function AuthenticatedShell() {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -17,6 +18,8 @@ export function AuthenticatedShell() {
       <div className="hidden md:block">
         <DashboardSidebar />
       </div>
+
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Mobile overlay */}
       {open && (
@@ -48,6 +51,13 @@ export function AuthenticatedShell() {
             <Menu className="h-5 w-5" />
           </button>
           <span className="font-display text-sm font-semibold">Tethyr</span>
+          <button
+            className="ml-auto rounded-full p-2 hover:bg-surface"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </header>
 
         <main className="flex-1">

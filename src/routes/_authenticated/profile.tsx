@@ -398,7 +398,7 @@ function Shell({
     ? ({ "--accent-border": withAlpha(accentColor, 0.55) } as React.CSSProperties)
     : undefined;
   return (
-    <div className="animate-room-enter bg-noise p-4 sm:p-8" style={accentStyle}>
+    <div className="animate-room-enter mx-auto max-w-6xl bg-noise p-4 sm:p-8" style={accentStyle}>
       {children}
     </div>
   );
@@ -467,7 +467,11 @@ function HeaderCard({
           <div className="relative shrink-0 -mt-16 sm:-mt-20">
             <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
               {avatarSigned ? (
-                <img src={avatarSigned} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={avatarSigned}
+                  alt={`${profile?.display_name ?? "Your"} avatar`}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
                   {(profile?.display_name ?? "?").charAt(0).toUpperCase()}

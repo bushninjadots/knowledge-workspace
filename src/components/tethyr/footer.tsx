@@ -58,7 +58,7 @@ export function Footer() {
                   to="/explore"
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Explore Skills
+                  Explore Projects
                 </Link>
               </li>
               <li>
@@ -67,14 +67,6 @@ export function Footer() {
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Find Teachers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/community"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Tutorials
                 </Link>
               </li>
             </ul>
@@ -99,9 +91,6 @@ export function Footer() {
                 >
                   Log In
                 </Link>
-              </li>
-              <li>
-                <span className="text-muted-foreground/40">About (soon)</span>
               </li>
             </ul>
           </div>
