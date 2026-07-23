@@ -79,20 +79,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tethyr — Connected by what you know" },
+      { title: "Tethyr — Where creators build together" },
       {
         name: "description",
         content:
-          "Tethyr is a trusted knowledge network where creators teach and learn from each other. Share skills instead of paying for them.",
+          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
       },
       { name: "author", content: "Tethyr" },
-      { property: "og:title", content: "Tethyr — Connected by what you know" },
+      { property: "og:title", content: "Tethyr — Where creators build together" },
       {
         property: "og:description",
-        content: "A trusted knowledge network for creators.",
+        content: "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Tethyr — Where creators build together" },
+      { name: "twitter:description", content: "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
