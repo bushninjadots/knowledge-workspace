@@ -47,24 +47,28 @@ const rooms = [
     title: "Projects",
     desc: "Creative studios where ideas become reality",
     accent: "green" as const,
+    to: "/explore",
   },
   {
     icon: Code,
     title: "Skills",
     desc: "Workshops for teaching and learning craft",
     accent: "purple" as const,
+    to: "/explore",
   },
   {
     icon: Sparkles,
     title: "Community",
     desc: "Open space for conversations and connections",
     accent: "green" as const,
+    to: "/community",
   },
   {
     icon: Video,
     title: "Messages",
     desc: "Meeting table for deeper collaboration",
     accent: "purple" as const,
+    to: "/messages",
   },
 ];
 
@@ -180,8 +184,9 @@ function HomePage() {
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {rooms.map((room, i) => (
-            <div
+            <Link
               key={room.title}
+              to={room.to}
               className={`group relative overflow-hidden rounded-3xl border border-border/60 bg-surface p-6 transition-lift hover:-translate-y-1 hover:border-primary/40 animate-room-enter animate-stagger inner-glow`}
               style={{ animationDelay: `${i * 100}ms` }}
             >
@@ -196,7 +201,11 @@ function HomePage() {
               </span>
               <h3 className="mt-5 font-display text-lg font-semibold">{room.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{room.desc}</p>
-            </div>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                Enter{" "}
+                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
           ))}
         </div>
       </section>

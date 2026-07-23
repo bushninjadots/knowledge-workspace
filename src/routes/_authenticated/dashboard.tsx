@@ -6,7 +6,6 @@ import {
   Bell,
   ArrowRight,
   Compass,
-  User,
   Sparkles,
   Clock,
   Rocket,
@@ -256,19 +255,19 @@ function DashboardHome() {
             />
             <div className="mt-4 space-y-2">
               <QuickLink
-                to="/profile"
-                icon={<User className="h-4 w-4" />}
-                label="View your profile"
-              />
-              <QuickLink
-                to="/profile"
-                icon={<User className="h-4 w-4" />}
-                label="Continue editing"
+                to="/explore"
+                icon={<Compass className="h-4 w-4" />}
+                label="Explore creators"
               />
               <QuickLink
                 to="/community"
                 icon={<Sparkles className="h-4 w-4" />}
                 label="Community feed"
+              />
+              <QuickLink
+                to="/skills/video-editing"
+                icon={<Compass className="h-4 w-4" />}
+                label="Browse workshops"
               />
             </div>
           </section>

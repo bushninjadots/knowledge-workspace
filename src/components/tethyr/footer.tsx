@@ -63,7 +63,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/dashboard"
+                  to="/explore"
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Find Teachers
