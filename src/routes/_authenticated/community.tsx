@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
-import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
 import { PostCard } from "@/components/tethyr/community/post-card";
@@ -195,225 +194,219 @@ function CommunityPage() {
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
-    <div className="animate-room-enter flex min-h-screen bg-background">
-      <div className="hidden md:block">
-        <DashboardSidebar />
-      </div>
+    <div className="animate-room-enter bg-noise">
+      <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
+        <CommunityLeftSidebar active={nav} onSelect={setNav} />
 
-      <main className="flex-1 pb-20 lg:pb-0">
-        <div className="bg-noise mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
-          <CommunityLeftSidebar active={nav} onSelect={setNav} />
-
-          <div className="min-w-0 flex-1">
-            <header className="mb-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-primary/70">
-                    Open Collaboration Space
-                  </p>
-                  <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
-                  <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-                    An open workshop floor — share project updates, ask for help, request
-                    collaboration, or drop a resource. Every post has purpose.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setMobileTrendingOpen(true)}
-                  className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Trending
-                </button>
-              </div>
-
-              <div className="relative mt-4">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search projects, skills, people, or ideas..."
-                  className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-                />
-                {isSearching && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              {isSearching && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {feed.length} result{feed.length !== 1 ? "s" : ""} for "{searchQuery}"
+        <div className="min-w-0 flex-1">
+          <header className="mb-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-primary/70">
+                  Open Collaboration Space
                 </p>
-              )}
-            </header>
-
-            {showComposer && (
-              <div className="mb-6">
-                <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} />
+                <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
+                <p className="mt-1 max-w-lg text-sm text-muted-foreground">
+                  An open workshop floor — share project updates, ask for help, request
+                  collaboration, or drop a resource. Every post has purpose.
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => setMobileTrendingOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Trending
+              </button>
+            </div>
 
-            {showTypeTabs && (
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {TYPE_FILTERS.map((f) => {
-                  const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
-                  return (
-                    <button
-                      key={f.value}
-                      onClick={() => setTypeFilter(f.value)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition-all duration-200 ${
-                        typeFilter === f.value
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
-                      }`}
-                    >
-                      {icon && <span className="mr-1">{icon}</span>}
-                      {f.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {showTypeTabs && (
-              <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="relative mt-4">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects, skills, people, or ideas..."
+                className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+              />
+              {isSearching && (
                 <button
-                  onClick={() => setFocusFilter("all")}
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {isSearching && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {feed.length} result{feed.length !== 1 ? "s" : ""} for "{searchQuery}"
+              </p>
+            )}
+          </header>
+
+          {showComposer && (
+            <div className="mb-6">
+              <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} />
+            </div>
+          )}
+
+          {showTypeTabs && (
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {TYPE_FILTERS.map((f) => {
+                const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
+                return (
+                  <button
+                    key={f.value}
+                    onClick={() => setTypeFilter(f.value)}
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition-all duration-200 ${
+                      typeFilter === f.value
+                        ? "border-primary bg-primary/10 text-primary shadow-sm"
+                        : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
+                    }`}
+                  >
+                    {icon && <span className="mr-1">{icon}</span>}
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {showTypeTabs && (
+            <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                onClick={() => setFocusFilter("all")}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-200 ${
+                  focusFilter === "all"
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
+                }`}
+              >
+                Any focus
+              </button>
+              {DISCOVERY_FILTERS.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
                   className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-200 ${
-                    focusFilter === "all"
+                    focusFilter === f
                       ? "bg-surface-elevated text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
                   }`}
                 >
-                  Any focus
+                  {f}
                 </button>
-                {DISCOVERY_FILTERS.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-200 ${
-                      focusFilter === f
-                        ? "bg-surface-elevated text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            )}
+              ))}
+            </div>
+          )}
 
-            {showTypeTabs && (
-              <div className="mb-4 flex items-center gap-1">
-                <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
-                {SORT_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSortMode(opt.value)}
-                    className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-all duration-200 ${
-                      sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
+          {showTypeTabs && (
+            <div className="mb-4 flex items-center gap-1">
+              <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortMode(opt.value)}
+                  className={`rounded-lg px-2 py-1 text-[11px] font-medium transition-all duration-200 ${
+                    sortMode === opt.value
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-            {nav === "communities" ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {COMMUNITIES.length === 0 ? (
-                  <div className="col-span-full">
-                    <EmptyState
-                      icon={<Users className="h-5 w-5" />}
-                      title="No workshops yet"
-                      description="Workshop spaces will appear here once they're created. Start a new one to bring people together."
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ) : nav === "following" ? (
-              <EmptyState
-                icon={<Heart className="h-5 w-5" />}
-                title="Following is coming soon"
-                description="Once you follow collaborators, their posts will surface here first."
-              />
-            ) : isLoading ? (
-              <div className="flex flex-col gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-32 rounded bg-surface-elevated" />
-                        <div className="h-3 w-48 rounded bg-surface-elevated" />
-                      </div>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <div className="h-3 w-full rounded bg-surface-elevated" />
-                      <div className="h-3 w-3/4 rounded bg-surface-elevated" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : feed.length === 0 && isSearching ? (
-              <EmptyState
-                icon={<Search className="h-5 w-5" />}
-                title="No results found"
-                description={`Nothing matches "${searchQuery}". Try different keywords — project names, skill tags, or collaborator handles.`}
-              />
-            ) : feed.length === 0 ? (
-              <EmptyState
-                icon={<Users className="h-5 w-5" />}
-                title={
-                  nav === "saved"
-                    ? "Nothing saved yet"
-                    : nav === "help"
-                      ? "No help requests"
-                      : "The workshop is quiet"
-                }
-                description={
-                  nav === "saved"
-                    ? "Save a post to pin it here for quick access."
-                    : nav === "help"
-                      ? "When someone needs a hand, their request will appear here."
-                      : "Be the first to share a project update, ask a question, or request collaboration."
-                }
-              />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {feed.map((post, index) => (
-                  <PostCardWithComments
-                    key={post.id}
-                    post={post}
-                    saved={savedIds.has(post.id)}
-                    onToggleSave={() => toggleSave(post.id)}
-                    searchQuery={isSearching ? searchQuery : undefined}
-                    showComments={openComments.has(post.id)}
-                    onToggleComments={() => toggleComments(post.id)}
-                    onDelete={() => deletePostHandler(post.id)}
-                    onEdit={() => editPost(post)}
-                    onToggleAction={(action) => handleToggleAction(post.id, action)}
-                    className="transition-lift animate-stagger"
-                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+          {nav === "communities" ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {COMMUNITIES.length === 0 ? (
+                <div className="col-span-full">
+                  <EmptyState
+                    icon={<Users className="h-5 w-5" />}
+                    title="No workshops yet"
+                    description="Workshop spaces will appear here once they're created. Start a new one to bring people together."
                   />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <CommunityRightSidebar />
+                </div>
+              ) : null}
+            </div>
+          ) : nav === "following" ? (
+            <EmptyState
+              icon={<Heart className="h-5 w-5" />}
+              title="Following is coming soon"
+              description="Once you follow collaborators, their posts will surface here first."
+            />
+          ) : isLoading ? (
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-32 rounded bg-surface-elevated" />
+                      <div className="h-3 w-48 rounded bg-surface-elevated" />
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <div className="h-3 w-full rounded bg-surface-elevated" />
+                    <div className="h-3 w-3/4 rounded bg-surface-elevated" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : feed.length === 0 && isSearching ? (
+            <EmptyState
+              icon={<Search className="h-5 w-5" />}
+              title="No results found"
+              description={`Nothing matches "${searchQuery}". Try different keywords — project names, skill tags, or collaborator handles.`}
+            />
+          ) : feed.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-5 w-5" />}
+              title={
+                nav === "saved"
+                  ? "Nothing saved yet"
+                  : nav === "help"
+                    ? "No help requests"
+                    : "The workshop is quiet"
+              }
+              description={
+                nav === "saved"
+                  ? "Save a post to pin it here for quick access."
+                  : nav === "help"
+                    ? "When someone needs a hand, their request will appear here."
+                    : "Be the first to share a project update, ask a question, or request collaboration."
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {feed.map((post, index) => (
+                <PostCardWithComments
+                  key={post.id}
+                  post={post}
+                  saved={savedIds.has(post.id)}
+                  onToggleSave={() => toggleSave(post.id)}
+                  searchQuery={isSearching ? searchQuery : undefined}
+                  showComments={openComments.has(post.id)}
+                  onToggleComments={() => toggleComments(post.id)}
+                  onDelete={() => deletePostHandler(post.id)}
+                  onEdit={() => editPost(post)}
+                  onToggleAction={(action) => handleToggleAction(post.id, action)}
+                  className="transition-lift animate-stagger"
+                  style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </main>
+
+        <CommunityRightSidebar />
+      </div>
 
       <MobileBottomNav
         active={nav}

@@ -5,7 +5,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
-import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -53,74 +52,67 @@ function MessagesPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background animate-room-enter">
-      <div className="hidden md:block">
-        <DashboardSidebar />
-      </div>
-      <main className="flex-1">
-        <div className="mx-auto flex h-[calc(100vh-0px)] w-full max-w-6xl">
-          {/* Seating chart — conversation list */}
-          <aside
-            className={`w-full flex-col border-r border-border/60 sm:w-80 ${
-              active ? "hidden sm:flex" : "flex"
-            }`}
-          >
-            <header className="flex h-16 items-center justify-between border-b border-border/60 px-4">
-              <div className="leading-tight">
-                <h1 className="font-display text-lg font-semibold">Messages</h1>
-                <p className="text-[11px] text-muted-foreground">Where tethrs actually talk</p>
-              </div>
-              {unread && unread.total > 0 && (
-                <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                  {unread.total}
-                </span>
-              )}
-            </header>
-            <div className="flex-1 overflow-y-auto bg-noise">
-              {isLoading ? (
-                <div className="m-2 h-16 animate-pulse rounded-2xl bg-surface" />
-              ) : accepted.length === 0 ? (
-                <div className="p-4">
-                  <EmptyState
-                    variant="messages"
-                    icon={<span className="text-xl">&#128075;</span>}
-                    title="The table is empty"
-                    description="Once you're tethryd with someone, this is where focused conversations happen. Pull up a chair."
-                  />
-                </div>
-              ) : (
-                <ul className="divide-y divide-border/40">
-                  {accepted.map((c) => (
-                    <li key={c.id}>
-                      <ConversationRow
-                        conn={c}
-                        active={c.id === activeId}
-                        unreadCount={unread?.byConnection[c.id] ?? 0}
-                        onSelect={() => select(c.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
+    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl">
+      {/* Seating chart — conversation list */}
+      <aside
+        className={`w-full flex-col border-r border-border/60 sm:w-80 ${
+          active ? "hidden sm:flex" : "flex"
+        }`}
+      >
+        <header className="flex h-16 items-center justify-between border-b border-border/60 px-4">
+          <div className="leading-tight">
+            <h1 className="font-display text-lg font-semibold">Messages</h1>
+            <p className="text-[11px] text-muted-foreground">Where tethrs actually talk</p>
+          </div>
+          {unread && unread.total > 0 && (
+            <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+              {unread.total}
+            </span>
+          )}
+        </header>
+        <div className="flex-1 overflow-y-auto bg-noise">
+          {isLoading ? (
+            <div className="m-2 h-16 animate-pulse rounded-2xl bg-surface" />
+          ) : accepted.length === 0 ? (
+            <div className="p-4">
+              <EmptyState
+                variant="messages"
+                icon={<span className="text-xl">&#128075;</span>}
+                title="The table is empty"
+                description="Once you're tethryd with someone, this is where focused conversations happen. Pull up a chair."
+              />
             </div>
-          </aside>
-
-          {/* Thread — focused conversation */}
-          <section className={`flex-1 flex-col ${active ? "flex" : "hidden sm:flex"}`}>
-            {active ? (
-              <Thread conn={active} meId={meId} onBack={() => select(null)} />
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-                <EmptyState
-                  variant="messages"
-                  title="Pick a seat at the table"
-                  description="Every great tether starts with a conversation. Choose someone from the seating chart to begin."
-                />
-              </div>
-            )}
-          </section>
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {accepted.map((c) => (
+                <li key={c.id}>
+                  <ConversationRow
+                    conn={c}
+                    active={c.id === activeId}
+                    unreadCount={unread?.byConnection[c.id] ?? 0}
+                    onSelect={() => select(c.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      </main>
+      </aside>
+
+      {/* Thread — focused conversation */}
+      <section className={`flex-1 flex-col ${active ? "flex" : "hidden sm:flex"}`}>
+        {active ? (
+          <Thread conn={active} meId={meId} onBack={() => select(null)} />
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+            <EmptyState
+              variant="messages"
+              title="Pick a seat at the table"
+              description="Every great tether starts with a conversation. Choose someone from the seating chart to begin."
+            />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
