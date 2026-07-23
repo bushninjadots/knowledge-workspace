@@ -15,15 +15,25 @@ export function AuthShell({
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background bg-noise px-4 py-12">
+      {/* Grid pattern */}
       <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-      <div
-        className="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--brand-purple), transparent 60%)" }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-32 right-1/4 h-[360px] w-[360px] rounded-full opacity-15 blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--brand-green), transparent 60%)" }}
-      />
+
+      {/* Animated floating orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -top-40 left-1/4 h-[480px] w-[480px] rounded-full opacity-20 blur-3xl animate-[orb-drift_12s_ease-in-out_infinite_alternate]"
+          style={{ background: "radial-gradient(circle, var(--brand-purple), transparent 60%)" }}
+        />
+        <div
+          className="absolute -bottom-32 right-1/4 h-[360px] w-[360px] rounded-full opacity-15 blur-3xl animate-[orb-drift_10s_ease-in-out_infinite_alternate-reverse]"
+          style={{ background: "radial-gradient(circle, var(--brand-green), transparent 60%)" }}
+        />
+        <div
+          className="absolute top-1/3 right-1/6 h-[200px] w-[200px] rounded-full opacity-10 blur-3xl animate-[orb-drift_14s_ease-in-out_infinite_alternate]"
+          style={{ background: "radial-gradient(circle, var(--brand-green), transparent 60%)" }}
+        />
+      </div>
+
       <div className="relative w-full max-w-md animate-room-enter">
         <div className="mb-8 flex justify-center">
           <TethyrBall size="md" />
@@ -42,6 +52,14 @@ export function AuthShell({
           </Link>
         </p>
       </div>
+
+      <style>{`
+        @keyframes orb-drift {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(30px, -20px) scale(1.05); }
+          100% { transform: translate(-20px, 15px) scale(0.95); }
+        }
+      `}</style>
     </div>
   );
 }
