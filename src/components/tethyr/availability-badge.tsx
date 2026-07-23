@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Circle,
-  Clock,
-  BookOpen,
-  Users,
-  GraduationCap,
-  ChevronDown,
-} from "lucide-react";
+import { Circle, Clock, BookOpen, Users, GraduationCap, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,11 +12,41 @@ const STATUS_OPTIONS: {
   color: string;
   bg: string;
 }[] = [
-  { value: "available", label: "Available", icon: Circle, color: "text-brand-green", bg: "bg-brand-green/10 border-brand-green/30" },
-  { value: "busy", label: "Busy", icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/30" },
-  { value: "learning", label: "Learning", icon: BookOpen, color: "text-primary", bg: "bg-primary/10 border-primary/30" },
-  { value: "looking_for_team", label: "Looking for Team", icon: Users, color: "text-brand-purple", bg: "bg-brand-purple/10 border-brand-purple/30" },
-  { value: "mentoring", label: "Mentoring", icon: GraduationCap, color: "text-brand-green", bg: "bg-brand-green/10 border-brand-green/30" },
+  {
+    value: "available",
+    label: "Available",
+    icon: Circle,
+    color: "text-brand-green",
+    bg: "bg-brand-green/10 border-brand-green/30",
+  },
+  {
+    value: "busy",
+    label: "Busy",
+    icon: Clock,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10 border-amber-500/30",
+  },
+  {
+    value: "learning",
+    label: "Learning",
+    icon: BookOpen,
+    color: "text-primary",
+    bg: "bg-primary/10 border-primary/30",
+  },
+  {
+    value: "looking_for_team",
+    label: "Looking for Team",
+    icon: Users,
+    color: "text-brand-purple",
+    bg: "bg-brand-purple/10 border-brand-purple/30",
+  },
+  {
+    value: "mentoring",
+    label: "Mentoring",
+    icon: GraduationCap,
+    color: "text-brand-green",
+    bg: "bg-brand-green/10 border-brand-green/30",
+  },
 ];
 
 export function getStatusDisplay(status: AvailabilityStatus) {
@@ -131,7 +154,9 @@ export function useUpdateAvailability() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (status: AvailabilityStatus) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await (supabase as any)

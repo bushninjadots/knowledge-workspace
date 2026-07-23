@@ -10,12 +10,7 @@ export type SkillMeta = {
 };
 
 export type AvailabilityStatus =
-  | "available"
-  | "busy"
-  | "learning"
-  | "looking_for_team"
-  | "mentoring"
-  | null;
+  "available" | "busy" | "learning" | "looking_for_team" | "mentoring" | null;
 
 export type MatchCandidate = {
   profile_id: string;
@@ -106,10 +101,7 @@ export function scoreAvailability(
   if (targetAvail === "available" || targetAvail === "looking_for_team") {
     score += 1;
   }
-  if (
-    candidateAvail === "looking_for_team" &&
-    targetAvail === "available"
-  ) {
+  if (candidateAvail === "looking_for_team" && targetAvail === "available") {
     score += 2;
     reasons.push("Great timing — both looking to connect");
   }
@@ -145,22 +137,13 @@ export function computeMatchScore(params: {
   targetAvail: AvailabilityStatus;
   targetLangs: string[];
 }): { score: number; reasons: string[] } {
-  const [skillScore, skillReasons] = scoreSkillMatch(
-    params.candidateTeach,
-    params.targetLearnIds,
-  );
+  const [skillScore, skillReasons] = scoreSkillMatch(params.candidateTeach, params.targetLearnIds);
   const [reverseScore, reverseReasons] = scoreReverseMatch(
     params.candidateLearn,
     params.targetTeachIds,
   );
-  const [availScore, availReasons] = scoreAvailability(
-    params.candidateAvail,
-    params.targetAvail,
-  );
-  const [langScore, langReasons] = scoreLanguages(
-    params.candidateLangs,
-    params.targetLangs,
-  );
+  const [availScore, availReasons] = scoreAvailability(params.candidateAvail, params.targetAvail);
+  const [langScore, langReasons] = scoreLanguages(params.candidateLangs, params.targetLangs);
 
   return {
     score: skillScore * 3 + reverseScore * 2 + availScore + langScore,

@@ -22,11 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import {
-  useCreatePost,
-  useUpdatePost,
-  type PostWithAuthor,
-} from "@/hooks/use-community";
+import { useCreatePost, useUpdatePost, type PostWithAuthor } from "@/hooks/use-community";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -156,10 +152,7 @@ export function ComposerBar({
   useEffect(() => {
     if (isEditing) return;
     if (draft || type || images.length > 0) {
-      localStorage.setItem(
-        DRAFT_KEY,
-        JSON.stringify({ body: draft, title, type, images }),
-      );
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ body: draft, title, type, images }));
     } else {
       localStorage.removeItem(DRAFT_KEY);
     }
@@ -224,7 +217,8 @@ export function ComposerBar({
       return;
     }
 
-    const postTitle = title.trim() || (bodyText.length > 80 ? bodyText.slice(0, 77) + "..." : bodyText);
+    const postTitle =
+      title.trim() || (bodyText.length > 80 ? bodyText.slice(0, 77) + "..." : bodyText);
 
     try {
       if (isEditing && editingPost) {

@@ -125,7 +125,9 @@ export function ResourcesSection({
                   >
                     {r.title}
                   </a>
-                  <p className="text-[11px] text-muted-foreground">{RESOURCE_LABEL[r.type] ?? r.type}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {RESOURCE_LABEL[r.type] ?? r.type}
+                  </p>
                 </div>
                 {isOwner && (
                   <button
@@ -159,7 +161,10 @@ export function GallerySection({
 
   const handleAdd = () => {
     if (!url.trim()) return;
-    onUpdate([...gallery, { url: url.trim(), caption: caption.trim() || undefined, type: "image" }]);
+    onUpdate([
+      ...gallery,
+      { url: url.trim(), caption: caption.trim() || undefined, type: "image" },
+    ]);
     setUrl("");
     setCaption("");
     setShowAdd(false);
@@ -223,7 +228,10 @@ export function GallerySection({
       {gallery.length > 0 && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {gallery.map((g, idx) => (
-            <div key={idx} className="group relative overflow-hidden rounded-2xl border border-border/60">
+            <div
+              key={idx}
+              className="group relative overflow-hidden rounded-2xl border border-border/60"
+            >
               <img
                 src={safeHref(g.url)}
                 alt={g.caption ?? ""}

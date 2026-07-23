@@ -82,7 +82,12 @@ async function fetchProfile(userId: string) {
       .maybeSingle();
     if (!error) return data as Profile | null;
     // Retry on any schema/column error (missing column, schema cache, etc.)
-    if (!error.message?.includes("column") && !error.message?.includes("schema") && !error.code?.startsWith("42")) break;
+    if (
+      !error.message?.includes("column") &&
+      !error.message?.includes("schema") &&
+      !error.code?.startsWith("42")
+    )
+      break;
   }
   // Last resort: return just the id so the app doesn't crash.
   return { id: userId } as Profile;

@@ -170,11 +170,18 @@ INSERT INTO public.projects(profile_id, title)
 SELECT count(*) AS should_be_1 FROM public.project_contributors
   WHERE profile_id = '11111111-1111-1111-1111-111111111111' AND role = 'creator';
 
--- Bob adds himself as a contributor (self-join is allowed).
+-- Bob cannot add himself: contributor additions are owner-only.
 SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
-INSERT INTO public.project_contributors(project_id, profile_id, role)
-  SELECT id, '22222222-2222-2222-2222-222222222222', 'contributor'
-    FROM public.projects WHERE title = 'Alice''s SaaS';
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.project_contributors(project_id, profile_id, role)
+      SELECT id, '22222222-2222-2222-2222-222222222222', 'contributor'
+        FROM public.projects WHERE title = 'Alice''s SaaS';
+    RAISE NOTICE 'REGRESSION: bob self-joined without owner approval';
+  EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+    RAISE NOTICE 'OK: self-join rejected';
+  END;
+END $$;
 
 -- EXPECT: eve cannot add bob (or anyone but herself) to alice's project.
 SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');

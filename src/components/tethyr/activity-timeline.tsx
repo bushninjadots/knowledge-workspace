@@ -1,7 +1,22 @@
 // Activity timeline — shows both activity_events and contribution_log entries
 // in a unified, chronologically sorted view.
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Image as ImageIcon, GraduationCap, BookOpen, Star, Rocket, User, MessageCircle, Flag, ThumbsUp, Users, Award, Plus, Zap } from "lucide-react";
+import {
+  Sparkles,
+  Image as ImageIcon,
+  GraduationCap,
+  BookOpen,
+  Star,
+  Rocket,
+  User,
+  MessageCircle,
+  Flag,
+  ThumbsUp,
+  Users,
+  Award,
+  Plus,
+  Zap,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "./empty-state";
 

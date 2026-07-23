@@ -45,7 +45,11 @@ export function MilestonesTimeline({
   const handleAdd = async () => {
     if (!title.trim()) return;
     try {
-      await createMutation.mutateAsync({ projectId, title: title.trim(), description: desc.trim() || undefined });
+      await createMutation.mutateAsync({
+        projectId,
+        title: title.trim(),
+        description: desc.trim() || undefined,
+      });
       setTitle("");
       setDesc("");
       setShowAdd(false);
@@ -140,7 +144,10 @@ export function MilestonesTimeline({
 
       {total > 0 && (
         <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-          <div className="h-full rounded-full bg-gradient-brand transition-all" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full rounded-full bg-gradient-brand transition-all"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
@@ -153,13 +160,15 @@ export function MilestonesTimeline({
             return (
               <div key={m.id} className="flex items-start gap-3">
                 <button
-                  onClick={() => isOwner ? handleToggle(m) : undefined}
+                  onClick={() => (isOwner ? handleToggle(m) : undefined)}
                   className={`mt-0.5 shrink-0 ${STATUS_STYLE[m.status]} ${isOwner ? "cursor-pointer hover:opacity-70" : ""}`}
                 >
                   <Icon className="h-4 w-4" />
                 </button>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm ${m.status === "done" ? "text-muted-foreground line-through" : ""}`}>
+                  <p
+                    className={`text-sm ${m.status === "done" ? "text-muted-foreground line-through" : ""}`}
+                  >
                     {m.title}
                   </p>
                   {m.description && (

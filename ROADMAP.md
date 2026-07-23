@@ -28,18 +28,23 @@ Repeat
 ## Design Principles (Non-Negotiable)
 
 ### 1. Projects are the centre of Tethyr
+
 Every feature should connect back to projects.
 
 ### 2. Everything must strengthen the loop
+
 Discover → Learn → Collaborate → Build → Share → Earn Reputation → Unlock Opportunities → Repeat
 
 ### 3. Avoid social media mechanics
+
 Do NOT add: follower counts, like counts as primary metrics, vanity statistics, engagement bait, endless scrolling. Focus on meaningful contribution.
 
 ### 4. Reputation over popularity
+
 Users become known for: helping others, finishing projects, mentoring, teaching, learning, collaborating — not for accumulating followers.
 
 ### 5. Every page needs a purpose
+
 - **Home:** What should I do today?
 - **Projects:** What are people building, and how can I contribute?
 - **Community:** Where can I help or ask for help?
@@ -70,6 +75,7 @@ Mobile access, visual polish, search & discovery, comments, user identity, rich 
 Current: Title, Description, Photo, Goal, Status
 
 Expand to include:
+
 ```
 Overview
 Vision
@@ -88,6 +94,7 @@ Discussion
 ```
 
 Tasks:
+
 - Redesign project schema (new DB columns/tables)
 - Redesign project UI (`projects.$id.tsx`)
 - Create reusable project components
@@ -97,6 +104,7 @@ Tasks:
 ## Step 2.2 — Project Timeline ✅ DONE
 
 Timeline stages:
+
 ```
 Planning → Building → Testing → Launch → Growing
 ```
@@ -108,6 +116,7 @@ Planning → Building → Testing → Launch → Growing
 ## Step 2.3 — Milestones ✅ DONE
 
 Each project has milestones:
+
 ```
 Title
 Description
@@ -124,6 +133,7 @@ Progress
 ## Step 2.4 — Weekly Updates ✅ DONE
 
 Projects publish updates instead of random posts:
+
 ```
 Week 8
 - Finished UI redesign
@@ -138,6 +148,7 @@ Week 8
 ## Step 2.5 — Open Roles ✅ DONE
 
 Every project can advertise roles:
+
 ```
 Looking For: Illustrator, React Dev, Writer, SEO, Music, 3D Artist, Tester
 ```
@@ -150,6 +161,7 @@ Looking For: Illustrator, React Dev, Writer, SEO, Music, 3D Artist, Tester
 ## Step 2.6 — Contributors ✅ DONE
 
 Every contributor gets:
+
 ```
 Role (creator / contributor / mentor)
 Joined Date
@@ -164,6 +176,7 @@ Skills Used
 ## Step 2.7 — Project Discussions ✅ DONE
 
 Instead of generic comments, project-specific discussion:
+
 ```
 Questions
 Ideas
@@ -184,7 +197,9 @@ Announcements
 The heart of Tethyr.
 
 ## Skill Matching ✅ DONE
+
 Automatically suggest people, projects, mentors, learners based on:
+
 - Teach skills
 - Learn skills
 - Projects
@@ -192,16 +207,21 @@ Automatically suggest people, projects, mentors, learners based on:
 - Interests
 
 ## Join Requests ✅ DONE
+
 Users click "I'd Like To Help" → Owner reviews → Accept / Decline / Message
 
 ## Availability Status ✅ DONE
+
 ```
 Available / Busy / Learning / Looking For Team / Mentoring
 ```
+
 Visible everywhere — profile, cards, search results.
 
 ## Collaboration Recommendations ✅ DONE
+
 Dashboard shows:
+
 - Projects You May Like
 - Creators You Match
 - Communities You Fit
@@ -215,6 +235,7 @@ Dashboard shows:
 No followers. No likes. Everything earned.
 
 ## Reputation Categories ✅ DONE
+
 ```
 Collaboration
 Teaching
@@ -225,6 +246,7 @@ Project Impact
 ```
 
 ## Contribution History Timeline ✅ DONE
+
 ```
 Joined Project
 Finished Milestone
@@ -235,6 +257,7 @@ Received Endorsement
 ```
 
 ## Achievements ✅ DONE
+
 ```
 First Mentor
 100 Hours Helped
@@ -249,6 +272,7 @@ Community Builder
 # PHASE 5 — Skills Become Ecosystems ✅ DONE
 
 Each skill gets a full destination page:
+
 ```
 Overview / Projects / People / Mentors / Learners
 Challenges / Resources / Tutorials / Discussions / Trending
@@ -259,6 +283,7 @@ Challenges / Resources / Tutorials / Discussions / Trending
 # PHASE 6 — Community Evolution
 
 Current feed becomes purpose-driven. Post types:
+
 ```
 Project Update / Looking For Help / Feedback Request
 Tutorial / Lesson Learned / Showcase / Open Role
@@ -272,6 +297,7 @@ Every post belongs somewhere. No random social posting.
 # PHASE 7 — Opportunity Layer
 
 Browse by need instead of people:
+
 ```
 Need Designer / Need Musician / Need Tester
 Need Translator / Need Photographer / Need Mentor
@@ -282,6 +308,7 @@ Need Translator / Need Photographer / Need Mentor
 # PHASE 8 — Dashboard
 
 Everything actionable:
+
 ```
 Continue Project / Open Invitations / Applications
 Messages / Project Progress / Suggested Collaborators
@@ -294,6 +321,7 @@ Weekly Reputation
 # PHASE 9 — Knowledge Layer
 
 Projects generate knowledge:
+
 ```
 Documentation / Resources / Files / Guides
 Lessons Learned / FAQ / Tutorials

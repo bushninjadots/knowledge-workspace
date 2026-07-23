@@ -26,7 +26,9 @@ export function NextStepsList({ items }: { items: Section[] }) {
             ) : (
               <Circle className="h-4 w-4 text-muted-foreground" />
             )}
-            <span className={`text-sm ${s.done ? "text-muted-foreground line-through" : "text-foreground"}`}>
+            <span
+              className={`text-sm ${s.done ? "text-muted-foreground line-through" : "text-foreground"}`}
+            >
               {s.label}
             </span>
             <span className="ml-auto text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">

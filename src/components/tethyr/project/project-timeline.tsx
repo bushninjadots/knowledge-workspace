@@ -1,10 +1,4 @@
-import {
-  Lightbulb,
-  Hammer,
-  FlaskConical,
-  Rocket,
-  Sprout,
-} from "lucide-react";
+import { Lightbulb, Hammer, FlaskConical, Rocket, Sprout } from "lucide-react";
 
 export type ProjectStage = "planning" | "building" | "testing" | "launch" | "growing";
 
@@ -71,7 +65,11 @@ export function ProjectTimeline({
               </div>
               <span
                 className={`text-[11px] font-medium ${
-                  isActive ? "text-foreground" : isPast ? "text-brand-green" : "text-muted-foreground"
+                  isActive
+                    ? "text-foreground"
+                    : isPast
+                      ? "text-brand-green"
+                      : "text-muted-foreground"
                 } ${isFuture ? "opacity-50" : ""}`}
               >
                 {stage.label}

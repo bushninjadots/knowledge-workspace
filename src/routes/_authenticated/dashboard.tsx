@@ -41,7 +41,7 @@ function DashboardPage() {
 
   useEffect(() => {
     if (data?.userId) {
-      checkAndAwardAchievements(data.userId).catch(() => {});
+      checkAndAwardAchievements().catch(() => {});
     }
   }, [data?.userId]);
 

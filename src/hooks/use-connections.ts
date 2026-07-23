@@ -68,17 +68,18 @@ export function useConnections() {
     }
     const channel = supabase.channel(`connections:${meId}`);
     channel
+      .on("postgres_changes", { event: "*", schema: "public", table: "connections" }, () => {
+        qc.invalidateQueries({ queryKey: CONNECTIONS_KEY });
+        qc.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+      })
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "connections" },
-        () => {
-          qc.invalidateQueries({ queryKey: CONNECTIONS_KEY });
-          qc.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "activity_events",
+          filter: `profile_id=eq.${meId}`,
         },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "activity_events", filter: `profile_id=eq.${meId}` },
         () => qc.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
       );
     channel.subscribe();

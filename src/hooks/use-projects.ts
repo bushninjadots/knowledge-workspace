@@ -36,7 +36,11 @@ export type ProjectDetail = {
 };
 
 export type GalleryItem = { url: string; caption?: string; type: "image" | "video" };
-export type ResourceItem = { title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" };
+export type ResourceItem = {
+  title: string;
+  url: string;
+  type: "article" | "tool" | "video" | "doc" | "other";
+};
 
 export type MilestoneRow = {
   id: string;
@@ -115,7 +119,8 @@ export const PROJECT_KEY = (id: string) => ["project-detail", id] as const;
 export const MILESTONES_KEY = (projectId: string) => ["milestones", projectId] as const;
 export const PROJECT_UPDATES_KEY = (projectId: string) => ["project-updates", projectId] as const;
 export const DISCUSSIONS_KEY = (projectId: string) => ["discussions", projectId] as const;
-export const DISCUSSION_REPLIES_KEY = (discussionId: string) => ["discussion-replies", discussionId] as const;
+export const DISCUSSION_REPLIES_KEY = (discussionId: string) =>
+  ["discussion-replies", discussionId] as const;
 export const OPEN_ROLES_KEY = (projectId: string) => ["open-roles", projectId] as const;
 
 // ============================================================
@@ -142,7 +147,12 @@ export function useMilestones(projectId: string) {
 export function useCreateMilestone() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { projectId: string; title: string; description?: string; due_date?: string }) => {
+    mutationFn: async (input: {
+      projectId: string;
+      title: string;
+      description?: string;
+      due_date?: string;
+    }) => {
       // Get max position
       const { data: existing } = await sb
         .from("project_milestones")
@@ -176,12 +186,17 @@ export function useCreateMilestone() {
 export function useUpdateMilestone() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; projectId: string; title?: string; description?: string; status?: MilestoneRow["status"]; due_date?: string; position?: number }) => {
+    mutationFn: async (input: {
+      id: string;
+      projectId: string;
+      title?: string;
+      description?: string;
+      status?: MilestoneRow["status"];
+      due_date?: string;
+      position?: number;
+    }) => {
       const { id, projectId, ...updates } = input;
-      const { error } = await sb
-        .from("project_milestones")
-        .update(updates)
-        .eq("id", id);
+      const { error } = await sb.from("project_milestones").update(updates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -246,8 +261,15 @@ export function useProjectUpdates(projectId: string) {
 export function useCreateProjectUpdate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { projectId: string; title: string; body: string; week_number?: number }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: async (input: {
+      projectId: string;
+      title: string;
+      body: string;
+      week_number?: number;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await sb
@@ -361,8 +383,15 @@ export function useDiscussions(projectId: string) {
 export function useCreateDiscussion() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { projectId: string; title: string; body: string; category?: DiscussionRow["category"] }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: async (input: {
+      projectId: string;
+      title: string;
+      body: string;
+      category?: DiscussionRow["category"];
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await sb
@@ -443,7 +472,9 @@ export function useCreateDiscussionReply() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { discussionId: string; body: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await sb
@@ -489,7 +520,12 @@ export function useOpenRoles(projectId: string) {
 export function useCreateOpenRole() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { projectId: string; title: string; description?: string; skills?: string[] }) => {
+    mutationFn: async (input: {
+      projectId: string;
+      title: string;
+      description?: string;
+      skills?: string[];
+    }) => {
       const { data, error } = await sb
         .from("project_open_roles")
         .insert({
@@ -530,7 +566,12 @@ export function useDeleteOpenRole() {
 export function useAcceptRoleApplication() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { applicationId: string; profileId: string; roleId: string; projectId: string }) => {
+    mutationFn: async (input: {
+      applicationId: string;
+      profileId: string;
+      roleId: string;
+      projectId: string;
+    }) => {
       // Update application status
       const { error } = await sb
         .from("project_role_applications")

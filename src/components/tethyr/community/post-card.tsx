@@ -515,7 +515,9 @@ function CommentThreadInline({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2">
                     <span className="text-xs font-medium">{name}</span>
-                    <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {timeAgo(c.created_at)}
+                    </span>
                   </div>
                   <p className="mt-1 text-sm text-foreground/90">{c.body}</p>
                   {isQuestion && c.is_best_answer && (

@@ -1,12 +1,7 @@
 // Direct-message hooks: paginated thread, typing broadcast, read receipts,
 // and per-connection unread counts. Realtime keeps everything in sync.
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -205,14 +200,13 @@ export function useTyping(connectionId: string | null) {
     const channel = supabase.channel(`typing:${connectionId}`, {
       config: { broadcast: { self: false } },
     });
-    channel
-      .on("broadcast", { event: "typing" }, (payload) => {
-        const from = (payload.payload as { from?: string } | undefined)?.from;
-        if (!from || from === meId) return;
-        setOtherTyping(true);
-        if (clearTimer.current) clearTimeout(clearTimer.current);
-        clearTimer.current = setTimeout(() => setOtherTyping(false), 3000);
-      });
+    channel.on("broadcast", { event: "typing" }, (payload) => {
+      const from = (payload.payload as { from?: string } | undefined)?.from;
+      if (!from || from === meId) return;
+      setOtherTyping(true);
+      if (clearTimer.current) clearTimeout(clearTimer.current);
+      clearTimer.current = setTimeout(() => setOtherTyping(false), 3000);
+    });
     channel.subscribe();
     channelRef.current = channel;
     return () => {

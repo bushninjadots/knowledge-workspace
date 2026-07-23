@@ -42,7 +42,7 @@ export function sections({
   projectsCount,
 }: CompletenessInput): Section[] {
   const p = profile;
-  const has = <T,>(v: T | null | undefined) => v != null && v !== "";
+  const has = <T>(v: T | null | undefined) => v != null && v !== "";
   const arr = (v: unknown[] | null | undefined) => (v?.length ?? 0) > 0;
   const cta = (href = "/profile") => ({ label: "Edit profile", href });
 
@@ -76,13 +76,17 @@ export function sections({
       done: arr(p?.available_days) && arr(p?.available_times),
       cta: cta(),
     },
-    { key: "style", label: "Describe your teaching style", done: has(p?.teaching_style), cta: cta() },
+    {
+      key: "style",
+      label: "Describe your teaching style",
+      done: has(p?.teaching_style),
+      cta: cta(),
+    },
     { key: "goals", label: "Share your learning goals", done: has(p?.learning_goals), cta: cta() },
     {
       key: "links",
       label: "Connect a social or portfolio link",
-      done:
-        Object.keys(p?.social_links ?? {}).length > 0 || (p?.portfolio_links?.length ?? 0) > 0,
+      done: Object.keys(p?.social_links ?? {}).length > 0 || (p?.portfolio_links?.length ?? 0) > 0,
       cta: cta(),
     },
     { key: "project", label: "Publish your first project", done: projectsCount > 0, cta: cta() },

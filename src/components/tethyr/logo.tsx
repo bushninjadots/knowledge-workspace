@@ -7,11 +7,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
 }
 
-export function Logo({
-  className = "",
-  variant = "full",
-  size = "md",
-}: LogoProps) {
+export function Logo({ className = "", variant = "full", size = "md" }: LogoProps) {
   const sizeMap = {
     sm: "h-6 w-6",
     md: "h-8 w-8",
@@ -41,7 +37,9 @@ export function Logo({
           <LogoInfinity className={sizeMap[size]} />
         </div>
         <div className="flex flex-col">
-          <span className={`font-display font-semibold tracking-tight text-foreground ${textSizeMap[size]}`}>
+          <span
+            className={`font-display font-semibold tracking-tight text-foreground ${textSizeMap[size]}`}
+          >
             Tethyr
           </span>
           <span className="text-xs text-brand-green font-medium">Connected by what you know</span>
@@ -56,7 +54,9 @@ export function Logo({
       <div className="relative">
         <LogoInfinity className={sizeMap[size]} />
       </div>
-      <span className={`font-display font-semibold tracking-tight text-foreground ${textSizeMap[size]}`}>
+      <span
+        className={`font-display font-semibold tracking-tight text-foreground ${textSizeMap[size]}`}
+      >
         Tethyr
       </span>
     </Link>

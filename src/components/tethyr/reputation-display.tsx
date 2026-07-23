@@ -43,7 +43,14 @@ export function ReputationTierBadge({ score }: { score: number }) {
     <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-3">
       <div className="relative h-12 w-12 shrink-0">
         <svg viewBox="0 0 48 48" className="h-full w-full -rotate-90">
-          <circle cx="24" cy="24" r="20" stroke="var(--surface-elevated)" strokeWidth="4" fill="none" />
+          <circle
+            cx="24"
+            cy="24"
+            r="20"
+            stroke="var(--surface-elevated)"
+            strokeWidth="4"
+            fill="none"
+          />
           <circle
             cx="24"
             cy="24"
@@ -109,13 +116,7 @@ export function ReputationBreakdown({ profileId }: { profileId: string }) {
   );
 }
 
-export function ReputationCard({
-  profileId,
-  score,
-}: {
-  profileId: string;
-  score: number;
-}) {
+export function ReputationCard({ profileId, score }: { profileId: string; score: number }) {
   return (
     <div className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
       <div className="flex items-start gap-3">

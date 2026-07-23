@@ -26,7 +26,7 @@ const rooms = [
   { to: "/messages", label: "Messages", sub: "Meeting table", icon: MessageSquare, live: true },
   { to: "/profile", label: "Workshop", sub: "Your skills", icon: GraduationCap, live: true },
   { to: "/dashboard", label: "Sessions", sub: "Coming soon", icon: Trophy, live: false },
-  { to: "/dashboard", label: "Library", sub: "Coming soon", icon: Compass, live: false },
+  { to: "/library", label: "Library", sub: "Knowledge hub", icon: Compass, live: true },
 ] as const;
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {

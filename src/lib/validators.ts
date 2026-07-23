@@ -4,16 +4,10 @@
 // final line of defence.
 
 export const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "gif"] as const;
-export const ALLOWED_IMAGE_MIMES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-] as const;
+export const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
 export type ImageValidation =
-  | { ok: true; ext: string; contentType: string }
-  | { ok: false; error: string };
+  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateImageFile(file: File): ImageValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
@@ -64,8 +58,7 @@ export const ALLOWED_PROOF_MIMES = [
 ] as const;
 
 export type ProofFileValidation =
-  | { ok: true; ext: string; contentType: string }
-  | { ok: false; error: string };
+  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateProofFile(file: File): ProofFileValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
@@ -101,9 +94,31 @@ export function safeHref(url: string | null | undefined): string {
 
 // Reject filenames that could enable path traversal or other injection.
 export function sanitizeFilename(name: string): string {
-  return name
-    .replace(/[\/\\]/g, "")
-    .replace(/\.\./g, "")
-    .replace(/^\.+/, "")
-    .trim();
+  return name.replace(/[\\/]/g, "").replace(/\.\./g, "").replace(/^\.+/, "").trim();
+}
+
+const LIBRARY_FILE_EXTS = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+  "pdf",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+] as const;
+
+export function validateLibraryFile(
+  file: File,
+): { ok: true; ext: string } | { ok: false; error: string } {
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!LIBRARY_FILE_EXTS.includes(ext as (typeof LIBRARY_FILE_EXTS)[number])) {
+    return { ok: false, error: "Only common images, PDFs, and office documents are allowed." };
+  }
+  if (file.size > 25 * 1024 * 1024) return { ok: false, error: "Files must be under 25 MB." };
+  return { ok: true, ext };
 }

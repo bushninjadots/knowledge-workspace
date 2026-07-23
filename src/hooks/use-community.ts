@@ -160,11 +160,16 @@ export function usePosts() {
       const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
 
       // Get current user's actions
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const myActions = actions.filter((a) => a.user_id === user?.id);
 
       // Aggregate stats
-      const statsMap = new Map<string, { likes: number; helpful: number; saves: number; offers: number }>();
+      const statsMap = new Map<
+        string,
+        { likes: number; helpful: number; saves: number; offers: number }
+      >();
       for (const a of actions) {
         if (!statsMap.has(a.post_id)) {
           statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
@@ -197,7 +202,9 @@ export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreatePostInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await sb
@@ -236,12 +243,7 @@ export function useUpdatePost() {
   return useMutation({
     mutationFn: async (input: UpdatePostInput) => {
       const { id, ...updates } = input;
-      const { data, error } = await sb
-        .from("posts")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
+      const { data, error } = await sb.from("posts").update(updates).eq("id", id).select().single();
 
       if (error) throw error;
       return data;
@@ -285,7 +287,14 @@ export function useComments(postId: string) {
         }
         throw error;
       }
-      const comments = rawComments as { id: string; post_id: string; author_id: string; body: string; is_best_answer: boolean; created_at: string }[];
+      const comments = rawComments as {
+        id: string;
+        post_id: string;
+        author_id: string;
+        body: string;
+        is_best_answer: boolean;
+        created_at: string;
+      }[];
 
       const authorIds = [...new Set(comments.map((c) => c.author_id))];
       const { data: profiles } = await supabase
@@ -315,7 +324,9 @@ export function useAddComment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { postId: string; body: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await sb
@@ -400,13 +411,11 @@ export function useTogglePostAction() {
         if (error) throw error;
       } else {
         // Add action
-        const { error } = await sb
-          .from("post_actions")
-          .insert({
-            post_id: input.postId,
-            user_id: input.currentUserId,
-            action: input.action,
-          });
+        const { error } = await sb.from("post_actions").insert({
+          post_id: input.postId,
+          user_id: input.currentUserId,
+          action: input.action,
+        });
 
         if (error) throw error;
       }

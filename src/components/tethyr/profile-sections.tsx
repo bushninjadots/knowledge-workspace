@@ -663,8 +663,12 @@ function ProjectDialog({
   const [collab, setCollab] = useState(project?.looking_for_collaborators ?? false);
   const [featured, setFeatured] = useState(project?.is_featured ?? false);
   const [vision, setVision] = useState(project?.vision ?? "");
-  const [galleryItems, setGalleryItems] = useState<{ url: string; caption?: string; type: "image" | "video" }[]>(project?.gallery ?? []);
-  const [resourceItems, setResourceItems] = useState<{ title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[]>(project?.resources ?? []);
+  const [galleryItems, setGalleryItems] = useState<
+    { url: string; caption?: string; type: "image" | "video" }[]
+  >(project?.gallery ?? []);
+  const [resourceItems, setResourceItems] = useState<
+    { title: string; url: string; type: "article" | "tool" | "video" | "doc" | "other" }[]
+  >(project?.resources ?? []);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -996,7 +1000,7 @@ function ProjectDialog({
                 }}
               />
             </div>
-           </Field>
+          </Field>
 
           <Field label="Gallery images">
             <div className="space-y-2">
@@ -1044,11 +1048,7 @@ function ProjectDialog({
                 </div>
               ))}
               <div className="flex gap-2">
-                <Input
-                  placeholder="Title"
-                  id="resource-title"
-                  className="flex-1"
-                />
+                <Input placeholder="Title" id="resource-title" className="flex-1" />
                 <Input
                   placeholder="URL"
                   id="resource-url"

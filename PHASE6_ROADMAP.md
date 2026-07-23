@@ -17,11 +17,13 @@ The community feed is currently a flat list of posts. Phase 6 makes it **purpose
 ## Step 6.1 — Add Missing Post Types
 
 Add to `PostType` union in `src/hooks/use-community.ts`:
+
 - `lesson_learned` — "What I learned from X"
 - `feedback_request` — "Review my project/approach"
 - `open_role` — "Looking for [role] on [project]"
 
 Update:
+
 - `src/lib/community-data.ts` — POST_TYPE_LABEL entries
 - `src/components/tethyr/community/composer-bar.tsx` — QUICK_ACTIONS entries + ACTION_ICON
 - `src/routes/_authenticated/community.tsx` — TYPE_FILTERS will auto-update from POST_TYPE_LABEL
@@ -35,6 +37,7 @@ No migration needed — these are just new values in the existing `type` column 
 New migration: `supabase/migrations/20260722150000_challenges.sql`
 
 ### `challenges` table
+
 ```sql
 id              uuid primary key default gen_random_uuid()
 title           text not null
@@ -52,6 +55,7 @@ updated_at      timestamptz not null default now()
 ```
 
 ### `challenge_participants` table
+
 ```sql
 id          uuid primary key default gen_random_uuid()
 challenge_id uuid not null references challenges(id) on delete cascade
@@ -63,6 +67,7 @@ unique(challenge_id, user_id)
 ```
 
 RLS policies:
+
 - Everyone can read active/completed challenges
 - Only authenticated users can create challenges
 - Challenge creators can update their own challenges
@@ -77,6 +82,7 @@ Index on `challenges(status, created_at)` for feed queries.
 New file: `src/hooks/use-challenges.ts`
 
 Hooks:
+
 - `useChallenges(filters?)` — list challenges with optional status filter
 - `useChallenge(id)` — single challenge with participants
 - `useCreateChallenge()` — insert challenge
@@ -94,6 +100,7 @@ All use `(supabase as any)` pattern since types aren't regenerated.
 Extend the composer or add a "Create Challenge" button in the community header.
 
 Challenge creation form (inline or modal):
+
 - Title
 - Description (markdown)
 - Type: Skill Challenge / Project Challenge / Learning Challenge
@@ -112,6 +119,7 @@ On submit → insert into `challenges` table → show in feed.
 New component: `src/components/tethyr/community/challenge-card.tsx`
 
 Challenge card shows:
+
 - Title + description preview
 - Type badge (Skill / Project / Learning)
 - Difficulty badge
@@ -130,6 +138,7 @@ When "Challenges" nav is selected, filter feed to show only challenges (queried 
 New route: `src/routes/_authenticated/challenges.$id.tsx`
 
 Page layout:
+
 - Full challenge info (title, description, type, difficulty, skills)
 - Participant list with progress
 - Join/Leave button
@@ -142,15 +151,18 @@ Page layout:
 ## Step 6.7 — Nav Routing + Empty States
 
 Update `src/routes/_authenticated/community.tsx`:
+
 - "Challenges" nav → show challenges from `challenges` table (not posts)
 - Update empty states for all nav items to be contextually accurate
 - Remove dead-end "Coming soon" messages where we now have real features
 
 Update `src/components/tethyr/community/left-sidebar.tsx`:
+
 - Show challenge count badge on "Challenges" nav item
 - Update icon if needed
 
 Update `src/components/tethyr/community/right-sidebar.tsx`:
+
 - Add "Active Challenges" widget showing top 3 active challenges
 - Replace "No challenges yet" with real data
 
@@ -159,12 +171,14 @@ Update `src/components/tethyr/community/right-sidebar.tsx`:
 ## Files to Create/Modify
 
 ### New files
+
 - `src/hooks/use-challenges.ts` — challenge CRUD hooks
 - `src/components/tethyr/community/challenge-card.tsx` — challenge card component
 - `src/routes/_authenticated/challenges.$id.tsx` — challenge detail page
 - `supabase/migrations/20260722150000_challenges.sql` — database migration
 
 ### Modified files
+
 - `src/hooks/use-community.ts` — add new post types to PostType union
 - `src/lib/community-data.ts` — add POST_TYPE_LABEL entries for new types
 - `src/components/tethyr/community/composer-bar.tsx` — add new types to QUICK_ACTIONS + ACTION_ICON
@@ -177,6 +191,7 @@ Update `src/components/tethyr/community/right-sidebar.tsx`:
 ## Verification
 
 After implementation:
+
 1. `npx tsc --noEmit` — no type errors
 2. Apply migration in Supabase SQL Editor
 3. `npm run dev` — app loads without errors

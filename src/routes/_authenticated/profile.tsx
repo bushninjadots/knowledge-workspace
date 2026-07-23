@@ -69,7 +69,6 @@ import { completenessPercent } from "@/lib/profile-completeness";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ReputationCard } from "@/components/tethyr/reputation-display";
 import { AchievementGrid } from "@/components/tethyr/achievements";
-import { checkAndAwardAchievements } from "@/lib/reputation";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({

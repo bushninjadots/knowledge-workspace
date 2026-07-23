@@ -51,7 +51,9 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
       // Cast to any because stage/vision/gallery/resources aren't in generated types yet
       const { data: projects } = await (supabase as any)
         .from("projects")
-        .select("id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id")
+        .select(
+          "id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id",
+        )
         .neq("profile_id", me.userId)
         .not("stage", "eq", "archived")
         .order("updated_at", { ascending: false })
@@ -63,7 +65,10 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
       const { data: projectSkills } = await supabase
         .from("project_skills")
         .select("project_id, skill_id")
-        .in("project_id", (projects as any[]).map((p: any) => p.id));
+        .in(
+          "project_id",
+          (projects as any[]).map((p: any) => p.id),
+        );
 
       const skillMap = new Map<string, string[]>();
       for (const row of (projectSkills ?? []) as { project_id: string; skill_id: string }[]) {
@@ -128,9 +133,7 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{p.title}</p>
               {p.description && (
-                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                  {p.description}
-                </p>
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
               )}
             </div>
             {p.stage && (

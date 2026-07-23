@@ -81,7 +81,9 @@ function DiscussionThread({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {discussion.is_pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
-            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${CATEGORY_STYLE[discussion.category]}`}>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${CATEGORY_STYLE[discussion.category]}`}
+            >
               {CATEGORY_LABEL[discussion.category]}
             </span>
             <h4 className="text-sm font-medium">{discussion.title}</h4>
@@ -185,7 +187,12 @@ export function ProjectDiscussions({
   const handleAdd = async () => {
     if (!title.trim() || !body.trim()) return;
     try {
-      await createDiscussion.mutateAsync({ projectId, title: title.trim(), body: body.trim(), category });
+      await createDiscussion.mutateAsync({
+        projectId,
+        title: title.trim(),
+        body: body.trim(),
+        category,
+      });
       setTitle("");
       setBody("");
       setCategory("general");
@@ -262,7 +269,12 @@ export function ProjectDiscussions({
       ) : (
         <div className="space-y-3">
           {discussions.map((d) => (
-            <DiscussionThread key={d.id} discussion={d} isContributor={isContributor} isOwner={isOwner} />
+            <DiscussionThread
+              key={d.id}
+              discussion={d}
+              isContributor={isContributor}
+              isOwner={isOwner}
+            />
           ))}
         </div>
       )}

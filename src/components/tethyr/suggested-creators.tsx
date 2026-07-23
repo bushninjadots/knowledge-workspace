@@ -45,7 +45,9 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
       // Fetch candidate profiles (exclude self, must have a name)
       const { data: profiles } = await (supabase as any)
         .from("profiles")
-        .select("id, handle, display_name, creator_title, category, avatar_url, availability, languages")
+        .select(
+          "id, handle, display_name, creator_title, category, avatar_url, availability, languages",
+        )
         .not("display_name", "is", null)
         .neq("id", me.userId)
         .limit(200);
@@ -58,7 +60,9 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
       const [teachRes, learnRes] = await Promise.all([
         supabase
           .from("profile_skills_teach")
-          .select("profile_id, skill_id, experience_level, verification_level, skills(name, category)")
+          .select(
+            "profile_id, skill_id, experience_level, verification_level, skills(name, category)",
+          )
           .in("profile_id", candidateIds),
         supabase
           .from("profile_skills_learn")

@@ -24,10 +24,7 @@ function addSecurityHeaders(response: Response): Response {
   headers.set("X-Frame-Options", "DENY");
   headers.set("X-XSS-Protection", "0");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload",
-  );
+  headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +

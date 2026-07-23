@@ -1,18 +1,48 @@
 // Achievements — auto-awarded badges displayed on profiles.
 import { useQuery } from "@tanstack/react-query";
-import { Award, Rocket, Flag, ThumbsUp, Star, Shield, GraduationCap, Users, BookOpen, Hammer, MessageCircle, Clock, Heart, Compass } from "lucide-react";
+import {
+  Award,
+  Rocket,
+  Flag,
+  ThumbsUp,
+  Star,
+  Shield,
+  GraduationCap,
+  Users,
+  BookOpen,
+  Hammer,
+  MessageCircle,
+  Clock,
+  Heart,
+  Compass,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ACHIEVEMENTS, type AchievementType, type AchievementDef } from "@/lib/reputation";
 import { EmptyState } from "./empty-state";
 
 const ICONS: Record<string, typeof Award> = {
-  Rocket, Flag, ThumbsUp, Star, Shield, GraduationCap, Users, BookOpen, Hammer, MessageCircle, Clock, Heart, Compass, Award,
+  Rocket,
+  Flag,
+  ThumbsUp,
+  Star,
+  Shield,
+  GraduationCap,
+  Users,
+  BookOpen,
+  Hammer,
+  MessageCircle,
+  Clock,
+  Heart,
+  Compass,
+  Award,
 };
 
 function AchievementIcon({ def }: { def: AchievementDef }) {
   const Icon = ICONS[def.icon] ?? Award;
   return (
-    <span className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-elevated ${def.color}`}>
+    <span
+      className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-elevated ${def.color}`}
+    >
       <Icon className="h-5 w-5" />
     </span>
   );
@@ -30,7 +60,11 @@ export function AchievementBadge({ type }: { type: AchievementType }) {
 }
 
 export function AchievementGrid({ profileId }: { profileId: string }) {
-  const { data: earned, isLoading, isError } = useQuery({
+  const {
+    data: earned,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["achievements", profileId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -93,9 +127,7 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
           <div
             key={def.type}
             className={`flex items-start gap-3 rounded-2xl border p-3 transition ${
-              isEarned
-                ? "border-border/60 bg-surface"
-                : "border-border/30 bg-surface/40 opacity-50"
+              isEarned ? "border-border/60 bg-surface" : "border-border/30 bg-surface/40 opacity-50"
             }`}
           >
             <AchievementIcon def={def} />

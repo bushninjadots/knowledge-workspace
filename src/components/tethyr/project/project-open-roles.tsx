@@ -2,7 +2,12 @@ import { useState } from "react";
 import { Plus, Trash2, HandHeart } from "lucide-react";
 import { toast } from "sonner";
 import type { OpenRoleRow } from "@/hooks/use-projects";
-import { useCreateOpenRole, useDeleteOpenRole, useAcceptRoleApplication, useDeclineRoleApplication } from "@/hooks/use-projects";
+import {
+  useCreateOpenRole,
+  useDeleteOpenRole,
+  useAcceptRoleApplication,
+  useDeclineRoleApplication,
+} from "@/hooks/use-projects";
 import { ApplyToRoleButton, RoleApplicationsList } from "./project-role-applications";
 
 export function OpenRolesSection({
@@ -30,7 +35,10 @@ export function OpenRolesSection({
         projectId,
         title: title.trim(),
         description: desc.trim() || undefined,
-        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        skills: skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       });
       setTitle("");
       setDesc("");
@@ -145,8 +153,12 @@ export function OpenRolesSection({
               <RoleApplicationsList
                 roleId={r.id}
                 isOwner={isOwner}
-                onAccept={(appId, profileId) => acceptApp.mutate({ applicationId: appId, profileId, roleId: r.id, projectId })}
-                onDecline={(appId) => declineApp.mutate({ applicationId: appId, roleId: r.id, projectId })}
+                onAccept={(appId, profileId) =>
+                  acceptApp.mutate({ applicationId: appId, profileId, roleId: r.id, projectId })
+                }
+                onDecline={(appId) =>
+                  declineApp.mutate({ applicationId: appId, roleId: r.id, projectId })
+                }
               />
             </div>
           ))}
