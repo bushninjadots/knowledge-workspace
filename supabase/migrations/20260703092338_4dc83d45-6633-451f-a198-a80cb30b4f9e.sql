@@ -1,5 +1,9 @@
 
-CREATE TYPE public.connection_status AS ENUM ('pending', 'accepted', 'declined');
+DO $$ BEGIN
+  CREATE TYPE public.connection_status AS ENUM ('pending', 'accepted', 'declined');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE public.connections (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

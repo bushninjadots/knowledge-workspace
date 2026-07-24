@@ -44,6 +44,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 
 export type ProjectStatus = "planning" | "active" | "paused" | "completed";
 
@@ -233,105 +234,126 @@ export function BannerStrip({
   }
 
   return (
-    <div
-      className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
-      style={{ borderColor: accentColor ?? "transparent" }}
+    <DragDropFileInput
+      accept="image/*"
+      onFiles={(files) => {
+        const file = files[0];
+        if (file) {
+          // Simulate the change event for the existing handler
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          const fakeEvent = { target: { files: dt.files } } as React.ChangeEvent<HTMLInputElement>;
+          handle(fakeEvent);
+        }
+      }}
+      disabled={uploading}
     >
-      {bannerSigned ? (
-        <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
-      )}
-      <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
+      <div
+        className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+        style={{ borderColor: accentColor ?? "transparent" }}
+      >
+        {bannerSigned ? (
+          <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
+        )}
+        <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
 
-      <div className="absolute right-4 top-4 flex items-center gap-2">
-        <button
-          onClick={openCaptionEditor}
-          disabled={uploading}
-          className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          {bannerCaption ? "Edit caption" : "Add caption"}
-        </button>
-        <button
-          onClick={() => ref.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
-        >
-          <Camera className="h-3.5 w-3.5" />
-          {uploading ? "Uploading…" : bannerSigned ? "Change banner" : "Add banner"}
-        </button>
-      </div>
-      <input ref={ref} type="file" accept="image/*" className="hidden" onChange={handle} />
-
-      {editingCaption ? (
-        <div
-          className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-2xl bg-background/85 p-3 backdrop-blur"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Input
-            ref={captionInputRef}
-            value={captionDraft}
-            onChange={(e) => setCaptionDraft(e.target.value.slice(0, BANNER_CAPTION_MAX))}
-            placeholder="Say something fun about this banner…"
-            maxLength={BANNER_CAPTION_MAX}
-            className="h-9 bg-surface text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveCaption();
-              if (e.key === "Escape") setEditingCaption(false);
+        <div className="absolute right-4 top-4 flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openCaptionEditor();
             }}
-          />
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-1">
-              {QUICK_EMOJI.map((emoji) => (
-                <button
-                  key={emoji}
+            disabled={uploading}
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {bannerCaption ? "Edit caption" : "Add caption"}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              ref.current?.click();
+            }}
+            disabled={uploading}
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
+          >
+            <Camera className="h-3.5 w-3.5" />
+            {uploading ? "Uploading…" : bannerSigned ? "Change banner" : "Add banner"}
+          </button>
+        </div>
+        <input ref={ref} type="file" accept="image/*" className="hidden" onChange={handle} />
+
+        {editingCaption ? (
+          <div
+            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-2xl bg-background/85 p-3 backdrop-blur"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Input
+              ref={captionInputRef}
+              value={captionDraft}
+              onChange={(e) => setCaptionDraft(e.target.value.slice(0, BANNER_CAPTION_MAX))}
+              placeholder="Say something fun about this banner…"
+              maxLength={BANNER_CAPTION_MAX}
+              className="h-9 bg-surface text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveCaption();
+                if (e.key === "Escape") setEditingCaption(false);
+              }}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1">
+                {QUICK_EMOJI.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => insertEmoji(emoji)}
+                    className="rounded-lg px-1.5 py-0.5 text-base leading-none hover:bg-surface"
+                    aria-label={`Insert ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">
+                  {captionDraft.length}/{BANNER_CAPTION_MAX}
+                </span>
+                <Button
                   type="button"
-                  onClick={() => insertEmoji(emoji)}
-                  className="rounded-lg px-1.5 py-0.5 text-base leading-none hover:bg-surface"
-                  aria-label={`Insert ${emoji}`}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded-full px-3 text-xs"
+                  onClick={() => setEditingCaption(false)}
                 >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">
-                {captionDraft.length}/{BANNER_CAPTION_MAX}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 rounded-full px-3 text-xs"
-                onClick={() => setEditingCaption(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="h-7 rounded-full px-3 text-xs"
-                onClick={saveCaption}
-                disabled={savingCaption}
-              >
-                {savingCaption ? "Saving…" : "Save"}
-              </Button>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 rounded-full px-3 text-xs"
+                  onClick={saveCaption}
+                  disabled={savingCaption}
+                >
+                  {savingCaption ? "Saving…" : "Save"}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        bannerCaption && (
-          <button
-            onClick={openCaptionEditor}
-            className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur transition hover:bg-background/80 sm:max-w-xs"
-            title="Click to edit caption"
-          >
-            {bannerCaption}
-          </button>
-        )
-      )}
-    </div>
+        ) : (
+          bannerCaption && (
+            <button
+              onClick={openCaptionEditor}
+              className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur transition hover:bg-background/80 sm:max-w-xs"
+              title="Click to edit caption"
+            >
+              {bannerCaption}
+            </button>
+          )
+        )}
+      </div>
+    </DragDropFileInput>
   );
 }
 

@@ -39,3 +39,5 @@ dist-ssr
 # TanStack Router regenerates this from src/routes/** on every dev/build run —
 # committing it just causes perpetual, noisy diffs.
 src/routeTree.gen.ts
+supabase/.temp/
+supabase/.branches/

@@ -57,6 +57,7 @@ import {
   type ActivityRow,
 } from "@/components/tethyr/profile-sections";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
+import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import {
   useCurrentUser,
   useSkillsCatalog,
@@ -463,7 +464,20 @@ function HeaderCard({
           onChange={onChange}
         />
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div className="relative shrink-0 -mt-16 sm:-mt-20">
+          <DragDropFileInput
+            accept="image/*"
+            onFiles={(files) => {
+              const file = files[0];
+              if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                const fakeEvent = { target: { files: dt.files } } as React.ChangeEvent<HTMLInputElement>;
+                handleUpload(fakeEvent);
+              }
+            }}
+            disabled={uploading}
+            className="relative shrink-0 -mt-16 sm:-mt-20"
+          >
             <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
               {avatarSigned ? (
                 <img
@@ -478,7 +492,10 @@ function HeaderCard({
               )}
             </div>
             <button
-              onClick={() => fileRef.current?.click()}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileRef.current?.click();
+              }}
               disabled={uploading}
               className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105 disabled:opacity-50"
               aria-label="Upload avatar"
@@ -492,7 +509,7 @@ function HeaderCard({
               className="hidden"
               onChange={handleUpload}
             />
-          </div>
+          </DragDropFileInput>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-3">

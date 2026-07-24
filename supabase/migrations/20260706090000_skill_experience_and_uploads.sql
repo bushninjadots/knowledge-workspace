@@ -2,12 +2,16 @@
 -- to say how experienced they actually are, and back it up with a real
 -- uploaded file instead of only a pasted link.
 
-CREATE TYPE public.skill_experience_level AS ENUM (
-  'beginner',
-  'intermediate',
-  'advanced',
-  'expert'
-);
+DO $$ BEGIN
+  CREATE TYPE public.skill_experience_level AS ENUM (
+    'beginner',
+    'intermediate',
+    'advanced',
+    'expert'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 ALTER TABLE public.profile_skills_teach
   ADD COLUMN IF NOT EXISTS experience_level public.skill_experience_level

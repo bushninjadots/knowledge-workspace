@@ -32,7 +32,7 @@ function addSecurityHeaders(response: Response): Response {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: https:; " +
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co; " +
+      "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co; " +
       "frame-ancestors 'none'",
   );
   return new Response(response.body, {

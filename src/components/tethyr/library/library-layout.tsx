@@ -6,14 +6,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
  * Library layout shell: sidebar + content area.
  * The parent route passes its children which receive the current view.
  */
-export function LibraryLayout({ children }: { children: (view: LibraryView) => React.ReactNode }) {
+export function LibraryLayout({
+  onNewNote,
+  children,
+}: {
+  onNewNote: () => void;
+  children: (view: LibraryView) => React.ReactNode;
+}) {
   const [view, setView] = useState<LibraryView>({ type: "all" });
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
       {/* Library sidebar */}
       <div className="hidden w-64 shrink-0 border-r border-border/60 bg-surface/30 bg-noise lg:block">
-        <LibrarySidebar view={view} onViewChange={setView} />
+        <LibrarySidebar view={view} onViewChange={setView} onNewNote={onNewNote} />
       </div>
 
       {/* Main content */}

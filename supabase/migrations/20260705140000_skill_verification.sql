@@ -3,11 +3,15 @@
 -- Only applies to "skills I teach" — that's the credibility claim other
 -- people actually rely on when deciding to learn from someone.
 
-CREATE TYPE public.skill_verification_level AS ENUM (
-  'self_declared',
-  'proof_certified',
-  'community_recognized'
-);
+DO $$ BEGIN
+  CREATE TYPE public.skill_verification_level AS ENUM (
+    'self_declared',
+    'proof_certified',
+    'community_recognized'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 ALTER TABLE public.profile_skills_teach
   ADD COLUMN IF NOT EXISTS verification_level public.skill_verification_level

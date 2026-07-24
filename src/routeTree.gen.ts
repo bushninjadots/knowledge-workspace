@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
+import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -57,6 +58,11 @@ const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/projects/$id',
   path: '/projects/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/sessions': typeof AuthenticatedSessionsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/sessions': typeof AuthenticatedSessionsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/sessions': typeof AuthenticatedSessionsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/messages'
     | '/profile'
+    | '/sessions'
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/messages'
     | '/profile'
+    | '/sessions'
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/messages'
     | '/_authenticated/profile'
+    | '/_authenticated/sessions'
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
@@ -250,6 +262,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/$id'
       preLoaderRoute: typeof ProjectsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/sessions': {
+      id: '/_authenticated/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof AuthenticatedSessionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
@@ -321,6 +340,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -330,6 +350,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSessionsRoute: AuthenticatedSessionsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

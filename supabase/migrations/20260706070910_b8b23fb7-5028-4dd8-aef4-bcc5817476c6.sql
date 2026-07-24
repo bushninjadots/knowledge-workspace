@@ -1,5 +1,10 @@
 -- Projects Phase 1: turn "projects" from a portfolio card into a workspace.
-CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'paused', 'completed');
+-- Idempotent: safe to run multiple times.
+
+DO $$ BEGIN
+  CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'paused', 'completed');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 ALTER TABLE public.projects
   ADD COLUMN IF NOT EXISTS goal text,
@@ -7,13 +12,19 @@ ALTER TABLE public.projects
   ADD COLUMN IF NOT EXISTS started_at timestamptz NOT NULL DEFAULT now(),
   ADD COLUMN IF NOT EXISTS progress_percent smallint NOT NULL DEFAULT 0;
 
-ALTER TABLE public.projects
-  ADD CONSTRAINT projects_progress_percent_range CHECK (progress_percent BETWEEN 0 AND 100);
+DO $$ BEGIN
+  ALTER TABLE public.projects
+    ADD CONSTRAINT projects_progress_percent_range CHECK (progress_percent BETWEEN 0 AND 100);
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 CREATE INDEX IF NOT EXISTS projects_status_idx ON public.projects(status);
 GRANT SELECT ON public.projects TO anon;
 
-CREATE TYPE public.project_contributor_role AS ENUM ('creator', 'contributor', 'mentor');
+DO $$ BEGIN
+  CREATE TYPE public.project_contributor_role AS ENUM ('creator', 'contributor', 'mentor');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.project_contributors (
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
@@ -27,19 +38,23 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_contributors TO authentic
 GRANT ALL ON public.project_contributors TO service_role;
 ALTER TABLE public.project_contributors ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Contributors viewable by everyone" ON public.project_contributors;
 CREATE POLICY "Contributors viewable by everyone" ON public.project_contributors
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Owner or self can add contributor" ON public.project_contributors;
 CREATE POLICY "Owner or self can add contributor" ON public.project_contributors
   FOR INSERT WITH CHECK (
     profile_id = auth.uid()
     OR EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND p.profile_id = auth.uid())
   );
+DROP POLICY IF EXISTS "Owner can change contributor roles" ON public.project_contributors;
 CREATE POLICY "Owner can change contributor roles" ON public.project_contributors
   FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND p.profile_id = auth.uid())
   ) WITH CHECK (
     EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND p.profile_id = auth.uid())
   );
+DROP POLICY IF EXISTS "Owner or self can remove contributor" ON public.project_contributors;
 CREATE POLICY "Owner or self can remove contributor" ON public.project_contributors
   FOR DELETE USING (
     (profile_id = auth.uid() AND role <> 'creator')
@@ -88,12 +103,15 @@ GRANT SELECT, INSERT, DELETE ON public.project_skills TO authenticated;
 GRANT ALL ON public.project_skills TO service_role;
 ALTER TABLE public.project_skills ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Project skills viewable by everyone" ON public.project_skills;
 CREATE POLICY "Project skills viewable by everyone" ON public.project_skills
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Project owner manages project skills insert" ON public.project_skills;
 CREATE POLICY "Project owner manages project skills insert" ON public.project_skills
   FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND p.profile_id = auth.uid())
   );
+DROP POLICY IF EXISTS "Project owner manages project skills delete" ON public.project_skills;
 CREATE POLICY "Project owner manages project skills delete" ON public.project_skills
   FOR DELETE USING (
     EXISTS (SELECT 1 FROM public.projects p WHERE p.id = project_id AND p.profile_id = auth.uid())
@@ -105,16 +123,17 @@ INSERT INTO public.project_contributors (project_id, profile_id, role)
 SELECT id, profile_id, 'creator' FROM public.projects
 ON CONFLICT (project_id, profile_id) DO NOTHING;
 
-DROP POLICY IF EXISTS "Project media readable to authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "Project media is publicly accessible" ON storage.objects;
 CREATE POLICY "Project media is publicly accessible"
   ON storage.objects FOR SELECT USING (bucket_id = 'project-media');
 
 -- Skill verification tiers
-CREATE TYPE public.skill_verification_level AS ENUM (
-  'self_declared',
-  'proof_certified',
-  'community_recognized'
-);
+DO $$ BEGIN
+  CREATE TYPE public.skill_verification_level AS ENUM (
+    'self_declared', 'proof_certified', 'community_recognized'
+  );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 ALTER TABLE public.profile_skills_teach
   ADD COLUMN IF NOT EXISTS verification_level public.skill_verification_level
@@ -123,6 +142,7 @@ ALTER TABLE public.profile_skills_teach
   ADD COLUMN IF NOT EXISTS proof_note text;
 
 GRANT UPDATE ON public.profile_skills_teach TO authenticated;
+DROP POLICY IF EXISTS "Users manage own teach skills update" ON public.profile_skills_teach;
 CREATE POLICY "Users manage own teach skills update" ON public.profile_skills_teach
   FOR UPDATE USING (auth.uid() = profile_id) WITH CHECK (auth.uid() = profile_id);
 
@@ -140,10 +160,13 @@ GRANT SELECT, INSERT, DELETE ON public.skill_endorsements TO authenticated;
 GRANT ALL ON public.skill_endorsements TO service_role;
 ALTER TABLE public.skill_endorsements ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Endorsements viewable by everyone" ON public.skill_endorsements;
 CREATE POLICY "Endorsements viewable by everyone" ON public.skill_endorsements
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Anyone but the owner can endorse" ON public.skill_endorsements;
 CREATE POLICY "Anyone but the owner can endorse" ON public.skill_endorsements
   FOR INSERT WITH CHECK (endorsed_by = auth.uid() AND endorsed_by <> profile_id);
+DROP POLICY IF EXISTS "Only the endorser can retract" ON public.skill_endorsements;
 CREATE POLICY "Only the endorser can retract" ON public.skill_endorsements
   FOR DELETE USING (endorsed_by = auth.uid());
 

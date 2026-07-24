@@ -5,7 +5,11 @@
 -- resources and discussion are later phases and are NOT part of this file.
 
 -- 1. Project status + new workspace fields on projects
-CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'paused', 'completed');
+DO $$ BEGIN
+  CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'paused', 'completed');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 ALTER TABLE public.projects
   ADD COLUMN IF NOT EXISTS goal text,
@@ -13,8 +17,12 @@ ALTER TABLE public.projects
   ADD COLUMN IF NOT EXISTS started_at timestamptz NOT NULL DEFAULT now(),
   ADD COLUMN IF NOT EXISTS progress_percent smallint NOT NULL DEFAULT 0;
 
-ALTER TABLE public.projects
-  ADD CONSTRAINT projects_progress_percent_range CHECK (progress_percent BETWEEN 0 AND 100);
+DO $$ BEGIN
+  ALTER TABLE public.projects
+    ADD CONSTRAINT projects_progress_percent_range CHECK (progress_percent BETWEEN 0 AND 100);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE INDEX IF NOT EXISTS projects_status_idx ON public.projects(status);
 
@@ -25,7 +33,11 @@ GRANT SELECT ON public.projects TO anon;
 
 -- 2. Contributors — the creator is always a row here so "Creator" and
 -- "Contributors" can be read from one table.
-CREATE TYPE public.project_contributor_role AS ENUM ('creator', 'contributor', 'mentor');
+DO $$ BEGIN
+  CREATE TYPE public.project_contributor_role AS ENUM ('creator', 'contributor', 'mentor');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.project_contributors (
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,

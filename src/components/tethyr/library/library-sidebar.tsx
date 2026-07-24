@@ -12,15 +12,12 @@ import {
   Hash,
   Layers,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-  useLibraryCollections,
-  useLibraryTags,
-  useCreateCollection,
-  useCreateTag,
-} from "@/hooks/use-library";
+import { useLibraryCollections, useLibraryTags, useCreateTag } from "@/hooks/use-library";
+import { CollectionDialog } from "./collection-dialog";
 import { cn } from "@/lib/utils";
 
 type View =
@@ -45,36 +42,21 @@ const filterItems = [
 export function LibrarySidebar({
   view,
   onViewChange,
+  onNewNote,
 }: {
   view: View;
   onViewChange: (view: View) => void;
+  onNewNote: () => void;
 }) {
   const [collectionsOpen, setCollectionsOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(true);
-  const [showNewCollection, setShowNewCollection] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState("");
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
   const { data: collections = [] } = useLibraryCollections();
   const { data: tags = [] } = useLibraryTags();
-  const createCollection = useCreateCollection();
   const createTag = useCreateTag();
-
-  function handleCreateCollection() {
-    const name = newCollectionName.trim();
-    if (!name) return;
-    createCollection.mutate(
-      { name },
-      {
-        onSuccess: (col) => {
-          setNewCollectionName("");
-          setShowNewCollection(false);
-          onViewChange({ type: "collection", collectionId: col.id });
-        },
-      },
-    );
-  }
 
   function handleCreateTag() {
     const name = newTagName.trim();
@@ -86,6 +68,9 @@ export function LibrarySidebar({
           setNewTagName("");
           setShowNewTag(false);
           onViewChange({ type: "tag", tagId: tag.id });
+        },
+        onError: (err) => {
+          toast.error(`Failed to create tag: ${err.message}`);
         },
       },
     );
@@ -108,7 +93,7 @@ export function LibrarySidebar({
             variant="outline"
             size="sm"
             className="flex-1 gap-2 border-border/60 bg-surface/60 text-xs"
-            onClick={() => onViewChange({ type: "all" })}
+            onClick={onNewNote}
           >
             <FileText className="h-3.5 w-3.5" />
             New Note
@@ -117,7 +102,7 @@ export function LibrarySidebar({
             variant="outline"
             size="sm"
             className="gap-2 border-border/60 bg-surface/60 text-xs"
-            onClick={() => setShowNewCollection(true)}
+            onClick={() => setShowCollectionDialog(true)}
           >
             <FolderPlus className="h-3.5 w-3.5" />
           </Button>
@@ -173,7 +158,7 @@ export function LibrarySidebar({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setShowNewCollection(true);
+                setShowCollectionDialog(true);
               }}
               className="ml-auto rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-muted-foreground"
             >
@@ -183,7 +168,7 @@ export function LibrarySidebar({
 
           {collectionsOpen && (
             <nav className="flex flex-col gap-0.5">
-              {collections.length === 0 && !showNewCollection && (
+              {collections.length === 0 && (
                 <p className="px-2.5 py-2 text-xs text-muted-foreground/50">No collections yet</p>
               )}
               {collections.map((col) => {
@@ -207,25 +192,6 @@ export function LibrarySidebar({
                   </button>
                 );
               })}
-
-              {showNewCollection && (
-                <div className="flex items-center gap-1 px-2.5">
-                  <input
-                    autoFocus
-                    value={newCollectionName}
-                    onChange={(e) => setNewCollectionName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreateCollection();
-                      if (e.key === "Escape") {
-                        setShowNewCollection(false);
-                        setNewCollectionName("");
-                      }
-                    }}
-                    placeholder="Collection name…"
-                    className="h-7 flex-1 rounded-md border border-border/60 bg-background px-2 text-xs outline-none focus:border-brand-green/50"
-                  />
-                </div>
-              )}
             </nav>
           )}
         </div>
@@ -297,6 +263,12 @@ export function LibrarySidebar({
           )}
         </div>
       </div>
+
+      <CollectionDialog
+        open={showCollectionDialog}
+        onOpenChange={setShowCollectionDialog}
+        onCreated={(col) => onViewChange({ type: "collection", collectionId: col.id })}
+      />
     </ScrollArea>
   );
 }

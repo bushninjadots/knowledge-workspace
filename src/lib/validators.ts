@@ -98,11 +98,13 @@ export function sanitizeFilename(name: string): string {
 }
 
 const LIBRARY_FILE_EXTS = [
+  // Images
   "jpg",
   "jpeg",
   "png",
   "webp",
   "gif",
+  // Documents
   "pdf",
   "doc",
   "docx",
@@ -110,15 +112,39 @@ const LIBRARY_FILE_EXTS = [
   "pptx",
   "xls",
   "xlsx",
+  // Text
+  "txt",
+  "md",
+  "csv",
+  "json",
+  "rtf",
+  // Video (short clips)
+  "mp4",
+  "webm",
+  "mov",
+  "avi",
 ] as const;
+
+const VIDEO_EXTS = ["mp4", "webm", "mov", "avi"] as const;
+const MAX_DEFAULT_SIZE = 25 * 1024 * 1024; // 25 MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB for video
 
 export function validateLibraryFile(
   file: File,
 ): { ok: true; ext: string } | { ok: false; error: string } {
   const ext = (file.name.split(".").pop() ?? "").toLowerCase();
   if (!LIBRARY_FILE_EXTS.includes(ext as (typeof LIBRARY_FILE_EXTS)[number])) {
-    return { ok: false, error: "Only common images, PDFs, and office documents are allowed." };
+    return {
+      ok: false,
+      error:
+        "Allowed: images, PDFs, office docs, text/markdown files, CSV, JSON, and short video clips (MP4, WebM, MOV).",
+    };
   }
-  if (file.size > 25 * 1024 * 1024) return { ok: false, error: "Files must be under 25 MB." };
+  const isVideo = (VIDEO_EXTS as readonly string[]).includes(ext);
+  const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_DEFAULT_SIZE;
+  if (file.size > maxSize) {
+    const limit = isVideo ? "100 MB" : "25 MB";
+    return { ok: false, error: `File must be under ${limit}.` };
+  }
   return { ok: true, ext };
 }

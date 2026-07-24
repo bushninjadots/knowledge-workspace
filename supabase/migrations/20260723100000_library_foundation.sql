@@ -27,7 +27,11 @@ CREATE INDEX idx_library_collections_parent ON library_collections(parent_id);
 -- ─────────────────────────────────────────────
 -- ITEMS (notes, documents, links, uploads)
 -- ─────────────────────────────────────────────
-CREATE TYPE library_item_type AS ENUM ('note', 'document', 'link', 'upload');
+DO $$ BEGIN
+  CREATE TYPE library_item_type AS ENUM ('note', 'document', 'link', 'upload');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE library_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

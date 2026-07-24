@@ -1,0 +1,93 @@
+import { useState, useCallback } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
+import { OverviewCards, NextSessionCountdown } from "./overview-cards";
+import { TodaySchedule } from "./today-schedule";
+import { UpcomingSessions } from "./upcoming-sessions";
+import { SessionsCalendar } from "./sessions-calendar";
+import { SessionRequests } from "./session-requests";
+import { SessionHistory } from "./session-history";
+import { AvailabilitySettings } from "./availability-settings";
+import {
+  useSessionStats,
+  useTodaySessions,
+  useUpcomingSessions,
+  useSessionRequests,
+  useSessionHistory,
+  useSessionAvailability,
+} from "@/hooks/use-sessions";
+
+export function SessionsLayout() {
+  const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
+
+  const { data: stats, isLoading: statsLoading } = useSessionStats();
+  const { data: todaySessions = [] } = useTodaySessions();
+  const { data: upcomingSessions = [], isLoading: upcomingLoading } = useUpcomingSessions();
+  const { data: requests = [] } = useSessionRequests();
+  const { data: historySessions = [], isLoading: historyLoading } = useSessionHistory();
+  const { data: availability = [] } = useSessionAvailability();
+
+  const pendingCount = requests.filter((r) => r.status === "pending" && r.to_user_id).length;
+
+  const nextSession = upcomingSessions[0] ?? null;
+
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
+      {/* Left Sidebar */}
+      <div className="hidden w-56 shrink-0 border-r border-border/60 bg-surface/30 bg-noise p-4 lg:block">
+        <SessionsSidebar activeTab={activeTab} onTabChange={setActiveTab} pendingCount={pendingCount} />
+      </div>
+
+      {/* Main Content */}
+      <ScrollArea className="flex-1">
+        <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Sessions</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Manage your skill exchanges, mentoring, and meetings.
+              </p>
+            </div>
+            <button className="rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-brand-green/90 hover:shadow-soft active:scale-[0.98]">
+              + Schedule Session
+            </button>
+          </div>
+
+          {/* Tab content */}
+          {activeTab === "upcoming" && (
+            <div className="space-y-6">
+              {/* Stats */}
+              <OverviewCards stats={stats} />
+
+              {/* Next session countdown */}
+              {nextSession && <NextSessionCountdown nextSession={nextSession} />}
+
+              {/* Today */}
+              <TodaySchedule sessions={todaySessions} />
+
+              {/* Upcoming */}
+              <UpcomingSessions sessions={upcomingSessions} />
+            </div>
+          )}
+
+          {activeTab === "calendar" && (
+            <SessionsCalendar
+              sessions={upcomingSessions}
+              onSessionClick={(s) => {
+                // Phase 4: navigate to session detail
+                console.log("Session clicked:", s.id);
+              }}
+            />
+          )}
+
+          {activeTab === "history" && <SessionHistory sessions={historySessions} loading={historyLoading} />}
+
+          {activeTab === "requests" && <SessionRequests requests={requests} />}
+
+          {activeTab === "availability" && <AvailabilitySettings availability={availability} />}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

@@ -522,7 +522,12 @@ export function useUploadLibraryFile() {
   const { data: me } = useCurrentUser();
 
   return useMutation({
-    mutationFn: async (input: { file: File; collection_id?: string; title?: string }) => {
+    mutationFn: async (input: {
+      file: File;
+      collection_id?: string;
+      title?: string;
+      description?: string;
+    }) => {
       if (!me?.userId) throw new Error("Not authenticated");
 
       const validation = validateLibraryFile(input.file);
@@ -540,16 +545,25 @@ export function useUploadLibraryFile() {
       // Determine type from extension
       const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
       const docExts = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"];
+      const videoExts = ["mp4", "webm", "mov", "avi"];
+      const textExts = ["txt", "md", "csv", "json", "rtf"];
 
       let type: LibraryItem["type"] = "upload";
-      if (imageExts.includes(ext)) type = "upload";
-      else if (docExts.includes(ext)) type = "document";
+      if (imageExts.includes(ext) || videoExts.includes(ext)) type = "upload";
+      else if (docExts.includes(ext) || textExts.includes(ext)) type = "document";
+
+      // Build description content for text-based files
+      let content = "";
+      if (input.description) {
+        content = input.description;
+      }
 
       const { data: item, error: itemError } = await supabase
         .from("library_items")
         .insert({
           user_id: me.userId,
           title: input.title ?? input.file.name,
+          content,
           type,
           collection_id: input.collection_id ?? null,
           // Despite its legacy name, file_url stores a private storage object path.

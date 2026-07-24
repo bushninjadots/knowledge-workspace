@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreatePost, useUpdatePost, type PostWithAuthor } from "@/hooks/use-community";
+import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -178,6 +179,22 @@ export function ComposerBar({
       reader.readAsDataURL(file);
     }
     e.target.value = "";
+  }
+
+  function handleDroppedImage(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only images are supported");
+      return;
+    }
+    if (images.length >= 4) {
+      toast.info("Maximum 4 images per post");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImages((prev) => [...prev, reader.result as string]);
+    };
+    reader.readAsDataURL(file);
   }
 
   function removeImage(index: number) {
@@ -371,6 +388,11 @@ export function ComposerBar({
           <ImagePlus className="h-3.5 w-3.5" />
           Image
         </button>
+        <InlineDropZone
+          accept="image/*"
+          onFile={handleDroppedImage}
+          className="hidden sm:flex h-8 w-32"
+        />
         <button
           onClick={handleBold}
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
