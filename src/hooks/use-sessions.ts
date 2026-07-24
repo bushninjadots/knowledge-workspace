@@ -231,6 +231,74 @@ async function fetchSessionHistory(userId: string): Promise<SessionWithParticipa
 
 /* ───────── Hooks ───────── */
 
+export function useSessionDetail(sessionId: string) {
+  return useQuery({
+    queryKey: sessionKeys.detail(sessionId),
+    queryFn: async (): Promise<SessionWithParticipants> => {
+      const { data, error } = await sb
+        .from("sessions")
+        .select(SESSION_SELECT)
+        .eq("id", sessionId)
+        .single();
+      if (error) throw error;
+      return data as SessionWithParticipants;
+    },
+    enabled: !!sessionId,
+  });
+}
+
+export function useSessionResources(sessionId: string) {
+  return useQuery({
+    queryKey: [...sessionKeys.all, "resources", sessionId] as const,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("session_resources")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!sessionId,
+  });
+}
+
+export function useSessionNotes(sessionId: string) {
+  return useQuery({
+    queryKey: [...sessionKeys.all, "notes", sessionId] as const,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("session_notes")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!sessionId,
+  });
+}
+
+export function useAddSessionNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sessionId, content }: { sessionId: string; content: string }) => {
+      const { data, error } = await sb
+        .from("session_notes")
+        .insert({ session_id: sessionId, content, version: 1 })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: [...sessionKeys.all, "notes", vars.sessionId],
+      });
+    },
+  });
+}
+
 export function useSessions() {
   const { data: me } = useCurrentUser();
   const userId = me?.userId;

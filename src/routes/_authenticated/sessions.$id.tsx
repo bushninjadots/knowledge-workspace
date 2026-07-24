@@ -1,0 +1,443 @@
+import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Globe,
+  MapPin,
+  Video,
+  Users,
+  FileText,
+  Send,
+  Loader2,
+  Repeat,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  useSessionDetail,
+  useSessionNotes,
+  useAddSessionNote,
+  useDeleteSession,
+  type SessionWithParticipants,
+} from "@/hooks/use-sessions";
+import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const sb = supabase as any;
+
+export const Route = createFileRoute("/_authenticated/sessions/$id")({
+  head: () => ({
+    meta: [
+      { title: "Session — Tethyr" },
+      { name: "description", content: "View session details." },
+    ],
+  }),
+  component: SessionDetailPage,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Session not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <Link to="/sessions" className="mt-4 inline-block text-sm text-primary hover:underline">
+          Back to sessions
+        </Link>
+      </div>
+    </div>
+  ),
+});
+
+function SessionDetailPage() {
+  const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const { data: me } = useCurrentUser();
+  const { data: session, isLoading } = useSessionDetail(id);
+  const { data: notes = [] } = useSessionNotes(id);
+  const addNote = useAddSessionNote();
+  const deleteSession = useDeleteSession();
+
+  const [noteText, setNoteText] = useState("");
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-foreground">Session not found</h1>
+          <Link to="/sessions" className="mt-4 inline-block text-sm text-primary hover:underline">
+            Back to sessions
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-12 max-w-4xl items-center gap-3 px-4 sm:px-6">
+          <button
+            onClick={() => navigate({ to: "/sessions" })}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <span className="text-sm font-medium text-foreground truncate">Sessions</span>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+        <HeroSection session={session} userId={me?.userId} />
+        <InfoPanel session={session} />
+        <Separator className="bg-border/40" />
+        <ParticipantList session={session} />
+        <Separator className="bg-border/40" />
+        <NotesSection
+          sessionId={id}
+          notes={notes}
+          noteText={noteText}
+          onNoteTextChange={setNoteText}
+          onAddNote={async () => {
+            if (!noteText.trim()) return;
+            try {
+              await addNote.mutateAsync({ sessionId: id, content: noteText.trim() });
+              setNoteText("");
+              toast.success("Note added");
+            } catch {
+              toast.error("Failed to add note");
+            }
+          }}
+          isAdding={addNote.isPending}
+        />
+        <Separator className="bg-border/40" />
+        <FollowUpActions
+          session={session}
+          userId={me?.userId}
+          onDelete={async () => {
+            try {
+              await deleteSession.mutateAsync(id);
+              toast.success("Session deleted");
+              navigate({ to: "/sessions" });
+            } catch {
+              toast.error("Failed to delete session");
+            }
+          }}
+          isDeleting={deleteSession.isPending}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Hero Section ───────── */
+
+function HeroSection({
+  session,
+  userId,
+}: {
+  session: SessionWithParticipants;
+  userId?: string;
+}) {
+  const statusCfg = STATUS_CONFIG[session.status];
+  const isOrganizer = session.organizer_id === userId;
+
+  const startsAt = session.starts_at ? new Date(session.starts_at) : null;
+  const dateStr = startsAt
+    ? startsAt.toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Not scheduled";
+  const timeStr = startsAt
+    ? startsAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{session.title}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge
+              className={`${statusCfg.bg} ${statusCfg.color} border-0 font-medium`}
+            >
+              {statusCfg.icon} {statusCfg.label}
+            </Badge>
+            {session.skills?.name && (
+              <Badge variant="outline" className="text-xs">
+                {session.skills.name}
+              </Badge>
+            )}
+            {session.is_recurring && (
+              <Badge variant="outline" className="text-xs">
+                <Repeat className="mr-1 h-3 w-3" /> Recurring
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Date + time bar */}
+      <div className="flex flex-wrap items-center gap-4 rounded-xl bg-surface/50 px-4 py-3 text-sm">
+        <div className="flex items-center gap-2 text-foreground">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span>{dateStr}</span>
+        </div>
+        {timeStr && (
+          <div className="flex items-center gap-2 text-foreground">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>{timeStr}</span>
+            <span className="text-muted-foreground">
+              ({session.duration_minutes} min)
+            </span>
+          </div>
+        )}
+        {session.organizer && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span>Organized by</span>
+            <span className="font-medium text-foreground">
+              {session.organizer.display_name ?? session.organizer.handle ?? "Unknown"}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Info Panel ───────── */
+
+function InfoPanel({ session }: { session: SessionWithParticipants }) {
+  const items: { icon: typeof Globe; label: string; value: string; href?: string }[] = [];
+
+  if (session.meeting_url) {
+    items.push({ icon: Video, label: "Meeting", value: session.meeting_url, href: session.meeting_url });
+  }
+  if (session.location) {
+    items.push({ icon: MapPin, label: "Location", value: session.location });
+  }
+  items.push({ icon: Clock, label: "Duration", value: `${session.duration_minutes} min` });
+  items.push({ icon: Globe, label: "Timezone", value: session.timezone });
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {items.map((item, i) => {
+        const Icon = item.icon;
+        return (
+          <div
+            key={i}
+            className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-4 py-3"
+          >
+            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <div className="text-[11px] text-muted-foreground">{item.label}</div>
+              {item.href ? (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate text-sm font-medium text-primary hover:underline"
+                >
+                  {item.value}
+                </a>
+              ) : (
+                <div className="truncate text-sm font-medium text-foreground">{item.value}</div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ───────── Participant List ───────── */
+
+function ParticipantList({ session }: { session: SessionWithParticipants }) {
+  const participants = session.participants ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold text-foreground">
+          Participants ({participants.length})
+        </h2>
+      </div>
+      {participants.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No participants yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {participants.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-4 py-2.5"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={p.profiles?.avatar_url ?? undefined} />
+                <AvatarFallback className="text-xs">
+                  {(p.profiles?.display_name ?? "?").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-foreground">
+                  {p.profiles?.display_name ?? "Unknown"}
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  @{p.profiles?.handle ?? "—"}
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className={`text-[10px] ${
+                  p.status === "accepted"
+                    ? "border-green-500/40 text-green-600"
+                    : p.status === "declined"
+                      ? "border-red-500/40 text-red-600"
+                      : p.status === "invited"
+                        ? "border-amber-500/40 text-amber-600"
+                        : ""
+                }`}
+              >
+                {p.status}
+              </Badge>
+              {p.role === "organizer" && (
+                <Badge variant="secondary" className="text-[10px]">
+                  Organizer
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────── Notes Section ───────── */
+
+function NotesSection({
+  sessionId,
+  notes,
+  noteText,
+  onNoteTextChange,
+  onAddNote,
+  isAdding,
+}: {
+  sessionId: string;
+  notes: { id: string; content: string; created_at: string }[];
+  noteText: string;
+  onNoteTextChange: (v: string) => void;
+  onAddNote: () => void;
+  isAdding: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <FileText className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold text-foreground">Notes</h2>
+      </div>
+
+      {/* Add note */}
+      <div className="flex gap-2">
+        <Textarea
+          placeholder="Add a note about this session..."
+          rows={2}
+          value={noteText}
+          onChange={(e) => onNoteTextChange(e.target.value)}
+          className="flex-1"
+        />
+        <Button
+          size="icon"
+          onClick={onAddNote}
+          disabled={!noteText.trim() || isAdding}
+          className="shrink-0 bg-brand-green text-background hover:bg-brand-green/90"
+        >
+          {isAdding ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Note list */}
+      {notes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No notes yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className="rounded-xl border border-border/40 bg-surface/30 px-4 py-3"
+            >
+              <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
+              <div className="mt-2 text-[11px] text-muted-foreground">
+                {new Date(note.created_at).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────── Follow-Up Actions ───────── */
+
+function FollowUpActions({
+  session,
+  userId,
+  onDelete,
+  isDeleting,
+}: {
+  session: SessionWithParticipants;
+  userId?: string;
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
+  const isOrganizer = session.organizer_id === userId;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-foreground">Actions</h2>
+      <div className="flex flex-wrap gap-2">
+        {isOrganizer && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="mr-1 h-3.5 w-3.5" />
+            )}
+            Delete Session
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

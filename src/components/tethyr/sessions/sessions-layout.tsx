@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
 import { OverviewCards, NextSessionCountdown } from "./overview-cards";
@@ -16,9 +17,11 @@ import {
   useSessionRequests,
   useSessionHistory,
   useSessionAvailability,
+  type SessionWithParticipants,
 } from "@/hooks/use-sessions";
 
 export function SessionsLayout() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
   const [wizardOpen, setWizardOpen] = useState(false);
 
@@ -32,6 +35,10 @@ export function SessionsLayout() {
   const pendingCount = requests.filter((r) => r.status === "pending" && r.to_user_id).length;
 
   const nextSession = upcomingSessions[0] ?? null;
+
+  function goToSession(session: SessionWithParticipants) {
+    navigate({ to: "/sessions/$id", params: { id: session.id } });
+  }
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
@@ -69,20 +76,17 @@ export function SessionsLayout() {
               {nextSession && <NextSessionCountdown nextSession={nextSession} />}
 
               {/* Today */}
-              <TodaySchedule sessions={todaySessions} />
+              <TodaySchedule sessions={todaySessions} onSessionClick={goToSession} />
 
               {/* Upcoming */}
-              <UpcomingSessions sessions={upcomingSessions} />
+              <UpcomingSessions sessions={upcomingSessions} onSessionClick={goToSession} />
             </div>
           )}
 
           {activeTab === "calendar" && (
             <SessionsCalendar
               sessions={upcomingSessions}
-              onSessionClick={(s) => {
-                // Phase 4: navigate to session detail
-                console.log("Session clicked:", s.id);
-              }}
+              onSessionClick={goToSession}
             />
           )}
 

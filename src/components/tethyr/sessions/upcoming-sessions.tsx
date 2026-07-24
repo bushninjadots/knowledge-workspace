@@ -27,14 +27,23 @@ function formatDuration(minutes: number) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-function UpcomingCard({ session }: { session: SessionWithParticipants }) {
+function UpcomingCard({
+  session,
+  onClick,
+}: {
+  session: SessionWithParticipants;
+  onClick?: () => void;
+}) {
   const status = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.scheduled;
   const type = TYPE_LABELS[session.session_type] ?? session.session_type;
   const start = session.starts_at ? new Date(session.starts_at) : null;
   const participantCount = session.participants?.length ?? 0;
 
   return (
-    <div className="group flex items-start gap-4 rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50">
+    <div
+      onClick={onClick}
+      className="group flex items-start gap-4 rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50 cursor-pointer"
+    >
       {/* Date badge */}
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
         {start ? (
@@ -135,8 +144,10 @@ function UpcomingCard({ session }: { session: SessionWithParticipants }) {
 
 export function UpcomingSessions({
   sessions,
+  onSessionClick,
 }: {
   sessions: SessionWithParticipants[];
+  onSessionClick?: (session: SessionWithParticipants) => void;
 }) {
   if (sessions.length === 0) {
     return (
@@ -162,7 +173,7 @@ export function UpcomingSessions({
       </div>
       <div className="space-y-2">
         {sessions.map((session) => (
-          <UpcomingCard key={session.id} session={session} />
+          <UpcomingCard key={session.id} session={session} onClick={() => onSessionClick?.(session)} />
         ))}
       </div>
     </div>

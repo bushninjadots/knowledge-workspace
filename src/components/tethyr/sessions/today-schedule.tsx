@@ -17,13 +17,22 @@ function formatDuration(minutes: number) {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-function SessionCard({ session }: { session: SessionWithParticipants }) {
+function SessionCard({
+  session,
+  onClick,
+}: {
+  session: SessionWithParticipants;
+  onClick?: () => void;
+}) {
   const status = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.scheduled;
   const type = TYPE_LABELS[session.session_type] ?? session.session_type;
   const participantCount = session.participants?.length ?? 0;
 
   return (
-    <div className="group flex items-start gap-4 rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50">
+    <div
+      onClick={onClick}
+      className="group flex items-start gap-4 rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50 cursor-pointer"
+    >
       {/* Time column */}
       <div className="w-16 shrink-0 text-center">
         <p className="text-lg font-bold tabular-nums text-foreground">
@@ -102,8 +111,10 @@ function SessionCard({ session }: { session: SessionWithParticipants }) {
 
 export function TodaySchedule({
   sessions,
+  onSessionClick,
 }: {
   sessions: SessionWithParticipants[];
+  onSessionClick?: (session: SessionWithParticipants) => void;
 }) {
   if (sessions.length === 0) {
     return (
@@ -129,7 +140,7 @@ export function TodaySchedule({
       </div>
       <div className="space-y-2">
         {sessions.map((session) => (
-          <SessionCard key={session.id} session={session} />
+          <SessionCard key={session.id} session={session} onClick={() => onSessionClick?.(session)} />
         ))}
       </div>
     </div>

@@ -87,14 +87,15 @@
 - [x] Wired to "+ Schedule Session" button in layout
 - [x] Uses `useCreateSession` mutation (inserts session + participants)
 
-## Phase 4 — Session Details Page (Planned)
-- [ ] Route: `sessions/$id.tsx`
-- [ ] Hero section (title, participants, status, actions)
-- [ ] Info panel (location, link, duration, timezone, organizer)
-- [ ] Resources section
-- [ ] Participant list with status
-- [ ] Notes editor
-- [ ] Follow-up actions
+## Phase 4 — Session Details Page ✓
+- [x] Route: `sessions/$id.tsx`
+- [x] Hero section (title, participants, status, actions)
+- [x] Info panel (location, link, duration, timezone, organizer)
+- [x] Participant list with status badges
+- [x] Notes editor (add notes to sessions)
+- [x] Follow-up actions (delete session)
+- [x] Session click → navigate to detail (calendar, today, upcoming)
+- [x] Route tree regenerated via TanStack Router CLI
 
 ## Phase 5 — Requests (Planned)
 - [ ] Incoming invitations list
