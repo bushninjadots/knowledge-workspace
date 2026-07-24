@@ -8,6 +8,7 @@ import { SessionsCalendar } from "./sessions-calendar";
 import { SessionRequests } from "./session-requests";
 import { SessionHistory } from "./session-history";
 import { AvailabilitySettings } from "./availability-settings";
+import { ScheduleSessionWizard } from "./schedule-session-wizard";
 import {
   useSessionStats,
   useTodaySessions,
@@ -19,6 +20,7 @@ import {
 
 export function SessionsLayout() {
   const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const { data: stats, isLoading: statsLoading } = useSessionStats();
   const { data: todaySessions = [] } = useTodaySessions();
@@ -49,7 +51,10 @@ export function SessionsLayout() {
                 Manage your skill exchanges, mentoring, and meetings.
               </p>
             </div>
-            <button className="rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-brand-green/90 hover:shadow-soft active:scale-[0.98]">
+            <button
+              onClick={() => setWizardOpen(true)}
+              className="rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-brand-green/90 hover:shadow-soft active:scale-[0.98]"
+            >
               + Schedule Session
             </button>
           </div>
@@ -88,6 +93,8 @@ export function SessionsLayout() {
           {activeTab === "availability" && <AvailabilitySettings availability={availability} />}
         </div>
       </ScrollArea>
+
+      <ScheduleSessionWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
   );
 }

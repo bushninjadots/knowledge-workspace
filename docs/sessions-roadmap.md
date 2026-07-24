@@ -77,12 +77,15 @@
 
 ---
 
-## Phase 3 — Schedule Session Wizard (Planned)
-- [ ] Step 1: Choose participants (search, invite)
-- [ ] Step 2: Session type selector
-- [ ] Step 3: Link content (project, skill, community, exchange)
-- [ ] Step 4: Date/time/timezone/duration/recurring
-- [ ] Step 5: Confirmation & send invitations
+## Phase 3 — Schedule Session Wizard ✓
+- [x] Step 1: Choose participants (search, invite)
+- [x] Step 2: Session type selector
+- [x] Step 3: Link content (title, description, meeting URL, location)
+- [x] Step 4: Date/time/timezone/duration/recurring
+- [x] Step 5: Confirmation & send invitations
+- [x] Dialog-based wizard shell with step indicator
+- [x] Wired to "+ Schedule Session" button in layout
+- [x] Uses `useCreateSession` mutation (inserts session + participants)
 
 ## Phase 4 — Session Details Page (Planned)
 - [ ] Route: `sessions/$id.tsx`
