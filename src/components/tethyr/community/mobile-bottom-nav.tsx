@@ -26,21 +26,23 @@ export function MobileBottomNav({
           <button
             key={item.id}
             onClick={() => onSelect(item.id)}
-            className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] transition-colors ${
-              isActive ? "text-brand-green" : "text-muted-foreground active:text-foreground"
+            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              isActive
+                ? "text-brand-green font-semibold"
+                : "text-muted-foreground active:text-foreground"
             }`}
           >
             <Icon className={`h-5 w-5 ${isActive ? "fill-brand-green/15" : ""}`} />
-            <span className="font-medium">{item.label}</span>
+            <span>{item.label}</span>
           </button>
         );
       })}
       <button
         onClick={onOpenSidebar}
-        className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] text-muted-foreground transition-colors active:text-foreground"
+        className="flex flex-1 flex-col items-center gap-1 py-3 text-xs text-muted-foreground transition-colors active:text-foreground"
       >
         <Menu className="h-5 w-5" />
-        <span className="font-medium">More</span>
+        <span>More</span>
       </button>
     </nav>
   );
