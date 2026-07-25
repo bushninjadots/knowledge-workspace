@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -129,4 +130,126 @@ export function useNotificationsByCategory() {
     },
     staleTime: 15_000,
   });
+}
+
+// ---------- Mark as read ----------
+
+export function useMarkAsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await (supabase as any)
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+    },
+  });
+}
+
+// ---------- Mark all as read ----------
+
+export function useMarkAllAsRead() {
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!meId) throw new Error("Not authenticated");
+      const { error } = await (supabase as any)
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .eq("user_id", meId)
+        .is("read_at", null);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+    },
+  });
+}
+
+// ---------- Archive ----------
+
+export function useArchiveNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("notifications")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+    },
+  });
+}
+
+// ---------- Delete ----------
+
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("notifications").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+    },
+  });
+}
+
+// ---------- Realtime subscription ----------
+
+export function useNotificationRealtime() {
+  const qc = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    if (!meId) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const channel = supabase.channel(`notifications:${meId}`);
+    channel.on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${meId}`,
+      },
+      () => {
+        qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+        qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+        qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+      },
+    );
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [meId, qc]);
 }
