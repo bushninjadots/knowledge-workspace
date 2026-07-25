@@ -1,4 +1,4 @@
-import { Clock, Video, MapPin, ExternalLink } from "lucide-react";
+import { Clock, Video, ExternalLink } from "lucide-react";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 
@@ -47,7 +47,9 @@ function SessionCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <h3 className="text-sm font-semibold text-foreground">{session.title}</h3>
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}>
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
+          >
             {status.icon} {status.label}
           </span>
         </div>
@@ -140,7 +142,11 @@ export function TodaySchedule({
       </div>
       <div className="space-y-2">
         {sessions.map((session) => (
-          <SessionCard key={session.id} session={session} onClick={() => onSessionClick?.(session)} />
+          <SessionCard
+            key={session.id}
+            session={session}
+            onClick={() => onSessionClick?.(session)}
+          />
         ))}
       </div>
     </div>

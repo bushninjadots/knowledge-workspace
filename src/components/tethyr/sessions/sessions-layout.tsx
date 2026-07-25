@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
@@ -25,9 +25,9 @@ export function SessionsLayout() {
   const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
   const [wizardOpen, setWizardOpen] = useState(false);
 
-  const { data: stats, isLoading: statsLoading } = useSessionStats();
+  const { data: stats } = useSessionStats();
   const { data: todaySessions = [] } = useTodaySessions();
-  const { data: upcomingSessions = [], isLoading: upcomingLoading } = useUpcomingSessions();
+  const { data: upcomingSessions = [] } = useUpcomingSessions();
   const { data: requests = [] } = useSessionRequests();
   const { data: historySessions = [], isLoading: historyLoading } = useSessionHistory();
   const { data: availability = [] } = useSessionAvailability();
@@ -44,7 +44,11 @@ export function SessionsLayout() {
     <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
       {/* Left Sidebar */}
       <div className="hidden w-56 shrink-0 border-r border-border/60 bg-surface/30 bg-noise p-4 lg:block">
-        <SessionsSidebar activeTab={activeTab} onTabChange={setActiveTab} pendingCount={pendingCount} />
+        <SessionsSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          pendingCount={pendingCount}
+        />
       </div>
 
       {/* Main Content */}
@@ -84,13 +88,12 @@ export function SessionsLayout() {
           )}
 
           {activeTab === "calendar" && (
-            <SessionsCalendar
-              sessions={upcomingSessions}
-              onSessionClick={goToSession}
-            />
+            <SessionsCalendar sessions={upcomingSessions} onSessionClick={goToSession} />
           )}
 
-          {activeTab === "history" && <SessionHistory sessions={historySessions} loading={historyLoading} />}
+          {activeTab === "history" && (
+            <SessionHistory sessions={historySessions} loading={historyLoading} />
+          )}
 
           {activeTab === "requests" && <SessionRequests requests={requests} />}
 

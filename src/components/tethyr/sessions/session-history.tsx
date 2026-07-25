@@ -87,9 +87,7 @@ export function SessionHistory({
           <History className="h-5 w-5 text-muted-foreground/60" />
         </div>
         <p className="text-sm font-medium text-foreground">No completed sessions yet</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Your session history will appear here.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Your session history will appear here.</p>
       </div>
     );
   }
@@ -98,9 +96,7 @@ export function SessionHistory({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Session History</h3>
-        <span className="text-[11px] text-muted-foreground">
-          {sessions.length} completed
-        </span>
+        <span className="text-[11px] text-muted-foreground">{sessions.length} completed</span>
       </div>
       <div className="space-y-2">
         {sessions.map((session) => (

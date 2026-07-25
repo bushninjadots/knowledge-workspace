@@ -1,13 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CalendarDays,
-  Clock,
-  Video,
-  MapPin,
-  Plus,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Video, MapPin, Plus } from "lucide-react";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 
@@ -51,16 +43,6 @@ function formatHour(hour: number) {
   return `${hour > 12 ? hour - 12 : hour} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-function getSessionPosition(startsAt: string | null, durationMinutes: number) {
-  if (!startsAt) return null;
-  const d = new Date(startsAt);
-  const hour = d.getHours() + d.getMinutes() / 60;
-  if (hour < 6 || hour > 21) return null;
-  const top = ((hour - 6) / 15) * 100;
-  const height = (durationMinutes / 60 / 15) * 100;
-  return { top: `${top}%`, height: `${Math.max(height, 2.5)}%` };
-}
-
 function CalendarEventCard({
   session,
   onClick,
@@ -92,7 +74,9 @@ function CalendarEventCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <h4 className="truncate text-sm font-semibold text-foreground">{session.title}</h4>
-          <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${status.bg} ${status.color}`}>
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${status.bg} ${status.color}`}
+          >
             {status.label}
           </span>
         </div>
@@ -137,9 +121,7 @@ function DayView({
   sessions: SessionWithParticipants[];
   onSessionClick: (s: SessionWithParticipants) => void;
 }) {
-  const daySessions = sessions.filter((s) =>
-    s.starts_at && isSameDay(new Date(s.starts_at), date),
-  );
+  const daySessions = sessions.filter((s) => s.starts_at && isSameDay(new Date(s.starts_at), date));
 
   return (
     <div className="relative">
@@ -155,11 +137,7 @@ function DayView({
                 return h === hour;
               })
               .map((s) => (
-                <CalendarEventCard
-                  key={s.id}
-                  session={s}
-                  onClick={() => onSessionClick(s)}
-                />
+                <CalendarEventCard key={s.id} session={s} onClick={() => onSessionClick(s)} />
               ))}
           </div>
         </div>
@@ -191,10 +169,7 @@ function WeekView({
         {weekDates.map((d, i) => {
           const isToday = isSameDay(d, today);
           return (
-            <div
-              key={i}
-              className={`py-2 text-center ${isToday ? "bg-brand-green/5" : ""}`}
-            >
+            <div key={i} className={`py-2 text-center ${isToday ? "bg-brand-green/5" : ""}`}>
               <p className="text-[10px] font-medium uppercase text-muted-foreground/60">
                 {dayNames[i]}
               </p>
@@ -281,7 +256,10 @@ function MonthView({
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-border/40">
         {dayNames.map((name) => (
-          <div key={name} className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/60">
+          <div
+            key={name}
+            className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/60"
+          >
             {name}
           </div>
         ))}
@@ -290,7 +268,10 @@ function MonthView({
       {/* Calendar grid */}
       <div className="grid grid-cols-7">
         {days.map((d, i) => {
-          if (!d) return <div key={`empty-${i}`} className="min-h-[6rem] border-b border-r border-border/20" />;
+          if (!d)
+            return (
+              <div key={`empty-${i}`} className="min-h-[6rem] border-b border-r border-border/20" />
+            );
           const isToday = isSameDay(d, today);
           const daySessions = sessionsByDate.get(d.toDateString()) ?? [];
           return (
@@ -395,11 +376,7 @@ function AgendaView({
             </div>
             <div className="space-y-2 pl-[3.25rem]">
               {daySessions.map((s) => (
-                <CalendarEventCard
-                  key={s.id}
-                  session={s}
-                  onClick={() => onSessionClick(s)}
-                />
+                <CalendarEventCard key={s.id} session={s} onClick={() => onSessionClick(s)} />
               ))}
             </div>
           </div>
@@ -526,9 +503,7 @@ export function SessionsCalendar({
         {view === "month" && (
           <MonthView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />
         )}
-        {view === "agenda" && (
-          <AgendaView sessions={sessions} onSessionClick={onSessionClick} />
-        )}
+        {view === "agenda" && <AgendaView sessions={sessions} onSessionClick={onSessionClick} />}
       </div>
     </div>
   );

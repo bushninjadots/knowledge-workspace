@@ -53,7 +53,9 @@ export function OverviewCards({ stats }: { stats: Stats }) {
                   {card.value}
                 </p>
               </div>
-              <div className={`rounded-xl ${card.bg} p-2.5 transition-transform group-hover:scale-105`}>
+              <div
+                className={`rounded-xl ${card.bg} p-2.5 transition-transform group-hover:scale-105`}
+              >
                 <Icon className={`h-4 w-4 ${card.color}`} />
               </div>
             </div>
@@ -94,14 +96,16 @@ export function NextSessionCountdown({
         <p className="text-[11px] font-medium uppercase tracking-wider text-brand-green/80">
           Next Session
         </p>
-        <p className="truncate text-sm font-medium text-foreground">
-          {nextSession.title}
-        </p>
+        <p className="truncate text-sm font-medium text-foreground">{nextSession.title}</p>
       </div>
       <div className="text-right">
         <p className="text-lg font-bold tabular-nums text-brand-green">{timeStr}</p>
         <p className="text-[10px] text-muted-foreground">
-          {start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+          {start.toLocaleDateString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          })}
         </p>
       </div>
     </div>

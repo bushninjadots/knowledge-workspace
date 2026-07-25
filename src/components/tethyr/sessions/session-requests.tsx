@@ -39,7 +39,17 @@ function RequestCard({ request }: { request: SessionRequest }) {
           <p className="mt-0.5 text-xs text-muted-foreground">
             {request.sessions.title}
             {request.sessions.starts_at && (
-              <> — {new Date(request.sessions.starts_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</>
+              <>
+                {" "}
+                —{" "}
+                {new Date(request.sessions.starts_at).toLocaleString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </>
             )}
           </p>
         )}
@@ -106,9 +116,7 @@ export function SessionRequests({ requests }: { requests: SessionRequest[] }) {
     <div className="space-y-6">
       {pending.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">
-            Pending ({pending.length})
-          </h3>
+          <h3 className="text-sm font-semibold text-foreground">Pending ({pending.length})</h3>
           {pending.map((req) => (
             <RequestCard key={req.id} request={req} />
           ))}

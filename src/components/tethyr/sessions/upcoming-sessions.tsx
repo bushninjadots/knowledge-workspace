@@ -51,7 +51,9 @@ function UpcomingCard({
             <span className="text-[10px] font-semibold uppercase text-brand-green">
               {start.toLocaleDateString(undefined, { weekday: "short" })}
             </span>
-            <span className="text-lg font-bold tabular-nums text-foreground">{start.getDate()}</span>
+            <span className="text-lg font-bold tabular-nums text-foreground">
+              {start.getDate()}
+            </span>
           </>
         ) : (
           <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
@@ -62,7 +64,9 @@ function UpcomingCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <h3 className="text-sm font-semibold text-foreground">{session.title}</h3>
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}>
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
+          >
             {status.icon} {status.label}
           </span>
         </div>
@@ -156,9 +160,7 @@ export function UpcomingSessions({
           <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
         </div>
         <p className="text-sm font-medium text-foreground">No upcoming sessions</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Schedule a session to get started.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Schedule a session to get started.</p>
       </div>
     );
   }
@@ -173,7 +175,11 @@ export function UpcomingSessions({
       </div>
       <div className="space-y-2">
         {sessions.map((session) => (
-          <UpcomingCard key={session.id} session={session} onClick={() => onSessionClick?.(session)} />
+          <UpcomingCard
+            key={session.id}
+            session={session}
+            onClick={() => onSessionClick?.(session)}
+          />
         ))}
       </div>
     </div>

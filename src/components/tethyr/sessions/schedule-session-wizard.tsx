@@ -22,20 +22,12 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import {
-  useCreateSession,
-  type SessionType,
-} from "@/hooks/use-sessions";
+import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -58,9 +50,24 @@ const STEPS = [
 ] as const;
 
 const SESSION_TYPES: { value: SessionType; label: string; icon: typeof Video; desc: string }[] = [
-  { value: "skill_exchange", label: "Skill Exchange", icon: Wrench, desc: "Trade skills with a peer" },
-  { value: "mentoring", label: "Mentoring", icon: GraduationCap, desc: "One-on-one guidance session" },
-  { value: "project_meeting", label: "Project Meeting", icon: FolderKanban, desc: "Collaborate on a project" },
+  {
+    value: "skill_exchange",
+    label: "Skill Exchange",
+    icon: Wrench,
+    desc: "Trade skills with a peer",
+  },
+  {
+    value: "mentoring",
+    label: "Mentoring",
+    icon: GraduationCap,
+    desc: "One-on-one guidance session",
+  },
+  {
+    value: "project_meeting",
+    label: "Project Meeting",
+    icon: FolderKanban,
+    desc: "Collaborate on a project",
+  },
   { value: "study_session", label: "Study Session", icon: BookOpen, desc: "Learn together" },
   { value: "workshop", label: "Workshop", icon: Users, desc: "Group teaching session" },
   { value: "general", label: "General", icon: MessageSquare, desc: "Open discussion" },
@@ -132,8 +139,6 @@ export function ScheduleSessionWizard({
   const [state, setState] = useState<WizardState>(INITIAL);
   const { data: me } = useCurrentUser();
   const createSession = useCreateSession();
-
-  const userId = me?.userId;
 
   function update<K extends keyof WizardState>(key: K, value: WizardState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -227,7 +232,11 @@ export function ScheduleSessionWizard({
                   </div>
                   <span
                     className={`hidden text-xs font-medium sm:inline ${
-                      active ? "text-foreground" : done ? "text-brand-green" : "text-muted-foreground"
+                      active
+                        ? "text-foreground"
+                        : done
+                          ? "text-brand-green"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {s.label}
@@ -279,21 +288,13 @@ export function ScheduleSessionWizard({
             />
           )}
           {step === 4 && (
-            <StepConfirm
-              state={state}
-              organizerName={me?.profile?.display_name ?? "You"}
-            />
+            <StepConfirm state={state} organizerName={me?.profile?.display_name ?? "You"} />
           )}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border/60 bg-surface/30 px-6 py-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={prev}
-            disabled={step === 0}
-          >
+          <Button variant="ghost" size="sm" onClick={prev} disabled={step === 0}>
             <ChevronLeft className="mr-1 h-4 w-4" />
             Back
           </Button>
@@ -419,16 +420,10 @@ function StepParticipants({
 
       {participants.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">
-            Invited ({participants.length})
-          </Label>
+          <Label className="text-xs text-muted-foreground">Invited ({participants.length})</Label>
           <div className="flex flex-wrap gap-2">
             {participants.map((p) => (
-              <Badge
-                key={p.id}
-                variant="secondary"
-                className="flex items-center gap-1.5 pr-1.5"
-              >
+              <Badge key={p.id} variant="secondary" className="flex items-center gap-1.5 pr-1.5">
                 <Avatar className="h-4 w-4">
                   <AvatarImage src={p.avatar_url ?? undefined} />
                   <AvatarFallback className="text-[8px]">
@@ -453,20 +448,12 @@ function StepParticipants({
 
 /* ───────── Step 2: Session Type ───────── */
 
-function StepType({
-  value,
-  onChange,
-}: {
-  value: SessionType;
-  onChange: (v: SessionType) => void;
-}) {
+function StepType({ value, onChange }: { value: SessionType; onChange: (v: SessionType) => void }) {
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground">Session Type</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          What kind of session is this?
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">What kind of session is this?</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {SESSION_TYPES.map((t) => {
@@ -484,9 +471,7 @@ function StepType({
             >
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                  selected
-                    ? "bg-brand-green/20 text-brand-green"
-                    : "bg-muted text-muted-foreground"
+                  selected ? "bg-brand-green/20 text-brand-green" : "bg-muted text-muted-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -617,9 +602,7 @@ function StepSchedule({
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground">Schedule</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          When will this session take place?
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">When will this session take place?</p>
       </div>
 
       <div className="space-y-3">
@@ -710,19 +693,11 @@ function StepSchedule({
 
 /* ───────── Step 5: Confirm ───────── */
 
-function StepConfirm({
-  state,
-  organizerName,
-}: {
-  state: WizardState;
-  organizerName: string;
-}) {
+function StepConfirm({ state, organizerName }: { state: WizardState; organizerName: string }) {
   const typeInfo = SESSION_TYPES.find((t) => t.value === state.sessionType);
   const TypeIcon = typeInfo?.icon ?? MessageSquare;
 
-  const dt = state.date && state.time
-    ? new Date(`${state.date}T${state.time}`)
-    : null;
+  const dt = state.date && state.time ? new Date(`${state.date}T${state.time}`) : null;
 
   return (
     <div className="space-y-4">
@@ -750,8 +725,13 @@ function StepConfirm({
           <div className="rounded-lg bg-background/60 px-3 py-2">
             <div className="text-muted-foreground">When</div>
             <div className="font-medium text-foreground">
-              {dt ? dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "—"}
-              {" "}
+              {dt
+                ? dt.toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "—"}{" "}
               {dt ? dt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "—"}
             </div>
           </div>

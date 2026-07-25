@@ -503,3 +503,138 @@ export function useRespondToRequest() {
     },
   });
 }
+
+/* ───────── Session Resources Mutations ───────── */
+
+export function useAddSessionResource() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      title,
+      url,
+      resourceType,
+    }: {
+      sessionId: string;
+      title: string;
+      url?: string;
+      resourceType?: string;
+    }) => {
+      const { data, error } = await sb
+        .from("session_resources")
+        .insert({
+          session_id: sessionId,
+          title,
+          url: url ?? null,
+          resource_type: resourceType ?? "link",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: [...sessionKeys.all, "resources", vars.sessionId],
+      });
+    },
+  });
+}
+
+export function useDeleteSessionResource() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ resourceId, sessionId }: { resourceId: string; sessionId: string }) => {
+      const { error } = await sb.from("session_resources").delete().eq("id", resourceId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: [...sessionKeys.all, "resources", vars.sessionId],
+      });
+    },
+  });
+}
+
+/* ───────── Session Notes Mutations ───────── */
+
+export function useDeleteSessionNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ noteId, sessionId }: { noteId: string; sessionId: string }) => {
+      const { error } = await sb.from("session_notes").delete().eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: [...sessionKeys.all, "notes", vars.sessionId],
+      });
+    },
+  });
+}
+
+/* ───────── Session Status Mutation ───────── */
+
+export function useUpdateSessionStatus() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useMutation({
+    mutationFn: async ({ sessionId, status }: { sessionId: string; status: SessionStatus }) => {
+      const { data, error } = await sb
+        .from("sessions")
+        .update({ status })
+        .eq("id", sessionId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Session;
+    },
+    onSuccess: () => {
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      }
+    },
+  });
+}
+
+/* ───────── Participant Status Mutation ───────── */
+
+export function useUpdateParticipantStatus() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useMutation({
+    mutationFn: async ({
+      participantId,
+      status,
+      sessionId,
+    }: {
+      participantId: string;
+      status: ParticipantStatus;
+      sessionId: string;
+    }) => {
+      const { data, error } = await sb
+        .from("session_participants")
+        .update({ status, responded_at: new Date().toISOString() })
+        .eq("id", participantId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: sessionKeys.detail(vars.sessionId),
+      });
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      }
+    },
+  });
+}

@@ -13,26 +13,34 @@ import {
   Loader2,
   Repeat,
   Trash2,
+  CheckCircle2,
+  PlayCircle,
+  StopCircle,
+  XCircle,
+  Check,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   useSessionDetail,
   useSessionNotes,
+  useSessionResources,
   useAddSessionNote,
+  useDeleteSessionNote,
   useDeleteSession,
+  useUpdateSessionStatus,
+  useUpdateParticipantStatus,
   type SessionWithParticipants,
+  type SessionStatus,
 } from "@/hooks/use-sessions";
 import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
+import { SessionResources } from "@/components/tethyr/sessions/session-resources";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const sb = supabase as any;
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -61,8 +69,12 @@ function SessionDetailPage() {
   const { data: me } = useCurrentUser();
   const { data: session, isLoading } = useSessionDetail(id);
   const { data: notes = [] } = useSessionNotes(id);
+  const { data: resources = [] } = useSessionResources(id);
   const addNote = useAddSessionNote();
+  const deleteNote = useDeleteSessionNote();
   const deleteSession = useDeleteSession();
+  const updateStatus = useUpdateSessionStatus();
+  const updateParticipantStatus = useUpdateParticipantStatus();
 
   const [noteText, setNoteText] = useState("");
 
@@ -87,6 +99,9 @@ function SessionDetailPage() {
     );
   }
 
+  const isOrganizer = session.organizer_id === me?.userId;
+  const myParticipant = session.participants?.find((p) => p.profile_id === me?.userId);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
@@ -103,13 +118,48 @@ function SessionDetailPage() {
       </div>
 
       <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
-        <HeroSection session={session} userId={me?.userId} />
+        <HeroSection session={session} />
         <InfoPanel session={session} />
+
+        {/* Status Actions */}
+        {isOrganizer && (
+          <>
+            <Separator className="bg-border/40" />
+            <StatusActions
+              session={session}
+              onStatusChange={async (status: SessionStatus) => {
+                try {
+                  await updateStatus.mutateAsync({ sessionId: id, status });
+                  toast.success(`Session ${status.replace("_", " ")}`);
+                } catch {
+                  toast.error("Failed to update status");
+                }
+              }}
+              isUpdating={updateStatus.isPending}
+            />
+          </>
+        )}
+
+        {/* Participant Actions (for non-organizers) */}
+        {myParticipant && myParticipant.status === "invited" && (
+          <>
+            <Separator className="bg-border/40" />
+            <ParticipantActions
+              participantId={myParticipant.id}
+              sessionId={id}
+              onUpdateParticipantStatus={updateParticipantStatus}
+            />
+          </>
+        )}
+
         <Separator className="bg-border/40" />
         <ParticipantList session={session} />
+
+        <Separator className="bg-border/40" />
+        <SessionResources sessionId={id} resources={resources} isOrganizer={isOrganizer} />
+
         <Separator className="bg-border/40" />
         <NotesSection
-          sessionId={id}
           notes={notes}
           noteText={noteText}
           onNoteTextChange={setNoteText}
@@ -123,8 +173,18 @@ function SessionDetailPage() {
               toast.error("Failed to add note");
             }
           }}
+          onDeleteNote={async (noteId: string) => {
+            try {
+              await deleteNote.mutateAsync({ noteId, sessionId: id });
+              toast.success("Note deleted");
+            } catch {
+              toast.error("Failed to delete note");
+            }
+          }}
           isAdding={addNote.isPending}
+          currentUserId={me?.userId}
         />
+
         <Separator className="bg-border/40" />
         <FollowUpActions
           session={session}
@@ -147,15 +207,8 @@ function SessionDetailPage() {
 
 /* ───────── Hero Section ───────── */
 
-function HeroSection({
-  session,
-  userId,
-}: {
-  session: SessionWithParticipants;
-  userId?: string;
-}) {
+function HeroSection({ session }: { session: SessionWithParticipants }) {
   const statusCfg = STATUS_CONFIG[session.status];
-  const isOrganizer = session.organizer_id === userId;
 
   const startsAt = session.starts_at ? new Date(session.starts_at) : null;
   const dateStr = startsAt
@@ -176,9 +229,7 @@ function HeroSection({
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{session.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge
-              className={`${statusCfg.bg} ${statusCfg.color} border-0 font-medium`}
-            >
+            <Badge className={`${statusCfg.bg} ${statusCfg.color} border-0 font-medium`}>
               {statusCfg.icon} {statusCfg.label}
             </Badge>
             {session.skills?.name && (
@@ -205,9 +256,7 @@ function HeroSection({
           <div className="flex items-center gap-2 text-foreground">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <span>{timeStr}</span>
-            <span className="text-muted-foreground">
-              ({session.duration_minutes} min)
-            </span>
+            <span className="text-muted-foreground">({session.duration_minutes} min)</span>
           </div>
         )}
         {session.organizer && (
@@ -229,7 +278,12 @@ function InfoPanel({ session }: { session: SessionWithParticipants }) {
   const items: { icon: typeof Globe; label: string; value: string; href?: string }[] = [];
 
   if (session.meeting_url) {
-    items.push({ icon: Video, label: "Meeting", value: session.meeting_url, href: session.meeting_url });
+    items.push({
+      icon: Video,
+      label: "Meeting",
+      value: session.meeting_url,
+      href: session.meeting_url,
+    });
   }
   if (session.location) {
     items.push({ icon: MapPin, label: "Location", value: session.location });
@@ -267,6 +321,127 @@ function InfoPanel({ session }: { session: SessionWithParticipants }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ───────── Status Actions ───────── */
+
+const STATUS_TRANSITIONS: Record<
+  SessionStatus,
+  { label: string; icon: typeof CheckCircle2; next: SessionStatus }[]
+> = {
+  draft: [{ label: "Publish", icon: CheckCircle2, next: "scheduled" }],
+  scheduled: [
+    { label: "Confirm", icon: CheckCircle2, next: "confirmed" },
+    { label: "Start", icon: PlayCircle, next: "in_progress" },
+    { label: "Cancel", icon: XCircle, next: "cancelled" },
+  ],
+  invitation_sent: [
+    { label: "Confirm", icon: CheckCircle2, next: "confirmed" },
+    { label: "Cancel", icon: XCircle, next: "cancelled" },
+  ],
+  confirmed: [
+    { label: "Start", icon: PlayCircle, next: "in_progress" },
+    { label: "Cancel", icon: XCircle, next: "cancelled" },
+  ],
+  in_progress: [
+    { label: "Complete", icon: StopCircle, next: "completed" },
+    { label: "Cancel", icon: XCircle, next: "cancelled" },
+  ],
+  completed: [],
+  cancelled: [],
+};
+
+function StatusActions({
+  session,
+  onStatusChange,
+  isUpdating,
+}: {
+  session: SessionWithParticipants;
+  onStatusChange: (status: SessionStatus) => void;
+  isUpdating: boolean;
+}) {
+  const transitions = STATUS_TRANSITIONS[session.status] ?? [];
+
+  if (transitions.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-foreground">Status</h2>
+      <div className="flex flex-wrap gap-2">
+        {transitions.map((t) => {
+          const Icon = t.icon;
+          const isCancel = t.next === "cancelled";
+          return (
+            <Button
+              key={t.next}
+              variant={isCancel ? "destructive" : "default"}
+              size="sm"
+              onClick={() => onStatusChange(t.next)}
+              disabled={isUpdating}
+              className={isCancel ? "" : "bg-brand-green text-background hover:bg-brand-green/90"}
+            >
+              {isUpdating ? (
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Icon className="mr-1 h-3.5 w-3.5" />
+              )}
+              {t.label}
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Participant Actions ───────── */
+
+function ParticipantActions({
+  participantId,
+  sessionId,
+  onUpdateParticipantStatus,
+}: {
+  participantId: string;
+  sessionId: string;
+  onUpdateParticipantStatus: ReturnType<typeof useUpdateParticipantStatus>;
+}) {
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold text-foreground">Your Invitation</h2>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() =>
+            onUpdateParticipantStatus.mutateAsync({
+              participantId,
+              status: "accepted",
+              sessionId,
+            })
+          }
+          disabled={onUpdateParticipantStatus.isPending}
+          className="bg-brand-green text-background hover:bg-brand-green/90"
+        >
+          <Check className="mr-1 h-3.5 w-3.5" />
+          Accept
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() =>
+            onUpdateParticipantStatus.mutateAsync({
+              participantId,
+              status: "declined",
+              sessionId,
+            })
+          }
+          disabled={onUpdateParticipantStatus.isPending}
+        >
+          <X className="mr-1 h-3.5 w-3.5" />
+          Decline
+        </Button>
+      </div>
     </div>
   );
 }
@@ -337,19 +512,21 @@ function ParticipantList({ session }: { session: SessionWithParticipants }) {
 /* ───────── Notes Section ───────── */
 
 function NotesSection({
-  sessionId,
   notes,
   noteText,
   onNoteTextChange,
   onAddNote,
+  onDeleteNote,
   isAdding,
+  currentUserId,
 }: {
-  sessionId: string;
-  notes: { id: string; content: string; created_at: string }[];
+  notes: { id: string; content: string; created_at: string; created_by?: string }[];
   noteText: string;
   onNoteTextChange: (v: string) => void;
   onAddNote: () => void;
+  onDeleteNote: (noteId: string) => void;
   isAdding: boolean;
+  currentUserId?: string;
 }) {
   return (
     <div className="space-y-3">
@@ -373,11 +550,7 @@ function NotesSection({
           disabled={!noteText.trim() || isAdding}
           className="shrink-0 bg-brand-green text-background hover:bg-brand-green/90"
         >
-          {isAdding ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -392,8 +565,18 @@ function NotesSection({
               className="rounded-xl border border-border/40 bg-surface/30 px-4 py-3"
             >
               <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
-              <div className="mt-2 text-[11px] text-muted-foreground">
-                {new Date(note.created_at).toLocaleString()}
+              <div className="mt-2 flex items-center justify-between">
+                <div className="text-[11px] text-muted-foreground">
+                  {new Date(note.created_at).toLocaleString()}
+                </div>
+                {note.created_by === currentUserId && (
+                  <button
+                    onClick={() => onDeleteNote(note.id)}
+                    className="text-[11px] text-muted-foreground transition-colors hover:text-red-500"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -423,12 +606,7 @@ function FollowUpActions({
       <h2 className="text-sm font-semibold text-foreground">Actions</h2>
       <div className="flex flex-wrap gap-2">
         {isOrganizer && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onDelete}
-            disabled={isDeleting}
-          >
+          <Button variant="destructive" size="sm" onClick={onDelete} disabled={isDeleting}>
             {isDeleting ? (
               <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
             ) : (

@@ -11,11 +11,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }
   tentative: { bg: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-500/30" },
 };
 
-export function AvailabilitySettings({
-  availability,
-}: {
-  availability: Availability[];
-}) {
+export function AvailabilitySettings({ availability }: { availability: Availability[] }) {
   if (availability.length === 0) {
     return (
       <div className="space-y-6">
@@ -63,11 +59,15 @@ export function AvailabilitySettings({
               <p className="mt-1 text-sm text-foreground">15 min between sessions</p>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-muted-foreground">Max Sessions / Day</label>
+              <label className="text-[11px] font-medium text-muted-foreground">
+                Max Sessions / Day
+              </label>
               <p className="mt-1 text-sm text-foreground">5</p>
             </div>
             <div>
-              <label className="text-[11px] font-medium text-muted-foreground">Preferred Length</label>
+              <label className="text-[11px] font-medium text-muted-foreground">
+                Preferred Length
+              </label>
               <p className="mt-1 text-sm text-foreground">60 min</p>
             </div>
           </div>
@@ -91,7 +91,7 @@ export function AvailabilitySettings({
           {DAYS.map((day, idx) => {
             const slots = byDay[idx] ?? [];
             const statusStyle = slots[0]
-              ? STATUS_STYLES[slots[0].status] ?? STATUS_STYLES.available
+              ? (STATUS_STYLES[slots[0].status] ?? STATUS_STYLES.available)
               : null;
             return (
               <div

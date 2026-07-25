@@ -1,11 +1,4 @@
-import {
-  CalendarDays,
-  Clock,
-  History,
-  CalendarClock,
-  Bell,
-  Calendar,
-} from "lucide-react";
+import { CalendarDays, Clock, History, Bell, Calendar } from "lucide-react";
 import type { SessionStatus } from "@/hooks/use-sessions";
 
 const tabs = [
@@ -23,12 +16,42 @@ export const STATUS_CONFIG: Record<
   { label: string; color: string; bg: string; icon: string }
 > = {
   draft: { label: "Draft", color: "text-muted-foreground", bg: "bg-muted", icon: "📝" },
-  scheduled: { label: "Scheduled", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950", icon: "📅" },
-  invitation_sent: { label: "Invitation Sent", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950", icon: "📨" },
-  confirmed: { label: "Confirmed", color: "text-green-600", bg: "bg-green-50 dark:bg-green-950", icon: "✅" },
-  in_progress: { label: "In Progress", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950", icon: "▶️" },
-  completed: { label: "Completed", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950", icon: "🏁" },
-  cancelled: { label: "Cancelled", color: "text-red-600", bg: "bg-red-50 dark:bg-red-950", icon: "❌" },
+  scheduled: {
+    label: "Scheduled",
+    color: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-950",
+    icon: "📅",
+  },
+  invitation_sent: {
+    label: "Invitation Sent",
+    color: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-950",
+    icon: "📨",
+  },
+  confirmed: {
+    label: "Confirmed",
+    color: "text-green-600",
+    bg: "bg-green-50 dark:bg-green-950",
+    icon: "✅",
+  },
+  in_progress: {
+    label: "In Progress",
+    color: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-950",
+    icon: "▶️",
+  },
+  completed: {
+    label: "Completed",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50 dark:bg-emerald-950",
+    icon: "🏁",
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "text-red-600",
+    bg: "bg-red-50 dark:bg-red-950",
+    icon: "❌",
+  },
 };
 
 export const TYPE_LABELS: Record<string, string> = {
