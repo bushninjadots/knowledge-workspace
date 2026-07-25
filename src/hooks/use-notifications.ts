@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -49,10 +48,7 @@ export const BY_CATEGORY_KEY = ["notificationsByCategory"] as const;
 
 // ---------- Paginated feed ----------
 
-export function useNotifications(
-  filters?: NotificationFilters,
-  limit = 50,
-) {
+export function useNotifications(filters?: NotificationFilters, limit = 50) {
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
 
