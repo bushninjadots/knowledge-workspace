@@ -111,12 +111,10 @@ BEGIN
   FROM public.profiles WHERE id = NEW.sender_id;
 
   PERFORM public.insert_notification(
-    (SELECT connection_id FROM public.connections WHERE id = NEW.connection_id
-      AND requester_id <> NEW.sender_id
-      UNION
-      SELECT connection_id FROM public.connections WHERE id = NEW.connection_id
-      AND addressee_id <> NEW.sender_id
-      LIMIT 1),
+    (SELECT addressee_id FROM public.connections WHERE id = NEW.connection_id AND requester_id = NEW.sender_id
+     UNION
+     SELECT requester_id FROM public.connections WHERE id = NEW.connection_id AND addressee_id = NEW.sender_id
+     LIMIT 1),
     NEW.sender_id,
     'message',
     COALESCE(_actor_name, 'Someone') || ' sent you a message',
@@ -160,6 +158,8 @@ BEGIN
   ELSIF TG_OP = 'UPDATE' AND NEW.status = 'accepted' AND OLD.status = 'pending' THEN
     _recipient_id := NEW.requester_id;
     _notif_type := 'connection_accepted';
+    SELECT COALESCE(display_name, handle) INTO _actor_name
+    FROM public.profiles WHERE id = NEW.addressee_id;
     _title := COALESCE(_actor_name, 'Someone') || ' accepted your connection';
   ELSE
     RETURN NEW;
@@ -338,7 +338,7 @@ BEGIN
     NEW.profile_id,
     NULL,
     'achievement',
-    'Achievement Unlocked: ' || replace(replace(NEW.achievement::text, '_', ' '), 'E', ''),
+    'Achievement Unlocked: ' || replace(NEW.achievement::text, '_', ' '),
     NULL,
     'achievement',
     NULL,
