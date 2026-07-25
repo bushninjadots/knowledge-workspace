@@ -167,7 +167,7 @@ BEGIN
 
   PERFORM public.insert_notification(
     _recipient_id,
-    NEW.requester_id,
+    CASE WHEN TG_OP = 'UPDATE' THEN NEW.addressee_id ELSE NEW.requester_id END,
     _notif_type,
     _title,
     NULL,
