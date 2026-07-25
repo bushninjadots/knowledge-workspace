@@ -46,7 +46,7 @@ export function NotificationDropdown() {
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
           <span className="text-sm font-medium">Notifications</span>
-          <Link to="/dashboard" className="text-xs text-primary hover:underline">
+          <Link to="/notifications" className="text-xs text-primary hover:underline">
             View All
           </Link>
         </div>
