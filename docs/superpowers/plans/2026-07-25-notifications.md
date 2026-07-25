@@ -24,22 +24,24 @@
 ## File Map
 
 ### New Files
-| File | Responsibility |
-|---|---|
-| `supabase/migrations/20260725120000_notifications.sql` | Table, indexes, RLS, trigger functions, realtime |
-| `src/hooks/use-notifications.ts` | Types, query hooks, mutation hooks, realtime subscription |
-| `src/components/tethyr/notifications/notification-card.tsx` | Single notification row with avatar, title, body, actions |
-| `src/components/tethyr/notifications/notification-feed.tsx` | Scrollable feed with time grouping and empty state |
-| `src/components/tethyr/notifications/notification-sidebar.tsx` | Left sidebar category list with unread counts |
-| `src/components/tethyr/notifications/notification-dropdown.tsx` | Top-bar dropdown panel (10 recent unread) |
-| `src/components/tethyr/notifications/notification-header.tsx` | Page header with title, unread count, mark-all-read |
-| `src/components/tethyr/notifications/notification-empty.tsx` | Empty state illustration |
-| `src/routes/_authenticated/notifications.tsx` | Page route composing all components |
+
+| File                                                            | Responsibility                                            |
+| --------------------------------------------------------------- | --------------------------------------------------------- |
+| `supabase/migrations/20260725120000_notifications.sql`          | Table, indexes, RLS, trigger functions, realtime          |
+| `src/hooks/use-notifications.ts`                                | Types, query hooks, mutation hooks, realtime subscription |
+| `src/components/tethyr/notifications/notification-card.tsx`     | Single notification row with avatar, title, body, actions |
+| `src/components/tethyr/notifications/notification-feed.tsx`     | Scrollable feed with time grouping and empty state        |
+| `src/components/tethyr/notifications/notification-sidebar.tsx`  | Left sidebar category list with unread counts             |
+| `src/components/tethyr/notifications/notification-dropdown.tsx` | Top-bar dropdown panel (10 recent unread)                 |
+| `src/components/tethyr/notifications/notification-header.tsx`   | Page header with title, unread count, mark-all-read       |
+| `src/components/tethyr/notifications/notification-empty.tsx`    | Empty state illustration                                  |
+| `src/routes/_authenticated/notifications.tsx`                   | Page route composing all components                       |
 
 ### Modified Files
-| File | Change |
-|---|---|
-| `src/components/tethyr/dashboard-sidebar.tsx:26-30` | Add Notifications nav item after Messages |
+
+| File                                                    | Change                                    |
+| ------------------------------------------------------- | ----------------------------------------- |
+| `src/components/tethyr/dashboard-sidebar.tsx:26-30`     | Add Notifications nav item after Messages |
 | `src/components/tethyr/authenticated-shell.tsx:177-193` | Add bell icon + dropdown to mobile header |
 
 ---
@@ -47,9 +49,11 @@
 ### Task 1: Database Migration — Table + Indexes + RLS
 
 **Files:**
+
 - Create: `supabase/migrations/20260725120000_notifications.sql`
 
 **Interfaces:**
+
 - Produces: `notifications` table with all columns, 3 indexes, 3 RLS policies, GRANT statements
 
 - [ ] **Step 1: Create the migration file with table, indexes, and RLS**
@@ -141,9 +145,11 @@ git commit -m "feat(notifications): add notifications table, indexes, and RLS po
 ### Task 2: Database Migration — Trigger Functions
 
 **Files:**
+
 - Modify: `supabase/migrations/20260725120000_notifications.sql` (append)
 
 **Interfaces:**
+
 - Produces: 9 SECURITY DEFINER trigger functions + trigger attachments + realtime config
 - Consumes: existing tables (`messages`, `connections`, `comments`, `session_participants`, `user_achievements`, `skill_endorsements`, `project_contributors`, `profiles`)
 
@@ -651,9 +657,11 @@ git commit -m "feat(notifications): add trigger functions for all notification t
 ### Task 3: Hooks — Types + Query Hooks
 
 **Files:**
+
 - Create: `src/hooks/use-notifications.ts`
 
 **Interfaces:**
+
 - Produces: `NotificationType`, `Notification`, `NotificationFilters`, `useNotifications()`, `useUnreadNotificationCount()`, `useNotificationsByCategory()`
 - Consumes: `useCurrentUser()` from `src/hooks/use-current-user.ts`, `supabase` from `src/integrations/supabase/client.ts`
 
@@ -711,10 +719,7 @@ export const BY_CATEGORY_KEY = ["notificationsByCategory"] as const;
 
 // ---------- Paginated feed ----------
 
-export function useNotifications(
-  filters?: NotificationFilters,
-  limit = 50,
-) {
+export function useNotifications(filters?: NotificationFilters, limit = 50) {
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
 
@@ -815,9 +820,11 @@ git commit -m "feat(notifications): add notification query hooks"
 ### Task 4: Hooks — Mutation Hooks + Realtime
 
 **Files:**
+
 - Modify: `src/hooks/use-notifications.ts` (append)
 
 **Interfaces:**
+
 - Consumes: types and query keys from Task 3
 - Produces: `useMarkAsRead()`, `useMarkAllAsRead()`, `useArchiveNotification()`, `useDeleteNotification()`, realtime subscription effect
 
@@ -897,10 +904,7 @@ export function useDeleteNotification() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
-        .from("notifications")
-        .delete()
-        .eq("id", id);
+      const { error } = await (supabase as any).from("notifications").delete().eq("id", id);
       if (error) throw error;
     },
     onSettled: () => {
@@ -969,9 +973,11 @@ git commit -m "feat(notifications): add mutation hooks and realtime subscription
 ### Task 5: Notification Card Component
 
 **Files:**
+
 - Create: `src/components/tethyr/notifications/notification-card.tsx`
 
 **Interfaces:**
+
 - Consumes: `Notification`, `NotificationType` from `use-notifications.ts`
 - Produces: `NotificationCard` component, `NOTIFICATION_CONFIG` map (icon, color, action label per type)
 - Uses: `Avatar`, `AvatarFallback`, `AvatarImage` from `@/components/ui/avatar`, `Button` from `@/components/ui/button`, `DropdownMenu` + content/trigger/items from `@/components/ui/dropdown-menu`, `Tooltip` + content/trigger from `@/components/ui/tooltip`
@@ -1157,10 +1163,12 @@ git commit -m "feat(notifications): add notification card component"
 ### Task 6: Notification Empty State + Header
 
 **Files:**
+
 - Create: `src/components/tethyr/notifications/notification-empty.tsx`
 - Create: `src/components/tethyr/notifications/notification-header.tsx`
 
 **Interfaces:**
+
 - Consumes: `useUnreadNotificationCount()`, `useMarkAllAsRead()` from `use-notifications.ts`
 - Produces: `NotificationEmpty`, `NotificationHeader` components
 - Uses: `Button` from `@/components/ui/button`, `Bell` + `CheckCheck` from lucide-react, `Link` from `@tanstack/react-router`
@@ -1252,9 +1260,11 @@ git commit -m "feat(notifications): add empty state and header components"
 ### Task 7: Notification Sidebar Component
 
 **Files:**
+
 - Create: `src/components/tethyr/notifications/notification-sidebar.tsx`
 
 **Interfaces:**
+
 - Consumes: `useNotificationsByCategory()` from `use-notifications.ts`, `NotificationType` type
 - Produces: `NotificationSidebar` component, `NOTIFICATION_CATEGORIES` config array
 - Props: `{ activeCategory: string; onCategoryChange: (cat: string) => void }`
@@ -1351,9 +1361,11 @@ git commit -m "feat(notifications): add notification sidebar with category count
 ### Task 8: Notification Feed Component
 
 **Files:**
+
 - Create: `src/components/tethyr/notifications/notification-feed.tsx`
 
 **Interfaces:**
+
 - Consumes: `Notification` from `use-notifications.ts`, `NotificationCard` from `notification-card.tsx`, `NotificationEmpty` from `notification-empty.tsx`
 - Produces: `NotificationFeed` component
 - Props: `{ notifications: Notification[]; isLoading: boolean; onAction?: (n: Notification) => void }`
@@ -1469,9 +1481,11 @@ git commit -m "feat(notifications): add notification feed with time grouping"
 ### Task 9: Notification Dropdown Component
 
 **Files:**
+
 - Create: `src/components/tethyr/notifications/notification-dropdown.tsx`
 
 **Interfaces:**
+
 - Consumes: `useNotifications()`, `useMarkAllAsRead()`, `useNotificationRealtime()` from `use-notifications.ts`
 - Produces: `NotificationDropdown` component
 - Uses: `DropdownMenu` + content/trigger from `@/components/ui/dropdown-menu`, `Button` from `@/components/ui/button`, `Bell` from lucide-react, `Link` from `@tanstack/react-router`
@@ -1582,9 +1596,11 @@ git commit -m "feat(notifications): add notification dropdown panel"
 ### Task 10: Notifications Page Route
 
 **Files:**
+
 - Create: `src/routes/_authenticated/notifications.tsx`
 
 **Interfaces:**
+
 - Consumes: `useNotifications()`, `useNotificationRealtime()` from `use-notifications.ts`, `NotificationHeader`, `NotificationSidebar`, `NotificationFeed` components
 - Produces: `NotificationsPage` component, TanStack Router route definition
 
@@ -1672,9 +1688,11 @@ git commit -m "feat(notifications): add notifications page route"
 ### Task 11: Sidebar Integration — Add Notifications Nav Item
 
 **Files:**
+
 - Modify: `src/components/tethyr/dashboard-sidebar.tsx`
 
 **Interfaces:**
+
 - Consumes: `useUnreadNotificationCount()` from `use-notifications.ts`
 - Modifies: `rooms` array (line 22-30) to add Notifications entry, badge logic (line 104-105)
 
@@ -1748,9 +1766,11 @@ git commit -m "feat(notifications): add notifications nav item with unread badge
 ### Task 12: Mobile Header — Add Bell Icon + Dropdown
 
 **Files:**
+
 - Modify: `src/components/tethyr/authenticated-shell.tsx`
 
 **Interfaces:**
+
 - Consumes: `NotificationDropdown` from `notification-dropdown.tsx`
 - Modifies: Mobile header bar (lines 177-193) to add bell icon between Search and end
 
@@ -1810,9 +1830,11 @@ git commit -m "feat(notifications): add bell icon and dropdown to mobile header"
 ### Task 13: Final Verification
 
 **Files:**
+
 - All files created/modified in Tasks 1-12
 
 **Interfaces:**
+
 - None (verification only)
 
 - [ ] **Step 1: Run full TypeScript check**

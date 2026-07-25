@@ -27,6 +27,7 @@ import { Route as AuthenticatedCommunityRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library.$id'
+import { Route as AuthenticatedChallengesIdRouteImport } from './routes/_authenticated/challenges.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -119,6 +120,12 @@ const AuthenticatedLibraryIdRoute = AuthenticatedLibraryIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedLibraryRoute,
 } as any)
+const AuthenticatedChallengesIdRoute =
+  AuthenticatedChallengesIdRouteImport.update({
+    id: '/challenges/$id',
+    path: '/challenges/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -175,6 +184,7 @@ export interface FileRoutesById {
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/_authenticated/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
+    | '/challenges/$id'
     | '/library/$id'
     | '/profile/$userId'
     | '/sessions/$id'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
+    | '/challenges/$id'
     | '/library/$id'
     | '/profile/$userId'
     | '/sessions/$id'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/skills/$slug'
     | '/u/$handle'
+    | '/_authenticated/challenges/$id'
     | '/_authenticated/library/$id'
     | '/_authenticated/profile/$userId'
     | '/_authenticated/sessions/$id'
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryIdRouteImport
       parentRoute: typeof AuthenticatedLibraryRoute
     }
+    '/_authenticated/challenges/$id': {
+      id: '/_authenticated/challenges/$id'
+      path: '/challenges/$id'
+      fullPath: '/challenges/$id'
+      preLoaderRoute: typeof AuthenticatedChallengesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -425,6 +445,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRouteWithChildren
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedChallengesIdRoute: typeof AuthenticatedChallengesIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -436,6 +457,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRouteWithChildren,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedChallengesIdRoute: AuthenticatedChallengesIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

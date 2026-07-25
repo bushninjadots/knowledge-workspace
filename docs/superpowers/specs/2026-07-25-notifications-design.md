@@ -13,6 +13,7 @@ Build a full notification system for Tethyr — a central communication hub wher
 **Inspiration:** GitHub notifications, Slack activity feed, Discord mentions, Reddit inbox, Linear issue feed.
 
 **Key decisions:**
+
 - Supabase `notifications` table + Realtime for persistence and delivery
 - PostgreSQL triggers for notification generation (follows existing `log_activity()` pattern)
 - Full page route (`/notifications`) + dropdown panel from top bar
@@ -72,17 +73,17 @@ CREATE POLICY "Users delete own notifications"
 
 Each function is `SECURITY DEFINER` to bypass RLS when inserting:
 
-| Function | Trigger | Event Type | Fires On |
-|---|---|---|---|
-| `notify_new_message()` | AFTER INSERT on `messages` | `message` | New message received |
-| `notify_connection_event()` | AFTER INSERT/UPDATE on `connections` | `connection_request` / `connection_accepted` | Connection request sent / accepted |
-| `notify_post_comment()` | AFTER INSERT on `comments` | `comment` | Comment on a post |
-| `notify_mention()` | AFTER INSERT on `comments` | `mention` | Comment body contains @handle |
-| `notify_session_event()` | AFTER INSERT/UPDATE on `session_participants` | `session_invite` / `session_update` | Session invite / status change |
-| `notify_achievement()` | AFTER INSERT on `user_achievements` | `achievement` | Achievement unlocked |
-| `notify_endorsement()` | AFTER INSERT on `skill_endorsements` | `endorsement` | Skill endorsed |
-| `notify_project_event()` | AFTER INSERT on `project_contributors` | `project_invite` / `project_join` | Project invite / someone joins |
-| `notify_follow()` | AFTER INSERT on `connections` (status=accepted) | `follow` | Connection accepted (mutual follow) |
+| Function                    | Trigger                                         | Event Type                                   | Fires On                            |
+| --------------------------- | ----------------------------------------------- | -------------------------------------------- | ----------------------------------- |
+| `notify_new_message()`      | AFTER INSERT on `messages`                      | `message`                                    | New message received                |
+| `notify_connection_event()` | AFTER INSERT/UPDATE on `connections`            | `connection_request` / `connection_accepted` | Connection request sent / accepted  |
+| `notify_post_comment()`     | AFTER INSERT on `comments`                      | `comment`                                    | Comment on a post                   |
+| `notify_mention()`          | AFTER INSERT on `comments`                      | `mention`                                    | Comment body contains @handle       |
+| `notify_session_event()`    | AFTER INSERT/UPDATE on `session_participants`   | `session_invite` / `session_update`          | Session invite / status change      |
+| `notify_achievement()`      | AFTER INSERT on `user_achievements`             | `achievement`                                | Achievement unlocked                |
+| `notify_endorsement()`      | AFTER INSERT on `skill_endorsements`            | `endorsement`                                | Skill endorsed                      |
+| `notify_project_event()`    | AFTER INSERT on `project_contributors`          | `project_invite` / `project_join`            | Project invite / someone joins      |
+| `notify_follow()`           | AFTER INSERT on `connections` (status=accepted) | `follow`                                     | Connection accepted (mutual follow) |
 
 ### Realtime
 
@@ -101,18 +102,18 @@ ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
 
 ```typescript
 type NotificationType =
-  | 'message'
-  | 'connection_request'
-  | 'connection_accepted'
-  | 'session_invite'
-  | 'session_update'
-  | 'comment'
-  | 'mention'
-  | 'endorsement'
-  | 'achievement'
-  | 'project_invite'
-  | 'project_join'
-  | 'follow';
+  | "message"
+  | "connection_request"
+  | "connection_accepted"
+  | "session_invite"
+  | "session_update"
+  | "comment"
+  | "mention"
+  | "endorsement"
+  | "achievement"
+  | "project_invite"
+  | "project_join"
+  | "follow";
 
 interface Notification {
   id: string;
@@ -138,36 +139,41 @@ interface NotificationFilters {
 
 **Query hooks:**
 
-| Hook | Purpose | Query |
-|---|---|---|
-| `useNotifications(filters?, limit?)` | Paginated feed | SELECT from notifications WHERE user_id = me, optional type/read/archived filters, ORDER BY created_at DESC, limit (default 50) |
-| `useUnreadNotificationCount()` | Sidebar badge | SELECT count FROM notifications WHERE user_id = me AND read_at IS NULL |
-| `useNotificationsByCategory()` | Sidebar category counts | SELECT type, count FROM notifications WHERE user_id = me AND read_at IS NULL GROUP BY type |
+| Hook                                 | Purpose                 | Query                                                                                                                           |
+| ------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `useNotifications(filters?, limit?)` | Paginated feed          | SELECT from notifications WHERE user_id = me, optional type/read/archived filters, ORDER BY created_at DESC, limit (default 50) |
+| `useUnreadNotificationCount()`       | Sidebar badge           | SELECT count FROM notifications WHERE user_id = me AND read_at IS NULL                                                          |
+| `useNotificationsByCategory()`       | Sidebar category counts | SELECT type, count FROM notifications WHERE user_id = me AND read_at IS NULL GROUP BY type                                      |
 
 **Mutation hooks:**
 
-| Hook | Purpose |
-|---|---|
-| `useMarkAsRead()` | Sets `read_at = now()` for notification IDs, invalidates queries |
-| `useMarkAllAsRead()` | Sets `read_at = now()` for all unread of current user, invalidates queries |
-| `useArchiveNotification()` | Sets `archived_at = now()`, invalidates queries |
-| `useDeleteNotification()` | Hard delete, invalidates queries |
+| Hook                       | Purpose                                                                    |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `useMarkAsRead()`          | Sets `read_at = now()` for notification IDs, invalidates queries           |
+| `useMarkAllAsRead()`       | Sets `read_at = now()` for all unread of current user, invalidates queries |
+| `useArchiveNotification()` | Sets `archived_at = now()`, invalidates queries                            |
+| `useDeleteNotification()`  | Hard delete, invalidates queries                                           |
 
 **Realtime subscription:**
 
 ```typescript
 // Subscribe to new notifications for current user
-const channel = supabase.channel(`notifications:${userId}`)
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'notifications',
-    filter: `user_id=eq.${userId}`
-  }, () => {
-    qc.invalidateQueries({ queryKey: ['notifications'] });
-    qc.invalidateQueries({ queryKey: ['unreadNotificationCount'] });
-    qc.invalidateQueries({ queryKey: ['notificationsByCategory'] });
-  })
+const channel = supabase
+  .channel(`notifications:${userId}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "notifications",
+      filter: `user_id=eq.${userId}`,
+    },
+    () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["unreadNotificationCount"] });
+      qc.invalidateQueries({ queryKey: ["notificationsByCategory"] });
+    },
+  )
   .subscribe();
 ```
 
@@ -194,6 +200,7 @@ src/components/tethyr/notifications/
 ### `notification-card.tsx`
 
 Layout:
+
 ```
 ┌──────────────────────────────────────────────────┐
 │ [Avatar]  Title text here                        │
@@ -203,11 +210,13 @@ Layout:
 ```
 
 States:
+
 - **Unread:** `border-l-2 border-primary` (green accent), bg slightly elevated
 - **Read:** normal surface, muted text
 - **Hover:** `transition-lift` (card elevates slightly)
 
 Action button varies by type:
+
 - Messages → "Reply"
 - Invites → "Accept" / "Decline"
 - Most others → "View"
@@ -218,6 +227,7 @@ More menu: Mark Read, Archive, Delete
 ### `notification-sidebar.tsx`
 
 Categories with unread counts:
+
 ```
 All (12)
 Messages (4)
@@ -241,6 +251,7 @@ Notifications                    [34 unread]
 ### `notification-feed.tsx`
 
 Groups notifications by time:
+
 ```
 ── Today ──
 [Card] Alex sent you a message
@@ -280,20 +291,20 @@ Opens from bell icon in top bar. Shows 10 most recent unread. "View All" links t
 
 ## Notification Types & Card Variants
 
-| Type | Icon | Color | Title Example | Action |
-|---|---|---|---|---|
-| `message` | MessageCircle | Blue | "Alex sent you a message" | Reply |
-| `connection_request` | UserPlus | Green | "Maria wants to connect" | Accept / Decline |
-| `connection_accepted` | CheckCircle | Green | "Maria accepted your connection" | View Profile |
-| `session_invite` | CalendarPlus | Purple | "You're invited to: Spanish Practice" | Accept / Decline |
-| `session_update` | CalendarClock | Purple | "Session starts in 30 minutes" | Join Session |
-| `comment` | MessageSquare | Blue | "Alex commented on your post" | View Thread |
-| `mention` | AtSign | Orange | "You were mentioned by Alex" | Reply |
-| `endorsement` | Star | Yellow | "Maria endorsed your Spanish skill" | View |
-| `achievement` | Trophy | Gold | "Achievement Unlocked: 10 Exchanges" | Celebrate |
-| `project_invite` | FolderPlus | Green | "Join: Open Source AI Assistant" | Accept / Decline |
-| `project_join` | Users | Green | "Sarah joined your project" | View Profile |
-| `follow` | Heart | Pink | "John started following you" | Follow Back |
+| Type                  | Icon          | Color  | Title Example                         | Action           |
+| --------------------- | ------------- | ------ | ------------------------------------- | ---------------- |
+| `message`             | MessageCircle | Blue   | "Alex sent you a message"             | Reply            |
+| `connection_request`  | UserPlus      | Green  | "Maria wants to connect"              | Accept / Decline |
+| `connection_accepted` | CheckCircle   | Green  | "Maria accepted your connection"      | View Profile     |
+| `session_invite`      | CalendarPlus  | Purple | "You're invited to: Spanish Practice" | Accept / Decline |
+| `session_update`      | CalendarClock | Purple | "Session starts in 30 minutes"        | Join Session     |
+| `comment`             | MessageSquare | Blue   | "Alex commented on your post"         | View Thread      |
+| `mention`             | AtSign        | Orange | "You were mentioned by Alex"          | Reply            |
+| `endorsement`         | Star          | Yellow | "Maria endorsed your Spanish skill"   | View             |
+| `achievement`         | Trophy        | Gold   | "Achievement Unlocked: 10 Exchanges"  | Celebrate        |
+| `project_invite`      | FolderPlus    | Green  | "Join: Open Source AI Assistant"      | Accept / Decline |
+| `project_join`        | Users         | Green  | "Sarah joined your project"           | View Profile     |
+| `follow`              | Heart         | Pink   | "John started following you"          | Follow Back      |
 
 Achievement cards get a subtle gold gradient border (no confetti in MVP).
 
@@ -328,6 +339,7 @@ Achievement cards get a subtle gold gradient border (no confetti in MVP).
 ### Sidebar Integration
 
 Add to `DashboardSidebar` nav items:
+
 ```
 🔔 Notifications (3)    ← green badge with unread count
 ```
@@ -346,14 +358,15 @@ Bell icon in mobile header bar opens `NotificationDropdown`. Shows 10 most recen
 
 ```typescript
 // Route definition
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/_authenticated/notifications')({
+export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
 });
 ```
 
 **Page component:**
+
 - Uses `useNotifications()` for feed data
 - Uses `useUnreadNotificationCount()` for header badge
 - Uses `useMarkAllAsRead()` for bulk action
@@ -403,6 +416,7 @@ No confetti, no swipe gestures, no sound effects in MVP.
 Single migration: `supabase/migrations/20260725120000_notifications.sql`
 
 Contains:
+
 1. `notifications` table creation
 2. Indexes
 3. RLS policies
@@ -415,6 +429,7 @@ Contains:
 ## Files to Create/Modify
 
 ### New Files
+
 1. `supabase/migrations/20260725120000_notifications.sql` — DB schema + triggers
 2. `src/hooks/use-notifications.ts` — All hooks
 3. `src/components/tethyr/notifications/notification-card.tsx`
@@ -426,6 +441,7 @@ Contains:
 9. `src/routes/_authenticated/notifications.tsx` — Page route
 
 ### Modified Files
+
 1. `src/components/tethyr/dashboard-sidebar.tsx` — Add Notifications nav item with badge
 2. `src/components/tethyr/authenticated-shell.tsx` — Add bell icon + dropdown to mobile header
 
@@ -434,6 +450,7 @@ Contains:
 ## Verification
 
 After implementation:
+
 1. `npx tsc --noEmit` — zero errors
 2. `npx eslint src/hooks/use-notifications.ts src/components/tethyr/notifications/ src/routes/_authenticated/notifications.tsx` — zero errors
 3. Manual test: create a message → notification appears in real-time

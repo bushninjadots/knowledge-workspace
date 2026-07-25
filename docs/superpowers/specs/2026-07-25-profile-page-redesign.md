@@ -32,6 +32,7 @@ Mobile: stack sidebar below content.
 ## Tabs
 
 ### 1. Overview
+
 - Reputation card (score, tier, breakdown)
 - Skills summary (top teach/learn skills)
 - Projects preview (featured/last 3)
@@ -40,29 +41,35 @@ Mobile: stack sidebar below content.
 - Achievement highlights
 
 ### 2. Skills
+
 - Skills I teach (with verification/experience badges, proof)
 - Skills I want to learn
 - Skill Match card (when viewing another user: "You can teach X, they teach Y, 92% match")
 - Edit dialogs (own profile only)
 
 ### 3. Projects
+
 - Full project grid (reuse existing ProjectsCard)
 - Create/edit/delete (own profile only)
 
 ### 4. Communities
+
 - Community memberships (Reddit-style: role, karma, posts)
 - **Stub for now** — empty state with "Coming soon"
 
 ### 5. Activity
+
 - GitHub-style contribution graph (heatmap from activity_events + contribution_log)
 - Full activity timeline (reuse existing ActivityTimeline)
 
 ### 6. Sessions
+
 - Session history (completed exchanges with ratings)
 - Stats: sessions completed, hours shared, people helped
 - Connects to existing sessions feature
 
 ### 7. Reviews
+
 - Airbnb-style reviews from exchanges
 - **Stub for now** — empty state with "Coming soon"
 
@@ -75,20 +82,20 @@ Mobile: stack sidebar below content.
 
 ## Components
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| ProfileLayout | `profile-layout.tsx` | Banner + header + tabs + sidebar shell |
-| ProfileSidebar | `profile-sidebar.tsx` | Reputation, verification, stats |
-| ProfileOverviewTab | `profile-overview-tab.tsx` | Summary content |
-| ProfileSkillsTab | `profile-skills-tab.tsx` | Teach/learn + match |
-| ProfileProjectsTab | `profile-projects-tab.tsx` | Project grid |
-| ProfileCommunitiesTab | `profile-communities-tab.tsx` | Stub |
-| ProfileActivityTab | `profile-activity-tab.tsx` | Contribution graph + timeline |
-| ProfileSessionsTab | `profile-sessions-tab.tsx` | Session history |
-| ProfileReviewsTab | `profile-reviews-tab.tsx` | Stub |
-| ContributionGraph | `contribution-graph.tsx` | GitHub-style heatmap |
-| SkillMatchCard | `skill-match-card.tsx` | Mutual exchange compatibility |
-| ProfileActions | `profile-actions.tsx` | Connect/Message/Exchange buttons |
+| Component             | File                          | Purpose                                |
+| --------------------- | ----------------------------- | -------------------------------------- |
+| ProfileLayout         | `profile-layout.tsx`          | Banner + header + tabs + sidebar shell |
+| ProfileSidebar        | `profile-sidebar.tsx`         | Reputation, verification, stats        |
+| ProfileOverviewTab    | `profile-overview-tab.tsx`    | Summary content                        |
+| ProfileSkillsTab      | `profile-skills-tab.tsx`      | Teach/learn + match                    |
+| ProfileProjectsTab    | `profile-projects-tab.tsx`    | Project grid                           |
+| ProfileCommunitiesTab | `profile-communities-tab.tsx` | Stub                                   |
+| ProfileActivityTab    | `profile-activity-tab.tsx`    | Contribution graph + timeline          |
+| ProfileSessionsTab    | `profile-sessions-tab.tsx`    | Session history                        |
+| ProfileReviewsTab     | `profile-reviews-tab.tsx`     | Stub                                   |
+| ContributionGraph     | `contribution-graph.tsx`      | GitHub-style heatmap                   |
+| SkillMatchCard        | `skill-match-card.tsx`        | Mutual exchange compatibility          |
+| ProfileActions        | `profile-actions.tsx`         | Connect/Message/Exchange buttons       |
 
 ## Existing Code Reused
 

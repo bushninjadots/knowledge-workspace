@@ -270,7 +270,7 @@ export function NoteEditor({
   });
 
   // Sync external content changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content, { emitUpdate: false });

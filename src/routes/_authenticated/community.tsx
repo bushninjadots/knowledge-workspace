@@ -20,6 +20,8 @@ import {
   useTogglePostAction,
   type PostWithAuthor,
 } from "@/hooks/use-community";
+import { useChallenges } from "@/hooks/use-challenges";
+import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   COMMUNITIES,
@@ -88,6 +90,7 @@ const SORT_OPTIONS: { label: string; value: SortMode }[] = [
 function CommunityPage() {
   const { data: me } = useCurrentUser();
   const { data: posts = [], isLoading } = usePosts();
+  const { data: challenges = [], isLoading: isLoadingChallenges } = useChallenges("active");
   const deletePost = useDeletePost();
   const toggleAction = useTogglePostAction();
 
@@ -320,7 +323,30 @@ function CommunityPage() {
             </div>
           )}
 
-          {nav === "communities" ? (
+          {nav === "challenges" ? (
+            isLoadingChallenges ? (
+              <div className="flex flex-col gap-4">
+                {[1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse rounded-2xl border border-border/50 bg-card/60 p-6 h-40"
+                  />
+                ))}
+              </div>
+            ) : challenges.length === 0 ? (
+              <EmptyState
+                icon={<Users className="h-5 w-5" />}
+                title="No active challenges yet"
+                description="Community challenges give creators shared goals to learn and build together. Stay tuned for upcoming challenges!"
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {challenges.map((c) => (
+                  <ChallengeCard key={c.id} challenge={c} />
+                ))}
+              </div>
+            )
+          ) : nav === "communities" ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {COMMUNITIES.length === 0 ? (
                 <div className="col-span-full">

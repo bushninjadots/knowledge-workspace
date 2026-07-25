@@ -5,12 +5,7 @@ import { useCurrentUser } from "./use-current-user";
 /* ───────── Types ───────── */
 
 export type SessionType =
-  | "skill_exchange"
-  | "mentoring"
-  | "project_meeting"
-  | "study_session"
-  | "workshop"
-  | "general";
+  "skill_exchange" | "mentoring" | "project_meeting" | "study_session" | "workshop" | "general";
 
 export type SessionStatus =
   | "draft"
@@ -59,9 +54,17 @@ export type SessionParticipant = {
 
 export type SessionWithParticipants = Session & {
   participants: (SessionParticipant & {
-    profiles: { display_name: string | null; handle: string | null; avatar_url: string | null } | null;
+    profiles: {
+      display_name: string | null;
+      handle: string | null;
+      avatar_url: string | null;
+    } | null;
   })[];
-  organizer: { display_name: string | null; handle: string | null; avatar_url: string | null } | null;
+  organizer: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  } | null;
   skills?: { name: string; category: string } | null;
   projects?: { title: string } | null;
 };
@@ -76,8 +79,16 @@ export type SessionRequest = {
   suggested_time: string | null;
   created_at: string;
   responded_at: string | null;
-  from_user?: { display_name: string | null; handle: string | null; avatar_url: string | null } | null;
-  to_user?: { display_name: string | null; handle: string | null; avatar_url: string | null } | null;
+  from_user?: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  } | null;
+  to_user?: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  } | null;
   sessions?: { title: string; starts_at: string | null; duration_minutes: number } | null;
 };
 
@@ -195,12 +206,14 @@ async function fetchSessionStats(userId: string) {
 async function fetchRequests(userId: string): Promise<SessionRequest[]> {
   const { data, error } = await sb
     .from("session_requests")
-    .select(`
+    .select(
+      `
       *,
       from_user:profiles!session_requests_from_user_id_fkey(display_name, handle, avatar_url),
       to_user:profiles!session_requests_to_user_id_fkey(display_name, handle, avatar_url),
       sessions(title, starts_at, duration_minutes)
-    `)
+    `,
+    )
     .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
     .order("created_at", { ascending: false });
   if (error) throw error;

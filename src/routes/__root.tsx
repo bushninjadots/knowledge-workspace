@@ -89,14 +89,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Tethyr — Where creators build together" },
       {
         property: "og:description",
-        content: "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+        content:
+          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Tethyr — Where creators build together" },
-      { name: "twitter:description", content: "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png" },
+      {
+        name: "twitter:description",
+        content:
+          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png",
+      },
     ],
     links: [
       ...(import.meta.env.VITE_PUBLIC_SITE_URL
