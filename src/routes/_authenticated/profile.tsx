@@ -1,13 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useId } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Camera,
   Pencil,
   Globe,
-  MapPin,
-  Clock,
   Languages,
   GraduationCap,
   Sparkles,
@@ -27,7 +23,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { validateImageFile, validateProofFile, isSafeUrl, safeHref } from "@/lib/validators";
+import { validateProofFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,17 +43,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  BannerStrip,
-  ChipListCard,
-  ProjectsCard,
   VerificationBadge,
   ExperienceBadge,
   EXPERIENCE_LABEL,
-  type ProjectRow,
-  type ActivityRow,
 } from "@/components/tethyr/profile-sections";
-import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
-import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import {
   useCurrentUser,
   useSkillsCatalog,
@@ -66,10 +55,14 @@ import {
   type SkillVerificationLevel,
   type SkillExperienceLevel,
 } from "@/hooks/use-current-user";
-import { completenessPercent } from "@/lib/profile-completeness";
-import { useDominantColor, withAlpha } from "@/lib/dominant-color";
-import { ReputationCard } from "@/components/tethyr/reputation-display";
-import { AchievementGrid } from "@/components/tethyr/achievements";
+import { ProfileLayout, type Skill } from "@/components/tethyr/profile/profile-layout";
+import { ProfileOverviewTab } from "@/components/tethyr/profile/profile-overview-tab";
+import { ProfileSkillsTab } from "@/components/tethyr/profile/profile-skills-tab";
+import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects-tab";
+import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
+import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
+import { ProfileCommunitiesTab } from "@/components/tethyr/profile/profile-communities-tab";
+import { ProfileReviewsTab } from "@/components/tethyr/profile/profile-reviews-tab";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -95,23 +88,6 @@ export const Route = createFileRoute("/_authenticated/profile")({
   ),
 });
 
-type Skill = { id: string; slug: string; name: string; category: string };
-
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const TIMES = ["Mornings", "Afternoons", "Evenings", "Late night"];
-const CATEGORIES = [
-  "Video Editing",
-  "Graphic Design",
-  "Motion Design",
-  "Photography",
-  "YouTube",
-  "Streaming",
-  "SEO",
-  "WordPress",
-  "Development",
-  "Music",
-  "Other",
-];
 const SOCIAL_KEYS: { key: string; label: string; icon: typeof Youtube; placeholder: string }[] = [
   { key: "website", label: "Website", icon: Globe, placeholder: "https://yoursite.com" },
   { key: "youtube", label: "YouTube", icon: Youtube, placeholder: "https://youtube.com/@you" },
@@ -131,33 +107,26 @@ function ProfilePage() {
   const profileQuery = useCurrentUser();
   const skillsQuery = useSkillsCatalog();
   const refresh = profileQuery.refresh;
-  // Called unconditionally, before the loading early-return below, to
-  // satisfy the Rules of Hooks.
-  const cardAccent = useDominantColor(profileQuery.data?.bannerSigned ?? null);
 
   if (profileQuery.isError) {
     return (
-      <Shell>
-        <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
-          <h2 className="text-lg font-semibold text-foreground">Couldn't load your workshop</h2>
-          <p className="text-sm text-muted-foreground">
-            {profileQuery.error?.message ?? "Something went wrong. Please try again."}
-          </p>
-          <Button variant="outline" onClick={() => refresh()}>
-            Try again
-          </Button>
-        </div>
-      </Shell>
+      <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
+        <h2 className="text-lg font-semibold text-foreground">Couldn't load your workshop</h2>
+        <p className="text-sm text-muted-foreground">
+          {profileQuery.error?.message ?? "Something went wrong. Please try again."}
+        </p>
+        <Button variant="outline" onClick={() => refresh()}>
+          Try again
+        </Button>
+      </div>
     );
   }
 
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
-      <Shell>
-        <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">
-          Setting up your workshop…
-        </div>
-      </Shell>
+      <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">
+        Setting up your workshop…
+      </div>
     );
   }
 
@@ -166,7 +135,6 @@ function ProfilePage() {
     teachIds,
     teachMeta,
     learnIds,
-    wishlistIds,
     avatarSigned,
     bannerSigned,
     userId,
@@ -176,595 +144,120 @@ function ProfilePage() {
     activity,
   } = profileQuery.data;
   const skills = skillsQuery.data ?? [];
-  const skillById = new Map(skills.map((s) => [s.id, s]));
-
-  const teachSkills = teachIds
-    .map((id) => {
-      const s = skillById.get(id);
-      if (!s) return null;
-      const meta: TeachSkillMeta = teachMeta[id] ?? {
-        verification_level: "self_declared" as SkillVerificationLevel,
-        experience_level: "intermediate" as SkillExperienceLevel,
-        proof_url: null,
-        proof_note: null,
-      };
-      return { ...s, meta };
-    })
-    .filter(Boolean) as (Skill & { meta: TeachSkillMeta })[];
-  const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
-  const wishSkills = wishlistIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
-
-  const completeness = completenessPercent({
-    profile,
-    teachCount: teachSkills.length,
-    learnCount: learnSkills.length,
-    projectsCount: projects.length,
-  });
 
   return (
-    <Shell accentColor={cardAccent}>
-      <div className="w-full space-y-6">
-        {/* HEADER + BANNER */}
-        <HeaderCard
-          profile={profile}
-          avatarSigned={avatarSigned}
-          bannerSigned={bannerSigned}
-          userId={userId}
-          completeness={completeness}
-          onChange={refresh}
-        />
-
-        {/* PROJECTS — prominent, at the top */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
-          <div className="relative">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-lg font-semibold">Projects</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Your showcase — the work you're proud of.
-                </p>
-              </div>
-            </div>
-            <ProjectsCard
+    <ProfileLayout
+      profile={profile}
+      avatarSigned={avatarSigned}
+      bannerSigned={bannerSigned}
+      userId={userId}
+      isOwnProfile={true}
+      teachIds={teachIds}
+      teachMeta={teachMeta}
+      learnIds={learnIds}
+      projects={projects}
+      coverUrls={coverUrls}
+      projectSkillIds={projectSkillIds}
+      activity={activity}
+      skills={skills}
+      onChange={refresh}
+      tabContent={{
+        overview: (
+          <div className="space-y-6">
+            <ProfileOverviewTab
+              profile={profile}
+              userId={userId}
+              teachIds={teachIds}
+              teachMeta={teachMeta}
+              learnIds={learnIds}
               projects={projects}
               coverUrls={coverUrls}
-              userId={userId}
-              allSkills={skills}
               projectSkillIds={projectSkillIds}
+              activity={activity}
+              skills={skills}
               onChange={refresh}
+              isOwnProfile={true}
             />
+            <AboutCard profile={profile} onChange={refresh} />
+            <TextCard
+              title="Teaching style"
+              field="teaching_style"
+              value={profile?.teaching_style ?? ""}
+              placeholder="How do you teach? Hands-on, project-based, async reviews…"
+              onChange={refresh}
+              userId={userId}
+            />
+            <TextCard
+              title="Learning goals"
+              field="learning_goals"
+              value={profile?.learning_goals ?? ""}
+              placeholder="What do you want to unlock in the next 6 months?"
+              onChange={refresh}
+              userId={userId}
+            />
+            <div className="grid gap-6 md:grid-cols-2">
+              <ChipListInline
+                title="Favourite tools"
+                icon={<Wrench className="h-4 w-4" />}
+                field="favourite_tools"
+                values={profile?.favourite_tools ?? []}
+                userId={userId}
+                accent="green"
+                placeholder="Figma, Notion, Runway…"
+                onChange={refresh}
+              />
+              <ChipListInline
+                title="Software stack"
+                icon={<Layers className="h-4 w-4" />}
+                field="software_stack"
+                values={profile?.software_stack ?? []}
+                userId={userId}
+                accent="purple"
+                placeholder="Photoshop, Blender, Ableton…"
+                onChange={refresh}
+              />
+            </div>
+            <LinksCard profile={profile} onChange={refresh} />
           </div>
-        </div>
-
-        {/* SKILLS — teach / currently learning / wishlist */}
-        <div>
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gradient-to-r from-primary/30 via-primary/10 to-transparent" />
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
-              Skill Station
-            </span>
-            <div className="h-px flex-1 bg-gradient-to-l from-[var(--brand-purple)]/30 via-[var(--brand-purple)]/10 to-transparent" />
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            <TeachSkillsCard
-              title="Skills I teach"
-              icon={<GraduationCap className="h-4 w-4" />}
-              selected={teachSkills}
+        ),
+        skills: (
+          <div className="space-y-6">
+            <ProfileSkillsTab
+              profile={profile}
+              teachIds={teachIds}
+              teachMeta={teachMeta}
+              learnIds={learnIds}
+              skills={skills}
+              isOwnProfile={true}
+              userId={userId}
+            />
+            <SkillEditingSection
+              teachIds={teachIds}
+              teachMeta={teachMeta}
+              learnIds={learnIds}
               allSkills={skills}
               userId={userId}
               onChange={refresh}
             />
-            <SkillsCard
-              title="Currently learning"
-              accent="purple"
-              icon={<BookOpen className="h-4 w-4" />}
-              selected={learnSkills}
-              allSkills={skills}
-              userId={userId}
-              table="profile_skills_learn"
-              onChange={refresh}
-            />
-            <SkillsCard
-              title="Want next"
-              accent="purple"
-              icon={<Sparkles className="h-4 w-4" />}
-              selected={wishSkills}
-              allSkills={skills}
-              userId={userId}
-              table="profile_skills_wishlist"
-              onChange={refresh}
-            />
           </div>
-        </div>
-
-        {/* TOOLS + STACK */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <ChipListCard
-            title="Favourite tools"
-            icon={<Wrench className="h-4 w-4" />}
-            field="favourite_tools"
-            values={profile?.favourite_tools ?? []}
+        ),
+        projects: (
+          <ProfileProjectsTab
+            projects={projects}
+            coverUrls={coverUrls}
             userId={userId}
-            accent="green"
-            placeholder="Figma, Notion, Runway…"
+            skills={skills}
+            projectSkillIds={projectSkillIds}
             onChange={refresh}
+            isOwnProfile={true}
           />
-          <ChipListCard
-            title="Software stack"
-            icon={<Layers className="h-4 w-4" />}
-            field="software_stack"
-            values={profile?.software_stack ?? []}
-            userId={userId}
-            accent="purple"
-            placeholder="Photoshop, Blender, Ableton…"
-            onChange={refresh}
-          />
-        </div>
-
-        {/* AVAILABILITY — schedule board feel */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-          <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-bl from-[var(--brand-purple)]/10 to-transparent pointer-events-none rounded-bl-[100%]" />
-          <div className="absolute bottom-0 left-0 h-20 w-20 bg-gradient-to-tr from-primary/10 to-transparent pointer-events-none rounded-tr-[100%]" />
-          <div className="relative">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold">Schedule Board</h2>
-            </div>
-            <p className="mb-4 -mt-2 text-sm text-muted-foreground">
-              When your workshop doors are open.
-            </p>
-            <AvailabilityCard profile={profile} onChange={refresh} />
-          </div>
-        </div>
-
-        {/* REPUTATION + ACHIEVEMENTS — trophy wall */}
-        {profile?.reputation_score != null && profile.reputation_score > 0 && (
-          <ReputationCard profileId={userId} score={profile.reputation_score} />
-        )}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-primary/5 pointer-events-none" />
-          <div className="relative">
-            <h2 className="font-display text-lg font-semibold">Trophy Wall</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Badges earned through your contributions — proof of craft.
-            </p>
-            <div className="mt-5">
-              <AchievementGrid profileId={userId} />
-            </div>
-          </div>
-        </div>
-
-        {/* STYLE & GOALS */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <TextCard
-            title="Teaching style"
-            field="teaching_style"
-            value={profile?.teaching_style ?? ""}
-            placeholder="How do you teach? Hands-on, project-based, async reviews…"
-            onChange={refresh}
-            userId={userId}
-          />
-          <TextCard
-            title="Learning goals"
-            field="learning_goals"
-            value={profile?.learning_goals ?? ""}
-            placeholder="What do you want to unlock in the next 6 months?"
-            onChange={refresh}
-            userId={userId}
-          />
-        </div>
-
-        {/* LINKS */}
-        <LinksCard profile={profile} onChange={refresh} />
-
-        {/* ACTIVITY TIMELINE — workshop journal */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-muted/30 pointer-events-none" />
-          <div className="relative">
-            <h2 className="font-display text-lg font-semibold">Workshop Journal</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every action becomes part of your story — the chronicle of your craft.
-            </p>
-            <div className="mt-5">
-              <ActivityTimeline profileId={userId} events={activity} />
-            </div>
-          </div>
-        </div>
-
-        {/* ABOUT — moved to bottom */}
-        <div>
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gradient-to-r from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
-              About You
-            </span>
-            <div className="h-px flex-1 bg-gradient-to-l from-muted-foreground/20 via-muted-foreground/10 to-transparent" />
-          </div>
-          <AboutCard profile={profile} onChange={refresh} />
-        </div>
-      </div>
-    </Shell>
-  );
-}
-
-function Shell({
-  children,
-  accentColor,
-}: {
-  children: React.ReactNode;
-  accentColor?: string | null;
-}) {
-  const accentStyle = accentColor
-    ? ({ "--accent-border": withAlpha(accentColor, 0.55) } as React.CSSProperties)
-    : undefined;
-  return (
-    <div className="animate-room-enter mx-auto max-w-6xl bg-noise p-4 sm:p-8" style={accentStyle}>
-      {children}
-    </div>
-  );
-}
-
-/* -------------------------- HEADER -------------------------- */
-
-function HeaderCard({
-  profile,
-  avatarSigned,
-  bannerSigned,
-  userId,
-  completeness,
-  onChange,
-}: {
-  profile: Profile | null;
-  avatarSigned: string | null;
-  bannerSigned: string | null;
-  userId: string;
-  completeness: number;
-  onChange: () => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const check = validateImageFile(file);
-    if (!check.ok) return toast.error(check.error);
-    setUploading(true);
-    const path = `${userId}/avatar.${check.ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true, contentType: check.contentType });
-    if (upErr) {
-      toast.error(upErr.message);
-      setUploading(false);
-      return;
-    }
-
-    const { error: profErr } = await supabase
-      .from("profiles")
-      .update({ avatar_url: path })
-      .eq("id", userId);
-    setUploading(false);
-    if (profErr) return toast.error(profErr.message);
-    toast.success("Avatar updated");
-    onChange();
-  }
-
-  return (
-    <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
-      <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[var(--brand-purple)]/5 blur-3xl pointer-events-none" />
-      <div className="relative">
-        <BannerStrip
-          bannerSigned={bannerSigned}
-          bannerCaption={profile?.banner_caption ?? null}
-          userId={userId}
-          onChange={onChange}
-        />
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <DragDropFileInput
-            accept="image/*"
-            onFiles={(files) => {
-              const file = files[0];
-              if (file) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                const fakeEvent = { target: { files: dt.files } } as React.ChangeEvent<HTMLInputElement>;
-                handleUpload(fakeEvent);
-              }
-            }}
-            disabled={uploading}
-            className="relative shrink-0 -mt-16 sm:-mt-20"
-          >
-            <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
-              {avatarSigned ? (
-                <img
-                  src={avatarSigned}
-                  alt={`${profile?.display_name ?? "Your"} avatar`}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
-                  {(profile?.display_name ?? "?").charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                fileRef.current?.click();
-              }}
-              disabled={uploading}
-              className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105 disabled:opacity-50"
-              aria-label="Upload avatar"
-            >
-              <Camera className="h-4 w-4" />
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleUpload}
-            />
-          </DragDropFileInput>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-3">
-              <div className="min-w-0">
-                <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                  {profile?.display_name || "Untitled creator"}
-                </h1>
-                {profile?.creator_title && (
-                  <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
-                )}
-                <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-auto rounded-full"
-                onClick={() => setEditOpen(true)}
-                aria-label="Edit identity"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              {profile?.category && <Chip>{profile.category}</Chip>}
-              {profile?.years_experience != null && (
-                <Chip>{profile.years_experience} yrs experience</Chip>
-              )}
-              {profile?.country && (
-                <Chip>
-                  <MapPin className="mr-1 inline h-3 w-3" />
-                  {profile.country}
-                </Chip>
-              )}
-              {profile?.timezone && (
-                <Chip>
-                  <Clock className="mr-1 inline h-3 w-3" />
-                  {profile.timezone}
-                </Chip>
-              )}
-            </div>
-          </div>
-
-          <div className="shrink-0 sm:w-40">
-            <CompletenessRing value={completeness} />
-          </div>
-        </div>
-      </div>
-
-      <EditIdentityDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        profile={profile}
-        userId={userId}
-        onSaved={onChange}
-      />
-    </div>
-  );
-}
-
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1">
-      {children}
-    </span>
-  );
-}
-
-function CompletenessRing({ value }: { value: number }) {
-  const gradientId = useId();
-  const r = 32;
-  const c = 2 * Math.PI * r;
-  const offset = c - (value / 100) * c;
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-background/40 p-3">
-      <div className="relative h-20 w-20">
-        <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
-          <circle cx="40" cy="40" r={r} stroke="hsl(var(--border))" strokeWidth="6" fill="none" />
-          <circle
-            cx="40"
-            cy="40"
-            r={r}
-            stroke={`url(#${gradientId})`}
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.6s" }}
-          />
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="var(--brand-green)" />
-              <stop offset="100%" stopColor="var(--brand-purple)" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center font-display text-lg font-semibold">
-          {value}%
-        </div>
-      </div>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Complete</p>
-    </div>
-  );
-}
-
-function EditIdentityDialog({
-  open,
-  onOpenChange,
-  profile,
-  userId,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  profile: Profile | null;
-  userId: string;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState({
-    display_name: profile?.display_name ?? "",
-    handle: profile?.handle ?? "",
-    creator_title: profile?.creator_title ?? "",
-    category: profile?.category ?? "",
-    years_experience: profile?.years_experience?.toString() ?? "",
-    country: profile?.country ?? "",
-    timezone: profile?.timezone ?? "",
-  });
-  useEffect(() => {
-    if (open) {
-      setForm({
-        display_name: profile?.display_name ?? "",
-        handle: profile?.handle ?? "",
-        creator_title: profile?.creator_title ?? "",
-        category: profile?.category ?? "",
-        years_experience: profile?.years_experience?.toString() ?? "",
-        country: profile?.country ?? "",
-        timezone: profile?.timezone ?? "",
-      });
-    }
-  }, [open, profile]);
-
-  const [saving, setSaving] = useState(false);
-  async function save() {
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        display_name: form.display_name || null,
-        handle: form.handle.replace(/^@/, "").trim() || null,
-        creator_title: form.creator_title || null,
-        category: form.category || null,
-        years_experience: form.years_experience
-          ? Math.max(0, Math.min(100, parseInt(form.years_experience, 10) || 0))
-          : null,
-        country: form.country || null,
-        timezone: form.timezone || null,
-      })
-      .eq("id", userId);
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    onSaved();
-    onOpenChange(false);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit identity</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Field label="Display name">
-            <Input
-              value={form.display_name}
-              maxLength={50}
-              onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-            />
-          </Field>
-          <Field label="Handle">
-            <Input
-              value={form.handle}
-              maxLength={30}
-              onChange={(e) => setForm({ ...form, handle: e.target.value })}
-            />
-          </Field>
-          <Field label="Creator title">
-            <Input
-              placeholder="Motion designer & YouTube educator"
-              maxLength={80}
-              value={form.creator_title}
-              onChange={(e) => setForm({ ...form, creator_title: e.target.value })}
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Category">
-              <select
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                <option value="">—</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Years experience">
-              <Input
-                type="number"
-                min="0"
-                value={form.years_experience}
-                onChange={(e) => setForm({ ...form, years_experience: e.target.value })}
-              />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Country">
-              <Input
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-                placeholder="e.g. Germany"
-              />
-            </Field>
-            <Field label="Timezone">
-              <Input
-                value={form.timezone}
-                onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                placeholder="e.g. CET"
-              />
-            </Field>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
-      {children}
-    </div>
+        ),
+        communities: <ProfileCommunitiesTab />,
+        activity: <ProfileActivityTab userId={userId} activity={activity} />,
+        sessions: <ProfileSessionsTab userId={userId} isOwnProfile={true} />,
+        reviews: <ProfileReviewsTab isOwnProfile={true} />,
+      }}
+    />
   );
 }
 
@@ -887,9 +380,64 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
   );
 }
 
-/* -------------------------- SKILLS -------------------------- */
+/* -------------------------- SKILL EDITING -------------------------- */
 
 type TeachSkill = Skill & { meta: TeachSkillMeta };
+
+function SkillEditingSection({
+  teachIds,
+  teachMeta,
+  learnIds,
+  allSkills,
+  userId,
+  onChange,
+}: {
+  teachIds: string[];
+  teachMeta: Record<string, TeachSkillMeta>;
+  learnIds: string[];
+  allSkills: Skill[];
+  userId: string;
+  onChange: () => void;
+}) {
+  const skillById = new Map(allSkills.map((s) => [s.id, s]));
+  const teachSkills = teachIds
+    .map((id) => {
+      const s = skillById.get(id);
+      if (!s) return null;
+      const meta: TeachSkillMeta = teachMeta[id] ?? {
+        verification_level: "self_declared" as SkillVerificationLevel,
+        experience_level: "intermediate" as SkillExperienceLevel,
+        proof_url: null,
+        proof_note: null,
+      };
+      return { ...s, meta };
+    })
+    .filter(Boolean) as TeachSkill[];
+  const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <TeachSkillsCard
+        title="Skills I teach"
+        icon={<GraduationCap className="h-4 w-4" />}
+        selected={teachSkills}
+        allSkills={allSkills}
+        userId={userId}
+        onChange={onChange}
+      />
+      <SkillsCard
+        title="Currently learning"
+        accent="purple"
+        icon={<BookOpen className="h-4 w-4" />}
+        selected={learnSkills}
+        allSkills={allSkills}
+        userId={userId}
+        table="profile_skills_learn"
+        onChange={onChange}
+      />
+    </div>
+  );
+}
 
 function SkillsCard({
   title,
@@ -1276,7 +824,6 @@ function ProofDialog({
     const trimmedUrl = url.trim();
     if (trimmedUrl && !isSafeUrl(trimmedUrl)) return toast.error("That link doesn't look valid.");
     setSaving(true);
-    // Never downgrade a level the community already earned for this creator.
     const nextLevel: SkillVerificationLevel =
       skill.meta.verification_level === "community_recognized"
         ? "community_recognized"
@@ -1388,137 +935,6 @@ function ProofDialog({
   );
 }
 
-/* -------------------------- AVAILABILITY -------------------------- */
-
-function AvailabilityCard({
-  profile,
-  onChange,
-}: {
-  profile: Profile | null;
-  onChange: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [days, setDays] = useState<string[]>(profile?.available_days ?? []);
-  const [times, setTimes] = useState<string[]>(profile?.available_times ?? []);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setDays(profile?.available_days ?? []);
-      setTimes(profile?.available_times ?? []);
-    }
-  }, [open, profile]);
-
-  async function save() {
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ available_days: days, available_times: times })
-      .eq("id", profile!.id);
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    onChange();
-    setOpen(false);
-  }
-
-  return (
-    <div>
-      <div className="space-y-3">
-        <Row label="Days">
-          {profile?.available_days?.length ? (
-            profile.available_days.map((d) => <Chip key={d}>{d}</Chip>)
-          ) : (
-            <span className="text-sm text-muted-foreground">Not set</span>
-          )}
-        </Row>
-        <Row label="Times">
-          {profile?.available_times?.length ? (
-            profile.available_times.map((t) => <Chip key={t}>{t}</Chip>)
-          ) : (
-            <span className="text-sm text-muted-foreground">Not set</span>
-          )}
-        </Row>
-      </div>
-      <div className="mt-4 flex justify-end">
-        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-          <Pencil className="mr-1.5 h-3.5 w-3.5" />
-          Edit schedule
-        </Button>
-      </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit availability</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Field label="Days">
-              <div className="flex flex-wrap gap-2">
-                {DAYS.map((d) => {
-                  const on = days.includes(d);
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDays(on ? days.filter((x) => x !== d) : [...days, d])}
-                      className={`rounded-full border px-3 py-1.5 text-xs ${
-                        on
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-            <Field label="Times">
-              <div className="flex flex-wrap gap-2">
-                {TIMES.map((t) => {
-                  const on = times.includes(t);
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTimes(on ? times.filter((x) => x !== t) : [...times, t])}
-                      className={`rounded-full border px-3 py-1.5 text-xs ${
-                        on
-                          ? "border-[var(--brand-purple)] bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]"
-                          : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-16 text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
-  );
-}
-
 /* -------------------------- TEXT CARD -------------------------- */
 
 function TextCard({
@@ -1573,6 +989,134 @@ function TextCard({
             onChange={(e) => setText(e.target.value)}
             placeholder={placeholder}
           />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </SectionCard>
+  );
+}
+
+/* -------------------------- CHIP LIST INLINE -------------------------- */
+
+function ChipListInline({
+  title,
+  icon,
+  field,
+  values,
+  userId,
+  accent,
+  placeholder,
+  onChange,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  field: "favourite_tools" | "software_stack";
+  values: string[];
+  userId: string;
+  accent: "green" | "purple";
+  placeholder: string;
+  onChange: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<string[]>(values);
+  const [input, setInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setDraft(values);
+      setInput("");
+    }
+  }, [open, values]);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ [field]: draft } as Partial<Pick<Profile, "favourite_tools" | "software_stack">>)
+      .eq("id", userId);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Saved");
+    onChange();
+    setOpen(false);
+  }
+
+  function addChip() {
+    const v = input.trim();
+    if (v && !draft.includes(v) && draft.length < 20) {
+      setDraft([...draft, v]);
+      setInput("");
+    }
+  }
+
+  const chipCls =
+    accent === "green"
+      ? "border-primary/40 bg-primary/10 text-primary"
+      : "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]";
+
+  return (
+    <SectionCard
+      title={
+        <span className="flex items-center gap-2">
+          {icon}
+          {title}
+        </span>
+      }
+      onEdit={() => setOpen(true)}
+    >
+      {values.length === 0 ? (
+        <p className="text-sm text-muted-foreground">None added yet.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {values.map((v) => (
+            <span key={v} className={`rounded-full border px-3 py-1 text-xs ${chipCls}`}>
+              {v}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit {title.toLowerCase()}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-wrap gap-2">
+            {draft.map((v) => (
+              <button
+                key={v}
+                onClick={() => setDraft(draft.filter((x) => x !== v))}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${chipCls}`}
+              >
+                {v}
+                <X className="h-3 w-3" />
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={placeholder}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addChip();
+                }
+              }}
+            />
+            <Button type="button" variant="outline" onClick={addChip}>
+              Add
+            </Button>
+          </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
@@ -1779,6 +1323,23 @@ function SectionCard({
           </Button>
         )}
       </div>
+      {children}
+    </div>
+  );
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1">
+      {children}
+    </span>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
       {children}
     </div>
   );
