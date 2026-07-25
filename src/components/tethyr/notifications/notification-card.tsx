@@ -17,7 +17,6 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +24,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   useMarkAsRead,
   useArchiveNotification,
@@ -64,17 +62,10 @@ function timeAgo(dateStr: string): string {
 
 interface NotificationCardProps {
   notification: Notification;
-  actorName?: string;
-  actorAvatar?: string;
   onAction?: (notification: Notification) => void;
 }
 
-export function NotificationCard({
-  notification,
-  actorName,
-  actorAvatar,
-  onAction,
-}: NotificationCardProps) {
+export function NotificationCard({ notification, onAction }: NotificationCardProps) {
   const markAsRead = useMarkAsRead();
   const archive = useArchiveNotification();
   const deleteNotif = useDeleteNotification();
@@ -101,7 +92,7 @@ export function NotificationCard({
         isUnread
           ? "border-l-2 border-l-primary border-border/40 bg-surface-elevated/50"
           : "border-border/40 bg-surface/40 opacity-75 hover:opacity-100"
-      } hover:shadow-lift hover:-translate-y-0.5`}
+      } hover:shadow-lifted hover:-translate-y-0.5`}
     >
       {/* Icon */}
       <div
