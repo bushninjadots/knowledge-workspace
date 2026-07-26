@@ -444,10 +444,11 @@ export function ComposerBar({
           );
         })}
         <Button
+          type="button"
           size="sm"
           className="ml-auto"
           onClick={submit}
-          disabled={!draft.trim() || isSubmitting}
+          disabled={!draft.trim() || !type || isSubmitting}
         >
           {isSubmitting ? "..." : isEditing ? "Save" : "Post"}
         </Button>

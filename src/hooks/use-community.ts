@@ -24,6 +24,12 @@ export type PostType =
   | "feedback_request"
   | "open_role";
 
+const VALID_POST_TYPES: Set<string> = new Set([
+  "showcase", "question", "project_update", "tutorial", "resource",
+  "achievement", "discussion", "help_request", "collaboration_request",
+  "progress_update", "lesson_learned", "feedback_request", "open_role",
+]);
+
 export type PostRow = {
   id: string;
   author_id: string;
@@ -206,6 +212,10 @@ export function useCreatePost() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+
+      if (!VALID_POST_TYPES.has(input.type)) {
+        throw new Error(`Invalid post type: "${input.type}". Please select a post type from the toolbar.`);
+      }
 
       const { data, error } = await sb
         .from("posts")
