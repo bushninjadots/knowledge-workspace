@@ -249,11 +249,11 @@ export function BannerStrip({
       disabled={uploading}
     >
       <div
-        className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+        className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
         style={{ borderColor: accentColor ?? "transparent" }}
       >
         {bannerSigned ? (
-          <img src={bannerSigned} alt="" className="h-full w-full object-cover object-top" />
+          <img src={bannerSigned} alt="" className="h-full w-full object-cover object-center" />
         ) : (
           <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
         )}

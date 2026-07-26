@@ -21,7 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
-import { AchievementGrid } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import {
   Dialog,
@@ -125,11 +124,11 @@ export function ProfileLayout({
             />
           ) : (
             <div
-              className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+              className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
               style={{ borderColor: accentColor ?? "transparent" }}
             >
               {bannerSigned ? (
-                <img src={bannerSigned} alt="" className="h-full w-full object-cover object-top" />
+                <img src={bannerSigned} alt="" className="h-full w-full object-cover object-center" />
               ) : (
                 <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
               )}
@@ -428,14 +427,6 @@ function ProfileSidebar({
           {profile?.reputation_score != null && (
             <StatRow icon={Star} label="Reputation" value={profile.reputation_score} />
           )}
-        </div>
-      </div>
-
-      {/* VERIFICATION BADGES */}
-      <div className="card-border rounded-3xl border bg-surface p-5">
-        <h3 className="mb-3 text-sm font-semibold">Badges</h3>
-        <div className="mt-2">
-          <AchievementGrid profileId={userId} />
         </div>
       </div>
 
