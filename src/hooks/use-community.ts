@@ -24,7 +24,7 @@ export type PostType =
   | "feedback_request"
   | "open_role";
 
-const VALID_POST_TYPES: Set<string> = new Set([
+export const VALID_POST_TYPES: Set<string> = new Set([
   "showcase", "question", "project_update", "tutorial", "resource",
   "achievement", "discussion", "help_request", "collaboration_request",
   "progress_update", "lesson_learned", "feedback_request", "open_role",
@@ -253,6 +253,9 @@ export function useUpdatePost() {
   return useMutation({
     mutationFn: async (input: UpdatePostInput) => {
       const { id, ...updates } = input;
+      if (updates.type && !VALID_POST_TYPES.has(updates.type)) {
+        throw new Error(`Invalid post type: "${updates.type}". Please select a post type from the toolbar.`);
+      }
       const { data, error } = await sb.from("posts").update(updates).eq("id", id).select().single();
 
       if (error) throw error;

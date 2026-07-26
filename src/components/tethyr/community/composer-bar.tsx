@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useCreatePost, useUpdatePost, type PostWithAuthor } from "@/hooks/use-community";
+import { useCreatePost, useUpdatePost, type PostWithAuthor, VALID_POST_TYPES } from "@/hooks/use-community";
 import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
@@ -150,7 +150,12 @@ export function ComposerBar({
         const parsed = JSON.parse(saved);
         if (parsed.body) setDraft(parsed.body);
         if (parsed.title) setTitle(parsed.title);
-        if (parsed.type) setType(parsed.type);
+        if (parsed.type && VALID_POST_TYPES.has(parsed.type)) {
+          setType(parsed.type);
+        } else if (parsed.type) {
+          // Clear stale draft with invalid type
+          localStorage.removeItem(DRAFT_KEY);
+        }
         if (parsed.images) setImages(parsed.images);
       } catch {
         // ignore
@@ -239,6 +244,12 @@ export function ComposerBar({
     const bodyText = draft.trim();
     if (!bodyText || !type) {
       if (!type) toast.info("Pick a post type above first");
+      return;
+    }
+
+    if (!VALID_POST_TYPES.has(type)) {
+      toast.error(`Invalid post type "${type}". Pick a type from the toolbar.`);
+      setType(null);
       return;
     }
 
