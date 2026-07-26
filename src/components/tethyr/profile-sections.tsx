@@ -253,13 +253,13 @@ export function BannerStrip({
         style={{ borderColor: accentColor ?? "transparent" }}
       >
         {bannerSigned ? (
-          <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
+          <img src={bannerSigned} alt="" className="h-full w-full object-cover object-top" />
         ) : (
           <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
         )}
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
 
-        <div className="absolute right-4 top-4 flex items-center gap-2">
+        <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();

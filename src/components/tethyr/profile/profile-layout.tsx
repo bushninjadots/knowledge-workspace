@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
+import { useDominantColor } from "@/lib/dominant-color";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
@@ -95,6 +96,7 @@ export function ProfileLayout({
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [editOpen, setEditOpen] = useState(false);
+  const accentColor = useDominantColor(bannerSigned);
 
   const completeness = completenessPercent({
     profile,
@@ -107,7 +109,7 @@ export function ProfileLayout({
     <div className="animate-room-enter mx-auto max-w-7xl bg-noise p-4 sm:p-8">
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface" style={{ borderColor: accentColor ?? undefined }}>
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
           <div className="relative">
             {isOwnProfile ? (
@@ -199,7 +201,7 @@ export function ProfileLayout({
                   </div>
 
                   {profile?.bio && (
-                    <p className="mt-2 max-w-xl text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-2 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap">
                       {profile.bio}
                     </p>
                   )}

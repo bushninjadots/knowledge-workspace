@@ -37,13 +37,15 @@ const ICONS: Record<string, typeof Award> = {
   Award,
 };
 
-function AchievementIcon({ def }: { def: AchievementDef }) {
+function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm" | "md" }) {
   const Icon = ICONS[def.icon] ?? Award;
   return (
     <span
-      className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-elevated ${def.color}`}
+      className={`flex shrink-0 items-center justify-center rounded-xl bg-surface-elevated ${def.color} ${
+        size === "sm" ? "h-8 w-8" : "h-10 w-10"
+      }`}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
     </span>
   );
 }
@@ -52,7 +54,7 @@ export function AchievementBadge({ type }: { type: AchievementType }) {
   const def = ACHIEVEMENTS.find((a) => a.type === type);
   if (!def) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-2.5 py-1 text-[11px] font-medium text-foreground">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] font-medium text-foreground">
       <AchievementIcon def={def} />
       {def.label}
     </span>
@@ -80,9 +82,9 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface/60" />
+          <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface/60" />
         ))}
       </div>
     );
@@ -119,21 +121,21 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {sorted.map((def) => {
         const isEarned = earnedSet.has(def.type);
         const awardedAt = earnedMap.get(def.type);
         return (
           <div
             key={def.type}
-            className={`flex items-start gap-3 rounded-2xl border p-3 transition ${
+            className={`flex items-start gap-2.5 rounded-2xl border p-2.5 transition ${
               isEarned ? "border-border/60 bg-surface" : "border-border/30 bg-surface/40 opacity-50"
             }`}
           >
-            <AchievementIcon def={def} />
+            <AchievementIcon def={def} size="sm" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{def.label}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{def.description}</p>
+              <p className="truncate text-xs font-medium">{def.label}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{def.description}</p>
               {isEarned && awardedAt && (
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   Earned {new Date(awardedAt).toLocaleDateString()}

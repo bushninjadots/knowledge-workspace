@@ -244,7 +244,7 @@ function PublicProfileRoute() {
               <img
                 src={bannerSigned}
                 alt={`${profile.display_name ?? "Member"} banner`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
               />
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
