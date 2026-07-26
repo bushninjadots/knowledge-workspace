@@ -41,11 +41,11 @@ function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm
   const Icon = ICONS[def.icon] ?? Award;
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-xl bg-surface-elevated ${def.color} ${
-        size === "sm" ? "h-8 w-8" : "h-10 w-10"
+      className={`flex shrink-0 items-center justify-center rounded-full ${def.color} ${
+        size === "sm" ? "h-5 w-5" : "h-10 w-10"
       }`}
     >
-      <Icon className={size === "sm" ? "h-4 w-4" : "h-5 w-5"} />
+      <Icon className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />
     </span>
   );
 }
@@ -82,9 +82,9 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface/60" />
+          <div key={i} className="h-7 w-20 animate-pulse rounded-full bg-surface/60" />
         ))}
       </div>
     );
@@ -101,7 +101,6 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
   }
 
   const earnedSet = new Set((earned ?? []).map((e) => e.achievement));
-  const earnedMap = new Map((earned ?? []).map((e) => [e.achievement, e.awarded_at]));
 
   // Show earned first, then locked
   const sorted = [...ACHIEVEMENTS].sort((a, b) => {
@@ -121,28 +120,22 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div className="flex flex-wrap gap-2">
       {sorted.map((def) => {
         const isEarned = earnedSet.has(def.type);
-        const awardedAt = earnedMap.get(def.type);
         return (
-          <div
+          <span
             key={def.type}
-            className={`flex items-start gap-2.5 rounded-2xl border p-2.5 transition ${
-              isEarned ? "border-border/60 bg-surface" : "border-border/30 bg-surface/40 opacity-50"
+            title={`${def.label}: ${def.description}${isEarned ? " (Earned)" : ""}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+              isEarned
+                ? "border-border/60 bg-surface text-foreground"
+                : "border-border/30 bg-surface/40 text-muted-foreground/60"
             }`}
           >
             <AchievementIcon def={def} size="sm" />
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium">{def.label}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{def.description}</p>
-              {isEarned && awardedAt && (
-                <p className="mt-1 text-[10px] text-muted-foreground">
-                  Earned {new Date(awardedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </div>
+            {def.label}
+          </span>
         );
       })}
     </div>

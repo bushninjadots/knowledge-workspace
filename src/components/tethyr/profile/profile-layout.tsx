@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
-import { useDominantColor } from "@/lib/dominant-color";
+import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
@@ -98,6 +98,10 @@ export function ProfileLayout({
   const [editOpen, setEditOpen] = useState(false);
   const accentColor = useDominantColor(bannerSigned);
 
+  const accentStyle = accentColor
+    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+    : undefined;
+
   const completeness = completenessPercent({
     profile,
     teachCount: teachIds.length,
@@ -106,33 +110,35 @@ export function ProfileLayout({
   });
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl bg-noise p-4 sm:p-8">
+    <div className="animate-room-enter mx-auto max-w-7xl bg-noise p-4 sm:p-8" style={accentStyle}>
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface" style={{ borderColor: accentColor ?? undefined }}>
+        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
-          <div className="relative">
-            {isOwnProfile ? (
-              <BannerStrip
-                bannerSigned={bannerSigned}
-                bannerCaption={profile?.banner_caption ?? null}
-                userId={userId}
-                onChange={onChange}
-              />
-            ) : (
-              <div className="relative h-40 overflow-hidden rounded-t-3xl sm:h-56">
-                {bannerSigned ? (
-                  <img src={bannerSigned} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
-                )}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
-              </div>
-            )}
 
-            <div className="p-6 sm:p-8">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                {/* AVATAR */}
+          {isOwnProfile ? (
+            <BannerStrip
+              bannerSigned={bannerSigned}
+              bannerCaption={profile?.banner_caption ?? null}
+              userId={userId}
+              onChange={onChange}
+            />
+          ) : (
+            <div
+              className="relative -m-6 mb-6 h-40 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-56"
+              style={{ borderColor: accentColor ?? "transparent" }}
+            >
+              {bannerSigned ? (
+                <img src={bannerSigned} alt="" className="h-full w-full object-cover object-top" />
+              ) : (
+                <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
+              )}
+              <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+            {/* AVATAR */}
                 <div className="relative shrink-0 -mt-16 sm:-mt-20">
                   {isOwnProfile ? (
                     <DragDropFileInput
@@ -255,9 +261,7 @@ export function ProfileLayout({
                   ) : null}
                 </div>
               </div>
-            </div>
           </div>
-        </div>
 
         {/* TABS + CONTENT */}
         <div className="flex flex-col gap-6 lg:flex-row">
