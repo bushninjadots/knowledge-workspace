@@ -31,7 +31,6 @@ import {
   MessageSquareMore,
   UserPlus,
 } from "lucide-react";
-import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   POST_TYPE_LABEL,
@@ -41,6 +40,7 @@ import {
   type PostWithAuthor,
 } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAddComment } from "@/hooks/use-community";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -102,12 +102,13 @@ const TYPE_ICON: Record<PostType, typeof Heart> = {
 function HighlightText({ text, query }: { text: string; query?: string }) {
   if (!query || !query.trim()) return <>{text}</>;
   const q = query.trim();
-  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-  const parts = text.split(regex);
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  const testRe = new RegExp(`^${escaped}$`, "i");
   return (
     <>
       {parts.map((part, i) =>
-        regex.test(part) ? (
+        testRe.test(part) ? (
           <mark key={i} className="rounded bg-primary/20 px-0.5 text-primary">
             {part}
           </mark>
@@ -141,7 +142,6 @@ export function PostCard({
   onDelete,
   onEdit,
   onToggleAction,
-  currentUserId,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -153,7 +153,6 @@ export function PostCard({
   onDelete?: () => void;
   onEdit?: () => void;
   onToggleAction?: (action: "like" | "helpful" | "offer") => void;
-  currentUserId?: string;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -490,6 +489,21 @@ function CommentThreadInline({
   comments: CommentRow[];
   isQuestion: boolean;
 }) {
+  const addComment = useAddComment();
+  const [newComment, setNewComment] = useState("");
+
+  function submitComment() {
+    const body = newComment.trim();
+    if (!body) return;
+    addComment.mutate(
+      { postId, body },
+      {
+        onSuccess: () => setNewComment(""),
+        onError: () => {},
+      },
+    );
+  }
+
   return (
     <div className="mt-3 border-t border-border/60 pt-3">
       <p className="text-xs text-muted-foreground">
@@ -531,6 +545,28 @@ function CommentThreadInline({
             </div>
           );
         })}
+
+        <div className="flex items-start gap-2.5 mt-1">
+          <input
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submitComment();
+              }
+            }}
+            placeholder="Write a comment..."
+            className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50"
+          />
+          <button
+            onClick={submitComment}
+            disabled={!newComment.trim() || addComment.isPending}
+            className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+          >
+            {addComment.isPending ? "..." : "Reply"}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -91,7 +91,3 @@ export const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "feedback_request", label: "Request Feedback" },
   { type: "open_role", label: "Post Open Role" },
 ];
-
-export function reputationLabel(_rep: number): string {
-  return "";
-}

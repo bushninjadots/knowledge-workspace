@@ -186,7 +186,7 @@ export function usePosts() {
         author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
           display_name: "Unknown",
           handle: "unknown",
-          creator_title: "Creator",
+          creator_title: "Member",
           category: "General",
           avatar_url: null,
         },
@@ -311,7 +311,7 @@ export function useComments(postId: string) {
         author: (profileMap.get(c.author_id) as unknown as CommentRow["author"]) ?? {
           display_name: "Unknown",
           handle: "unknown",
-          creator_title: "Creator",
+          creator_title: "Member",
           avatar_url: null,
         },
       }));

@@ -128,6 +128,14 @@ export function ComposerBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Reset states when editingPost changes (switching between posts)
+  useEffect(() => {
+    setType(editingPost?.type ?? null);
+    setTitle(editingPost?.title ?? "");
+    setDraft(editingPost?.body ?? "");
+    setImages(editingPost?.images ?? []);
+  }, [editingPost?.id]);
+
   const name = me?.profile?.display_name || me?.profile?.handle || "You";
   const initial = name.charAt(0).toUpperCase();
   const isEditing = !!editingPost;
