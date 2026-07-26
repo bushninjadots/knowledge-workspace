@@ -547,7 +547,7 @@ function PublicProfileRoute() {
               </svg>
             }
           >
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/80">
               {profile.bio}
             </p>
             {(profile.favourite_tools.length > 0 || profile.software_stack.length > 0) && (

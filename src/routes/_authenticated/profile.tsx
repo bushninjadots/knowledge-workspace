@@ -292,7 +292,7 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
 
   return (
     <SectionCard title="About" onEdit={() => setEditing(true)}>
-      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+      <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
         {profile?.bio || "Tell other people who you are and what you make."}
       </p>
       {profile && profile.languages.length > 0 && (

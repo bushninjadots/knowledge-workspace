@@ -113,7 +113,6 @@ export function ProfileLayout({
       <div className="space-y-6">
         {/* BANNER + HEADER */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-[var(--brand-purple)]/5 pointer-events-none" />
 
           {isOwnProfile ? (
             <BannerStrip
@@ -206,7 +205,7 @@ export function ProfileLayout({
                   </div>
 
                   {profile?.bio && (
-                    <p className="mt-2 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap">
+                    <p className="mt-2 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
                       {profile.bio}
                     </p>
                   )}
