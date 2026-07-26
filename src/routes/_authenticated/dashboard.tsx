@@ -20,8 +20,8 @@ import { checkAndAwardAchievements } from "@/lib/reputation";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Reception — Tethyr" },
-      { name: "description", content: "Your Tethyr reception." },
+      { title: "Dashboard — Tethyr" },
+      { name: "description", content: "Your Tethyr dashboard." },
     ],
   }),
   component: DashboardPage,
@@ -77,7 +77,7 @@ function DashboardPage() {
   const remaining = nextSteps(input, 5);
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
-  const firstName = data.profile?.display_name?.split(" ")[0] ?? data.profile?.handle ?? "creator";
+  const firstName = data.profile?.display_name?.split(" ")[0] ?? data.profile?.handle ?? "member";
 
   return (
     <div className="animate-room-enter mx-auto max-w-6xl space-y-6 p-4 sm:p-8">
@@ -103,7 +103,7 @@ function DashboardPage() {
             </h1>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
               {pct < 100
-                ? "Finish the last few steps on your profile so other creators can discover you and start exchanging knowledge."
+                ? "Finish the last few steps on your profile so other people can discover you and start building together."
                 : "Your profile is looking great. Here's what's happening on Tethyr right now."}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -129,7 +129,7 @@ function DashboardPage() {
             <SectionHeader
               icon={<Sparkles className="h-4 w-4 text-primary" />}
               title="Next steps"
-              subtitle="A few things to finish before other creators can find you."
+              subtitle="A few things to finish before other people can find you."
             />
             <div className="mt-4">
               <NextStepsList items={remaining} />
@@ -160,7 +160,7 @@ function DashboardPage() {
               <QuickLink
                 to="/explore"
                 icon={<Compass className="h-4 w-4" />}
-                label="Explore creators"
+                label="Explore people"
               />
               <QuickLink
                 to="/community"
@@ -170,7 +170,7 @@ function DashboardPage() {
               <QuickLink
                 to="/skills/video-editing"
                 icon={<Compass className="h-4 w-4" />}
-                label="Browse workshops"
+                label="Browse studios"
               />
             </div>
           </section>
@@ -180,7 +180,7 @@ function DashboardPage() {
       <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
         <SectionHeader
           icon={<Zap className="h-4 w-4 text-brand-green" />}
-          title="Creators you match with"
+          title="People you connect with"
           subtitle="Based on complementary skills, availability, and language."
         />
         <div className="mt-4">
@@ -205,7 +205,7 @@ function DashboardPage() {
         <SectionHeader
           icon={<Sparkles className="h-4 w-4 text-primary" />}
           title="Discover skills"
-          subtitle="Trending across the creator catalog."
+          subtitle="Trending across the network."
         />
         <div className="mt-4">
           <DiscoverSkills />

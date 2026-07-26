@@ -176,7 +176,7 @@ export function TethyrBallFull({ className }: { className?: string }) {
       className={`flex min-h-screen flex-col items-center justify-center bg-background ${className ?? ""}`}
     >
       <TethyrBall size="lg" />
-      <p className="mt-6 text-sm text-muted-foreground animate-pulse">Entering the workshop…</p>
+      <p className="mt-6 text-sm text-muted-foreground animate-pulse">Entering the network…</p>
     </div>
   );
 }

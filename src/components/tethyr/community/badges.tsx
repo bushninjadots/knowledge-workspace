@@ -3,7 +3,7 @@ import { BADGE_STYLES, type ReputationBadge } from "@/lib/community-data";
 
 const BADGE_ICON: Record<ReputationBadge, typeof Award> = {
   "Helpful Mentor": Sparkles,
-  "Verified Teacher": GraduationCap,
+  "Verified Sharer": GraduationCap,
   "Project Builder": Hammer,
   "Community Contributor": Users,
   Expert: Award,

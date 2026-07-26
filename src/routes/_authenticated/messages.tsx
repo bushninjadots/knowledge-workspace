@@ -128,7 +128,7 @@ function ConversationRow({
   unreadCount: number;
   onSelect: () => void;
 }) {
-  const name = conn.other?.display_name ?? conn.other?.handle ?? "Creator";
+  const name = conn.other?.display_name ?? conn.other?.handle ?? "Member";
   const subtitle = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
@@ -204,7 +204,7 @@ function Thread({
     });
   }
 
-  const name = conn.other?.display_name ?? conn.other?.handle ?? "Creator";
+  const name = conn.other?.display_name ?? conn.other?.handle ?? "Member";
   // Last message I sent — used to place the read receipt only under it.
   const lastMineId = [...messages].reverse().find((m) => m.sender_id === meId)?.id;
 

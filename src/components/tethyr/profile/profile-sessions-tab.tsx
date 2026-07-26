@@ -30,7 +30,7 @@ export function ProfileSessionsTab({ isOwnProfile }: { userId: string; isOwnProf
         title="No sessions yet"
         description={
           isOwnProfile
-            ? "Your completed skill exchanges will appear here."
+            ? "Your completed collaborations will appear here."
             : "This user hasn't completed any sessions yet."
         }
       />

@@ -151,7 +151,7 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
       <EmptyState
         icon={<Sparkles className="h-5 w-5" />}
         title="No matches yet"
-        description="Add skills to your profile to see creators you match with."
+        description="Add skills to your profile to see people you connect with."
       />
     );
   }
@@ -173,10 +173,10 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {c.display_name || c.handle || "Untitled creator"}
+                  {c.display_name || c.handle || "Untitled member"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {c.creator_title || c.category || "Creator"}
+                  {c.creator_title || c.category || "Member"}
                 </p>
               </div>
             </div>

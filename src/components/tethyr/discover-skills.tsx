@@ -15,7 +15,7 @@ export function DiscoverSkills({ limit = 12 }: { limit?: number }) {
       <EmptyState
         icon={<Flame className="h-5 w-5" />}
         title="No skills to discover yet"
-        description="The skill catalog will populate as the community grows."
+        description="The skill catalog will populate as people join."
       />
     );
   }

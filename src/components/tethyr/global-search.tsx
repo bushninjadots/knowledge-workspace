@@ -111,7 +111,7 @@ export function GlobalSearch({
           setOpen(true);
         }}
         onFocus={() => q && setOpen(true)}
-        placeholder="Search creators, skills, categories…"
+        placeholder="Search people, skills, categories…"
         className="h-10 rounded-full border-border/60 bg-surface/60 pl-9"
         aria-label="Global search"
       />
@@ -125,7 +125,7 @@ export function GlobalSearch({
           {profileHits.length > 0 && (
             <div className="mb-1">
               <p className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-                Creators
+                People
               </p>
               {profileHits.map((p) => (
                 <button
@@ -142,7 +142,7 @@ export function GlobalSearch({
                   <User className="h-4 w-4 text-muted-foreground" />
                   <div className="min-w-0">
                     <p className="truncate text-sm">
-                      {p.display_name || p.handle || "Untitled creator"}
+                      {p.display_name || p.handle || "Untitled member"}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {[p.creator_title, p.category].filter(Boolean).join(" · ") || "—"}

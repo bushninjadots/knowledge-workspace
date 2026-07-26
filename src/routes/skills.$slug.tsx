@@ -29,10 +29,10 @@ const sb = supabase as any;
 export const Route = createFileRoute("/skills/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} — Skills Workshop — Tethyr` },
+      { title: `${params.slug} — Tethyr` },
       {
         name: "description",
-        content: `Enter the ${params.slug} workshop on Tethyr — meet teachers, learners, and discover projects.`,
+        content: `Enter ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
       },
     ],
   }),
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/skills/$slug")({
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Workshop not found</h1>
+        <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <Link to="/explore" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to explore
@@ -121,7 +121,7 @@ function SkillPage() {
                   <categoryBadge.icon className="h-2.5 w-2.5" />
                   {skill.category}
                 </span>
-                <span className="text-xs text-muted-foreground">Workshop</span>
+                <span className="text-xs text-muted-foreground">Hub</span>
               </div>
             </div>
           </div>
@@ -225,13 +225,13 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           icon={<GraduationCap className="h-5 w-5 text-primary" />}
-          label="Teachers"
+          label="Sharing"
           value={stats?.teachers ?? 0}
           delay={0}
         />
         <StatCard
           icon={<BookOpen className="h-5 w-5 text-brand-purple" />}
-          label="Learners"
+          label="Growing"
           value={stats?.learners ?? 0}
           delay={1}
         />
@@ -251,17 +251,17 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
 
       {/* Workshop description */}
       <div className="card-border rounded-3xl border bg-surface p-6">
-        <h2 className="font-display text-lg font-semibold">What is the {skillName} Workshop?</h2>
+        <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This is a dedicated learning space for {skillName}. Browse the People tab to find teachers
-          and learners, or check Projects to see what's being built with this skill.
+          This is a dedicated space for {skillName}. Browse the People tab to find people sharing
+          and growing, or check Projects to see what's being built with this skill.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
             to="/explore"
             className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20"
           >
-            Find teachers <ExternalLink className="h-3.5 w-3.5" />
+            Find people sharing <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
@@ -331,7 +331,7 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           }`}
         >
           <GraduationCap className="mr-1.5 inline h-3.5 w-3.5" />
-          Teachers
+          Sharing
         </button>
         <button
           onClick={() => setFilter("learners")}
@@ -342,7 +342,7 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           }`}
         >
           <BookOpen className="mr-1.5 inline h-3.5 w-3.5" />
-          Learners
+          Growing
         </button>
       </div>
 
@@ -387,8 +387,8 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <EmptyState
         icon={<GraduationCap className="h-5 w-5" />}
-        title="No teachers yet"
-        description={`Be the first to offer ${skillName} teaching on Tethyr.`}
+        title="No one sharing yet"
+        description={`Be the first to share ${skillName} on Tethyr.`}
         variant="skills"
       />
     );
@@ -413,10 +413,10 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">
-                {p.display_name || p.handle || "Creator"}
+                {p.display_name || p.handle || "Member"}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {p.creator_title || "Creator"}
+                {p.creator_title || "Member"}
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 <VerificationBadge level={row.verification_level} />
@@ -462,8 +462,8 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <EmptyState
         icon={<BookOpen className="h-5 w-5" />}
-        title="No learners yet"
-        description={`Be the first to start learning ${skillName} on Tethyr.`}
+        title="No one growing yet"
+        description={`Be the first to start growing ${skillName} on Tethyr.`}
         variant="skills"
       />
     );
@@ -488,10 +488,10 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">
-                {p.display_name || p.handle || "Creator"}
+                {p.display_name || p.handle || "Member"}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {p.creator_title || "Creator"}
+                {p.creator_title || "Member"}
               </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
@@ -616,7 +616,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           Tethyr
         </Link>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm text-muted-foreground">Workshop</span>
+        <span className="text-sm text-muted-foreground">Hub</span>
       </header>
       <main className="flex-1">{children}</main>
     </div>

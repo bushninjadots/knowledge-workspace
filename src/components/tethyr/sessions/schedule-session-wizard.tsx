@@ -52,9 +52,9 @@ const STEPS = [
 const SESSION_TYPES: { value: SessionType; label: string; icon: typeof Video; desc: string }[] = [
   {
     value: "skill_exchange",
-    label: "Skill Exchange",
+    label: "Collaboration",
     icon: Wrench,
-    desc: "Trade skills with a peer",
+    desc: "Collaborate on skills with a peer",
   },
   {
     value: "mentoring",
@@ -69,7 +69,7 @@ const SESSION_TYPES: { value: SessionType; label: string; icon: typeof Video; de
     desc: "Collaborate on a project",
   },
   { value: "study_session", label: "Study Session", icon: BookOpen, desc: "Learn together" },
-  { value: "workshop", label: "Workshop", icon: Users, desc: "Group teaching session" },
+  { value: "workshop", label: "Collaboration", icon: Users, desc: "Group collaboration session" },
   { value: "general", label: "General", icon: MessageSquare, desc: "Open discussion" },
 ];
 

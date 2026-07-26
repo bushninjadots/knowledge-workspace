@@ -47,7 +47,7 @@ function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in to continue teaching and learning."
+      subtitle="Log in to continue building and growing."
       footer={
         <>
           New to Tethyr?{" "}

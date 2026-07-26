@@ -8,8 +8,7 @@ export function Footer() {
         <div className="space-y-4 md:max-w-sm">
           <Logo variant="horizontal" size="md" />
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The digital home where creators build together. Learn, teach, connect, and grow — skills
-            for skills, not money.
+            The collaborative home where people build together. Share, connect, and grow — skills for the love of building.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
@@ -19,7 +18,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:gap-12">
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
-              Campus
+              Platform
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -27,7 +26,7 @@ export function Footer() {
                   to="/dashboard"
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Reception
+                  Dashboard
                 </Link>
               </li>
               <li>
@@ -50,7 +49,7 @@ export function Footer() {
           </div>
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
-              Learn
+              Grow
             </h3>
             <ul className="space-y-2.5 text-sm">
               <li>
@@ -66,7 +65,7 @@ export function Footer() {
                   to="/explore"
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Find Teachers
+                  Find People Sharing
                 </Link>
               </li>
             </ul>
@@ -102,7 +101,7 @@ export function Footer() {
             © {new Date().getFullYear()} Tethyr. Connected by what you know.
           </p>
           <p className="text-xs text-muted-foreground/50">
-            A trusted knowledge network for creators
+            A trusted collaborative network
           </p>
         </div>
       </div>

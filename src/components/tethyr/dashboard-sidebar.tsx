@@ -20,11 +20,11 @@ import { AvailabilitySelector, useUpdateAvailability } from "./availability-badg
 import type { AvailabilityStatus } from "@/lib/skill-match";
 
 const rooms = [
-  { to: "/dashboard", label: "Reception", sub: "Today's activity", icon: Home, live: true },
-  { to: "/explore", label: "Projects", sub: "Creative studios", icon: FolderOpen, live: true },
+  { to: "/dashboard", label: "Dashboard", sub: "Today's activity", icon: Home, live: true },
+  { to: "/explore", label: "Projects", sub: "Projects & people", icon: FolderOpen, live: true },
   { to: "/community", label: "Community", sub: "Open space", icon: Users, live: true },
   { to: "/messages", label: "Messages", sub: "Meeting table", icon: MessageSquare, live: true },
-  { to: "/profile", label: "Workshop", sub: "Your skills", icon: GraduationCap, live: true },
+  { to: "/profile", label: "Studio", sub: "Your skills", icon: GraduationCap, live: true },
   { to: "/sessions", label: "Sessions", sub: "Skill meetings", icon: Trophy, live: true },
   { to: "/library", label: "Library", sub: "Knowledge hub", icon: Compass, live: true },
 ] as const;
@@ -64,7 +64,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
         aria-label="Quick search"
       >
         <Search className="h-3.5 w-3.5" />
-        <span className="text-xs">Search the workshop…</span>
+        <span className="text-xs">Search the network…</span>
         <kbd className="ml-auto rounded border border-border/60 bg-surface px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
           /
         </kbd>
@@ -73,13 +73,13 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       {/* Room navigation */}
       <nav className="mt-5 flex flex-1 flex-col gap-0.5">
         <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
-          Campus
+          
         </p>
         {rooms.map((room, i) => {
           const Icon = room.icon;
           const isActive =
             room.to === "/dashboard"
-              ? pathname === "/dashboard" && room.label === "Reception"
+              ? pathname === "/dashboard" && room.label === "Dashboard"
               : pathname.startsWith(room.to);
 
           if (!room.live) {
@@ -156,10 +156,10 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">
-              {me?.profile?.display_name || me?.profile?.handle || "Creator"}
+              {me?.profile?.display_name || me?.profile?.handle || "Member"}
             </p>
             <p className="truncate text-[11px] text-muted-foreground">
-              {me?.profile?.creator_title || "Workshop"}
+              {me?.profile?.creator_title || "Studio"}
             </p>
           </div>
           <Link
@@ -177,7 +177,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
-          Leave the workshop
+          Leave the studio
         </button>
       </div>
     </aside>

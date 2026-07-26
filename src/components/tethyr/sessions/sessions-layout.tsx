@@ -59,7 +59,7 @@ export function SessionsLayout() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Sessions</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Manage your skill exchanges, mentoring, and meetings.
+                Manage your collaborations, mentoring, and meetings.
               </p>
             </div>
             <button

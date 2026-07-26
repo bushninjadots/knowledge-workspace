@@ -34,7 +34,7 @@ export function ConnectionsCard() {
         <div>
           <h2 className="font-display text-lg font-semibold">Tethrs</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Creators you're connected with and pending requests.
+            People you're connected with and pending requests.
           </p>
         </div>
         {accepted.length > 0 && (
@@ -66,7 +66,7 @@ export function ConnectionsCard() {
                   </Link>
                 ) : (
                   <p className="truncate text-sm font-medium">
-                    {c.other?.display_name || "Creator"}
+                    {c.other?.display_name || "Member"}
                   </p>
                 )}
                 <p className="truncate text-xs text-muted-foreground">
@@ -138,7 +138,7 @@ export function ConnectionsCard() {
                     {c.other?.display_name || c.other?.handle}
                   </Link>
                 ) : (
-                  <p className="truncate text-sm">{c.other?.display_name || "Creator"}</p>
+                  <p className="truncate text-sm">{c.other?.display_name || "Member"}</p>
                 )}
                 <p className="truncate text-[11px] text-muted-foreground">Waiting for response</p>
               </div>
@@ -166,7 +166,7 @@ export function ConnectionsCard() {
           <EmptyState
             icon={<Link2 className="h-5 w-5" />}
             title="No tethrs yet"
-            description="Search for creators and send your first tethyr request."
+            description="Search for people and send your first connection request."
           />
         ) : accepted.length > 0 ? (
           <div className="grid gap-2 sm:grid-cols-2">
@@ -189,7 +189,7 @@ export function ConnectionsCard() {
                     </Link>
                   ) : (
                     <p className="truncate text-sm font-medium">
-                      {c.other?.display_name || "Creator"}
+                      {c.other?.display_name || "Member"}
                     </p>
                   )}
                   <p className="truncate text-xs text-muted-foreground">

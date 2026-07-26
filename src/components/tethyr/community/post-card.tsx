@@ -165,7 +165,7 @@ export function PostCard({
   const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
 
   const authorName = post.author.display_name || post.author.handle || "Unknown";
-  const authorTitle = post.author.creator_title || post.author.category || "Creator";
+  const authorTitle = post.author.creator_title || post.author.category || "Member";
   const initial = authorName.charAt(0).toUpperCase();
 
   const questionData = post.question_data as Record<string, unknown> | null;

@@ -33,11 +33,11 @@ import {
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
     meta: [
-      { title: "Open Collaboration Space — Tethyr" },
+      { title: "Community — Tethyr" },
       {
         name: "description",
         content:
-          "An open workshop floor where creators share ideas, ask for help, and collaborate on projects.",
+          "A space where people share ideas, ask for help, and collaborate on projects.",
       },
     ],
   }),
@@ -206,11 +206,11 @@ function CommunityPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider text-primary/70">
-                  Open Collaboration Space
+                  Community
                 </p>
                 <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
                 <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-                  An open workshop floor — share project updates, ask for help, request
+                  Share project updates, ask for help, request
                   collaboration, or drop a resource. Every post has purpose.
                 </p>
               </div>
@@ -335,7 +335,7 @@ function CommunityPage() {
               <EmptyState
                 icon={<Users className="h-5 w-5" />}
                 title="No active challenges yet"
-                description="Community challenges give creators shared goals to learn and build together. Stay tuned for upcoming challenges!"
+                description="Community challenges give people shared goals to learn and build together. Stay tuned for upcoming challenges!"
               />
             ) : (
               <div className="flex flex-col gap-4">
@@ -350,8 +350,8 @@ function CommunityPage() {
                 <div className="col-span-full">
                   <EmptyState
                     icon={<Users className="h-5 w-5" />}
-                    title="No workshops yet"
-                    description="Workshop spaces will appear here once they're created. Start a new one to bring people together."
+                    title="No communities yet"
+                    description="Community spaces will appear here once they're created. Start a new one to bring people together."
                   />
                 </div>
               ) : null}
@@ -397,7 +397,7 @@ function CommunityPage() {
                   ? "Nothing saved yet"
                   : nav === "help"
                     ? "No help requests"
-                    : "The workshop is quiet"
+                    : "The community is quiet"
               }
               description={
                 nav === "saved"
@@ -517,9 +517,9 @@ function PostCardWithComments({
 function navTitle(nav: CommunityNavId): string {
   switch (nav) {
     case "home":
-      return "Workshop Floor";
+      return "Community Feed";
     case "communities":
-      return "Workshops";
+      return "Communities";
     case "help":
       return "Help Requests";
     case "collab":
@@ -539,6 +539,6 @@ function navTitle(nav: CommunityNavId): string {
     case "trending":
       return "Trending";
     default:
-      return "Open Collaboration Space";
+      return "Community";
   }
 }

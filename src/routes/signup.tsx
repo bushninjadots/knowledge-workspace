@@ -11,7 +11,7 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Sign up — Tethyr" },
-      { name: "description", content: "Join the Tethyr knowledge network for creators." },
+      { name: "description", content: "Join the Tethyr collaborative network." },
     ],
   }),
   component: SignupPage,
@@ -84,7 +84,7 @@ function SignupPage() {
   return (
     <AuthShell
       title="Join Tethyr"
-      subtitle="Claim your handle and start trading skills."
+      subtitle="Claim your handle and start building together."
       footer={
         <>
           Already a member?{" "}
@@ -162,7 +162,7 @@ function SignupPage() {
           {loading ? "Creating..." : "Create my profile"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          By joining you agree to keep the network kind and credit your teachers.
+          By joining you agree to keep the network kind and respect the people you build with.
         </p>
       </form>
     </AuthShell>

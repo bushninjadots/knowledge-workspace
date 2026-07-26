@@ -79,26 +79,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tethyr — Where creators build together" },
+      { title: "Tethyr — Where people build together" },
       {
         name: "description",
         content:
-          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
       },
       { name: "author", content: "Tethyr" },
-      { property: "og:title", content: "Tethyr — Where creators build together" },
+      { property: "og:title", content: "Tethyr — Where people build together" },
       {
         property: "og:description",
         content:
-          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Tethyr — Where creators build together" },
+      { name: "twitter:title", content: "Tethyr — Where people build together" },
       {
         name: "twitter:description",
         content:
-          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
       },
       {
         property: "og:image",

@@ -104,8 +104,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     type: "prolific_teacher",
-    label: "Prolific Teacher",
-    description: "Teaching 5+ skills",
+    label: "Prolific Sharer",
+    description: "Sharing 5+ skills",
     icon: "BookOpen",
     color: "text-brand-green",
   },
@@ -139,8 +139,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     type: "learner_journey",
-    label: "Learner's Journey",
-    description: "Learning 5+ skills",
+    label: "Growth Journey",
+    description: "Growing in 5+ skills",
     icon: "Compass",
     color: "text-primary",
   },
@@ -169,8 +169,8 @@ export function computeCategoryBreakdown(
 
   const defs: { name: string; label: string; color: string }[] = [
     { name: "collaboration", label: "Collaboration", color: "text-primary" },
-    { name: "teaching", label: "Teaching", color: "text-brand-green" },
-    { name: "learning", label: "Learning", color: "text-brand-purple" },
+    { name: "teaching", label: "Sharing", color: "text-brand-green" },
+    { name: "learning", label: "Growing", color: "text-brand-purple" },
     { name: "community", label: "Community", color: "text-amber-500" },
     { name: "project_impact", label: "Project Impact", color: "text-brand-green" },
     { name: "reliability", label: "Reliability", color: "text-primary" },

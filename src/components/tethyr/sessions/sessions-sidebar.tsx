@@ -55,11 +55,11 @@ export const STATUS_CONFIG: Record<
 };
 
 export const TYPE_LABELS: Record<string, string> = {
-  skill_exchange: "Skill Exchange",
+  skill_exchange: "Collaboration",
   mentoring: "Mentoring",
   project_meeting: "Project Meeting",
   study_session: "Study Session",
-  workshop: "Workshop",
+  workshop: "Collaboration",
   general: "General",
 };
 

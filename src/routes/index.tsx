@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tethyr — Where creators build together" },
+      { title: "Tethyr — Where people build together" },
       {
         name: "description",
         content:
-          "A premium creative campus where creators discover, learn, collaborate, and grow. People become known through what they build together.",
+          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
       },
     ],
   }),
@@ -39,11 +39,10 @@ function HomePage() {
               Early access — now open
             </span>
             <h1 className="mt-8 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
-              Where creators <span className="text-gradient-brand">build together</span>
+              Where people <span className="text-gradient-brand">build together</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              Skills for skills. Creators teach each other, learn from each other, and become known
-              through what they build together.
+              Build together. Grow together. People share what they know, grow their skills, and become known through what they build together.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button
@@ -79,7 +78,7 @@ function HomePage() {
               Ready to build something <span className="text-gradient-brand">together</span>?
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-              Claim your handle and join the first wave of creators building Tethyr together. People
+              Claim your handle and join the first wave of people building Tethyr together. People
               become known through what they build.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

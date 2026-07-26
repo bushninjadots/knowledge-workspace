@@ -82,7 +82,7 @@ function MobileSearch({
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search creators, skills…"
+            placeholder="Search people, skills…"
             className="h-10 rounded-full border-border/60 bg-surface/60 pl-9"
           />
         </div>
@@ -90,7 +90,7 @@ function MobileSearch({
           {profiles.length > 0 && (
             <div className="mb-1">
               <p className="px-3 pt-1 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-                Creators
+                People
               </p>
               {profiles.map((p) => (
                 <button

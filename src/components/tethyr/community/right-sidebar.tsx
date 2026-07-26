@@ -74,7 +74,7 @@ export function CommunityRightSidebar({ mobile = false }: { mobile?: boolean }) 
         icon={<HandHeart className="h-3.5 w-3.5 text-primary" />}
       >
         <div className="p-3 rounded-2xl border border-dashed border-border/60 bg-surface/40 text-center space-y-2">
-          <p className="text-xs text-muted-foreground">Need a hand or mentoring on a project?</p>
+          <p className="text-xs text-muted-foreground">Need a hand or guidance on a project?</p>
           <Button size="sm" variant="outline" asChild className="text-xs h-7 px-2.5 gap-1">
             <Link to="/community">
               <Plus className="h-3 w-3" /> Post Help Request
@@ -114,7 +114,7 @@ export function CommunityRightSidebar({ mobile = false }: { mobile?: boolean }) 
 
       <SidebarCard title="Learning Goals" icon={<Target className="h-3.5 w-3.5 text-primary" />}>
         <p className="px-1 text-xs text-muted-foreground">
-          Set your learning goals in your profile to find matching mentors.
+          Set your growth goals in your profile to find matching collaborators.
         </p>
       </SidebarCard>
     </aside>

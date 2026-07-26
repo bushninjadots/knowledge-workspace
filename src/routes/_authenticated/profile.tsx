@@ -67,10 +67,10 @@ import { ProfileReviewsTab } from "@/components/tethyr/profile/profile-reviews-t
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
     meta: [
-      { title: "Your Workshop — Tethyr" },
+      { title: "Your Studio — Tethyr" },
       {
         name: "description",
-        content: "Manage your skills, projects, and creative presence on Tethyr.",
+        content: "Manage your skills, projects, and collaborative presence on Tethyr.",
       },
     ],
   }),
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Workshop failed to load</h1>
+        <h1 className="text-xl font-semibold text-foreground">Studio failed to load</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <a href="/profile" className="mt-4 inline-block text-sm text-primary hover:underline">
           Try again
@@ -111,7 +111,7 @@ function ProfilePage() {
   if (profileQuery.isError) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
-        <h2 className="text-lg font-semibold text-foreground">Couldn't load your workshop</h2>
+        <h2 className="text-lg font-semibold text-foreground">Couldn't load your studio</h2>
         <p className="text-sm text-muted-foreground">
           {profileQuery.error?.message ?? "Something went wrong. Please try again."}
         </p>
@@ -125,7 +125,7 @@ function ProfilePage() {
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
       <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">
-        Setting up your workshop…
+        Setting up your studio…
       </div>
     );
   }
@@ -180,15 +180,15 @@ function ProfilePage() {
             />
             <AboutCard profile={profile} onChange={refresh} />
             <TextCard
-              title="Teaching style"
+              title="Sharing style"
               field="teaching_style"
               value={profile?.teaching_style ?? ""}
-              placeholder="How do you teach? Hands-on, project-based, async reviews…"
+              placeholder="How do you share? Hands-on, project-based, async reviews…"
               onChange={refresh}
               userId={userId}
             />
             <TextCard
-              title="Learning goals"
+              title="Growth goals"
               field="learning_goals"
               value={profile?.learning_goals ?? ""}
               placeholder="What do you want to unlock in the next 6 months?"
@@ -293,7 +293,7 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
   return (
     <SectionCard title="About" onEdit={() => setEditing(true)}>
       <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-        {profile?.bio || "Tell other creators who you are and what you make."}
+        {profile?.bio || "Tell other people who you are and what you make."}
       </p>
       {profile && profile.languages.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
@@ -418,7 +418,7 @@ function SkillEditingSection({
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <TeachSkillsCard
-        title="Skills I teach"
+        title="Skills I Share"
         icon={<GraduationCap className="h-4 w-4" />}
         selected={teachSkills}
         allSkills={allSkills}
@@ -426,7 +426,7 @@ function SkillEditingSection({
         onChange={onChange}
       />
       <SkillsCard
-        title="Currently learning"
+        title="Growing"
         accent="purple"
         icon={<BookOpen className="h-4 w-4" />}
         selected={learnSkills}

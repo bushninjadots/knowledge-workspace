@@ -66,10 +66,10 @@ type Tab = "projects" | "creators";
 export const Route = createFileRoute("/_authenticated/explore")({
   head: () => ({
     meta: [
-      { title: "Creative Studios — Tethyr" },
+      { title: "Explore — Tethyr" },
       {
         name: "description",
-        content: "Discover projects in progress and creators building them on Tethyr.",
+        content: "Discover projects in progress and the people building them on Tethyr.",
       },
     ],
   }),
@@ -151,10 +151,10 @@ function ExplorePage() {
   return (
     <div className="animate-room-enter mx-auto max-w-6xl p-4 md:p-8">
       <header className="mb-6">
-        <p className="text-xs uppercase tracking-wider text-primary/70">Creative Studios</p>
+        <p className="text-xs uppercase tracking-wider text-primary/70">Explore</p>
         <h1 className="font-display text-2xl font-semibold">What's being built right now</h1>
         <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-          Browse active projects, find creators to collaborate with, and discover what the community
+          Browse active projects, find people to collaborate with, and discover what the community
           is working on.
         </p>
       </header>
@@ -188,7 +188,7 @@ function ExplorePage() {
           }`}
         >
           <Users className="h-3.5 w-3.5" />
-          Creators
+          People
         </button>
       </div>
 
@@ -200,7 +200,7 @@ function ExplorePage() {
           onChange={(e) => setQ(e.target.value)}
           placeholder={
             tab === "projects"
-              ? "Search projects, tags, or creators…"
+              ? "Search projects, tags, or people…"
               : "Search by name, handle, craft…"
           }
           className="border-0 bg-transparent focus-visible:ring-0"
@@ -246,7 +246,7 @@ function ExplorePage() {
           <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 [column-fill:_var(--surface)]">
             {filteredProjects.map((project, i) => {
               const creatorName =
-                project.profiles?.display_name || project.profiles?.handle || "Creator";
+                project.profiles?.display_name || project.profiles?.handle || "Member";
               const creatorInitial = creatorName.charAt(0).toUpperCase();
               const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
               const isLarge = project.is_featured || (project.description?.length ?? 0) > 150;
@@ -316,7 +316,7 @@ function ExplorePage() {
       ) : filteredCreators.length === 0 ? (
         <EmptyState
           icon={<Compass className="h-5 w-5" />}
-          title="No creators match yet"
+          title="No people match yet"
           description="Try clearing filters or searching a different craft."
         />
       ) : (
@@ -336,10 +336,10 @@ function ExplorePage() {
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {c.display_name || c.handle || "Untitled creator"}
+                      {c.display_name || c.handle || "Untitled member"}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {c.creator_title || c.category || "New creator"}
+                      {c.creator_title || c.category || "New member"}
                     </p>
                   </div>
                 </div>

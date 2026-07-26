@@ -70,7 +70,7 @@ export function ConnectButton({
         <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Tethyr with {targetName ?? "this creator"}</DialogTitle>
+              <DialogTitle>Tethyr with {targetName ?? "this person"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
@@ -113,7 +113,7 @@ export function ConnectButton({
           size="sm"
           variant="ghost"
           onClick={() => {
-            if (!confirm("Untethyr this creator?")) return;
+            if (!confirm("Untethyr this person?")) return;
             remove.mutate(existing.id, {
               onSuccess: () => toast.success("Connection removed"),
               onError: (e: Error) => toast.error(e.message),

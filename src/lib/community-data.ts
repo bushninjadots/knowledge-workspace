@@ -25,7 +25,7 @@ export type Community = {
 
 export type ReputationBadge =
   | "Helpful Mentor"
-  | "Verified Teacher"
+  | "Verified Sharer"
   | "Project Builder"
   | "Community Contributor"
   | "Expert"
@@ -37,7 +37,7 @@ export type ReputationBadge =
 
 export const BADGE_STYLES: Record<ReputationBadge, string> = {
   "Helpful Mentor": "border-brand-green/40 bg-brand-green/10 text-brand-green",
-  "Verified Teacher": "border-primary/40 bg-primary/10 text-primary",
+  "Verified Sharer": "border-primary/40 bg-primary/10 text-primary",
   "Project Builder": "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
   "Community Contributor": "border-border bg-surface-elevated text-foreground",
   Expert: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
@@ -54,15 +54,15 @@ export const POST_TYPE_LABEL: Record<string, string> = {
   discussion: "Discussion",
   help_request: "Help Request",
   collaboration_request: "Collaboration Request",
-  progress_update: "Learning Progress",
+  progress_update: "Growth Progress",
   lesson_learned: "Lesson Learned",
   feedback_request: "Feedback Request",
   open_role: "Open Role",
 };
 
 export const DISCOVERY_FILTERS = [
-  "Learning",
-  "Teaching",
+  "Growing",
+  "Sharing",
   "Building",
   "Collaboration",
   "Mentorship",

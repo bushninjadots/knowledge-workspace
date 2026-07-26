@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: () => ({
     meta: [
       { title: "Profile — Tethyr" },
-      { name: "description", content: "View a creator's profile on Tethyr." },
+      { name: "description", content: "View a person's profile on Tethyr." },
     ],
   }),
   component: PublicProfilePage,
@@ -51,7 +51,7 @@ function PublicProfilePage() {
       <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
         <h2 className="text-lg font-semibold text-foreground">Profile not found</h2>
         <p className="text-sm text-muted-foreground">
-          This creator profile doesn't exist or isn't visible.
+          This profile doesn't exist or isn't visible.
         </p>
         <a href="/explore">
           <Button variant="outline">Back to explore</Button>

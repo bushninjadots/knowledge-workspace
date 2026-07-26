@@ -93,7 +93,7 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
       <EmptyState
         icon={<Award className="h-5 w-5" />}
         title="No achievements yet"
-        description="Earn badges by contributing, collaborating, and teaching on Tethyr."
+        description="Earn badges by contributing, collaborating, and sharing on Tethyr."
       />
     );
   }
@@ -113,7 +113,7 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
       <EmptyState
         icon={<Award className="h-5 w-5" />}
         title="No achievements yet"
-        description="Earn badges by contributing, collaborating, and teaching on Tethyr."
+        description="Earn badges by contributing, collaborating, and sharing on Tethyr."
       />
     );
   }

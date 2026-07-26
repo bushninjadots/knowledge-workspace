@@ -5,7 +5,7 @@ export const Route = createFileRoute("/_authenticated/sessions")({
   head: () => ({
     meta: [
       { title: "Sessions — Tethyr" },
-      { name: "description", content: "Manage your skill exchanges, mentoring, and meetings." },
+      { name: "description", content: "Manage your collaborations, mentoring, and meetings." },
     ],
   }),
   component: SessionsPage,

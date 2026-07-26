@@ -166,7 +166,7 @@ export function ProfileLayout({
                   <div className="flex items-start gap-3">
                     <div className="min-w-0">
                       <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                        {profile?.display_name || "Untitled creator"}
+                        {profile?.display_name || "Untitled member"}
                       </h1>
                       {profile?.creator_title && (
                         <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
@@ -236,7 +236,7 @@ export function ProfileLayout({
                       </Button>
                       <Button size="sm" variant="outline" className="rounded-full">
                         <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-                        Exchange Skills
+                        Collaborate
                       </Button>
                     </div>
                   )}
@@ -415,8 +415,8 @@ function ProfileSidebar({
       <div className="card-border rounded-3xl border bg-surface p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
         <div className="space-y-2.5">
-          <StatRow icon={GraduationCap} label="Skills taught" value={teachIds.length} />
-          <StatRow icon={BookOpen} label="Skills learning" value={learnIds.length} />
+          <StatRow icon={GraduationCap} label="Skills shared" value={teachIds.length} />
+          <StatRow icon={BookOpen} label="Growing" value={learnIds.length} />
           <StatRow icon={Sparkles} label="Projects" value={projects.length} />
           <StatRow icon={Calendar} label="Activity events" value={activity.length} />
           {profile?.reputation_score != null && (

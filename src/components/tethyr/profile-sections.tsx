@@ -1103,7 +1103,7 @@ function ProjectDialog({
             />
             <Toggle
               label="Looking for feedback"
-              description="Invite reviews from other creators"
+              description="Invite reviews from other people"
               checked={feedback}
               onChange={setFeedback}
             />

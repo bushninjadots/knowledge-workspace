@@ -82,7 +82,7 @@ export const Route = createFileRoute("/u/$handle")({
   ),
   notFoundComponent: () => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-muted-foreground">
-      No creator with that handle.
+      No person with that handle.
     </div>
   ),
 });
@@ -222,7 +222,7 @@ function PublicProfileRoute() {
   if (error || !data) {
     return (
       <Shell>
-        <div className="p-8 text-sm text-muted-foreground">Creator not found.</div>
+        <div className="p-8 text-sm text-muted-foreground">Person not found.</div>
       </Shell>
     );
   }
@@ -243,7 +243,7 @@ function PublicProfileRoute() {
             {bannerSigned ? (
               <img
                 src={bannerSigned}
-                alt={`${profile.display_name ?? "Creator"} banner`}
+                alt={`${profile.display_name ?? "Member"} banner`}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -265,7 +265,7 @@ function PublicProfileRoute() {
                 {avatarSigned ? (
                   <img
                     src={avatarSigned}
-                    alt={`${profile.display_name ?? "Creator"} avatar`}
+                    alt={`${profile.display_name ?? "Member"} avatar`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -281,7 +281,7 @@ function PublicProfileRoute() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                    {profile.display_name || "Untitled creator"}
+                    {profile.display_name || "Untitled member"}
                   </h1>
                   {profile.creator_title && (
                     <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
@@ -340,12 +340,12 @@ function PublicProfileRoute() {
 
         {/* ── Section 1: Skills They Teach (with endorsements) ── */}
         <SectionCard
-          title="Workshops"
-          subtitle="Skills they teach and can help you with"
+          title="Studios"
+          subtitle="Skills they share and can help you with"
           icon={<GraduationCap className="h-4 w-4" />}
         >
           {teachSkills.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Not sharing any workshops yet.</p>
+            <p className="text-sm text-muted-foreground">Not sharing any studios yet.</p>
           ) : (
             <div className="space-y-3">
               {teachSkills.map((s) => {
@@ -414,7 +414,7 @@ function PublicProfileRoute() {
         {/* ── Section 2: Project Contributions ── */}
         <SectionCard
           title="Contributions"
-          subtitle="Projects this creator has worked on"
+          subtitle="Projects this person has worked on"
           icon={
             <svg
               className="h-4 w-4"
