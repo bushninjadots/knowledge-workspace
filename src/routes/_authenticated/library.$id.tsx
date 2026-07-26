@@ -79,6 +79,9 @@ function LibraryItemPage() {
           setHasChanges(false);
           toast.success("Saved");
         },
+        onError: (err) => {
+          toast.error(`Save failed: ${err.message}`);
+        },
       },
     );
   }

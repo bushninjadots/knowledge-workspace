@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus, LayoutGrid, List, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ export const Route = createFileRoute("/_authenticated/library")({
 function LibraryPage() {
   const navigate = useNavigate();
   const createItem = useCreateItem();
+  const { location } = useRouterState();
+  const isChildRoute = location.pathname.startsWith("/library/");
 
   function handleNewNote() {
     createItem.mutate(
@@ -37,6 +39,10 @@ function LibraryPage() {
         },
       },
     );
+  }
+
+  if (isChildRoute) {
+    return <Outlet />;
   }
 
   return (
