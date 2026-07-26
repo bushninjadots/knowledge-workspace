@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -233,8 +233,6 @@ export function NoteEditor({
   onChange?: (html: string) => void;
   editable?: boolean;
 }) {
-  const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -262,10 +260,7 @@ export function NoteEditor({
     },
     onUpdate: ({ editor: e }) => {
       if (!onChange) return;
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      saveTimeout.current = setTimeout(() => {
-        onChange(e.getHTML());
-      }, 500);
+      onChange(e.getHTML());
     },
   });
 
