@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Pencil,
   Camera,
@@ -23,9 +23,18 @@ import {
   Target,
   Check,
   Search as SearchIcon,
+  Megaphone,
+  MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Until Supabase types are regenerated after migration, cast new columns
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -533,6 +542,9 @@ export function ProjectsCard({
 }) {
   const [editing, setEditing] = useState<ProjectRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+  const { data: me } = useCurrentUser();
+  const isOwn = me?.userId === userId;
 
   return (
     <SectionCard
@@ -617,14 +629,33 @@ export function ProjectsCard({
                   </div>
                 </div>
               </Link>
-              <button
-                type="button"
-                onClick={() => setEditing(p)}
-                aria-label="Edit project"
-                className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur transition hover:text-foreground group-hover:opacity-100"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
+              {isOwn && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Project options"
+                      className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur transition hover:text-foreground group-hover:opacity-100"
+                    >
+                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={() => setEditing(p)}>
+                      <Pencil className="mr-2 h-3.5 w-3.5" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate({ to: "/community", search: { attach_project: p.id } })
+                      }
+                    >
+                      <Megaphone className="mr-2 h-3.5 w-3.5" />
+                      Post to Community
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           ))}
         </div>
