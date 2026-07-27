@@ -42,6 +42,7 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAddComment } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
+import { ProjectCardInline } from "@/components/tethyr/community/project-card-inline";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -344,6 +345,16 @@ export function PostCard({
               <Handshake className="h-3 w-3" /> Looking for {role}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Attached project */}
+      {(post.project_id || post.project_snapshot) && (
+        <div className="mt-3">
+          <ProjectCardInline
+            project_id={post.project_id}
+            project_snapshot={post.project_snapshot}
+          />
         </div>
       )}
 
