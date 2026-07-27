@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown } from "lucide-react";
+import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -13,6 +13,7 @@ import { CommunityRightSidebar } from "@/components/tethyr/community/right-sideb
 import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   usePosts,
   useDeletePost,
@@ -24,12 +25,10 @@ import { useChallenges } from "@/hooks/use-challenges";
 import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
-import {
-  COMMUNITIES,
-  DISCOVERY_FILTERS,
-  POST_TYPE_LABEL,
-  type DiscoveryFocus,
-} from "@/lib/community-data";
+import { COMMUNITIES, DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
+import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
+import { CommunityCard } from "@/components/tethyr/community/community-card";
+import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
 
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
@@ -106,6 +105,9 @@ function CommunityPage() {
   const [sortMode, setSortMode] = useState<SortMode>("latest");
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
+  const { data: spaces = [], isLoading: isLoadingSpaces } = useCommunitySpaces();
+  const [createSpaceOpen, setCreateSpaceOpen] = useState(false);
+  const [spaceSearch, setSpaceSearch] = useState("");
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -347,16 +349,59 @@ function CommunityPage() {
               </div>
             )
           ) : nav === "communities" ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {COMMUNITIES.length === 0 ? (
-                <div className="col-span-full">
-                  <EmptyState
-                    icon={<Users className="h-5 w-5" />}
-                    title="No communities yet"
-                    description="Community spaces will appear here once they're created. Start a new one to bring people together."
+            <div>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={spaceSearch}
+                    onChange={(e) => setSpaceSearch(e.target.value)}
+                    placeholder="Search spaces..."
+                    className="h-9 rounded-xl border-border/60 bg-surface pl-9 pr-4 text-sm"
                   />
                 </div>
-              ) : null}
+                <Button
+                  size="sm"
+                  className="rounded-full shrink-0"
+                  onClick={() => setCreateSpaceOpen(true)}
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Create space
+                </Button>
+              </div>
+              {isLoadingSpaces ? (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse rounded-3xl border border-border/50 bg-card/60 p-5 h-32"
+                    />
+                  ))}
+                </div>
+              ) : spaces.length === 0 ? (
+                <EmptyState
+                  icon={<Users className="h-5 w-5" />}
+                  title="No communities yet"
+                  description="Be the first to create a community space and bring people together."
+                />
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {spaces
+                    .filter((s: CommunitySpace) =>
+                      spaceSearch.trim()
+                        ? s.name.toLowerCase().includes(spaceSearch.toLowerCase()) ||
+                          s.description.toLowerCase().includes(spaceSearch.toLowerCase())
+                        : true,
+                    )
+                    .map((space: CommunitySpace) => (
+                      <CommunityCard key={space.id} space={space} />
+                    ))}
+                </div>
+              )}
+              <CreateSpaceDialog
+                open={createSpaceOpen}
+                onOpenChange={setCreateSpaceOpen}
+              />
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
