@@ -26,3 +26,7 @@ CREATE POLICY "Users can follow others"
 CREATE POLICY "Users can unfollow others"
   ON public.follows FOR DELETE
   USING (auth.uid() = follower_id);
+
+-- Grants
+GRANT SELECT, INSERT, DELETE ON public.follows TO authenticated;
+GRANT ALL ON public.follows TO service_role;
