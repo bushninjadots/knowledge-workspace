@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useSearch } from "@tanstack/react-router";
 import {
   Rocket,
   HelpCircle,
@@ -16,14 +17,17 @@ import {
   Lightbulb,
   MessageSquareMore,
   UserPlus,
+  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useCreatePost, useUpdatePost, type PostWithAuthor, VALID_POST_TYPES } from "@/hooks/use-community";
+import { useCreatePost, useUpdatePost, type PostWithAuthor, VALID_POST_TYPES, type ProjectSnapshot } from "@/hooks/use-community";
 import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
+import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
+import { supabase } from "@/integrations/supabase/client";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -127,8 +131,48 @@ export function ComposerBar({
   const [showCodeInsert, setShowCodeInsert] = useState(false);
   const [codeLang, setCodeLang] = useState("JavaScript");
   const [focused, setFocused] = useState(false);
+  const [showAttachPanel, setShowAttachPanel] = useState(false);
+  const [attachedProject, setAttachedProject] = useState<{
+    projectId?: string;
+    snapshot: ProjectSnapshot;
+  } | null>(null);
+  const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Read ?attach_project param to pre-fill attachment
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const attachId = params.get("attach_project");
+    if (attachId && !attachedProject) {
+      (async () => {
+        const { data } = await supabase
+          .from("projects")
+          .select("id, title, description, status, stage")
+          .eq("id", attachId)
+          .single();
+        if (data) {
+          setAttachedProject({
+            projectId: data.id,
+            snapshot: {
+              name: data.title,
+              description: data.description,
+              platform: "tethyr",
+              url: `/projects/${data.id}`,
+              logo: null,
+              status: data.status,
+              stage: data.stage,
+            },
+          });
+          setShowAttachPanel(true);
+        }
+      })();
+      // Clean URL param
+      const url = new URL(window.location.href);
+      url.searchParams.delete("attach_project");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
 
   // Reset states when editingPost changes (switching between posts)
   useEffect(() => {
@@ -276,6 +320,9 @@ export function ComposerBar({
           community: me?.profile?.category || "General",
           space_id: spaceId ?? null,
           images: images.length > 0 ? images : undefined,
+          project_id: attachedProject?.projectId ?? null,
+          project_snapshot: attachedProject?.snapshot ?? null,
+          feedback_tags: feedbackTags.length > 0 ? feedbackTags : undefined,
         });
         toast.success("Posted to the community");
       }
@@ -283,6 +330,9 @@ export function ComposerBar({
       setTitle("");
       setType(null);
       setImages([]);
+      setAttachedProject(null);
+      setFeedbackTags([]);
+      setShowAttachPanel(false);
       localStorage.removeItem(DRAFT_KEY);
       onCancelEdit?.();
     } catch (err: any) {
@@ -362,6 +412,24 @@ export function ComposerBar({
         </div>
       )}
 
+      {showAttachPanel && (
+        <div className="mt-3">
+          <AttachProjectPanel
+            currentAttachment={attachedProject}
+            feedbackTags={feedbackTags}
+            onAttach={(projectId, snapshot) => {
+              setAttachedProject({ projectId: projectId ?? undefined, snapshot });
+              setShowAttachPanel(false);
+            }}
+            onRemove={() => {
+              setAttachedProject(null);
+              setFeedbackTags([]);
+            }}
+            onFeedbackTagsChange={setFeedbackTags}
+          />
+        </div>
+      )}
+
       {showCodeInsert && (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-2">
           <Code2 className="h-4 w-4 shrink-0 text-brand-purple" />
@@ -437,6 +505,17 @@ export function ComposerBar({
         >
           <Code2 className="h-3.5 w-3.5" />
           Code
+        </button>
+        <button
+          onClick={() => setShowAttachPanel((v) => !v)}
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
+            showAttachPanel || attachedProject
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          }`}
+        >
+          <Paperclip className="h-3.5 w-3.5" />
+          Project
         </button>
         <div className="mx-1 h-4 w-px bg-border/60" />
         {QUICK_ACTIONS.map((a) => {
