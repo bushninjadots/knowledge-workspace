@@ -25,15 +25,35 @@ export type PostType =
   | "open_role";
 
 export const VALID_POST_TYPES: Set<string> = new Set([
-  "showcase", "question", "project_update", "tutorial", "resource",
-  "achievement", "discussion", "help_request", "collaboration_request",
-  "progress_update", "lesson_learned", "feedback_request", "open_role",
+  "showcase",
+  "question",
+  "project_update",
+  "tutorial",
+  "resource",
+  "achievement",
+  "discussion",
+  "help_request",
+  "collaboration_request",
+  "progress_update",
+  "lesson_learned",
+  "feedback_request",
+  "open_role",
 ]);
 
 export type ProjectSnapshot = {
   name: string;
   description: string | null;
-  platform: "tethyr" | "github" | "gitlab" | "codeberg" | "figma" | "behance" | "dribbble" | "notion" | "website" | "other";
+  platform:
+    | "tethyr"
+    | "github"
+    | "gitlab"
+    | "codeberg"
+    | "figma"
+    | "behance"
+    | "dribbble"
+    | "notion"
+    | "website"
+    | "other";
   url: string;
   logo: string | null;
   status?: string;
@@ -236,7 +256,9 @@ export function useCreatePost() {
       if (!user) throw new Error("Not authenticated");
 
       if (!VALID_POST_TYPES.has(input.type)) {
-        throw new Error(`Invalid post type: "${input.type}". Please select a post type from the toolbar.`);
+        throw new Error(
+          `Invalid post type: "${input.type}". Please select a post type from the toolbar.`,
+        );
       }
 
       const { data, error } = await sb
@@ -280,7 +302,9 @@ export function useUpdatePost() {
     mutationFn: async (input: UpdatePostInput) => {
       const { id, ...updates } = input;
       if (updates.type && !VALID_POST_TYPES.has(updates.type)) {
-        throw new Error(`Invalid post type: "${updates.type}". Please select a post type from the toolbar.`);
+        throw new Error(
+          `Invalid post type: "${updates.type}". Please select a post type from the toolbar.`,
+        );
       }
       const { data, error } = await sb.from("posts").update(updates).eq("id", id).select().single();
 

@@ -73,7 +73,10 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
 
       return rows.map((r) => ({
         ...r,
-        author: (profileMap.get(r.author_id) as { display_name: string | null; handle: string | null }) ?? {
+        author: (profileMap.get(r.author_id) as {
+          display_name: string | null;
+          handle: string | null;
+        }) ?? {
           display_name: "Unknown",
           handle: "unknown",
         },

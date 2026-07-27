@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useSearch } from "@tanstack/react-router";
 import {
   Rocket,
   HelpCircle,
@@ -24,7 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useCreatePost, useUpdatePost, type PostWithAuthor, VALID_POST_TYPES, type ProjectSnapshot } from "@/hooks/use-community";
+import {
+  useCreatePost,
+  useUpdatePost,
+  type PostWithAuthor,
+  VALID_POST_TYPES,
+  type ProjectSnapshot,
+} from "@/hooks/use-community";
 import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
 import { supabase } from "@/integrations/supabase/client";

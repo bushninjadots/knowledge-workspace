@@ -11,13 +11,7 @@ import type { ProjectSnapshot } from "@/hooks/use-community";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
-const FEEDBACK_TAG_OPTIONS = [
-  "UI Design",
-  "Code Review",
-  "Performance",
-  "Architecture",
-  "General",
-];
+const FEEDBACK_TAG_OPTIONS = ["UI Design", "Code Review", "Performance", "Architecture", "General"];
 
 type Props = {
   onAttach: (projectId: string | null, snapshot: ProjectSnapshot) => void;
@@ -154,7 +148,9 @@ export function AttachProjectPanel({
             {loadingProjects ? (
               <p className="text-xs text-muted-foreground">Loading...</p>
             ) : myProjects.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No projects yet. Create one or attach an external URL.</p>
+              <p className="text-xs text-muted-foreground">
+                No projects yet. Create one or attach an external URL.
+              </p>
             ) : (
               <div className="max-h-48 space-y-1 overflow-y-auto">
                 {myProjects.map((p) => (
@@ -211,7 +207,11 @@ export function AttachProjectPanel({
             {fetchedSnapshot && (
               <div className="flex items-center gap-3 rounded-xl border border-border/60 p-2">
                 {fetchedSnapshot.logo ? (
-                  <img src={fetchedSnapshot.logo} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                  <img
+                    src={fetchedSnapshot.logo}
+                    alt=""
+                    className="h-8 w-8 rounded-lg object-cover"
+                  />
                 ) : (
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated text-xs">
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -219,7 +219,9 @@ export function AttachProjectPanel({
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{fetchedSnapshot.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{fetchedSnapshot.platform}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {fetchedSnapshot.platform}
+                  </p>
                 </div>
                 <Button size="sm" onClick={confirmExternal} className="shrink-0">
                   Attach
