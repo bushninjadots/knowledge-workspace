@@ -19,6 +19,7 @@ import {
   Twitch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FollowButton } from "@/components/tethyr/follow-button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
@@ -232,6 +233,7 @@ export function ProfileLayout({
                   {/* ACTION BUTTONS (public profile) */}
                   {!isOwnProfile && (
                     <div className="mt-4 flex flex-wrap gap-2">
+                      <FollowButton targetUserId={userId} />
                       <Button size="sm" className="rounded-full">
                         <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
                         Message

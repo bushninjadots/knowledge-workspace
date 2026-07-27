@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { ConnectButton } from "@/components/tethyr/connect-button";
+import { FollowButton } from "@/components/tethyr/follow-button";
 import {
   VerificationBadge,
   ExperienceBadge,
@@ -289,6 +290,7 @@ function PublicProfileRoute() {
                   <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <FollowButton targetUserId={profile.id} />
                   <ConnectButton
                     targetId={profile.id}
                     targetName={profile.display_name ?? profile.handle}
