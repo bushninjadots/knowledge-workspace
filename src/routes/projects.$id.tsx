@@ -19,6 +19,7 @@ import {
   Clock,
   Sparkles,
   BookOpen,
+  PenSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,6 +55,7 @@ import {
   ApplyToRoleButton,
   RoleApplicationsList,
 } from "@/components/tethyr/project/project-role-applications";
+import { ProjectCommunityPosts } from "@/components/tethyr/project/project-community-posts";
 
 type PersonLite = {
   id: string;
@@ -300,6 +302,16 @@ function ProjectPage() {
               >
                 {PROJECT_STATUS_LABEL[project.status]}
               </span>
+              {(isOwner || isContributor) && (
+                <Link
+                  to="/community"
+                  search={{ attach_project: id } as Record<string, string>}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/20"
+                >
+                  <PenSquare className="h-3 w-3" />
+                  Post to Community
+                </Link>
+              )}
             </div>
 
             {project.goal && (
@@ -554,6 +566,9 @@ function ProjectPage() {
             <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
           </div>
         )}
+
+        {/* Community Discussions — always visible */}
+        <ProjectCommunityPosts projectId={id} />
       </div>
     </Shell>
   );
