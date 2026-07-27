@@ -141,10 +141,12 @@ CREATE INDEX idx_space_members_user ON public.community_space_members(user_id);
 
 ```sql
 ALTER TABLE public.posts ADD COLUMN space_id uuid REFERENCES public.community_spaces(id) ON DELETE SET NULL;
+ALTER TABLE public.posts ADD COLUMN is_pinned boolean NOT NULL DEFAULT false;
 CREATE INDEX idx_posts_space ON public.posts(space_id);
+CREATE INDEX idx_posts_space_pinned ON public.posts(space_id, is_pinned) WHERE is_pinned = true;
 ```
 
-**Backwards compatibility:** The existing `community` text column is kept. A migration creates a "General" space and maps posts with `community != 'General'` to new spaces (orphaned text values are left as-is; only 'General' is migrated).
+**Backwards compatibility:** The existing `community` text column is kept. A migration creates a "General" space and maps posts with `community = 'General'` to that space. Posts with other community text values keep the text value but get `space_id = NULL`.
 
 **RLS update:** Posts remain publicly viewable (existing policy `true`). No space-membership restriction on reading posts — spaces organize content, not gate it.
 
@@ -162,7 +164,7 @@ CREATE INDEX idx_posts_space ON public.posts(space_id);
 | `useSpaceMembers(spaceId)` | Query | Member list with roles and profiles |
 | `useUpdateMemberRole()` | Mutation | Promotes/demotes members (owner only) |
 | `useRemoveMember()` | Mutation | Removes a member (owner/mod only) |
-| `usePinPost()` | Mutation | Pins a post to a space (sets `is_pinned` boolean on the post or a separate join table) |
+| `usePinPost()` | Mutation | Pins a post to a space (toggles `is_pinned` boolean on the posts table, scoped to the space; only owner/mod can pin) |
 | `useCommunitySpacePosts(spaceId)` | Query | Posts filtered by space_id, with pinned posts first |
 
 ### Components
