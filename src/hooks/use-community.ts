@@ -30,6 +30,19 @@ export const VALID_POST_TYPES: Set<string> = new Set([
   "progress_update", "lesson_learned", "feedback_request", "open_role",
 ]);
 
+export type ProjectSnapshot = {
+  name: string;
+  description: string | null;
+  platform: "tethyr" | "github" | "gitlab" | "codeberg" | "figma" | "behance" | "dribbble" | "notion" | "website" | "other";
+  url: string;
+  logo: string | null;
+  status?: string;
+  stage?: string;
+  stars?: number;
+  language?: string;
+  owner?: string;
+};
+
 export type PostRow = {
   id: string;
   author_id: string;
@@ -46,6 +59,9 @@ export type PostRow = {
   collaboration_data: Record<string, unknown> | null;
   progress_data: Record<string, unknown> | null;
   project_data: Record<string, unknown> | null;
+  project_id: string | null;
+  project_snapshot: ProjectSnapshot | null;
+  feedback_tags: string[];
   images: string[];
   space_id: string | null;
   is_pinned: boolean;
@@ -105,6 +121,9 @@ export type CreatePostInput = {
   collaboration_data?: Record<string, unknown> | null;
   progress_data?: Record<string, unknown> | null;
   project_data?: Record<string, unknown> | null;
+  project_id?: string | null;
+  project_snapshot?: ProjectSnapshot | null;
+  feedback_tags?: string[];
   space_id?: string | null;
 };
 
@@ -238,6 +257,9 @@ export function useCreatePost() {
           collaboration_data: input.collaboration_data ?? null,
           progress_data: input.progress_data ?? null,
           project_data: input.project_data ?? null,
+          project_id: input.project_id ?? null,
+          project_snapshot: input.project_snapshot ?? null,
+          feedback_tags: input.feedback_tags ?? [],
           space_id: input.space_id ?? null,
         })
         .select()

@@ -620,6 +620,42 @@ export function useDeclineRoleApplication() {
 }
 
 // ============================================================
+// My Projects (for project picker)
+// ============================================================
+
+export function useMyProjects() {
+  return useQuery({
+    queryKey: ["my-projects"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await sb
+        .from("projects")
+        .select("id, title, description, status, stage, cover_url")
+        .eq("profile_id", user.id)
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+      return (data ?? []) as {
+        id: string;
+        title: string;
+        description: string | null;
+        status: string;
+        stage: string;
+        cover_url: string | null;
+      }[];
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ============================================================
 // Project Stage
 // ============================================================
 
