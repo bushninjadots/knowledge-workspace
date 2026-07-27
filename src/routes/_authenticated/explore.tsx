@@ -2,8 +2,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Search, Users, Folder, ArrowRight, Zap } from "lucide-react";
+import { Compass, Search, Users, Folder, ArrowRight, Zap, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -150,13 +151,21 @@ function ExplorePage() {
 
   return (
     <div className="animate-room-enter mx-auto max-w-6xl p-4 md:p-8">
-      <header className="mb-6">
-        <p className="text-xs uppercase tracking-wider text-primary/70">Explore</p>
-        <h1 className="font-display text-2xl font-semibold">What's being built right now</h1>
-        <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-          Browse active projects, find people to collaborate with, and discover what the community
-          is working on.
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-primary/70">Explore</p>
+          <h1 className="font-display text-2xl font-semibold">What's being built right now</h1>
+          <p className="mt-1 max-w-lg text-sm text-muted-foreground">
+            Browse active projects, find people to collaborate with, and discover what the community
+            is working on.
+          </p>
+        </div>
+        <Button asChild variant="default" size="sm" className="shrink-0 rounded-full shadow-glow-green">
+          <Link to="/profile">
+            <Plus className="mr-1 h-4 w-4" />
+            Start a Project
+          </Link>
+        </Button>
       </header>
 
       {/* Tab bar */}

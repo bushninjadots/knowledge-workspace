@@ -11,6 +11,7 @@ import {
   LogOut,
   Search,
   Bell,
+  Plus,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,6 +143,20 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+
+      {/* Create Project button */}
+      <div className="mt-2 px-1">
+        <Link
+          to="/profile"
+          className="group flex items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-3 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:border-primary/60 hover:bg-primary/10"
+          onClick={onNavigate}
+        >
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/20">
+            <Plus className="h-3 w-3" />
+          </div>
+          <span>Create Project</span>
+        </Link>
+      </div>
 
       {/* User section */}
       <div className="mt-auto space-y-3 border-t border-border/60 pt-4">

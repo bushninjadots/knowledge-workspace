@@ -1,5 +1,8 @@
 import { Rocket } from "lucide-react";
-import { ProjectsCard } from "@/components/tethyr/profile-sections";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { ProjectsCard, ProjectDialog } from "@/components/tethyr/profile-sections";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import type { Skill } from "./profile-layout";
 
@@ -20,6 +23,8 @@ export function ProfileProjectsTab({
   onChange: () => void;
   isOwnProfile: boolean;
 }) {
+  const [creating, setCreating] = useState(false);
+
   return (
     <div className="card-border rounded-3xl border bg-surface p-6">
       <div className="mb-5 flex items-center justify-between">
@@ -28,6 +33,17 @@ export function ProfileProjectsTab({
           <h3 className="font-display text-base font-semibold">Projects</h3>
           <span className="text-xs text-muted-foreground">{projects.length} projects</span>
         </div>
+        {isOwnProfile && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-full"
+            onClick={() => setCreating(true)}
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            New
+          </Button>
+        )}
       </div>
       {projects.length === 0 ? (
         <div className="py-8 text-center">
@@ -47,6 +63,17 @@ export function ProfileProjectsTab({
           allSkills={skills}
           projectSkillIds={projectSkillIds}
           onChange={onChange}
+        />
+      )}
+      {isOwnProfile && (
+        <ProjectDialog
+          project={null}
+          userId={userId}
+          allSkills={skills}
+          initialSkillIds={[]}
+          open={creating}
+          onOpenChange={setCreating}
+          onSaved={onChange}
         />
       )}
     </div>

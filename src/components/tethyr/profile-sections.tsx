@@ -652,7 +652,7 @@ export function ProjectsCard({
 
 const PROJECT_STATUSES: ProjectStatus[] = ["planning", "active", "paused", "completed"];
 
-function ProjectDialog({
+export function ProjectDialog({
   project,
   userId,
   allSkills,
