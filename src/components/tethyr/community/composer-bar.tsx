@@ -111,9 +111,11 @@ function insertMarkdown(
 export function ComposerBar({
   editingPost,
   onCancelEdit,
+  spaceId,
 }: {
   editingPost?: PostWithAuthor | null;
   onCancelEdit?: () => void;
+  spaceId?: string | null;
 }) {
   const { data: me } = useCurrentUser();
   const createPost = useCreatePost();
@@ -272,6 +274,7 @@ export function ComposerBar({
           title: postTitle,
           body: bodyText,
           community: me?.profile?.category || "General",
+          space_id: spaceId ?? null,
           images: images.length > 0 ? images : undefined,
         });
         toast.success("Posted to the community");

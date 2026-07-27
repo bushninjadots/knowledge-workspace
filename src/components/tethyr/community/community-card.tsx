@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useJoinSpace, useLeaveSpace, type CommunitySpace } from "@/hooks/use-community-spaces";
 
-export function CommunityCard({ space }: { space: CommunitySpace }) {
+export function CommunityCard({ space, onClick }: { space: CommunitySpace; onClick?: () => void }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
 
@@ -27,7 +27,11 @@ export function CommunityCard({ space }: { space: CommunitySpace }) {
   const initial = space.name.charAt(0).toUpperCase();
 
   return (
-    <div className="group flex flex-col rounded-3xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl">
+    <button
+      type="button"
+      onClick={() => onClick?.()}
+      className="group flex flex-col rounded-3xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl text-left w-full"
+    >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
           {space.avatar_url ? (
@@ -62,6 +66,6 @@ export function CommunityCard({ space }: { space: CommunitySpace }) {
           {space.is_member ? "Joined" : "Join"}
         </Button>
       </div>
-    </div>
+    </button>
   );
 }

@@ -25,10 +25,12 @@ import { useChallenges } from "@/hooks/use-challenges";
 import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
-import { COMMUNITIES, DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
-import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
+import { DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
+import { useCommunitySpaces, useCommunitySpace, useCommunitySpacePosts, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { CommunityCard } from "@/components/tethyr/community/community-card";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
+import { SpaceHeader } from "@/components/tethyr/community/space-header";
+import { SpaceSettingsDialog } from "@/components/tethyr/community/space-settings-dialog";
 
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
@@ -108,6 +110,10 @@ function CommunityPage() {
   const { data: spaces = [], isLoading: isLoadingSpaces } = useCommunitySpaces();
   const [createSpaceOpen, setCreateSpaceOpen] = useState(false);
   const [spaceSearch, setSpaceSearch] = useState("");
+  const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
+  const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
+  const { data: spacePosts = [], isLoading: isLoadingSpacePosts } = useCommunitySpacePosts(activeSpace?.id ?? "");
+  const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -159,6 +165,8 @@ function CommunityPage() {
   const effectiveTypeFilter = NAV_TO_POST_TYPE[nav] ?? (nav === "home" ? typeFilter : null);
 
   const feed = useMemo(() => {
+    if (activeSpace) return spacePosts;
+
     let list = posts;
     if (nav === "saved") {
       list = list.filter((p) => savedIds.has(p.id));
@@ -194,7 +202,7 @@ function CommunityPage() {
     }
 
     return list;
-  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, followingFeed]);
+  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, followingFeed, activeSpace, spacePosts]);
 
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
@@ -252,9 +260,30 @@ function CommunityPage() {
             )}
           </header>
 
+          {activeSpace && (
+            <SpaceHeader
+              space={activeSpace}
+              myRole={activeSpace.my_role ?? null}
+              onBack={() => setActiveSpaceSlug(null)}
+              onOpenSettings={() => setSpaceSettingsOpen(true)}
+            />
+          )}
+
+          {activeSpace && spaceSettingsOpen && (
+            <SpaceSettingsDialog
+              space={activeSpace}
+              open={spaceSettingsOpen}
+              onOpenChange={setSpaceSettingsOpen}
+              onDeleted={() => {
+                setActiveSpaceSlug(null);
+                setSpaceSettingsOpen(false);
+              }}
+            />
+          )}
+
           {showComposer && (
             <div className="mb-6">
-              <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} />
+              <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} spaceId={activeSpace?.id} />
             </div>
           )}
 
@@ -394,7 +423,7 @@ function CommunityPage() {
                         : true,
                     )
                     .map((space: CommunitySpace) => (
-                      <CommunityCard key={space.id} space={space} />
+                      <CommunityCard key={space.id} space={space} onClick={() => { setActiveSpaceSlug(space.slug); setNav("home"); }} />
                     ))}
                 </div>
               )}

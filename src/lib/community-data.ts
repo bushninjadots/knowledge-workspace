@@ -74,8 +74,6 @@ export const DISCOVERY_FILTERS = [
 ] as const;
 export type DiscoveryFocus = (typeof DISCOVERY_FILTERS)[number];
 
-export const COMMUNITIES: Community[] = [];
-
 export const ACTIVE_LEARNING_GOALS: string[] = [];
 
 export const QUICK_ACTIONS: { type: string; label: string }[] = [

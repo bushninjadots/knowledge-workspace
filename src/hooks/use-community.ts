@@ -47,6 +47,8 @@ export type PostRow = {
   progress_data: Record<string, unknown> | null;
   project_data: Record<string, unknown> | null;
   images: string[];
+  space_id: string | null;
+  is_pinned: boolean;
   created_at: string;
   updated_at: string;
   // Joined from profiles
@@ -103,6 +105,7 @@ export type CreatePostInput = {
   collaboration_data?: Record<string, unknown> | null;
   progress_data?: Record<string, unknown> | null;
   project_data?: Record<string, unknown> | null;
+  space_id?: string | null;
 };
 
 export type UpdatePostInput = {
@@ -235,6 +238,7 @@ export function useCreatePost() {
           collaboration_data: input.collaboration_data ?? null,
           progress_data: input.progress_data ?? null,
           project_data: input.project_data ?? null,
+          space_id: input.space_id ?? null,
         })
         .select()
         .single();
