@@ -23,6 +23,7 @@ import {
 import { useChallenges } from "@/hooks/use-challenges";
 import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useFollowingFeed } from "@/hooks/use-follow";
 import {
   COMMUNITIES,
   DISCOVERY_FILTERS,
@@ -91,6 +92,7 @@ function CommunityPage() {
   const { data: me } = useCurrentUser();
   const { data: posts = [], isLoading } = usePosts();
   const { data: challenges = [], isLoading: isLoadingChallenges } = useChallenges("active");
+  const { data: followingFeed = [], isLoading: isLoadingFollowing } = useFollowingFeed();
   const deletePost = useDeletePost();
   const toggleAction = useTogglePostAction();
 
@@ -159,7 +161,7 @@ function CommunityPage() {
     if (nav === "saved") {
       list = list.filter((p) => savedIds.has(p.id));
     } else if (nav === "following") {
-      list = [];
+      list = followingFeed;
     } else {
       if (effectiveTypeFilter && effectiveTypeFilter !== "all") {
         list = list.filter((p) => p.type === effectiveTypeFilter);
@@ -190,7 +192,7 @@ function CommunityPage() {
     }
 
     return list;
-  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode]);
+  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, followingFeed]);
 
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
@@ -357,11 +359,49 @@ function CommunityPage() {
               ) : null}
             </div>
           ) : nav === "following" ? (
-            <EmptyState
-              icon={<Heart className="h-5 w-5" />}
-              title="Following is coming soon"
-              description="Once you follow collaborators, their posts will surface here first."
-            />
+            isLoadingFollowing ? (
+              <div className="flex flex-col gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-32 rounded bg-surface-elevated" />
+                        <div className="h-3 w-48 rounded bg-surface-elevated" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : followingFeed.length === 0 ? (
+              <EmptyState
+                icon={<Heart className="h-5 w-5" />}
+                title="You're not following anyone yet"
+                description="Follow collaborators to see their posts here. Visit a profile and click Follow to get started."
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {followingFeed.map((post, index) => (
+                  <PostCardWithComments
+                    key={post.id}
+                    post={post}
+                    saved={savedIds.has(post.id)}
+                    onToggleSave={() => toggleSave(post.id)}
+                    searchQuery={undefined}
+                    showComments={openComments.has(post.id)}
+                    onToggleComments={() => toggleComments(post.id)}
+                    onDelete={() => deletePostHandler(post.id)}
+                    onEdit={() => editPost(post)}
+                    onToggleAction={(action) => handleToggleAction(post.id, action)}
+                    className="transition-lift animate-stagger"
+                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+                  />
+                ))}
+              </div>
+            )
           ) : isLoading ? (
             <div className="flex flex-col gap-4">
               {[1, 2, 3].map((i) => (
