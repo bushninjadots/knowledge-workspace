@@ -224,9 +224,15 @@ export function PostCard({
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
             <span>{authorTitle}</span>
             <span aria-hidden>·</span>
-            <span className="rounded-full border border-border/60 px-1.5 py-0 text-[10px] uppercase tracking-wider">
-              {post.community}
-            </span>
+            {post.space_id ? (
+              <span className="rounded-full border border-brand-purple/40 bg-brand-purple/10 px-1.5 py-0 text-[10px] uppercase tracking-wider text-brand-purple">
+                Space
+              </span>
+            ) : (
+              <span className="rounded-full border border-border/60 px-1.5 py-0 text-[10px] uppercase tracking-wider">
+                {post.community}
+              </span>
+            )}
             <span aria-hidden>·</span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
