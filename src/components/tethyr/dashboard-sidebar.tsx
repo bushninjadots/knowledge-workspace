@@ -10,11 +10,13 @@ import {
   Settings,
   LogOut,
   Search,
+  Bell,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUnreadCounts } from "@/hooks/use-messages";
+import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
@@ -24,6 +26,7 @@ const rooms = [
   { to: "/explore", label: "Projects", sub: "Projects & people", icon: FolderOpen, live: true },
   { to: "/community", label: "Community", sub: "Open space", icon: Users, live: true },
   { to: "/messages", label: "Messages", sub: "Meeting table", icon: MessageSquare, live: true },
+  { to: "/notifications", label: "Notifications", sub: "Activity feed", icon: Bell, live: true },
   { to: "/profile", label: "Studio", sub: "Your skills", icon: GraduationCap, live: true },
   { to: "/sessions", label: "Sessions", sub: "Skill meetings", icon: Trophy, live: true },
   { to: "/library", label: "Library", sub: "Knowledge hub", icon: Compass, live: true },
@@ -33,6 +36,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { data: unread } = useUnreadCounts();
+  const { data: notifUnread = 0 } = useUnreadNotificationCount();
   const { data: me } = useCurrentUser();
   const updateAvailability = useUpdateAvailability();
 
@@ -102,7 +106,11 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           }
 
           const badge =
-            room.label === "Messages" && unread && unread.total > 0 ? unread.total : null;
+            room.label === "Messages" && unread && unread.total > 0
+              ? unread.total
+              : room.label === "Notifications" && notifUnread > 0
+                ? notifUnread
+                : null;
 
           return (
             <Link

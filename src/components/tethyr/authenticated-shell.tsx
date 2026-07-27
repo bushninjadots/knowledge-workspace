@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { NotificationDropdown } from "./notifications/notification-dropdown";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "@tanstack/react-router";
@@ -183,13 +184,16 @@ export function AuthenticatedShell() {
             <Menu className="h-5 w-5" />
           </button>
           <span className="font-display text-sm font-semibold">Tethyr</span>
-          <button
-            className="ml-auto rounded-full p-2 hover:bg-surface"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationDropdown />
+            <button
+              className="rounded-full p-2 hover:bg-surface"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
         </header>
 
         <main className="flex-1">
