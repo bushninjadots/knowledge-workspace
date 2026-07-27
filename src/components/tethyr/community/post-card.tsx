@@ -41,6 +41,7 @@ import {
 } from "@/lib/community-data";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAddComment } from "@/hooks/use-community";
+import { FollowButton } from "@/components/tethyr/follow-button";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -234,6 +235,7 @@ export function PostCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {!isOwner && <FollowButton targetUserId={post.author_id} size="sm" />}
           {isOwner && (
             <div className="flex items-center gap-1">
               <button
