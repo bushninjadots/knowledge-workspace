@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useEffect } from "react";
-import { ArrowRight, Compass, Sparkles, Clock, Zap, Folder, Plus } from "lucide-react";
+import { ArrowRight, Compass, Sparkles, Clock, Zap, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
@@ -158,19 +158,19 @@ function DashboardPage() {
             />
             <div className="mt-4 space-y-2">
               <QuickLink
-                to="/profile"
-                icon={<Plus className="h-4 w-4" />}
-                label="Create a project"
+                to="/explore"
+                icon={<Compass className="h-4 w-4" />}
+                label="Explore people"
               />
               <QuickLink
                 to="/community"
                 icon={<Sparkles className="h-4 w-4" />}
-                label="Post to community"
+                label="Community feed"
               />
               <QuickLink
-                to="/explore"
+                to="/skills/video-editing"
                 icon={<Compass className="h-4 w-4" />}
-                label="Explore people"
+                label="Browse studios"
               />
             </div>
           </section>
