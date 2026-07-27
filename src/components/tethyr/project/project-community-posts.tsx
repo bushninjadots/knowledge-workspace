@@ -1,0 +1,126 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { MessageCircle, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
+
+const POST_TYPE_LABEL: Record<string, string> = {
+  showcase: "Showcase",
+  question: "Question",
+  project_update: "Update",
+  tutorial: "Tutorial",
+  resource: "Resource",
+  achievement: "Achievement",
+  discussion: "Discussion",
+  help_request: "Help",
+  collaboration_request: "Collab",
+  progress_update: "Progress",
+  lesson_learned: "Lesson",
+  feedback_request: "Feedback",
+  open_role: "Open Role",
+};
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
+type PostLite = {
+  id: string;
+  title: string;
+  type: string;
+  author_id: string;
+  created_at: string;
+  author?: { display_name: string | null; handle: string | null };
+};
+
+export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
+  const { data: posts = [], isLoading } = useQuery({
+    queryKey: ["project-community-posts", projectId],
+    queryFn: async () => {
+      const { data: raw, error } = await sb
+        .from("posts")
+        .select("id, title, type, author_id, created_at")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+
+      const rows = (raw ?? []) as PostLite[];
+      if (rows.length === 0) return [];
+
+      const authorIds = [...new Set(rows.map((r) => r.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, handle")
+        .in("id", authorIds);
+
+      const profileMap = new Map(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return rows.map((r) => ({
+        ...r,
+        author: (profileMap.get(r.author_id) as { display_name: string | null; handle: string | null }) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+        },
+      }));
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="card-border rounded-3xl border bg-surface p-6">
+        <p className="text-sm text-muted-foreground">Loading community posts...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-border rounded-3xl border bg-surface p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
+        <MessageCircle className="h-4 w-4" />
+        Community Discussions
+      </div>
+      {posts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No community discussions yet. Be the first to post about this project.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {posts.map((post) => (
+            <Link
+              key={post.id}
+              to="/community"
+              className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-surface-elevated"
+            >
+              <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[10px] text-muted-foreground">
+                {POST_TYPE_LABEL[post.type] ?? post.type}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{post.title}</span>
+              <span className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Clock className="h-2.5 w-2.5" />
+                {timeAgo(post.created_at)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
