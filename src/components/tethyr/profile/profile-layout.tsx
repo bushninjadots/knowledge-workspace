@@ -135,10 +135,6 @@ export function ProfileLayout({
               ) : (
                 <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
               )}
-              <div
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent) 0%, color-mix(in srgb, var(--surface) 0%, transparent) 50%, var(--surface) 100%)" }}
-              />
             </div>
           )}
 
