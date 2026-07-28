@@ -215,41 +215,59 @@ export function useDeleteNotification() {
   });
 }
 
-// ---------- Realtime subscription ----------
+// ---------- Realtime subscription (singleton per user) ----------
+
+let activeChannel: ReturnType<typeof supabase.channel> | null = null;
+let activeUserId: string | null = null;
+let refCount = 0;
 
 export function useNotificationRealtime() {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (!meId) return;
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+
+    // If a channel already exists for a DIFFERENT user, tear it down
+    if (activeChannel && activeUserId !== meId) {
+      supabase.removeChannel(activeChannel);
+      activeChannel = null;
+      activeUserId = null;
+      refCount = 0;
     }
-    const channel = supabase.channel(`notifications:${meId}`);
-    channel.on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-        filter: `user_id=eq.${meId}`,
-      },
-      () => {
-        qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
-        qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
-        qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
-      },
-    );
-    channel.subscribe();
-    channelRef.current = channel;
+
+    refCount++;
+
+    // Only create + subscribe once per user
+    if (!activeChannel) {
+      const channel = supabase.channel(`notifications:${meId}`);
+      channel.on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${meId}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+          qc.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+          qc.invalidateQueries({ queryKey: BY_CATEGORY_KEY });
+        },
+      );
+      channel.subscribe();
+      activeChannel = channel;
+      activeUserId = meId;
+    }
+
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      refCount--;
+      if (refCount <= 0 && activeChannel) {
+        supabase.removeChannel(activeChannel);
+        activeChannel = null;
+        activeUserId = null;
+        refCount = 0;
       }
     };
   }, [meId, qc]);
