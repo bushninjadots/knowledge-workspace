@@ -20,7 +20,7 @@ const NOTIFICATION_CATEGORIES = [
     id: "project",
     label: "Projects",
     icon: FolderOpen,
-    matchTypes: ["project_invite", "project_join"],
+    matchTypes: ["project_invite", "project_join", "project_post"],
   },
   {
     id: "reputation",

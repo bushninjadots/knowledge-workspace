@@ -30,6 +30,7 @@ import {
   Lightbulb,
   MessageSquareMore,
   UserPlus,
+  Share2,
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
@@ -43,6 +44,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAddComment } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { ProjectCardInline } from "@/components/tethyr/community/project-card-inline";
+import { ShareSpaceDialog } from "@/components/tethyr/community/share-space-dialog";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -144,6 +146,8 @@ export function PostCard({
   onDelete,
   onEdit,
   onToggleAction,
+  highlighted,
+  shared_from_space,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -155,9 +159,12 @@ export function PostCard({
   onDelete?: () => void;
   onEdit?: () => void;
   onToggleAction?: (action: "like" | "helpful" | "offer") => void;
+  highlighted?: boolean;
+  shared_from_space?: string | null;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const isOwner = me?.userId === post.author_id;
   const liked = post.myActions.includes("like");
@@ -183,7 +190,11 @@ export function PostCard({
 
   return (
     <article
-      className={`card-border rounded-3xl border border-l-[3px] bg-surface p-5 sm:p-6 ${TYPE_BORDER[post.type]}`}
+      className={`card-border rounded-3xl border border-l-[3px] bg-surface p-5 sm:p-6 transition-all duration-500 ${TYPE_BORDER[post.type]} ${
+        highlighted
+          ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
+          : ""
+      }`}
     >
       {/* Header */}
       <div className="flex items-start gap-3">
@@ -232,6 +243,11 @@ export function PostCard({
             ) : (
               <span className="rounded-full border border-border/60 px-1.5 py-0 text-[10px] uppercase tracking-wider">
                 {post.community}
+              </span>
+            )}
+            {shared_from_space && (
+              <span className="rounded-full border border-blue-400/40 bg-blue-400/10 px-1.5 py-0 text-[10px] text-blue-400">
+                Shared from {shared_from_space}
               </span>
             )}
             <span aria-hidden>·</span>
@@ -473,6 +489,12 @@ export function PostCard({
           activeClass="text-brand-purple"
           onClick={onToggleSave}
         />
+        <ActionButton
+          icon={Share2}
+          label="Share"
+          count={0}
+          onClick={() => setShareDialogOpen(true)}
+        />
         <button
           onClick={() => onToggleAction?.("offer")}
           disabled={offered}
@@ -495,6 +517,13 @@ export function PostCard({
           isQuestion={post.type === "question"}
         />
       )}
+
+      <ShareSpaceDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        postId={post.id}
+        currentSpaceId={post.space_id}
+      />
     </article>
   );
 }

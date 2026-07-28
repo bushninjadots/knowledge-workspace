@@ -46,6 +46,7 @@ const NOTIFICATION_CONFIG: Record<
   achievement: { icon: Trophy, color: "text-amber-400", actionLabel: "Celebrate" },
   project_invite: { icon: FolderPlus, color: "text-green-400", actionLabel: "View" },
   project_join: { icon: Users, color: "text-green-400", actionLabel: "View Profile" },
+  project_post: { icon: MessageSquare, color: "text-blue-400", actionLabel: "View Post" },
   follow: { icon: Heart, color: "text-pink-400", actionLabel: "Follow Back" },
 };
 

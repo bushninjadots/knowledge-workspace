@@ -15,7 +15,7 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   message: ["message"],
   session: ["session_invite", "session_update"],
   community: ["comment", "mention", "follow"],
-  project: ["project_invite", "project_join"],
+  project: ["project_invite", "project_join", "project_post"],
   reputation: ["endorsement", "connection_request", "connection_accepted"],
   achievement: ["achievement"],
 };

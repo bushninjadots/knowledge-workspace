@@ -38,9 +38,29 @@ type PostLite = {
   title: string;
   type: string;
   author_id: string;
+  space_id: string | null;
   created_at: string;
   author?: { display_name: string | null; handle: string | null };
 };
+
+export function useProjectCommunityPostCount(projectId: string) {
+  return useQuery({
+    queryKey: ["project-community-post-count", projectId],
+    queryFn: async () => {
+      const { count, error } = await sb
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", projectId);
+      if (error) {
+        if (error.code === "42P01") return 0;
+        throw error;
+      }
+      return count ?? 0;
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
+  });
+}
 
 export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
   const { data: posts = [], isLoading } = useQuery({
@@ -48,7 +68,7 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
     queryFn: async () => {
       const { data: raw, error } = await sb
         .from("posts")
-        .select("id, title, type, author_id, created_at")
+        .select("id, title, type, author_id, space_id, created_at")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -71,8 +91,21 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
+      const spaceIds = [...new Set(rows.map((r) => r.space_id).filter(Boolean))] as string[];
+      let spaceSlugMap = new Map<string, string>();
+      if (spaceIds.length > 0) {
+        const { data: spaces } = await sb
+          .from("community_spaces")
+          .select("id, slug")
+          .in("id", spaceIds);
+        spaceSlugMap = new Map(
+          (spaces ?? []).map((s: { id: string; slug: string }) => [s.id, s.slug]),
+        );
+      }
+
       return rows.map((r) => ({
         ...r,
+        space_slug: r.space_id ? (spaceSlugMap.get(r.space_id) ?? null) : null,
         author: (profileMap.get(r.author_id) as {
           display_name: string | null;
           handle: string | null;
@@ -110,6 +143,12 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
             <Link
               key={post.id}
               to="/community"
+              search={
+                {
+                  post: post.id,
+                  ...(post.space_slug ? { space: post.space_slug } : {}),
+                } as Record<string, string>
+              }
               className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-surface-elevated"
             >
               <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[10px] text-muted-foreground">

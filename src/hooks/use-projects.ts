@@ -77,6 +77,7 @@ export type DiscussionRow = {
   body: string;
   category: "general" | "question" | "idea" | "feedback" | "announcement";
   is_pinned: boolean;
+  community_post_id: string | null;
   created_at: string;
   updated_at: string;
   author?: {

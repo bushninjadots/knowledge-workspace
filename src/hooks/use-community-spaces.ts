@@ -376,11 +376,59 @@ export function usePinPost() {
 
 import type { PostRow, PostWithAuthor } from "@/hooks/use-community";
 
+// ============================================================
+// Share / Unshare
+// ============================================================
+
+export function useSharePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { postId: string; spaceId: string }) => {
+      const { data: me } = await supabase.auth.getUser();
+      if (!me.user) throw new Error("Not authenticated");
+
+      const { error } = await sb.from("post_space_shares").insert({
+        post_id: input.postId,
+        space_id: input.spaceId,
+        shared_by: me.user.id,
+      });
+
+      if (error) throw error;
+    },
+    onSettled: (_data, _error, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(variables.spaceId) });
+    },
+  });
+}
+
+export function useUnsharePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { postId: string; spaceId: string }) => {
+      const { error } = await sb
+        .from("post_space_shares")
+        .delete()
+        .eq("post_id", input.postId)
+        .eq("space_id", input.spaceId);
+
+      if (error) throw error;
+    },
+    onSettled: (_data, _error, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(variables.spaceId) });
+    },
+  });
+}
+
+// ============================================================
+// Space Posts (includes shared posts)
+// ============================================================
+
 export function useCommunitySpacePosts(spaceId: string) {
   return useQuery({
     queryKey: SPACE_POSTS_KEY(spaceId),
     queryFn: async () => {
-      const { data: rawPosts, error } = await sb
+      // Fetch native posts for this space
+      const { data: rawNative, error: nativeErr } = await sb
         .from("posts")
         .select("*")
         .eq("space_id", spaceId)
@@ -388,17 +436,53 @@ export function useCommunitySpacePosts(spaceId: string) {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+      if (nativeErr) {
+        if (nativeErr.message?.includes("Could not find the table") || nativeErr.code === "42P01") {
           return [] as PostWithAuthor[];
         }
-        throw error;
+        throw nativeErr;
       }
 
-      const posts = rawPosts as PostRow[];
-      if (posts.length === 0) return [] as PostWithAuthor[];
+      // Fetch shared posts for this space
+      const { data: rawShares } = await sb
+        .from("post_space_shares")
+        .select("post_id")
+        .eq("space_id", spaceId);
 
-      const authorIds = [...new Set(posts.map((p) => p.author_id))];
+      const sharedPostIds = (rawShares ?? []).map((s: { post_id: string }) => s.post_id);
+
+      let sharedPosts: PostRow[] = [];
+      if (sharedPostIds.length > 0) {
+        const { data: rawShared } = await sb
+          .from("posts")
+          .select("*")
+          .in("id", sharedPostIds)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        sharedPosts = (rawShared ?? []) as PostRow[];
+      }
+
+      // Merge and deduplicate
+      const nativePosts = (rawNative ?? []) as PostRow[];
+      const seenIds = new Set(nativePosts.map((p) => p.id));
+      const allPosts = [
+        ...nativePosts,
+        ...sharedPosts.filter((p) => {
+          if (seenIds.has(p.id)) return false;
+          seenIds.add(p.id);
+          return true;
+        }),
+      ];
+
+      // Sort by pinned first, then by created_at
+      allPosts.sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      if (allPosts.length === 0) return [] as PostWithAuthor[];
+
+      const authorIds = [...new Set(allPosts.map((p) => p.author_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, display_name, handle, creator_title, category, avatar_url")
@@ -408,7 +492,7 @@ export function useCommunitySpacePosts(spaceId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      const postIds = posts.map((p) => p.id);
+      const postIds = allPosts.map((p) => p.id);
       const { data: rawActions } = await sb
         .from("post_actions")
         .select("post_id, action, user_id")
@@ -435,7 +519,10 @@ export function useCommunitySpacePosts(spaceId: string) {
         if (a.action === "offer") s.offers++;
       }
 
-      return posts.map((p): PostWithAuthor => ({
+      // Build shared-post-id set for the current space
+      const sharedIdSet = new Set(sharedPostIds);
+
+      return allPosts.map((p): PostWithAuthor & { is_shared?: boolean } => ({
         ...p,
         author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
           display_name: "Unknown",
@@ -446,6 +533,7 @@ export function useCommunitySpacePosts(spaceId: string) {
         },
         stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
         myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+        is_shared: sharedIdSet.has(p.id),
       }));
     },
     staleTime: 30_000,

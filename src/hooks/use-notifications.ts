@@ -18,6 +18,7 @@ export type NotificationType =
   | "achievement"
   | "project_invite"
   | "project_join"
+  | "project_post"
   | "follow";
 
 export interface Notification {

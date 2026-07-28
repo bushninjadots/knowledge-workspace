@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -26,7 +26,12 @@ import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
 import { DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
-import { useCommunitySpaces, useCommunitySpace, useCommunitySpacePosts, type CommunitySpace } from "@/hooks/use-community-spaces";
+import {
+  useCommunitySpaces,
+  useCommunitySpace,
+  useCommunitySpacePosts,
+  type CommunitySpace,
+} from "@/hooks/use-community-spaces";
 import { CommunityCard } from "@/components/tethyr/community/community-card";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
 import { SpaceHeader } from "@/components/tethyr/community/space-header";
@@ -38,8 +43,7 @@ export const Route = createFileRoute("/_authenticated/community")({
       { title: "Community — Tethyr" },
       {
         name: "description",
-        content:
-          "A space where people share ideas, ask for help, and collaborate on projects.",
+        content: "A space where people share ideas, ask for help, and collaborate on projects.",
       },
     ],
   }),
@@ -112,8 +116,38 @@ function CommunityPage() {
   const [spaceSearch, setSpaceSearch] = useState("");
   const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
   const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
-  const { data: spacePosts = [], isLoading: isLoadingSpacePosts } = useCommunitySpacePosts(activeSpace?.id ?? "");
+  const { data: spacePosts = [] } = useCommunitySpacePosts(activeSpace?.id ?? "");
   const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false);
+
+  // Deep-link: read ?post= and ?space= from URL
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const deepLinkedPostId = searchParams.post;
+  const deepLinkedSpaceSlug = searchParams.space;
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+
+  // If deep-linked to a space, auto-navigate to it
+  useEffect(() => {
+    if (deepLinkedSpaceSlug && deepLinkedSpaceSlug !== activeSpaceSlug) {
+      setActiveSpaceSlug(deepLinkedSpaceSlug);
+    }
+  }, [deepLinkedSpaceSlug, activeSpaceSlug]);
+
+  // If deep-linked to a post, highlight it after a short delay
+  useEffect(() => {
+    if (deepLinkedPostId) {
+      const timer = setTimeout(() => {
+        setHighlightedPostId(deepLinkedPostId);
+        const el = document.getElementById(`post-${deepLinkedPostId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        // Clear highlight after 3 seconds
+        const clearTimer = setTimeout(() => setHighlightedPostId(null), 3000);
+        return () => clearTimeout(clearTimer);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [deepLinkedPostId]);
 
   function toggleSave(id: string) {
     setSavedIds((prev) => {
@@ -202,7 +236,18 @@ function CommunityPage() {
     }
 
     return list;
-  }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, followingFeed, activeSpace, spacePosts]);
+  }, [
+    posts,
+    nav,
+    effectiveTypeFilter,
+    focusFilter,
+    savedIds,
+    searchQuery,
+    sortMode,
+    followingFeed,
+    activeSpace,
+    spacePosts,
+  ]);
 
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
@@ -217,13 +262,11 @@ function CommunityPage() {
           <header className="mb-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider text-primary/70">
-                  Community
-                </p>
+                <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
                 <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
                 <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-                  Share project updates, ask for help, request
-                  collaboration, or drop a resource. Every post has purpose.
+                  Share project updates, ask for help, request collaboration, or drop a resource.
+                  Every post has purpose.
                 </p>
               </div>
               <button
@@ -283,7 +326,11 @@ function CommunityPage() {
 
           {showComposer && (
             <div className="mb-6">
-              <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} spaceId={activeSpace?.id} />
+              <ComposerBar
+                editingPost={editingPost}
+                onCancelEdit={cancelEdit}
+                spaceId={activeSpace?.id}
+              />
             </div>
           )}
 
@@ -423,14 +470,18 @@ function CommunityPage() {
                         : true,
                     )
                     .map((space: CommunitySpace) => (
-                      <CommunityCard key={space.id} space={space} onClick={() => { setActiveSpaceSlug(space.slug); setNav("home"); }} />
+                      <CommunityCard
+                        key={space.id}
+                        space={space}
+                        onClick={() => {
+                          setActiveSpaceSlug(space.slug);
+                          setNav("home");
+                        }}
+                      />
                     ))}
                 </div>
               )}
-              <CreateSpaceDialog
-                open={createSpaceOpen}
-                onOpenChange={setCreateSpaceOpen}
-              />
+              <CreateSpaceDialog open={createSpaceOpen} onOpenChange={setCreateSpaceOpen} />
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
@@ -472,6 +523,7 @@ function CommunityPage() {
                     onToggleAction={(action) => handleToggleAction(post.id, action)}
                     className="transition-lift animate-stagger"
                     style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+                    highlighted={post.id === highlightedPostId}
                   />
                 ))}
               </div>
@@ -537,6 +589,7 @@ function CommunityPage() {
                   onToggleAction={(action) => handleToggleAction(post.id, action)}
                   className="transition-lift animate-stagger"
                   style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+                  highlighted={post.id === highlightedPostId}
                 />
               ))}
             </div>
@@ -595,6 +648,7 @@ function PostCardWithComments({
   onToggleAction,
   className,
   style,
+  highlighted,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -607,11 +661,12 @@ function PostCardWithComments({
   onToggleAction: (action: "like" | "helpful" | "offer") => void;
   className?: string;
   style?: React.CSSProperties;
+  highlighted?: boolean;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
   return (
-    <div className={className} style={style}>
+    <div id={`post-${post.id}`} className={className} style={style}>
       <PostCard
         post={post}
         saved={saved}
@@ -623,6 +678,7 @@ function PostCardWithComments({
         onDelete={onDelete}
         onEdit={onEdit}
         onToggleAction={onToggleAction}
+        highlighted={highlighted}
       />
     </div>
   );

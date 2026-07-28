@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, Trash2, Pin, MessageCircle, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Pin, MessageCircle, ChevronRight, ChevronDown, Users } from "lucide-react";
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -86,6 +86,16 @@ function DiscussionThread({
             >
               {CATEGORY_LABEL[discussion.category]}
             </span>
+            {discussion.community_post_id && (
+              <Link
+                to="/community"
+                search={{ post: discussion.community_post_id } as Record<string, string>}
+                className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-blue-400/10 px-2 py-0.5 text-[10px] font-medium text-blue-400 transition hover:bg-blue-400/20"
+              >
+                <Users className="h-2.5 w-2.5" />
+                Also on Community
+              </Link>
+            )}
             <h4 className="text-sm font-medium">{discussion.title}</h4>
           </div>
           <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">

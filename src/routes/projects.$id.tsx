@@ -56,6 +56,7 @@ import {
   RoleApplicationsList,
 } from "@/components/tethyr/project/project-role-applications";
 import { ProjectCommunityPosts } from "@/components/tethyr/project/project-community-posts";
+import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
 
 type PersonLite = {
   id: string;
@@ -225,6 +226,7 @@ function ProjectPage() {
   const { data: updates = [] } = useProjectUpdates(id);
   const { data: discussions = [] } = useDiscussions(id);
   const { data: openRoles = [] } = useOpenRoles(id);
+  const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
   if (isLoading) {
     return (
@@ -348,6 +350,16 @@ function ProjectPage() {
                 <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2.5 py-0.5 text-[var(--brand-purple)]">
                   <UserPlus className="h-3 w-3" /> Open to collaborators
                 </span>
+              )}
+              {communityPostCount > 0 && (
+                <Link
+                  to="/community"
+                  search={{ project: id } as Record<string, string>}
+                  className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-blue-400/10 px-2.5 py-0.5 text-xs text-blue-400 transition hover:bg-blue-400/20"
+                >
+                  <MessageCircle className="h-3 w-3" /> {communityPostCount} community post
+                  {communityPostCount !== 1 ? "s" : ""}
+                </Link>
               )}
             </div>
           </div>
