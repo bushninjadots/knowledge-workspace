@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Camera,
   MapPin,
@@ -95,8 +95,32 @@ export function ProfileLayout({
   tabContent: Record<Tab, React.ReactNode>;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [renderTab, setRenderTab] = useState<Tab>("overview");
+  const [phase, setPhase] = useState<"idle" | "folding" | "unfolding">("idle");
+  const nextTabRef = useRef<Tab>("overview");
   const [editOpen, setEditOpen] = useState(false);
   const accentColor = useDominantColor(bannerSigned);
+
+  const switchTab = (newTab: Tab) => {
+    if (newTab === activeTab || phase !== "idle") return;
+    nextTabRef.current = newTab;
+    setActiveTab(newTab);
+    setPhase("folding");
+  };
+
+  useEffect(() => {
+    if (phase === "folding") {
+      const t = setTimeout(() => {
+        setRenderTab(nextTabRef.current);
+        setPhase("unfolding");
+      }, 250);
+      return () => clearTimeout(t);
+    }
+    if (phase === "unfolding") {
+      const t = setTimeout(() => setPhase("idle"), 250);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
 
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
@@ -278,7 +302,7 @@ export function ProfileLayout({
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => switchTab(tab.id)}
                       className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition whitespace-nowrap ${
                         active
                           ? "bg-primary text-background"
@@ -294,7 +318,12 @@ export function ProfileLayout({
             </div>
 
             {/* TAB CONTENT */}
-            {tabContent[activeTab]}
+            <div
+              className={`${phase === "folding" ? "animate-fold-up" : phase === "unfolding" ? "animate-fold-down" : ""}`}
+              style={{ transformOrigin: "top center" }}
+            >
+              {tabContent[renderTab]}
+            </div>
           </div>
 
           {/* SIDEBAR */}

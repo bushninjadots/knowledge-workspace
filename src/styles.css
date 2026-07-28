@@ -252,6 +252,37 @@
   }
 }
 
+/* Paper-fold tab content animation */
+@keyframes fold-up {
+  from {
+    transform: perspective(800px) rotateX(0deg) scaleY(1);
+    opacity: 1;
+  }
+  to {
+    transform: perspective(800px) rotateX(-8deg) scaleY(0.02);
+    opacity: 0;
+  }
+}
+
+@keyframes fold-down {
+  from {
+    transform: perspective(800px) rotateX(8deg) scaleY(0.02);
+    opacity: 0;
+  }
+  to {
+    transform: perspective(800px) rotateX(0deg) scaleY(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-fold-up {
+  animation: fold-up 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@utility animate-fold-down {
+  animation: fold-down 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* Markdown prose styles for community posts */
 .prose-custom {
   & p {
