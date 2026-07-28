@@ -43,7 +43,7 @@
 2. Added `VALID_POST_TYPES` Set validation in `useCreatePost` and `useUpdatePost` mutations (defense-in-depth).
 3. Added localStorage draft sanitization in `composer-bar.tsx` — rejects and clears drafts with invalid types on page load.
 4. Added pre-submit type validation as a final safeguard before the mutation call.
-5. Fixed `trg_reputation_community_post` trigger — it had `IF NEW.type = 'post'` (dead code, never matched). Changed to log reputation for ALL post types.
+5. Fixed `trg_reputation_community_post` trigger — it had `IF NEW.type = 'post'` (dead code, never matched). Applied fix in `20260728100000_fix_reputation_trigger.sql` — now logs reputation for ALL post types.
 6. Regenerated Supabase types to include community tables and all 13 `post_type` values.
 
 **Important gotcha for future development:** `supabase db push` only applies to the **remote** database. After adding new migrations, always also apply them locally:
