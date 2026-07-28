@@ -6,3 +6,6 @@ ALTER TABLE public.posts
 
 CREATE INDEX IF NOT EXISTS posts_project_idx ON public.posts(project_id);
 CREATE INDEX IF NOT EXISTS posts_feedback_tags_idx ON public.posts USING GIN(feedback_tags);
+
+-- Notify PostgREST to reload schema
+NOTIFY pgrst, 'reload schema';
