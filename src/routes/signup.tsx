@@ -53,32 +53,36 @@ function SignupPage() {
       toast.error("Password must be at least 8 characters");
       return;
     }
-    const cleanHandleCheck = handle.replace(/^@/, "").trim();
-    if (!/^[a-zA-Z0-9_-]{1,30}$/.test(cleanHandleCheck)) {
+    const cleanHandle = handle.replace(/^@/, "").trim();
+    if (!/^[a-zA-Z0-9_-]{1,30}$/.test(cleanHandle)) {
       toast.error("Handle must be 1–30 characters: letters, numbers, _ or -");
       return;
     }
     setLoading(true);
-    const cleanHandle = handle.replace(/^@/, "").trim();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: {
-          display_name: name,
-          handle: cleanHandle,
-          craft,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            display_name: name,
+            handle: cleanHandle,
+            craft,
+          },
         },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Welcome to Tethyr ✨");
+      navigate({ to: "/dashboard" });
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    toast.success("Welcome to Tethyr ✨");
-    navigate({ to: "/dashboard" });
   }
 
   return (

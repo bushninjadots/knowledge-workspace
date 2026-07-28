@@ -244,9 +244,9 @@ function ProjectPage() {
   const otherContributors = contributors.filter((c) => c.role !== "creator");
   const isOwner = me?.userId === project.profile_id;
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
-  const timeSinceStart = formatDistanceToNowStrict(new Date(project.started_at), {
-    addSuffix: true,
-  });
+  const timeSinceStart = project.started_at
+    ? formatDistanceToNowStrict(new Date(project.started_at), { addSuffix: true })
+    : null;
   const links = Object.entries(project.links ?? {}).filter(([, url]) => !!url);
   const doneCount = milestones.filter((m) => m.status === "done").length;
 
@@ -328,9 +328,11 @@ function ProjectPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> Started {timeSinceStart}
-              </span>
+              {timeSinceStart && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> Started {timeSinceStart}
+                </span>
+              )}
               {otherContributors.length > 0 && (
                 <span className="inline-flex items-center gap-1">
                   <UsersIcon className="h-3.5 w-3.5" /> {otherContributors.length}{" "}

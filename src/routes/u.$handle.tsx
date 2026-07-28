@@ -231,6 +231,10 @@ function PublicProfileRoute() {
   const { profile, teachSkills, learnSkills, contributedProjects, avatarSigned, bannerSigned } =
     data;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
+  const languages = profile.languages ?? [];
+  const portfolioLinks = profile.portfolio_links ?? [];
+  const favouriteTools = profile.favourite_tools ?? [];
+  const softwareStack = profile.software_stack ?? [];
 
   return (
     <Shell accentColor={bannerAccent}>
@@ -312,9 +316,9 @@ function PublicProfileRoute() {
                     <Clock className="h-3.5 w-3.5" /> {profile.timezone}
                   </span>
                 )}
-                {profile.languages.length > 0 && (
+                {languages.length > 0 && (
                   <span className="inline-flex items-center gap-1">
-                    <Languages className="h-3.5 w-3.5" /> {profile.languages.join(", ")}
+                    <Languages className="h-3.5 w-3.5" /> {languages.join(", ")}
                   </span>
                 )}
                 {profile.reputation_score != null && profile.reputation_score > 0 && (
@@ -495,11 +499,10 @@ function PublicProfileRoute() {
           </SectionCard>
 
           {/* ── Section 4: Links and Social ── */}
-          {(profile.portfolio_links.length > 0 ||
-            Object.keys(profile.social_links ?? {}).length > 0) && (
+          {(portfolioLinks.length > 0 || Object.keys(profile.social_links ?? {}).length > 0) && (
             <SectionCard title="Links" icon={<LinkIcon className="h-4 w-4" />}>
               <div className="space-y-2">
-                {profile.portfolio_links.map((p, i) => (
+                {portfolioLinks.map((p, i) => (
                   <a
                     key={i}
                     href={safeHref(p.url)}
@@ -550,15 +553,15 @@ function PublicProfileRoute() {
             <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/80">
               {profile.bio}
             </p>
-            {(profile.favourite_tools.length > 0 || profile.software_stack.length > 0) && (
+            {(favouriteTools.length > 0 || softwareStack.length > 0) && (
               <div className="mt-4 space-y-2">
-                {profile.favourite_tools.length > 0 && (
+                {favouriteTools.length > 0 && (
                   <div>
                     <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       Tools
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {profile.favourite_tools.map((t) => (
+                      {favouriteTools.map((t) => (
                         <span
                           key={t}
                           className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"
@@ -569,13 +572,13 @@ function PublicProfileRoute() {
                     </div>
                   </div>
                 )}
-                {profile.software_stack.length > 0 && (
+                {softwareStack.length > 0 && (
                   <div>
                     <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       Stack
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {profile.software_stack.map((s) => (
+                      {softwareStack.map((s) => (
                         <span
                           key={s}
                           className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"

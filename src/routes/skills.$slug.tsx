@@ -70,7 +70,11 @@ function SkillPage() {
   const { slug } = useParams({ from: "/skills/$slug" });
   const [tab, setTab] = useState<TabId>("overview");
 
-  const { data: skill, isLoading: skillLoading } = useQuery({
+  const {
+    data: skill,
+    isLoading: skillLoading,
+    isError,
+  } = useQuery({
     queryKey: ["skill", slug],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -84,7 +88,7 @@ function SkillPage() {
     },
   });
 
-  if (skillLoading || !skill) {
+  if (skillLoading || (!skill && !isError)) {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl p-8">
@@ -93,6 +97,8 @@ function SkillPage() {
       </Shell>
     );
   }
+
+  if (!skill) return null;
 
   const categoryBadge = CATEGORY_BADGES[skill.category] ?? CATEGORY_BADGES["Creative"];
   const WorkshopIcon = WORKSHOP_ICONS[Math.abs(skill.name.charCodeAt(0)) % WORKSHOP_ICONS.length];
