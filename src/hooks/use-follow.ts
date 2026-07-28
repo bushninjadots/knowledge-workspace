@@ -139,7 +139,10 @@ export function useFollowingFeed() {
         .eq("follower_id", me.user.id);
 
       if (followError) {
-        if (followError.message?.includes("Could not find the table") || followError.code === "42P01") {
+        if (
+          followError.message?.includes("Could not find the table") ||
+          followError.code === "42P01"
+        ) {
           return [] as PostWithAuthor[];
         }
         throw followError;
@@ -156,7 +159,10 @@ export function useFollowingFeed() {
         .limit(50);
 
       if (postsError) {
-        if (postsError.message?.includes("Could not find the table") || postsError.code === "42P01") {
+        if (
+          postsError.message?.includes("Could not find the table") ||
+          postsError.code === "42P01"
+        ) {
           return [] as PostWithAuthor[];
         }
         throw postsError;
@@ -184,7 +190,10 @@ export function useFollowingFeed() {
 
       const myActions = actions.filter((a) => a.user_id === me.user.id);
 
-      const statsMap = new Map<string, { likes: number; helpful: number; saves: number; offers: number }>();
+      const statsMap = new Map<
+        string,
+        { likes: number; helpful: number; saves: number; offers: number }
+      >();
       for (const a of actions) {
         if (!statsMap.has(a.post_id)) {
           statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });

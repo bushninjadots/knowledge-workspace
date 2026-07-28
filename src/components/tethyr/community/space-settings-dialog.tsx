@@ -59,7 +59,11 @@ export function SpaceSettingsDialog({
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await updateSpace.mutateAsync({ id: space.id, name: name.trim(), description: description.trim() });
+      await updateSpace.mutateAsync({
+        id: space.id,
+        name: name.trim(),
+        description: description.trim(),
+      });
       toast.success("Space updated");
       onOpenChange(false);
     } catch {
@@ -89,11 +93,22 @@ export function SpaceSettingsDialog({
           <form onSubmit={handleSave} className="space-y-4 border-b border-border pb-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name</Label>
-              <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={50} />
+              <Input
+                id="edit-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={50}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-desc">Description</Label>
-              <Textarea id="edit-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={300} />
+              <Textarea
+                id="edit-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                maxLength={300}
+              />
             </div>
             <Button type="submit" size="sm" disabled={!name.trim() || updateSpace.isPending}>
               Save changes
@@ -134,7 +149,12 @@ export function SpaceSettingsDialog({
             ) : (
               <div className="flex items-center gap-3">
                 <p className="text-sm text-destructive">Are you sure? This cannot be undone.</p>
-                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteSpace.isPending}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteSpace.isPending}
+                >
                   Confirm
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
@@ -183,7 +203,12 @@ function MemberRow({
               → {ROLE_LABELS[role]}
             </Button>
           ))}
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive" onClick={onRemove}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-destructive"
+            onClick={onRemove}
+          >
             Remove
           </Button>
         </div>

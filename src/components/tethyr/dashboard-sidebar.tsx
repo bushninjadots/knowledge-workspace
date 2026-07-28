@@ -76,9 +76,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Room navigation */}
       <nav className="mt-5 flex flex-1 flex-col gap-0.5">
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
-          
-        </p>
+        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60"></p>
         {rooms.map((room, i) => {
           const Icon = room.icon;
           const isActive =

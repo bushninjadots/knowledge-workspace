@@ -8,7 +8,8 @@ export function Footer() {
         <div className="space-y-4 md:max-w-sm">
           <Logo variant="horizontal" size="md" />
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The collaborative home where people build together. Share, connect, and grow — skills for the love of building.
+            The collaborative home where people build together. Share, connect, and grow — skills
+            for the love of building.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
@@ -100,9 +101,7 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Tethyr. Connected by what you know.
           </p>
-          <p className="text-xs text-muted-foreground/50">
-            A trusted collaborative network
-          </p>
+          <p className="text-xs text-muted-foreground/50">A trusted collaborative network</p>
         </div>
       </div>
     </footer>

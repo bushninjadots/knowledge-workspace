@@ -114,7 +114,6 @@ export function ProfileLayout({
       <div className="space-y-6">
         {/* BANNER + HEADER */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
-
           {isOwnProfile ? (
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -128,7 +127,11 @@ export function ProfileLayout({
               style={{ borderColor: accentColor ?? "transparent" }}
             >
               {bannerSigned ? (
-                <img src={bannerSigned} alt="" className="h-full w-full object-cover object-center" />
+                <img
+                  src={bannerSigned}
+                  alt=""
+                  className="h-full w-full object-cover object-center"
+                />
               ) : (
                 <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
               )}
@@ -138,130 +141,130 @@ export function ProfileLayout({
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             {/* AVATAR */}
-                <div className="relative shrink-0 -mt-16 sm:-mt-20">
-                  {isOwnProfile ? (
-                    <DragDropFileInput
-                      accept="image/*"
-                      onFiles={(files) => {
-                        const file = files[0];
-                        if (file) {
-                          const dt = new DataTransfer();
-                          dt.items.add(file);
-                          const fakeEvent = {
-                            target: { files: dt.files },
-                          } as React.ChangeEvent<HTMLInputElement>;
-                          handleAvatarUpload(fakeEvent, userId, onChange);
-                        }
-                      }}
+            <div className="relative shrink-0 -mt-16 sm:-mt-20">
+              {isOwnProfile ? (
+                <DragDropFileInput
+                  accept="image/*"
+                  onFiles={(files) => {
+                    const file = files[0];
+                    if (file) {
+                      const dt = new DataTransfer();
+                      dt.items.add(file);
+                      const fakeEvent = {
+                        target: { files: dt.files },
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      handleAvatarUpload(fakeEvent, userId, onChange);
+                    }
+                  }}
+                >
+                  <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
+                    <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
+                  </div>
+                  <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105">
+                    <Camera className="h-4 w-4" />
+                  </button>
+                </DragDropFileInput>
+              ) : (
+                <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
+                  <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
+                </div>
+              )}
+            </div>
+
+            {/* IDENTITY */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0">
+                  <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
+                    {profile?.display_name || "Untitled member"}
+                  </h1>
+                  {profile?.creator_title && (
+                    <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+                  )}
+                  <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
+                </div>
+                {isOwnProfile && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto rounded-full"
+                    onClick={() => setEditOpen(true)}
+                    aria-label="Edit identity"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
                     >
-                      <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
-                        <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
-                      </div>
-                      <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105">
-                        <Camera className="h-4 w-4" />
-                      </button>
-                    </DragDropFileInput>
-                  ) : (
-                    <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
-                      <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
-                    </div>
-                  )}
-                </div>
-
-                {/* IDENTITY */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0">
-                      <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                        {profile?.display_name || "Untitled member"}
-                      </h1>
-                      {profile?.creator_title && (
-                        <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
-                      )}
-                      <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
-                    </div>
-                    {isOwnProfile && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto rounded-full"
-                        onClick={() => setEditOpen(true)}
-                        aria-label="Edit identity"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                          />
-                        </svg>
-                      </Button>
-                    )}
-                  </div>
-
-                  {profile?.bio && (
-                    <p className="mt-2 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                      {profile.bio}
-                    </p>
-                  )}
-
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    {profile?.category && <Chip>{profile.category}</Chip>}
-                    {profile?.years_experience != null && (
-                      <Chip>{profile.years_experience} yrs experience</Chip>
-                    )}
-                    {profile?.country && (
-                      <Chip>
-                        <MapPin className="mr-1 inline h-3 w-3" />
-                        {profile.country}
-                      </Chip>
-                    )}
-                    {profile?.timezone && (
-                      <Chip>
-                        <Clock className="mr-1 inline h-3 w-3" />
-                        {profile.timezone}
-                      </Chip>
-                    )}
-                  </div>
-
-                  {/* ACTION BUTTONS (public profile) */}
-                  {!isOwnProfile && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <FollowButton targetUserId={userId} />
-                      <Button size="sm" className="rounded-full">
-                        <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                        Message
-                      </Button>
-                      <Button size="sm" variant="outline" className="rounded-full">
-                        <Users className="mr-1.5 h-3.5 w-3.5" />
-                        Connect
-                      </Button>
-                      <Button size="sm" variant="outline" className="rounded-full">
-                        <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-                        Collaborate
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* COMPLETENESS (own) or REPUTATION (public) */}
-                <div className="shrink-0">
-                  {isOwnProfile ? (
-                    <CompletenessRing value={completeness} />
-                  ) : profile?.reputation_score != null && profile.reputation_score > 0 ? (
-                    <div className="space-y-2">
-                      <ReputationTierBadge score={profile.reputation_score} />
-                    </div>
-                  ) : null}
-                </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                      />
+                    </svg>
+                  </Button>
+                )}
               </div>
+
+              {profile?.bio && (
+                <p className="mt-2 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                  {profile.bio}
+                </p>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {profile?.category && <Chip>{profile.category}</Chip>}
+                {profile?.years_experience != null && (
+                  <Chip>{profile.years_experience} yrs experience</Chip>
+                )}
+                {profile?.country && (
+                  <Chip>
+                    <MapPin className="mr-1 inline h-3 w-3" />
+                    {profile.country}
+                  </Chip>
+                )}
+                {profile?.timezone && (
+                  <Chip>
+                    <Clock className="mr-1 inline h-3 w-3" />
+                    {profile.timezone}
+                  </Chip>
+                )}
+              </div>
+
+              {/* ACTION BUTTONS (public profile) */}
+              {!isOwnProfile && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <FollowButton targetUserId={userId} />
+                  <Button size="sm" className="rounded-full">
+                    <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                    Message
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    <Users className="mr-1.5 h-3.5 w-3.5" />
+                    Connect
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+                    Collaborate
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* COMPLETENESS (own) or REPUTATION (public) */}
+            <div className="shrink-0">
+              {isOwnProfile ? (
+                <CompletenessRing value={completeness} />
+              ) : profile?.reputation_score != null && profile.reputation_score > 0 ? (
+                <div className="space-y-2">
+                  <ReputationTierBadge score={profile.reputation_score} />
+                </div>
+              ) : null}
+            </div>
           </div>
+        </div>
 
         {/* TABS + CONTENT */}
         <div className="flex flex-col gap-6 lg:flex-row">

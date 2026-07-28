@@ -3,8 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
@@ -46,12 +45,9 @@ serve(async (req) => {
     if (githubMatch) {
       const [, owner, repo] = githubMatch;
       const cleanRepo = repo.replace(/\.git$/, "");
-      const apiRes = await fetch(
-        `https://api.github.com/repos/${owner}/${cleanRepo}`,
-        {
-          headers: { Accept: "application/vnd.github.v3+json" },
-        },
-      );
+      const apiRes = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}`, {
+        headers: { Accept: "application/vnd.github.v3+json" },
+      });
       if (apiRes.ok) {
         const data = await apiRes.json();
         result = {
@@ -72,9 +68,7 @@ serve(async (req) => {
       const gitlabMatch = url.match(/gitlab\.com\/(.+?)(?:\.git)?$/);
       if (gitlabMatch) {
         const projectPath = encodeURIComponent(gitlabMatch[1].replace(/\/$/, ""));
-        const apiRes = await fetch(
-          `https://gitlab.com/api/v4/projects/${projectPath}`,
-        );
+        const apiRes = await fetch(`https://gitlab.com/api/v4/projects/${projectPath}`);
         if (apiRes.ok) {
           const data = await apiRes.json();
           result = {
@@ -97,9 +91,7 @@ serve(async (req) => {
       if (codebergMatch) {
         const [, owner, repo] = codebergMatch;
         const cleanRepo = repo.replace(/\.git$/, "");
-        const apiRes = await fetch(
-          `https://codeberg.org/api/v1/repos/${owner}/${cleanRepo}`,
-        );
+        const apiRes = await fetch(`https://codeberg.org/api/v1/repos/${owner}/${cleanRepo}`);
         if (apiRes.ok) {
           const data = await apiRes.json();
           result = {
@@ -125,15 +117,9 @@ serve(async (req) => {
         });
         const html = await pageRes.text();
 
-        const ogTitle = html.match(
-          /<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i,
-        );
-        const ogDesc = html.match(
-          /<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i,
-        );
-        const ogImage = html.match(
-          /<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i,
-        );
+        const ogTitle = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+        const ogDesc = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+        const ogImage = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
 
         const hostname = new URL(url).hostname.replace("www.", "");
 

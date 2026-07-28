@@ -1,13 +1,34 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useNotifications, useNotificationRealtime } from "@/hooks/use-notifications";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationSidebar } from "@/components/tethyr/notifications/notification-sidebar";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
 import type { NotificationType } from "@/hooks/use-notifications";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
+  head: () => ({
+    meta: [{ title: "Notifications — Tethyr" }],
+  }),
   component: NotificationsPage,
+  errorComponent: ({ error }) => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Notifications unavailable</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error?.message ||
+            "Unable to load notifications. The notifications service may be temporarily unavailable."}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Button onClick={() => window.location.reload()}>Try again</Button>
+          <Link to="/dashboard">
+            <Button variant="outline">Go to Dashboard</Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  ),
 });
 
 const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {

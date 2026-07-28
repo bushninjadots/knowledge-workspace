@@ -1,7 +1,12 @@
 import { ArrowLeft, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useJoinSpace, useLeaveSpace, type CommunitySpace, type SpaceMemberRole } from "@/hooks/use-community-spaces";
+import {
+  useJoinSpace,
+  useLeaveSpace,
+  type CommunitySpace,
+  type SpaceMemberRole,
+} from "@/hooks/use-community-spaces";
 
 export function SpaceHeader({
   space,
@@ -37,7 +42,10 @@ export function SpaceHeader({
   return (
     <div className="mb-6 rounded-3xl border border-border/60 bg-card/70 p-6 backdrop-blur-sm">
       <div className="flex items-start gap-4">
-        <button onClick={onBack} className="mt-1 rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors">
+        <button
+          onClick={onBack}
+          className="mt-1 rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+        >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">

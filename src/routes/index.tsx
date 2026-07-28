@@ -42,7 +42,8 @@ function HomePage() {
               Where people <span className="text-gradient-brand">build together</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              Build together. Grow together. People share what they know, grow their skills, and become known through what they build together.
+              Build together. Grow together. People share what they know, grow their skills, and
+              become known through what they build together.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button
