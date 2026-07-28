@@ -270,6 +270,7 @@ export function NoteEditor({
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
   if (!editor) return null;

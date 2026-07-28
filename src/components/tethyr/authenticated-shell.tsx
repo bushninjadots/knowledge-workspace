@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useRouterState } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { NotificationDropdown } from "./notifications/notification-dropdown";

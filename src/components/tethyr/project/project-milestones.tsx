@@ -16,12 +16,6 @@ const STATUS_STYLE: Record<MilestoneRow["status"], string> = {
   pending: "text-muted-foreground",
 };
 
-const STATUS_BG: Record<MilestoneRow["status"], string> = {
-  done: "bg-brand-green",
-  in_progress: "bg-primary",
-  pending: "bg-muted-foreground/40",
-};
-
 export function MilestonesTimeline({
   milestones,
   projectId,

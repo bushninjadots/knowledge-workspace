@@ -157,7 +157,6 @@ export function useSendMessage(connectionId: string | null) {
 
 // ---------- Unread counts across all conversations ----------
 export function useUnreadCounts() {
-  const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
 

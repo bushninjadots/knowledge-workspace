@@ -177,6 +177,7 @@ export function ComposerBar({
       url.searchParams.delete("attach_project");
       window.history.replaceState({}, "", url.toString());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset states when editingPost changes (switching between posts)
@@ -185,6 +186,7 @@ export function ComposerBar({
     setTitle(editingPost?.title ?? "");
     setDraft(editingPost?.body ?? "");
     setImages(editingPost?.images ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPost?.id]);
 
   const name = me?.profile?.display_name || me?.profile?.handle || "You";

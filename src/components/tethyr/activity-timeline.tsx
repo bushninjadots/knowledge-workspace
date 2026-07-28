@@ -13,7 +13,6 @@ import {
   Flag,
   ThumbsUp,
   Users,
-  Award,
   Plus,
   Zap,
 } from "lucide-react";

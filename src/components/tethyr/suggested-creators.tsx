@@ -9,17 +9,6 @@ import { computeMatchScore, type SkillMeta, type AvailabilityStatus } from "@/li
 import { AvailabilityBadge } from "./availability-badge";
 import { EmptyState } from "./empty-state";
 
-type CandidateProfile = {
-  id: string;
-  handle: string | null;
-  display_name: string | null;
-  creator_title: string | null;
-  category: string | null;
-  avatar_url: string | null;
-  availability: AvailabilityStatus;
-  languages: string[];
-};
-
 type CandidateSkills = {
   profile_id: string;
   skill_id: string;

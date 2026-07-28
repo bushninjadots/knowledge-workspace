@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Plus, Trash2, FileText, Wrench, Video, BookOpen, Link2 } from "lucide-react";
+import { Plus, Trash2, FileText, Wrench, Video, BookOpen, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { safeHref } from "@/lib/validators";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";

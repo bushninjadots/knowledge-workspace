@@ -15,7 +15,6 @@ import {
   Figma,
   Sparkles,
   MessageCircle,
-  Users as UsersIcon,
   UserPlus,
   GraduationCap,
   ImageIcon,

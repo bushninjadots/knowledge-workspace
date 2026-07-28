@@ -37,8 +37,6 @@ export function ReputationScore({
 
 export function ReputationTierBadge({ score }: { score: number }) {
   const { current, next, progress } = getTierProgress(score);
-  const gradientId = `tier-${current.name}`;
-
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-3">
       <div className="relative h-12 w-12 shrink-0">

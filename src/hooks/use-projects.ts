@@ -196,7 +196,7 @@ export function useUpdateMilestone() {
       due_date?: string;
       position?: number;
     }) => {
-      const { id, projectId, ...updates } = input;
+      const { id, projectId: _projectId, ...updates } = input;
       const { error } = await sb.from("project_milestones").update(updates).eq("id", id);
       if (error) throw error;
     },

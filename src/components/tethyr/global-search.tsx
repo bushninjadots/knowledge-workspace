@@ -49,6 +49,7 @@ export function GlobalSearch({
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // PostgREST's .or() treats commas, parens, periods, and backslashes as

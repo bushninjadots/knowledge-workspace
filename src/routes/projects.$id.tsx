@@ -33,7 +33,6 @@ import {
   PROJECT_LINK_KEYS,
   PROJECT_STATUS_LABEL,
   PROJECT_STATUS_STYLE,
-  type ProjectStatus,
 } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -51,10 +50,7 @@ import { ProjectDiscussions } from "@/components/tethyr/project/project-discussi
 import { OpenRolesSection } from "@/components/tethyr/project/project-open-roles";
 import { GallerySection, ResourcesSection } from "@/components/tethyr/project/project-resources";
 import { ProjectTimeline } from "@/components/tethyr/project/project-timeline";
-import {
-  ApplyToRoleButton,
-  RoleApplicationsList,
-} from "@/components/tethyr/project/project-role-applications";
+// Role application components imported but not yet used in this route
 import { ProjectCommunityPosts } from "@/components/tethyr/project/project-community-posts";
 import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
 

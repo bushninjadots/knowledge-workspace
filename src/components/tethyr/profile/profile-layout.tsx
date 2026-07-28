@@ -422,7 +422,7 @@ function CompletenessRing({ value }: { value: number }) {
 
 function ProfileSidebar({
   profile,
-  userId,
+  userId: _userId,
   teachIds,
   learnIds,
   projects,

@@ -276,7 +276,7 @@ function WorkshopIllustration({
 }
 
 export function EmptyState({
-  icon,
+  icon: _icon,
   title,
   description,
   actionLabel,

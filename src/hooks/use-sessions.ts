@@ -132,7 +132,7 @@ async function fetchSessionsForUser(userId: string): Promise<SessionWithParticip
   return (data ?? []) as SessionWithParticipants[];
 }
 
-async function fetchTodaySessions(userId: string): Promise<SessionWithParticipants[]> {
+async function fetchTodaySessions(_userId: string): Promise<SessionWithParticipants[]> {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
@@ -148,7 +148,7 @@ async function fetchTodaySessions(userId: string): Promise<SessionWithParticipan
   return (data ?? []) as SessionWithParticipants[];
 }
 
-async function fetchUpcomingSessions(userId: string): Promise<SessionWithParticipants[]> {
+async function fetchUpcomingSessions(_userId: string): Promise<SessionWithParticipants[]> {
   const now = new Date().toISOString();
   const { data, error } = await sb
     .from("sessions")
@@ -559,7 +559,13 @@ export function useDeleteSessionResource() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ resourceId, sessionId }: { resourceId: string; sessionId: string }) => {
+    mutationFn: async ({
+      resourceId,
+      sessionId: _sessionId,
+    }: {
+      resourceId: string;
+      sessionId: string;
+    }) => {
       const { error } = await sb.from("session_resources").delete().eq("id", resourceId);
       if (error) throw error;
     },
@@ -577,7 +583,13 @@ export function useDeleteSessionNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ noteId, sessionId }: { noteId: string; sessionId: string }) => {
+    mutationFn: async ({
+      noteId,
+      sessionId: _sessionId,
+    }: {
+      noteId: string;
+      sessionId: string;
+    }) => {
       const { error } = await sb.from("session_notes").delete().eq("id", noteId);
       if (error) throw error;
     },
@@ -626,7 +638,7 @@ export function useUpdateParticipantStatus() {
     mutationFn: async ({
       participantId,
       status,
-      sessionId,
+      sessionId: _sessionId,
     }: {
       participantId: string;
       status: ParticipantStatus;

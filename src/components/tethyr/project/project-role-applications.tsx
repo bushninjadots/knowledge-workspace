@@ -60,7 +60,7 @@ export function useRoleApplications(roleId: string) {
 
 export function ApplyToRoleButton({
   roleId,
-  projectId,
+  projectId: _projectId,
   isOwner,
 }: {
   roleId: string;
