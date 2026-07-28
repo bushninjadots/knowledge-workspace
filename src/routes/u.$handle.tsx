@@ -238,7 +238,7 @@ function PublicProfileRoute() {
         {/* ── Hero: Studio Backdrop ── */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
           <div
-            className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
+            className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
             style={{ borderColor: bannerAccent ?? "transparent" }}
           >
             {bannerSigned ? (
@@ -250,7 +250,7 @@ function PublicProfileRoute() {
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
-            <div className="absolute inset-0 bg-linear-to-b from-surface/0 via-surface/40 to-surface" />
+            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
             <div className="absolute inset-0 bg-linear-to-r from-black/10 via-transparent to-transparent" />
             {profile.banner_caption && (
               <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur sm:max-w-xs">

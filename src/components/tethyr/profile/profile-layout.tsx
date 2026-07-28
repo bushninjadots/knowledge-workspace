@@ -123,7 +123,7 @@ export function ProfileLayout({
             />
           ) : (
             <div
-              className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
+              className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
               style={{ borderColor: accentColor ?? "transparent" }}
             >
               {bannerSigned ? (
@@ -135,7 +135,7 @@ export function ProfileLayout({
               ) : (
                 <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
               )}
-              <div className="absolute inset-0 bg-linear-to-b from-surface/0 via-surface/50 to-surface" />
+              <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-surface" />
             </div>
           )}
 
