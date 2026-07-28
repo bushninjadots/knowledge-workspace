@@ -250,8 +250,8 @@ function PublicProfileRoute() {
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-surface" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-b from-surface/0 via-surface/40 to-surface" />
+            <div className="absolute inset-0 bg-linear-to-r from-black/10 via-transparent to-transparent" />
             {profile.banner_caption && (
               <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur sm:max-w-xs">
                 {profile.banner_caption}

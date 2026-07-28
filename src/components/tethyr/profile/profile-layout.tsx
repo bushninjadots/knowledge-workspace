@@ -135,7 +135,7 @@ export function ProfileLayout({
               ) : (
                 <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
               )}
-              <div className="absolute inset-0 bg-linear-to-b from-transparent to-surface" />
+              <div className="absolute inset-0 bg-linear-to-b from-surface/0 via-surface/50 to-surface" />
             </div>
           )}
 
