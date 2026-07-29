@@ -200,6 +200,7 @@ function Thread({
     if (!body) return;
     setDraft("");
     send.mutate(body, {
+      onSuccess: () => toast.success("Message sent"),
       onError: (e: Error) => toast.error(e.message),
     });
   }

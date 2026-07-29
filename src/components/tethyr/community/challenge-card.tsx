@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 import { Trophy, Users, Calendar, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -28,9 +29,15 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
     e.preventDefault();
     e.stopPropagation();
     if (challenge.is_joined) {
-      leaveMutation.mutate(challenge.id);
+      leaveMutation.mutate(challenge.id, {
+        onSuccess: () => toast.success("Left challenge"),
+        onError: () => toast.error("Failed to leave challenge"),
+      });
     } else {
-      joinMutation.mutate(challenge.id);
+      joinMutation.mutate(challenge.id, {
+        onSuccess: () => toast.success("Joined challenge"),
+        onError: () => toast.error("Failed to join challenge"),
+      });
     }
   };
 

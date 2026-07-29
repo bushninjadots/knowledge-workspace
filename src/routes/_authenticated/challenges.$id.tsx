@@ -11,6 +11,7 @@ import {
   Sparkles,
   Award,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,9 +73,15 @@ function ChallengeDetailPage() {
 
   const handleToggleJoin = () => {
     if (challenge.is_joined) {
-      leaveMutation.mutate(challenge.id);
+      leaveMutation.mutate(challenge.id, {
+        onSuccess: () => toast.success("Left challenge"),
+        onError: () => toast.error("Failed to leave challenge"),
+      });
     } else {
-      joinMutation.mutate(challenge.id);
+      joinMutation.mutate(challenge.id, {
+        onSuccess: () => toast.success("Joined challenge"),
+        onError: () => toast.error("Failed to join challenge"),
+      });
     }
   };
 
@@ -83,6 +90,9 @@ function ChallengeDetailPage() {
       challengeId: challenge.id,
       status: "completed",
       progress: { note: notes, completed_at: new Date().toISOString() },
+    }, {
+      onSuccess: () => toast.success("Challenge marked as completed"),
+      onError: () => toast.error("Failed to update progress"),
     });
   };
 
@@ -235,7 +245,10 @@ function ChallengeDetailPage() {
                           </div>
                         ) : isAvailable ? (
                           <button
-                            onClick={() => updateProgressMutation.mutate({ challengeId: challenge.id, status: step as any })}
+                            onClick={() => updateProgressMutation.mutate({ challengeId: challenge.id, status: step as any }, {
+                              onSuccess: () => toast.success("Challenge status updated"),
+                              onError: () => toast.error("Failed to update challenge status"),
+                            })}
                             disabled={updateProgressMutation.isPending}
                             className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted-foreground hover:border-primary"
                           />

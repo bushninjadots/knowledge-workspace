@@ -414,10 +414,13 @@ function ParticipantActions({
         <Button
           size="sm"
           onClick={() =>
-            onUpdateParticipantStatus.mutateAsync({
+            onUpdateParticipantStatus.mutate({
               participantId,
               status: "accepted",
               sessionId,
+            }, {
+              onSuccess: () => toast.success("Invitation accepted"),
+              onError: () => toast.error("Failed to accept invitation"),
             })
           }
           disabled={onUpdateParticipantStatus.isPending}
@@ -430,10 +433,13 @@ function ParticipantActions({
           variant="destructive"
           size="sm"
           onClick={() =>
-            onUpdateParticipantStatus.mutateAsync({
+            onUpdateParticipantStatus.mutate({
               participantId,
               status: "declined",
               sessionId,
+            }, {
+              onSuccess: () => toast.success("Invitation declined"),
+              onError: () => toast.error("Failed to decline invitation"),
             })
           }
           disabled={onUpdateParticipantStatus.isPending}

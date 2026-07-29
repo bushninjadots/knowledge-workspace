@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import {
   MessageCircle,
   UserPlus,
@@ -85,31 +86,45 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
   const isConnectionRequest = notification.type === "connection_request";
 
   function handleMarkRead() {
-    markAsRead.mutate([notification.id]);
+    markAsRead.mutate([notification.id], {
+      onError: () => toast.error("Failed to mark as read"),
+    });
   }
 
   function handleArchive() {
-    archive.mutate(notification.id);
+    archive.mutate(notification.id, {
+      onError: () => toast.error("Failed to archive notification"),
+    });
   }
 
   function handleDelete() {
-    deleteNotif.mutate(notification.id);
+    deleteNotif.mutate(notification.id, {
+      onError: () => toast.error("Failed to delete notification"),
+    });
   }
 
   function handleAccept() {
     if (!notification.entity_id) return;
-    respondConnection.mutate({ id: notification.entity_id, status: "accepted" });
+    respondConnection.mutate({ id: notification.entity_id, status: "accepted" }, {
+      onSuccess: () => toast.success("Connection request accepted"),
+      onError: () => toast.error("Failed to accept connection request"),
+    });
     onNavigate?.(notification);
   }
 
   function handleDecline() {
     if (!notification.entity_id) return;
-    respondConnection.mutate({ id: notification.entity_id, status: "declined" });
+    respondConnection.mutate({ id: notification.entity_id, status: "declined" }, {
+      onSuccess: () => toast.success("Connection request declined"),
+      onError: () => toast.error("Failed to decline connection request"),
+    });
   }
 
   function handleClick() {
     if (!hasEntity && !isConnectionRequest) return;
-    if (isUnread) markAsRead.mutate([notification.id]);
+    if (isUnread) markAsRead.mutate([notification.id], {
+      onError: () => toast.error("Failed to mark as read"),
+    });
     onNavigate?.(notification);
   }
 
