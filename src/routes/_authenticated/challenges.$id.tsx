@@ -5,6 +5,7 @@ import {
   Users,
   Calendar,
   ArrowLeft,
+  Check,
   CheckCircle2,
   Clock,
   Sparkles,
@@ -195,7 +196,7 @@ function ChallengeDetailPage() {
       </Card>
 
       {/* Progress & Actions Section if Joined */}
-      {challenge.is_joined && (
+      {challenge.is_joined && challenge.my_participation && (
         <Card className="p-6 space-y-4 border-emerald-500/20 bg-emerald-500/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -203,41 +204,86 @@ function ChallengeDetailPage() {
               <h2 className="text-lg font-semibold">Your Challenge Status</h2>
             </div>
             <Badge variant="outline" className="capitalize bg-background">
-              {challenge.my_participation?.status || "joined"}
+              {challenge.my_participation.status || "joined"}
             </Badge>
           </div>
 
-          <Progress value={isCompleted ? 100 : 33} className="h-2" />
+          {(() => {
+            const myParticipation = challenge.my_participation!;
+            const STATUS_STEPS = ["joined", "in_progress", "completed"] as const;
+            const currentStepIndex = STATUS_STEPS.indexOf(myParticipation.status as typeof STATUS_STEPS[number]);
+            const progressPercent = currentStepIndex >= 0 ? (currentStepIndex / (STATUS_STEPS.length - 1)) * 100 : 0;
 
-          {!isCompleted ? (
-            <div className="space-y-3 pt-2">
-              <p className="text-xs text-muted-foreground">
-                Work on this challenge and mark it completed when you&apos;re done to earn
-                reputation points!
-              </p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Optional notes or repository link..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="flex-1 text-xs px-3 py-2 rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <Button
-                  size="sm"
-                  onClick={handleMarkComplete}
-                  disabled={isPending}
-                  className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Mark Completed
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 pt-1">
-              <CheckCircle2 className="h-4 w-4" /> Congratulations! You completed this challenge.
-            </p>
-          )}
+            return (
+              <>
+                <Progress value={progressPercent} className="mb-4" />
+
+                <div className="space-y-2">
+                  {STATUS_STEPS.map((step, i) => {
+                    const isCurrent = i === currentStepIndex;
+                    const isDone = i < currentStepIndex;
+                    const isAvailable = i === currentStepIndex + 1;
+                    return (
+                      <div key={step} className="flex items-center gap-3">
+                        {isDone ? (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check className="h-3 w-3" />
+                          </div>
+                        ) : isCurrent ? (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-primary">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          </div>
+                        ) : isAvailable ? (
+                          <button
+                            onClick={() => updateProgressMutation.mutate({ challengeId: challenge.id, status: step as any })}
+                            disabled={updateProgressMutation.isPending}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted-foreground hover:border-primary"
+                          />
+                        ) : (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted" />
+                        )}
+                        <span className={`text-sm capitalize ${isDone ? "text-muted-foreground line-through" : isCurrent ? "font-medium" : "text-muted-foreground"}`}>
+                          {step.replace("_", " ")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {myParticipation.status === "in_progress" && (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-xs text-muted-foreground">
+                      Work on this challenge and mark it completed when you&apos;re done to earn reputation points!
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="Optional notes or repository link..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="flex-1 text-xs px-3 py-2 rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleMarkComplete}
+                        disabled={updateProgressMutation.isPending}
+                        className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Mark Completed
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {myParticipation.status === "completed" && (
+                  <div className="mt-2 flex items-center gap-1 text-sm text-amber-600">
+                    <Award className="h-4 w-4" />
+                    <span>+15 reputation</span>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </Card>
       )}
 
