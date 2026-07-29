@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useNotifications, useNotificationRealtime } from "@/hooks/use-notifications";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationSidebar } from "@/components/tethyr/notifications/notification-sidebar";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
-import type { NotificationType } from "@/hooks/use-notifications";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { NotificationType, Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
@@ -41,9 +43,65 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   achievement: ["achievement"],
 };
 
+const TABS = [
+  { key: "all", label: "All" },
+  { key: "message", label: "Messages" },
+  { key: "session", label: "Sessions" },
+  { key: "community", label: "Community" },
+  { key: "project", label: "Projects" },
+  { key: "reputation", label: "Reputation" },
+  { key: "achievement", label: "Achievements" },
+] as const;
+
+function useNotificationNavigator() {
+  const navigate = useNavigate();
+
+  return function navigateToNotification(n: Notification) {
+    switch (n.type) {
+      case "message":
+        navigate({ to: "/messages" });
+        break;
+      case "comment":
+      case "mention":
+        navigate({ to: "/community" });
+        break;
+      case "session_invite":
+      case "session_update":
+        if (n.entity_id) {
+          navigate({ to: "/sessions/$id", params: { id: n.entity_id } });
+        } else {
+          navigate({ to: "/sessions" });
+        }
+        break;
+      case "achievement":
+        navigate({ to: "/profile" });
+        break;
+      case "endorsement":
+        navigate({ to: "/profile" });
+        break;
+      case "project_join":
+      case "project_post":
+        if (n.entity_id) {
+          navigate({ to: "/explore" });
+        } else {
+          navigate({ to: "/explore" });
+        }
+        break;
+      case "connection_request":
+      case "connection_accepted":
+      case "follow":
+        navigate({ to: "/profile" });
+        break;
+      default:
+        toast.info("This notification doesn't have a linked page yet.");
+    }
+  };
+}
+
 function NotificationsPage() {
   useNotificationRealtime();
   const [activeCategory, setActiveCategory] = useState("all");
+  const navigateToNotification = useNotificationNavigator();
 
   const types = CATEGORY_TYPE_MAP[activeCategory];
   const filterType = types && types.length === 1 ? types[0] : undefined;
@@ -52,7 +110,6 @@ function NotificationsPage() {
     filterType ? { type: filterType } : undefined,
   );
 
-  // For multi-type categories, filter client-side
   const notifications =
     types && types.length > 1
       ? allNotifications.filter((n) => types.includes(n.type))
@@ -62,17 +119,35 @@ function NotificationsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <NotificationHeader />
       <div className="mt-6 flex gap-8">
-        {/* Sidebar */}
         <aside className="hidden w-48 shrink-0 md:block">
           <NotificationSidebar
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
           />
         </aside>
-
-        {/* Feed */}
         <main className="min-w-0 flex-1">
-          <NotificationFeed notifications={notifications} isLoading={isLoading} />
+          <Tabs
+            value={activeCategory}
+            onValueChange={setActiveCategory}
+            className="mb-6"
+          >
+            <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
+              {TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.key}
+                  value={tab.key}
+                  className="whitespace-nowrap text-xs"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <NotificationFeed
+            notifications={notifications}
+            isLoading={isLoading}
+            onNavigate={navigateToNotification}
+          />
         </main>
       </div>
     </div>
