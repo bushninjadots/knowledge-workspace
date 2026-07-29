@@ -237,7 +237,11 @@ export function useJoinSpace() {
         role: "member",
       });
 
-      if (error) throw error;
+      if (error) {
+        // If already a member (duplicate key), treat as success
+        if (error.code === "23505") return;
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SPACES_KEY });
