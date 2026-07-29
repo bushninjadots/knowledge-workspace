@@ -663,3 +663,85 @@ export function useUpdateParticipantStatus() {
     },
   });
 }
+
+/* ───────── New Session Mutations ───────── */
+
+export function useSetSessionAvailability() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useMutation({
+    mutationFn: async (slots: { day_of_week: number; start_time: string; end_time: string; status: string }[]) => {
+      const { error: delError } = await sb
+        .from("session_availability")
+        .delete()
+        .eq("profile_id", userId);
+
+      if (delError) throw delError;
+
+      if (slots.length > 0) {
+        const { error: insError } = await sb
+          .from("session_availability")
+          .insert(slots.map((s) => ({ ...s, profile_id: userId, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })));
+
+        if (insError) throw insError;
+      }
+    },
+    onSuccess: () => {
+      if (userId) queryClient.invalidateQueries({ queryKey: sessionKeys.availability(userId) });
+    },
+  });
+}
+
+export function useCancelSessionRequest() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await sb
+        .from("session_requests")
+        .update({ status: "cancelled" })
+        .eq("id", requestId)
+        .eq("from_user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      if (userId) queryClient.invalidateQueries({ queryKey: sessionKeys.requests(userId) });
+    },
+  });
+}
+
+export function useSendSessionRequest() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useMutation({
+    mutationFn: async ({
+      toUserId,
+      sessionType,
+      message,
+      suggestedTime,
+    }: {
+      toUserId: string;
+      sessionType?: string;
+      message?: string;
+      suggestedTime?: string;
+    }) => {
+      const { error } = await sb.from("session_requests").insert({
+        from_user_id: userId,
+        to_user_id: toUserId,
+        session_type: sessionType || null,
+        message: message || null,
+        suggested_time: suggestedTime || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      if (userId) queryClient.invalidateQueries({ queryKey: sessionKeys.requests(userId) });
+    },
+  });
+}
