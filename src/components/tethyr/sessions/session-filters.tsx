@@ -35,7 +35,7 @@ export function SessionFilters({ filters, onChange }: SessionFiltersProps) {
           <SelectItem value="general">General</SelectItem>
         </SelectContent>
       </Select>
-      {(filters.search || filters.type) && (
+      {(filters.search || (filters.type && filters.type !== "all")) && (
         <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => onChange({ search: "", type: "" })}>
           Clear
         </Button>
