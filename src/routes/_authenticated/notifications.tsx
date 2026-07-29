@@ -37,7 +37,7 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   all: null,
   message: ["message"],
   session: ["session_invite", "session_update"],
-  community: ["comment", "mention", "follow"],
+  community: ["comment", "mention", "follow", "challenge_join", "challenge_complete"],
   project: ["project_invite", "project_join", "project_post"],
   reputation: ["endorsement", "connection_request", "connection_accepted"],
   achievement: ["achievement"],
@@ -87,6 +87,14 @@ function useNotificationNavigator() {
       case "connection_accepted":
       case "follow":
         navigate({ to: "/profile" });
+        break;
+      case "challenge_join":
+      case "challenge_complete":
+        if (n.entity_id) {
+          navigate({ to: "/challenges/$id", params: { id: n.entity_id } });
+        } else {
+          navigate({ to: "/community" });
+        }
         break;
       default:
         toast.info("This notification doesn't have a linked page yet.");

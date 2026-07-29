@@ -17,6 +17,8 @@ import {
   Trash2,
   UserCheck,
   UserX,
+  Swords,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +52,8 @@ const NOTIFICATION_CONFIG: Record<
   project_join: { icon: Users, color: "text-green-400" },
   project_post: { icon: MessageSquare, color: "text-blue-400" },
   follow: { icon: Heart, color: "text-pink-400" },
+  challenge_join: { icon: Swords, color: "text-orange-400" },
+  challenge_complete: { icon: Flag, color: "text-green-400" },
 };
 
 function timeAgo(dateStr: string): string {
