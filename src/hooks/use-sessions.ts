@@ -343,9 +343,9 @@ export function useUpcomingSessions() {
   });
 }
 
-export function useSessionStats() {
+export function useSessionStats(viewUserId?: string) {
   const { data: me } = useCurrentUser();
-  const userId = me?.userId;
+  const userId = viewUserId ?? me?.userId;
   return useQuery({
     queryKey: sessionKeys.stats(userId ?? ""),
     queryFn: () => fetchSessionStats(userId!),

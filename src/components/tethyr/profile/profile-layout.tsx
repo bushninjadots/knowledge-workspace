@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
+import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
+import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
@@ -121,6 +123,11 @@ export function ProfileLayout({
       return () => clearTimeout(t);
     }
   }, [phase]);
+
+  const { data: requestsData } = useSessionRequests();
+  const hasPendingRequest = (requestsData ?? []).some(
+    (r) => r.to_user_id === userId && r.status === "pending"
+  );
 
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
@@ -260,6 +267,11 @@ export function ProfileLayout({
               {!isOwnProfile && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <FollowButton targetUserId={userId} />
+                  <RequestSessionDialog
+                    toUserId={userId}
+                    toUserName={profile?.display_name ?? "User"}
+                    hasPendingRequest={hasPendingRequest}
+                  />
                   <Button size="sm" className="rounded-full">
                     <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
                     Message
