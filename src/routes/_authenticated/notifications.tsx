@@ -81,11 +81,7 @@ function useNotificationNavigator() {
         break;
       case "project_join":
       case "project_post":
-        if (n.entity_id) {
-          navigate({ to: "/explore" });
-        } else {
-          navigate({ to: "/explore" });
-        }
+        navigate({ to: "/explore" });
         break;
       case "connection_request":
       case "connection_accepted":
