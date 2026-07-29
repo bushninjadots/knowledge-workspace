@@ -36,7 +36,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
     } else {
       joinMutation.mutate(challenge.id, {
         onSuccess: () => toast.success("Joined challenge"),
-        onError: () => toast.error("Failed to join challenge"),
+        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
       });
     }
   };
