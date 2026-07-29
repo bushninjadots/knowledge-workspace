@@ -9,7 +9,6 @@ import {
   Trophy,
   Settings,
   LogOut,
-  Search,
   Bell,
 } from "lucide-react";
 import { Logo } from "./logo";
@@ -19,6 +18,7 @@ import { useUnreadCounts } from "@/hooks/use-messages";
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
+import { GlobalSearch } from "./global-search";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 
 const rooms = [
@@ -59,20 +59,9 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Quick search */}
-      <button
-        onClick={() => {
-          const searchEl = document.querySelector<HTMLInputElement>('[aria-label="Global search"]');
-          searchEl?.focus();
-        }}
-        className="mt-3 flex items-center gap-2.5 rounded-xl border border-border/40 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-all hover:border-border/60 hover:bg-surface/60 hover:text-foreground"
-        aria-label="Quick search"
-      >
-        <Search className="h-3.5 w-3.5" />
-        <span className="text-xs">Search the network…</span>
-        <kbd className="ml-auto rounded border border-border/60 bg-surface px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-          /
-        </kbd>
-      </button>
+      <div className="mt-3">
+        <GlobalSearch variant="inline" />
+      </div>
 
       {/* Room navigation */}
       <nav className="mt-5 flex flex-1 flex-col gap-0.5">
