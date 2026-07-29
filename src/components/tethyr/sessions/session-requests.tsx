@@ -1,10 +1,12 @@
 import { Check, X, Clock, MessageSquare } from "lucide-react";
 import type { SessionRequest } from "@/hooks/use-sessions";
-import { useRespondToRequest } from "@/hooks/use-sessions";
+import { useRespondToRequest, useCancelSessionRequest } from "@/hooks/use-sessions";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 function RequestCard({ request }: { request: SessionRequest }) {
   const respondToRequest = useRespondToRequest();
+  const cancelRequest = useCancelSessionRequest();
   const isIncoming = !!request.to_user_id;
   const otherUser = isIncoming ? request.from_user : request.to_user;
   const isPending = request.status === "pending";
@@ -86,9 +88,25 @@ function RequestCard({ request }: { request: SessionRequest }) {
         </div>
       )}
       {isPending && !isIncoming && (
-        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-          <Clock className="h-3 w-3" /> Waiting for response
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock className="h-3 w-3" /> Waiting for response
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              cancelRequest.mutate(request.id, {
+                onSuccess: () => toast.success("Request cancelled"),
+                onError: () => toast.error("Failed to cancel request"),
+              });
+            }}
+            disabled={cancelRequest.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            Cancel
+          </Button>
+        </div>
       )}
     </div>
   );
