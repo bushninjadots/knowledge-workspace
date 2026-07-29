@@ -93,12 +93,14 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
   }
 
   function handleAccept() {
-    respondConnection.mutate({ id: notification.entity_id!, status: "accepted" });
+    if (!notification.entity_id) return;
+    respondConnection.mutate({ id: notification.entity_id, status: "accepted" });
     onNavigate?.(notification);
   }
 
   function handleDecline() {
-    respondConnection.mutate({ id: notification.entity_id!, status: "declined" });
+    if (!notification.entity_id) return;
+    respondConnection.mutate({ id: notification.entity_id, status: "declined" });
   }
 
   function handleClick() {
