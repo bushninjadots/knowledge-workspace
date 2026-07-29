@@ -31,7 +31,7 @@ export function SpaceHeader({
     } else {
       joinSpace.mutate(space.id, {
         onSuccess: () => toast.success(`Joined ${space.name}!`),
-        onError: () => toast.error("Failed to join"),
+        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
       });
     }
   }
