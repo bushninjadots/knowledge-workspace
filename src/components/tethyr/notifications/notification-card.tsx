@@ -15,7 +15,8 @@ import {
   Check,
   Archive,
   Trash2,
-  ExternalLink,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,25 +30,26 @@ import {
   useArchiveNotification,
   useDeleteNotification,
 } from "@/hooks/use-notifications";
+import { useRespondConnection } from "@/hooks/use-connections";
 import type { Notification, NotificationType } from "@/hooks/use-notifications";
 
 const NOTIFICATION_CONFIG: Record<
   NotificationType,
-  { icon: typeof MessageCircle; color: string; actionLabel: string; actionTo?: string }
+  { icon: typeof MessageCircle; color: string }
 > = {
-  message: { icon: MessageCircle, color: "text-blue-400", actionLabel: "Reply" },
-  connection_request: { icon: UserPlus, color: "text-green-400", actionLabel: "View" },
-  connection_accepted: { icon: CheckCircle, color: "text-green-400", actionLabel: "View Profile" },
-  session_invite: { icon: CalendarPlus, color: "text-purple-400", actionLabel: "View" },
-  session_update: { icon: CalendarClock, color: "text-purple-400", actionLabel: "Join Session" },
-  comment: { icon: MessageSquare, color: "text-blue-400", actionLabel: "View Thread" },
-  mention: { icon: AtSign, color: "text-orange-400", actionLabel: "Reply" },
-  endorsement: { icon: Star, color: "text-yellow-400", actionLabel: "View" },
-  achievement: { icon: Trophy, color: "text-amber-400", actionLabel: "Celebrate" },
-  project_invite: { icon: FolderPlus, color: "text-green-400", actionLabel: "View" },
-  project_join: { icon: Users, color: "text-green-400", actionLabel: "View Profile" },
-  project_post: { icon: MessageSquare, color: "text-blue-400", actionLabel: "View Post" },
-  follow: { icon: Heart, color: "text-pink-400", actionLabel: "Follow Back" },
+  message: { icon: MessageCircle, color: "text-blue-400" },
+  connection_request: { icon: UserPlus, color: "text-green-400" },
+  connection_accepted: { icon: CheckCircle, color: "text-green-400" },
+  session_invite: { icon: CalendarPlus, color: "text-purple-400" },
+  session_update: { icon: CalendarClock, color: "text-purple-400" },
+  comment: { icon: MessageSquare, color: "text-blue-400" },
+  mention: { icon: AtSign, color: "text-orange-400" },
+  endorsement: { icon: Star, color: "text-yellow-400" },
+  achievement: { icon: Trophy, color: "text-amber-400" },
+  project_invite: { icon: FolderPlus, color: "text-green-400" },
+  project_join: { icon: Users, color: "text-green-400" },
+  project_post: { icon: MessageSquare, color: "text-blue-400" },
+  follow: { icon: Heart, color: "text-pink-400" },
 };
 
 function timeAgo(dateStr: string): string {
@@ -63,17 +65,20 @@ function timeAgo(dateStr: string): string {
 
 interface NotificationCardProps {
   notification: Notification;
-  onAction?: (notification: Notification) => void;
+  onNavigate?: (notification: Notification) => void;
 }
 
-export function NotificationCard({ notification, onAction }: NotificationCardProps) {
+export function NotificationCard({ notification, onNavigate }: NotificationCardProps) {
   const markAsRead = useMarkAsRead();
   const archive = useArchiveNotification();
   const deleteNotif = useDeleteNotification();
+  const respondConnection = useRespondConnection();
 
   const config = NOTIFICATION_CONFIG[notification.type];
   const Icon = config.icon;
   const isUnread = !notification.read_at;
+  const hasEntity = !!notification.entity_id;
+  const isConnectionRequest = notification.type === "connection_request";
 
   function handleMarkRead() {
     markAsRead.mutate([notification.id]);
@@ -87,22 +92,46 @@ export function NotificationCard({ notification, onAction }: NotificationCardPro
     deleteNotif.mutate(notification.id);
   }
 
+  function handleAccept() {
+    respondConnection.mutate({ id: notification.entity_id!, status: "accepted" });
+    onNavigate?.(notification);
+  }
+
+  function handleDecline() {
+    respondConnection.mutate({ id: notification.entity_id!, status: "declined" });
+  }
+
+  function handleClick() {
+    if (!hasEntity && !isConnectionRequest) return;
+    if (isUnread) markAsRead.mutate([notification.id]);
+    onNavigate?.(notification);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick();
+    }
+  }
+
   return (
     <div
+      role={isConnectionRequest ? "article" : "button"}
+      tabIndex={isConnectionRequest ? -1 : 0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-all duration-200 ${
         isUnread
           ? "border-l-2 border-l-primary border-border/40 bg-surface-elevated/50"
           : "border-border/40 bg-surface/40 opacity-75 hover:opacity-100"
-      } hover:shadow-lifted hover:-translate-y-0.5`}
+      } ${!isConnectionRequest ? "cursor-pointer hover:shadow-lifted hover:-translate-y-0.5" : ""} ${!hasEntity && !isConnectionRequest ? "opacity-50 cursor-not-allowed" : ""}`}
     >
-      {/* Icon */}
       <div
         className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface ${config.color}`}
       >
         <Icon className="h-4 w-4" />
       </div>
 
-      {/* Content */}
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-snug">
           <span className="font-medium text-foreground">{notification.title}</span>
@@ -114,24 +143,40 @@ export function NotificationCard({ notification, onAction }: NotificationCardPro
           <span className="text-[11px] text-muted-foreground/70">
             {timeAgo(notification.created_at)}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-[11px] text-primary hover:text-primary/80"
-            onClick={() => onAction?.(notification)}
-          >
-            {config.actionLabel}
-            <ExternalLink className="ml-1 h-3 w-3" />
-          </Button>
+          {!hasEntity && !isConnectionRequest && (
+            <span className="text-[11px] text-muted-foreground/40 italic">
+              No longer available
+            </span>
+          )}
+          {isConnectionRequest && notification.entity_id && (
+            <div className="ml-auto flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px] text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                onClick={(e) => { e.stopPropagation(); handleAccept(); }}
+              >
+                <UserCheck className="mr-1 h-3 w-3" />
+                Accept
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={(e) => { e.stopPropagation(); handleDecline(); }}
+              >
+                <UserX className="mr-1 h-3 w-3" />
+                Decline
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Unread dot */}
       {isUnread && (
         <div className="absolute right-12 top-4 h-2 w-2 rounded-full bg-primary animate-gentle-pulse" />
       )}
 
-      {/* More menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

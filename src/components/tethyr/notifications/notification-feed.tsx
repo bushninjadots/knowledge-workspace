@@ -40,10 +40,10 @@ function groupByTime(notifications: Notification[]): { label: string; items: Not
 interface NotificationFeedProps {
   notifications: Notification[];
   isLoading: boolean;
-  onAction?: (n: Notification) => void;
+  onNavigate?: (n: Notification) => void;
 }
 
-export function NotificationFeed({ notifications, isLoading, onAction }: NotificationFeedProps) {
+export function NotificationFeed({ notifications, isLoading, onNavigate }: NotificationFeedProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -82,7 +82,7 @@ export function NotificationFeed({ notifications, isLoading, onAction }: Notific
           </div>
           <div className="space-y-2">
             {group.items.map((n) => (
-              <NotificationCard key={n.id} notification={n} onAction={onAction} />
+              <NotificationCard key={n.id} notification={n} onNavigate={onNavigate} />
             ))}
           </div>
         </div>
