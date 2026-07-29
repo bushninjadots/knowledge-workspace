@@ -34,6 +34,7 @@ import {
 } from "@/hooks/use-community-spaces";
 import { CommunityCard } from "@/components/tethyr/community/community-card";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
+import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
 import { SpaceHeader } from "@/components/tethyr/community/space-header";
 import { SpaceSettingsDialog } from "@/components/tethyr/community/space-settings-dialog";
 
@@ -402,28 +403,34 @@ function CommunityPage() {
           )}
 
           {nav === "challenges" ? (
-            isLoadingChallenges ? (
-              <div className="flex flex-col gap-4">
-                {[1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="animate-pulse rounded-2xl border border-border/50 bg-card/60 p-6 h-40"
-                  />
-                ))}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Challenges</h2>
+                <CreateChallengeDialog />
               </div>
-            ) : challenges.length === 0 ? (
-              <EmptyState
-                icon={<Users className="h-5 w-5" />}
-                title="No active challenges yet"
-                description="Community challenges give people shared goals to learn and build together. Stay tuned for upcoming challenges!"
-              />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {challenges.map((c) => (
-                  <ChallengeCard key={c.id} challenge={c} />
-                ))}
-              </div>
-            )
+              {isLoadingChallenges ? (
+                <div className="flex flex-col gap-4">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse rounded-2xl border border-border/50 bg-card/60 p-6 h-40"
+                    />
+                  ))}
+                </div>
+              ) : challenges.length === 0 ? (
+                <EmptyState
+                  icon={<Users className="h-5 w-5" />}
+                  title="No active challenges yet"
+                  description="Community challenges give people shared goals to learn and build together. Stay tuned for upcoming challenges!"
+                />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {challenges.map((c) => (
+                    <ChallengeCard key={c.id} challenge={c} />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : nav === "communities" ? (
             <div>
               <div className="mb-4 flex items-center justify-between gap-3">
