@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
@@ -10,6 +10,7 @@ import { SessionRequests } from "./session-requests";
 import { SessionHistory } from "./session-history";
 import { AvailabilitySettings } from "./availability-settings";
 import { ScheduleSessionWizard } from "./schedule-session-wizard";
+import { SessionFilters, type SessionFiltersState } from "./session-filters";
 import {
   useSessionStats,
   useTodaySessions,
@@ -24,6 +25,16 @@ export function SessionsLayout() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
+
+  const filterSessions = useCallback((sessions: SessionWithParticipants[] | undefined) => {
+    if (!sessions) return sessions;
+    return sessions.filter((s) => {
+      if (filters.search && !s.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
+      if (filters.type && filters.type !== "all" && s.session_type !== filters.type) return false;
+      return true;
+    });
+  }, [filters]);
 
   const { data: stats } = useSessionStats();
   const { data: todaySessions = [] } = useTodaySessions();
@@ -73,6 +84,8 @@ export function SessionsLayout() {
           {/* Tab content */}
           {activeTab === "upcoming" && (
             <div className="space-y-6">
+              <SessionFilters filters={filters} onChange={setFilters} />
+
               {/* Stats */}
               <OverviewCards stats={stats} />
 
@@ -83,7 +96,7 @@ export function SessionsLayout() {
               <TodaySchedule sessions={todaySessions} onSessionClick={goToSession} />
 
               {/* Upcoming */}
-              <UpcomingSessions sessions={upcomingSessions} onSessionClick={goToSession} />
+              <UpcomingSessions sessions={filterSessions(upcomingSessions) ?? []} onSessionClick={goToSession} />
             </div>
           )}
 
@@ -92,7 +105,10 @@ export function SessionsLayout() {
           )}
 
           {activeTab === "history" && (
-            <SessionHistory sessions={historySessions} loading={historyLoading} />
+            <>
+              <SessionFilters filters={filters} onChange={setFilters} />
+              <SessionHistory sessions={filterSessions(historySessions) ?? []} loading={historyLoading} />
+            </>
           )}
 
           {activeTab === "requests" && <SessionRequests requests={requests} />}
