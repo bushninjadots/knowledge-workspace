@@ -19,6 +19,7 @@ export type ProjectRow = {
   cover_url: string | null;
   is_featured: boolean;
   looking_for_collaborators: boolean;
+  looking_for_feedback: boolean;
   created_at: string;
   profiles: {
     id: string;
@@ -89,7 +90,7 @@ function ExplorePage() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
+          "id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
         )
         .order("created_at", { ascending: false })
         .limit(40);
