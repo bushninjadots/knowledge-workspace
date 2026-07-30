@@ -18,6 +18,12 @@ interface ProjectShelfProps {
 export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category, setCategory }: ProjectShelfProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [overlayProject, setOverlayProject] = useState<ProjectRow | null>(null);
+
+  useEffect(() => {
+    if (activeIndex >= projects.length && projects.length > 0) {
+      setActiveIndex(0);
+    }
+  }, [projects.length, activeIndex]);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();

@@ -29,6 +29,29 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
     }
   }, [project]);
 
+  useEffect(() => {
+    if (!project) return;
+    const panel = closeButtonRef.current?.parentElement?.parentElement;
+    if (!panel) return;
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    panel.addEventListener("keydown", handleTab);
+    return () => panel.removeEventListener("keydown", handleTab);
+  }, [project]);
+
   return (
     <AnimatePresence>
       {project && (

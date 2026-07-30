@@ -37,8 +37,7 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
 
   return (
     <motion.button
-      layout
-      id={`shelf-card-${project.id}`}
+      layoutId={`shelf-card-${project.id}`}
       onClick={onClick}
       className={cn(
         "relative shrink-0 cursor-pointer overflow-hidden rounded-2xl border text-left outline-none",

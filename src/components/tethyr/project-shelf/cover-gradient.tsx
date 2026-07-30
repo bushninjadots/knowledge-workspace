@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { CATEGORY_COLORS, inferCategory } from "@/lib/category-colors";
 
 interface CoverGradientProps {
@@ -10,6 +10,7 @@ interface CoverGradientProps {
 export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) {
   const cat = inferCategory(tags);
   const c = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.Design;
+  const prefersReducedMotion = useReducedMotion();
 
   if (coverUrl) {
     return (
@@ -20,14 +21,25 @@ export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) 
     );
   }
 
+  const gradient = `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`;
+
+  if (prefersReducedMotion) {
+    return (
+      <div
+        className="absolute inset-0"
+        style={{ background: gradient }}
+      />
+    );
+  }
+
   return (
     <motion.div
       className="absolute inset-0"
       animate={{
         background: [
-          `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`,
+          gradient,
           `linear-gradient(135deg, oklch(0.35 ${c.sat / 100} ${c.hue + 60}), oklch(0.4 ${c.sat / 100} ${c.hue}))`,
-          `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`,
+          gradient,
         ],
       }}
       transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
