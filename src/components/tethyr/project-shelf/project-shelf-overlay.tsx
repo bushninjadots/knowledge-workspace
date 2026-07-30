@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, Users, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
-import { CATEGORY_ICON, inferCategory } from "@/lib/category-colors";
 import { CoverGradient } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
