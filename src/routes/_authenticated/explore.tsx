@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/tethyr/empty-state";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-type ProjectRow = {
+export type ProjectRow = {
   id: string;
   title: string;
   description: string | null;
