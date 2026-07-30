@@ -18,19 +18,20 @@ interface ProjectShelfCoverProps {
   meId: string | null;
   isContributor: boolean;
   prefersReducedMotion: boolean;
+  forceFace?: boolean;
   onClick: () => void;
 }
 
-export function ProjectShelfCover({ project, index, activeIndex, meId, isContributor, prefersReducedMotion, onClick }: ProjectShelfCoverProps) {
+export function ProjectShelfCover({ project, index, activeIndex, meId, isContributor, prefersReducedMotion, forceFace, onClick }: ProjectShelfCoverProps) {
   const distance = Math.abs(index - activeIndex);
-  const isActive = index === activeIndex;
+  const isActive = forceFace || index === activeIndex;
   const isOwn = project.profiles?.id === meId;
   const category = inferCategory(project.tags);
   const Icon = CATEGORY_ICON[category] ?? CATEGORY_ICON.Design;
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
 
-  const rotateY = isActive ? 0 : index < activeIndex ? -18 : 18;
-  const scale = isActive ? 1 : 0.85;
+  const rotateY = forceFace ? 0 : isActive ? 0 : index < activeIndex ? -18 : 18;
+  const scale = forceFace ? 1 : isActive ? 1 : 0.85;
   const zIndex = isActive ? 10 : 10 - distance;
   const blur = distance <= 1 ? 0 : distance === 2 ? 2 : 4;
 
@@ -49,7 +50,7 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
         scale,
         zIndex,
         filter: blur > 0 ? `blur(${blur}px)` : "blur(0px)",
-        width: isActive ? "65%" : "180px",
+        width: forceFace ? "100%" : isActive ? "65%" : "180px",
       }}
       transition={prefersReducedMotion
         ? { duration: 0 }

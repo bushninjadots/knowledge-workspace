@@ -21,6 +21,14 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
   const containerRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const activeProject = projects[activeIndex];
 
@@ -71,43 +79,65 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
       />
 
       {/* Shelf */}
-      <div
-        ref={containerRef}
-        className="overflow-x-auto scrollbar-none"
-        style={{ perspective: "1200px" }}
-        role="listbox"
-        aria-label="Projects"
-        aria-activedescendant={activeProject ? `shelf-card-${activeProject.id}` : undefined}
-      >
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={`${q}-${category}`}
-            className="flex items-center gap-4 px-4 py-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={shelfTransition}
-          >
-            {projects.map((project, i) => (
-              <ProjectShelfCover
-                key={project.id}
-                project={project}
-                index={i}
-                activeIndex={activeIndex}
-                meId={meId}
-                isContributor={contributorIds.has(project.id)}
-                prefersReducedMotion={prefersReducedMotion ?? false}
-                onClick={() => {
-                  lastFocusedRef.current = document.activeElement as HTMLElement;
-                  setActiveIndex(i);
-                  scrollToActive(i);
-                  setOverlayProject(project);
-                }}
-              />
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      {isMobile ? (
+        <div className="space-y-3 px-4">
+          {projects.map((project, i) => (
+            <ProjectShelfCover
+              key={project.id}
+              project={project}
+              index={i}
+              activeIndex={activeIndex}
+              meId={meId}
+              isContributor={contributorIds.has(project.id)}
+              prefersReducedMotion={prefersReducedMotion ?? false}
+              forceFace
+              onClick={() => {
+                lastFocusedRef.current = document.activeElement as HTMLElement;
+                setActiveIndex(i);
+                setOverlayProject(project);
+              }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          ref={containerRef}
+          className="overflow-x-auto scrollbar-none"
+          style={{ perspective: "1200px" }}
+          role="listbox"
+          aria-label="Projects"
+          aria-activedescendant={activeProject ? `shelf-card-${activeProject.id}` : undefined}
+        >
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={`${q}-${category}`}
+              className="flex items-center gap-4 px-4 py-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={shelfTransition}
+            >
+              {projects.map((project, i) => (
+                <ProjectShelfCover
+                  key={project.id}
+                  project={project}
+                  index={i}
+                  activeIndex={activeIndex}
+                  meId={meId}
+                  isContributor={contributorIds.has(project.id)}
+                  prefersReducedMotion={prefersReducedMotion ?? false}
+                  onClick={() => {
+                    lastFocusedRef.current = document.activeElement as HTMLElement;
+                    setActiveIndex(i);
+                    scrollToActive(i);
+                    setOverlayProject(project);
+                  }}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Overlay */}
       <ProjectShelfOverlay
