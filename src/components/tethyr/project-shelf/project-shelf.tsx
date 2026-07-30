@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { AnimatePresence, motion, useReducedMotion, useMotionValue, useSpring } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, useMotionValue, animate } from "framer-motion";
 import { ProjectShelfHeader } from "./project-shelf-header";
 import { ProjectShelfCover } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
@@ -25,8 +25,8 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const velocityRef = useRef(0);
   const lastWheelTimeRef = useRef(0);
+  const activeProjectRef = useRef<ProjectRow | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
@@ -38,38 +38,52 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
 
   const maxOffset = Math.max(0, projects.length - 1);
 
-  const rawOffset = useMotionValue(0);
-  const smoothOffset = useSpring(rawOffset, {
-    stiffness: prefersReducedMotion ? 500 : 200,
-    damping: prefersReducedMotion ? 100 : 25,
-  });
+  const displayOffset = useMotionValue(0);
 
   useEffect(() => {
     if (projects.length === 0) return;
-    const clamped = Math.min(rawOffset.get(), maxOffset);
-    if (clamped !== rawOffset.get()) rawOffset.set(clamped);
-  }, [maxOffset, projects.length, rawOffset]);
+    const clamped = Math.min(displayOffset.get(), maxOffset);
+    if (clamped !== displayOffset.get()) displayOffset.set(clamped);
+  }, [maxOffset, projects.length, displayOffset]);
 
-  const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
-    const unsub = smoothOffset.on("change", (v) => setActiveIndex(Math.round(v)));
+    if (projects.length === 0) return;
+    const unsub = displayOffset.on("change", (v) => {
+      const idx = Math.round(v);
+      if (idx !== (activeProjectRef.current ? projects.indexOf(activeProjectRef.current) : -1)) {
+        activeProjectRef.current = projects[idx] ?? null;
+      }
+      const container = containerRef.current;
+      if (container) {
+        const id = projects[idx] ? `shelf-card-${projects[idx].id}` : undefined;
+        if (id) container.setAttribute("aria-activedescendant", id);
+        else container.removeAttribute("aria-activedescendant");
+      }
+    });
     return unsub;
-  }, [smoothOffset]);
-
-  const activeProject = projects[activeIndex] ?? null;
+  }, [displayOffset, projects]);
 
   const snapToNearest = useCallback(() => {
     if (maxOffset <= 0) return;
-    const nearest = Math.max(0, Math.min(maxOffset, Math.round(rawOffset.get())));
-    rawOffset.set(nearest);
-  }, [maxOffset, rawOffset]);
+    const nearest = Math.max(0, Math.min(maxOffset, Math.round(displayOffset.get())));
+    animate(displayOffset, nearest, {
+      type: "spring",
+      stiffness: prefersReducedMotion ? 500 : 200,
+      damping: prefersReducedMotion ? 100 : 25,
+    });
+  }, [maxOffset, displayOffset, prefersReducedMotion]);
 
   const navigate = useCallback((dir: -1 | 1) => {
     if (maxOffset <= 0) return;
-    const current = Math.round(smoothOffset.get());
+    displayOffset.stop();
+    const current = Math.round(displayOffset.get());
     const next = Math.max(0, Math.min(maxOffset, current + dir));
-    rawOffset.set(next);
-  }, [maxOffset, rawOffset, smoothOffset]);
+    animate(displayOffset, next, {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    });
+  }, [maxOffset, displayOffset]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -79,11 +93,11 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
       }
       if (e.key === "ArrowLeft") navigate(-1);
       if (e.key === "ArrowRight") navigate(1);
-      if (e.key === "Enter" && activeProject) setOverlayProject(activeProject);
+      if (e.key === "Enter" && activeProjectRef.current) setOverlayProject(activeProjectRef.current);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [navigate, activeProject, overlayProject]);
+  }, [navigate, overlayProject]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -91,17 +105,18 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      displayOffset.stop();
+
       const now = Date.now();
       const dt = now - lastWheelTimeRef.current;
       lastWheelTimeRef.current = now;
 
-      const delta = -e.deltaY * SCROLL_SENSITIVITY;
-      velocityRef.current = delta;
-      if (dt < 50) velocityRef.current *= 1.2;
+      let delta = -e.deltaY * SCROLL_SENSITIVITY;
+      if (dt < 50) delta *= 1.2;
 
-      const current = rawOffset.get();
+      const current = displayOffset.get();
       const next = Math.max(0, Math.min(maxOffset, current + delta));
-      rawOffset.set(next);
+      displayOffset.set(next);
 
       clearTimeout(snapTimerRef.current);
       snapTimerRef.current = setTimeout(snapToNearest, SNAP_DELAY_MS);
@@ -112,13 +127,14 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
       container.removeEventListener("wheel", handleWheel);
       clearTimeout(snapTimerRef.current);
     };
-  }, [isMobile, maxOffset, rawOffset, snapToNearest]);
+  }, [isMobile, maxOffset, displayOffset, snapToNearest]);
 
   const handleCardClick = useCallback((project: ProjectRow, index: number) => {
     lastFocusedRef.current = document.activeElement as HTMLElement;
-    rawOffset.set(index);
+    displayOffset.stop();
+    displayOffset.set(index);
     setOverlayProject(project);
-  }, [rawOffset]);
+  }, [displayOffset]);
 
   return (
     <div className="space-y-6">
@@ -137,12 +153,12 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
               key={project.id}
               project={project}
               index={i}
-              offset={smoothOffset}
+              offset={displayOffset}
               meId={meId}
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
               forceFace
-              onClick={() => handleCardClick(project, i)}
+               onClick={() => handleCardClick(project, i)}
             />
           ))}
         </div>
@@ -158,7 +174,6 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
           }}
           role="listbox"
           aria-label="Projects"
-          aria-activedescendant={activeProject ? `shelf-card-${activeProject.id}` : undefined}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -173,7 +188,7 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
                   key={project.id}
                   project={project}
                   index={i}
-                  offset={smoothOffset}
+                  offset={displayOffset}
                   meId={meId}
                   isContributor={contributorIds.has(project.id)}
                   prefersReducedMotion={prefersReducedMotion ?? false}

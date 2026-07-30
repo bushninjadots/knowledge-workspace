@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CATEGORY_COLORS, CATEGORY_ICON, inferCategory } from "@/lib/category-colors";
@@ -60,6 +59,7 @@ function getRotateY(dist: number): number {
   if (a < 0.4) return 0;
   if (a < 1) return sign * 18 * (a - 0.4) / 0.6;
   if (a < 2) return sign * (18 + (a - 1) * 17);
+  if (a < 4) return sign * (35 + (a - 2) * 7.5);
   return sign * 50;
 }
 
@@ -75,14 +75,14 @@ function getBlur(absDist: number): string {
   if (absDist < 0.8) return "blur(0px)";
   if (absDist < 1.5) return `blur(${(2 * (absDist - 0.8) / 0.7).toFixed(1)}px)`;
   if (absDist < 2.5) return `blur(${(2 + 2 * (absDist - 1.5)).toFixed(1)}px)`;
-  if (absDist < 4) return `blur(${(4 + 4 * (absDist - 2.5)).toFixed(1)}px)`;
+  if (absDist < 4) return `blur(${(4 + 4 * (absDist - 2.5) / 1.5).toFixed(1)}px)`;
   return "blur(8px)";
 }
 
 function getOpacity(absDist: number): number {
   if (absDist < 1) return 1;
   if (absDist < 2) return 1 - 0.3 * (absDist - 1);
-  if (absDist < 3) return 0.7 - 0.4 * (absDist - 2);
+  if (absDist < 4) return 0.7 - 0.25 * (absDist - 2);
   return 0.2;
 }
 
@@ -162,12 +162,6 @@ export function ProjectShelfCover({
   const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
   const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
 
-  const [isActive, setIsActive] = useState(Math.abs(index) < 0.6);
-  useEffect(() => {
-    const unsub = absDist.on("change", (d) => setIsActive(d < 0.6));
-    return unsub;
-  }, [absDist]);
-
   return (
     <motion.div
       className="absolute"
@@ -188,7 +182,7 @@ export function ProjectShelfCover({
           opacity: cardOpacity,
         }}
         onClick={onClick}
-        aria-selected={isActive}
+        aria-selected={Math.abs(index) < 0.6}
         role="option"
       >
         {/* Spine view */}
