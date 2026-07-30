@@ -33,12 +33,12 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
   }, []);
 
   const navigate = useCallback((dir: -1 | 1) => {
-    setActiveIndex((prev) => {
-      const next = Math.max(0, Math.min(projects.length - 1, prev + dir));
-      scrollToActive(next);
-      return next;
-    });
-  }, [projects.length, scrollToActive]);
+    setActiveIndex((prev) => Math.max(0, Math.min(projects.length - 1, prev + dir)));
+  }, [projects.length]);
+
+  useEffect(() => {
+    scrollToActive(activeIndex);
+  }, [activeIndex, scrollToActive]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
