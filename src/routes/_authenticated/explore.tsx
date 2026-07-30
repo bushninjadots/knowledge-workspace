@@ -81,7 +81,7 @@ function ExplorePage() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
+          "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url)",
         )
         .order("created_at", { ascending: false })
         .limit(40);
