@@ -86,7 +86,17 @@ function ExplorePage() {
         .order("created_at", { ascending: false })
         .limit(40);
       if (error) throw error;
-      return (data ?? []) as unknown as ProjectRow[];
+      const rows = (data ?? []) as unknown as ProjectRow[];
+      await Promise.all(
+        rows.map(async (p) => {
+          if (!p.cover_url) return;
+          const { data: s } = await supabase.storage
+            .from("project-media")
+            .createSignedUrl(p.cover_url, 60 * 60);
+          if (s?.signedUrl) p.cover_url = s.signedUrl;
+        }),
+      );
+      return rows;
     },
     staleTime: 60_000,
   });

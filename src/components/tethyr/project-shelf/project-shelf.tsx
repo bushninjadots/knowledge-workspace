@@ -74,6 +74,17 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
     return () => window.removeEventListener("keydown", handleKey);
   }, [navigate, activeProject, overlayProject]);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || isMobile) return;
+    const handleWheel = (e: WheelEvent) => {
+      container.scrollLeft += e.deltaY;
+      e.preventDefault();
+    };
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [isMobile]);
+
   return (
     <div className="space-y-6">
       <ProjectShelfHeader
