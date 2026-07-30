@@ -62,7 +62,7 @@ type PersonLite = {
   avatar_url: string | null;
 };
 
-type Contributor = {
+export type Contributor = {
   profile_id: string;
   role: "creator" | "contributor" | "mentor";
   contribution_score: number;
