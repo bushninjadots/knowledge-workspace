@@ -1,4 +1,5 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, ExternalLink, Users, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
@@ -19,6 +20,14 @@ const STATUS_STYLES: Record<string, { label: string; dot: string; badge: string 
 
 export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayProps) {
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (project) {
+      setTimeout(() => closeButtonRef.current?.focus(), 50);
+    }
+  }, [project]);
 
   return (
     <AnimatePresence>
@@ -40,7 +49,10 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
           <motion.div
             layoutId={`shelf-card-${project.id}`}
             className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-3xl border border-border/60 bg-surface shadow-2xl"
-            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            transition={prefersReducedMotion
+              ? { duration: 0 }
+              : { type: "spring" as const, stiffness: 200, damping: 25 }
+            }
           >
             {/* Cover */}
             <div className="relative aspect-video">
@@ -48,6 +60,7 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
 
               {/* Close button */}
               <button
+                ref={closeButtonRef}
                 onClick={onClose}
                 className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm transition hover:bg-background/80"
                 aria-label="Close overlay"

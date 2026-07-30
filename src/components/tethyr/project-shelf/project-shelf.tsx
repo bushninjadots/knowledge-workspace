@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ProjectShelfHeader } from "./project-shelf-header";
 import { ProjectShelfCover } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
@@ -19,8 +19,14 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
   const [activeIndex, setActiveIndex] = useState(0);
   const [overlayProject, setOverlayProject] = useState<ProjectRow | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const activeProject = projects[activeIndex];
+
+  const shelfTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.2 };
 
   const scrollToActive = useCallback((idx: number) => {
     const container = containerRef.current;
@@ -80,7 +86,7 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={shelfTransition}
           >
             {projects.map((project, i) => (
               <ProjectShelfCover
@@ -90,7 +96,9 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
                 activeIndex={activeIndex}
                 meId={meId}
                 isContributor={contributorIds.has(project.id)}
+                prefersReducedMotion={prefersReducedMotion ?? false}
                 onClick={() => {
+                  lastFocusedRef.current = document.activeElement as HTMLElement;
                   setActiveIndex(i);
                   scrollToActive(i);
                   setOverlayProject(project);
@@ -104,7 +112,10 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
       {/* Overlay */}
       <ProjectShelfOverlay
         project={overlayProject}
-        onClose={() => setOverlayProject(null)}
+        onClose={() => {
+          setOverlayProject(null);
+          setTimeout(() => lastFocusedRef.current?.focus(), 200);
+        }}
       />
     </div>
   );

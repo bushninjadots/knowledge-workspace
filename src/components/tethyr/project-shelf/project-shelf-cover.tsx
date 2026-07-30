@@ -17,10 +17,11 @@ interface ProjectShelfCoverProps {
   activeIndex: number;
   meId: string | null;
   isContributor: boolean;
+  prefersReducedMotion: boolean;
   onClick: () => void;
 }
 
-export function ProjectShelfCover({ project, index, activeIndex, meId, isContributor, onClick }: ProjectShelfCoverProps) {
+export function ProjectShelfCover({ project, index, activeIndex, meId, isContributor, prefersReducedMotion, onClick }: ProjectShelfCoverProps) {
   const distance = Math.abs(index - activeIndex);
   const isActive = index === activeIndex;
   const isOwn = project.profiles?.id === meId;
@@ -50,12 +51,13 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
         filter: blur > 0 ? `blur(${blur}px)` : "blur(0px)",
         width: isActive ? "65%" : "180px",
       }}
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-      }}
-      whileHover={!isActive ? { scale: 0.9, rotateY: rotateY * 0.5, transition: { type: "spring", stiffness: 400, damping: 25 } } : undefined}
+      transition={prefersReducedMotion
+        ? { duration: 0 }
+        : { type: "spring" as const, stiffness: 300, damping: 30 }
+      }
+      whileHover={!isActive && !prefersReducedMotion
+        ? { scale: 0.9, rotateY: rotateY * 0.5, transition: { type: "spring", stiffness: 400, damping: 25 } }
+        : undefined}
       aria-selected={isActive}
       role="option"
     >
