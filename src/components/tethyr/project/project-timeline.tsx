@@ -14,12 +14,51 @@ export function ProjectTimeline({
   currentStage,
   isOwner,
   onStageChange,
+  variant = "horizontal",
 }: {
   currentStage: ProjectStage;
   isOwner: boolean;
   onStageChange?: (stage: ProjectStage) => void;
+  variant?: "horizontal" | "compact";
 }) {
   const currentIdx = STAGES.findIndex((s) => s.id === currentStage);
+
+  if (variant === "compact") {
+    return (
+      <div className="space-y-1">
+        {STAGES.map((stage, idx) => {
+          const Icon = stage.icon;
+          const isActive = idx === currentIdx;
+          const isPast = idx < currentIdx;
+          return (
+            <button
+              key={stage.id}
+              onClick={() => { if (isOwner && onStageChange) onStageChange(stage.id); }}
+              disabled={!isOwner}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs transition ${
+                isOwner ? "cursor-pointer" : "cursor-default"
+              } ${isActive ? "bg-primary/10" : "hover:bg-surface-elevated"}`}
+            >
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                isActive ? "border-primary text-primary" :
+                isPast ? "border-brand-green text-brand-green" :
+                "border-border/60 text-muted-foreground"
+              }`}>
+                <Icon className="h-3 w-3" />
+              </div>
+              <span className={`font-medium ${
+                isActive ? "text-foreground" :
+                isPast ? "text-brand-green" :
+                "text-muted-foreground"
+              }`}>
+                {stage.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="card-border rounded-3xl border bg-surface p-6">
