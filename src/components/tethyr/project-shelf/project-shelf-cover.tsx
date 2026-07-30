@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CATEGORY_ICON, inferCategory } from "@/lib/category-colors";
+import { CATEGORY_COLORS, CATEGORY_ICON, inferCategory } from "@/lib/category-colors";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -32,7 +32,6 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
   const scale = isActive ? 1 : 0.85;
   const zIndex = isActive ? 10 : 10 - distance;
   const blur = distance <= 1 ? 0 : distance === 2 ? 2 : 4;
-  const width = isActive ? "min-w-[65%]" : "min-w-[180px]";
 
   return (
     <motion.button
@@ -69,7 +68,10 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
         ) : (
           /* Spine view for non-active cards */
           <div className="flex flex-col items-center gap-2">
-            <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", `bg-${category.toLowerCase()}/10`)}>
+            <div
+              className="h-8 w-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `oklch(0.5 ${(CATEGORY_COLORS[category]?.sat ?? 60) / 100} ${CATEGORY_COLORS[category]?.hue ?? 270} / 0.1)` }}
+            >
               <Icon className="h-4 w-4 text-foreground" />
             </div>
             <span className="text-xs font-medium text-foreground leading-tight text-center line-clamp-2 [writing-mode:vertical-rl] [text-orientation:mixed] rotate-180 max-h-24">
