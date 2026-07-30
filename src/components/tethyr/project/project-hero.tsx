@@ -1,7 +1,7 @@
 import { Bookmark, Share2, UserPlus } from "lucide-react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import type { ProjectDetail, ProjectStage } from "@/hooks/use-projects";
+import type { ProjectDetail } from "@/hooks/use-projects";
 import type { Contributor } from "@/routes/projects.$id";
 
 interface ProjectHeroProps {
@@ -10,6 +10,17 @@ interface ProjectHeroProps {
   creator: Contributor | undefined;
   avatarSigned: Record<string, string>;
   accent?: string | null;
+}
+
+function InlineLink({ to, handle, className, children }: { to: string | undefined; handle: string | null; className: string; children: React.ReactNode }) {
+  if (!to) {
+    return <span className={className}>{children}</span>;
+  }
+  return (
+    <Link to={to} params={{ handle: handle ?? "" }} className={className}>
+      {children}
+    </Link>
+  );
 }
 
 export function ProjectHero({ project, coverSigned, creator, avatarSigned, accent }: ProjectHeroProps) {
@@ -44,23 +55,29 @@ export function ProjectHero({ project, coverSigned, creator, avatarSigned, accen
               {project.title}
             </h1>
             {creator?.profile && (
-              <Link
-                to="/u/$handle"
-                params={{ handle: creator.profile.handle ?? "" }}
+              <InlineLink
+                to={creator.profile.handle ? "/u/$handle" : undefined}
+                handle={creator.profile.handle}
                 className="mt-3 inline-flex items-center gap-2 text-sm text-white/80 hover:text-white"
               >
-                <img
-                  src={avatarSigned[creator.profile_id] ?? ""}
-                  alt=""
-                  className="h-7 w-7 rounded-full object-cover ring-2 ring-white/20"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                    (e.target as HTMLImageElement).parentElement!.textContent =
-                      (creator.profile?.display_name ?? "?")[0].toUpperCase();
-                  }}
-                />
+                <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-gradient-brand ring-2 ring-white/20">
+                  {avatarSigned[creator.profile_id] ? (
+                    <img
+                      src={avatarSigned[creator.profile_id]}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-background">
+                      {(creator.profile?.display_name ?? "?")[0].toUpperCase()}
+                    </div>
+                  )}
+                </div>
                 {creator.profile.display_name || creator.profile.handle}
-              </Link>
+              </InlineLink>
             )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {/* Status pill */}
