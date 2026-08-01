@@ -1,11 +1,10 @@
 -- Challenge Notifications
--- Adds notification types and triggers for challenge join/complete events.
+-- Adds notification triggers for challenge join/complete events.
+--
+-- NOTE: no enum changes here — public.notifications.type is a `text` column,
+-- so notification kinds are plain string values, not enum labels.
 
--- 1. Add new notification types to the enum
-ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'challenge_join';
-ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'challenge_complete';
-
--- 2. Trigger: challenge join → notify creator
+-- 1. Trigger: challenge join → notify creator
 CREATE OR REPLACE FUNCTION public.notify_challenge_join()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -45,7 +44,7 @@ SELECT public._create_trigger_if_table_exists(
   'notify_challenge_join', 'AFTER', 'INSERT'
 );
 
--- 3. Trigger: challenge complete → notify creator
+-- 2. Trigger: challenge complete → notify creator
 CREATE OR REPLACE FUNCTION public.notify_challenge_complete()
 RETURNS trigger
 LANGUAGE plpgsql
