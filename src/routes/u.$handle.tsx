@@ -75,6 +75,12 @@ type ProjectLite = {
 };
 
 export const Route = createFileRoute("/u/$handle")({
+  head: () => ({
+    meta: [
+      { title: "Profile — Tethyr" },
+      { name: "description", content: "A creator building on Tethyr." },
+    ],
+  }),
   component: PublicProfileRoute,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">

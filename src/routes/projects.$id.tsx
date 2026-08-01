@@ -89,6 +89,12 @@ const TABS: { id: Tab; label: string; icon: typeof Target }[] = [
 ];
 
 export const Route = createFileRoute("/projects/$id")({
+  head: () => ({
+    meta: [
+      { title: "Project — Tethyr" },
+      { name: "description", content: "A project being built on Tethyr." },
+    ],
+  }),
   component: ProjectPage,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">

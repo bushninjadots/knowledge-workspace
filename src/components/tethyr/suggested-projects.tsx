@@ -55,7 +55,7 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
           "id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id",
         )
         .neq("profile_id", me.userId)
-        .not("stage", "eq", "archived")
+        .in("stage", ["planning", "building", "testing", "launch", "growing"])
         .order("updated_at", { ascending: false })
         .limit(100);
 

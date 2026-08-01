@@ -25,6 +25,12 @@ import {
 } from "@/hooks/use-challenges";
 
 export const Route = createFileRoute("/_authenticated/challenges/$id")({
+  head: () => ({
+    meta: [
+      { title: "Challenge — Tethyr" },
+      { name: "description", content: "Join a challenge and level up with the community." },
+    ],
+  }),
   component: ChallengeDetailPage,
 });
 

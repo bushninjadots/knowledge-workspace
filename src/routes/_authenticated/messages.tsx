@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/messages")({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Meeting Table — Tethyr" },
+      { title: "Messages — Tethyr" },
       { name: "description", content: "Focused conversations at the meeting table." },
     ],
   }),

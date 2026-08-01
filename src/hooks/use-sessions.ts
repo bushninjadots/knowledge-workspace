@@ -122,11 +122,31 @@ const SESSION_SELECT = `
   projects:projects(title)
 `;
 
+const NO_MATCHING_UUID = "00000000-0000-0000-0000-000000000000";
+
+async function fetchParticipatingSessionIds(userId: string): Promise<string[]> {
+  const { data, error } = await sb
+    .from("session_participants")
+    .select("session_id")
+    .eq("profile_id", userId);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => r.session_id as string);
+}
+
+// PostgREST cannot reference embedded resources inside an or() filter, so the
+// participant lookup is done first and the sessions query filters on top-level
+// columns (organizer_id OR id IN participant session_ids) instead.
+function sessionsForUserFilter(userId: string, sessionIds: string[]): string {
+  const ids = sessionIds.length > 0 ? sessionIds.join(",") : NO_MATCHING_UUID;
+  return `organizer_id.eq.${userId},id.in.(${ids})`;
+}
+
 async function fetchSessionsForUser(userId: string): Promise<SessionWithParticipants[]> {
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
   const { data, error } = await sb
     .from("sessions")
     .select(SESSION_SELECT)
-    .or(`organizer_id.eq.${userId},session_participants.profile_id.eq.${userId}`)
+    .or(sessionsForUserFilter(userId, participantSessionIds))
     .order("starts_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
@@ -165,18 +185,21 @@ async function fetchSessionStats(userId: string) {
   const now = new Date().toISOString();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
+  const scopeFilter = sessionsForUserFilter(userId, participantSessionIds);
+
   const [upcomingRes, completedRes, pendingRes, hoursRes] = await Promise.all([
     sb
       .from("sessions")
       .select("id", { count: "exact", head: true })
       .gte("starts_at", now)
       .not("status", "eq", "cancelled")
-      .or(`organizer_id.eq.${userId},session_participants.profile_id.eq.${userId}`),
+      .or(scopeFilter),
     sb
       .from("sessions")
       .select("id", { count: "exact", head: true })
       .eq("status", "completed")
-      .or(`organizer_id.eq.${userId},session_participants.profile_id.eq.${userId}`),
+      .or(scopeFilter),
     sb
       .from("session_requests")
       .select("id", { count: "exact", head: true })
@@ -187,7 +210,7 @@ async function fetchSessionStats(userId: string) {
       .select("duration_minutes")
       .eq("status", "completed")
       .gte("starts_at", monthStart)
-      .or(`organizer_id.eq.${userId},session_participants.profile_id.eq.${userId}`),
+      .or(scopeFilter),
   ]);
 
   const totalHours = (hoursRes.data ?? []).reduce(
@@ -231,11 +254,12 @@ async function fetchAvailability(userId: string) {
 }
 
 async function fetchSessionHistory(userId: string): Promise<SessionWithParticipants[]> {
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
   const { data, error } = await sb
     .from("sessions")
     .select(SESSION_SELECT)
     .eq("status", "completed")
-    .or(`organizer_id.eq.${userId},session_participants.profile_id.eq.${userId}`)
+    .or(sessionsForUserFilter(userId, participantSessionIds))
     .order("starts_at", { ascending: false })
     .limit(100);
   if (error) throw error;

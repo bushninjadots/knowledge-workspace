@@ -1,7 +1,7 @@
 // Skill ecosystem page at /skills/:slug. Each skill becomes a creative
 // workshop — a dedicated learning space with teachers, learners, and projects.
 import { useState } from "react";
-import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -73,7 +73,6 @@ function SkillPage() {
   const {
     data: skill,
     isLoading: skillLoading,
-    isError,
   } = useQuery({
     queryKey: ["skill", slug],
     queryFn: async () => {
@@ -83,12 +82,16 @@ function SkillPage() {
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
-      if (!data) throw notFound();
-      return data as { id: string; slug: string; name: string; category: string };
+      return (data ?? null) as {
+        id: string;
+        slug: string;
+        name: string;
+        category: string;
+      } | null;
     },
   });
 
-  if (skillLoading || (!skill && !isError)) {
+  if (skillLoading) {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl p-8">
@@ -98,7 +101,23 @@ function SkillPage() {
     );
   }
 
-  if (!skill) return null;
+  if (!skill) {
+    return (
+      <Shell>
+        <div className="flex min-h-screen items-center justify-center bg-background px-4">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We couldn&apos;t find a hub for &ldquo;{slug}&rdquo; yet.
+            </p>
+            <Link to="/explore" className="mt-4 inline-block text-sm text-primary hover:underline">
+              Back to explore
+            </Link>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
 
   const categoryBadge = CATEGORY_BADGES[skill.category] ?? CATEGORY_BADGES["Creative"];
   const WorkshopIcon = WORKSHOP_ICONS[Math.abs(skill.name.charCodeAt(0)) % WORKSHOP_ICONS.length];

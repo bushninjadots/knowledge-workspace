@@ -57,3 +57,42 @@ npx supabase db query "ALTER TYPE ... ADD VALUE IF NOT EXISTS ..."
 ```js
 localStorage.removeItem("tethyr-community-draft");
 ```
+
+---
+
+## 5. Infinite recursion in RLS policies for `community_space_members` (RESOLVED)
+
+**Error:** `infinite recursion detected in policy for relation "community_space_members"` → HTTP 500 on the Community page.
+
+**Root cause:** The `Members can see member list`, `Owners and moderators can manage members`, and `Owners and moderators can remove members` policies used self-referential `EXISTS (SELECT 1 FROM community_space_members ...)` subqueries. Evaluating them re-triggered RLS on the same table.
+
+**Resolution:** Fixed in `20260801000000_fix_community_spaces_rls_recursion.sql`, mirroring the sessions fix (#1). Membership checks now go through `SECURITY DEFINER` functions `is_space_member(space_id, user_id)` and `is_space_owner_or_moderator(space_id, user_id)`.
+
+---
+
+## 6. Sessions queries: PostgREST `or()` with embedded resources (RESOLVED)
+
+**Error:** `failed to parse logic tree (PGRST100)` → 5× HTTP 400 on the Sessions page.
+
+**Root cause:** `src/hooks/use-sessions.ts` used `.or("organizer_id.eq.X,session_participants.profile_id.eq.X")`. PostgREST cannot reference embedded resources inside an `or()` filter.
+
+**Resolution:** Resolve the user's participating session ids first (`fetchParticipatingSessionIds`), then filter on top-level columns only: `or("organizer_id.eq.X,id.in.(...)" )`. Applied to `fetchSessionsForUser`, `fetchSessionStats`, and `fetchSessionHistory`.
+
+---
+
+## 7. Storage paths rendered as raw `<img src>` (RESOLVED)
+
+**Error:** Cover/avatar images 404 against the app origin. Components used storage paths (e.g. `{userId}/{uuid}.png`) directly as `src`.
+
+**Resolution:** Added `useSignedStorageUrl(bucket, path)` hook (`src/hooks/use-signed-url.ts`) that calls `createSignedUrl(..., 60*60*24)`, and applied it in `project-card-inline.tsx` (`project-media`), `space-header.tsx` and `community-card.tsx` (`avatars`), and `schedule-session-wizard.tsx` (per-participant `ParticipantAvatar`).
+
+---
+
+## 8. Misc fixes (RESOLVED)
+
+- **Dashboard 400 (`22P02`)**: `suggested-projects.tsx` filtered on `stage eq "archived"`, which isn't in the `project_stage` enum. Now filters `stage in (planning, building, testing, launch, growing)`.
+- **Library nested `<button>`**: The Collections/Tags toggles in `library-sidebar.tsx` contained a nested "+" `<button>` → hydration error. The "+" is now a sibling button.
+- **Messages title**: `messages.tsx` said "Meeting Table — Tethyr"; now "Messages — Tethyr".
+- **Missing page titles**: `/projects/$id`, `/u/$handle`, `/library`, `/challenges/$id` now set heads instead of falling back to the root title.
+- **Blank skill pages**: `/skills/<unknown-slug>` rendered an empty page. The route now shows a "Skill not found" state (previously `throw notFound()` inside the react-query `queryFn` was swallowed, and `if (!skill) return null` produced a blank page).
+- **Dashboard dead link**: The "Browse studios" QuickLink pointed to `/skills/video-editing` (non-existent). Now links to `/explore` as "Explore skills & studios".

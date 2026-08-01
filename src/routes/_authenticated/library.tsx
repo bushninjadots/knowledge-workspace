@@ -18,6 +18,12 @@ import {
 import type { LibraryView } from "@/components/tethyr/library/library-sidebar";
 
 export const Route = createFileRoute("/_authenticated/library")({
+  head: () => ({
+    meta: [
+      { title: "Library — Tethyr" },
+      { name: "description", content: "Your personal library of notes, files, and links." },
+    ],
+  }),
   component: LibraryPage,
 });
 

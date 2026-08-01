@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -331,6 +332,26 @@ export function ScheduleSessionWizard({
 
 /* ───────── Step 1: Participants ───────── */
 
+function ParticipantAvatar({
+  participant,
+  className,
+  fallbackClassName,
+}: {
+  participant: Participant;
+  className?: string;
+  fallbackClassName?: string;
+}) {
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", participant.avatar_url);
+  return (
+    <Avatar className={className}>
+      <AvatarImage src={avatarUrl ?? undefined} />
+      <AvatarFallback className={fallbackClassName}>
+        {(participant.display_name ?? "?").charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
 function StepParticipants({
   participants,
   onChange,
@@ -400,12 +421,7 @@ function StepParticipants({
               onClick={() => add(p)}
               className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={p.avatar_url ?? undefined} />
-                <AvatarFallback className="text-xs">
-                  {(p.display_name ?? "?").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <ParticipantAvatar participant={p} className="h-8 w-8" fallbackClassName="text-xs" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-foreground">
                   {p.display_name ?? "Unnamed"}
@@ -424,12 +440,11 @@ function StepParticipants({
           <div className="flex flex-wrap gap-2">
             {participants.map((p) => (
               <Badge key={p.id} variant="secondary" className="flex items-center gap-1.5 pr-1.5">
-                <Avatar className="h-4 w-4">
-                  <AvatarImage src={p.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-[8px]">
-                    {(p.display_name ?? "?").charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <ParticipantAvatar
+                  participant={p}
+                  className="h-4 w-4"
+                  fallbackClassName="text-[8px]"
+                />
                 {p.display_name ?? p.handle ?? "User"}
                 <button
                   onClick={() => remove(p.id)}

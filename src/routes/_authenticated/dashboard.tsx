@@ -168,9 +168,9 @@ function DashboardPage() {
                 label="Community feed"
               />
               <QuickLink
-                to="/skills/video-editing"
+                to="/explore"
                 icon={<Compass className="h-4 w-4" />}
-                label="Browse studios"
+                label="Explore skills & studios"
               />
             </div>
           </section>

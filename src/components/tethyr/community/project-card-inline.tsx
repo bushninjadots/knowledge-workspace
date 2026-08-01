@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectSnapshot } from "@/hooks/use-community";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -51,7 +52,10 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
   const name = project?.title ?? snapshot?.name ?? "Project";
   const description = project?.description ?? snapshot?.description ?? null;
   const stage = project?.stage ?? snapshot?.stage ?? null;
-  const logo = project?.cover_url ?? snapshot?.logo ?? null;
+  const { data: signedCoverUrl } = useSignedStorageUrl("project-media", project?.cover_url);
+  // Live covers live in Supabase storage and need signing; snapshot-only logos
+  // are already full external URLs.
+  const logo = project ? (signedCoverUrl ?? null) : (snapshot?.logo ?? null);
   const platform = snapshot?.platform ?? "tethyr";
   const isExternal = platform !== "tethyr";
 

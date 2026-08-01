@@ -145,26 +145,26 @@ export function LibrarySidebar({
 
         {/* Collections */}
         <div>
-          <button
-            onClick={() => setCollectionsOpen(!collectionsOpen)}
-            className="mb-2 flex w-full items-center gap-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
-          >
-            {collectionsOpen ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-            Collections
+          <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCollectionDialog(true);
-              }}
-              className="ml-auto rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-muted-foreground"
+              onClick={() => setCollectionsOpen(!collectionsOpen)}
+              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
+            >
+              {collectionsOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              Collections
+            </button>
+            <button
+              onClick={() => setShowCollectionDialog(true)}
+              aria-label="New collection"
+              className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-muted-foreground"
             >
               <Plus className="h-3 w-3" />
             </button>
-          </button>
+          </div>
 
           {collectionsOpen && (
             <nav className="flex flex-col gap-0.5">
@@ -200,22 +200,26 @@ export function LibrarySidebar({
 
         {/* Tags */}
         <div>
-          <button
-            onClick={() => setTagsOpen(!tagsOpen)}
-            className="mb-2 flex w-full items-center gap-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
-          >
-            {tagsOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            Tags
+          <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowNewTag(true);
-              }}
-              className="ml-auto rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-muted-foreground"
+              onClick={() => setTagsOpen(!tagsOpen)}
+              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
+            >
+              {tagsOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              Tags
+            </button>
+            <button
+              onClick={() => setShowNewTag(true)}
+              aria-label="New tag"
+              className="rounded p-0.5 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-muted-foreground"
             >
               <Plus className="h-3 w-3" />
             </button>
-          </button>
+          </div>
 
           {tagsOpen && (
             <nav className="flex flex-col gap-0.5">

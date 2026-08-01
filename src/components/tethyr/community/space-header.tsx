@@ -7,6 +7,7 @@ import {
   type CommunitySpace,
   type SpaceMemberRole,
 } from "@/hooks/use-community-spaces";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 export function SpaceHeader({
   space,
@@ -21,6 +22,7 @@ export function SpaceHeader({
 }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
 
   function handleToggleMembership() {
     if (space.is_member) {
@@ -49,8 +51,8 @@ export function SpaceHeader({
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
-          {space.avatar_url ? (
-            <img src={space.avatar_url} alt="" className="h-full w-full rounded-2xl object-cover" />
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
           ) : (
             initial
           )}
