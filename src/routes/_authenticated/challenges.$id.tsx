@@ -23,6 +23,7 @@ import {
   useLeaveChallenge,
   useUpdateChallengeProgress,
 } from "@/hooks/use-challenges";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 export const Route = createFileRoute("/_authenticated/challenges/$id")({
   head: () => ({
@@ -146,12 +147,11 @@ function ChallengeDetailPage() {
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={challenge.creator?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    {challenge.creator?.display_name?.slice(0, 2).toUpperCase() || "CM"}
-                  </AvatarFallback>
-                </Avatar>
+                <ChallengeAvatar
+                  profile={challenge.creator}
+                  className="h-5 w-5"
+                  fallbackClassName="text-[10px]"
+                />
                 <span>Created by {challenge.creator?.display_name || "Community Member"}</span>
               </div>
               <span>•</span>
@@ -328,12 +328,11 @@ function ChallengeDetailPage() {
                   className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/40"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={part.profile?.avatar_url ?? undefined} />
-                      <AvatarFallback className="text-xs">
-                        {part.profile?.display_name?.slice(0, 2).toUpperCase() || "CM"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <ChallengeAvatar
+                      profile={part.profile}
+                      className="h-8 w-8"
+                      fallbackClassName="text-xs"
+                    />
                     <div>
                       <p className="text-sm font-medium text-foreground">
                         {part.profile?.display_name || "Community Member"}
@@ -361,5 +360,25 @@ function ChallengeDetailPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ChallengeAvatar({
+  profile,
+  className,
+  fallbackClassName,
+}: {
+  profile?: { avatar_url?: string | null; display_name?: string | null } | null;
+  className?: string;
+  fallbackClassName?: string;
+}) {
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", profile?.avatar_url);
+  return (
+    <Avatar className={className}>
+      <AvatarImage src={avatarUrl ?? undefined} />
+      <AvatarFallback className={fallbackClassName}>
+        {profile?.display_name?.slice(0, 2).toUpperCase() || "CM"}
+      </AvatarFallback>
+    </Avatar>
   );
 }

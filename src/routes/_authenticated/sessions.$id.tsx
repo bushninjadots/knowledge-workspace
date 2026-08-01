@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -474,12 +475,7 @@ function ParticipantList({ session }: { session: SessionWithParticipants }) {
               key={p.id}
               className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-4 py-2.5"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={p.profiles?.avatar_url ?? undefined} />
-                <AvatarFallback className="text-xs">
-                  {(p.profiles?.display_name ?? "?").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <SessionParticipantAvatar p={p} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-foreground">
                   {p.profiles?.display_name ?? "Unknown"}
@@ -623,5 +619,21 @@ function FollowUpActions({
         )}
       </div>
     </div>
+  );
+}
+
+function SessionParticipantAvatar({
+  p,
+}: {
+  p: { profiles?: { avatar_url?: string | null; display_name?: string | null } | null };
+}) {
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", p.profiles?.avatar_url);
+  return (
+    <Avatar className="h-8 w-8">
+      <AvatarImage src={avatarUrl ?? undefined} />
+      <AvatarFallback className="text-xs">
+        {(p.profiles?.display_name ?? "?").charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
   );
 }
