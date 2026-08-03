@@ -133,6 +133,44 @@ export type Database = {
           },
         ]
       }
+      contribution_log: {
+        Row: {
+          action: string
+          category: string
+          created_at: string
+          id: string
+          metadata: Json
+          points: number
+          profile_id: string
+        }
+        Insert: {
+          action: string
+          category: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          points?: number
+          profile_id: string
+        }
+        Update: {
+          action?: string
+          category?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          points?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contribution_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discussion_replies: {
         Row: {
           author_id: string
@@ -427,6 +465,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          availability:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
           available_days: string[]
           available_times: string[]
           avatar_url: string | null
@@ -444,6 +485,7 @@ export type Database = {
           languages: string[]
           learning_goals: string | null
           portfolio_links: Json
+          reputation_score: number
           social_links: Json
           software_stack: string[]
           teaching_style: string | null
@@ -452,6 +494,9 @@ export type Database = {
           years_experience: number | null
         }
         Insert: {
+          availability?:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
@@ -469,6 +514,7 @@ export type Database = {
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          reputation_score?: number
           social_links?: Json
           software_stack?: string[]
           teaching_style?: string | null
@@ -477,6 +523,9 @@ export type Database = {
           years_experience?: number | null
         }
         Update: {
+          availability?:
+            | Database["public"]["Enums"]["availability_status"]
+            | null
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
@@ -494,6 +543,7 @@ export type Database = {
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          reputation_score?: number
           social_links?: Json
           software_stack?: string[]
           teaching_style?: string | null
@@ -505,22 +555,28 @@ export type Database = {
       }
       project_contributors: {
         Row: {
+          contribution_score: number
           joined_at: string
           profile_id: string
           project_id: string
           role: Database["public"]["Enums"]["project_contributor_role"]
+          skills_used: string[]
         }
         Insert: {
+          contribution_score?: number
           joined_at?: string
           profile_id: string
           project_id: string
           role?: Database["public"]["Enums"]["project_contributor_role"]
+          skills_used?: string[]
         }
         Update: {
+          contribution_score?: number
           joined_at?: string
           profile_id?: string
           project_id?: string
           role?: Database["public"]["Enums"]["project_contributor_role"]
+          skills_used?: string[]
         }
         Relationships: [
           {
@@ -682,6 +738,51 @@ export type Database = {
           },
         ]
       }
+      project_role_applications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          profile_id: string
+          role_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          profile_id: string
+          role_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          profile_id?: string
+          role_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_role_applications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_role_applications_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "project_open_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_skills: {
         Row: {
           created_at: string
@@ -776,6 +877,7 @@ export type Database = {
           profile_id: string
           progress_percent: number
           resources: Json
+          stage: Database["public"]["Enums"]["project_stage"]
           started_at: string
           status: Database["public"]["Enums"]["project_status"]
           tags: string[]
@@ -798,6 +900,7 @@ export type Database = {
           profile_id: string
           progress_percent?: number
           resources?: Json
+          stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
@@ -820,6 +923,7 @@ export type Database = {
           profile_id?: string
           progress_percent?: number
           resources?: Json
+          stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
@@ -907,6 +1011,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement: Database["public"]["Enums"]["achievement_type"]
+          awarded_at: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          achievement: Database["public"]["Enums"]["achievement_type"]
+          awarded_at?: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          achievement?: Database["public"]["Enums"]["achievement_type"]
+          awarded_at?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -916,8 +1049,39 @@ export type Database = {
         Args: { _kind: string; _metadata?: Json; _profile_id: string }
         Returns: undefined
       }
+      log_contribution: {
+        Args: {
+          p_action: string
+          p_category: string
+          p_metadata?: Json
+          p_points: number
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
+      achievement_type:
+        | "first_project"
+        | "first_milestone"
+        | "first_endorsement"
+        | "five_endorsements"
+        | "ten_endorsements"
+        | "community_recognized"
+        | "mentor"
+        | "collaborator"
+        | "prolific_teacher"
+        | "project_builder"
+        | "community_builder"
+        | "reliable_collaborator"
+        | "helped_ten_people"
+        | "learner_journey"
+      availability_status:
+        | "available"
+        | "busy"
+        | "learning"
+        | "looking_for_team"
+        | "mentoring"
       connection_status: "pending" | "accepted" | "declined"
       post_action: "like" | "helpful" | "save" | "offer"
       post_type:
@@ -932,6 +1096,7 @@ export type Database = {
         | "collaboration_request"
         | "progress_update"
       project_contributor_role: "creator" | "contributor" | "mentor"
+      project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
       skill_verification_level:
         | "self_declared"
@@ -1064,6 +1229,29 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      achievement_type: [
+        "first_project",
+        "first_milestone",
+        "first_endorsement",
+        "five_endorsements",
+        "ten_endorsements",
+        "community_recognized",
+        "mentor",
+        "collaborator",
+        "prolific_teacher",
+        "project_builder",
+        "community_builder",
+        "reliable_collaborator",
+        "helped_ten_people",
+        "learner_journey",
+      ],
+      availability_status: [
+        "available",
+        "busy",
+        "learning",
+        "looking_for_team",
+        "mentoring",
+      ],
       connection_status: ["pending", "accepted", "declined"],
       post_action: ["like", "helpful", "save", "offer"],
       post_type: [
@@ -1079,6 +1267,7 @@ export const Constants = {
         "progress_update",
       ],
       project_contributor_role: ["creator", "contributor", "mentor"],
+      project_stage: ["planning", "building", "testing", "launch", "growing"],
       project_status: ["planning", "active", "paused", "completed"],
       skill_verification_level: [
         "self_declared",
