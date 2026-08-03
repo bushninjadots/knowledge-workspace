@@ -46,6 +46,48 @@ export type Database = {
           },
         ]
       }
+      comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_best_answer: boolean
+          post_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_best_answer?: boolean
+          post_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_best_answer?: boolean
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connections: {
         Row: {
           addressee_id: string
@@ -91,6 +133,45 @@ export type Database = {
           },
         ]
       }
+      discussion_replies: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          discussion_id: string
+          id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          discussion_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          discussion_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_replies_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_replies_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "project_discussions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string
@@ -122,6 +203,116 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_actions: {
+        Row: {
+          action: Database["public"]["Enums"]["post_action"]
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["post_action"]
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["post_action"]
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_actions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          achievement_data: Json | null
+          author_id: string
+          body: string
+          collaboration_data: Json | null
+          community: string
+          created_at: string
+          focus: string | null
+          help_data: Json | null
+          id: string
+          images: string[]
+          progress_data: Json | null
+          project_data: Json | null
+          question_data: Json | null
+          resource_data: Json | null
+          skills: string[]
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at: string
+        }
+        Insert: {
+          achievement_data?: Json | null
+          author_id: string
+          body?: string
+          collaboration_data?: Json | null
+          community?: string
+          created_at?: string
+          focus?: string | null
+          help_data?: Json | null
+          id?: string
+          images?: string[]
+          progress_data?: Json | null
+          project_data?: Json | null
+          question_data?: Json | null
+          resource_data?: Json | null
+          skills?: string[]
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+        }
+        Update: {
+          achievement_data?: Json | null
+          author_id?: string
+          body?: string
+          collaboration_data?: Json | null
+          community?: string
+          created_at?: string
+          focus?: string | null
+          help_data?: Json | null
+          id?: string
+          images?: string[]
+          progress_data?: Json | null
+          project_data?: Json | null
+          question_data?: Json | null
+          resource_data?: Json | null
+          skills?: string[]
+          title?: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -348,6 +539,149 @@ export type Database = {
           },
         ]
       }
+      project_discussions: {
+        Row: {
+          author_id: string
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          project_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_discussions_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_discussions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_milestones: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          position: number
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          position?: number
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          position?: number
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_open_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          filled_by: string | null
+          id: string
+          is_filled: boolean
+          project_id: string
+          skills: string[]
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          project_id: string
+          skills?: string[]
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          project_id?: string
+          skills?: string[]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_open_roles_filled_by_fkey"
+            columns: ["filled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_open_roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_skills: {
         Row: {
           created_at: string
@@ -381,11 +715,57 @@ export type Database = {
           },
         ]
       }
+      project_updates: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+          title: string
+          week_number: number | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          project_id: string
+          title: string
+          week_number?: number | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          title?: string
+          week_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_updates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_updates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           cover_url: string | null
           created_at: string
           description: string | null
+          gallery: Json
           goal: string | null
           id: string
           is_featured: boolean
@@ -395,16 +775,19 @@ export type Database = {
           media: Json
           profile_id: string
           progress_percent: number
+          resources: Json
           started_at: string
           status: Database["public"]["Enums"]["project_status"]
           tags: string[]
           title: string
           updated_at: string
+          vision: string | null
         }
         Insert: {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          gallery?: Json
           goal?: string | null
           id?: string
           is_featured?: boolean
@@ -414,16 +797,19 @@ export type Database = {
           media?: Json
           profile_id: string
           progress_percent?: number
+          resources?: Json
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title: string
           updated_at?: string
+          vision?: string | null
         }
         Update: {
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          gallery?: Json
           goal?: string | null
           id?: string
           is_featured?: boolean
@@ -433,11 +819,13 @@ export type Database = {
           media?: Json
           profile_id?: string
           progress_percent?: number
+          resources?: Json
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title?: string
           updated_at?: string
+          vision?: string | null
         }
         Relationships: [
           {
@@ -531,6 +919,18 @@ export type Database = {
     }
     Enums: {
       connection_status: "pending" | "accepted" | "declined"
+      post_action: "like" | "helpful" | "save" | "offer"
+      post_type:
+        | "showcase"
+        | "question"
+        | "project_update"
+        | "tutorial"
+        | "resource"
+        | "achievement"
+        | "discussion"
+        | "help_request"
+        | "collaboration_request"
+        | "progress_update"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_status: "planning" | "active" | "paused" | "completed"
       skill_verification_level:
@@ -665,6 +1065,19 @@ export const Constants = {
   public: {
     Enums: {
       connection_status: ["pending", "accepted", "declined"],
+      post_action: ["like", "helpful", "save", "offer"],
+      post_type: [
+        "showcase",
+        "question",
+        "project_update",
+        "tutorial",
+        "resource",
+        "achievement",
+        "discussion",
+        "help_request",
+        "collaboration_request",
+        "progress_update",
+      ],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_status: ["planning", "active", "paused", "completed"],
       skill_verification_level: [
