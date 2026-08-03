@@ -210,6 +210,233 @@ export type Database = {
           },
         ]
       }
+      library_collections: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_collections_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "library_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_collections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_item_tags: {
+        Row: {
+          item_id: string
+          tag_id: string
+        }
+        Insert: {
+          item_id: string
+          tag_id: string
+        }
+        Update: {
+          item_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "library_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_items: {
+        Row: {
+          collection_id: string | null
+          content: string
+          created_at: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_favorite: boolean
+          is_pinned: boolean
+          reading_progress: number
+          thumbnail_url: string | null
+          title: string
+          type: Database["public"]["Enums"]["library_item_type"]
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          collection_id?: string | null
+          content?: string
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_pinned?: boolean
+          reading_progress?: number
+          thumbnail_url?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["library_item_type"]
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          collection_id?: string | null
+          content?: string
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_favorite?: boolean
+          is_pinned?: boolean
+          reading_progress?: number
+          thumbnail_url?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["library_item_type"]
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "library_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_versions: {
+        Row: {
+          content: string
+          created_at: string
+          editor_id: string
+          id: string
+          item_id: string
+          title: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          editor_id: string
+          id?: string
+          item_id: string
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          editor_id?: string
+          id?: string
+          item_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_versions_editor_id_fkey"
+            columns: ["editor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_versions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string
@@ -391,6 +618,7 @@ export type Database = {
       profile_skills_teach: {
         Row: {
           created_at: string
+          experience_level: Database["public"]["Enums"]["skill_experience_level"]
           profile_id: string
           proof_note: string | null
           proof_url: string | null
@@ -399,6 +627,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          experience_level?: Database["public"]["Enums"]["skill_experience_level"]
           profile_id: string
           proof_note?: string | null
           proof_url?: string | null
@@ -407,6 +636,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          experience_level?: Database["public"]["Enums"]["skill_experience_level"]
           profile_id?: string
           proof_note?: string | null
           proof_url?: string | null
@@ -1083,6 +1313,7 @@ export type Database = {
         | "looking_for_team"
         | "mentoring"
       connection_status: "pending" | "accepted" | "declined"
+      library_item_type: "note" | "document" | "link" | "upload"
       post_action: "like" | "helpful" | "save" | "offer"
       post_type:
         | "showcase"
@@ -1098,6 +1329,11 @@ export type Database = {
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
+      skill_experience_level:
+        | "beginner"
+        | "intermediate"
+        | "advanced"
+        | "expert"
       skill_verification_level:
         | "self_declared"
         | "proof_certified"
@@ -1253,6 +1489,7 @@ export const Constants = {
         "mentoring",
       ],
       connection_status: ["pending", "accepted", "declined"],
+      library_item_type: ["note", "document", "link", "upload"],
       post_action: ["like", "helpful", "save", "offer"],
       post_type: [
         "showcase",
@@ -1269,6 +1506,12 @@ export const Constants = {
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_stage: ["planning", "building", "testing", "launch", "growing"],
       project_status: ["planning", "active", "paused", "completed"],
+      skill_experience_level: [
+        "beginner",
+        "intermediate",
+        "advanced",
+        "expert",
+      ],
       skill_verification_level: [
         "self_declared",
         "proof_certified",
