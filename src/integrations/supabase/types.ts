@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1623,20 +1603,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _create_trigger_if_table_exists: {
-        Args: {
-          p_event?: string
-          p_function_name: string
-          p_level?: string
-          p_table_name: string
-          p_timing?: string
-          p_trigger_name: string
-        }
-        Returns: undefined
-      }
-      award_earned_achievements: {
-        Args: never
-        Returns: Database["public"]["Enums"]["achievement_type"][]
+      is_session_member: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
       }
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string }
@@ -1692,9 +1661,6 @@ export type Database = {
         | "help_request"
         | "collaboration_request"
         | "progress_update"
-        | "lesson_learned"
-        | "feedback_request"
-        | "open_role"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
@@ -1847,9 +1813,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       achievement_type: [
@@ -1892,9 +1855,6 @@ export const Constants = {
         "help_request",
         "collaboration_request",
         "progress_update",
-        "lesson_learned",
-        "feedback_request",
-        "open_role",
       ],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_stage: ["planning", "building", "testing", "launch", "growing"],
@@ -1930,4 +1890,3 @@ export const Constants = {
     },
   },
 } as const
-
