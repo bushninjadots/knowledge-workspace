@@ -1171,6 +1171,334 @@ export type Database = {
           },
         ]
       }
+      session_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          profile_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["availability_day_status"]
+          timezone: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          profile_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["availability_day_status"]
+          timezone?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          profile_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["availability_day_status"]
+          timezone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_availability_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_notes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          session_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          session_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          session_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_participants: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          responded_at: string | null
+          role: Database["public"]["Enums"]["participant_role"]
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          responded_at?: string | null
+          role?: Database["public"]["Enums"]["participant_role"]
+          session_id: string
+          status?: Database["public"]["Enums"]["participant_status"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          responded_at?: string | null
+          role?: Database["public"]["Enums"]["participant_role"]
+          session_id?: string
+          status?: Database["public"]["Enums"]["participant_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_requests: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          message: string | null
+          responded_at: string | null
+          session_id: string | null
+          status: string
+          suggested_time: string | null
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          message?: string | null
+          responded_at?: string | null
+          session_id?: string | null
+          status?: string
+          suggested_time?: string | null
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          message?: string | null
+          responded_at?: string | null
+          session_id?: string | null
+          status?: string
+          suggested_time?: string | null
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_requests_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_requests_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_resources: {
+        Row: {
+          created_at: string
+          file_path: string | null
+          id: string
+          resource_type: string
+          session_id: string
+          title: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          resource_type?: string
+          session_id: string
+          title: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          resource_type?: string
+          session_id?: string
+          title?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_resources_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_resources_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          ends_at: string | null
+          exchange_id: string | null
+          id: string
+          is_recurring: boolean
+          location: string | null
+          meeting_url: string | null
+          organizer_id: string
+          project_id: string | null
+          recurrence_rule: string | null
+          session_type: Database["public"]["Enums"]["session_type"]
+          skill_id: string | null
+          starts_at: string | null
+          status: Database["public"]["Enums"]["session_status"]
+          timezone: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          ends_at?: string | null
+          exchange_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          location?: string | null
+          meeting_url?: string | null
+          organizer_id: string
+          project_id?: string | null
+          recurrence_rule?: string | null
+          session_type?: Database["public"]["Enums"]["session_type"]
+          skill_id?: string | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["session_status"]
+          timezone?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          ends_at?: string | null
+          exchange_id?: string | null
+          id?: string
+          is_recurring?: boolean
+          location?: string | null
+          meeting_url?: string | null
+          organizer_id?: string
+          project_id?: string | null
+          recurrence_rule?: string | null
+          session_type?: Database["public"]["Enums"]["session_type"]
+          skill_id?: string | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["session_status"]
+          timezone?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       skill_endorsements: {
         Row: {
           created_at: string
@@ -1275,6 +1603,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_session_member: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string }
         Returns: undefined
@@ -1306,6 +1638,7 @@ export type Database = {
         | "reliable_collaborator"
         | "helped_ten_people"
         | "learner_journey"
+      availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
         | "busy"
@@ -1314,6 +1647,8 @@ export type Database = {
         | "mentoring"
       connection_status: "pending" | "accepted" | "declined"
       library_item_type: "note" | "document" | "link" | "upload"
+      participant_role: "organizer" | "participant" | "mentor"
+      participant_status: "invited" | "accepted" | "declined" | "pending"
       post_action: "like" | "helpful" | "save" | "offer"
       post_type:
         | "showcase"
@@ -1329,6 +1664,21 @@ export type Database = {
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
+      session_status:
+        | "draft"
+        | "scheduled"
+        | "invitation_sent"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      session_type:
+        | "skill_exchange"
+        | "mentoring"
+        | "project_meeting"
+        | "study_session"
+        | "workshop"
+        | "general"
       skill_experience_level:
         | "beginner"
         | "intermediate"
@@ -1481,6 +1831,7 @@ export const Constants = {
         "helped_ten_people",
         "learner_journey",
       ],
+      availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [
         "available",
         "busy",
@@ -1490,6 +1841,8 @@ export const Constants = {
       ],
       connection_status: ["pending", "accepted", "declined"],
       library_item_type: ["note", "document", "link", "upload"],
+      participant_role: ["organizer", "participant", "mentor"],
+      participant_status: ["invited", "accepted", "declined", "pending"],
       post_action: ["like", "helpful", "save", "offer"],
       post_type: [
         "showcase",
@@ -1506,6 +1859,23 @@ export const Constants = {
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_stage: ["planning", "building", "testing", "launch", "growing"],
       project_status: ["planning", "active", "paused", "completed"],
+      session_status: [
+        "draft",
+        "scheduled",
+        "invitation_sent",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      session_type: [
+        "skill_exchange",
+        "mentoring",
+        "project_meeting",
+        "study_session",
+        "workshop",
+        "general",
+      ],
       skill_experience_level: [
         "beginner",
         "intermediate",
