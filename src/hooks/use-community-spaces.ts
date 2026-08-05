@@ -159,6 +159,16 @@ export function useCommunitySpace(slug: string) {
   });
 }
 
+/** Spaces the signed-in user belongs to, default space always first. */
+export function useMySpaces() {
+  const { data: spaces = [], ...rest } = useCommunitySpaces();
+  return {
+    ...rest,
+    data: spaces.filter((s: CommunitySpace) => s.is_member || isDefaultSpace(s)),
+  };
+}
+
+
 // ============================================================
 // CRUD Mutations
 // ============================================================
