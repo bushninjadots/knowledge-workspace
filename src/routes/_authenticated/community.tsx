@@ -630,13 +630,26 @@ function CommunityPage() {
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
             <CommunityLeftSidebar
+              mobile
               active={nav}
               onSelect={(id) => {
+                setActiveSpaceSlug(null);
                 setNav(id);
                 setMobileSidebarOpen(false);
               }}
+              activeSpaceSlug={activeSpaceSlug}
+              onSelectSpace={(slug) => {
+                openSpace(slug);
+                setMobileSidebarOpen(false);
+              }}
+              onCreateSpace={() => {
+                setMobileSidebarOpen(false);
+                setNav("communities");
+                setCreateSpaceOpen(true);
+              }}
             />
           </div>
+
         </DrawerContent>
       </Drawer>
 
