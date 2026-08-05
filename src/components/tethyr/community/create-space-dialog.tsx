@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useCreateSpace } from "@/hooks/use-community-spaces";
+import { useCreateSpace, type CommunitySpace } from "@/hooks/use-community-spaces";
 
 export function CreateSpaceDialog({
   open,
@@ -20,7 +20,7 @@ export function CreateSpaceDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated?: () => void;
+  onCreated?: (space: CommunitySpace) => void;
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -31,17 +31,21 @@ export function CreateSpaceDialog({
     if (!name.trim()) return;
 
     try {
-      await createSpace.mutateAsync({ name: name.trim(), description: description.trim() });
-      toast.success("Space created!");
+      const space = await createSpace.mutateAsync({
+        name: name.trim(),
+        description: description.trim(),
+      });
+      toast.success(`${space.name} created — you're the owner`);
       setName("");
       setDescription("");
       onOpenChange(false);
-      onCreated?.();
+      onCreated?.(space);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create space";
       toast.error(msg);
     }
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
