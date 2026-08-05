@@ -247,17 +247,29 @@ function CommunityPage() {
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
-    <div className="animate-room-enter min-h-screen bg-noise">
+    <div className="animate-room-enter min-h-screen">
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
-        <CommunityLeftSidebar active={nav} onSelect={setNav} />
+        <CommunityLeftSidebar
+          active={nav}
+          onSelect={(id) => {
+            setActiveSpaceSlug(null);
+            setNav(id);
+          }}
+          activeSpaceSlug={activeSpaceSlug}
+          onSelectSpace={openSpace}
+          onCreateSpace={() => {
+            setNav("communities");
+            setCreateSpaceOpen(true);
+          }}
+        />
 
         <div className="min-w-0 flex-1">
           <header className="mb-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
-                <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
+                <h1 className="text-xl font-semibold tracking-tight">{navTitle(nav)}</h1>
                 <p className="mt-1 max-w-lg text-sm text-muted-foreground">
+
                   Share project updates, ask for help, request collaboration, or drop a resource.
                   Every post has purpose.
                 </p>
