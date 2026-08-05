@@ -37,17 +37,26 @@ export function CommunityLeftSidebar({
   activeSpaceSlug,
   onSelectSpace,
   onCreateSpace,
+  mobile = false,
 }: {
   active: CommunityNavId;
   onSelect: (id: CommunityNavId) => void;
   activeSpaceSlug?: string | null;
   onSelectSpace?: (slug: string) => void;
   onCreateSpace?: () => void;
+  mobile?: boolean;
 }) {
   const { data: mySpaces = [] } = useMySpaces();
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col gap-4 lg:flex">
+    <aside
+      className={
+        mobile
+          ? "flex w-full flex-col gap-4"
+          : "hidden w-60 shrink-0 flex-col gap-4 lg:flex"
+      }
+    >
+
       <nav className="rounded-lg border border-border bg-surface p-1.5">
         {NAV.map((item) => {
           const Icon = item.icon;
