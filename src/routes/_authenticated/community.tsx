@@ -158,6 +158,13 @@ function CommunityPage() {
     });
   }
 
+  function openSpace(slug: string) {
+    setActiveSpaceSlug(slug);
+    setNav("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+
   function editPost(post: PostWithAuthor) {
     setEditingPost(post);
     window.scrollTo({ top: 0, behavior: "smooth" });
