@@ -75,16 +75,8 @@ const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
   })),
 ];
 
-const TYPE_ICONS: Record<string, string> = {
-  project_update: "🚀",
-  question: "❓",
-  resource: "📚",
-  help_request: "🤝",
-  collaboration_request: "🔨",
-  tip: "💡",
-  showcase: "✨",
-  discussion: "💬",
-};
+
+
 
 type SortMode = "latest" | "helpful" | "offers";
 
