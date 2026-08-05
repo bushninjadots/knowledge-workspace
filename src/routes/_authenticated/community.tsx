@@ -328,26 +328,23 @@ function CommunityPage() {
           )}
 
           {showTypeTabs && (
-            <div className="sticky top-0 z-20 -mx-2 px-2 py-3 bg-background/85 backdrop-blur-md mb-4 border-b border-border/40 space-y-2.5">
-              <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-                {TYPE_FILTERS.map((f) => {
-                  const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
-                  return (
-                    <button
-                      key={f.value}
-                      onClick={() => setTypeFilter(f.value)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 min-h-[36px] ${
-                        typeFilter === f.value
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
-                      }`}
-                    >
-                      {icon && <span className="mr-1">{icon}</span>}
-                      {f.label}
-                    </button>
-                  );
-                })}
+            <div className="sticky top-0 z-20 -mx-2 mb-4 space-y-2.5 border-b border-border bg-background/95 px-2 py-3 backdrop-blur-sm">
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                {TYPE_FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setTypeFilter(f.value)}
+                    className={`shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
+                      typeFilter === f.value
+                        ? "border-border bg-surface-elevated text-foreground"
+                        : "border-border/70 bg-transparent text-muted-foreground hover:bg-surface-elevated/60 hover:text-foreground"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
+
 
               <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
                 <button
