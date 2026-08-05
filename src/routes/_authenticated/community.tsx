@@ -75,9 +75,6 @@ const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
   })),
 ];
 
-
-
-
 type SortMode = "latest" | "helpful" | "offers";
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
@@ -163,7 +160,6 @@ function CommunityPage() {
     setNav("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
 
   function editPost(post: PostWithAuthor) {
     setEditingPost(post);
@@ -276,7 +272,6 @@ function CommunityPage() {
               <div>
                 <h1 className="text-xl font-semibold tracking-tight">{navTitle(nav)}</h1>
                 <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-
                   Share project updates, ask for help, request collaboration, or drop a resource.
                   Every post has purpose.
                 </p>
@@ -364,7 +359,6 @@ function CommunityPage() {
                 ))}
               </div>
 
-
               <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
@@ -407,7 +401,6 @@ function CommunityPage() {
                   </button>
                 ))}
               </div>
-
             </div>
           )}
 
@@ -499,7 +492,6 @@ function CommunityPage() {
                 onOpenChange={setCreateSpaceOpen}
                 onCreated={(space) => openSpace(space.slug)}
               />
-
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
@@ -649,7 +641,6 @@ function CommunityPage() {
               }}
             />
           </div>
-
         </DrawerContent>
       </Drawer>
 
