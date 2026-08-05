@@ -101,15 +101,20 @@ export function useCommunitySpaces() {
         }
       }
 
-      return (spaces ?? []).map((s: CommunitySpace): CommunitySpace => ({
-        ...s,
-        member_count: countMap.get(s.id) ?? 0,
-        is_member: myMembershipMap.has(s.id),
-        my_role: myMembershipMap.get(s.id) ?? null,
-      }));
+      return sortSpaces(
+        (spaces ?? []).map(
+          (s: CommunitySpace): CommunitySpace => ({
+            ...s,
+            member_count: countMap.get(s.id) ?? 0,
+            is_member: myMembershipMap.has(s.id),
+            my_role: myMembershipMap.get(s.id) ?? null,
+          }),
+        ),
+      );
     },
     staleTime: 30_000,
   });
+
 }
 
 export function useCommunitySpace(slug: string) {
