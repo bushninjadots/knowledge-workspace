@@ -44,18 +44,19 @@
   --color-dark-slate: var(--dark-slate);
   --color-soft-ivory: var(--soft-ivory);
 
-  --shadow-glow-green: 0 10px 40px -10px color-mix(in oklab, var(--brand-green) 45%, transparent);
-  --shadow-glow-purple: 0 10px 40px -10px color-mix(in oklab, var(--brand-purple) 45%, transparent);
-  --shadow-card: 0 4px 24px -8px oklch(0 0 0 / 0.4);
-  --shadow-lifted: 0 8px 32px -4px oklch(0 0 0 / 0.5), 0 2px 8px -2px oklch(0 0 0 / 0.3);
-  --shadow-soft: 0 2px 12px -2px oklch(0 0 0 / 0.25);
-  --shadow-glow-green-soft: 0 4px 20px -4px color-mix(in oklab, var(--brand-green) 25%, transparent);
-  --shadow-glow-purple-soft: 0 4px 20px -4px
-    color-mix(in oklab, var(--brand-purple) 25%, transparent);
+  /* Flat, precise elevation — no glow-heavy SaaS bloom */
+  --shadow-glow-green: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+  --shadow-glow-purple: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --shadow-lifted: 0 2px 6px -2px oklch(0 0 0 / 0.4), 0 1px 2px 0 oklch(0 0 0 / 0.25);
+  --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.25);
+  --shadow-glow-green-soft: 0 1px 2px 0 oklch(0 0 0 / 0.25);
+  --shadow-glow-purple-soft: 0 1px 2px 0 oklch(0 0 0 / 0.25);
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 0.375rem;
+
 
   /* Tethyr palette — dark first */
   --background: oklch(0.18 0.018 264); /* #0E1117 */
