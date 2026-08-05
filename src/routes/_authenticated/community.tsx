@@ -449,16 +449,16 @@ function CommunityPage() {
                     value={spaceSearch}
                     onChange={(e) => setSpaceSearch(e.target.value)}
                     placeholder="Search spaces..."
-                    className="h-9 rounded-xl border-border/60 bg-surface pl-9 pr-4 text-sm"
+                    className="h-9 rounded-md border-border bg-surface pl-9 pr-4 text-sm"
                   />
                 </div>
                 <Button
                   size="sm"
-                  className="rounded-full shrink-0"
+                  className="h-9 shrink-0 rounded-md"
                   onClick={() => setCreateSpaceOpen(true)}
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Create space
+                  New space
                 </Button>
               </div>
               {isLoadingSpaces ? (
@@ -466,7 +466,7 @@ function CommunityPage() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="animate-pulse rounded-3xl border border-border/50 bg-card/60 p-5 h-32"
+                      className="h-32 animate-pulse rounded-lg border border-border bg-surface"
                     />
                   ))}
                 </div>
@@ -489,15 +489,17 @@ function CommunityPage() {
                       <CommunityCard
                         key={space.id}
                         space={space}
-                        onClick={() => {
-                          setActiveSpaceSlug(space.slug);
-                          setNav("home");
-                        }}
+                        onClick={() => openSpace(space.slug)}
                       />
                     ))}
                 </div>
               )}
-              <CreateSpaceDialog open={createSpaceOpen} onOpenChange={setCreateSpaceOpen} />
+              <CreateSpaceDialog
+                open={createSpaceOpen}
+                onOpenChange={setCreateSpaceOpen}
+                onCreated={(space) => openSpace(space.slug)}
+              />
+
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
