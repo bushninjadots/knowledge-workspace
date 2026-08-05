@@ -36,6 +36,25 @@ const SPACE_KEY = (slug: string) => ["community-space", slug] as const;
 const SPACE_MEMBERS_KEY = (spaceId: string) => ["space-members", spaceId] as const;
 const SPACE_POSTS_KEY = (spaceId: string) => ["space-posts", spaceId] as const;
 
+/** The always-present house space, pinned to the top of every space list. */
+export const DEFAULT_SPACE_SLUG = "general";
+
+export function isDefaultSpace(space: CommunitySpace): boolean {
+  return space.slug === DEFAULT_SPACE_SLUG;
+}
+
+/** Default space first, then joined spaces, then by member count. */
+function sortSpaces(list: CommunitySpace[]): CommunitySpace[] {
+  return [...list].sort((a, b) => {
+    if (isDefaultSpace(a) !== isDefaultSpace(b)) return isDefaultSpace(a) ? -1 : 1;
+    if (!!a.is_member !== !!b.is_member) return a.is_member ? -1 : 1;
+    const diff = (b.member_count ?? 0) - (a.member_count ?? 0);
+    if (diff !== 0) return diff;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+
 // ============================================================
 // Queries
 // ============================================================
