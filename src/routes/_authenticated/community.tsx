@@ -75,17 +75,6 @@ const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
   })),
 ];
 
-const TYPE_ICONS: Record<string, string> = {
-  project_update: "🚀",
-  question: "❓",
-  resource: "📚",
-  help_request: "🤝",
-  collaboration_request: "🔨",
-  tip: "💡",
-  showcase: "✨",
-  discussion: "💬",
-};
-
 type SortMode = "latest" | "helpful" | "offers";
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
@@ -164,6 +153,12 @@ function CommunityPage() {
       onSuccess: () => toast.success("Post deleted"),
       onError: () => toast.error("Failed to delete"),
     });
+  }
+
+  function openSpace(slug: string) {
+    setActiveSpaceSlug(slug);
+    setNav("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function editPost(post: PostWithAuthor) {
@@ -255,16 +250,27 @@ function CommunityPage() {
   const showTypeTabs = nav === "home" && !isSearching;
 
   return (
-    <div className="animate-room-enter min-h-screen bg-noise">
+    <div className="animate-room-enter min-h-screen">
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
-        <CommunityLeftSidebar active={nav} onSelect={setNav} />
+        <CommunityLeftSidebar
+          active={nav}
+          onSelect={(id) => {
+            setActiveSpaceSlug(null);
+            setNav(id);
+          }}
+          activeSpaceSlug={activeSpaceSlug}
+          onSelectSpace={openSpace}
+          onCreateSpace={() => {
+            setNav("communities");
+            setCreateSpaceOpen(true);
+          }}
+        />
 
         <div className="min-w-0 flex-1">
           <header className="mb-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
-                <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
+                <h1 className="text-xl font-semibold tracking-tight">{navTitle(nav)}</h1>
                 <p className="mt-1 max-w-lg text-sm text-muted-foreground">
                   Share project updates, ask for help, request collaboration, or drop a resource.
                   Every post has purpose.
@@ -336,34 +342,30 @@ function CommunityPage() {
           )}
 
           {showTypeTabs && (
-            <div className="sticky top-0 z-20 -mx-2 px-2 py-3 bg-background/85 backdrop-blur-md mb-4 border-b border-border/40 space-y-2.5">
-              <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-                {TYPE_FILTERS.map((f) => {
-                  const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
-                  return (
-                    <button
-                      key={f.value}
-                      onClick={() => setTypeFilter(f.value)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 min-h-[36px] ${
-                        typeFilter === f.value
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
-                      }`}
-                    >
-                      {icon && <span className="mr-1">{icon}</span>}
-                      {f.label}
-                    </button>
-                  );
-                })}
+            <div className="sticky top-0 z-20 -mx-2 mb-4 space-y-2.5 border-b border-border bg-background/95 px-2 py-3 backdrop-blur-sm">
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                {TYPE_FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setTypeFilter(f.value)}
+                    className={`shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
+                      typeFilter === f.value
+                        ? "border-border bg-surface-elevated text-foreground"
+                        : "border-border/70 bg-transparent text-muted-foreground hover:bg-surface-elevated/60 hover:text-foreground"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
 
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+              <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                  className={`shrink-0 rounded px-2 py-1 text-xs transition-colors ${
                     focusFilter === "all"
-                      ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
+                      ? "bg-surface-elevated font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
                   }`}
                 >
                   Any focus
@@ -372,10 +374,10 @@ function CommunityPage() {
                   <button
                     key={f}
                     onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                    className={`shrink-0 rounded px-2 py-1 text-xs transition-colors ${
                       focusFilter === f
-                        ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
+                        ? "bg-surface-elevated font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
                     }`}
                   >
                     {f}
@@ -383,15 +385,15 @@ function CommunityPage() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5 pt-1">
+              <div className="flex items-center gap-1 pt-1">
                 <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setSortMode(opt.value)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
+                    className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
                       sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -440,16 +442,16 @@ function CommunityPage() {
                     value={spaceSearch}
                     onChange={(e) => setSpaceSearch(e.target.value)}
                     placeholder="Search spaces..."
-                    className="h-9 rounded-xl border-border/60 bg-surface pl-9 pr-4 text-sm"
+                    className="h-9 rounded-md border-border bg-surface pl-9 pr-4 text-sm"
                   />
                 </div>
                 <Button
                   size="sm"
-                  className="rounded-full shrink-0"
+                  className="h-9 shrink-0 rounded-md"
                   onClick={() => setCreateSpaceOpen(true)}
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Create space
+                  New space
                 </Button>
               </div>
               {isLoadingSpaces ? (
@@ -457,7 +459,7 @@ function CommunityPage() {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="animate-pulse rounded-3xl border border-border/50 bg-card/60 p-5 h-32"
+                      className="h-32 animate-pulse rounded-lg border border-border bg-surface"
                     />
                   ))}
                 </div>
@@ -480,15 +482,16 @@ function CommunityPage() {
                       <CommunityCard
                         key={space.id}
                         space={space}
-                        onClick={() => {
-                          setActiveSpaceSlug(space.slug);
-                          setNav("home");
-                        }}
+                        onClick={() => openSpace(space.slug)}
                       />
                     ))}
                 </div>
               )}
-              <CreateSpaceDialog open={createSpaceOpen} onOpenChange={setCreateSpaceOpen} />
+              <CreateSpaceDialog
+                open={createSpaceOpen}
+                onOpenChange={setCreateSpaceOpen}
+                onCreated={(space) => openSpace(space.slug)}
+              />
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
@@ -619,10 +622,22 @@ function CommunityPage() {
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
             <CommunityLeftSidebar
+              mobile
               active={nav}
               onSelect={(id) => {
+                setActiveSpaceSlug(null);
                 setNav(id);
                 setMobileSidebarOpen(false);
+              }}
+              activeSpaceSlug={activeSpaceSlug}
+              onSelectSpace={(slug) => {
+                openSpace(slug);
+                setMobileSidebarOpen(false);
+              }}
+              onCreateSpace={() => {
+                setMobileSidebarOpen(false);
+                setNav("communities");
+                setCreateSpaceOpen(true);
               }}
             />
           </div>

@@ -36,6 +36,25 @@ const SPACE_KEY = (slug: string) => ["community-space", slug] as const;
 const SPACE_MEMBERS_KEY = (spaceId: string) => ["space-members", spaceId] as const;
 const SPACE_POSTS_KEY = (spaceId: string) => ["space-posts", spaceId] as const;
 
+/** The always-present house space, pinned to the top of every space list. */
+export const DEFAULT_SPACE_SLUG = "general";
+
+export function isDefaultSpace(space: CommunitySpace): boolean {
+  return space.slug === DEFAULT_SPACE_SLUG;
+}
+
+/** Default space first, then joined spaces, then by member count. */
+function sortSpaces(list: CommunitySpace[]): CommunitySpace[] {
+  return [...list].sort((a, b) => {
+    if (isDefaultSpace(a) !== isDefaultSpace(b)) return isDefaultSpace(a) ? -1 : 1;
+    if (!!a.is_member !== !!b.is_member) return a.is_member ? -1 : 1;
+    const diff = (b.member_count ?? 0) - (a.member_count ?? 0);
+    if (diff !== 0) return diff;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+
 // ============================================================
 // Queries
 // ============================================================
@@ -82,15 +101,20 @@ export function useCommunitySpaces() {
         }
       }
 
-      return (spaces ?? []).map((s: CommunitySpace): CommunitySpace => ({
-        ...s,
-        member_count: countMap.get(s.id) ?? 0,
-        is_member: myMembershipMap.has(s.id),
-        my_role: myMembershipMap.get(s.id) ?? null,
-      }));
+      return sortSpaces(
+        (spaces ?? []).map(
+          (s: CommunitySpace): CommunitySpace => ({
+            ...s,
+            member_count: countMap.get(s.id) ?? 0,
+            is_member: myMembershipMap.has(s.id),
+            my_role: myMembershipMap.get(s.id) ?? null,
+          }),
+        ),
+      );
     },
     staleTime: 30_000,
   });
+
 }
 
 export function useCommunitySpace(slug: string) {
@@ -134,6 +158,16 @@ export function useCommunitySpace(slug: string) {
     enabled: !!slug,
   });
 }
+
+/** Spaces the signed-in user belongs to, default space always first. */
+export function useMySpaces() {
+  const { data: spaces = [], ...rest } = useCommunitySpaces();
+  return {
+    ...rest,
+    data: spaces.filter((s: CommunitySpace) => s.is_member || isDefaultSpace(s)),
+  };
+}
+
 
 // ============================================================
 // CRUD Mutations
@@ -224,6 +258,56 @@ export function useDeleteSpace() {
 // Join / Leave
 // ============================================================
 
+/** Optimistically flip membership in every cached view of a space. */
+function applyMembership(
+  qc: ReturnType<typeof useQueryClient>,
+  spaceId: string,
+  isMember: boolean,
+) {
+  const previousList = qc.getQueryData<CommunitySpace[]>(SPACES_KEY);
+
+  qc.setQueryData<CommunitySpace[]>(SPACES_KEY, (list) =>
+    list
+      ? list.map((s) =>
+          s.id === spaceId
+            ? {
+                ...s,
+                is_member: isMember,
+                my_role: isMember ? (s.my_role ?? "member") : null,
+                member_count: Math.max(0, (s.member_count ?? 0) + (isMember ? 1 : -1)),
+              }
+            : s,
+        )
+      : list,
+  );
+
+  const slug = previousList?.find((s) => s.id === spaceId)?.slug;
+  const previousSpace = slug ? qc.getQueryData<CommunitySpace>(SPACE_KEY(slug)) : undefined;
+  if (slug) {
+    qc.setQueryData<CommunitySpace | null>(SPACE_KEY(slug), (space) =>
+      space
+        ? {
+            ...space,
+            is_member: isMember,
+            my_role: isMember ? (space.my_role ?? "member") : null,
+            member_count: Math.max(0, (space.member_count ?? 0) + (isMember ? 1 : -1)),
+          }
+        : space,
+    );
+  }
+
+  return { previousList, slug, previousSpace };
+}
+
+function rollbackMembership(
+  qc: ReturnType<typeof useQueryClient>,
+  ctx?: { previousList?: CommunitySpace[]; slug?: string; previousSpace?: CommunitySpace },
+) {
+  if (!ctx) return;
+  if (ctx.previousList) qc.setQueryData(SPACES_KEY, ctx.previousList);
+  if (ctx.slug && ctx.previousSpace) qc.setQueryData(SPACE_KEY(ctx.slug), ctx.previousSpace);
+}
+
 export function useJoinSpace() {
   const qc = useQueryClient();
   return useMutation({
@@ -243,8 +327,15 @@ export function useJoinSpace() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onMutate: async (spaceId: string) => {
+      await qc.cancelQueries({ queryKey: SPACES_KEY });
+      return applyMembership(qc, spaceId, true);
+    },
+    onError: (_err, _spaceId, ctx) => rollbackMembership(qc, ctx),
+    onSettled: (_data, _err, spaceId) => {
       qc.invalidateQueries({ queryKey: SPACES_KEY });
+      qc.invalidateQueries({ queryKey: SPACE_MEMBERS_KEY(spaceId) });
+      qc.invalidateQueries({ queryKey: ["community-space"] });
     },
   });
 }
@@ -264,11 +355,19 @@ export function useLeaveSpace() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (spaceId: string) => {
+      await qc.cancelQueries({ queryKey: SPACES_KEY });
+      return applyMembership(qc, spaceId, false);
+    },
+    onError: (_err, _spaceId, ctx) => rollbackMembership(qc, ctx),
+    onSettled: (_data, _err, spaceId) => {
       qc.invalidateQueries({ queryKey: SPACES_KEY });
+      qc.invalidateQueries({ queryKey: SPACE_MEMBERS_KEY(spaceId) });
+      qc.invalidateQueries({ queryKey: ["community-space"] });
     },
   });
 }
+
 
 // ============================================================
 // Member Management
