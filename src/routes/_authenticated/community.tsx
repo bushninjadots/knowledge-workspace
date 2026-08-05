@@ -346,13 +346,13 @@ function CommunityPage() {
               </div>
 
 
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+              <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                  className={`shrink-0 rounded px-2 py-1 text-xs transition-colors ${
                     focusFilter === "all"
-                      ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
+                      ? "bg-surface-elevated font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
                   }`}
                 >
                   Any focus
@@ -361,10 +361,10 @@ function CommunityPage() {
                   <button
                     key={f}
                     onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                    className={`shrink-0 rounded px-2 py-1 text-xs transition-colors ${
                       focusFilter === f
-                        ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
+                        ? "bg-surface-elevated font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
                     }`}
                   >
                     {f}
@@ -372,15 +372,15 @@ function CommunityPage() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5 pt-1">
+              <div className="flex items-center gap-1 pt-1">
                 <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                 {SORT_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setSortMode(opt.value)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
+                    className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
                       sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -388,6 +388,7 @@ function CommunityPage() {
                   </button>
                 ))}
               </div>
+
             </div>
           )}
 
