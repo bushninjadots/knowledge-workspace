@@ -27,14 +27,14 @@
  */
 
 @theme inline {
-  /* --- Radius scale: engineered, not rounded ------------------------------ */
+  /* --- Radius scale: tight, professional, not decorative ----------------- */
   --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: var(--radius); /* 4px */
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
-  --radius-3xl: 8px;
-  --radius-4xl: 8px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 5px;
+  --radius-2xl: 5px;
+  --radius-3xl: 6px;
+  --radius-4xl: 8px;  /* reserved: modals, images, hero sections */
 
   /* --- Type -------------------------------------------------------------- */
   --font-sans:
@@ -93,14 +93,14 @@
   --color-dark-slate: var(--surface-elevated);
   --color-soft-ivory: var(--surface);
 
-  /* --- Elevation: hairlines, not halos ----------------------------------- */
+  /* --- Elevation: structure over decoration ------------------------------ */
   --shadow-glow-green: none;
   --shadow-glow-purple: none;
   --shadow-glow-green-soft: none;
   --shadow-glow-purple-soft: none;
-  --shadow-card: 0 1px 2px 0 var(--shadow-tint);
-  --shadow-soft: 0 1px 2px 0 var(--shadow-tint);
-  --shadow-lifted: 0 4px 12px -2px var(--shadow-tint);
+  --shadow-card: none;
+  --shadow-soft: none;
+  --shadow-lifted: 0 1px 3px 0 var(--shadow-tint);  /* dialogs only */
 }
 
 /* ---------------------------------------------------------------------------
@@ -298,11 +298,25 @@
  * Structural primitives — panels, rules, section headers
  * ------------------------------------------------------------------------ */
 
-/* A workspace panel: bordered region, square-ish, no shadow. */
+/* A workspace panel: bordered region, tight radius, structure-only.
+   Use for self-contained widgets that need to stand apart. */
 @utility panel {
-  background-color: var(--surface-elevated);
+  background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+}
+
+/* Continuous surface: one background, children separated by hairlines.
+   For feed content, tab sections, and listing layouts. */
+@utility surface-section {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Each child inside surface-section gets a bottom border. */
+@utility surface-divide > * + * {
+  border-top: 1px solid var(--border);
 }
 
 /* Full-bleed panel that sits flush inside a column (no side borders). */
@@ -491,7 +505,6 @@
 
 @utility animate-border-glow {
   position: relative;
-  overflow: hidden;
 }
 
 .animate-border-glow::before {

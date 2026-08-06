@@ -180,7 +180,7 @@ export function PostCard({
 
   return (
     <article
-      className={`card-border rounded-3xl border border-l-[3px] bg-surface p-5 sm:p-6 transition-all duration-500 ${TYPE_BORDER[post.type]} ${
+      className={`border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
         highlighted
           ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
           : ""

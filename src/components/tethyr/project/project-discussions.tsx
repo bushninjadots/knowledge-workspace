@@ -206,7 +206,7 @@ export function ProjectDiscussions({
   };
 
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Discussion</h3>
         {isContributor && (

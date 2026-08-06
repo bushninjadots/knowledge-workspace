@@ -111,14 +111,14 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
 
   if (isLoading) {
     return (
-      <div className="card-border rounded-3xl border bg-surface p-6">
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <p className="text-sm text-muted-foreground">Loading community posts...</p>
       </div>
     );
   }
 
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
         <MessageCircle className="h-4 w-4" />
         Community Discussions

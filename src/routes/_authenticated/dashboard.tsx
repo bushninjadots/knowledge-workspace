@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useEffect } from "react";
-import { ArrowRight, Compass, Sparkles, Clock, Zap, Folder } from "lucide-react";
+import { ArrowRight, Sparkles, Clock, Zap, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
@@ -82,7 +82,7 @@ function DashboardPage() {
   return (
     <div className="animate-room-enter mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
       {/* Welcome */}
-      <section className="animate-border-glow relative rounded-3xl border border-border bg-surface p-6 sm:p-8">
+      <section className="animate-border-glow relative rounded-xl border border-border bg-surface p-5 sm:p-6">
         {/* Personalised banner background */}
         {data.bannerSigned && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
@@ -144,130 +144,80 @@ function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Continuous workspace surface — replaces floating cards */}
+      <div className="surface-section surface-divide bg-noise">
         {pct < 100 && (
-          <section className="card-border rounded-3xl border bg-surface p-5 lg:col-span-2 sm:p-6">
-            <SectionHeader
-              icon={<Sparkles className="h-4 w-4 text-primary" />}
-              title="Next steps"
-              subtitle="A few things to finish before other people can find you."
-            />
-            <div className="mt-4">
-              <NextStepsList items={remaining} />
-            </div>
-          </section>
+          <WorkspaceSection
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Next steps"
+            subtitle="A few things to finish before other people can find you."
+          >
+            <NextStepsList items={remaining} />
+          </WorkspaceSection>
         )}
 
-        <section
-          className={`card-border rounded-3xl border bg-surface p-5 sm:p-6 ${pct < 100 ? "" : "lg:col-span-2"}`}
+        <WorkspaceSection
+          icon={<Folder className="h-4 w-4" />}
+          title="Projects for you"
+          subtitle="Projects matching your skills and interests."
         >
-          <SectionHeader
-            icon={<Folder className="h-4 w-4 text-brand-green" />}
-            title="Projects for you"
-            subtitle="Projects matching your skills and interests."
-          />
-          <div className="mt-4">
-            <SuggestedProjects />
-          </div>
-        </section>
+          <SuggestedProjects />
+        </WorkspaceSection>
 
-        {pct < 100 && (
-          <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-            <SectionHeader
-              icon={<Compass className="h-4 w-4 text-brand-purple" />}
-              title="Quick links"
-            />
-            <div className="mt-4 space-y-2">
-              <QuickLink
-                to="/explore"
-                icon={<Compass className="h-4 w-4" />}
-                label="Explore people"
-              />
-              <QuickLink
-                to="/community"
-                icon={<Sparkles className="h-4 w-4" />}
-                label="Community feed"
-              />
-              <QuickLink
-                to="/explore"
-                icon={<Compass className="h-4 w-4" />}
-                label="Explore skills & studios"
-              />
-            </div>
-          </section>
-        )}
-      </div>
-
-      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-        <SectionHeader
-          icon={<Zap className="h-4 w-4 text-brand-green" />}
+        <WorkspaceSection
+          icon={<Zap className="h-4 w-4" />}
           title="People you connect with"
           subtitle="Based on complementary skills, availability, and language."
-        />
-        <div className="mt-4">
+        >
           <SuggestedCreators />
-        </div>
-      </section>
+        </WorkspaceSection>
 
-      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-        <SectionHeader
-          icon={<Clock className="h-4 w-4 text-primary" />}
+        <WorkspaceSection
+          icon={<Clock className="h-4 w-4" />}
           title="Recent activity"
           subtitle="Every meaningful action becomes part of your reputation history."
-        />
-        <div className="mt-4">
+        >
           <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
-        </div>
-      </section>
+        </WorkspaceSection>
 
-      <ConnectionsCard />
+        <ConnectionsCard />
 
-      <section className="card-border rounded-3xl border bg-surface p-5 sm:p-6">
-        <SectionHeader
-          icon={<Sparkles className="h-4 w-4 text-primary" />}
+        <WorkspaceSection
+          icon={<Sparkles className="h-4 w-4" />}
           title="Discover skills"
           subtitle="Trending across the network."
-        />
-        <div className="mt-4">
+        >
           <DiscoverSkills />
-        </div>
-      </section>
+        </WorkspaceSection>
+      </div>
     </div>
   );
 }
 
-function SectionHeader({
+function WorkspaceSection({
   icon,
   title,
   subtitle,
+  children,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated">
-        {icon}
+    <div className="px-5 py-4 sm:px-6 sm:py-5">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="text-muted-foreground">{icon}</span>
+        <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
+          {title}
+        </h2>
+        {subtitle && (
+          <span className="text-xs text-muted-foreground">— {subtitle}</span>
+        )}
       </div>
-      <div>
-        <h2 className="font-display text-lg font-semibold">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
-      </div>
+      {children}
     </div>
-  );
-}
-
-function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface))]"
-    >
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="text-sm">{label}</span>
-      <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
-    </Link>
   );
 }
 

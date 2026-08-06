@@ -272,7 +272,7 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
       </div>
 
       {/* Workshop description */}
-      <div className="card-border rounded-3xl border bg-surface p-6">
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           This is a dedicated space for {skillName}. Browse the People tab to find people sharing

@@ -260,7 +260,7 @@ function ProjectPage() {
     <Shell accentColor={accent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* HERO / HEADER */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-surface">
           <div
             className="relative aspect-[21/9] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
             style={{ borderColor: accent ?? "transparent" }}
@@ -412,7 +412,7 @@ function ProjectPage() {
           <div className="space-y-6">
             {/* Vision */}
             {project.vision && (
-              <div className="card-border rounded-3xl border bg-surface p-6">
+              <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
                 <h3 className="mb-2 text-sm font-medium text-foreground/80">Vision</h3>
                 <div className="prose-custom text-sm text-foreground/90">
                   <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
@@ -422,7 +422,7 @@ function ProjectPage() {
 
             {/* Description */}
             {project.description && (
-              <div className="card-border rounded-3xl border bg-surface p-6">
+              <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
                 <h3 className="mb-2 text-sm font-medium text-foreground/80">About</h3>
                 <div className="prose-custom text-sm leading-relaxed text-foreground/90">
                   <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
@@ -615,7 +615,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
         {icon}
         {title}

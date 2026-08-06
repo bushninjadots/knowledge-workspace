@@ -148,7 +148,7 @@ export function ProfileLayout({
     <div className="animate-room-enter mx-auto max-w-7xl bg-noise p-4 sm:p-8" style={accentStyle}>
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6">
           {isOwnProfile ? (
             <BannerStrip
               bannerSigned={bannerSigned}

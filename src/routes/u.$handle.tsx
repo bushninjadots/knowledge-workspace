@@ -246,7 +246,7 @@ function PublicProfileRoute() {
     <Shell accentColor={bannerAccent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* ── Hero: Studio Backdrop ── */}
-        <div className="card-border relative overflow-hidden rounded-3xl border bg-surface p-6 sm:p-8">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6">
           <div
             className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
             style={{ borderColor: bannerAccent ?? "transparent" }}
@@ -616,7 +616,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card-border bg-noise relative rounded-3xl border bg-surface p-6">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="mb-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           {icon}

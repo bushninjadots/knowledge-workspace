@@ -52,7 +52,7 @@ export function ProfileOverviewTab({
 
       {/* SKILLS SUMMARY */}
       {(teachSkills.length > 0 || learnSkills.length > 0) && (
-        <div className="card-border rounded-3xl border bg-surface p-6">
+        <div className="rounded-xl border border-border bg-surface p-5">
           <h3 className="mb-4 font-display text-base font-semibold">Skills</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             {teachSkills.length > 0 && (
@@ -108,7 +108,7 @@ export function ProfileOverviewTab({
 
       {/* PROJECTS PREVIEW */}
       {projects.length > 0 && (
-        <div className="card-border rounded-3xl border bg-surface p-6">
+        <div className="rounded-xl border border-border bg-surface p-5">
           <div className="mb-4 flex items-center gap-2">
             <Rocket className="h-4 w-4 text-muted-foreground" />
             <h3 className="font-display text-base font-semibold">Projects</h3>
@@ -125,7 +125,7 @@ export function ProfileOverviewTab({
       )}
 
       {/* VERIFICATION BADGES */}
-      <div className="card-border rounded-3xl border bg-surface p-6">
+      <div className="rounded-xl border border-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <Star className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-display text-base font-semibold">Achievements</h3>
@@ -135,7 +135,7 @@ export function ProfileOverviewTab({
 
       {/* ACTIVITY PREVIEW */}
       {activity.length > 0 && (
-        <div className="card-border rounded-3xl border bg-surface p-6">
+        <div className="rounded-xl border border-border bg-surface p-5">
           <h3 className="mb-4 font-display text-base font-semibold">Recent Activity</h3>
           <ActivityTimeline profileId={userId} events={activity.slice(0, 5)} />
         </div>

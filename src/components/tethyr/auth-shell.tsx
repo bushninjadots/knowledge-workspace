@@ -38,7 +38,7 @@ export function AuthShell({
         <div className="mb-8 flex justify-center">
           <TethyrBall size="md" />
         </div>
-        <div className="rounded-3xl border border-border/60 bg-surface/80 p-8 shadow-card backdrop-blur-xl bg-noise">
+        <div className="rounded-xl border border-border bg-surface p-8">
           <div className="mb-6 space-y-1 text-center">
             <h1 className="font-display text-2xl font-semibold">{title}</h1>
             <p className="text-sm text-muted-foreground">{subtitle}</p>

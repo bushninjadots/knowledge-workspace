@@ -26,7 +26,7 @@ export function ProfileProjectsTab({
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-5">
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Rocket className="h-4 w-4 text-muted-foreground" />

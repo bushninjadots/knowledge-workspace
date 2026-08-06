@@ -37,7 +37,7 @@ export function CommunityLeftSidebar({
 }) {
   return (
     <aside className="hidden w-64 shrink-0 flex-col gap-6 lg:flex">
-      <nav className="card-border rounded-3xl border bg-surface p-3">
+      <nav className="rounded-xl border border-border bg-surface p-3">
         {NAV.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.id;

@@ -12,7 +12,7 @@ export function ProfileSessionsTab({
   const { data: stats, isLoading } = useSessionStats(userId);
 
   return (
-    <div className="card-border rounded-3xl border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-5">
       <div className="mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-display text-base font-semibold">Sessions</h3>
