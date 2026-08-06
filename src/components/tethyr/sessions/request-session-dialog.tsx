@@ -1,8 +1,20 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSendSessionRequest } from "@/hooks/use-sessions";
 
@@ -12,7 +24,11 @@ interface RequestSessionDialogProps {
   hasPendingRequest: boolean;
 }
 
-export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }: RequestSessionDialogProps) {
+export function RequestSessionDialog({
+  toUserId,
+  toUserName,
+  hasPendingRequest,
+}: RequestSessionDialogProps) {
   const [open, setOpen] = useState(false);
   const [sessionType, setSessionType] = useState("");
   const [message, setMessage] = useState("");
@@ -29,7 +45,7 @@ export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }
           setSessionType("");
         },
         onError: () => toast.error("Failed to send request"),
-      }
+      },
     );
   };
 
@@ -71,7 +87,9 @@ export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={sendRequest.isPending}>
               {sendRequest.isPending ? "Sending..." : "Send Request"}
             </Button>

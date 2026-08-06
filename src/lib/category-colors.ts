@@ -1,6 +1,4 @@
-import {
-  Palette, Code, Video, Camera, Music, Pen, Megaphone, type LucideIcon
-} from "lucide-react";
+import { Palette, Code, Video, Camera, Music, Pen, Megaphone, type LucideIcon } from "lucide-react";
 
 export const CATEGORY_ICON: Record<string, LucideIcon> = {
   Design: Palette,

@@ -7,7 +7,8 @@ export const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "gif"] as const
 export const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
 export type ImageValidation =
-  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
+  | { ok: true; ext: string; contentType: string }
+  | { ok: false; error: string };
 
 export function validateImageFile(file: File): ImageValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
@@ -58,7 +59,8 @@ export const ALLOWED_PROOF_MIMES = [
 ] as const;
 
 export type ProofFileValidation =
-  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
+  | { ok: true; ext: string; contentType: string }
+  | { ok: false; error: string };
 
 export function validateProofFile(file: File): ProofFileValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();

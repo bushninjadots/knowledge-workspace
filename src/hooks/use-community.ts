@@ -229,18 +229,20 @@ export function usePosts() {
         if (a.action === "offer") s.offers++;
       }
 
-      return posts.map((p: PostRow): PostWithAuthor => ({
-        ...p,
-        author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
-          display_name: "Unknown",
-          handle: "unknown",
-          creator_title: "Member",
-          category: "General",
-          avatar_url: null,
-        },
-        stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
-        myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
-      }));
+      return posts.map(
+        (p: PostRow): PostWithAuthor => ({
+          ...p,
+          author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+            display_name: "Unknown",
+            handle: "unknown",
+            creator_title: "Member",
+            category: "General",
+            avatar_url: null,
+          },
+          stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
+          myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+        }),
+      );
     },
     staleTime: 30_000,
   });
@@ -369,15 +371,17 @@ export function useComments(postId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return comments.map((c): CommentRow => ({
-        ...c,
-        author: (profileMap.get(c.author_id) as unknown as CommentRow["author"]) ?? {
-          display_name: "Unknown",
-          handle: "unknown",
-          creator_title: "Member",
-          avatar_url: null,
-        },
-      }));
+      return comments.map(
+        (c): CommentRow => ({
+          ...c,
+          author: (profileMap.get(c.author_id) as unknown as CommentRow["author"]) ?? {
+            display_name: "Unknown",
+            handle: "unknown",
+            creator_title: "Member",
+            avatar_url: null,
+          },
+        }),
+      );
     },
     enabled: !!postId,
   });

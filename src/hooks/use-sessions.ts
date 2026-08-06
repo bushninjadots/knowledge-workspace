@@ -5,7 +5,12 @@ import { useCurrentUser } from "./use-current-user";
 /* ───────── Types ───────── */
 
 export type SessionType =
-  "skill_exchange" | "mentoring" | "project_meeting" | "study_session" | "workshop" | "general";
+  | "skill_exchange"
+  | "mentoring"
+  | "project_meeting"
+  | "study_session"
+  | "workshop"
+  | "general";
 
 export type SessionStatus =
   | "draft"
@@ -696,7 +701,9 @@ export function useSetSessionAvailability() {
   const userId = me?.userId;
 
   return useMutation({
-    mutationFn: async (slots: { day_of_week: number; start_time: string; end_time: string; status: string }[]) => {
+    mutationFn: async (
+      slots: { day_of_week: number; start_time: string; end_time: string; status: string }[],
+    ) => {
       const { error: delError } = await sb
         .from("session_availability")
         .delete()
@@ -705,9 +712,13 @@ export function useSetSessionAvailability() {
       if (delError) throw delError;
 
       if (slots.length > 0) {
-        const { error: insError } = await sb
-          .from("session_availability")
-          .insert(slots.map((s) => ({ ...s, profile_id: userId, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })));
+        const { error: insError } = await sb.from("session_availability").insert(
+          slots.map((s) => ({
+            ...s,
+            profile_id: userId,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          })),
+        );
 
         if (insError) throw insError;
       }

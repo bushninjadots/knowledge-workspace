@@ -40,10 +40,7 @@ function getCardCenter(dist: number): number {
   const sign = dist >= 0 ? 1 : -1;
   if (d <= 0) return 0;
   const gap = 8;
-  const w = [
-    getCardWidth(0), getCardWidth(1),
-    getCardWidth(2), getCardWidth(3), getCardWidth(4),
-  ];
+  const w = [getCardWidth(0), getCardWidth(1), getCardWidth(2), getCardWidth(3), getCardWidth(4)];
   const pos = [0];
   for (let i = 1; i < w.length; i++) {
     pos[i] = pos[i - 1] + w[i - 1] / 2 + gap + w[i] / 2;
@@ -57,7 +54,7 @@ function getRotateY(dist: number): number {
   const a = Math.abs(dist);
   const sign = dist > 0 ? -1 : 1;
   if (a < 0.4) return 0;
-  if (a < 1) return sign * 18 * (a - 0.4) / 0.6;
+  if (a < 1) return (sign * 18 * (a - 0.4)) / 0.6;
   if (a < 2) return sign * (18 + (a - 1) * 17);
   if (a < 4) return sign * (35 + (a - 2) * 7.5);
   return sign * 50;
@@ -65,7 +62,7 @@ function getRotateY(dist: number): number {
 
 function getScale(absDist: number): number {
   if (absDist < 0.4) return 1;
-  if (absDist < 1) return 1 - 0.15 * (absDist - 0.4) / 0.6;
+  if (absDist < 1) return 1 - (0.15 * (absDist - 0.4)) / 0.6;
   if (absDist < 2) return 0.85 - 0.15 * (absDist - 1);
   if (absDist < 3) return 0.7 - 0.15 * (absDist - 2);
   return 0.55;
@@ -73,9 +70,9 @@ function getScale(absDist: number): number {
 
 function getBlur(absDist: number): string {
   if (absDist < 0.8) return "blur(0px)";
-  if (absDist < 1.5) return `blur(${(2 * (absDist - 0.8) / 0.7).toFixed(1)}px)`;
+  if (absDist < 1.5) return `blur(${((2 * (absDist - 0.8)) / 0.7).toFixed(1)}px)`;
   if (absDist < 2.5) return `blur(${(2 + 2 * (absDist - 1.5)).toFixed(1)}px)`;
-  if (absDist < 4) return `blur(${(4 + 4 * (absDist - 2.5) / 1.5).toFixed(1)}px)`;
+  if (absDist < 4) return `blur(${(4 + (4 * (absDist - 2.5)) / 1.5).toFixed(1)}px)`;
   return "blur(8px)";
 }
 
@@ -95,13 +92,34 @@ function getZIndex(absDist: number): number {
 }
 
 export function ProjectShelfCover({
-  project, index, offset, meId, isContributor, prefersReducedMotion, forceFace, onClick,
+  project,
+  index,
+  offset,
+  meId,
+  isContributor,
+  prefersReducedMotion,
+  forceFace,
+  onClick,
 }: ProjectShelfCoverProps) {
   const category = inferCategory(project.tags);
   const Icon = CATEGORY_ICON[category] ?? CATEGORY_ICON.Design;
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
   const catColors = CATEGORY_COLORS[category];
+
+  // Hooks must run unconditionally — declared before any early return.
+  const dist = useTransform(offset, (o) => index - o);
+  const absDist = useTransform(dist, (d) => Math.abs(d));
+  const centerX = useTransform(dist, getCardCenter);
+  const w = useTransform(absDist, getCardWidth);
+  const h = useTransform(w, (width) => Math.max((width * 9) / 16, 180));
+  const rotateY = useTransform(dist, getRotateY);
+  const cardScale = useTransform(absDist, getScale);
+  const blurFilter = useTransform(absDist, getBlur);
+  const cardOpacity = useTransform(absDist, getOpacity);
+  const zIdx = useTransform(absDist, getZIndex);
+  const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
+  const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
 
   if (forceFace) {
     return (
@@ -116,7 +134,11 @@ export function ProjectShelfCover({
         role="option"
       >
         <div className="aspect-video">
-          <CoverGradient tags={project.tags} coverUrl={project.cover_url} progress={project.progress_percent} />
+          <CoverGradient
+            tags={project.tags}
+            coverUrl={project.cover_url}
+            progress={project.progress_percent}
+          />
         </div>
         <ProgressBar progress={project.progress_percent} />
         <div className="absolute left-3 top-3 flex items-center gap-2">
@@ -148,19 +170,6 @@ export function ProjectShelfCover({
       </motion.button>
     );
   }
-
-  const dist = useTransform(offset, (o) => index - o);
-  const absDist = useTransform(dist, (d) => Math.abs(d));
-  const centerX = useTransform(dist, getCardCenter);
-  const w = useTransform(absDist, getCardWidth);
-  const h = useTransform(w, (width) => Math.max(width * 9 / 16, 180));
-  const rotateY = useTransform(dist, getRotateY);
-  const cardScale = useTransform(absDist, getScale);
-  const blurFilter = useTransform(absDist, getBlur);
-  const cardOpacity = useTransform(absDist, getOpacity);
-  const zIdx = useTransform(absDist, getZIndex);
-  const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
-  const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
 
   return (
     <motion.div
@@ -211,11 +220,12 @@ export function ProjectShelfCover({
         </motion.div>
 
         {/* Face view */}
-        <motion.div
-          className="absolute inset-0 overflow-hidden"
-          style={{ opacity: faceOpacity }}
-        >
-          <CoverGradient tags={project.tags} coverUrl={project.cover_url} progress={project.progress_percent} />
+        <motion.div className="absolute inset-0 overflow-hidden" style={{ opacity: faceOpacity }}>
+          <CoverGradient
+            tags={project.tags}
+            coverUrl={project.cover_url}
+            progress={project.progress_percent}
+          />
           <div className="absolute bottom-0 left-0 right-0 z-10">
             <ProgressBar progress={project.progress_percent} />
           </div>

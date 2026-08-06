@@ -45,7 +45,13 @@ import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sectio
 export type Skill = { id: string; slug: string; name: string; category: string };
 
 export type Tab =
-  "overview" | "skills" | "projects" | "communities" | "activity" | "sessions" | "reviews";
+  | "overview"
+  | "skills"
+  | "projects"
+  | "communities"
+  | "activity"
+  | "sessions"
+  | "reviews";
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "overview", label: "Overview", icon: BarChart3 },
@@ -126,7 +132,7 @@ export function ProfileLayout({
 
   const { data: requestsData } = useSessionRequests();
   const hasPendingRequest = (requestsData ?? []).some(
-    (r) => r.to_user_id === userId && r.status === "pending"
+    (r) => r.to_user_id === userId && r.status === "pending",
   );
 
   const accentStyle = accentColor

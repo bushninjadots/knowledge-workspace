@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, User, GraduationCap, FolderOpen, BookOpen, MessageSquare, Clock } from "lucide-react";
+import {
+  Search,
+  User,
+  GraduationCap,
+  FolderOpen,
+  BookOpen,
+  MessageSquare,
+  Clock,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +96,9 @@ export function GlobalSearch({
       const { data, error } = await supabase
         .from("profiles")
         .select("id, handle, display_name, category, creator_title")
-        .or(`display_name.ilike.${like},handle.ilike.${like},category.ilike.${like},creator_title.ilike.${like}`)
+        .or(
+          `display_name.ilike.${like},handle.ilike.${like},category.ilike.${like},creator_title.ilike.${like}`,
+        )
         .limit(4);
       if (error) throw error;
       return (data ?? []) as ProfileHit[];
@@ -176,8 +186,22 @@ export function GlobalSearch({
   const postHits = posts.data ?? [];
   const sessionHits = sessions.data ?? [];
 
-  const isLoading = profiles.isLoading || skills.isLoading || projects.isLoading || libraryItems.isLoading || posts.isLoading || sessions.isLoading;
-  const noResults = enabled && !isLoading && profileHits.length === 0 && skillHits.length === 0 && projectHits.length === 0 && libraryHits.length === 0 && postHits.length === 0 && sessionHits.length === 0;
+  const isLoading =
+    profiles.isLoading ||
+    skills.isLoading ||
+    projects.isLoading ||
+    libraryItems.isLoading ||
+    posts.isLoading ||
+    sessions.isLoading;
+  const noResults =
+    enabled &&
+    !isLoading &&
+    profileHits.length === 0 &&
+    skillHits.length === 0 &&
+    projectHits.length === 0 &&
+    libraryHits.length === 0 &&
+    postHits.length === 0 &&
+    sessionHits.length === 0;
 
   function flatItems() {
     const items: Array<{ type: string }> = [];
@@ -229,20 +253,27 @@ export function GlobalSearch({
   function activateItem(index: number) {
     const allHits: Array<{ to: () => { to: string; params?: Record<string, string> } | null }> = [
       ...profileHits.map((h) => ({
-        to: () => h.handle ? ({ to: "/u/$handle" as const, params: { handle: h.handle } }) : null,
+        to: () => (h.handle ? { to: "/u/$handle" as const, params: { handle: h.handle } } : null),
       })),
       ...skillHits.map((h) => ({
         to: () => ({
           to: "/skills/$slug" as const,
           params: {
-            slug: h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+            slug: h.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, ""),
           },
         }),
       })),
       ...projectHits.map(() => ({ to: () => ({ to: "/explore" as const }) })),
-      ...libraryHits.map((h) => ({ to: () => ({ to: "/library/$id" as const, params: { id: h.id } }) })),
+      ...libraryHits.map((h) => ({
+        to: () => ({ to: "/library/$id" as const, params: { id: h.id } }),
+      })),
       ...postHits.map(() => ({ to: () => ({ to: "/community" as const }) })),
-      ...sessionHits.map((h) => ({ to: () => ({ to: "/sessions/$id" as const, params: { id: h.id } }) })),
+      ...sessionHits.map((h) => ({
+        to: () => ({ to: "/sessions/$id" as const, params: { id: h.id } }),
+      })),
     ];
     const hit = allHits[index];
     if (!hit) return;
@@ -259,7 +290,10 @@ export function GlobalSearch({
 
     function sectionHeader(label: string) {
       return (
-        <p key={`header-${label}`} className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+        <p
+          key={`header-${label}`}
+          className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
+        >
           {label}
         </p>
       );
@@ -283,7 +317,7 @@ export function GlobalSearch({
                 {[p.creator_title, p.category].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -303,7 +337,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{s.name}</p>
               <p className="truncate text-xs text-muted-foreground">{s.category}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -325,7 +359,7 @@ export function GlobalSearch({
                 {p.description?.slice(0, 80) || "—"}
               </p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -345,7 +379,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{l.title}</p>
               <p className="truncate text-xs text-muted-foreground">{l.type}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -365,7 +399,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{p.title}</p>
               <p className="truncate text-xs text-muted-foreground">{p.type}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -385,14 +419,16 @@ export function GlobalSearch({
               <p className="truncate text-sm">{s.title}</p>
               <p className="truncate text-xs text-muted-foreground">{s.session_type || "—"}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
 
     if (isLoading) {
       items.push(
-        <p key="loading" className="px-3 py-2 text-xs text-muted-foreground">Searching…</p>
+        <p key="loading" className="px-3 py-2 text-xs text-muted-foreground">
+          Searching…
+        </p>,
       );
     }
 
@@ -400,7 +436,7 @@ export function GlobalSearch({
       items.push(
         <p key="no-results" className="px-3 py-4 text-center text-sm text-muted-foreground">
           No results for "{debounced}".
-        </p>
+        </p>,
       );
     }
 

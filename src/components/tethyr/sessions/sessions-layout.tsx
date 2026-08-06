@@ -27,14 +27,18 @@ export function SessionsLayout() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
 
-  const filterSessions = useCallback((sessions: SessionWithParticipants[] | undefined) => {
-    if (!sessions) return sessions;
-    return sessions.filter((s) => {
-      if (filters.search && !s.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
-      if (filters.type && filters.type !== "all" && s.session_type !== filters.type) return false;
-      return true;
-    });
-  }, [filters]);
+  const filterSessions = useCallback(
+    (sessions: SessionWithParticipants[] | undefined) => {
+      if (!sessions) return sessions;
+      return sessions.filter((s) => {
+        if (filters.search && !s.title.toLowerCase().includes(filters.search.toLowerCase()))
+          return false;
+        if (filters.type && filters.type !== "all" && s.session_type !== filters.type) return false;
+        return true;
+      });
+    },
+    [filters],
+  );
 
   const { data: stats } = useSessionStats();
   const { data: todaySessions = [] } = useTodaySessions();
@@ -96,7 +100,10 @@ export function SessionsLayout() {
               <TodaySchedule sessions={todaySessions} onSessionClick={goToSession} />
 
               {/* Upcoming */}
-              <UpcomingSessions sessions={filterSessions(upcomingSessions) ?? []} onSessionClick={goToSession} />
+              <UpcomingSessions
+                sessions={filterSessions(upcomingSessions) ?? []}
+                onSessionClick={goToSession}
+              />
             </div>
           )}
 
@@ -107,7 +114,10 @@ export function SessionsLayout() {
           {activeTab === "history" && (
             <>
               <SessionFilters filters={filters} onChange={setFilters} />
-              <SessionHistory sessions={filterSessions(historySessions) ?? []} loading={historyLoading} />
+              <SessionHistory
+                sessions={filterSessions(historySessions) ?? []}
+                loading={historyLoading}
+              />
             </>
           )}
 

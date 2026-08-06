@@ -4,8 +4,15 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
 const CATEGORIES = [
-  "All", "Projects", "Design", "Development", "Video",
-  "Photography", "Music", "Writing", "Marketing",
+  "All",
+  "Projects",
+  "Design",
+  "Development",
+  "Video",
+  "Photography",
+  "Music",
+  "Writing",
+  "Marketing",
 ] as const;
 
 interface ProjectShelfHeaderProps {
@@ -16,7 +23,13 @@ interface ProjectShelfHeaderProps {
   count: number;
 }
 
-export function ProjectShelfHeader({ q, setQ, category, setCategory, count }: ProjectShelfHeaderProps) {
+export function ProjectShelfHeader({
+  q,
+  setQ,
+  category,
+  setCategory,
+  count,
+}: ProjectShelfHeaderProps) {
   return (
     <div className="space-y-4">
       {/* Title */}
@@ -24,7 +37,8 @@ export function ProjectShelfHeader({ q, setQ, category, setCategory, count }: Pr
         <p className="text-xs uppercase tracking-wider text-primary/70">Explore</p>
         <h1 className="font-display text-2xl font-semibold">What's being built right now</h1>
         <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-          Browse active projects, find people to collaborate with, and discover what the community is working on.
+          Browse active projects, find people to collaborate with, and discover what the community
+          is working on.
         </p>
       </div>
 

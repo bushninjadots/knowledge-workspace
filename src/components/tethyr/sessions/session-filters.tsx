@@ -1,5 +1,11 @@
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 export interface SessionFiltersState {
@@ -36,7 +42,12 @@ export function SessionFilters({ filters, onChange }: SessionFiltersProps) {
         </SelectContent>
       </Select>
       {(filters.search || (filters.type && filters.type !== "all")) && (
-        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => onChange({ search: "", type: "" })}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => onChange({ search: "", type: "" })}
+        >
           Clear
         </Button>
       )}

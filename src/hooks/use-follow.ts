@@ -205,18 +205,20 @@ export function useFollowingFeed() {
         if (a.action === "offer") s.offers++;
       }
 
-      return posts.map((p): PostWithAuthor => ({
-        ...p,
-        author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
-          display_name: "Unknown",
-          handle: "unknown",
-          creator_title: "Member",
-          category: "General",
-          avatar_url: null,
-        },
-        stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
-        myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
-      }));
+      return posts.map(
+        (p): PostWithAuthor => ({
+          ...p,
+          author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+            display_name: "Unknown",
+            handle: "unknown",
+            creator_title: "Member",
+            category: "General",
+            avatar_url: null,
+          },
+          stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
+          myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+        }),
+      );
     },
     staleTime: 30_000,
   });

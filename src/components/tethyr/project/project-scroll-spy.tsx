@@ -4,9 +4,16 @@ interface ProjectScrollSpyProps {
   onSectionClick: (id: string) => void;
 }
 
-export function ProjectScrollSpy({ sections, activeSection, onSectionClick }: ProjectScrollSpyProps) {
+export function ProjectScrollSpy({
+  sections,
+  activeSection,
+  onSectionClick,
+}: ProjectScrollSpyProps) {
   return (
-    <nav className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 flex-col items-center gap-3 z-40" aria-label="Section navigation">
+    <nav
+      className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 flex-col items-center gap-3 z-40"
+      aria-label="Section navigation"
+    >
       <div className="absolute top-0 bottom-0 w-px bg-border/60" />
       {sections.map((s) => {
         const isActive = activeSection === s.id;

@@ -70,10 +70,7 @@ function SkillPage() {
   const { slug } = useParams({ from: "/skills/$slug" });
   const [tab, setTab] = useState<TabId>("overview");
 
-  const {
-    data: skill,
-    isLoading: skillLoading,
-  } = useQuery({
+  const { data: skill, isLoading: skillLoading } = useQuery({
     queryKey: ["skill", slug],
     queryFn: async () => {
       const { data, error } = await supabase

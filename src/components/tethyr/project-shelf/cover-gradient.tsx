@@ -24,12 +24,7 @@ export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) 
   const gradient = `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`;
 
   if (prefersReducedMotion) {
-    return (
-      <div
-        className="absolute inset-0"
-        style={{ background: gradient }}
-      />
-    );
+    return <div className="absolute inset-0" style={{ background: gradient }} />;
   }
 
   return (
