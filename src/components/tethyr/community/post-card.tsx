@@ -45,6 +45,7 @@ import { useAddComment } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { ProjectCardInline } from "@/components/tethyr/community/project-card-inline";
 import { ShareSpaceDialog } from "@/components/tethyr/community/share-space-dialog";
+import { timeAgo } from "@/lib/time";
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   Article: FileText,
@@ -122,17 +123,6 @@ function HighlightText({ text, query }: { text: string; query?: string }) {
       )}
     </>
   );
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = Math.floor((now - then) / 1000);
-  if (diff < 60) return "Just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(dateStr).toLocaleDateString();
 }
 
 export function PostCard({
