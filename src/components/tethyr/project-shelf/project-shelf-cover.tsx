@@ -172,18 +172,6 @@ export function ProjectShelfCover({
     );
   }
 
-  const dist = useTransform(offset, (o) => index - o);
-  const absDist = useTransform(dist, (d) => Math.abs(d));
-  const centerX = useTransform(dist, getCardCenter);
-  const w = useTransform(absDist, getCardWidth);
-  const h = useTransform(w, (width) => Math.max((width * 9) / 16, 180));
-  const rotateY = useTransform(dist, getRotateY);
-  const cardScale = useTransform(absDist, getScale);
-  const blurFilter = useTransform(absDist, getBlur);
-  const cardOpacity = useTransform(absDist, getOpacity);
-  const zIdx = useTransform(absDist, getZIndex);
-  const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
-  const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
 
   return (
     <motion.div
