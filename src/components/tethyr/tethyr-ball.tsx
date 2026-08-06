@@ -21,8 +21,16 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
   const firedRef = useRef(false);
 
   const [tick, setTick] = useState(0);
+  // Animation is client-only: driving SVG attrs from state during hydration
+  // makes the server markup and client markup disagree.
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     function loop(ts: number) {
       if (!startRef.current) startRef.current = ts;
       setTick(ts - startRef.current);
@@ -34,7 +42,7 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
     }
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [onComplete]);
+  }, [onComplete, mounted]);
 
   const t = tick * 0.001; // seconds
 
@@ -65,6 +73,17 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
     trailRef.current.push({ x: cx, y: cy });
     if (trailRef.current.length > 14) trailRef.current.shift();
   }, [cx, cy]);
+
+  if (!mounted) {
+    return (
+      <div
+        className={`relative flex items-center justify-center ${className}`}
+        style={{ width: px, height: px }}
+        role="img"
+        aria-label="Tethyr loading"
+      />
+    );
+  }
 
   return (
     <div
