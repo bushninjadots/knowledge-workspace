@@ -122,7 +122,7 @@ function LibraryItemPage() {
 
   return (
     <LibraryContentLayout>
-      <div className="mx-auto max-w-7xl px-6 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Top bar */}
         <div className="mb-6 flex items-center gap-3">
           <Button

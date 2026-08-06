@@ -58,6 +58,7 @@ export const POST_TYPE_LABEL: Record<string, string> = {
   lesson_learned: "Lesson Learned",
   feedback_request: "Feedback Request",
   open_role: "Open Role",
+  poll: "Poll",
 };
 
 export const DISCOVERY_FILTERS = [
@@ -77,6 +78,7 @@ export type DiscoveryFocus = (typeof DISCOVERY_FILTERS)[number];
 export const ACTIVE_LEARNING_GOALS: string[] = [];
 
 export const QUICK_ACTIONS: { type: string; label: string }[] = [
+  { type: "discussion", label: "Start Conversation" },
   { type: "showcase", label: "Showcase Project" },
   { type: "question", label: "Ask Question" },
   { type: "help_request", label: "Ask For Help" },
@@ -88,4 +90,5 @@ export const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "lesson_learned", label: "Lesson Learned" },
   { type: "feedback_request", label: "Request Feedback" },
   { type: "open_role", label: "Post Open Role" },
+  { type: "poll", label: "Create Poll" },
 ];

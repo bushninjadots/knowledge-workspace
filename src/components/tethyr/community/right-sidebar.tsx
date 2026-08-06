@@ -17,7 +17,7 @@ function SidebarCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-xl border card-border bg-surface p-4">
       <p className="flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {title}

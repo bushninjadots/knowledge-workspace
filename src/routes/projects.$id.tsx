@@ -3,7 +3,7 @@
 // milestones, updates, discussions and open roles all carry public SELECT
 // policies. Phase 2.1: expanded project model with vision, gallery,
 // resources, milestones, weekly updates, discussions, and open roles.
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -20,6 +20,9 @@ import {
   Sparkles,
   BookOpen,
   PenSquare,
+  Briefcase,
+  FolderOpen,
+  Link2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,14 +82,20 @@ const ROLE_LABEL: Record<Contributor["role"], string> = {
   contributor: "Contributor",
 };
 
-type Tab = "overview" | "milestones" | "journal" | "discussion" | "contributors";
+type Tab = "overview" | "milestones" | "journal" | "discussion" | "roles" | "gallery" | "resources" | "contributors" | "community";
 const TABS: { id: Tab; label: string; icon: typeof Target }[] = [
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "milestones", label: "Milestones", icon: Target },
   { id: "journal", label: "Journal", icon: Sparkles },
   { id: "discussion", label: "Discussion", icon: MessageCircle },
+  { id: "roles", label: "Roles", icon: Briefcase },
+  { id: "gallery", label: "Gallery", icon: ImageIcon },
+  { id: "resources", label: "Resources", icon: FolderOpen },
   { id: "contributors", label: "Contributors", icon: UsersIcon },
+  { id: "community", label: "Community", icon: Link2 },
 ];
+
+
 
 export const Route = createFileRoute("/projects/$id")({
   head: () => ({
@@ -112,6 +121,13 @@ function ProjectPage() {
   const { id } = useParams({ from: "/projects/$id" });
   const { data: me } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const switchTab = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+    // Smooth scroll to top of content
+    contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["project-detail", id],
@@ -260,7 +276,7 @@ function ProjectPage() {
     <Shell accentColor={accent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* HERO / HEADER */}
-        <div className="relative overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="relative overflow-hidden rounded-xl border card-border bg-surface">
           <div
             className="relative aspect-[21/9] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
             style={{ borderColor: accent ?? "transparent" }}
@@ -376,43 +392,46 @@ function ProjectPage() {
           onStageChange={(stage) => updateStage.mutate({ projectId: id, stage })}
         />
 
-        {/* TABS */}
-        <div className="flex gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-surface p-1">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium transition ${
-                  activeTab === tab.id
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
-                {tab.id === "milestones" && milestones.length > 0 && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0 text-[10px] tabular-nums text-primary">
-                    {doneCount}/{milestones.length}
-                  </span>
-                )}
-                {tab.id === "discussion" && discussions.length > 0 && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0 text-[10px] tabular-nums text-primary">
-                    {discussions.length}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        {/* TABS — sticky for easy navigation */}
+        <div className="sticky top-16 z-20 -mx-4 sm:-mx-8">
+          <div className="flex gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-4 py-2 backdrop-blur-md sm:px-8">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const count = tabBadge(tab.id, { milestones, doneCount, updates, discussions, openRoles, communityPostCount, contributors });
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    activeTab === tab.id
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/50"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  {count !== null && (
+                    <span className="ml-0.5 rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] tabular-nums text-[var(--user-accent,var(--primary))]">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Content area */}
+        <div ref={contentRef}>
+
+        {/* TAB CONTENT */}
 
         {/* TAB CONTENT */}
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Vision */}
             {project.vision && (
-              <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
                 <h3 className="mb-2 text-sm font-medium text-foreground/80">Vision</h3>
                 <div className="prose-custom text-sm text-foreground/90">
                   <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
@@ -422,7 +441,7 @@ function ProjectPage() {
 
             {/* Description */}
             {project.description && (
-              <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
                 <h3 className="mb-2 text-sm font-medium text-foreground/80">About</h3>
                 <div className="prose-custom text-sm leading-relaxed text-foreground/90">
                   <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
@@ -483,35 +502,20 @@ function ProjectPage() {
               )}
             </div>
 
-            {/* Gallery */}
-            <GallerySection
-              gallery={
-                (project.gallery ?? []) as {
-                  url: string;
-                  caption?: string;
-                  type: "image" | "video";
-                }[]
-              }
-              onUpdate={() => {}}
-              isOwner={isOwner}
-            />
-
-            {/* Resources */}
-            <ResourcesSection
-              resources={
-                (project.resources ?? []) as {
-                  title: string;
-                  url: string;
-                  type: "article" | "tool" | "video" | "doc" | "other";
-                }[]
-              }
-              onUpdate={() => {}}
-              isOwner={isOwner}
-            />
-
-            {/* Open Roles */}
+            {/* Open Roles — preview in overview */}
             {openRoles.length > 0 && (
-              <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-foreground/80">Open Roles</h3>
+                  <button
+                    onClick={() => switchTab("roles")}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    View all →
+                  </button>
+                </div>
+                <OpenRolesSection roles={openRoles.slice(0, 2)} projectId={id} isOwner={isOwner} />
+              </div>
             )}
           </div>
         )}
@@ -583,8 +587,50 @@ function ProjectPage() {
           </div>
         )}
 
-        {/* Community Discussions — always visible */}
-        <ProjectCommunityPosts projectId={id} />
+        {activeTab === "roles" && (
+          <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
+        )}
+
+        {activeTab === "gallery" && (
+          <GallerySection
+            gallery={
+              (project.gallery ?? []) as {
+                url: string;
+                caption?: string;
+                type: "image" | "video";
+              }[]
+            }
+            onUpdate={() => {}}
+            isOwner={isOwner}
+          />
+        )}
+
+        {activeTab === "resources" && (
+          <ResourcesSection
+            resources={
+              (project.resources ?? []) as {
+                title: string;
+                url: string;
+                type: "article" | "tool" | "video" | "doc" | "other";
+              }[]
+            }
+            onUpdate={() => {}}
+            isOwner={isOwner}
+          />
+        )}
+
+        {activeTab === "community" && (
+          <ProjectCommunityPosts projectId={id} />
+        )}
+
+        {/* Community Posts — always visible at bottom */}
+        {activeTab !== "community" && (
+          <div className="pt-2">
+            <ProjectCommunityPosts projectId={id} />
+          </div>
+        )}
+
+        </div>
       </div>
     </Shell>
   );
@@ -605,6 +651,40 @@ function Avatar({ name, src }: { name?: string | null; src?: string }) {
   );
 }
 
+function tabBadge(
+  tabId: Tab,
+  data: {
+    milestones: { status: string }[];
+    doneCount: number;
+    updates: unknown[];
+    discussions: unknown[];
+    openRoles: unknown[];
+    communityPostCount: number;
+    contributors: unknown[];
+  },
+): string | null {
+  switch (tabId) {
+    case "milestones":
+      return data.milestones.length > 0 ? `${data.doneCount}/${data.milestones.length}` : null;
+    case "journal":
+      return data.updates.length > 0 ? String(data.updates.length) : null;
+    case "discussion":
+      return data.discussions.length > 0 ? String(data.discussions.length) : null;
+    case "roles":
+      return data.openRoles.length > 0 ? String(data.openRoles.length) : null;
+    case "gallery":
+      return null; // gallery doesn't have a count
+    case "resources":
+      return null; // resources don't have a separate count query
+    case "contributors":
+      return data.contributors.length > 0 ? String(data.contributors.length) : null;
+    case "community":
+      return data.communityPostCount > 0 ? String(data.communityPostCount) : null;
+    default:
+      return null;
+  }
+}
+
 function SectionCard({
   title,
   icon,
@@ -615,7 +695,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
         {icon}
         {title}

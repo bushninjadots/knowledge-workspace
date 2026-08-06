@@ -9,6 +9,7 @@ import {
   Handshake,
   Sparkles,
   ImagePlus,
+  FilePlus,
   Code2,
   Bold,
   Italic,
@@ -17,6 +18,7 @@ import {
   MessageSquareMore,
   UserPlus,
   Paperclip,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,7 @@ const ACTION_ICON: Record<string, typeof Rocket> = {
   lesson_learned: Lightbulb,
   feedback_request: MessageSquareMore,
   open_role: UserPlus,
+  poll: BarChart3,
 };
 
 const MAX_CHARS = 2000;
@@ -144,6 +147,8 @@ export function ComposerBar({
   const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Read ?attach_project param to pre-fill attachment
   useEffect(() => {
@@ -245,6 +250,28 @@ export function ComposerBar({
       reader.readAsDataURL(file);
     }
     e.target.value = "";
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const path = `${me?.userId ?? "anon"}/${Date.now()}-${file.name}`;
+      const { error: upErr } = await supabase.storage
+        .from("library-files")
+        .upload(path, file);
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("library-files").getPublicUrl(path);
+      const link = `\n[${file.name}](${urlData.publicUrl})\n`;
+      setDraft((prev) => (prev + link).slice(0, MAX_CHARS));
+      toast.success("File attached");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
   }
 
   function handleDroppedImage(file: File) {
@@ -350,7 +377,7 @@ export function ComposerBar({
 
   return (
     <div
-      className={`border border-border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-shadow ${
+      className={`card-border border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-shadow ${
         focused
           ? "shadow-[0_0_0_1px_oklch(0.92_0.23_142/20%),0_0_20px_-4px_oklch(0.92_0.23_142/15%)]"
           : ""
@@ -479,6 +506,13 @@ export function ComposerBar({
           className="hidden"
           onChange={onFileChange}
         />
+        <input
+          ref={docInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.zip,.rar,.7z,.mp4,.mov,.psd,.ai,.sketch,.fig"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
         <button
           onClick={handleImageUpload}
           disabled={images.length >= 4}
@@ -486,6 +520,14 @@ export function ComposerBar({
         >
           <ImagePlus className="h-3.5 w-3.5" />
           Image
+        </button>
+        <button
+          onClick={() => docInputRef.current?.click()}
+          disabled={uploadingFile}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
+        >
+          <FilePlus className="h-3.5 w-3.5" />
+          {uploadingFile ? "Uploading…" : "File"}
         </button>
         <InlineDropZone
           accept="image/*"

@@ -22,7 +22,8 @@ export type PostType =
   | "progress_update"
   | "lesson_learned"
   | "feedback_request"
-  | "open_role";
+  | "open_role"
+  | "poll";
 
 export const VALID_POST_TYPES: Set<string> = new Set([
   "showcase",
@@ -38,6 +39,7 @@ export const VALID_POST_TYPES: Set<string> = new Set([
   "lesson_learned",
   "feedback_request",
   "open_role",
+  "poll",
 ]);
 
 export type ProjectSnapshot = {
@@ -79,6 +81,7 @@ export type PostRow = {
   collaboration_data: Record<string, unknown> | null;
   progress_data: Record<string, unknown> | null;
   project_data: Record<string, unknown> | null;
+  poll_data: Record<string, unknown> | null;
   project_id: string | null;
   project_snapshot: ProjectSnapshot | null;
   feedback_tags: string[];
@@ -141,6 +144,7 @@ export type CreatePostInput = {
   collaboration_data?: Record<string, unknown> | null;
   progress_data?: Record<string, unknown> | null;
   project_data?: Record<string, unknown> | null;
+  poll_data?: Record<string, unknown> | null;
   project_id?: string | null;
   project_snapshot?: ProjectSnapshot | null;
   feedback_tags?: string[];
@@ -281,6 +285,7 @@ export function useCreatePost() {
           collaboration_data: input.collaboration_data ?? null,
           progress_data: input.progress_data ?? null,
           project_data: input.project_data ?? null,
+          poll_data: input.poll_data ?? null,
           project_id: input.project_id ?? null,
           project_snapshot: input.project_snapshot ?? null,
           feedback_tags: input.feedback_tags ?? [],
@@ -486,6 +491,67 @@ export function useTogglePostAction() {
 
         if (error) throw error;
       }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+// ============================================================
+// Poll Voting
+// ============================================================
+
+export type PollData = {
+  question: string;
+  options: string[];
+  votes: { option_index: number; user_id: string }[];
+  ends_at: string | null;
+};
+
+export function useVotePoll() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      postId,
+      optionIndex,
+      userId,
+    }: {
+      postId: string;
+      optionIndex: number;
+      userId: string;
+    }) => {
+      // Fetch current poll data
+      const { data: post, error: fetchErr } = await sb
+        .from("posts")
+        .select("poll_data")
+        .eq("id", postId)
+        .single();
+
+      if (fetchErr) throw fetchErr;
+
+      const pollData = (post?.poll_data ?? {
+        question: "",
+        options: [],
+        votes: [],
+        ends_at: null,
+      }) as PollData;
+
+      // Check not already voted
+      const alreadyVoted = pollData.votes?.some((v) => v.user_id === userId);
+      if (alreadyVoted) throw new Error("Already voted");
+
+      // Add vote
+      const updatedVotes = [...(pollData.votes ?? []), { option_index: optionIndex, user_id: userId }];
+
+      const { error } = await sb
+        .from("posts")
+        .update({ poll_data: { ...pollData, votes: updatedVotes } })
+        .eq("id", postId);
+
+      if (error) throw error;
+
+      return { optionIndex, updatedVotes };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: POSTS_KEY });

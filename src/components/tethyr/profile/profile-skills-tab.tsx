@@ -36,7 +36,7 @@ export function ProfileSkillsTab({
       )}
 
       {/* TEACH SKILLS */}
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="rounded-xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <GraduationCap className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-display text-base font-semibold">Skills I teach</h3>
@@ -73,7 +73,7 @@ export function ProfileSkillsTab({
       </div>
 
       {/* LEARN SKILLS */}
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="rounded-xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-display text-base font-semibold">Skills I want to learn</h3>

@@ -22,14 +22,14 @@ export function ConnectionsCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="h-6 w-32 animate-pulse rounded-full bg-surface-elevated" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-semibold">Tethrs</h2>

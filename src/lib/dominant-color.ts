@@ -70,14 +70,16 @@ function mostSaturated(
  * preserving the hue and saturation as much as possible.
  */
 function ensureVisible(r: number, g: number, b: number): { r: number; g: number; b: number } {
-  // Relative luminance (0-255 scale, normalized later)
+  // Relative luminance (0-255 scale)
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  // Target: at least ~120 luminance on 0-255 scale (roughly mid-gray)
-  const MIN_LUM = 120;
+  // Higher threshold for dark-mode visibility: accent must pop against ~39-lum bg
+  const isDarkMode =
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+  const MIN_LUM = isDarkMode ? 155 : 100;
 
   if (lum >= MIN_LUM) return { r, g, b };
 
-  // Scale up linearly while preserving ratios
+  // Scale up linearly while preserving hue ratios
   const scale = MIN_LUM / Math.max(lum, 1);
   return {
     r: Math.min(255, Math.round(r * scale)),

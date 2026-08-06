@@ -1,10 +1,17 @@
 // Central hook for the current user's connections (tethrs / friend requests).
 // Includes optimistic updates and realtime sync so the dashboard reflects
 // changes the instant they happen — for the current user and the other side.
-import { useEffect, useRef } from "react";
+// Uses a module-level singleton channel (same pattern as useNotificationRealtime)
+// so multiple components calling useConnections() don't create duplicate subscriptions.
+import { useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CURRENT_USER_KEY, useCurrentUser } from "@/hooks/use-current-user";
+
+// Module-level singleton for the Realtime channel — shared across all callers.
+let activeChannel: ReturnType<typeof supabase.channel> | null = null;
+let activeUserId: string | null = null;
+let refCount = 0;
 
 export type ConnectionStatus = "pending" | "accepted" | "declined";
 
@@ -53,44 +60,65 @@ async function fetchConnections(meId: string): Promise<ConnectionWithProfile[]> 
   }));
 }
 
-export function useConnections() {
+function useConnectionsRealtime() {
+  const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
-  const qc = useQueryClient();
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Realtime: any change to connections involving me → refetch.
   useEffect(() => {
     if (!meId) return;
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+
+    // If a channel exists for a DIFFERENT user, tear it down
+    if (activeChannel && activeUserId !== meId) {
+      supabase.removeChannel(activeChannel);
+      activeChannel = null;
+      activeUserId = null;
+      refCount = 0;
     }
-    const channel = supabase.channel(`connections:${meId}`);
-    channel
-      .on("postgres_changes", { event: "*", schema: "public", table: "connections" }, () => {
-        qc.invalidateQueries({ queryKey: CONNECTIONS_KEY });
-        qc.invalidateQueries({ queryKey: CURRENT_USER_KEY });
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "activity_events",
-          filter: `profile_id=eq.${meId}`,
-        },
-        () => qc.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
-      );
-    channel.subscribe();
-    channelRef.current = channel;
+
+    refCount++;
+
+    // Only create + subscribe once per user
+    if (!activeChannel) {
+      const channel = supabase.channel(`connections:${meId}`);
+      channel
+        .on("postgres_changes", { event: "*", schema: "public", table: "connections" }, () => {
+          qc.invalidateQueries({ queryKey: CONNECTIONS_KEY });
+          qc.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        })
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "activity_events",
+            filter: `profile_id=eq.${meId}`,
+          },
+          () => qc.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
+        );
+      channel.subscribe();
+      activeChannel = channel;
+      activeUserId = meId;
+    }
+
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      refCount--;
+      if (refCount <= 0 && activeChannel) {
+        supabase.removeChannel(activeChannel);
+        activeChannel = null;
+        activeUserId = null;
+        refCount = 0;
       }
     };
   }, [meId, qc]);
+}
+
+export function useConnections() {
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+
+  // Singleton realtime channel — shared across all callers.
+  useConnectionsRealtime();
 
   return useQuery({
     queryKey: [...CONNECTIONS_KEY, meId ?? "anon"],

@@ -697,7 +697,7 @@ function TeachSkillsCard({
               key={s.id}
               type="button"
               onClick={() => setProofEditing(s)}
-              className="group flex flex-col items-start gap-1 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-left transition hover:border-primary/70"
+              className="group flex flex-col items-start gap-1 rounded-2xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 text-left transition hover:border-[var(--user-accent-border,var(--primary))]/70"
             >
               <Link
                 to="/skills/$slug"
@@ -1314,7 +1314,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         {onEdit && (

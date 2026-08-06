@@ -118,7 +118,7 @@ function SessionDetailPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         <HeroSection session={session} />
         <InfoPanel session={session} />
 

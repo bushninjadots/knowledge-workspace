@@ -116,7 +116,7 @@ export function ReputationBreakdown({ profileId }: { profileId: string }) {
 
 export function ReputationCard({ profileId, score }: { profileId: string; score: number }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated">
           <TrendingUp className="h-4 w-4 text-primary" />

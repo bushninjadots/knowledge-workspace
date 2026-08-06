@@ -290,7 +290,7 @@ function ExplorePage() {
         : opportunitiesLoading;
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl p-4 md:p-8">
+    <div className="animate-room-enter mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       {/* Tab bar */}
       <div
         role="tablist"

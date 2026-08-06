@@ -31,6 +31,7 @@ import {
   MessageSquareMore,
   UserPlus,
   Share2,
+  BarChart3,
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
@@ -40,8 +41,9 @@ import {
   type CommentRow,
   type PostWithAuthor,
 } from "@/lib/community-data";
+import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useAddComment } from "@/hooks/use-community";
+import { useAddComment, useVotePoll, type PollData } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { ProjectCardInline } from "@/components/tethyr/community/project-card-inline";
 import { ShareSpaceDialog } from "@/components/tethyr/community/share-space-dialog";
@@ -70,6 +72,7 @@ const TYPE_ACCENT: Record<PostType, string> = {
   lesson_learned: "text-brand-purple",
   feedback_request: "text-primary",
   open_role: "text-brand-green",
+  poll: "text-brand-purple",
 };
 
 const TYPE_BORDER: Record<PostType, string> = {
@@ -86,6 +89,7 @@ const TYPE_BORDER: Record<PostType, string> = {
   lesson_learned: "border-l-brand-purple",
   feedback_request: "border-l-primary",
   open_role: "border-l-brand-green",
+  poll: "border-l-brand-purple",
 };
 
 const TYPE_ICON: Record<PostType, typeof Heart> = {
@@ -102,6 +106,7 @@ const TYPE_ICON: Record<PostType, typeof Heart> = {
   lesson_learned: Lightbulb,
   feedback_request: MessageSquareMore,
   open_role: UserPlus,
+  poll: BarChart3,
 };
 
 function HighlightText({ text, query }: { text: string; query?: string }) {
@@ -173,6 +178,7 @@ export function PostCard({
   const collabData = post.collaboration_data as Record<string, unknown> | null;
   const projectData = post.project_data as Record<string, unknown> | null;
   const resourceData = post.resource_data as Record<string, unknown> | null;
+  const pollData = post.poll_data as PollData | null;
 
   const matchedSkills = post.skills.filter((s) =>
     ACTIVE_LEARNING_GOALS.some((g) => g.toLowerCase() === s.toLowerCase()),
@@ -180,7 +186,7 @@ export function PostCard({
 
   return (
     <article
-      className={`border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
+      className={`card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
         highlighted
           ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
           : ""
@@ -428,6 +434,11 @@ export function PostCard({
         </div>
       )}
 
+      {/* Poll display */}
+      {post.type === "poll" && pollData && (
+        <PollWidget pollData={pollData} postId={post.id} />
+      )}
+
       {post.skills.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {matchedSkills.length > 0 && (
@@ -608,6 +619,73 @@ function CommentThreadInline({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }) {
+  const { data: me } = useCurrentUser();
+  const votePoll = useVotePoll();
+  const myVote = pollData.votes?.find((v) => v.user_id === me?.userId) ?? null;
+  const totalVotes = pollData.votes?.length ?? 0;
+
+  function handleVote(optionIndex: number) {
+    if (myVote || votePoll.isPending || !me?.userId) return;
+    votePoll.mutate(
+      { postId, optionIndex, userId: me.userId },
+      {
+        onError: (err) => toast.error((err as Error).message || "Failed to vote"),
+      },
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <BarChart3 className="h-4 w-4 text-brand-purple" />
+        <p className="text-sm font-semibold">{pollData.question}</p>
+      </div>
+      <div className="space-y-2">
+        {pollData.options.map((option, i) => {
+          const optionVotes = pollData.votes?.filter((v) => v.option_index === i).length ?? 0;
+          const pct = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
+          const isVoted = myVote?.option_index === i;
+          return (
+            <button
+              key={i}
+              onClick={() => handleVote(i)}
+              disabled={!!myVote || votePoll.isPending}
+              className={`group relative w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                isVoted
+                  ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
+                  : myVote
+                    ? "border-border/60 bg-background/40 text-muted-foreground"
+                    : "border-border/60 bg-background/40 text-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">{option}</span>
+                {myVote && (
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {pct}%
+                  </span>
+                )}
+              </div>
+              {myVote && (
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
+                  <div
+                    className="h-full rounded-full bg-brand-purple/40 transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+      </p>
     </div>
   );
 }

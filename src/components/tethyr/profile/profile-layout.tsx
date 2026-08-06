@@ -145,10 +145,10 @@ export function ProfileLayout({
   });
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl bg-noise p-4 sm:p-8" style={accentStyle}>
+    <div className="animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8" style={accentStyle}>
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           {isOwnProfile ? (
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -421,7 +421,7 @@ function CompletenessRing({ value }: { value: number }) {
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="var(--user-accent, var(--trust))" />
-              <stop offset="100%" stopColor="var(--ai)" />
+              <stop offset="100%" stopColor="var(--user-accent-subtle, var(--learning-subtle))" />
             </linearGradient>
           </defs>
         </svg>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useEffect } from "react";
-import { ArrowRight, Sparkles, Clock, Zap, Folder } from "lucide-react";
+import { ArrowRight, Sparkles, Clock, Zap, Folder, Calendar, Users, MessageSquare, Briefcase, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
@@ -16,6 +16,11 @@ import {
 } from "@/components/tethyr/availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { checkAndAwardAchievements } from "@/lib/reputation";
+import { useSessionRequests } from "@/hooks/use-sessions";
+import { useConnections } from "@/hooks/use-connections";
+import { useUnreadCounts } from "@/hooks/use-messages";
+import { useMyProjects } from "@/hooks/use-projects";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -38,6 +43,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function DashboardPage() {
   const { data, isLoading, isError, error, refresh } = useCurrentUser();
   const updateAvail = useUpdateAvailability();
+  const { data: sessionRequests = [], isLoading: sessionsLoading } = useSessionRequests();
+  const { data: connections = [], isLoading: connectionsLoading } = useConnections();
+  const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
+  const { data: myProjects = [], isLoading: projectsLoading } = useMyProjects();
+  const actionsLoading = sessionsLoading || connectionsLoading || unreadLoading || projectsLoading;
 
   useEffect(() => {
     if (data?.userId) {
@@ -79,10 +89,20 @@ function DashboardPage() {
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
   const firstName = data.profile?.display_name?.split(/\s+/)[0] ?? data.profile?.handle ?? "member";
 
+  // Action hub counts
+  const pendingSessionCount = sessionRequests.filter((r) => r.status === "pending" && r.to_user_id === data.userId).length;
+  const pendingConnectionCount = connections.filter((c) => c.status === "pending" && c.addressee_id === data.userId).length;
+  const pendingInviteCount = pendingSessionCount + pendingConnectionCount;
+  const unreadMessageCount = unreadData?.total ?? 0;
+  const activeProjects = myProjects.filter((p) => p.status === "active" || p.status === "planning");
+  const activeProjectCount = activeProjects.length;
+  const hasActions = pendingInviteCount > 0 || unreadMessageCount > 0 || activeProjectCount > 0;
+  const firstActiveProjectId = activeProjects[0]?.id;
+
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
+    <div className="animate-room-enter mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       {/* Welcome */}
-      <section className="animate-border-glow relative rounded-xl border border-border bg-surface p-5 sm:p-6">
+      <section className="animate-border-glow relative rounded-xl border card-border bg-surface p-5 sm:p-6">
         {/* Personalised banner background */}
         {data.bannerSigned && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
@@ -143,6 +163,80 @@ function DashboardPage() {
           <CompletenessRing percent={pct} done={doneSteps} total={totalSteps} />
         </div>
       </section>
+
+      {/* Action hub — what needs attention right now */}
+      {actionsLoading ? (
+        <div className="surface-section bg-noise">
+          <div className="px-5 py-4 sm:px-6 sm:py-5">
+            <div className="mb-3 h-4 w-24 animate-pulse rounded bg-surface-elevated" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : hasActions ? (
+        <div className="surface-section bg-noise">
+          <div className="px-5 py-3 sm:px-6 sm:py-4">
+            <div className="mb-3 flex items-center gap-2.5">
+              <Zap className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
+                Action hub
+              </h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {pendingInviteCount > 0 && (
+                <ActionCard
+                  icon={<UserPlus className="h-4 w-4" />}
+                  label="Pending invitations"
+                  count={pendingInviteCount}
+                  accent="var(--user-accent, var(--trust))"
+                  href={pendingSessionCount > 0 ? "/sessions" : "/profile"}
+                  detail={
+                    pendingSessionCount > 0 && pendingConnectionCount > 0
+                      ? `${pendingSessionCount} session, ${pendingConnectionCount} connection`
+                      : pendingSessionCount > 0
+                        ? `${pendingSessionCount} session request${pendingSessionCount > 1 ? "s" : ""}`
+                        : `${pendingConnectionCount} connection request${pendingConnectionCount > 1 ? "s" : ""}`
+                  }
+                />
+              )}
+              {unreadMessageCount > 0 && (
+                <ActionCard
+                  icon={<MessageSquare className="h-4 w-4" />}
+                  label="Unread messages"
+                  count={unreadMessageCount}
+                  accent="var(--learning)"
+                  href="/messages"
+                  detail={`${unreadMessageCount} unread message${unreadMessageCount > 1 ? "s" : ""}`}
+                />
+              )}
+              {activeProjectCount > 0 && (
+                <ActionCard
+                  icon={<Briefcase className="h-4 w-4" />}
+                  label="Active projects"
+                  count={activeProjectCount}
+                  accent="var(--brand-purple)"
+                  href={firstActiveProjectId ? `/projects/${firstActiveProjectId}` : "/profile"}
+                  detail={activeProjects.slice(0, 3).map((p) => p.title).join(", ")}
+                />
+              )}
+              {pct < 100 && (
+                <ActionCard
+                  icon={<Sparkles className="h-4 w-4" />}
+                  label="Profile completion"
+                  count={pct}
+                  countSuffix="%"
+                  accent="var(--user-accent-subtle, var(--learning-subtle))"
+                  href="/profile"
+                  detail={`${doneSteps}/${totalSteps} sections done`}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Continuous workspace surface — replaces floating cards */}
       <div className="surface-section surface-divide bg-noise">
@@ -221,6 +315,48 @@ function WorkspaceSection({
   );
 }
 
+function ActionCard({
+  icon,
+  label,
+  count,
+  countSuffix,
+  accent,
+  href,
+  detail,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  countSuffix?: string;
+  accent: string;
+  href: string;
+  detail?: string;
+}) {
+  return (
+    <Link
+      to={href}
+      className="group flex items-start gap-3 rounded-xl border card-border bg-surface-elevated/60 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
+    >
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        style={{ backgroundColor: accent, color: "#fff" }}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="mt-0.5 font-display text-xl font-semibold tabular-nums">
+          {count}
+          {countSuffix ?? ""}
+        </p>
+        {detail && (
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{detail}</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 function CompletenessRing({
   percent,
   done,
@@ -261,7 +397,7 @@ function CompletenessRing({
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="var(--user-accent, var(--trust))" />
-              <stop offset="1" stopColor="var(--ai)" />
+              <stop offset="1" stopColor="var(--user-accent-subtle, var(--learning-subtle))" />
             </linearGradient>
           </defs>
         </svg>

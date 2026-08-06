@@ -81,7 +81,7 @@ export function MilestonesTimeline({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium text-foreground/80">Milestones</h3>

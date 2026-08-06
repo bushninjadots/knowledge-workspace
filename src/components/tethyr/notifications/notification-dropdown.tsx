@@ -1,5 +1,5 @@
 import { Bell, CheckCheck } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,10 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   useNotifications,
+  useMarkAsRead,
   useMarkAllAsRead,
   useUnreadNotificationCount,
   useNotificationRealtime,
 } from "@/hooks/use-notifications";
+import { toast } from "sonner";
+import type { Notification } from "@/hooks/use-notifications";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -30,6 +33,60 @@ export function NotificationDropdown() {
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const { data: notifications = [], isLoading } = useNotifications({ unreadOnly: true }, 10);
   const markAllAsRead = useMarkAllAsRead();
+  const markAsRead = useMarkAsRead();
+  const navigate = useNavigate();
+
+  function handleNotificationClick(n: Notification) {
+    // Mark as read
+    markAsRead.mutate([n.id], {
+      onError: () => toast.error("Failed to mark as read"),
+    });
+
+    // Navigate based on type
+    switch (n.type) {
+      case "message":
+        navigate({ to: "/messages" });
+        break;
+      case "comment":
+      case "mention":
+        navigate({ to: "/community" });
+        break;
+      case "session_invite":
+      case "session_update":
+        if (n.entity_id) {
+          navigate({ to: "/sessions/$id", params: { id: n.entity_id } });
+        } else {
+          navigate({ to: "/sessions" });
+        }
+        break;
+      case "achievement":
+      case "endorsement":
+      case "follow":
+      case "connection_request":
+      case "connection_accepted":
+        navigate({ to: "/profile" });
+        break;
+      case "project_invite":
+      case "project_join":
+      case "project_post":
+        if (n.entity_id) {
+          navigate({ to: "/projects/$id", params: { id: n.entity_id } });
+        } else {
+          navigate({ to: "/explore" });
+        }
+        break;
+      case "challenge_join":
+      case "challenge_complete":
+        if (n.entity_id) {
+          navigate({ to: "/challenges/$id", params: { id: n.entity_id } });
+        } else {
+          navigate({ to: "/community" });
+        }
+        break;
+      default:
+        toast.info("This notification doesn't have a linked page yet.");
+    }
+  }
 
   return (
     <DropdownMenu>
@@ -62,10 +119,16 @@ export function NotificationDropdown() {
           {notifications.map((n) => (
             <DropdownMenuItem
               key={n.id}
-              className="flex items-start gap-3 px-4 py-3 cursor-default"
+              className="flex items-start gap-3 px-4 py-3 cursor-pointer"
+              onClick={() => handleNotificationClick(n)}
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm leading-snug">{n.title}</p>
+                {n.body && (
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                    {n.body}
+                  </p>
+                )}
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{timeAgo(n.created_at)}</p>
               </div>
             </DropdownMenuItem>

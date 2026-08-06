@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown, Plus } from "lucide-react";
+import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown, Plus, Filter, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -23,7 +23,7 @@ import {
 } from "@/hooks/use-community";
 import { useChallenges } from "@/hooks/use-challenges";
 import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
 import { DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
 import {
@@ -110,6 +110,26 @@ function CommunityPage() {
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("latest");
+  const { data: skillCatalog = [] } = useSkillsCatalog();
+  const [mySkillsOnly, setMySkillsOnly] = useState(false);
+  // Build a set of skill NAMES the user teaches or learns
+  const mySkillNames = useMemo(() => {
+    const names = new Set<string>();
+    if (!me) return names;
+    const allUserSkillIds = new Set([...(me.teachIds ?? []), ...(me.learnIds ?? [])]);
+    for (const skill of skillCatalog) {
+      if (allUserSkillIds.has(skill.id)) {
+        names.add(skill.name.toLowerCase());
+      }
+    }
+    return names;
+  }, [me, skillCatalog]);
+  const activeFilterCount = [
+    typeFilter !== "all" ? 1 : 0,
+    focusFilter !== "all" ? 1 : 0,
+    mySkillsOnly ? 1 : 0,
+    sortMode !== "latest" ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
   const { data: spaces = [], isLoading: isLoadingSpaces } = useCommunitySpaces();
@@ -216,6 +236,12 @@ function CommunityPage() {
       }
     }
 
+    if (mySkillsOnly && mySkillNames.size > 0) {
+      list = list.filter((p) =>
+        p.skills.some((s) => mySkillNames.has(s.toLowerCase())),
+      );
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(
@@ -248,6 +274,8 @@ function CommunityPage() {
     followingFeed,
     activeSpace,
     spacePosts,
+    mySkillsOnly,
+    mySkillNames,
   ]);
 
   const isSearching = searchQuery.trim().length > 0;
@@ -308,6 +336,44 @@ function CommunityPage() {
               <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
                 {feed.length} result{feed.length !== 1 ? "s" : ""} for "{searchQuery}"
               </p>
+            )}
+            {!isSearching && activeFilterCount > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {typeFilter !== "all" && (
+                  <FilterBadge
+                    label={`Type: ${TYPE_FILTERS.find((f) => f.value === typeFilter)?.label ?? typeFilter}`}
+                    onRemove={() => setTypeFilter("all")}
+                  />
+                )}
+                {focusFilter !== "all" && (
+                  <FilterBadge
+                    label={`Focus: ${focusFilter}`}
+                    onRemove={() => setFocusFilter("all")}
+                  />
+                )}
+                {mySkillsOnly && (
+                  <FilterBadge label="My skills only" onRemove={() => setMySkillsOnly(false)} />
+                )}
+                {sortMode !== "latest" && (
+                  <FilterBadge
+                    label={`Sort: ${sortMode}`}
+                    onRemove={() => setSortMode("latest")}
+                  />
+                )}
+                {activeFilterCount > 1 && (
+                  <button
+                    onClick={() => {
+                      setTypeFilter("all");
+                      setFocusFilter("all");
+                      setMySkillsOnly(false);
+                      setSortMode("latest");
+                    }}
+                    className="text-[11px] text-muted-foreground underline hover:text-foreground"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             )}
           </header>
 
@@ -391,6 +457,19 @@ function CommunityPage() {
               </div>
 
               <div className="flex items-center gap-1.5 pt-1">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                <button
+                  onClick={() => setMySkillsOnly(!mySkillsOnly)}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
+                    mySkillsOnly
+                      ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BookmarkCheck className="mr-1 inline h-3 w-3" />
+                  My skills
+                </button>
+                <span className="text-muted-foreground/40">·</span>
                 <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                 {SORT_OPTIONS.map((opt) => (
                   <button
@@ -416,7 +495,7 @@ function CommunityPage() {
                 <CreateChallengeDialog />
               </div>
               {isLoadingChallenges ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-5">
                   {[1, 2].map((i) => (
                     <div
                       key={i}
@@ -431,7 +510,7 @@ function CommunityPage() {
                   description="Community challenges give people shared goals to learn and build together. Stay tuned for upcoming challenges!"
                 />
               ) : (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-5">
                   {challenges.map((c) => (
                     <ChallengeCard key={c.id} challenge={c} />
                   ))}
@@ -499,7 +578,7 @@ function CommunityPage() {
             </div>
           ) : nav === "following" ? (
             isLoadingFollowing ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -522,7 +601,7 @@ function CommunityPage() {
                 description="Follow collaborators to see their posts here. Visit a profile and click Follow to get started."
               />
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {followingFeed.map((post, index) => (
                   <PostCardWithComments
                     key={post.id}
@@ -543,7 +622,7 @@ function CommunityPage() {
               </div>
             )
           ) : isLoading ? (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
@@ -569,6 +648,12 @@ function CommunityPage() {
               title="No results found"
               description={`Nothing matches "${searchQuery}". Try different keywords — project names, skill tags, or collaborator handles.`}
             />
+          ) : feed.length === 0 && activeSpace ? (
+            <EmptyState
+              icon={<Users className="h-5 w-5" />}
+              title="This space is quiet"
+              description={`Be the first to post in ${activeSpace.name}. Share an update, ask a question, or start a conversation.`}
+            />
           ) : feed.length === 0 ? (
             <EmptyState
               icon={<Users className="h-5 w-5" />}
@@ -588,7 +673,7 @@ function CommunityPage() {
               }
             />
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               {feed.map((post, index) => (
                 <PostCardWithComments
                   key={post.id}
@@ -695,6 +780,17 @@ function PostCardWithComments({
         highlighted={highlighted}
       />
     </div>
+  );
+}
+
+function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+      {label}
+      <button onClick={onRemove} className="ml-0.5 rounded-full p-0.5 hover:bg-surface-elevated">
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </span>
   );
 }
 

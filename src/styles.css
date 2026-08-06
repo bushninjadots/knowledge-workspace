@@ -181,12 +181,12 @@
   --background: oklch(0.152 0.006 260); /* deeper, cooler charcoal */
   --foreground: oklch(0.93 0.005 250);
 
-  /* Surfaces — clear three-level hierarchy */
-  --surface: oklch(0.188 0.007 260); /* distinct from background */
-  --surface-elevated: oklch(0.215 0.008 260); /* cards, panels */
-  --surface-sunken: oklch(0.135 0.005 260); /* sunken inputs, code blocks */
+  /* Surfaces — clear three-level hierarchy with subtle cool tint */
+  --surface: oklch(0.192 0.009 258); /* distinct from background */
+  --surface-elevated: oklch(0.22 0.01 258); /* cards, panels */
+  --surface-sunken: oklch(0.138 0.006 258); /* sunken inputs, code blocks */
 
-  --card: oklch(0.20 0.0075 260);
+  --card: oklch(0.205 0.009 258);
   --card-foreground: oklch(0.93 0.005 250);
   --popover: oklch(0.22 0.009 260);
   --popover-foreground: oklch(0.93 0.005 250);
@@ -202,34 +202,34 @@
   --accent: oklch(0.25 0.01 260);
   --accent-foreground: oklch(0.93 0.005 250);
 
-  /* Borders — visible but refined */
-  --border: oklch(0.28 0.01 260);
-  --border-strong: oklch(0.38 0.012 260);
-  --input: oklch(0.30 0.011 260);
-  --ring: oklch(0.65 0.16 253);
+  /* Borders — more visible, less murky */
+  --border: oklch(0.32 0.012 258);
+  --border-strong: oklch(0.42 0.014 258);
+  --input: oklch(0.33 0.012 258);
+  --ring: oklch(0.68 0.18 253);
 
   --shadow-tint: oklch(0 0 0 / 0.60);
 
-  /* Semantic colours — slightly punchier for dark */
-  --trust: oklch(0.74 0.16 152);
-  --trust-foreground: oklch(0.15 0.03 152);
-  --trust-subtle: oklch(0.26 0.055 152);
+  /* Semantic colours — punchy, visible, not washed-out */
+  --trust: oklch(0.78 0.18 152);
+  --trust-foreground: oklch(0.12 0.04 152);
+  --trust-subtle: oklch(0.28 0.07 152);
 
-  --learning: oklch(0.70 0.16 250);
-  --learning-foreground: oklch(0.16 0.03 253);
-  --learning-subtle: oklch(0.27 0.06 253);
+  --learning: oklch(0.73 0.18 250);
+  --learning-foreground: oklch(0.14 0.04 253);
+  --learning-subtle: oklch(0.29 0.07 253);
 
-  --teaching: oklch(0.80 0.14 82);
-  --teaching-foreground: oklch(0.17 0.03 80);
-  --teaching-subtle: oklch(0.28 0.06 82);
+  --teaching: oklch(0.82 0.16 82);
+  --teaching-foreground: oklch(0.15 0.04 80);
+  --teaching-subtle: oklch(0.30 0.07 82);
 
-  --ai: oklch(0.70 0.16 292);
-  --ai-foreground: oklch(0.16 0.03 292);
-  --ai-subtle: oklch(0.27 0.06 292);
+  --ai: oklch(0.74 0.18 292);
+  --ai-foreground: oklch(0.14 0.04 292);
+  --ai-subtle: oklch(0.29 0.07 292);
 
-  --warning: oklch(0.67 0.20 25);
-  --warning-foreground: oklch(0.16 0.03 26);
-  --warning-subtle: oklch(0.27 0.07 25);
+  --warning: oklch(0.70 0.22 25);
+  --warning-foreground: oklch(0.14 0.04 26);
+  --warning-subtle: oklch(0.29 0.08 25);
 
   --destructive: var(--warning);
   --destructive-foreground: var(--warning-foreground);
@@ -310,13 +310,13 @@
    For feed content, tab sections, and listing layouts. */
 @utility surface-section {
   background-color: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--user-accent-border, var(--border));
   border-radius: var(--radius-lg);
 }
 
-/* Each child inside surface-section gets a bottom border. */
-@utility surface-divide > * + * {
-  border-top: 1px solid var(--border);
+/* Each child inside surface-section gets a hairline separator. */
+.surface-divide > * + * {
+  border-top: 2px solid var(--user-accent-border, var(--border));
 }
 
 /* Full-bleed panel that sits flush inside a column (no side borders). */
@@ -428,7 +428,7 @@
 }
 
 @utility card-border {
-  border-color: var(--border);
+  border-color: var(--user-accent-border, var(--border));
 }
 
 @utility scrollbar-none {
