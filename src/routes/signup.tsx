@@ -159,7 +159,7 @@ function SignupPage() {
                 className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
                   craft === c
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 }`}
               >
                 {c}

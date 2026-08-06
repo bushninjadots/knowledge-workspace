@@ -266,7 +266,7 @@ export function AttachProjectPanel({
               className={`rounded-full border px-2 py-0.5 text-[10px] transition ${
                 feedbackTags.includes(tag)
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/60 text-muted-foreground hover:border-primary/40"
+                  : "border-border/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
               }`}
             >
               {tag}

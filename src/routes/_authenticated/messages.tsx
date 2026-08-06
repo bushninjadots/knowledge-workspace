@@ -253,7 +253,7 @@ function Thread({
           </div>
         )}
         {conn.intro_message && (
-          <div className="mx-auto max-w-md rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-center text-xs text-muted-foreground shadow-sm">
+          <div className="mx-auto max-w-md rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 text-center text-xs text-muted-foreground shadow-sm">
             <span className="font-medium text-foreground">Intro note:</span> {conn.intro_message}
           </div>
         )}

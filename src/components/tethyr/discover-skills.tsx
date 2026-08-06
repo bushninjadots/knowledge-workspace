@@ -27,7 +27,7 @@ export function DiscoverSkills({ limit = 12 }: { limit?: number }) {
           key={s.id}
           to="/skills/$slug"
           params={{ slug: s.slug }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3 py-1 text-xs text-foreground transition hover:border-primary/40 hover:text-primary"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3 py-1 text-xs text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-primary"
         >
           <Flame className="h-3 w-3 text-brand-purple" />
           {s.name}

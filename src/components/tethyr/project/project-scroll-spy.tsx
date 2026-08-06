@@ -29,7 +29,7 @@ export function ProjectScrollSpy({
               className={`relative z-10 h-2.5 w-2.5 rounded-full border transition-all duration-300 ${
                 isActive
                   ? "border-primary bg-primary scale-125"
-                  : "border-border/60 bg-surface hover:border-primary/40"
+                  : "border-border/60 bg-surface hover:border-[var(--user-accent-border,var(--border-strong))]"
               }`}
             />
             <span

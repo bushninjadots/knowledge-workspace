@@ -482,7 +482,7 @@ export function ComposerBar({
         <button
           onClick={handleImageUpload}
           disabled={images.length >= 4}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95 disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
         >
           <ImagePlus className="h-3.5 w-3.5" />
           Image
@@ -496,7 +496,7 @@ export function ComposerBar({
           type="button"
           onClick={handleBold}
           aria-label="Bold"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Bold className="h-3.5 w-3.5" />
         </button>
@@ -504,7 +504,7 @@ export function ComposerBar({
           type="button"
           onClick={handleItalic}
           aria-label="Italic"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Italic className="h-3.5 w-3.5" />
         </button>
@@ -515,7 +515,7 @@ export function ComposerBar({
           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
             showCodeInsert
               ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
           }`}
         >
           <Code2 className="h-3.5 w-3.5" />
@@ -526,7 +526,7 @@ export function ComposerBar({
           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
             showAttachPanel || attachedProject
               ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
           }`}
         >
           <Paperclip className="h-3.5 w-3.5" />
@@ -543,7 +543,7 @@ export function ComposerBar({
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all active:scale-95 ${
                 active
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />

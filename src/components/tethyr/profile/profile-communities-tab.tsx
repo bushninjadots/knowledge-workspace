@@ -45,7 +45,7 @@ export function ProfileCommunitiesTab() {
               key={space.id}
               to="/community"
               search={{ space: space.slug }}
-              className="group rounded-2xl border border-border/60 bg-background/40 p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5"
+              className="group rounded-2xl border border-border/60 bg-background/40 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
             >
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">

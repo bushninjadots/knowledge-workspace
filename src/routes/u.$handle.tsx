@@ -338,7 +338,7 @@ function PublicProfileRoute() {
               {meId && meId !== profile.id && (
                 <Link
                   to="/messages"
-                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm text-primary hover:bg-primary/10"
+                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Start a conversation
@@ -364,7 +364,7 @@ function PublicProfileRoute() {
                 return (
                   <div
                     key={s.id}
-                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 hover:border-primary/40 hover:bg-primary/8"
+                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                   >
                     <div className="flex items-center gap-3">
                       <Link
@@ -447,7 +447,7 @@ function PublicProfileRoute() {
                   key={p.id}
                   to="/projects/$id"
                   params={{ id: p.id }}
-                  className="transition-lift group rounded-2xl border border-border/60 bg-background/40 p-4 hover:border-primary/30 hover:bg-primary/5"
+                  className="transition-lift group rounded-2xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
@@ -495,7 +495,7 @@ function PublicProfileRoute() {
                     key={s.id}
                     to="/skills/$slug"
                     params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
-                    className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground hover:border-primary/30 hover:text-primary"
+                    className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-primary"
                   >
                     {s.name}
                   </Link>
@@ -514,7 +514,7 @@ function PublicProfileRoute() {
                     href={safeHref(p.url)}
                     target="_blank"
                     rel="noreferrer"
-                    className="transition-lift flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-foreground hover:bg-primary/5 hover:text-primary"
+                    className="transition-lift flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-foreground hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:text-primary"
                   >
                     <LinkIcon className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">{p.label || p.url}</span>
@@ -527,7 +527,7 @@ function PublicProfileRoute() {
                       href={safeHref(url)}
                       target="_blank"
                       rel="noreferrer"
-                      className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                      className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                     >
                       {k}
                     </a>

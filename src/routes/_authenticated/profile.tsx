@@ -511,7 +511,7 @@ function SkillsCard({
 
   const chipCls =
     accent === "green"
-      ? "border-primary/40 bg-primary/10 text-primary"
+      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
       : "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]";
 
   return (
@@ -579,7 +579,7 @@ function SkillsCard({
                         className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ${
                           on
                             ? chipCls
-                            : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                            : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                         }`}
                       >
                         {on && <Check className="h-3 w-3" />}
@@ -750,8 +750,8 @@ function TeachSkillsCard({
                           }}
                           className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
                             on
-                              ? "border-primary/40 bg-primary/10 text-primary"
-                              : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                              : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                           }`}
                         >
                           {on && <Check className="h-3 w-3" />}
@@ -1059,7 +1059,7 @@ function ChipListInline({
 
   const chipCls =
     accent === "green"
-      ? "border-primary/40 bg-primary/10 text-primary"
+      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
       : "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]";
 
   return (

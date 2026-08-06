@@ -65,7 +65,7 @@ export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 
 export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
   planning: "border-border bg-background/60 text-muted-foreground",
-  active: "border-primary/40 bg-primary/10 text-primary",
+  active: "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   paused: "border-teaching/40 bg-teaching text-teaching",
   completed:
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
@@ -81,7 +81,7 @@ export const VERIFICATION_LABEL: Record<SkillVerificationLevel, string> = {
 
 export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
   self_declared: "border-border/60 bg-background/40 text-muted-foreground",
-  proof_certified: "border-primary/40 bg-primary/10 text-primary",
+  proof_certified: "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   community_recognized:
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
@@ -395,7 +395,7 @@ export function ChipListCard({
 
   const chipCls =
     accent === "green"
-      ? "border-primary/40 bg-primary/10 text-primary"
+      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
       : "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]";
 
   async function save() {
@@ -573,7 +573,7 @@ export function ProjectsCard({
           {projects.map((p) => (
             <div
               key={p.id}
-              className="card-border group relative overflow-hidden rounded-2xl border bg-background/40 transition hover:border-primary/40"
+              className="card-border group relative overflow-hidden rounded-2xl border bg-background/40 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
             >
               <Link to="/projects/$id" params={{ id: p.id }} className="block text-left">
                 <div className="aspect-video overflow-hidden bg-background">
@@ -887,7 +887,7 @@ export function ProjectDialog({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background/40 text-muted-foreground hover:border-primary/40"
+            className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
           >
             {coverPreview ? (
               <img src={coverPreview} alt="" className="h-full w-full object-cover" />
@@ -944,7 +944,7 @@ export function ProjectDialog({
                   className={`rounded-full border px-3 py-1.5 text-xs transition ${
                     status === s
                       ? PROJECT_STATUS_STYLE[s]
-                      : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                   }`}
                 >
                   {PROJECT_STATUS_LABEL[s]}
@@ -990,8 +990,8 @@ export function ProjectDialog({
                     }}
                     className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
                       on
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border bg-background/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                        : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                     }`}
                   >
                     {on && <Check className="h-3 w-3" />}

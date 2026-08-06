@@ -24,7 +24,7 @@ const STATUS_OPTIONS: {
     label: "Busy",
     icon: Clock,
     color: "text-teaching",
-    bg: "bg-teaching border-teaching/40",
+    bg: "bg-teaching/10 border-teaching/30",
   },
   {
     value: "learning",

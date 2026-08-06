@@ -319,7 +319,7 @@ function ProjectPage() {
             </div>
 
             {project.goal && (
-              <p className="mt-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground/90">
+              <p className="mt-4 flex items-start gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] p-3 text-sm text-foreground/90">
                 <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 {project.goal}
               </p>

@@ -60,7 +60,7 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
 
 const CATEGORY_BADGES: Record<string, { icon: typeof Wrench; color: string }> = {
   Creative: { icon: Palette, color: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple" },
-  Development: { icon: Hammer, color: "border-primary/40 bg-primary/10 text-primary" },
+  Development: { icon: Hammer, color: "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]" },
   Community: { icon: Users, color: "border-brand-green/40 bg-brand-green/10 text-brand-green" },
 };
 
@@ -300,7 +300,7 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
                 key={rs.id}
                 to="/skills/$slug"
                 params={{ slug: rs.slug }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/5"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
               >
                 {rs.name}
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -348,7 +348,7 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           onClick={() => setFilter("teachers")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
             filter === "teachers"
-              ? "border-primary/40 bg-primary/10 text-primary"
+              ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
               : "border-border text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -427,7 +427,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
@@ -502,7 +502,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
@@ -592,7 +592,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
             key={row.project_id}
             to="/projects/$id"
             params={{ id: proj.id }}
-            className="card-border rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">

@@ -63,6 +63,29 @@ function mostSaturated(
   });
 }
 
+/**
+ * Boosts luminance to ensure the colour is visible against dark backgrounds.
+ * Uses relative luminance (perceived brightness): 0.2126*R + 0.7152*G + 0.0722*B.
+ * If the colour is too dark, it's lightened toward a minimum threshold while
+ * preserving the hue and saturation as much as possible.
+ */
+function ensureVisible(r: number, g: number, b: number): { r: number; g: number; b: number } {
+  // Relative luminance (0-255 scale, normalized later)
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  // Target: at least ~120 luminance on 0-255 scale (roughly mid-gray)
+  const MIN_LUM = 120;
+
+  if (lum >= MIN_LUM) return { r, g, b };
+
+  // Scale up linearly while preserving ratios
+  const scale = MIN_LUM / Math.max(lum, 1);
+  return {
+    r: Math.min(255, Math.round(r * scale)),
+    g: Math.min(255, Math.round(g * scale)),
+    b: Math.min(255, Math.round(b * scale)),
+  };
+}
+
 // Samples an image across five regions (4 corners + centre) and extracts the
 // most visually interesting dominant colour. Falls back to global averaging
 // when per-region sampling fails.
@@ -119,13 +142,15 @@ export async function getDominantColor(url: string): Promise<string | null> {
             count++;
           }
           if (count === 0) return resolve(null);
-          resolve(`rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`);
+          const fallback = ensureVisible(Math.round(r / count), Math.round(g / count), Math.round(b / count));
+          resolve(`rgb(${fallback.r}, ${fallback.g}, ${fallback.b})`);
           return;
         }
 
         // Pick the most saturated sample for the accent
         const accent = mostSaturated(regions);
-        resolve(`rgb(${accent.r}, ${accent.g}, ${accent.b})`);
+        const visible = ensureVisible(accent.r, accent.g, accent.b);
+        resolve(`rgb(${visible.r}, ${visible.g}, ${visible.b})`);
       } catch {
         resolve(null);
       }
