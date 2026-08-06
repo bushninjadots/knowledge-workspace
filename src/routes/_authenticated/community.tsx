@@ -103,16 +103,50 @@ function CommunityPage() {
   const deletePost = useDeletePost();
   const toggleAction = useTogglePostAction();
 
+  const FILTER_STORE_KEY = "tethyr-community-filters";
+
+  function loadFilters() {
+    try {
+      const raw = localStorage.getItem(FILTER_STORE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFilters(state: Record<string, unknown>) {
+    try {
+      localStorage.setItem(FILTER_STORE_KEY, JSON.stringify(state));
+    } catch {
+      // ignore
+    }
+  }
+
+  const savedFilters = loadFilters();
   const [nav, setNav] = useState<CommunityNavId>("home");
-  const [typeFilter, setTypeFilter] = useState<string | "all">("all");
-  const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<string | "all">(
+    (savedFilters.typeFilter as string) ?? "all",
+  );
+  const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">(
+    (savedFilters.focusFilter as DiscoveryFocus) ?? "all",
+  );
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("latest");
+  const [sortMode, setSortMode] = useState<SortMode>(
+    (savedFilters.sortMode as SortMode) ?? "latest",
+  );  const [mySkillsOnly, setMySkillsOnly] = useState(
+    (savedFilters.mySkillsOnly as boolean) ?? false,
+  );
+
+  // Persist filters to localStorage on change
+  useEffect(() => {
+    saveFilters({ typeFilter, focusFilter, sortMode, mySkillsOnly });
+  }, [typeFilter, focusFilter, sortMode, mySkillsOnly]);
+
   const { data: skillCatalog = [] } = useSkillsCatalog();
-  const [mySkillsOnly, setMySkillsOnly] = useState(false);
   // Build a set of skill NAMES the user teaches or learns
   const mySkillNames = useMemo(() => {
     const names = new Set<string>();
@@ -682,23 +716,29 @@ function CommunityPage() {
             />
           ) : (
             <div className="flex flex-col gap-5">
-              {feed.map((post, index) => (
-                <PostCardWithComments
-                  key={post.id}
-                  post={post}
-                  saved={savedIds.has(post.id)}
-                  onToggleSave={() => toggleSave(post.id)}
-                  searchQuery={isSearching ? searchQuery : undefined}
-                  showComments={openComments.has(post.id)}
-                  onToggleComments={() => toggleComments(post.id)}
-                  onDelete={() => deletePostHandler(post.id)}
-                  onEdit={() => editPost(post)}
-                  onToggleAction={(action) => handleToggleAction(post.id, action)}
-                  className="transition-lift animate-stagger"
-                  style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
-                  highlighted={post.id === highlightedPostId}
-                />
-              ))}
+              {feed.map((post, index) => {
+                const overlap = sortMode === "recommended"
+                  ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
+                  : undefined;
+                return (
+                  <PostCardWithComments
+                    key={post.id}
+                    post={post}
+                    saved={savedIds.has(post.id)}
+                    onToggleSave={() => toggleSave(post.id)}
+                    searchQuery={isSearching ? searchQuery : undefined}
+                    showComments={openComments.has(post.id)}
+                    onToggleComments={() => toggleComments(post.id)}
+                    onDelete={() => deletePostHandler(post.id)}
+                    onEdit={() => editPost(post)}
+                    onToggleAction={(action) => handleToggleAction(post.id, action)}
+                    className="transition-lift animate-stagger"
+                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+                    highlighted={post.id === highlightedPostId}
+                    skillOverlap={overlap}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -769,6 +809,7 @@ function PostCardWithComments({
   className?: string;
   style?: React.CSSProperties;
   highlighted?: boolean;
+  skillOverlap?: number;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
@@ -786,6 +827,7 @@ function PostCardWithComments({
         onEdit={onEdit}
         onToggleAction={onToggleAction}
         highlighted={highlighted}
+        skillOverlap={skillOverlap}
       />
     </div>
   );

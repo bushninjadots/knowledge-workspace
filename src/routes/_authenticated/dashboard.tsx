@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useId, useEffect } from "react";
-import { ArrowRight, Sparkles, Clock, Zap, Folder, Calendar, Users, MessageSquare, Briefcase, UserPlus } from "lucide-react";
+import { useId, useEffect, useMemo } from "react";
+import { ArrowRight, Sparkles, Clock, Zap, Folder, Calendar, Users, MessageSquare, Briefcase, UserPlus, TrendingUp, Award, Swords, Ticket } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
@@ -20,6 +22,8 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import { useMyProjects } from "@/hooks/use-projects";
+import { useChallenges } from "@/hooks/use-challenges";
+import { supabase } from "@/integrations/supabase/client";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -48,6 +52,57 @@ function DashboardPage() {
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
   const { data: myProjects = [], isLoading: projectsLoading } = useMyProjects();
   const actionsLoading = sessionsLoading || connectionsLoading || unreadLoading || projectsLoading;
+
+  // My Challenges
+  const { data: myChallenges = [] } = useChallenges("active");
+  const joinedChallenges = useMemo(
+    () => myChallenges.filter((c: any) => c.is_joined),
+    [myChallenges],
+  );
+
+  // Role Applications — sent by me
+  const { data: myApplications = [] } = useQuery({
+    queryKey: ["my-applications", data.userId],
+    queryFn: async () => {
+      const { data: apps, error } = await (supabase as any)
+        .from("project_role_applications")
+        .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
+        .eq("applicant_id", data.userId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) return [];
+      return (apps ?? []) as any[];
+    },
+    enabled: !!data.userId,
+    staleTime: 30_000,
+  });
+
+  // Weekly reputation
+  const weeklyRep = useMemo(() => {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const thisWeek = (data.activity ?? []).filter(
+      (e: any) => new Date(e.created_at) >= weekAgo,
+    );
+    return thisWeek.length;
+  }, [data.activity]);
+
+  // Today's opportunities
+  const { data: todayOpps = [] } = useQuery({
+    queryKey: ["today-opportunities", data.userId],
+    queryFn: async () => {
+      const { data: roles, error } = await (supabase as any)
+        .from("project_open_roles")
+        .select("id, title, skills, projects(title, id, status)")
+        .eq("is_filled", false)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) return [];
+      return ((roles ?? []) as any[]).filter(
+        (r: any) => r.projects && ["planning", "active"].includes(r.projects.status),
+      );
+    },
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     if (data?.userId) {
@@ -275,6 +330,159 @@ function DashboardPage() {
         </WorkspaceSection>
 
         <ConnectionsCard />
+
+        {activeProjects.length > 0 && (
+          <WorkspaceSection
+            icon={<Briefcase className="h-4 w-4" />}
+            title="Continue your projects"
+            subtitle={`${activeProjects.length} active project${activeProjects.length !== 1 ? "s" : ""}`}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {activeProjects.slice(0, 4).map((p: any) => (
+                <Link
+                  key={p.id}
+                  to="/projects/$id"
+                  params={{ id: p.id }}
+                  className="group rounded-xl border card-border bg-surface-elevated/40 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-sm font-medium">{p.title}</p>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Progress value={p.progress_percent ?? 0} className="h-1.5" />
+                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                      {p.progress_percent ?? 0}%
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="capitalize">{p.status}</span>
+                    {p.stage && (
+                      <>
+                        <span>·</span>
+                        <span className="capitalize">{p.stage}</span>
+                      </>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
+
+        {myApplications.length > 0 && (
+          <WorkspaceSection
+            icon={<Ticket className="h-4 w-4" />}
+            title="Your applications"
+            subtitle={`${myApplications.length} application${myApplications.length !== 1 ? "s" : ""}`}
+          >
+            <div className="grid gap-2 sm:grid-cols-2">
+              {myApplications.slice(0, 4).map((app: any) => (
+                <Link
+                  key={app.id}
+                  to="/projects/$id"
+                  params={{ id: app.project_open_roles?.projects?.id ?? "" }}
+                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{app.project_open_roles?.title ?? "Role"}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {app.project_open_roles?.projects?.title ?? "Project"}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    app.status === "accepted"
+                      ? "bg-trust/10 text-trust"
+                      : app.status === "declined"
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-surface-elevated text-muted-foreground"
+                  }`}>
+                    {app.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
+
+        {joinedChallenges.length > 0 && (
+          <WorkspaceSection
+            icon={<Swords className="h-4 w-4" />}
+            title="Your challenges"
+            subtitle={`${joinedChallenges.length} joined`}
+          >
+            <div className="grid gap-2 sm:grid-cols-2">
+              {joinedChallenges.slice(0, 4).map((c: any) => (
+                <Link
+                  key={c.id}
+                  to="/challenges/$id"
+                  params={{ id: c.id }}
+                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{c.title}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{c.difficulty}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
+                    {c.my_participation?.status ?? "joined"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
+
+        {todayOpps.length > 0 && (
+          <WorkspaceSection
+            icon={<TrendingUp className="h-4 w-4" />}
+            title="Today's opportunities"
+            subtitle={`${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`}
+          >
+            <div className="grid gap-2 sm:grid-cols-2">
+              {todayOpps.slice(0, 4).map((opp: any) => (
+                <Link
+                  key={opp.id}
+                  to="/projects/$id"
+                  params={{ id: opp.projects?.id ?? "" }}
+                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{opp.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">{opp.projects?.title}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    {(opp.skills ?? []).slice(0, 2).map((s: string) => (
+                      <span key={s} className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] text-[var(--user-accent,var(--primary))]">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
+
+        {weeklyRep > 0 && (
+          <WorkspaceSection
+            icon={<Award className="h-4 w-4" />}
+            title="This week"
+            subtitle={`${weeklyRep} reputation event${weeklyRep !== 1 ? "s" : ""}`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex items-baseline gap-1">
+                <span className="font-display text-2xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
+                  {data.profile?.reputation_score ?? 0}
+                </span>
+                <span className="text-xs text-muted-foreground">reputation</span>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <Link to="/profile" className="text-xs text-primary hover:underline">
+                View achievements →
+              </Link>
+            </div>
+          </WorkspaceSection>
+        )}
 
         <WorkspaceSection
           icon={<Sparkles className="h-4 w-4" />}

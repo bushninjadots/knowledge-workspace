@@ -148,6 +148,7 @@ export function ComposerBar({
   const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [pollEndsAt, setPollEndsAt] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -356,7 +357,7 @@ export function ComposerBar({
                 question: pollQuestion.trim() || postTitle,
                 options: pollOptions.filter((o) => o.trim()).map((o) => o.trim()),
                 votes: [],
-                ends_at: null,
+                ends_at: pollEndsAt ? new Date(pollEndsAt).toISOString() : null,
               }
             : undefined;
 
@@ -387,6 +388,7 @@ export function ComposerBar({
       setFeedbackTags([]);
       setPollQuestion("");
       setPollOptions(["", ""]);
+      setPollEndsAt("");
       setShowAttachPanel(false);
       localStorage.removeItem(DRAFT_KEY);
       onCancelEdit?.();
@@ -508,6 +510,25 @@ export function ComposerBar({
               </div>
             ))}
           </div>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Ends</span>
+            <input
+              type="datetime-local"
+              value={pollEndsAt}
+              onChange={(e) => setPollEndsAt(e.target.value)}
+              className="rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs text-foreground focus:border-primary/50 focus:outline-none"
+            />
+            {pollEndsAt && (
+              <button
+                onClick={() => setPollEndsAt("")}
+                className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            <span className="text-[10px] text-muted-foreground">optional</span>
+          </div>
+
           {pollOptions.length < 10 && (
             <button
               onClick={() => setPollOptions([...pollOptions, ""])}

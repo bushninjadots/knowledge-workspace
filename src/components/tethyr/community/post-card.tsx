@@ -156,6 +156,7 @@ export function PostCard({
   onToggleAction?: (action: "like" | "helpful" | "offer") => void;
   highlighted?: boolean;
   shared_from_space?: string | null;
+  skillOverlap?: number;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -441,6 +442,12 @@ export function PostCard({
 
       {post.skills.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {skillOverlap != null && skillOverlap > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
+              <BadgeCheck className="h-3 w-3" />
+              {skillOverlap} skill{skillOverlap !== 1 ? "s" : ""} you know
+            </span>
+          )}
           {matchedSkills.length > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
               <BadgeCheck className="h-3 w-3" />
@@ -683,9 +690,17 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
-      </p>
+      <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <span>
+          {totalVotes} vote{totalVotes !== 1 ? "s" : ""}
+        </span>
+        {pollData.ends_at && (
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Ends {new Date(pollData.ends_at).toLocaleDateString()}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
