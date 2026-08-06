@@ -121,7 +121,6 @@ export function ProjectShelfCover({
   const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
   const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
 
-
   if (forceFace) {
     return (
       <motion.button
@@ -171,7 +170,6 @@ export function ProjectShelfCover({
       </motion.button>
     );
   }
-
 
   return (
     <motion.div
