@@ -130,18 +130,10 @@ function NotificationsPage() {
           />
         </aside>
         <main className="min-w-0 flex-1">
-          <Tabs
-            value={activeCategory}
-            onValueChange={setActiveCategory}
-            className="mb-6"
-          >
+          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
             <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
               {TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="whitespace-nowrap text-xs"
-                >
+                <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
                   {tab.label}
                 </TabsTrigger>
               ))}

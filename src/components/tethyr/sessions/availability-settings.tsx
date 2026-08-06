@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Clock } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { useSessionAvailability } from "@/hooks/use-sessions";
@@ -23,7 +29,13 @@ interface SlotInput {
   status: "available" | "unavailable" | "tentative";
 }
 
-function AvailabilityEditorDialog({ availability, onSaved }: { availability: Availability[]; onSaved: () => void }) {
+function AvailabilityEditorDialog({
+  availability,
+  onSaved,
+}: {
+  availability: Availability[];
+  onSaved: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [slots, setSlots] = useState<SlotInput[]>(() =>
     availability.map((a) => ({
@@ -31,12 +43,15 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
       start_time: a.start_time.slice(0, 5),
       end_time: a.end_time.slice(0, 5),
       status: a.status as SlotInput["status"],
-    }))
+    })),
   );
   const setAvailability = useSetSessionAvailability();
 
   const addSlot = (day: number) => {
-    setSlots((prev) => [...prev, { day_of_week: day, start_time: "09:00", end_time: "10:00", status: "available" }]);
+    setSlots((prev) => [
+      ...prev,
+      { day_of_week: day, start_time: "09:00", end_time: "10:00", status: "available" },
+    ]);
   };
 
   const removeSlot = (index: number) => {
@@ -70,7 +85,9 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">Edit Availability</Button>
+        <Button variant="outline" size="sm">
+          Edit Availability
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
@@ -110,7 +127,12 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
                         <option value="tentative">Maybe</option>
                         <option value="unavailable">Busy</option>
                       </select>
-                      <button onClick={() => removeSlot(globalIdx)} className="text-muted-foreground hover:text-destructive">&times;</button>
+                      <button
+                        onClick={() => removeSlot(globalIdx)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        &times;
+                      </button>
                     </div>
                   );
                 })}
@@ -123,9 +145,13 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
             </div>
           ))}
         </div>
-        {hasOverlaps && <p className="text-xs text-destructive">Some slots overlap — fix before saving</p>}
+        {hasOverlaps && (
+          <p className="text-xs text-destructive">Some slots overlap — fix before saving</p>
+        )}
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={setAvailability.isPending}>
             {setAvailability.isPending ? "Saving..." : "Save"}
           </Button>

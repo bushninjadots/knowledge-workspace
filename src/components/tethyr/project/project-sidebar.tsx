@@ -16,8 +16,15 @@ interface ProjectSidebarProps {
 }
 
 export function ProjectSidebar({
-  project, skills, links, openRoles, milestones, contributors,
-  isOwner, isContributor, onOpenRoleApply,
+  project,
+  skills,
+  links,
+  openRoles,
+  milestones,
+  contributors,
+  isOwner,
+  isContributor,
+  onOpenRoleApply,
 }: ProjectSidebarProps) {
   return (
     <aside className="sticky top-24 self-start space-y-4">
@@ -28,7 +35,9 @@ export function ProjectSidebar({
       )}
 
       <div className="rounded-2xl border border-border/60 bg-surface p-4">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Stage</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Stage
+        </h4>
         <ProjectTimeline
           currentStage={(project.stage ?? "planning") as ProjectStage}
           isOwner={isOwner}
@@ -38,7 +47,9 @@ export function ProjectSidebar({
 
       {skills.length > 0 && (
         <div className="rounded-2xl border border-border/60 bg-surface p-4">
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Skills</h4>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Skills
+          </h4>
           <div className="flex flex-wrap gap-1.5">
             {skills.slice(0, 6).map((s) => (
               <Link
@@ -59,7 +70,9 @@ export function ProjectSidebar({
 
       {links.length > 0 && (
         <div className="rounded-2xl border border-border/60 bg-surface p-4">
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Links</h4>
+          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Links
+          </h4>
           <div className="space-y-1.5">
             {links.map(([key, url]) => (
               <a
@@ -87,7 +100,9 @@ export function ProjectSidebar({
               <div key={role.id} className="rounded-lg bg-background/40 p-2.5">
                 <p className="text-xs font-medium">{role.title}</p>
                 {role.description && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{role.description}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">
+                    {role.description}
+                  </p>
                 )}
                 <button
                   onClick={() => onOpenRoleApply?.(role.id)}
@@ -102,13 +117,19 @@ export function ProjectSidebar({
       )}
 
       <div className="rounded-2xl border border-border/60 bg-surface p-4">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Project Info</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Project Info
+        </h4>
         <div className="space-y-1.5 text-xs text-muted-foreground">
           <div className="flex justify-between">
-            <span>{milestones.length} milestone{milestones.length !== 1 ? "s" : ""}</span>
+            <span>
+              {milestones.length} milestone{milestones.length !== 1 ? "s" : ""}
+            </span>
           </div>
           <div className="flex justify-between">
-            <span>{contributors.length} contributor{contributors.length !== 1 ? "s" : ""}</span>
+            <span>
+              {contributors.length} contributor{contributors.length !== 1 ? "s" : ""}
+            </span>
           </div>
           {project.progress_percent > 0 && (
             <div className="flex justify-between">

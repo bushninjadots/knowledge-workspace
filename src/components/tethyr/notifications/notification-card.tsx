@@ -36,26 +36,24 @@ import {
 import { useRespondConnection } from "@/hooks/use-connections";
 import type { Notification, NotificationType } from "@/hooks/use-notifications";
 
-const NOTIFICATION_CONFIG: Record<
-  NotificationType,
-  { icon: typeof MessageCircle; color: string }
-> = {
-  message: { icon: MessageCircle, color: "text-blue-400" },
-  connection_request: { icon: UserPlus, color: "text-green-400" },
-  connection_accepted: { icon: CheckCircle, color: "text-green-400" },
-  session_invite: { icon: CalendarPlus, color: "text-purple-400" },
-  session_update: { icon: CalendarClock, color: "text-purple-400" },
-  comment: { icon: MessageSquare, color: "text-blue-400" },
-  mention: { icon: AtSign, color: "text-orange-400" },
-  endorsement: { icon: Star, color: "text-yellow-400" },
-  achievement: { icon: Trophy, color: "text-amber-400" },
-  project_invite: { icon: FolderPlus, color: "text-green-400" },
-  project_join: { icon: Users, color: "text-green-400" },
-  project_post: { icon: MessageSquare, color: "text-blue-400" },
-  follow: { icon: Heart, color: "text-pink-400" },
-  challenge_join: { icon: Swords, color: "text-orange-400" },
-  challenge_complete: { icon: Flag, color: "text-green-400" },
-};
+const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle; color: string }> =
+  {
+    message: { icon: MessageCircle, color: "text-blue-400" },
+    connection_request: { icon: UserPlus, color: "text-green-400" },
+    connection_accepted: { icon: CheckCircle, color: "text-green-400" },
+    session_invite: { icon: CalendarPlus, color: "text-purple-400" },
+    session_update: { icon: CalendarClock, color: "text-purple-400" },
+    comment: { icon: MessageSquare, color: "text-blue-400" },
+    mention: { icon: AtSign, color: "text-orange-400" },
+    endorsement: { icon: Star, color: "text-yellow-400" },
+    achievement: { icon: Trophy, color: "text-amber-400" },
+    project_invite: { icon: FolderPlus, color: "text-green-400" },
+    project_join: { icon: Users, color: "text-green-400" },
+    project_post: { icon: MessageSquare, color: "text-blue-400" },
+    follow: { icon: Heart, color: "text-pink-400" },
+    challenge_join: { icon: Swords, color: "text-orange-400" },
+    challenge_complete: { icon: Flag, color: "text-green-400" },
+  };
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -105,26 +103,33 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
 
   function handleAccept() {
     if (!notification.entity_id) return;
-    respondConnection.mutate({ id: notification.entity_id, status: "accepted" }, {
-      onSuccess: () => toast.success("Connection request accepted"),
-      onError: () => toast.error("Failed to accept connection request"),
-    });
+    respondConnection.mutate(
+      { id: notification.entity_id, status: "accepted" },
+      {
+        onSuccess: () => toast.success("Connection request accepted"),
+        onError: () => toast.error("Failed to accept connection request"),
+      },
+    );
     onNavigate?.(notification);
   }
 
   function handleDecline() {
     if (!notification.entity_id) return;
-    respondConnection.mutate({ id: notification.entity_id, status: "declined" }, {
-      onSuccess: () => toast.success("Connection request declined"),
-      onError: () => toast.error("Failed to decline connection request"),
-    });
+    respondConnection.mutate(
+      { id: notification.entity_id, status: "declined" },
+      {
+        onSuccess: () => toast.success("Connection request declined"),
+        onError: () => toast.error("Failed to decline connection request"),
+      },
+    );
   }
 
   function handleClick() {
     if (!hasEntity && !isConnectionRequest) return;
-    if (isUnread) markAsRead.mutate([notification.id], {
-      onError: () => toast.error("Failed to mark as read"),
-    });
+    if (isUnread)
+      markAsRead.mutate([notification.id], {
+        onError: () => toast.error("Failed to mark as read"),
+      });
     onNavigate?.(notification);
   }
 
@@ -165,9 +170,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
             {timeAgo(notification.created_at)}
           </span>
           {!hasEntity && !isConnectionRequest && (
-            <span className="text-[11px] text-muted-foreground/40 italic">
-              No longer available
-            </span>
+            <span className="text-[11px] text-muted-foreground/40 italic">No longer available</span>
           )}
           {isConnectionRequest && notification.entity_id && (
             <div className="ml-auto flex gap-1">
@@ -175,7 +178,10 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[11px] text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                onClick={(e) => { e.stopPropagation(); handleAccept(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAccept();
+                }}
               >
                 <UserCheck className="mr-1 h-3 w-3" />
                 Accept
@@ -184,7 +190,10 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                onClick={(e) => { e.stopPropagation(); handleDecline(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecline();
+                }}
               >
                 <UserX className="mr-1 h-3 w-3" />
                 Decline

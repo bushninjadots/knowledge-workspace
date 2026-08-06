@@ -18,7 +18,15 @@ interface ProjectShelfProps {
 const SCROLL_SENSITIVITY = 0.001;
 const SNAP_DELAY_MS = 180;
 
-export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category, setCategory }: ProjectShelfProps) {
+export function ProjectShelf({
+  projects,
+  meId,
+  contributorIds,
+  q,
+  setQ,
+  category,
+  setCategory,
+}: ProjectShelfProps) {
   const [overlayProject, setOverlayProject] = useState<ProjectRow | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -73,17 +81,20 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
     });
   }, [maxOffset, displayOffset, prefersReducedMotion]);
 
-  const navigate = useCallback((dir: -1 | 1) => {
-    if (maxOffset <= 0) return;
-    displayOffset.stop();
-    const current = Math.round(displayOffset.get());
-    const next = Math.max(0, Math.min(maxOffset, current + dir));
-    animate(displayOffset, next, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    });
-  }, [maxOffset, displayOffset]);
+  const navigate = useCallback(
+    (dir: -1 | 1) => {
+      if (maxOffset <= 0) return;
+      displayOffset.stop();
+      const current = Math.round(displayOffset.get());
+      const next = Math.max(0, Math.min(maxOffset, current + dir));
+      animate(displayOffset, next, {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      });
+    },
+    [maxOffset, displayOffset],
+  );
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -93,7 +104,8 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
       }
       if (e.key === "ArrowLeft") navigate(-1);
       if (e.key === "ArrowRight") navigate(1);
-      if (e.key === "Enter" && activeProjectRef.current) setOverlayProject(activeProjectRef.current);
+      if (e.key === "Enter" && activeProjectRef.current)
+        setOverlayProject(activeProjectRef.current);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -129,12 +141,15 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
     };
   }, [isMobile, maxOffset, displayOffset, snapToNearest]);
 
-  const handleCardClick = useCallback((project: ProjectRow, index: number) => {
-    lastFocusedRef.current = document.activeElement as HTMLElement;
-    displayOffset.stop();
-    displayOffset.set(index);
-    setOverlayProject(project);
-  }, [displayOffset]);
+  const handleCardClick = useCallback(
+    (project: ProjectRow, index: number) => {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      displayOffset.stop();
+      displayOffset.set(index);
+      setOverlayProject(project);
+    },
+    [displayOffset],
+  );
 
   return (
     <div className="space-y-6">
@@ -158,7 +173,7 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
               forceFace
-               onClick={() => handleCardClick(project, i)}
+              onClick={() => handleCardClick(project, i)}
             />
           ))}
         </div>

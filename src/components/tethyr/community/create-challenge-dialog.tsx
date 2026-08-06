@@ -1,9 +1,21 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCreateChallenge } from "@/hooks/use-challenges";
 
@@ -20,15 +32,26 @@ export function CreateChallengeDialog() {
   const create = useCreateChallenge();
 
   const handleSubmit = () => {
-    if (!title.trim()) { toast.error("Title is required"); return; }
-    if (!description.trim()) { toast.error("Description is required"); return; }
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (!description.trim()) {
+      toast.error("Description is required");
+      return;
+    }
 
     create.mutate(
       {
         title: title.trim(),
         description: description.trim(),
         type: type as any,
-        skills: skills ? skills.split(",").map((s) => s.trim()).filter(Boolean) : [],
+        skills: skills
+          ? skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
         difficulty: difficulty as any,
         start_date: startDate || null,
         end_date: endDate || null,
@@ -61,10 +84,17 @@ export function CreateChallengeDialog() {
         </DialogHeader>
         <div className="space-y-4">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          <Textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="skill">Skill</SelectItem>
                 <SelectItem value="project">Project</SelectItem>
@@ -72,7 +102,9 @@ export function CreateChallengeDialog() {
               </SelectContent>
             </Select>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -80,7 +112,11 @@ export function CreateChallengeDialog() {
               </SelectContent>
             </Select>
           </div>
-          <Input placeholder="Skills (comma-separated)" value={skills} onChange={(e) => setSkills(e.target.value)} />
+          <Input
+            placeholder="Skills (comma-separated)"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Start date</label>
@@ -91,9 +127,17 @@ export function CreateChallengeDialog() {
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
-          <Input placeholder="Max participants (optional)" type="number" min="1" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} />
+          <Input
+            placeholder="Max participants (optional)"
+            type="number"
+            min="1"
+            value={maxParticipants}
+            onChange={(e) => setMaxParticipants(e.target.value)}
+          />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? "Creating..." : "Create"}
             </Button>

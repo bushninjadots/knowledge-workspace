@@ -2,7 +2,13 @@ import { Clock, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useSessionStats } from "@/hooks/use-sessions";
 
-export function ProfileSessionsTab({ userId, isOwnProfile }: { userId: string; isOwnProfile: boolean }) {
+export function ProfileSessionsTab({
+  userId,
+  isOwnProfile,
+}: {
+  userId: string;
+  isOwnProfile: boolean;
+}) {
   const { data: stats, isLoading } = useSessionStats(userId);
 
   return (
@@ -25,7 +31,9 @@ export function ProfileSessionsTab({ userId, isOwnProfile }: { userId: string; i
               <div className="mt-1 text-xs text-muted-foreground">Completed</div>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-center">
-              <div className="text-2xl font-bold text-[var(--brand-purple)]">{stats?.hoursThisMonth ?? 0}</div>
+              <div className="text-2xl font-bold text-[var(--brand-purple)]">
+                {stats?.hoursThisMonth ?? 0}
+              </div>
               <div className="mt-1 text-xs text-muted-foreground">Hours shared</div>
             </div>
           </div>

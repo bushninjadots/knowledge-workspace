@@ -12,7 +12,17 @@ interface ProjectHeroProps {
   accent?: string | null;
 }
 
-function InlineLink({ to, handle, className, children }: { to: string | undefined; handle: string | null; className: string; children: React.ReactNode }) {
+function InlineLink({
+  to,
+  handle,
+  className,
+  children,
+}: {
+  to: string | undefined;
+  handle: string | null;
+  className: string;
+  children: React.ReactNode;
+}) {
   if (!to) {
     return <span className={className}>{children}</span>;
   }
@@ -23,7 +33,13 @@ function InlineLink({ to, handle, className, children }: { to: string | undefine
   );
 }
 
-export function ProjectHero({ project, coverSigned, creator, avatarSigned, accent }: ProjectHeroProps) {
+export function ProjectHero({
+  project,
+  coverSigned,
+  creator,
+  avatarSigned,
+  accent,
+}: ProjectHeroProps) {
   const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
   const coverScale = useTransform(scrollY, [0, 500], [1, 1.1]);
@@ -82,12 +98,17 @@ export function ProjectHero({ project, coverSigned, creator, avatarSigned, accen
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {/* Status pill */}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
-                <span className={`h-1.5 w-1.5 rounded-full ${
-                  project.status === "active" ? "bg-brand-green" :
-                  project.status === "planning" ? "bg-amber-400" :
-                  project.status === "paused" ? "bg-muted-foreground/40" :
-                  "bg-primary"
-                }`} />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    project.status === "active"
+                      ? "bg-brand-green"
+                      : project.status === "planning"
+                        ? "bg-amber-400"
+                        : project.status === "paused"
+                          ? "bg-muted-foreground/40"
+                          : "bg-primary"
+                  }`}
+                />
                 {project.status}
               </span>
               {project.looking_for_collaborators && (
@@ -108,10 +129,16 @@ export function ProjectHero({ project, coverSigned, creator, avatarSigned, accen
               Join Project
             </button>
             <div className="flex gap-2">
-              <button className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm transition hover:bg-white/20" aria-label="Share">
+              <button
+                className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm transition hover:bg-white/20"
+                aria-label="Share"
+              >
                 <Share2 className="h-4 w-4" />
               </button>
-              <button className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm transition hover:bg-white/20" aria-label="Bookmark">
+              <button
+                className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm transition hover:bg-white/20"
+                aria-label="Bookmark"
+              >
                 <Bookmark className="h-4 w-4" />
               </button>
             </div>

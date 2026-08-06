@@ -14,7 +14,11 @@ interface ProjectShelfOverlayProps {
 const STATUS_STYLES: Record<string, { label: string; dot: string; badge: string }> = {
   active: { label: "Active", dot: "bg-brand-green", badge: "bg-brand-green/15 text-brand-green" },
   planning: { label: "Planning", dot: "bg-amber-400", badge: "bg-amber-400/15 text-amber-400" },
-  paused: { label: "Paused", dot: "bg-muted-foreground/40", badge: "bg-muted-foreground/10 text-muted-foreground" },
+  paused: {
+    label: "Paused",
+    dot: "bg-muted-foreground/40",
+    badge: "bg-muted-foreground/10 text-muted-foreground",
+  },
   completed: { label: "Completed", dot: "bg-primary", badge: "bg-primary/15 text-primary" },
 };
 
@@ -36,7 +40,7 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
     const handleTab = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
       const focusable = panel.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -72,14 +76,19 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
           <motion.div
             layoutId={`shelf-card-${project.id}`}
             className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-3xl border border-border/60 bg-surface shadow-2xl"
-            transition={prefersReducedMotion
-              ? { duration: 0 }
-              : { type: "spring" as const, stiffness: 200, damping: 25 }
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { type: "spring" as const, stiffness: 200, damping: 25 }
             }
           >
             {/* Cover */}
             <div className="relative aspect-video">
-              <CoverGradient tags={project.tags} coverUrl={project.cover_url} progress={project.progress_percent} />
+              <CoverGradient
+                tags={project.tags}
+                coverUrl={project.cover_url}
+                progress={project.progress_percent}
+              />
 
               {/* Close button */}
               <button
@@ -93,11 +102,18 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
 
               {/* Status badges */}
               <div className="absolute left-4 top-4 flex items-center gap-2">
-                <span className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm",
-                  STATUS_STYLES[project.status]?.badge ?? STATUS_STYLES.active.badge,
-                )}>
-                  <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_STYLES[project.status]?.dot ?? STATUS_STYLES.active.dot)} />
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm",
+                    STATUS_STYLES[project.status]?.badge ?? STATUS_STYLES.active.badge,
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      STATUS_STYLES[project.status]?.dot ?? STATUS_STYLES.active.dot,
+                    )}
+                  />
                   {STATUS_STYLES[project.status]?.label ?? "Active"}
                 </span>
                 {project.looking_for_collaborators && (
@@ -110,9 +126,7 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
 
               {/* Title overlay */}
               <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-lg font-semibold text-white drop-shadow-lg">
-                  {project.title}
-                </p>
+                <p className="text-lg font-semibold text-white drop-shadow-lg">{project.title}</p>
                 {project.profiles && (
                   <p className="text-sm text-white/80 drop-shadow">
                     by {project.profiles.display_name || project.profiles.handle || "Member"}

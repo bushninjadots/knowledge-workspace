@@ -93,14 +93,17 @@ function ChallengeDetailPage() {
   };
 
   const handleMarkComplete = () => {
-    updateProgressMutation.mutate({
-      challengeId: challenge.id,
-      status: "completed",
-      progress: { note: notes, completed_at: new Date().toISOString() },
-    }, {
-      onSuccess: () => toast.success("Challenge marked as completed"),
-      onError: () => toast.error("Failed to update progress"),
-    });
+    updateProgressMutation.mutate(
+      {
+        challengeId: challenge.id,
+        status: "completed",
+        progress: { note: notes, completed_at: new Date().toISOString() },
+      },
+      {
+        onSuccess: () => toast.success("Challenge marked as completed"),
+        onError: () => toast.error("Failed to update progress"),
+      },
+    );
   };
 
   const isCompleted = challenge.my_participation?.status === "completed";
@@ -227,8 +230,11 @@ function ChallengeDetailPage() {
           {(() => {
             const myParticipation = challenge.my_participation!;
             const STATUS_STEPS = ["joined", "in_progress", "completed"] as const;
-            const currentStepIndex = STATUS_STEPS.indexOf(myParticipation.status as typeof STATUS_STEPS[number]);
-            const progressPercent = currentStepIndex >= 0 ? (currentStepIndex / (STATUS_STEPS.length - 1)) * 100 : 0;
+            const currentStepIndex = STATUS_STEPS.indexOf(
+              myParticipation.status as (typeof STATUS_STEPS)[number],
+            );
+            const progressPercent =
+              currentStepIndex >= 0 ? (currentStepIndex / (STATUS_STEPS.length - 1)) * 100 : 0;
 
             return (
               <>
@@ -251,17 +257,24 @@ function ChallengeDetailPage() {
                           </div>
                         ) : isAvailable ? (
                           <button
-                            onClick={() => updateProgressMutation.mutate({ challengeId: challenge.id, status: step as any }, {
-                              onSuccess: () => toast.success("Challenge status updated"),
-                              onError: () => toast.error("Failed to update challenge status"),
-                            })}
+                            onClick={() =>
+                              updateProgressMutation.mutate(
+                                { challengeId: challenge.id, status: step as any },
+                                {
+                                  onSuccess: () => toast.success("Challenge status updated"),
+                                  onError: () => toast.error("Failed to update challenge status"),
+                                },
+                              )
+                            }
                             disabled={updateProgressMutation.isPending}
                             className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted-foreground hover:border-primary"
                           />
                         ) : (
                           <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted" />
                         )}
-                        <span className={`text-sm capitalize ${isDone ? "text-muted-foreground line-through" : isCurrent ? "font-medium" : "text-muted-foreground"}`}>
+                        <span
+                          className={`text-sm capitalize ${isDone ? "text-muted-foreground line-through" : isCurrent ? "font-medium" : "text-muted-foreground"}`}
+                        >
                           {step.replace("_", " ")}
                         </span>
                       </div>
@@ -272,7 +285,8 @@ function ChallengeDetailPage() {
                 {myParticipation.status === "in_progress" && (
                   <div className="space-y-3 pt-2">
                     <p className="text-xs text-muted-foreground">
-                      Work on this challenge and mark it completed when you&apos;re done to earn reputation points!
+                      Work on this challenge and mark it completed when you&apos;re done to earn
+                      reputation points!
                     </p>
                     <div className="flex items-center gap-3">
                       <input

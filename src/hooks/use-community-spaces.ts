@@ -54,7 +54,6 @@ function sortSpaces(list: CommunitySpace[]): CommunitySpace[] {
   });
 }
 
-
 // ============================================================
 // Queries
 // ============================================================
@@ -114,7 +113,6 @@ export function useCommunitySpaces() {
     },
     staleTime: 30_000,
   });
-
 }
 
 export function useCommunitySpace(slug: string) {
@@ -167,7 +165,6 @@ export function useMySpaces() {
     data: spaces.filter((s: CommunitySpace) => s.is_member || isDefaultSpace(s)),
   };
 }
-
 
 // ============================================================
 // CRUD Mutations
@@ -368,7 +365,6 @@ export function useLeaveSpace() {
   });
 }
 
-
 // ============================================================
 // Member Management
 // ============================================================
@@ -400,14 +396,16 @@ export function useSpaceMembers(spaceId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return (members ?? []).map((m: SpaceMember): SpaceMember => ({
-        ...m,
-        profile: (profileMap.get(m.user_id) as SpaceMember["profile"]) ?? {
-          display_name: "Unknown",
-          handle: "unknown",
-          avatar_url: null,
-        },
-      }));
+      return (members ?? []).map(
+        (m: SpaceMember): SpaceMember => ({
+          ...m,
+          profile: (profileMap.get(m.user_id) as SpaceMember["profile"]) ?? {
+            display_name: "Unknown",
+            handle: "unknown",
+            avatar_url: null,
+          },
+        }),
+      );
     },
     staleTime: 30_000,
     enabled: !!spaceId,

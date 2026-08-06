@@ -415,14 +415,17 @@ function ParticipantActions({
         <Button
           size="sm"
           onClick={() =>
-            onUpdateParticipantStatus.mutate({
-              participantId,
-              status: "accepted",
-              sessionId,
-            }, {
-              onSuccess: () => toast.success("Invitation accepted"),
-              onError: () => toast.error("Failed to accept invitation"),
-            })
+            onUpdateParticipantStatus.mutate(
+              {
+                participantId,
+                status: "accepted",
+                sessionId,
+              },
+              {
+                onSuccess: () => toast.success("Invitation accepted"),
+                onError: () => toast.error("Failed to accept invitation"),
+              },
+            )
           }
           disabled={onUpdateParticipantStatus.isPending}
           className="bg-brand-green text-background hover:bg-brand-green/90"
@@ -434,14 +437,17 @@ function ParticipantActions({
           variant="destructive"
           size="sm"
           onClick={() =>
-            onUpdateParticipantStatus.mutate({
-              participantId,
-              status: "declined",
-              sessionId,
-            }, {
-              onSuccess: () => toast.success("Invitation declined"),
-              onError: () => toast.error("Failed to decline invitation"),
-            })
+            onUpdateParticipantStatus.mutate(
+              {
+                participantId,
+                status: "declined",
+                sessionId,
+              },
+              {
+                onSuccess: () => toast.success("Invitation declined"),
+                onError: () => toast.error("Failed to decline invitation"),
+              },
+            )
           }
           disabled={onUpdateParticipantStatus.isPending}
         >
