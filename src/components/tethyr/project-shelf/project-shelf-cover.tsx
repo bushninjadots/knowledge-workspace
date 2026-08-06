@@ -91,14 +91,72 @@ function getZIndex(absDist: number): number {
   return 1;
 }
 
-export function ProjectShelfCover({
+export function ProjectShelfCover(props: ProjectShelfCoverProps) {
+  if (props.forceFace) return <ProjectShelfFace {...props} />;
+  return <ProjectShelfCoverAnimated {...props} />;
+}
+
+function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShelfCoverProps) {
+  const category = inferCategory(project.tags);
+  const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
+  const isOwn = project.profiles?.id === meId;
+
+  return (
+    <motion.button
+      layoutId={`shelf-card-${project.id}`}
+      id={`shelf-card-${project.id}`}
+      onClick={onClick}
+      className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none"
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      aria-selected
+      role="option"
+    >
+      <div className="aspect-video">
+        <CoverGradient
+          tags={project.tags}
+          coverUrl={project.cover_url}
+          progress={project.progress_percent}
+        />
+      </div>
+      <ProgressBar progress={project.progress_percent} />
+      <div className="absolute left-3 top-3 flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+          <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
+          {status.label}
+        </span>
+        {isOwn && (
+          <span className="rounded-full bg-brand-green/20 px-2 py-0.5 text-[10px] font-medium text-brand-green backdrop-blur-sm">
+            You
+          </span>
+        )}
+        {isContributor && (
+          <span className="rounded-full bg-brand-purple/20 px-2 py-0.5 text-[10px] font-medium text-brand-purple backdrop-blur-sm">
+            Contributing
+          </span>
+        )}
+      </div>
+      <div className="absolute bottom-6 left-3 right-3">
+        <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">
+          {project.title}
+        </p>
+        {project.profiles && (
+          <p className="text-xs text-white/70 drop-shadow">
+            {project.profiles.display_name || project.profiles.handle || "Member"}
+          </p>
+        )}
+      </div>
+    </motion.button>
+  );
+}
+
+function ProjectShelfCoverAnimated({
   project,
   index,
   offset,
   meId,
   isContributor,
   prefersReducedMotion,
-  forceFace,
   onClick,
 }: ProjectShelfCoverProps) {
   const category = inferCategory(project.tags);
@@ -106,56 +164,6 @@ export function ProjectShelfCover({
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
   const catColors = CATEGORY_COLORS[category];
-
-  if (forceFace) {
-    return (
-      <motion.button
-        layoutId={`shelf-card-${project.id}`}
-        id={`shelf-card-${project.id}`}
-        onClick={onClick}
-        className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none"
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        aria-selected
-        role="option"
-      >
-        <div className="aspect-video">
-          <CoverGradient
-            tags={project.tags}
-            coverUrl={project.cover_url}
-            progress={project.progress_percent}
-          />
-        </div>
-        <ProgressBar progress={project.progress_percent} />
-        <div className="absolute left-3 top-3 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
-            <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
-            {status.label}
-          </span>
-          {isOwn && (
-            <span className="rounded-full bg-brand-green/20 px-2 py-0.5 text-[10px] font-medium text-brand-green backdrop-blur-sm">
-              You
-            </span>
-          )}
-          {isContributor && (
-            <span className="rounded-full bg-brand-purple/20 px-2 py-0.5 text-[10px] font-medium text-brand-purple backdrop-blur-sm">
-              Contributing
-            </span>
-          )}
-        </div>
-        <div className="absolute bottom-6 left-3 right-3">
-          <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">
-            {project.title}
-          </p>
-          {project.profiles && (
-            <p className="text-xs text-white/70 drop-shadow">
-              {project.profiles.display_name || project.profiles.handle || "Member"}
-            </p>
-          )}
-        </div>
-      </motion.button>
-    );
-  }
 
   const dist = useTransform(offset, (o) => index - o);
   const absDist = useTransform(dist, (d) => Math.abs(d));

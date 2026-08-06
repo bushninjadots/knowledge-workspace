@@ -192,11 +192,6 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
             ))}
           </div>
         </div>
-
-        <div className="space-y-4 rounded-2xl border border-border/40 bg-surface/30 p-6">
-          <h3 className="text-sm font-semibold text-foreground">Preferences</h3>
-          <p className="text-xs text-muted-foreground">Coming soon</p>
-        </div>
       </div>
     );
   }

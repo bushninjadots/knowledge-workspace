@@ -60,7 +60,7 @@ function SignupPage() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -74,6 +74,10 @@ function SignupPage() {
       });
       if (error) {
         toast.error(error.message);
+        return;
+      }
+      if (!data.session) {
+        toast.success("Check your email to confirm your account");
         return;
       }
       toast.success("Welcome to Tethyr ✨");
@@ -138,6 +142,7 @@ function SignupPage() {
             id="password"
             type="password"
             placeholder="At least 8 characters"
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}

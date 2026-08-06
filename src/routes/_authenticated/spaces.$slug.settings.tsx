@@ -61,7 +61,10 @@ const ROLE_LABELS: Record<SpaceMemberRole, string> = {
   member: "Member",
 };
 
-const ROLE_BADGE: Record<SpaceMemberRole, { variant: "teaching" | "learning" | "outline"; icon: React.ReactNode }> = {
+const ROLE_BADGE: Record<
+  SpaceMemberRole,
+  { variant: "teaching" | "learning" | "outline"; icon: React.ReactNode }
+> = {
   owner: { variant: "teaching", icon: <Crown className="h-3 w-3" /> },
   moderator: { variant: "learning", icon: <Shield className="h-3 w-3" /> },
   member: { variant: "outline", icon: <User className="h-3 w-3" /> },
@@ -207,9 +210,7 @@ function SpaceSettingsPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
-            Community settings
-          </h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Community settings</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage details, visibility, and the moderation team for {space.name}.
           </p>
@@ -414,7 +415,6 @@ function SpaceSettingsPage() {
           </div>
         )}
       </section>
-
 
       {isOwner && (
         <section className="mt-10 rounded-lg border border-destructive/40 bg-card p-5">

@@ -27,6 +27,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -46,6 +47,28 @@ function LoginPage() {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function requestPasswordReset() {
+    if (!email.trim()) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Check your email for a password reset link");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -69,6 +92,7 @@ function LoginPage() {
             id="email"
             type="email"
             placeholder="you@studio.com"
+            autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -77,11 +101,20 @@ function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
+            <button
+              type="button"
+              onClick={requestPasswordReset}
+              disabled={resetting}
+              className="text-xs text-primary hover:underline disabled:opacity-50"
+            >
+              {resetting ? "Sending…" : "Forgot password?"}
+            </button>
           </div>
           <Input
             id="password"
             type="password"
             placeholder="••••••••"
+            autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
