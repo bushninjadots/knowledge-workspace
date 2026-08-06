@@ -86,10 +86,11 @@ const TYPE_ICONS: Record<string, string> = {
   discussion: "💬",
 };
 
-type SortMode = "latest" | "helpful" | "offers";
+type SortMode = "latest" | "helpful" | "offers" | "recommended";
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
   { label: "Latest", value: "latest" },
+  { label: "Recommended", value: "recommended" },
   { label: "Most helpful", value: "helpful" },
   { label: "Most offers", value: "offers" },
 ];
@@ -256,6 +257,13 @@ function CommunityPage() {
 
     if (nav === "trending") {
       list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
+    } else if (sortMode === "recommended" && mySkillNames.size > 0) {
+      list = [...list].sort((a, b) => {
+        const aOverlap = a.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
+        const bOverlap = b.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
+        if (bOverlap !== aOverlap) return bOverlap - aOverlap;
+        return b.stats.likes - a.stats.likes;
+      });
     } else if (sortMode === "helpful") {
       list = [...list].sort((a, b) => b.stats.helpful - a.stats.helpful);
     } else if (sortMode === "offers") {

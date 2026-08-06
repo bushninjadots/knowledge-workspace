@@ -19,6 +19,7 @@ import {
   UserPlus,
   Paperclip,
   BarChart3,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,8 @@ export function ComposerBar({
     snapshot: ProjectSnapshot;
   } | null>(null);
   const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -347,6 +350,21 @@ export function ComposerBar({
         });
         toast.success("Post updated");
       } else {
+        const poll_data =
+          type === "poll"
+            ? {
+                question: pollQuestion.trim() || postTitle,
+                options: pollOptions.filter((o) => o.trim()).map((o) => o.trim()),
+                votes: [],
+                ends_at: null,
+              }
+            : undefined;
+
+        if (type === "poll" && poll_data!.options.length < 2) {
+          toast.error("A poll needs at least 2 options");
+          return;
+        }
+
         await createPost.mutateAsync({
           type: type as PostType,
           title: postTitle,
@@ -357,6 +375,7 @@ export function ComposerBar({
           project_id: attachedProject?.projectId ?? null,
           project_snapshot: attachedProject?.snapshot ?? null,
           feedback_tags: feedbackTags.length > 0 ? feedbackTags : undefined,
+          poll_data,
         });
         toast.success("Posted to the community");
       }
@@ -366,6 +385,8 @@ export function ComposerBar({
       setImages([]);
       setAttachedProject(null);
       setFeedbackTags([]);
+      setPollQuestion("");
+      setPollOptions(["", ""]);
       setShowAttachPanel(false);
       localStorage.removeItem(DRAFT_KEY);
       onCancelEdit?.();
@@ -445,6 +466,57 @@ export function ComposerBar({
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {type === "poll" && (
+        <div className="mt-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-brand-purple" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-brand-purple">Poll</span>
+          </div>
+          <input
+            value={pollQuestion}
+            onChange={(e) => setPollQuestion(e.target.value.slice(0, 200))}
+            placeholder="Ask a question…"
+            className="mb-3 w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+          />
+          <div className="space-y-2">
+            {pollOptions.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/60 text-[10px] tabular-nums text-muted-foreground">
+                  {i + 1}
+                </span>
+                <input
+                  value={opt}
+                  onChange={(e) => {
+                    const next = [...pollOptions];
+                    next[i] = e.target.value.slice(0, 100);
+                    setPollOptions(next);
+                  }}
+                  placeholder={`Option ${i + 1}…`}
+                  className="flex-1 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+                />
+                {pollOptions.length > 2 && (
+                  <button
+                    onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}
+                    className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {pollOptions.length < 10 && (
+            <button
+              onClick={() => setPollOptions([...pollOptions, ""])}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Plus className="h-3 w-3" />
+              Add option
+            </button>
+          )}
         </div>
       )}
 

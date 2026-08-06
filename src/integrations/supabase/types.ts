@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -7,10 +8,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -217,7 +238,6 @@ export type Database = {
           name: string
           slug: string
           updated_at: string
-          visibility: string
         }
         Insert: {
           avatar_url?: string | null
@@ -228,7 +248,6 @@ export type Database = {
           name: string
           slug: string
           updated_at?: string
-          visibility?: string
         }
         Update: {
           avatar_url?: string | null
@@ -239,7 +258,6 @@ export type Database = {
           name?: string
           slug?: string
           updated_at?: string
-          visibility?: string
         }
         Relationships: [
           {
@@ -820,6 +838,7 @@ export type Database = {
           id: string
           images: string[]
           is_pinned: boolean
+          poll_data: Json | null
           progress_data: Json | null
           project_data: Json | null
           project_id: string | null
@@ -845,6 +864,7 @@ export type Database = {
           id?: string
           images?: string[]
           is_pinned?: boolean
+          poll_data?: Json | null
           progress_data?: Json | null
           project_data?: Json | null
           project_id?: string | null
@@ -870,6 +890,7 @@ export type Database = {
           id?: string
           images?: string[]
           is_pinned?: boolean
+          poll_data?: Json | null
           progress_data?: Json | null
           project_data?: Json | null
           project_id?: string | null
@@ -2044,6 +2065,7 @@ export type Database = {
         | "lesson_learned"
         | "feedback_request"
         | "open_role"
+        | "poll"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
@@ -2197,6 +2219,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       achievement_type: [
@@ -2242,6 +2267,7 @@ export const Constants = {
         "lesson_learned",
         "feedback_request",
         "open_role",
+        "poll",
       ],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_stage: ["planning", "building", "testing", "launch", "growing"],
@@ -2278,3 +2304,4 @@ export const Constants = {
     },
   },
 } as const
+
