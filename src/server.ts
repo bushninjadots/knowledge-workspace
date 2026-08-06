@@ -27,13 +27,13 @@ function addSecurityHeaders(response: Response): Response {
   headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' https://fonts.gstatic.com; " +
-      "img-src 'self' data: blob: https: http://localhost:54321 http://127.0.0.1:54321; " +
-      "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co; " +
-      "frame-ancestors 'none'",
+    "default-src'self';" +
+      "script-src'self''unsafe-inline''unsafe-eval';" +
+      "style-src'self''unsafe-inline'https://fonts.googleapis.com;" +
+      "font-src'self'https://fonts.gstatic.com;" +
+      "img-src'self'data: blob: https: http://localhost:54321 http://127.0.0.1:54321;" +
+      "connect-src'self'http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co;" +
+      "frame-ancestors'none'",
   );
   return new Response(response.body, {
     status: response.status,

@@ -14,7 +14,16 @@ import {
   useUnreadNotificationCount,
   useNotificationRealtime,
 } from "@/hooks/use-notifications";
-import { timeAgoShort } from "@/lib/time";
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return "now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  return `${Math.floor(diff / 86400)}d`;
+}
 
 export function NotificationDropdown() {
   useNotificationRealtime();
@@ -57,9 +66,7 @@ export function NotificationDropdown() {
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm leading-snug">{n.title}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground/70">
-                  {timeAgoShort(n.created_at)}
-                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{timeAgo(n.created_at)}</p>
               </div>
             </DropdownMenuItem>
           ))}

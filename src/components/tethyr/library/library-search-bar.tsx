@@ -14,9 +14,9 @@ const TYPE_ICONS: Record<string, typeof FileText> = {
 
 const TYPE_COLORS: Record<string, string> = {
   note: "text-brand-green",
-  document: "text-blue-400",
-  link: "text-amber-400",
-  upload: "text-purple-400",
+  document: "text-learning",
+  link: "text-teaching",
+  upload: "text-ai",
 };
 
 function highlightMatch(text: string, query: string) {
@@ -154,7 +154,7 @@ export function LibrarySearchBar({
                         {highlightMatch(item.title, value)}
                       </p>
                       {item.content && (
-                        <p className="truncate text-xs text-muted-foreground/60">
+                        <p className="truncate text-xs text-muted-foreground">
                           {highlightMatch(item.content.replace(/<[^>]+>/g, "").slice(0, 80), value)}
                         </p>
                       )}

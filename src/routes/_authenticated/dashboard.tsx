@@ -77,7 +77,7 @@ function DashboardPage() {
   const remaining = nextSteps(input, 5);
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
-  const firstName = data.profile?.display_name?.split(" ")[0] ?? data.profile?.handle ?? "member";
+  const firstName = data.profile?.display_name?.split("")[0] ?? data.profile?.handle ?? "member";
 
   return (
     <div className="animate-room-enter mx-auto max-w-6xl space-y-6 p-4 sm:p-8">

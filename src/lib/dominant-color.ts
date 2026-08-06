@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-// Samples an image and returns its average color as an `rgb(...)` string.
+// Samples an image and returns its average color as an`rgb(...)`string.
 // Used to make UI accents (like the banner border) sync with whatever photo
 // the user uploads. Runs entirely client-side via a hidden canvas.
 //
 // Note: this relies on the image being served with permissive CORS headers
 // (Supabase Storage signed URLs are). If the canvas gets tainted for any
 // reason, we fail silently and return null — callers should treat that as
-// "no accent color" rather than throw.
+//"no accent color"rather than throw.
 export async function getDominantColor(url: string): Promise<string | null> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -77,7 +77,7 @@ export function useDominantColor(url: string | null): string | null {
   return color;
 }
 
-// Turns an `rgb(r, g, b)` string into `rgba(r, g, b, alpha)` — used to get a
+// Turns an`rgb(r, g, b)`string into`rgba(r, g, b, alpha)`— used to get a
 // softer tint of the sampled banner color for card borders, distinct from
 // the fully-opaque color used on the banner's own border.
 export function withAlpha(rgb: string | null, alpha: number): string | null {

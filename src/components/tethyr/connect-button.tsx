@@ -1,5 +1,5 @@
 // Renders the correct connection action for viewing another creator's profile.
-// "Tethyr" = the verb for connecting on the platform.
+//"Tethyr"= the verb for connecting on the platform.
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link2, Clock, Check, X, Link2Off, MessageSquare } from "lucide-react";
@@ -52,7 +52,7 @@ export function ConnectButton({
       { addresseeId: targetId, meId: meId as string, introMessage: intro },
       {
         onSuccess: () => {
-          toast.success(`Tethyr request sent${targetName ? ` to ${targetName}` : ""}`);
+          toast.success(`Tethyr request sent${targetName ? `to ${targetName}` : ""}`);
           setInviteOpen(false);
           setIntro("");
         },

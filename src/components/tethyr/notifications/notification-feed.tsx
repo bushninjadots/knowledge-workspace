@@ -75,7 +75,7 @@ export function NotificationFeed({ notifications, isLoading, onNavigate }: Notif
         <div key={group.label}>
           <div className="mb-3 flex items-center gap-3">
             <Separator className="flex-1" />
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {group.label}
             </span>
             <Separator className="flex-1" />

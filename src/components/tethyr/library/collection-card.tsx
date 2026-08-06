@@ -34,7 +34,7 @@ export function CollectionCard({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{collection.name}</p>
         {itemCount !== undefined && (
-          <p className="text-xs text-muted-foreground/60">
+          <p className="text-xs text-muted-foreground">
             {itemCount} {itemCount === 1 ? "item" : "items"}
           </p>
         )}

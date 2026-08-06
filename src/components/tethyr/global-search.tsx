@@ -314,7 +314,7 @@ export function GlobalSearch({
             <div className="min-w-0">
               <p className="truncate text-sm">{p.display_name || p.handle || "Untitled member"}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {[p.creator_title, p.category].filter(Boolean).join(" · ") || "—"}
+                {[p.creator_title, p.category].filter(Boolean).join("·") || "—"}
               </p>
             </div>
           </button>,

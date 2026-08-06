@@ -28,7 +28,7 @@ export function useMessages(connectionId: string | null) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Realtime → refetch first page (newest).
-  // NOTE: deps only include primitives (connectionId, qc) — never the `key`
+  // NOTE: deps only include primitives (connectionId, qc) — never the`key`
   // array above, which is a new reference every render. Including it here
   // used to tear down and resubscribe the channel on every render, which
   // hammers Supabase Realtime with duplicate subscriptions on the same topic

@@ -24,9 +24,9 @@ const TYPE_ICONS: Record<string, typeof FileText> = {
 
 const TYPE_COLORS: Record<string, string> = {
   note: "text-brand-green",
-  document: "text-blue-400",
-  link: "text-amber-400",
-  upload: "text-purple-400",
+  document: "text-learning",
+  link: "text-teaching",
+  upload: "text-ai",
 };
 
 function formatRelativeTime(dateStr: string): string {
@@ -87,9 +87,9 @@ export function ItemCard({
           {excerpt && <p className="mt-0.5 truncate text-xs text-muted-foreground">{excerpt}</p>}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {item.is_pinned && <Pin className="h-3 w-3 text-brand-purple" />}
-          {item.is_favorite && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
+          {item.is_favorite && <Star className="h-3 w-3 fill-teaching text-teaching" />}
           <span>{formatRelativeTime(item.updated_at)}</span>
         </div>
 
@@ -139,7 +139,7 @@ export function ItemCard({
 
         <div className="flex items-center gap-1">
           {item.is_pinned && <Pin className="h-3 w-3 text-brand-purple" />}
-          {item.is_favorite && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
+          {item.is_favorite && <Star className="h-3 w-3 fill-teaching text-teaching" />}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -193,7 +193,7 @@ export function ItemCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground/60">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <span className="truncate">{item.type}</span>
         <span>{formatRelativeTime(item.updated_at)}</span>
       </div>

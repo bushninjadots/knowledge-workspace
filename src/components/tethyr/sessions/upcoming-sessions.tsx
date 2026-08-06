@@ -56,7 +56,7 @@ function UpcomingCard({
             </span>
           </>
         ) : (
-          <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
+          <CalendarDays className="h-5 w-5 text-muted-foreground" />
         )}
       </div>
 
@@ -157,7 +157,7 @@ export function UpcomingSessions({
     return (
       <div className="rounded-2xl border border-border/40 bg-surface/20 p-12 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-elevated">
-          <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
+          <CalendarDays className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-foreground">No upcoming sessions</p>
         <p className="mt-1 text-xs text-muted-foreground">Schedule a session to get started.</p>

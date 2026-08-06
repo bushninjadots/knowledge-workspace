@@ -324,7 +324,7 @@ function PublicProfileRoute() {
                 )}
                 {languages.length > 0 && (
                   <span className="inline-flex items-center gap-1">
-                    <Languages className="h-3.5 w-3.5" /> {languages.join(", ")}
+                    <Languages className="h-3.5 w-3.5" /> {languages.join(",")}
                   </span>
                 )}
                 {profile.reputation_score != null && profile.reputation_score > 0 && (

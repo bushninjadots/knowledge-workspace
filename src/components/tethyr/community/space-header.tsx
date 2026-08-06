@@ -1,10 +1,10 @@
-import { ArrowLeft, Users, Settings, Pin, Check } from "lucide-react";
+import { ArrowLeft, Users, Settings, Lock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useJoinSpace,
   useLeaveSpace,
-  isDefaultSpace,
   type CommunitySpace,
   type SpaceMemberRole,
 } from "@/hooks/use-community-spaces";
@@ -14,12 +14,11 @@ export function SpaceHeader({
   space,
   myRole,
   onBack,
-  onOpenSettings,
 }: {
   space: CommunitySpace;
   myRole: SpaceMemberRole | null;
   onBack: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings?: () => void;
 }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
@@ -33,7 +32,7 @@ export function SpaceHeader({
       });
     } else {
       joinSpace.mutate(space.id, {
-        onSuccess: () => toast.success(`Joined ${space.name}`),
+        onSuccess: () => toast.success(`Joined ${space.name}!`),
         onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
       });
     }
@@ -43,76 +42,58 @@ export function SpaceHeader({
   const canManage = myRole === "owner" || myRole === "moderator";
 
   return (
-    <div className="mb-6 rounded-lg border border-border bg-surface p-5">
+    <div className="mb-6 rounded-3xl border border-border/60 bg-card/70 p-6 backdrop-blur-sm">
       <div className="flex items-start gap-4">
         <button
+          type="button"
           onClick={onBack}
-          className="mt-0.5 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-          aria-label="Back to feed"
+          aria-label="Back to the community feed"
+          className="mt-1 rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface-elevated text-base font-semibold text-foreground">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full rounded-md object-cover" />
+            <img src={avatarUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
           ) : (
             initial
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="truncate text-lg font-semibold">{space.name}</h2>
-            {isDefaultSpace(space) && (
-              <span className="flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
-                <Pin className="h-3 w-3" />
-                Default
-              </span>
-            )}
-            {myRole && (
-              <span className="rounded border border-border px-1.5 py-0.5 text-xs capitalize text-muted-foreground">
-                {myRole}
-              </span>
-            )}
-          </div>
+          <h2 className="font-display text-xl font-semibold">{space.name}</h2>
           {space.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{space.description}</p>
+            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{space.description}</p>
           )}
           <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
             </span>
-            <span>/{space.slug}</span>
+            {space.visibility === "private" && (
+              <span className="flex items-center gap-1">
+                <Lock className="h-3.5 w-3.5" />
+                Private
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
           {canManage && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 rounded-md px-2.5 text-xs"
-              onClick={onOpenSettings}
-            >
-              <Settings className="mr-1.5 h-3.5 w-3.5" />
-              Settings
+            <Button size="sm" variant="outline" className="rounded-full" asChild>
+              <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
+                <Settings className="mr-1.5 h-3.5 w-3.5" />
+                Settings
+              </Link>
             </Button>
           )}
           <Button
             size="sm"
             variant={space.is_member ? "outline" : "default"}
-            className="group h-8 rounded-md px-3 text-xs"
+            className="rounded-full"
             onClick={handleToggleMembership}
             disabled={joinSpace.isPending || leaveSpace.isPending}
           >
-            {space.is_member ? (
-              <>
-                <Check className="mr-1 h-3 w-3" />
-                <span className="group-hover:hidden">Joined</span>
-                <span className="hidden group-hover:inline">Leave</span>
-              </>
-            ) : (
-              "Join space"
-            )}
+            {space.is_member ? "Joined" : "Join"}
           </Button>
         </div>
       </div>

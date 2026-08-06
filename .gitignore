@@ -41,3 +41,5 @@ dist-ssr
 src/routeTree.gen.ts
 supabase/.temp/
 supabase/.branches/
+.aider.chat.history.md
+.aider.input.history

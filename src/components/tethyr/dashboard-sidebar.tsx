@@ -20,16 +20,32 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
 import { GlobalSearch } from "./global-search";
 import type { AvailabilityStatus } from "@/lib/skill-match";
+import { ThemeToggle } from "./theme-toggle";
 
-const rooms = [
-  { to: "/dashboard", label: "Dashboard", sub: "Today's activity", icon: Home, live: true },
-  { to: "/explore", label: "Projects", sub: "Projects & people", icon: FolderOpen, live: true },
-  { to: "/community", label: "Community", sub: "Open space", icon: Users, live: true },
-  { to: "/messages", label: "Messages", sub: "Meeting table", icon: MessageSquare, live: true },
-  { to: "/notifications", label: "Notifications", sub: "Activity feed", icon: Bell, live: true },
-  { to: "/profile", label: "Studio", sub: "Your skills", icon: GraduationCap, live: true },
-  { to: "/sessions", label: "Sessions", sub: "Skill meetings", icon: Trophy, live: true },
-  { to: "/library", label: "Library", sub: "Knowledge hub", icon: Compass, live: true },
+const groups = [
+  {
+    label: "Workspace",
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: Home },
+      { to: "/explore", label: "Projects", icon: FolderOpen },
+      { to: "/library", label: "Library", icon: Compass },
+    ],
+  },
+  {
+    label: "Network",
+    items: [
+      { to: "/community", label: "Community", icon: Users },
+      { to: "/messages", label: "Messages", icon: MessageSquare },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Learning",
+    items: [
+      { to: "/profile", label: "Profile", icon: GraduationCap },
+      { to: "/sessions", label: "Sessions", icon: Trophy },
+    ],
+  },
 ] as const;
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -52,95 +68,74 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-border/60 bg-surface/40 bg-noise p-4">
-      {/* Logo area */}
-      <div className="px-2 py-2">
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-surface">
+      <div className="flex h-12 items-center border-b border-border px-3">
         <Logo />
       </div>
 
-      {/* Quick search */}
-      <div className="mt-3">
+      <div className="px-3 py-3">
         <GlobalSearch variant="inline" />
       </div>
 
-      {/* Room navigation */}
-      <nav className="mt-5 flex flex-1 flex-col gap-0.5">
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60"></p>
-        {rooms.map((room, i) => {
-          const Icon = room.icon;
-          const isActive =
-            room.to === "/dashboard"
-              ? pathname === "/dashboard" && room.label === "Dashboard"
-              : pathname.startsWith(room.to);
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4">
+        {groups.map((group) => (
+          <div key={group.label}>
+            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {group.label}
+            </p>
+            <div className="flex flex-col">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  item.to === "/dashboard"
+                    ? pathname === "/dashboard"
+                    : pathname.startsWith(item.to);
 
-          if (!room.live) {
-            return (
-              <div
-                key={room.label}
-                title="Coming soon"
-                className="flex cursor-not-allow items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground/30"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <Icon className="h-4 w-4" />
-                <div className="min-w-0 flex-1">
-                  <span className="block text-sm">{room.label}</span>
-                </div>
-                <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/40">
-                  Soon
-                </span>
-              </div>
-            );
-          }
+                const badge =
+                  item.label === "Messages" && unread && unread.total > 0
+                    ? unread.total
+                    : item.label === "Notifications" && notifUnread > 0
+                      ? notifUnread
+                      : null;
 
-          const badge =
-            room.label === "Messages" && unread && unread.total > 0
-              ? unread.total
-              : room.label === "Notifications" && notifUnread > 0
-                ? notifUnread
-                : null;
-
-          return (
-            <Link
-              key={room.label}
-              to={room.to}
-              onClick={onNavigate}
-              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
-                isActive
-                  ? "bg-surface-elevated text-foreground shadow-soft"
-                  : "text-muted-foreground hover:bg-surface/60 hover:text-foreground"
-              }`}
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              {isActive && (
-                <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-gradient-to-b from-brand-green to-brand-purple" />
-              )}
-              <Icon className={`h-4 w-4 transition-colors ${isActive ? "text-brand-green" : ""}`} />
-              <div className="min-w-0 flex-1">
-                <span className="block text-sm font-medium">{room.label}</span>
-              </div>
-              {badge != null ? (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                  {badge}
-                </span>
-              ) : isActive ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
-              ) : null}
-            </Link>
-          );
-        })}
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={onNavigate}
+                    className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
+                      isActive
+                        ? "bg-surface-sunken font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {badge != null && (
+                      <span className="rounded-sm bg-border-strong/40 px-1.5 text-[10px] font-medium tabular-nums text-foreground">
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* User section */}
-      <div className="mt-auto space-y-3 border-t border-border/60 pt-4">
-        <AvailabilitySelector
-          current={(me?.profile?.availability as AvailabilityStatus) ?? "available"}
-          onSave={(s) => updateAvailability.mutate(s)}
-        />
+      <div className="mt-auto border-t border-border px-2 py-2">
+        <div className="px-2 pb-2">
+          <AvailabilitySelector
+            current={(me?.profile?.availability as AvailabilityStatus) ?? "available"}
+            onSave={(s) => updateAvailability.mutate(s)}
+          />
+        </div>
 
-        <div className="flex items-center gap-3 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-2 rounded-sm px-2 py-1.5">
           <Link
             to="/profile"
-            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-brand text-xs font-bold text-background transition-transform hover:scale-105"
+            className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-surface-sunken text-[11px] font-semibold text-foreground"
             onClick={onNavigate}
           >
             {me?.avatarSigned ? (
@@ -150,29 +145,31 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
             )}
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">
+            <p className="truncate text-[13px] font-medium leading-tight">
               {me?.profile?.display_name || me?.profile?.handle || "Member"}
             </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {me?.profile?.creator_title || "Studio"}
+            <p className="truncate text-[11px] leading-tight text-muted-foreground">
+              {me?.profile?.creator_title || "Member"}
             </p>
           </div>
           <Link
             to="/profile"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
             aria-label="Settings"
             onClick={onNavigate}
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
           </Link>
         </div>
 
+        <ThemeToggle variant="row" className="px-2" />
+
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+          className="flex h-7 w-full items-center gap-2 rounded-sm px-2 text-[13px] text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
-          Leave the studio
+          Sign out
         </button>
       </div>
     </aside>

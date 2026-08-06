@@ -70,7 +70,7 @@ export function scoreSkillMatch(
 
 /**
  * Score how well a candidate's learn skills match a target user's teach skills
- * (reverse match — "I can teach them what they want to learn").
+ * (reverse match —"I can teach them what they want to learn").
  */
 export function scoreReverseMatch(
   candidateLearn: SkillMeta[],
@@ -124,7 +124,7 @@ export function scoreLanguages(
   const targetSet = new Set(targetLangs.map((l) => l.toLowerCase()));
   const overlap = candidateLangs.filter((l) => targetSet.has(l.toLowerCase()));
   if (overlap.length > 0) {
-    return [overlap.length, [`Speaks ${overlap.join(", ")}`]];
+    return [overlap.length, [`Speaks ${overlap.join(",")}`]];
   }
   return [0, []];
 }

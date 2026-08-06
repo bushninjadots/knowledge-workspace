@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 const links = [
   { to: "/", label: "Home" },
@@ -29,6 +30,7 @@ export function Navbar() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Button asChild variant="ghost" size="sm">
             <Link to="/login">Log in</Link>
           </Button>
@@ -36,13 +38,16 @@ export function Navbar() {
             <Link to="/signup">Join Tethyr</Link>
           </Button>
         </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
       {open && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">

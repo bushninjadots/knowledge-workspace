@@ -329,7 +329,7 @@ function ProjectPage() {
               <Progress value={project.progress_percent} className="h-2" />
               <span className="shrink-0 text-xs text-muted-foreground">
                 {project.progress_percent}% complete
-                {milestones.length > 0 && ` · ${doneCount}/${milestones.length} milestones`}
+                {milestones.length > 0 && `· ${doneCount}/${milestones.length} milestones`}
               </span>
             </div>
 
@@ -359,7 +359,7 @@ function ProjectPage() {
                 <Link
                   to="/community"
                   search={{ project: id } as Record<string, string>}
-                  className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-blue-400/10 px-2.5 py-0.5 text-xs text-blue-400 transition hover:bg-blue-400/20"
+                  className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2.5 py-0.5 text-xs text-learning transition hover:bg-learning"
                 >
                   <MessageCircle className="h-3 w-3" /> {communityPostCount} community post
                   {communityPostCount !== 1 ? "s" : ""}

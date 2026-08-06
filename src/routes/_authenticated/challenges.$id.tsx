@@ -122,23 +122,17 @@ function ChallengeDetailPage() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="space-y-3 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant="outline"
-                className="capitalize bg-purple-500/10 text-purple-400 border-purple-500/20"
-              >
+              <Badge variant="outline" className="capitalize bg-ai text-ai border-ai/40">
                 {challenge.type} Challenge
               </Badge>
               <Badge
                 variant="outline"
-                className="capitalize bg-amber-500/10 text-amber-400 border-amber-500/20"
+                className="capitalize bg-teaching text-teaching border-teaching/40"
               >
                 {challenge.difficulty}
               </Badge>
               {isCompleted && (
-                <Badge
-                  variant="outline"
-                  className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-1"
-                >
+                <Badge variant="outline" className="bg-trust text-trust border-trust/40 gap-1">
                   <CheckCircle2 className="h-3 w-3" /> Challenge Completed!
                 </Badge>
               )}
@@ -216,10 +210,10 @@ function ChallengeDetailPage() {
 
       {/* Progress & Actions Section if Joined */}
       {challenge.is_joined && challenge.my_participation && (
-        <Card className="p-6 space-y-4 border-emerald-500/20 bg-emerald-500/5">
+        <Card className="p-6 space-y-4 border-trust/40 bg-trust">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-emerald-400" />
+              <Award className="h-5 w-5 text-trust" />
               <h2 className="text-lg font-semibold">Your Challenge Status</h2>
             </div>
             <Badge variant="outline" className="capitalize bg-background">
@@ -275,7 +269,7 @@ function ChallengeDetailPage() {
                         <span
                           className={`text-sm capitalize ${isDone ? "text-muted-foreground line-through" : isCurrent ? "font-medium" : "text-muted-foreground"}`}
                         >
-                          {step.replace("_", " ")}
+                          {step.replace("_", "")}
                         </span>
                       </div>
                     );
@@ -300,7 +294,7 @@ function ChallengeDetailPage() {
                         size="sm"
                         onClick={handleMarkComplete}
                         disabled={updateProgressMutation.isPending}
-                        className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700"
+                        className="gap-1.5 text-xs bg-trust hover:bg-trust"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Mark Completed
                       </Button>
@@ -309,7 +303,7 @@ function ChallengeDetailPage() {
                 )}
 
                 {myParticipation.status === "completed" && (
-                  <div className="mt-2 flex items-center gap-1 text-sm text-amber-600">
+                  <div className="mt-2 flex items-center gap-1 text-sm text-teaching">
                     <Award className="h-4 w-4" />
                     <span>+15 reputation</span>
                   </div>
@@ -361,7 +355,7 @@ function ChallengeDetailPage() {
                     variant="outline"
                     className={`text-[10px] capitalize ${
                       part.status === "completed"
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-trust text-trust border-trust/40"
                         : "bg-secondary text-muted-foreground"
                     }`}
                   >

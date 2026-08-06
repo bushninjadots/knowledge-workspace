@@ -88,7 +88,7 @@ export function validateProofFile(file: File): ProofFileValidation {
   return { ok: true, ext, contentType };
 }
 
-// Returns the URL when safe, otherwise "#" — for rendering hrefs from data
+// Returns the URL when safe, otherwise"#"— for rendering hrefs from data
 // that may have been stored before validation was in place.
 export function safeHref(url: string | null | undefined): string {
   return url && isSafeUrl(url) ? url : "#";

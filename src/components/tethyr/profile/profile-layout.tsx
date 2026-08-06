@@ -337,7 +337,7 @@ export function ProfileLayout({
 
             {/* TAB CONTENT */}
             <div
-              className={`${phase !== "idle" ? "overflow-hidden " : ""}${phase === "folding" ? "animate-fold-up" : phase === "unfolding" ? "animate-fold-down" : ""}`}
+              className={`${phase !== "idle" ? "overflow-hidden" : ""}${phase === "folding" ? "animate-fold-up" : phase === "unfolding" ? "animate-fold-down" : ""}`}
               style={{ transformOrigin: "top center" }}
             >
               {tabContent[renderTab]}

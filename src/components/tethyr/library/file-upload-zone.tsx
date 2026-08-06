@@ -167,9 +167,9 @@ export function FileUploadZone({
                   placeholder="Title"
                   className="h-7 border-0 bg-transparent px-0 text-sm font-medium shadow-none focus-visible:ring-0"
                 />
-                <p className="text-[11px] text-muted-foreground/60">
+                <p className="text-[11px] text-muted-foreground">
                   {formatFileSize(pf.file.size)}
-                  {isVideo && " · Video"}
+                  {isVideo && "· Video"}
                 </p>
               </div>
               <button
@@ -240,7 +240,7 @@ export function FileUploadZone({
           {isDragOver ? "Drop files here" : "Drag & drop or click to browse"}
         </p>
         {!compact && (
-          <p className="mt-1 text-xs text-muted-foreground/60">
+          <p className="mt-1 text-xs text-muted-foreground">
             Images, documents, text files, and short video clips up to 100 MB
           </p>
         )}

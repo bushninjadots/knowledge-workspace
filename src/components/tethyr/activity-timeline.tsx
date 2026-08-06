@@ -143,7 +143,7 @@ export function ActivityTimeline({
       <span className="absolute left-[10px] top-2 bottom-2 w-px bg-border/70" aria-hidden />
       {rows.map((e) => {
         const Icon = ICONS[e.kind] ?? Sparkles;
-        const label = (LABELS[e.kind] ?? (() => e.kind.replaceAll("_", " ")))(e.metadata ?? {});
+        const label = (LABELS[e.kind] ?? (() => e.kind.replaceAll("_", "")))(e.metadata ?? {});
         const points = (e.metadata as any)?.points as number | undefined;
         return (
           <li key={e.id} className="relative">

@@ -275,7 +275,7 @@ function Thread({
                   {m.body}
                 </div>
                 {isLastMine && (
-                  <span className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                     {m.read_at ? (
                       <>
                         <CheckCheck className="h-3 w-3 text-primary/60" />
@@ -283,7 +283,7 @@ function Thread({
                       </>
                     ) : m.id.startsWith("optimistic-") ? (
                       <>
-                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                         Sending
                       </>
                     ) : (
@@ -303,9 +303,7 @@ function Thread({
             <p className="mt-2 text-sm text-muted-foreground">
               This is the very beginning of your conversation with {name}.
             </p>
-            <p className="text-xs text-muted-foreground/60">
-              No pressure, but "hi" is a great opener.
-            </p>
+            <p className="text-xs text-muted-foreground">No pressure, but"hi"is a great opener.</p>
           </div>
         )}
         {otherTyping && (

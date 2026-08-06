@@ -110,7 +110,7 @@ export function LibrarySidebar({
 
         {/* Filters */}
         <div>
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Browse
           </p>
           <nav className="flex flex-col gap-0.5">
@@ -148,7 +148,7 @@ export function LibrarySidebar({
           <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
               onClick={() => setCollectionsOpen(!collectionsOpen)}
-              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
+              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
             >
               {collectionsOpen ? (
                 <ChevronDown className="h-3 w-3" />
@@ -169,7 +169,7 @@ export function LibrarySidebar({
           {collectionsOpen && (
             <nav className="flex flex-col gap-0.5">
               {collections.length === 0 && (
-                <p className="px-2.5 py-2 text-xs text-muted-foreground/50">No collections yet</p>
+                <p className="px-2.5 py-2 text-xs text-muted-foreground">No collections yet</p>
               )}
               {collections.map((col) => {
                 const active = isActive("collection", col.id);
@@ -203,7 +203,7 @@ export function LibrarySidebar({
           <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
               onClick={() => setTagsOpen(!tagsOpen)}
-              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground"
+              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
             >
               {tagsOpen ? (
                 <ChevronDown className="h-3 w-3" />
@@ -224,7 +224,7 @@ export function LibrarySidebar({
           {tagsOpen && (
             <nav className="flex flex-col gap-0.5">
               {tags.length === 0 && !showNewTag && (
-                <p className="px-2.5 py-2 text-xs text-muted-foreground/50">No tags yet</p>
+                <p className="px-2.5 py-2 text-xs text-muted-foreground">No tags yet</p>
               )}
               {tags.map((tag) => {
                 const active = isActive("tag", tag.id);

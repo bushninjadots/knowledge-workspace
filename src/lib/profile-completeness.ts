@@ -1,5 +1,5 @@
 // Reusable profile completeness calculation.
-// Add a new signal by appending a row to `sections()`. Everything else
+// Add a new signal by appending a row to`sections()`. Everything else
 // (percentage, next-steps checklist, progress ring) reads from here.
 
 export type CompletenessInput = {

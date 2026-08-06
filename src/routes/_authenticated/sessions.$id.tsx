@@ -131,7 +131,7 @@ function SessionDetailPage() {
               onStatusChange={async (status: SessionStatus) => {
                 try {
                   await updateStatus.mutateAsync({ sessionId: id, status });
-                  toast.success(`Session ${status.replace("_", " ")}`);
+                  toast.success(`Session ${status.replace("_", "")}`);
                 } catch {
                   toast.error("Failed to update status");
                 }
@@ -494,11 +494,11 @@ function ParticipantList({ session }: { session: SessionWithParticipants }) {
                 variant="outline"
                 className={`text-[10px] ${
                   p.status === "accepted"
-                    ? "border-green-500/40 text-green-600"
+                    ? "border-trust/40 text-trust"
                     : p.status === "declined"
-                      ? "border-red-500/40 text-red-600"
+                      ? "border-warning/40 text-warning"
                       : p.status === "invited"
-                        ? "border-amber-500/40 text-amber-600"
+                        ? "border-teaching/40 text-teaching"
                         : ""
                 }`}
               >
@@ -580,7 +580,7 @@ function NotesSection({
                 {note.created_by === currentUserId && (
                   <button
                     onClick={() => onDeleteNote(note.id)}
-                    className="text-[11px] text-muted-foreground transition-colors hover:text-red-500"
+                    className="text-[11px] text-muted-foreground transition-colors hover:text-warning"
                   >
                     Delete
                   </button>

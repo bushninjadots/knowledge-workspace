@@ -18,38 +18,38 @@ export const STATUS_CONFIG: Record<
   draft: { label: "Draft", color: "text-muted-foreground", bg: "bg-muted", icon: "📝" },
   scheduled: {
     label: "Scheduled",
-    color: "text-blue-600",
-    bg: "bg-blue-50 dark:bg-blue-950",
+    color: "text-learning",
+    bg: "bg-learning-subtle",
     icon: "📅",
   },
   invitation_sent: {
     label: "Invitation Sent",
-    color: "text-amber-600",
-    bg: "bg-amber-50 dark:bg-amber-950",
+    color: "text-teaching",
+    bg: "bg-teaching-subtle",
     icon: "📨",
   },
   confirmed: {
     label: "Confirmed",
-    color: "text-green-600",
-    bg: "bg-green-50 dark:bg-green-950",
+    color: "text-trust",
+    bg: "bg-trust-subtle",
     icon: "✅",
   },
   in_progress: {
     label: "In Progress",
-    color: "text-purple-600",
-    bg: "bg-purple-50 dark:bg-purple-950",
+    color: "text-ai",
+    bg: "bg-ai-subtle",
     icon: "▶️",
   },
   completed: {
     label: "Completed",
-    color: "text-emerald-600",
-    bg: "bg-emerald-50 dark:bg-emerald-950",
+    color: "text-trust",
+    bg: "bg-trust-subtle",
     icon: "🏁",
   },
   cancelled: {
     label: "Cancelled",
-    color: "text-red-600",
-    bg: "bg-red-50 dark:bg-red-950",
+    color: "text-warning",
+    bg: "bg-warning-subtle",
     icon: "❌",
   },
 };
@@ -74,7 +74,7 @@ export function SessionsSidebar({
 }) {
   return (
     <nav className="flex flex-col gap-1">
-      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
+      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
         Sessions
       </p>
       {tabs.map((tab) => {

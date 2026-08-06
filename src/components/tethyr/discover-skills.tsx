@@ -8,7 +8,7 @@ export function DiscoverSkills({ limit = 12 }: { limit?: number }) {
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading trending skills…</div>;
   }
-  // Simple deterministic "trending" slice — swap for real signal later.
+  // Simple deterministic"trending"slice — swap for real signal later.
   const trending = skills.slice(0, limit);
   if (trending.length === 0) {
     return (

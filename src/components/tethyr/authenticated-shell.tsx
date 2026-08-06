@@ -4,6 +4,7 @@ import { Menu, Search, X } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { NotificationDropdown } from "./notifications/notification-dropdown";
 import { GlobalSearch } from "./global-search";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * Shared layout for all authenticated routes.
@@ -15,49 +16,47 @@ export function AuthenticatedShell() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden md:block">
+      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />
       </div>
 
       {/* Mobile overlay */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur"
-            onClick={() => setOpen(false)}
-          />
+          <div className="absolute inset-0 bg-foreground/20" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0">
             <DashboardSidebar onNavigate={() => setOpen(false)} />
           </div>
           <button
-            className="absolute right-4 top-4 rounded-full bg-surface p-2"
+            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6 md:hidden">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
           <button
-            className="rounded-full p-2 hover:bg-surface"
+            className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </button>
-          <span className="font-display text-sm font-semibold">Tethyr</span>
+          <span className="text-[13px] font-semibold tracking-tight md:hidden">Tethyr</span>
           <div className="ml-auto flex items-center gap-1">
-            <NotificationDropdown />
             <button
-              className="rounded-full p-2 hover:bg-surface"
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
             </button>
+            <ThemeToggle />
+            <NotificationDropdown />
           </div>
         </header>
 

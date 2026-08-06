@@ -259,7 +259,7 @@ export function useCreatePost() {
 
       if (!VALID_POST_TYPES.has(input.type)) {
         throw new Error(
-          `Invalid post type: "${input.type}". Please select a post type from the toolbar.`,
+          `Invalid post type:"${input.type}". Please select a post type from the toolbar.`,
         );
       }
 
@@ -305,7 +305,7 @@ export function useUpdatePost() {
       const { id, ...updates } = input;
       if (updates.type && !VALID_POST_TYPES.has(updates.type)) {
         throw new Error(
-          `Invalid post type: "${updates.type}". Please select a post type from the toolbar.`,
+          `Invalid post type:"${updates.type}". Please select a post type from the toolbar.`,
         );
       }
       const { data, error } = await sb.from("posts").update(updates).eq("id", id).select().single();

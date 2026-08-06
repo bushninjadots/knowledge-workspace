@@ -15,8 +15,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "bg-brand-green/10 text-brand-green border-brand-green/20",
-  intermediate: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  advanced: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+  intermediate: "bg-teaching text-teaching border-teaching/40",
+  advanced: "bg-warning text-warning border-warning/40",
 };
 
 export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
@@ -96,7 +96,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
             <Users className="h-3.5 w-3.5" />
             <span>
               {challenge.participant_count ?? 0}
-              {challenge.max_participants ? ` / ${challenge.max_participants}` : ""} joined
+              {challenge.max_participants ? `/ ${challenge.max_participants}` : ""} joined
             </span>
           </div>
           {challenge.end_date && (

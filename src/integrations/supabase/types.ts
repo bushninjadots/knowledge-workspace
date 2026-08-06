@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -51,7 +51,7 @@ export type Database = {
           challenge_id: string
           id: string
           joined_at: string
-          progress: Json
+          progress: Json | null
           status: string
           user_id: string
         }
@@ -59,7 +59,7 @@ export type Database = {
           challenge_id: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           status?: string
           user_id: string
         }
@@ -67,7 +67,7 @@ export type Database = {
           challenge_id?: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           status?: string
           user_id?: string
         }
@@ -77,13 +77,6 @@ export type Database = {
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "challenges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "challenge_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -134,15 +127,7 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "challenges_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       comments: {
         Row: {
@@ -232,6 +217,7 @@ export type Database = {
           name: string
           slug: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           avatar_url?: string | null
@@ -242,6 +228,7 @@ export type Database = {
           name: string
           slug: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           avatar_url?: string | null
@@ -252,6 +239,7 @@ export type Database = {
           name?: string
           slug?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -807,13 +795,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_space_shares_shared_by_fkey"
-            columns: ["shared_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1956,6 +1937,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _create_trigger_if_table_exists: {
+        Args: {
+          p_event?: string
+          p_function_name: string
+          p_level?: string
+          p_table_name: string
+          p_timing?: string
+          p_trigger_name: string
+        }
+        Returns: undefined
+      }
+      award_earned_achievements: {
+        Args: never
+        Returns: Database["public"]["Enums"]["achievement_type"][]
+      }
       insert_notification: {
         Args: {
           p_actor_id: string
@@ -1971,6 +1967,16 @@ export type Database = {
       }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_session_organizer:
+        | {
+            Args: { p_session_id: string; p_user_id?: string }
+            Returns: boolean
+          }
+        | { Args: { session_uuid: string }; Returns: boolean }
+      is_session_participant: {
+        Args: { p_session_id: string; p_user_id?: string }
         Returns: boolean
       }
       is_space_member: {
@@ -2035,6 +2041,9 @@ export type Database = {
         | "help_request"
         | "collaboration_request"
         | "progress_update"
+        | "lesson_learned"
+        | "feedback_request"
+        | "open_role"
       project_contributor_role: "creator" | "contributor" | "mentor"
       project_stage: "planning" | "building" | "testing" | "launch" | "growing"
       project_status: "planning" | "active" | "paused" | "completed"
@@ -2230,6 +2239,9 @@ export const Constants = {
         "help_request",
         "collaboration_request",
         "progress_update",
+        "lesson_learned",
+        "feedback_request",
+        "open_role",
       ],
       project_contributor_role: ["creator", "contributor", "mentor"],
       project_stage: ["planning", "building", "testing", "launch", "growing"],

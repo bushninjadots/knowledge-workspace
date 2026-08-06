@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
  * Reusable drag-and-drop file input wrapper.
  * Renders children (typically a button or upload area) and handles all
  * drag/drop + click-to-browse logic. Pass accepted MIME types and a max
- * file count. Calls `onFiles` with the validated File array.
+ * file count. Calls`onFiles`with the validated File array.
  */
 export function DragDropFileInput({
   accept,
@@ -155,10 +155,10 @@ export function InlineDropZone({
         <Upload
           className={cn(
             "h-4 w-4 transition-colors",
-            isDragOver ? "text-brand-green" : "text-muted-foreground/60",
+            isDragOver ? "text-brand-green" : "text-muted-foreground",
           )}
         />
-        <span className="text-[11px] text-muted-foreground/60">
+        <span className="text-[11px] text-muted-foreground">
           {isDragOver ? "Drop here" : "Drag & drop or click"}
         </span>
       </div>

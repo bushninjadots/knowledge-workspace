@@ -28,6 +28,7 @@ import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library.$id'
 import { Route as AuthenticatedChallengesIdRouteImport } from './routes/_authenticated/challenges.$id'
+import { Route as AuthenticatedSpacesSlugSettingsRouteImport } from './routes/_authenticated/spaces.$slug.settings'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -126,6 +127,12 @@ const AuthenticatedChallengesIdRoute =
     path: '/challenges/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSpacesSlugSettingsRoute =
+  AuthenticatedSpacesSlugSettingsRouteImport.update({
+    id: '/spaces/$slug/settings',
+    path: '/spaces/$slug/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -166,6 +174,7 @@ export interface FileRoutesByTo {
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/_authenticated/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/library/$id'
     | '/profile/$userId'
     | '/sessions/$id'
+    | '/spaces/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/library/$id'
     | '/profile/$userId'
     | '/sessions/$id'
+    | '/spaces/$slug/settings'
   id:
     | '__root__'
     | '/'
@@ -251,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library/$id'
     | '/_authenticated/profile/$userId'
     | '/_authenticated/sessions/$id'
+    | '/_authenticated/spaces/$slug/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChallengesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/spaces/$slug/settings': {
+      id: '/_authenticated/spaces/$slug/settings'
+      path: '/spaces/$slug/settings'
+      fullPath: '/spaces/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedSpacesSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -446,6 +466,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRouteWithChildren
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedChallengesIdRoute: typeof AuthenticatedChallengesIdRoute
+  AuthenticatedSpacesSlugSettingsRoute: typeof AuthenticatedSpacesSlugSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -458,6 +479,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRouteWithChildren,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedChallengesIdRoute: AuthenticatedChallengesIdRoute,
+  AuthenticatedSpacesSlugSettingsRoute: AuthenticatedSpacesSlugSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

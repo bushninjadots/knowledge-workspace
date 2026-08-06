@@ -23,8 +23,8 @@ const STATUS_OPTIONS: {
     value: "busy",
     label: "Busy",
     icon: Clock,
-    color: "text-amber-500",
-    bg: "bg-amber-500/10 border-amber-500/30",
+    color: "text-teaching",
+    bg: "bg-teaching border-teaching/40",
   },
   {
     value: "learning",

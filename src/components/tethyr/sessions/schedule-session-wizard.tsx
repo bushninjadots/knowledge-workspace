@@ -695,7 +695,7 @@ function StepSchedule({
             }`}
           >
             <div
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow transition-transform ${
                 isRecurring ? "translate-x-4" : "translate-x-0.5"
               }`}
             />

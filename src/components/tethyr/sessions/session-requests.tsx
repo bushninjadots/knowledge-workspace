@@ -33,7 +33,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
           <h3 className="text-sm font-semibold text-foreground">
             {otherUser?.display_name || otherUser?.handle || "Unknown"}
           </h3>
-          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+          <span className="shrink-0 rounded-full bg-teaching-subtle px-2 py-0.5 text-[10px] font-medium text-teaching">
             📨 {isIncoming ? "Invitation" : "Request"}
           </span>
         </div>
@@ -61,7 +61,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
             {request.message}
           </div>
         )}
-        <p className="mt-1.5 text-[10px] text-muted-foreground/60">
+        <p className="mt-1.5 text-[10px] text-muted-foreground">
           {new Date(request.created_at).toLocaleString()}
         </p>
       </div>
@@ -80,7 +80,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
           <button
             onClick={() => handleRespond("declined")}
             disabled={respondToRequest.isPending}
-            className="rounded-lg bg-red-500/10 p-2 text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+            className="rounded-lg bg-warning p-2 text-warning transition-colors hover:bg-warning disabled:opacity-50"
             title="Decline"
           >
             <X className="h-3.5 w-3.5" />
@@ -120,7 +120,7 @@ export function SessionRequests({ requests }: { requests: SessionRequest[] }) {
     return (
       <div className="rounded-2xl border border-border/40 bg-surface/20 p-12 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-elevated">
-          <Clock className="h-5 w-5 text-muted-foreground/60" />
+          <Clock className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-foreground">No session requests</p>
         <p className="mt-1 text-xs text-muted-foreground">

@@ -200,7 +200,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
       {/* Collections row (when viewing All) */}
       {view.type === "all" && collections.length > 0 && !search.trim() && (
         <div className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Collections
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

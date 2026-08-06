@@ -35,26 +35,36 @@ import {
 } from "@/hooks/use-notifications";
 import { useRespondConnection } from "@/hooks/use-connections";
 import type { Notification, NotificationType } from "@/hooks/use-notifications";
-import { timeAgo } from "@/lib/time";
 
 const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle; color: string }> =
   {
-    message: { icon: MessageCircle, color: "text-blue-400" },
-    connection_request: { icon: UserPlus, color: "text-green-400" },
-    connection_accepted: { icon: CheckCircle, color: "text-green-400" },
-    session_invite: { icon: CalendarPlus, color: "text-purple-400" },
-    session_update: { icon: CalendarClock, color: "text-purple-400" },
-    comment: { icon: MessageSquare, color: "text-blue-400" },
-    mention: { icon: AtSign, color: "text-orange-400" },
-    endorsement: { icon: Star, color: "text-yellow-400" },
-    achievement: { icon: Trophy, color: "text-amber-400" },
-    project_invite: { icon: FolderPlus, color: "text-green-400" },
-    project_join: { icon: Users, color: "text-green-400" },
-    project_post: { icon: MessageSquare, color: "text-blue-400" },
-    follow: { icon: Heart, color: "text-pink-400" },
-    challenge_join: { icon: Swords, color: "text-orange-400" },
-    challenge_complete: { icon: Flag, color: "text-green-400" },
+    message: { icon: MessageCircle, color: "text-learning" },
+    connection_request: { icon: UserPlus, color: "text-trust" },
+    connection_accepted: { icon: CheckCircle, color: "text-trust" },
+    session_invite: { icon: CalendarPlus, color: "text-ai" },
+    session_update: { icon: CalendarClock, color: "text-ai" },
+    comment: { icon: MessageSquare, color: "text-learning" },
+    mention: { icon: AtSign, color: "text-teaching" },
+    endorsement: { icon: Star, color: "text-teaching" },
+    achievement: { icon: Trophy, color: "text-teaching" },
+    project_invite: { icon: FolderPlus, color: "text-trust" },
+    project_join: { icon: Users, color: "text-trust" },
+    project_post: { icon: MessageSquare, color: "text-learning" },
+    follow: { icon: Heart, color: "text-warning" },
+    challenge_join: { icon: Swords, color: "text-teaching" },
+    challenge_complete: { icon: Flag, color: "text-trust" },
   };
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
 
 interface NotificationCardProps {
   notification: Notification;
@@ -124,7 +134,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === "Enter" || e.key === "") {
       e.preventDefault();
       handleClick();
     }
@@ -156,7 +166,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{notification.body}</p>
         )}
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground/70">
+          <span className="text-[11px] text-muted-foreground">
             {timeAgo(notification.created_at)}
           </span>
           {!hasEntity && !isConnectionRequest && (
@@ -167,7 +177,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-[11px] text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                className="h-6 px-2 text-[11px] text-trust hover:text-trust hover:bg-trust"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAccept();

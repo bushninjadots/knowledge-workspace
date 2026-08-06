@@ -137,7 +137,7 @@ function LibraryItemPage() {
           <div className="flex-1" />
 
           {/* Last saved */}
-          <span className="text-xs text-muted-foreground/60">
+          <span className="text-xs text-muted-foreground">
             {item.updated_at &&
               new Date(item.updated_at).toLocaleString("en-US", {
                 month: "short",
@@ -157,7 +157,7 @@ function LibraryItemPage() {
           >
             <Star
               className={`h-4 w-4 ${
-                item.is_favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                item.is_favorite ? "fill-teaching text-teaching" : "text-muted-foreground"
               }`}
             />
           </Button>
@@ -212,7 +212,7 @@ function LibraryItemPage() {
         ) : item.type === "link" && item.url ? (
           <div className="rounded-xl border border-border/40 bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Globe className="h-5 w-5 text-amber-400" />
+              <Globe className="h-5 w-5 text-teaching" />
               <a
                 href={item.url}
                 target="_blank"
@@ -226,7 +226,7 @@ function LibraryItemPage() {
         ) : item.type === "upload" && fileUrl ? (
           <div className="rounded-xl border border-border/40 bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Upload className="h-5 w-5 text-purple-400" />
+              <Upload className="h-5 w-5 text-ai" />
               <a
                 href={fileUrl}
                 target="_blank"
@@ -236,7 +236,7 @@ function LibraryItemPage() {
                 {item.file_type ?? "File"}
               </a>
               {item.file_size && (
-                <span className="text-xs text-muted-foreground/60">
+                <span className="text-xs text-muted-foreground">
                   ({(item.file_size / 1024).toFixed(1)} KB)
                 </span>
               )}
@@ -261,7 +261,7 @@ function LibraryItemPage() {
 
         {/* Collection */}
         {item.collection && (
-          <div className="mt-4 text-xs text-muted-foreground/60">
+          <div className="mt-4 text-xs text-muted-foreground">
             In collection: {item.collection.name}
           </div>
         )}

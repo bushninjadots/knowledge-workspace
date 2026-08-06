@@ -360,7 +360,9 @@ export function ComposerBar({
         <div className="mb-3 flex items-center justify-between rounded-xl bg-surface-elevated px-3 py-2">
           <span className="text-xs font-medium text-muted-foreground">Editing post</span>
           <button
+            type="button"
             onClick={onCancelEdit}
+            aria-label="Cancel editing"
             className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
@@ -378,7 +380,7 @@ export function ComposerBar({
             onChange={(e) => setTitle(e.target.value.slice(0, 200))}
             onFocus={() => setFocused(true)}
             placeholder="Title (optional)"
-            className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <Textarea
             ref={textareaRef}
@@ -386,7 +388,7 @@ export function ComposerBar({
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="What are you building or learning today? Supports **bold**, _italic_, and ```code```."
+            placeholder="What are you building or learning today? Supports **bold**, _italic_, and```code```."
             rows={focused || draft.length > 80 ? 5 : 2}
             className="min-h-16 resize-none rounded-2xl border-border/60 bg-background/40 transition-all font-mono text-sm"
           />
@@ -491,18 +493,24 @@ export function ComposerBar({
           className="hidden sm:flex h-8 w-32"
         />
         <button
+          type="button"
           onClick={handleBold}
+          aria-label="Bold"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
         >
           <Bold className="h-3.5 w-3.5" />
         </button>
         <button
+          type="button"
           onClick={handleItalic}
+          aria-label="Italic"
           className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground active:scale-95"
         >
           <Italic className="h-3.5 w-3.5" />
         </button>
         <button
+          type="button"
+          aria-label="Insert code block"
           onClick={handleCode}
           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
             showCodeInsert

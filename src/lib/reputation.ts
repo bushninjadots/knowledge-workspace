@@ -65,21 +65,21 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "First Endorsement",
     description: "Received your first peer endorsement",
     icon: "ThumbsUp",
-    color: "text-amber-500",
+    color: "text-teaching",
   },
   {
     type: "five_endorsements",
     label: "Rising Star",
     description: "Received 5 peer endorsements",
     icon: "Star",
-    color: "text-amber-500",
+    color: "text-teaching",
   },
   {
     type: "ten_endorsements",
     label: "Ten Endorsements",
     description: "Received 10 peer endorsements",
     icon: "Award",
-    color: "text-amber-500",
+    color: "text-teaching",
   },
   {
     type: "community_recognized",
@@ -135,7 +135,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Helped 10 People",
     description: "Contributed to 3+ projects",
     icon: "Heart",
-    color: "text-amber-500",
+    color: "text-teaching",
   },
   {
     type: "learner_journey",
@@ -171,7 +171,7 @@ export function computeCategoryBreakdown(
     { name: "collaboration", label: "Collaboration", color: "text-primary" },
     { name: "teaching", label: "Sharing", color: "text-brand-green" },
     { name: "learning", label: "Growing", color: "text-brand-purple" },
-    { name: "community", label: "Community", color: "text-amber-500" },
+    { name: "community", label: "Community", color: "text-teaching" },
     { name: "project_impact", label: "Project Impact", color: "text-brand-green" },
     { name: "reliability", label: "Reliability", color: "text-primary" },
   ];
@@ -230,7 +230,7 @@ export const TIERS: ReputationTier[] = [
   {
     name: "Leader",
     minScore: 200,
-    color: "text-amber-500",
+    color: "text-teaching",
     gradient: "from-amber-500/20 to-amber-500/10",
   },
   {

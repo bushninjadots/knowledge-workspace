@@ -1,4 +1,4 @@
-// Endorsing someone else's taught skill — the "community_recognized" tier
+// Endorsing someone else's taught skill — the"community_recognized"tier
 // is earned this way (see 20260705140000_skill_verification.sql), never
 // self-claimed.
 import { useMutation, useQueryClient } from "@tanstack/react-query";

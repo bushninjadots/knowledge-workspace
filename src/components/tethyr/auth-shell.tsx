@@ -59,7 +59,7 @@ export function AuthShell({
           50% { transform: translate(30px, -20px) scale(1.05); }
           100% { transform: translate(-20px, 15px) scale(0.95); }
         }
-      `}</style>
+`}</style>
     </div>
   );
 }

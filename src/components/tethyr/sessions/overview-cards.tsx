@@ -9,29 +9,29 @@ export function OverviewCards({ stats }: { stats: Stats }) {
       label: "Upcoming Sessions",
       value: stats?.upcomingCount ?? 0,
       icon: CalendarDays,
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-50 dark:bg-blue-950/50",
+      color: "text-learning",
+      bg: "bg-learning-subtle",
     },
     {
       label: "Completed Sessions",
       value: stats?.completedCount ?? 0,
       icon: CheckCircle,
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-950/50",
+      color: "text-trust",
+      bg: "bg-trust-subtle",
     },
     {
       label: "Pending Requests",
       value: stats?.pendingCount ?? 0,
       icon: Users,
-      color: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-50 dark:bg-amber-950/50",
+      color: "text-teaching",
+      bg: "bg-teaching-subtle",
     },
     {
       label: "Hours This Month",
       value: stats?.hoursThisMonth ?? 0,
       icon: Clock,
-      color: "text-purple-600 dark:text-purple-400",
-      bg: "bg-purple-50 dark:bg-purple-950/50",
+      color: "text-ai",
+      bg: "bg-ai-subtle",
     },
   ];
 
@@ -46,7 +46,7 @@ export function OverviewCards({ stats }: { stats: Stats }) {
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   {card.label}
                 </p>
                 <p className="mt-1.5 text-2xl font-bold tabular-nums text-foreground">
@@ -83,8 +83,8 @@ export function NextSessionCountdown({
   const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
 
   let timeStr = "";
-  if (days > 0) timeStr += `${days}d `;
-  if (hours > 0) timeStr += `${hours}h `;
+  if (days > 0) timeStr += `${days}d`;
+  if (hours > 0) timeStr += `${hours}h`;
   timeStr += `${minutes}m`;
 
   return (

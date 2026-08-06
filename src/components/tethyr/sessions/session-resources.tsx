@@ -170,7 +170,7 @@ export function SessionResources({
                 <button
                   onClick={() => handleDelete(resource.id)}
                   disabled={deleteResource.isPending}
-                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-warning hover:text-warning"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

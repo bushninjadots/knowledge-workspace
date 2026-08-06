@@ -124,7 +124,9 @@ export function AttachProjectPanel({
             <p className="text-xs text-muted-foreground">{currentAttachment.snapshot.platform}</p>
           </div>
           <button
+            type="button"
             onClick={onRemove}
+            aria-label="Remove attached project"
             className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive"
           >
             <X className="h-3.5 w-3.5" />

@@ -264,7 +264,7 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
           delay={2}
         />
         <StatCard
-          icon={<Star className="h-5 w-5 text-amber-500" />}
+          icon={<Star className="h-5 w-5 text-teaching" />}
           label="Endorsements"
           value={stats?.endorsements ?? 0}
           delay={3}

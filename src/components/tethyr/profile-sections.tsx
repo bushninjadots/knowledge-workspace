@@ -66,7 +66,7 @@ export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
   planning: "border-border bg-background/60 text-muted-foreground",
   active: "border-primary/40 bg-primary/10 text-primary",
-  paused: "border-amber-500/40 bg-amber-500/10 text-amber-500",
+  paused: "border-teaching/40 bg-teaching text-teaching",
   completed:
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
@@ -919,7 +919,7 @@ export function ProjectDialog({
 
           <Field label="Goal">
             <Input
-              placeholder="What does 'done' look like? e.g. Launch to first 10 users"
+              placeholder="What does'done'look like? e.g. Launch to first 10 users"
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
             />
@@ -1263,7 +1263,7 @@ export function TimelineCard({ events }: { events: ActivityRow[] }) {
         <ol className="relative space-y-4 border-l border-border/60 pl-6">
           {events.map((e) => {
             const meta = KIND_META[e.kind] ?? {
-              label: () => e.kind.replace(/_/g, " "),
+              label: () => e.kind.replace(/_/g, ""),
               icon: Sparkles,
               tone: "muted" as const,
             };

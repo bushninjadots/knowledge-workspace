@@ -851,7 +851,7 @@ function ProofDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>"{skill.name}" — how experienced are you?</DialogTitle>
+          <DialogTitle>"{skill.name}"— how experienced are you?</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
           Tell people where you're at, and back it up with a certificate, screenshot, or portfolio

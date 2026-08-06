@@ -19,7 +19,7 @@ const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   question: "border-primary/40 bg-primary/10 text-primary",
   idea: "border-brand-green/40 bg-brand-green/10 text-brand-green",
   feedback: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
-  announcement: "border-amber-500/40 bg-amber-500/10 text-amber-500",
+  announcement: "border-teaching/40 bg-teaching text-teaching",
 };
 
 const CATEGORY_LABEL: Record<DiscussionRow["category"], string> = {
@@ -82,7 +82,7 @@ function DiscussionThread({
               <Link
                 to="/community"
                 search={{ post: discussion.community_post_id } as Record<string, string>}
-                className="inline-flex items-center gap-1 rounded-full border border-blue-400/40 bg-blue-400/10 px-2 py-0.5 text-[10px] font-medium text-blue-400 transition hover:bg-blue-400/20"
+                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2 py-0.5 text-[10px] font-medium text-learning transition hover:bg-learning"
               >
                 <Users className="h-2.5 w-2.5" />
                 Also on Community

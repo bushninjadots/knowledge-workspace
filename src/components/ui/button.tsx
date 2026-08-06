@@ -5,27 +5,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:brightness-110 hover:-translate-y-0.5 glow-green",
-        purple:
-          "bg-secondary text-secondary-foreground hover:brightness-110 hover:-translate-y-0.5 glow-purple",
-        brand:
-          "bg-gradient-brand text-primary-foreground hover:brightness-110 hover:-translate-y-0.5 glow-purple",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-border bg-transparent hover:bg-surface hover:border-primary/40",
-        secondary: "bg-surface text-foreground hover:bg-surface-elevated",
-        ghost: "hover:bg-surface text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-primary text-primary-foreground border border-primary hover:bg-primary/90 active:bg-primary",
+        purple: "bg-ai text-ai-foreground border border-ai hover:bg-ai/90",
+        brand: "bg-primary text-primary-foreground border border-primary hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground border border-destructive hover:bg-destructive/90",
+        outline:
+          "border border-border bg-background text-foreground hover:bg-surface-sunken hover:border-border-strong",
+        secondary:
+          "border border-border bg-surface text-foreground hover:bg-surface-sunken hover:border-border-strong",
+        ghost: "text-muted-foreground hover:bg-surface-sunken hover:text-foreground",
+        link: "text-foreground underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-12 px-7 text-base",
-        icon: "h-10 w-10",
+        default: "h-8 px-3",
+        sm: "h-7 px-2.5 text-xs",
+        lg: "h-9 px-4",
+        icon: "h-8 w-8",
       },
     },
     defaultVariants: {

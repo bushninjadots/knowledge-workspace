@@ -18,8 +18,8 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   available: { bg: "bg-brand-green/10", text: "text-brand-green", border: "border-brand-green/30" },
-  unavailable: { bg: "bg-red-500/10", text: "text-red-500", border: "border-red-500/30" },
-  tentative: { bg: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-500/30" },
+  unavailable: { bg: "bg-warning", text: "text-warning", border: "border-warning/40" },
+  tentative: { bg: "bg-teaching", text: "text-teaching", border: "border-teaching/40" },
 };
 
 interface SlotInput {
@@ -167,7 +167,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
       <div className="space-y-6">
         <div className="rounded-2xl border border-border/40 bg-surface/20 p-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-elevated">
-            <Clock className="h-5 w-5 text-muted-foreground/60" />
+            <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="text-sm font-medium text-foreground">No availability set</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -185,7 +185,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
                 className="flex flex-col items-center gap-2 rounded-xl border border-border/40 bg-surface/30 p-3"
               >
                 <span className="text-[11px] font-semibold text-muted-foreground">{day}</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[10px] text-muted-foreground/60">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[10px] text-muted-foreground">
                   —
                 </div>
               </div>
@@ -239,7 +239,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
                     ))}
                   </div>
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[10px] text-muted-foreground/60">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[10px] text-muted-foreground">
                     —
                   </div>
                 )}

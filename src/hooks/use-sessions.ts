@@ -240,7 +240,7 @@ async function fetchRequests(userId: string): Promise<SessionRequest[]> {
       from_user:profiles!session_requests_from_user_id_fkey(display_name, handle, avatar_url),
       to_user:profiles!session_requests_to_user_id_fkey(display_name, handle, avatar_url),
       sessions(title, starts_at, duration_minutes)
-    `,
+`,
     )
     .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
     .order("created_at", { ascending: false });
@@ -712,13 +712,15 @@ export function useSetSessionAvailability() {
       if (delError) throw delError;
 
       if (slots.length > 0) {
-        const { error: insError } = await sb.from("session_availability").insert(
-          slots.map((s) => ({
-            ...s,
-            profile_id: userId,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          })),
-        );
+        const { error: insError } = await sb
+          .from("session_availability")
+          .insert(
+            slots.map((s) => ({
+              ...s,
+              profile_id: userId,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            })),
+          );
 
         if (insError) throw insError;
       }

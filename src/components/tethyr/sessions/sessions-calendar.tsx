@@ -59,7 +59,7 @@ function CalendarEventCard({
     return (
       <button
         onClick={onClick}
-        className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-all hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-blue-200 dark:border-blue-800" : status.bg.includes("green") ? "border-green-200 dark:border-green-800" : status.bg.includes("amber") ? "border-amber-200 dark:border-amber-800" : status.bg.includes("purple") ? "border-purple-200 dark:border-purple-800" : "border-border/40"}`}
+        className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-all hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
       >
         <span className="truncate text-[11px] font-medium text-foreground">{session.title}</span>
       </button>
@@ -69,7 +69,7 @@ function CalendarEventCard({
   return (
     <button
       onClick={onClick}
-      className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all hover:shadow-soft ${status.bg.includes("blue") ? "border-blue-200 dark:border-blue-800" : status.bg.includes("green") ? "border-green-200 dark:border-green-800" : status.bg.includes("amber") ? "border-amber-200 dark:border-amber-800" : status.bg.includes("purple") ? "border-purple-200 dark:border-purple-800" : "border-border/40"}`}
+      className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all hover:shadow-soft ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
@@ -127,7 +127,7 @@ function DayView({
     <div className="relative">
       {HOURS.map((hour) => (
         <div key={hour} className="flex border-b border-border/30">
-          <div className="w-16 shrink-0 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground/60">
+          <div className="w-16 shrink-0 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground">
             {formatHour(hour)}
           </div>
           <div className="relative min-h-[3rem] flex-1 border-l border-border/20">
@@ -170,7 +170,7 @@ function WeekView({
           const isToday = isSameDay(d, today);
           return (
             <div key={i} className={`py-2 text-center ${isToday ? "bg-brand-green/5" : ""}`}>
-              <p className="text-[10px] font-medium uppercase text-muted-foreground/60">
+              <p className="text-[10px] font-medium uppercase text-muted-foreground">
                 {dayNames[i]}
               </p>
               <p
@@ -189,7 +189,7 @@ function WeekView({
       <div className="grid grid-cols-[4rem_repeat(7,1fr)]">
         {HOURS.map((hour) => (
           <div key={hour} className="contents">
-            <div className="border-b border-border/30 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground/60">
+            <div className="border-b border-border/30 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground">
               {formatHour(hour)}
             </div>
             {weekDates.map((d, di) => {
@@ -258,7 +258,7 @@ function MonthView({
         {dayNames.map((name) => (
           <div
             key={name}
-            className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/60"
+            className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground"
           >
             {name}
           </div>

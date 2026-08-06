@@ -126,11 +126,11 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
         return (
           <span
             key={def.type}
-            title={`${def.label}: ${def.description}${isEarned ? " (Earned)" : ""}`}
+            title={`${def.label}: ${def.description}${isEarned ? "(Earned)" : ""}`}
             className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
               isEarned
                 ? "border-border/60 bg-surface text-foreground"
-                : "border-border/30 bg-surface/40 text-muted-foreground/60"
+                : "border-border/30 bg-surface/40 text-muted-foreground"
             }`}
           >
             <AchievementIcon def={def} size="sm" />

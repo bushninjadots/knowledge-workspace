@@ -236,7 +236,7 @@ export function PostCard({
               </span>
             )}
             {shared_from_space && (
-              <span className="rounded-full border border-blue-400/40 bg-blue-400/10 px-1.5 py-0 text-[10px] text-blue-400">
+              <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[10px] text-learning">
                 Shared from {shared_from_space}
               </span>
             )}
@@ -252,7 +252,9 @@ export function PostCard({
           {isOwner && (
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={onEdit}
+                aria-label="Edit post"
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
                 title="Edit post"
               >
@@ -595,7 +597,7 @@ function CommentThreadInline({
               }
             }}
             placeholder="Write a comment..."
-            className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50"
+            className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
           />
           <button
             onClick={submitComment}
