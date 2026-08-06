@@ -165,66 +165,82 @@
   --destructive-foreground: var(--warning-foreground);
 
   --accent-border: var(--border);
+
+  /* User-theme dynamic overrides (set via style prop from banner) */
+  --user-accent: var(--learning);
+  --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
+  --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
+  --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
- * Dark theme — GitHub dark dimmed / Linear register.
+ * Dark theme — GitHub dark dimmed / Linear register with richer layering.
  * ------------------------------------------------------------------------ */
 .dark {
-  --background: oklch(0.172 0.008 265); /* #0c0f14 */
-  --foreground: oklch(0.92 0.008 255); /* #e6edf3 */
+  /* Base — deeper charcoal with a subtle blue cast */
+  --background: oklch(0.152 0.006 260); /* deeper, cooler charcoal */
+  --foreground: oklch(0.93 0.005 250);
 
-  --surface: oklch(0.208 0.009 265); /* #14181f */
-  --surface-elevated: oklch(0.232 0.0095 265); /* #191e26 */
-  --surface-sunken: oklch(0.158 0.008 265); /* #010409 */
+  /* Surfaces — clear three-level hierarchy */
+  --surface: oklch(0.188 0.007 260); /* distinct from background */
+  --surface-elevated: oklch(0.215 0.008 260); /* cards, panels */
+  --surface-sunken: oklch(0.135 0.005 260); /* sunken inputs, code blocks */
 
-  --card: oklch(0.208 0.009 265);
-  --card-foreground: oklch(0.92 0.008 255);
-  --popover: oklch(0.235 0.01 265);
-  --popover-foreground: oklch(0.92 0.008 255);
+  --card: oklch(0.20 0.0075 260);
+  --card-foreground: oklch(0.93 0.005 250);
+  --popover: oklch(0.22 0.009 260);
+  --popover-foreground: oklch(0.93 0.005 250);
 
-  --muted: oklch(0.255 0.01 265);
-  --muted-foreground: oklch(0.72 0.013 258); /* AA on dark surfaces */
-  --muted-foreground-subtle: oklch(0.63 0.014 258); /* AA on dark surfaces */
+  --muted: oklch(0.24 0.009 260);
+  --muted-foreground: oklch(0.74 0.012 255);
+  --muted-foreground-subtle: oklch(0.65 0.013 255);
 
-  --primary: oklch(0.94 0.006 255);
-  --primary-foreground: oklch(0.178 0.008 265);
-  --secondary: oklch(0.255 0.01 265);
-  --secondary-foreground: oklch(0.92 0.008 255);
-  --accent: oklch(0.265 0.011 265);
-  --accent-foreground: oklch(0.92 0.008 255);
+  --primary: oklch(0.95 0.004 250);
+  --primary-foreground: oklch(0.16 0.006 260);
+  --secondary: oklch(0.24 0.009 260);
+  --secondary-foreground: oklch(0.93 0.005 250);
+  --accent: oklch(0.25 0.01 260);
+  --accent-foreground: oklch(0.93 0.005 250);
 
-  --border: oklch(0.305 0.011 265); /* #2b313a */
-  --border-strong: oklch(0.40 0.013 265);
-  --input: oklch(0.325 0.012 265);
-  --ring: oklch(0.62 0.16 253);
+  /* Borders — visible but refined */
+  --border: oklch(0.28 0.01 260);
+  --border-strong: oklch(0.38 0.012 260);
+  --input: oklch(0.30 0.011 260);
+  --ring: oklch(0.65 0.16 253);
 
-  --shadow-tint: oklch(0 0 0 / 0.55);
+  --shadow-tint: oklch(0 0 0 / 0.60);
 
-  --trust: oklch(0.72 0.15 152); /* #3fb950 */
-  --trust-foreground: oklch(0.16 0.02 152);
-  --trust-subtle: oklch(0.285 0.05 152);
+  /* Semantic colours — slightly punchier for dark */
+  --trust: oklch(0.74 0.16 152);
+  --trust-foreground: oklch(0.15 0.03 152);
+  --trust-subtle: oklch(0.26 0.055 152);
 
-  --learning: oklch(0.68 0.15 250); /* #4493f8 */
-  --learning-foreground: oklch(0.16 0.02 253);
-  --learning-subtle: oklch(0.285 0.055 253);
+  --learning: oklch(0.70 0.16 250);
+  --learning-foreground: oklch(0.16 0.03 253);
+  --learning-subtle: oklch(0.27 0.06 253);
 
-  --teaching: oklch(0.78 0.13 82); /* #d29922 */
-  --teaching-foreground: oklch(0.18 0.02 80);
-  --teaching-subtle: oklch(0.3 0.05 82);
+  --teaching: oklch(0.80 0.14 82);
+  --teaching-foreground: oklch(0.17 0.03 80);
+  --teaching-subtle: oklch(0.28 0.06 82);
 
-  --ai: oklch(0.68 0.15 292); /* #ab7df8 */
-  --ai-foreground: oklch(0.16 0.02 292);
-  --ai-subtle: oklch(0.29 0.055 292);
+  --ai: oklch(0.70 0.16 292);
+  --ai-foreground: oklch(0.16 0.03 292);
+  --ai-subtle: oklch(0.27 0.06 292);
 
-  --warning: oklch(0.65 0.19 25); /* #f85149 */
-  --warning-foreground: oklch(0.16 0.02 26);
-  --warning-subtle: oklch(0.29 0.065 25);
+  --warning: oklch(0.67 0.20 25);
+  --warning-foreground: oklch(0.16 0.03 26);
+  --warning-subtle: oklch(0.27 0.07 25);
 
   --destructive: var(--warning);
   --destructive-foreground: var(--warning-foreground);
 
   --accent-border: var(--border);
+
+  /* User-theme dynamic overrides (set via style prop from banner; fallbacks use color-mix for correct opacity from learning token) */
+  --user-accent: var(--learning);
+  --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
+  --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
+  --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
 }
 
 
@@ -352,9 +368,25 @@
   opacity: 1;
 }
 
-/* Texture removed — kept as a no-op hook. */
+/* Subtle film-grain texture — gives flat surfaces a tactile, premium feel.
+   Uses an inline SVG noise pattern so it works in both colour schemes and
+   doesn't require an external asset. Barely visible at normal zoom; adds
+   the kind of depth you feel rather than see. */
 @utility bg-noise {
   position: relative;
+  isolation: isolate;
+}
+
+.bg-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.5;
+  z-index: 0;
 }
 
 @utility inner-glow {
@@ -446,6 +478,51 @@
   animation: gentle-pulse 2.4s ease-in-out infinite;
 }
 
+/* Animated accent border glow — rotates a conic gradient behind the element,
+   visible through a 1px transparent gap. Used on hero cards and sidebars. */
+@keyframes accent-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility animate-border-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-border-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    var(--user-accent, var(--trust)),
+    var(--ai),
+    var(--user-accent, var(--trust))
+  );
+  animation: accent-spin 8s linear infinite;
+  animation-play-state: paused;
+  opacity: 0;
+  transition: opacity 400ms ease;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 1px;
+}
+
+.animate-border-glow:hover::before,
+.group:hover .animate-border-glow::before {
+  opacity: 0.5;
+  animation-play-state: running;
+}
+
 @utility animate-fold-up {
   animation: room-enter 120ms ease both;
 }
@@ -461,6 +538,10 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .bg-noise::after {
+    display: none;
   }
 }
 

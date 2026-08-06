@@ -52,7 +52,7 @@ function MessagesPage() {
   }
 
   return (
-    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl md:h-screen">
+    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-7xl md:h-screen">
       {/* Seating chart — conversation list */}
       <aside
         className={`w-full flex-col border-r border-border/60 sm:w-80 ${
@@ -320,7 +320,7 @@ function Thread({
 
       <div className="border-t border-border/60 p-3">
         <div className="flex items-end gap-2">
-          <div className="flex-1 rounded-2xl border border-border/60 bg-surface/80 transition-shadow duration-300 focus-within:border-primary/30 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0),0_0_12px_-3px_var(--brand-green)]">
+          <div className="flex-1 rounded-2xl border border-border/60 bg-surface/80 transition-shadow duration-300 focus-within:border-primary/30 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0),0_0_12px_-3px_var(--user-accent,var(--trust))]">
             <Textarea
               value={draft}
               onChange={(e) => {

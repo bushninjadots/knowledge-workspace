@@ -68,7 +68,7 @@ export function SessionsLayout() {
 
       {/* Main Content */}
       <ScrollArea className="flex-1">
-        <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -79,7 +79,7 @@ export function SessionsLayout() {
             </div>
             <button
               onClick={() => setWizardOpen(true)}
-              className="rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-brand-green/90 hover:shadow-soft active:scale-[0.98]"
+              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition-all hover:opacity-90 hover:shadow-soft active:scale-[0.98]"
             >
               + Schedule Session
             </button>

@@ -1,8 +1,8 @@
 # Phase 6 — Community Evolution (Temporary Roadmap)
 
 > Created: 2026-07-22
-> Status: IN PROGRESS — awaiting implementation
-> Last session: Analyzed gaps, planned full Phase 6, user confirmed: challenges = new table + detail page, no staged rollout.
+> Status: Substantially implemented — stabilization and follow-up backlog remain
+> Last session: Challenges, additional community post types, spaces, notifications, follows, and collaboration flows are implemented. This document now tracks follow-up polish rather than an unstarted build.
 
 ---
 

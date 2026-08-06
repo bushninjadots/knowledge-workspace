@@ -47,23 +47,39 @@ export function sections({
   const cta = (href = "/profile") => ({ label: "Edit profile", href });
 
   return [
-    { key: "avatar", label: "Upload profile photo", done: has(p?.avatar_url), cta: cta() },
-    { key: "banner", label: "Add a banner image", done: has(p?.banner_url), cta: cta() },
+    {
+      key: "teach",
+      label: "Add your first skill to share",
+      done: teachCount > 0,
+      cta: { label: "Open studio", href: "/profile" },
+    },
+    {
+      key: "learn",
+      label: "Add a skill you're growing",
+      done: learnCount > 0,
+      cta: { label: "Open studio", href: "/profile" },
+    },
+    {
+      key: "project",
+      label: "Publish your first project",
+      done: projectsCount > 0,
+      cta: { label: "Open studio", href: "/profile" },
+    },
     { key: "name", label: "Add your display name", done: has(p?.display_name), cta: cta() },
     { key: "title", label: "Write a title", done: has(p?.creator_title), cta: cta() },
     { key: "bio", label: "Write a short bio", done: has(p?.bio), cta: cta() },
+    { key: "category", label: "Pick a category", done: has(p?.category), cta: cta() },
+    { key: "avatar", label: "Upload profile photo", done: has(p?.avatar_url), cta: cta() },
+    { key: "banner", label: "Add a banner image", done: has(p?.banner_url), cta: cta() },
     { key: "country", label: "Set your location", done: has(p?.country), cta: cta() },
     { key: "timezone", label: "Set your timezone", done: has(p?.timezone), cta: cta() },
     { key: "languages", label: "Add languages you speak", done: arr(p?.languages), cta: cta() },
-    { key: "category", label: "Pick a category", done: has(p?.category), cta: cta() },
     {
       key: "experience",
       label: "Add years of experience",
       done: p?.years_experience != null,
       cta: cta(),
     },
-    { key: "teach", label: "Add your first skill to share", done: teachCount > 0, cta: cta() },
-    { key: "learn", label: "Add a skill you're growing", done: learnCount > 0, cta: cta() },
     {
       key: "tools",
       label: "List your favourite tools",
@@ -89,7 +105,6 @@ export function sections({
       done: Object.keys(p?.social_links ?? {}).length > 0 || (p?.portfolio_links?.length ?? 0) > 0,
       cta: cta(),
     },
-    { key: "project", label: "Publish your first project", done: projectsCount > 0, cta: cta() },
   ];
 }
 

@@ -223,9 +223,9 @@ export function ScheduleSessionWizard({
                   <div
                     className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold transition-colors ${
                       active
-                        ? "bg-brand-green text-background"
+                        ? "bg-[var(--user-accent,var(--trust))] text-background"
                         : done
-                          ? "bg-brand-green/20 text-brand-green"
+                          ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -236,7 +236,7 @@ export function ScheduleSessionWizard({
                       active
                         ? "text-foreground"
                         : done
-                          ? "text-brand-green"
+                          ? "text-[var(--user-accent,var(--trust))]"
                           : "text-muted-foreground"
                     }`}
                   >
@@ -308,7 +308,7 @@ export function ScheduleSessionWizard({
                 size="sm"
                 onClick={next}
                 disabled={!canNext}
-                className="bg-brand-green text-background hover:bg-brand-green/90"
+                className="bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
               >
                 Next
                 <ChevronRight className="ml-1 h-4 w-4" />
@@ -318,7 +318,7 @@ export function ScheduleSessionWizard({
                 size="sm"
                 onClick={handleSubmit}
                 disabled={createSession.isPending}
-                className="bg-brand-green text-background hover:bg-brand-green/90"
+                className="bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
               >
                 {createSession.isPending ? "Creating..." : "Create Session"}
               </Button>
@@ -428,7 +428,7 @@ function StepParticipants({
                 </div>
                 <div className="truncate text-xs text-muted-foreground">@{p.handle ?? "—"}</div>
               </div>
-              <span className="text-xs text-brand-green">+ Invite</span>
+              <span className="text-xs text-[var(--user-accent,var(--trust))]">+ Invite</span>
             </button>
           ))}
         </div>
@@ -480,13 +480,13 @@ function StepType({ value, onChange }: { value: SessionType; onChange: (v: Sessi
               onClick={() => onChange(t.value)}
               className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                 selected
-                  ? "border-brand-green bg-brand-green/5 shadow-sm"
+                  ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--trust-subtle))] shadow-sm"
                   : "border-border/60 bg-surface/50 hover:border-border hover:bg-muted/30"
               }`}
             >
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                  selected ? "bg-brand-green/20 text-brand-green" : "bg-muted text-muted-foreground"
+                  selected ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]" : "bg-muted text-muted-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -691,7 +691,7 @@ function StepSchedule({
           <button
             onClick={() => onRecurringChange(!isRecurring)}
             className={`relative h-5 w-9 rounded-full transition-colors ${
-              isRecurring ? "bg-brand-green" : "bg-muted"
+              isRecurring ? "bg-[var(--user-accent,var(--trust))]" : "bg-muted"
             }`}
           >
             <div
@@ -726,7 +726,7 @@ function StepConfirm({ state, organizerName }: { state: WizardState; organizerNa
       <div className="rounded-xl border border-border/60 bg-surface/50 p-4 space-y-3">
         {/* Title + type */}
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-green/20 text-brand-green">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]">
             <TypeIcon className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">

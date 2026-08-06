@@ -2,12 +2,12 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Search, Folder, Users } from "lucide-react";
+import { Compass, Search, Folder, Users, Briefcase, ArrowRight, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 
 export type ProjectRow = {
   id: string;
@@ -53,7 +53,47 @@ const CATEGORIES = [
   "Marketing",
 ] as const;
 
-type Tab = "projects" | "creators";
+type Tab = "projects" | "creators" | "opportunities";
+
+type OpportunityQueryRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  skills: string[] | null;
+  projects: {
+    id: string;
+    title: string;
+    description: string | null;
+    stage: string | null;
+    status: string;
+    profile_id: string;
+    profiles: {
+      handle: string | null;
+      display_name: string | null;
+      creator_title: string | null;
+    } | null;
+  } | null;
+};
+
+type Opportunity = {
+  id: string;
+  title: string;
+  description: string | null;
+  skills: string[];
+  project: {
+    id: string;
+    title: string;
+    description: string | null;
+    stage: string | null;
+    status: string;
+    profile_id: string;
+    profile: {
+      handle: string | null;
+      display_name: string | null;
+      creator_title: string | null;
+    } | null;
+  };
+};
 
 export const Route = createFileRoute("/_authenticated/explore")({
   head: () => ({
@@ -61,7 +101,7 @@ export const Route = createFileRoute("/_authenticated/explore")({
       { title: "Explore — Tethyr" },
       {
         name: "description",
-        content: "Discover projects in progress and the people building them on Tethyr.",
+        content: "Discover projects, creators, and open opportunities on Tethyr.",
       },
     ],
   }),
@@ -74,6 +114,7 @@ function ExplorePage() {
   const [tab, setTab] = useState<Tab>("projects");
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string>("All");
+  const { data: skills = [] } = useSkillsCatalog();
 
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ["explore-projects"],
@@ -119,6 +160,45 @@ function ExplorePage() {
     staleTime: 60_000,
   });
 
+  const { data: opportunities = [], isLoading: opportunitiesLoading } = useQuery({
+    queryKey: ["explore-opportunities"],
+    queryFn: async (): Promise<Opportunity[]> => {
+      const { data, error } = await supabase
+        .from("project_open_roles")
+        .select(
+          "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles(handle, display_name, creator_title))",
+        )
+        .eq("is_filled", false)
+        .order("created_at", { ascending: false })
+        .limit(80);
+      if (error) throw error;
+
+      return ((data ?? []) as unknown as OpportunityQueryRow[]).flatMap((row) => {
+        const project = row.projects;
+        if (!project || !["planning", "active"].includes(project.status)) return [];
+        return [
+          {
+            id: row.id,
+            title: row.title,
+            description: row.description ?? null,
+            skills: Array.isArray(row.skills) ? row.skills : [],
+            project: {
+              id: project.id,
+              title: project.title,
+              description: project.description ?? null,
+              stage: project.stage ?? null,
+              status: project.status,
+              profile_id: project.profile_id,
+              profile: project.profiles ?? null,
+            },
+          },
+        ];
+      });
+    },
+    enabled: tab === "opportunities",
+    staleTime: 60_000,
+  });
+
   const { data: creators, isLoading: creatorsLoading } = useQuery({
     queryKey: ["explore-creators", meId ?? "anon"],
     queryFn: async (): Promise<Creator[]> => {
@@ -158,6 +238,37 @@ function ExplorePage() {
     });
   }, [projects, q, category]);
 
+  const filteredOpportunities = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return opportunities.filter((opportunity) => {
+      const relatedSkills = opportunity.skills.map((skill) => skill.toLowerCase());
+      const skillCategories = skills
+        .filter((skill) =>
+          relatedSkills.some(
+            (roleSkill) =>
+              roleSkill === skill.name.toLowerCase() || roleSkill === skill.slug.toLowerCase(),
+          ),
+        )
+        .map((skill) => skill.category.toLowerCase());
+      const matchesCategory =
+        category === "All" ||
+        category === "Projects" ||
+        skillCategories.some((value) => value.includes(category.toLowerCase())) ||
+        opportunity.skills.some((skill) => skill.toLowerCase().includes(category.toLowerCase()));
+      if (!matchesCategory) return false;
+      if (!needle) return true;
+      return [
+        opportunity.title,
+        opportunity.description,
+        opportunity.project.title,
+        opportunity.project.description,
+        opportunity.project.profile?.display_name,
+        opportunity.project.profile?.creator_title,
+        ...opportunity.skills,
+      ].some((value) => (value ?? "").toLowerCase().includes(needle));
+    });
+  }, [opportunities, skills, q, category]);
+
   const filteredCreators = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (creators ?? []).filter((c) => {
@@ -171,10 +282,15 @@ function ExplorePage() {
     });
   }, [creators, q, category]);
 
-  const isLoading = tab === "projects" ? projectsLoading : creatorsLoading;
+  const isLoading =
+    tab === "projects"
+      ? projectsLoading
+      : tab === "creators"
+        ? creatorsLoading
+        : opportunitiesLoading;
 
   return (
-    <div className="animate-room-enter mx-auto max-w-6xl p-4 md:p-8">
+    <div className="animate-room-enter mx-auto max-w-7xl p-4 md:p-8">
       {/* Tab bar */}
       <div
         role="tablist"
@@ -206,6 +322,19 @@ function ExplorePage() {
           <Users className="h-3.5 w-3.5" />
           People
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === "opportunities"}
+          onClick={() => setTab("opportunities")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+            tab === "opportunities"
+              ? "bg-surface-elevated text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Briefcase className="h-3.5 w-3.5" />
+          Opportunities
+        </button>
       </div>
 
       {isLoading ? (
@@ -214,6 +343,98 @@ function ExplorePage() {
             <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-2xl bg-surface" />
           ))}
         </div>
+      ) : tab === "opportunities" ? (
+        filteredOpportunities.length === 0 ? (
+          <EmptyState
+            icon={<Briefcase className="h-5 w-5" />}
+            title="No open opportunities match"
+            description="Try a different need or check back as projects open new roles."
+            actionLabel="Browse projects"
+            actionHref="/explore"
+            variant="projects"
+          />
+        ) : (
+          <>
+            <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search roles, skills, or projects…"
+                className="border-0 bg-transparent focus-visible:ring-0"
+              />
+            </div>
+            <div className="mb-6 flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    category === c
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {filteredOpportunities.map((opportunity) => (
+                <Link
+                  key={opportunity.id}
+                  to="/projects/$id"
+                  params={{ id: opportunity.project.id }}
+                  className="group rounded-2xl border border-border/60 bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-purple">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        Open role
+                      </div>
+                      <h2 className="mt-2 truncate font-display text-lg font-semibold">
+                        {opportunity.title}
+                      </h2>
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </div>
+                  {opportunity.description && (
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {opportunity.description}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {opportunity.skills.length > 0 ? (
+                      opportunity.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Sparkles className="h-3 w-3" /> Open to a range of skills
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-5 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{opportunity.project.title}</span>
+                    {opportunity.project.profile?.display_name && (
+                      <span> · by {opportunity.project.profile.display_name}</span>
+                    )}
+                    {opportunity.project.stage && (
+                      <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs font-medium text-primary">View project and apply →</p>
+                </Link>
+              ))}
+            </div>
+          </>
+        )
       ) : tab === "projects" ? (
         <ProjectShelf
           projects={filteredProjects}
@@ -267,7 +488,7 @@ function ExplorePage() {
                   key={c.id}
                   to="/u/$handle"
                   params={{ handle: c.handle ?? "" }}
-                  className="rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-primary/40"
+                  className="rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">

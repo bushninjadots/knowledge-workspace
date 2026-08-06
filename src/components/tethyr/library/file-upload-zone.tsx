@@ -192,7 +192,7 @@ export function FileUploadZone({
 
       <Button
         className={cn(
-          "w-full gap-2 bg-brand-green text-background hover:bg-brand-green/90",
+          "w-full gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90",
           compact && "h-8 text-xs",
         )}
         onClick={handleUpload}
@@ -216,7 +216,7 @@ export function FileUploadZone({
         "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed text-center transition-all duration-200",
         compact ? "px-4 py-5" : "px-6 py-10",
         isDragOver
-          ? "border-brand-green bg-brand-green/5"
+          ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--trust-subtle))]"
           : "border-border/40 bg-surface/20 hover:border-border/60 hover:bg-surface/40",
       )}
     >
@@ -224,14 +224,14 @@ export function FileUploadZone({
         className={cn(
           "flex items-center justify-center rounded-xl transition-colors",
           compact ? "h-8 w-8" : "h-12 w-12",
-          isDragOver ? "bg-brand-green/10" : "bg-surface-elevated",
+          isDragOver ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : "bg-surface-elevated",
         )}
       >
         <Upload
           className={cn(
             "transition-colors",
             compact ? "h-4 w-4" : "h-5 w-5",
-            isDragOver ? "text-brand-green" : "text-muted-foreground",
+            isDragOver ? "text-[var(--user-accent,var(--trust))]" : "text-muted-foreground",
           )}
         />
       </div>

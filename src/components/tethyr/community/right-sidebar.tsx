@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { TrendingUp, HandHeart, Handshake, Trophy, Target, Sparkles, Plus } from "lucide-react";
 import { useChallenges } from "@/hooks/use-challenges";
+import { useTrendingSkills } from "@/hooks/use-current-user";
+import type { DiscoverableSkill } from "@/hooks/use-current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +29,7 @@ function SidebarCard({
 
 export function CommunityRightSidebar({ mobile = false }: { mobile?: boolean }) {
   const { data: challenges = [] } = useChallenges("active");
+  const { data: trendingSkills = [], isLoading: isLoadingSkills } = useTrendingSkills();
 
   return (
     <aside
@@ -101,15 +104,30 @@ export function CommunityRightSidebar({ mobile = false }: { mobile?: boolean }) 
         title="Trending Skills"
         icon={<TrendingUp className="h-3.5 w-3.5 text-brand-green" />}
       >
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {["React", "TypeScript", "UI/UX", "Python", "Tailwind"].map((skill) => (
-            <Link key={skill} to="/skills/$slug" params={{ slug: skill.toLowerCase() }}>
-              <Badge variant="secondary" className="text-xs px-2 py-0.5 hover:bg-secondary">
-                #{skill}
-              </Badge>
-            </Link>
-          ))}
-        </div>
+        {isLoadingSkills ? (
+          <div className="flex flex-wrap gap-1.5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <span
+                key={index}
+                className="h-5 w-16 animate-pulse rounded-full bg-surface-elevated"
+              />
+            ))}
+          </div>
+        ) : trendingSkills.length === 0 ? (
+          <p className="px-1 text-xs text-muted-foreground">
+            Skills will appear as the network grows.
+          </p>
+        ) : (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {trendingSkills.slice(0, 5).map((skill: DiscoverableSkill) => (
+              <Link key={skill.id} to="/skills/$slug" params={{ slug: skill.slug }}>
+                <Badge variant="secondary" className="text-xs px-2 py-0.5 hover:bg-secondary">
+                  #{skill.name}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        )}
       </SidebarCard>
 
       <SidebarCard title="Learning Goals" icon={<Target className="h-3.5 w-3.5 text-primary" />}>

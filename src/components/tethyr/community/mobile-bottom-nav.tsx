@@ -28,11 +28,11 @@ export function MobileBottomNav({
             onClick={() => onSelect(item.id)}
             className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
               isActive
-                ? "text-brand-green font-semibold"
+                ? "text-[var(--user-accent,var(--trust))] font-semibold"
                 : "text-muted-foreground active:text-foreground"
             }`}
           >
-            <Icon className={`h-5 w-5 ${isActive ? "fill-brand-green/15" : ""}`} />
+            <Icon className={`h-5 w-5 ${isActive ? "fill-[var(--user-accent,var(--trust))]/15" : ""}`} />
             <span>{item.label}</span>
           </button>
         );

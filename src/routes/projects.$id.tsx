@@ -258,7 +258,7 @@ function ProjectPage() {
 
   return (
     <Shell accentColor={accent}>
-      <div className="animate-room-enter mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* HERO / HEADER */}
         <div className="card-border relative overflow-hidden rounded-3xl border bg-surface">
           <div

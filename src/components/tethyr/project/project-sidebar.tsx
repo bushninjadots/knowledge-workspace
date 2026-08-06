@@ -29,7 +29,7 @@ export function ProjectSidebar({
   return (
     <aside className="sticky top-24 self-start space-y-4">
       {!isOwner && !isContributor && (
-        <button className="w-full rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-brand-green/90">
+        <button className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
           Join this Project
         </button>
       )}
@@ -141,7 +141,7 @@ export function ProjectSidebar({
 
       {!isOwner && !isContributor && (
         <div className="sticky bottom-4 pt-2">
-          <button className="w-full rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-background transition hover:bg-brand-green/90">
+          <button className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
             Request to Join
           </button>
         </div>

@@ -282,6 +282,8 @@ Challenges / Resources / Tutorials / Discussions / Trending
 
 # PHASE 6 — Community Evolution
 
+> **Phase 2 coherence pass (2026-08-06):** skill discovery is catalog-backed and usage-ranked, onboarding prioritizes skills and projects, key empty states have actionable studio links, and public/auth route smoke coverage is now documented in `tests/route_smoke.sh`.
+
 Current feed becomes purpose-driven. Post types:
 
 ```
@@ -295,6 +297,8 @@ Every post belongs somewhere. No random social posting.
 ---
 
 # PHASE 7 — Opportunity Layer
+
+> **Phase 3 start (2026-08-06):** v1 is now available as the Opportunities tab in Explore. It lists unfilled roles from active projects, supports need/skill search, and links directly to the existing project application flow.
 
 Browse by need instead of people:
 

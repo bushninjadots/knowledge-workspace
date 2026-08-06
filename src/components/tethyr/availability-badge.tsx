@@ -16,8 +16,8 @@ const STATUS_OPTIONS: {
     value: "available",
     label: "Available",
     icon: Circle,
-    color: "text-brand-green",
-    bg: "bg-brand-green/10 border-brand-green/30",
+    color: "text-[var(--user-accent,var(--trust))]",
+    bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
   },
   {
     value: "busy",
@@ -44,8 +44,8 @@ const STATUS_OPTIONS: {
     value: "mentoring",
     label: "Mentoring",
     icon: GraduationCap,
-    color: "text-brand-green",
-    bg: "bg-brand-green/10 border-brand-green/30",
+    color: "text-[var(--user-accent,var(--trust))]",
+    bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
   },
 ];
 

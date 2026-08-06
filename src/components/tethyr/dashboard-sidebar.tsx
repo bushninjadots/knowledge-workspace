@@ -68,7 +68,15 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-surface">
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-surface relative">
+      {/* Animated accent bar on right edge */}
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-px opacity-0 transition-opacity duration-700 hover:opacity-100"
+        style={{
+          background:
+            "linear-gradient(to bottom, transparent, var(--user-accent, var(--trust)) 30%, var(--ai) 70%, transparent)",
+        }}
+      />
       <div className="flex h-12 items-center border-b border-border px-3">
         <Logo />
       </div>
@@ -105,7 +113,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
                       isActive
-                        ? "bg-surface-sunken font-medium text-foreground"
+                        ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-foreground"
                         : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
                     }`}
                   >

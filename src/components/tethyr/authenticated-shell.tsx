@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { Menu, Search, X } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { NotificationDropdown } from "./notifications/notification-dropdown";
 import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "./theme-toggle";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 
 /**
  * Shared layout for all authenticated routes.
  * The sidebar + mobile menu lives here once — never remounts on navigation.
+ * Dynamic user theme from banner image cascades via CSS custom properties.
  */
 export function AuthenticatedShell() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { data: me } = useCurrentUser();
+  const palette = useUserPalette(me?.bannerSigned ?? null);
+  const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -37,7 +43,7 @@ export function AuthenticatedShell() {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col" style={themeStyle}>
         <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
           <button
             className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"

@@ -136,7 +136,7 @@ export function CollectionDialog({
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-lg border transition-all",
                       active
-                        ? "border-brand-green/50 bg-brand-green/10 text-brand-green"
+                        ? "border-[var(--user-accent,var(--trust))]/50 bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
                         : "border-border/40 bg-surface/40 text-muted-foreground hover:bg-surface/60 hover:text-foreground",
                     )}
                     title={item.name}
@@ -185,7 +185,7 @@ export function CollectionDialog({
             Cancel
           </Button>
           <Button
-            className="gap-2 bg-brand-green text-background hover:bg-brand-green/90"
+            className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
             onClick={handleCreate}
             disabled={createCollection.isPending}
           >

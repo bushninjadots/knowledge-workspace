@@ -140,7 +140,9 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
       <EmptyState
         icon={<Sparkles className="h-5 w-5" />}
         title="No matches yet"
-        description="Add skills to your profile to see people you connect with."
+        description="Add skills you share or want to learn to unlock better matches."
+        actionLabel="Open your studio"
+        actionHref="/profile"
       />
     );
   }
@@ -154,7 +156,7 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
             key={c.id}
             to="/u/$handle"
             params={{ handle: c.handle ?? "" }}
-            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">

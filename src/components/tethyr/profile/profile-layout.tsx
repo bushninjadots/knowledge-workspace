@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
-import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
@@ -107,7 +107,7 @@ export function ProfileLayout({
   const [phase, setPhase] = useState<"idle" | "folding" | "unfolding">("idle");
   const nextTabRef = useRef<Tab>("overview");
   const [editOpen, setEditOpen] = useState(false);
-  const accentColor = useDominantColor(bannerSigned);
+  const palette = useUserPalette(bannerSigned);
 
   const switchTab = (newTab: Tab) => {
     if (newTab === activeTab || phase !== "idle") return;
@@ -135,9 +135,7 @@ export function ProfileLayout({
     (r) => r.to_user_id === userId && r.status === "pending",
   );
 
-  const accentStyle = accentColor
-    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
-    : undefined;
+  const accentStyle = paletteToStyle(palette);
 
   const completeness = completenessPercent({
     profile,
@@ -161,7 +159,7 @@ export function ProfileLayout({
           ) : (
             <div
               className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
-              style={{ borderColor: accentColor ?? "transparent" }}
+              style={{ borderColor: palette?.dominant ?? "transparent" }}
             >
               {bannerSigned ? (
                 <img
@@ -323,7 +321,7 @@ export function ProfileLayout({
                       onClick={() => switchTab(tab.id)}
                       className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition whitespace-nowrap ${
                         active
-                          ? "bg-primary text-background"
+                          ? "bg-[var(--user-accent,var(--primary))] text-background"
                           : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                       }`}
                     >
@@ -422,8 +420,8 @@ function CompletenessRing({ value }: { value: number }) {
           />
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="var(--brand-green)" />
-              <stop offset="100%" stopColor="var(--brand-purple)" />
+              <stop offset="0%" stopColor="var(--user-accent, var(--trust))" />
+              <stop offset="100%" stopColor="var(--ai)" />
             </linearGradient>
           </defs>
         </svg>

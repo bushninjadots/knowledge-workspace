@@ -131,7 +131,7 @@ export function LibrarySidebar({
                   <Icon
                     className={cn(
                       "h-3.5 w-3.5 transition-colors",
-                      active ? "text-brand-green" : "",
+                      active ? "text-[var(--user-accent,var(--trust))]" : "",
                     )}
                   />
                   <span className="flex-1 text-left text-[13px]">{item.label}</span>
@@ -259,7 +259,7 @@ export function LibrarySidebar({
                       }
                     }}
                     placeholder="Tag name…"
-                    className="h-7 flex-1 rounded-md border border-border/60 bg-background px-2 text-xs outline-none focus:border-brand-green/50"
+                    className="h-7 flex-1 rounded-md border border-border/60 bg-background px-2 text-xs outline-none focus:border-[var(--user-accent,var(--trust))]/50"
                   />
                 </div>
               )}

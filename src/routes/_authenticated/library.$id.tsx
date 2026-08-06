@@ -122,7 +122,7 @@ function LibraryItemPage() {
 
   return (
     <LibraryContentLayout>
-      <div className="mx-auto max-w-4xl px-6 py-6">
+      <div className="mx-auto max-w-7xl px-6 py-6">
         {/* Top bar */}
         <div className="mb-6 flex items-center gap-3">
           <Button
@@ -185,7 +185,7 @@ function LibraryItemPage() {
 
           <Button
             size="sm"
-            className="gap-2 bg-brand-green text-background hover:bg-brand-green/90"
+            className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
             disabled={!hasChanges || updateItem.isPending}
             onClick={handleSave}
           >

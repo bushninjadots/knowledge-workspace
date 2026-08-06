@@ -110,7 +110,7 @@ function ProfilePage() {
 
   if (profileQuery.isError) {
     return (
-      <div className="mx-auto max-w-5xl space-y-4 p-8 text-center">
+      <div className="mx-auto max-w-7xl space-y-4 p-8 text-center">
         <h2 className="text-lg font-semibold text-foreground">Couldn't load your studio</h2>
         <p className="text-sm text-muted-foreground">
           {profileQuery.error?.message ?? "Something went wrong. Please try again."}
@@ -124,7 +124,7 @@ function ProfilePage() {
 
   if (profileQuery.isLoading || !profileQuery.data) {
     return (
-      <div className="mx-auto max-w-5xl p-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-7xl p-8 text-sm text-muted-foreground">
         Setting up your studio…
       </div>
     );

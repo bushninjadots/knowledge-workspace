@@ -32,7 +32,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
     <button
       type="button"
       onClick={() => onClick?.()}
-      className="group flex flex-col rounded-3xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl text-left w-full"
+      className="group flex flex-col rounded-3xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--card))] hover:shadow-lg text-left w-full"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">

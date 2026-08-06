@@ -65,7 +65,7 @@ export function ProjectHero({
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
 
       <div className="absolute inset-x-0 bottom-0 p-8 sm:p-12">
-        <div className="mx-auto flex w-full max-w-6xl items-end justify-between gap-6">
+        <div className="mx-auto flex w-full max-w-7xl items-end justify-between gap-6">
           <div className="max-w-2xl">
             <h1 className="font-display text-4xl font-semibold text-white drop-shadow-lg sm:text-5xl">
               {project.title}
@@ -101,7 +101,7 @@ export function ProjectHero({
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
                     project.status === "active"
-                      ? "bg-brand-green"
+                      ? "bg-[var(--user-accent,var(--trust))]"
                       : project.status === "planning"
                         ? "bg-teaching"
                         : project.status === "paused"
@@ -125,7 +125,7 @@ export function ProjectHero({
           </div>
 
           <div className="hidden shrink-0 flex-col gap-2 sm:flex">
-            <button className="inline-flex items-center gap-2 rounded-xl bg-brand-green px-5 py-2.5 text-sm font-semibold text-background transition hover:bg-brand-green/90">
+            <button className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
               Join Project
             </button>
             <div className="flex gap-2">

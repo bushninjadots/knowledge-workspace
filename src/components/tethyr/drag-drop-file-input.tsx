@@ -69,7 +69,7 @@ export function DragDropFileInput({
       onClick={() => !disabled && inputRef.current?.click()}
       className={cn(
         "relative cursor-pointer transition-all",
-        isDragOver && "ring-2 ring-brand-green/40",
+        isDragOver && "ring-2 ring-[var(--user-accent,var(--trust))]/40",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}

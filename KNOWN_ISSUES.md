@@ -1,5 +1,7 @@
 # Known Issues
 
+> Updated 2026-08-06. The Phase 1 stabilization and Phase 2 coherence passes are complete; entries below are historical resolutions or remaining operational risks.
+
 ## 1. Infinite recursion in RLS policies for `sessions` (RESOLVED)
 
 **Error:** `infinite recursion detected in policy for relation "sessions"`
@@ -47,6 +49,7 @@
 6. Regenerated Supabase types to include community tables and all 13 `post_type` values.
 
 **Important gotcha for future development:** `supabase db push` only applies to the **remote** database. After adding new migrations, always also apply them locally:
+
 ```bash
 npx supabase db reset          # resets local DB from migrations
 # OR manually:
@@ -54,6 +57,7 @@ npx supabase db query "ALTER TYPE ... ADD VALUE IF NOT EXISTS ..."
 ```
 
 **User-side fix:** Clear stale localStorage drafts if the error persists after the DB fix:
+
 ```js
 localStorage.removeItem("tethyr-community-draft");
 ```

@@ -92,7 +92,7 @@ function CharCount({ current, max }: { current: number; max: number }) {
           strokeDasharray={circ}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className={warn ? "text-destructive" : "text-brand-green"}
+          className={warn ? "text-destructive" : "text-[var(--user-accent,var(--trust))]"}
         />
       </svg>
     </div>

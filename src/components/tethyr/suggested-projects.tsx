@@ -115,7 +115,9 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
       <EmptyState
         icon={<Folder className="h-5 w-5" />}
         title="No project matches yet"
-        description="Add learning goals to your profile to see projects you'd be great for."
+        description="Add skills to your studio to see projects where you could make an impact."
+        actionLabel="Open your studio"
+        actionHref="/profile"
       />
     );
   }
@@ -127,7 +129,7 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
           key={p.id}
           to="/projects/$id"
           params={{ id: p.id }}
-          className="card-border rounded-2xl border bg-surface p-4 transition hover:border-primary/40"
+          className="card-border rounded-2xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">

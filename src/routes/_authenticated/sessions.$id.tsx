@@ -107,7 +107,7 @@ function SessionDetailPage() {
     <div className="min-h-screen bg-background">
       {/* Top bar */}
       <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-12 max-w-4xl items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             onClick={() => navigate({ to: "/sessions" })}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -118,7 +118,7 @@ function SessionDetailPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
         <HeroSection session={session} />
         <InfoPanel session={session} />
 
@@ -381,7 +381,7 @@ function StatusActions({
               size="sm"
               onClick={() => onStatusChange(t.next)}
               disabled={isUpdating}
-              className={isCancel ? "" : "bg-brand-green text-background hover:bg-brand-green/90"}
+              className={isCancel ? "" : "bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"}
             >
               {isUpdating ? (
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
@@ -556,7 +556,7 @@ function NotesSection({
           size="icon"
           onClick={onAddNote}
           disabled={!noteText.trim() || isAdding}
-          className="shrink-0 bg-brand-green text-background hover:bg-brand-green/90"
+          className="shrink-0 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>

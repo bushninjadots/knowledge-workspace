@@ -12,23 +12,26 @@ The goal is to make learning more accessible by matching people who have skills 
 
 ### Current
 
-- User authentication
-- User profiles
-- Skill listings
-- Search and discovery
-- Profile customization
-- Project showcase
-- Activity feed
+- User authentication, email confirmation, and password recovery
+- User profiles and profile completeness guidance
+- Skill listings, usage-ranked discovery, and skill hubs
+- Search and discovery for projects and creators
+- Profile customization and public studios
+- Project showcase and collaboration workspaces
+- Activity feed, reputation, endorsements, and achievements
+- Community feed, spaces, challenges, messages, notifications, and sessions
+- Private library with collections, tags, and signed file access
+- Opportunity discovery by open role, skill need, and active project
 
 ### Planned
 
-- Skill matching
 - Local nearby discovery
 - Wishlists for skills
-- Messaging improvements
-- Reputation and trust system
-- Groups and communities
+- Deeper messaging and session workflows
 - Mobile application
+- Local nearby discovery
+- Deeper messaging and session workflows
+- Knowledge layer for project documentation and shared resources
 
 ---
 

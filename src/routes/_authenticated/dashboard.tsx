@@ -47,7 +47,7 @@ function DashboardPage() {
 
   if (isError) {
     return (
-      <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-8 text-center">
+      <div className="mx-auto max-w-7xl space-y-4 p-4 sm:p-8 text-center">
         <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
         <p className="text-sm text-muted-foreground">
           {error?.message ?? "Something went wrong loading your data. Please try again."}
@@ -61,7 +61,7 @@ function DashboardPage() {
 
   if (isLoading || !data) {
     return (
-      <div className="mx-auto max-w-6xl p-4 sm:p-8">
+      <div className="mx-auto max-w-7xl p-4 sm:p-8">
         <div className="h-40 animate-pulse rounded-3xl bg-surface/60" />
       </div>
     );
@@ -77,15 +77,30 @@ function DashboardPage() {
   const remaining = nextSteps(input, 5);
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
-  const firstName = data.profile?.display_name?.split("")[0] ?? data.profile?.handle ?? "member";
+  const firstName = data.profile?.display_name?.split(/\s+/)[0] ?? data.profile?.handle ?? "member";
 
   return (
-    <div className="animate-room-enter mx-auto max-w-6xl space-y-6 p-4 sm:p-8">
+    <div className="animate-room-enter mx-auto max-w-7xl space-y-6 p-4 sm:p-8">
       {/* Welcome */}
-      <section className="relative overflow-hidden card-border rounded-3xl border bg-surface p-6 sm:p-8">
+      <section className="animate-border-glow relative rounded-3xl border border-border bg-surface p-6 sm:p-8">
+        {/* Personalised banner background */}
+        {data.bannerSigned && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+            <div
+              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.12] saturate-50"
+              style={{ backgroundImage: `url(${data.bannerSigned})` }}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
+          </div>
+        )}
+        {/* Fallback accent glow */}
         <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, var(--brand-purple), transparent 60%)" }}
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
+          style={{
+            background: data.bannerSigned
+              ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
+              : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
+          }}
         />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
@@ -99,7 +114,13 @@ function DashboardPage() {
               />
             </div>
             <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
-              Hey {firstName}, let's <span className="text-gradient-brand">keep going</span>.
+              Hey {firstName}, let's{" "}
+              <span
+                className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent"
+              >
+                keep going
+              </span>
+              .
             </h1>
             <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
               {pct < 100
@@ -241,7 +262,7 @@ function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; lab
   return (
     <Link
       to={to}
-      className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition hover:border-primary/40 hover:bg-surface"
+      className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface))]"
     >
       <span className="text-muted-foreground">{icon}</span>
       <span className="text-sm">{label}</span>
@@ -289,8 +310,8 @@ function CompletenessRing({
           />
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="var(--brand-green)" />
-              <stop offset="1" stopColor="var(--brand-purple)" />
+              <stop offset="0" stopColor="var(--user-accent, var(--trust))" />
+              <stop offset="1" stopColor="var(--ai)" />
             </linearGradient>
           </defs>
         </svg>

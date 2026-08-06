@@ -1,33 +1,24 @@
 # Pages To Create
 
-Link audit result (2026-08-01): every link on every page was verified by
-direct navigation and click test. All links resolve correctly **except** the
-skill hubs listed below, which are linked from the UI but have no page yet.
+Updated 2026-08-06 after the Phase 2 product-coherence pass.
 
-## Skill hubs (no page yet)
+## Current status
 
-These are linked from the Community page's **"Trending Skills"** sidebar
-(`src/components/tethyr/community/right-sidebar.tsx:105-106`). That list is
-currently **hardcoded**: `["React", "TypeScript", "UI/UX", "Python", "Tailwind"]`.
-`React` and `Python` hubs already exist; the rest resolve to a "Skill not
-found" page.
+The public skill route `/skills/$slug` is implemented and renders a complete hub for every skill present in the `skills` catalog. Community Trending Skills and dashboard Discover Skills now read from the catalog and rank skills by usage across teaching, learning, and project associations. They no longer link to hardcoded or missing slugs.
 
-| Route | Linked from | Notes |
-| --- | --- | --- |
-| `/skills/typescript` | Community → Trending Skills | No `typescript` row in `skills` table |
-| `/skills/ui-ux` | Community → Trending Skills | Link targets `/skills/ui%2Fux` (lowercased `ui/ux`); no skill row |
-| `/skills/tailwind` | Community → Trending Skills | No `tailwind` row in `skills` table |
+Unknown slugs still show an intentional **Skill not found** state with a path back to Explore; no additional page is required for those URLs.
 
-### Options once designed
+## Remaining product opportunities
 
-1. Create skill rows + design hub pages for these skills (they use the existing
-   `/skills/$slug` route, so only a `skills` row is needed).
-2. Or make the "Trending Skills" sidebar data-driven (query the `skills` table,
-   ordered by usage) so it only ever links to existing hubs — the label
-   "Trending" is currently misleading since the list is hardcoded.
+These are product improvements, not missing routes:
 
-## Already handled / no action
+- Add richer editorial descriptions and learning resources to skill hubs.
+- Add server-side aggregation or an RPC if the usage-ranked query becomes expensive at scale.
+- Add dedicated local discovery pages when that roadmap layer is started.
+- Expand Opportunities with saved searches, stronger skill matching, and application status summaries.
 
-- `/skills/video-editing` — was linked from the dashboard QuickLink; that link
-  was replaced with `/explore`. The URL itself still renders "Skill not found".
-- No external links (off-domain) exist anywhere on the site.
+## Already handled
+
+- `/skills/typescript`, `/skills/ui-ux`, and `/skills/tailwind` are no longer emitted by hardcoded navigation.
+- `/skills/video-editing` was removed from the dashboard QuickLink; the action now opens Explore.
+- Public profile, project, community, challenge, and authenticated product routes have intentional loading, empty, and error states.

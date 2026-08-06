@@ -19,7 +19,7 @@ export function NextStepsList({ items }: { items: Section[] }) {
         <li key={s.key}>
           <Link
             to={s.cta?.href ?? "/profile"}
-            className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition hover:border-primary/50 hover:bg-surface"
+            className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface))]"
           >
             {s.done ? (
               <Check className="h-4 w-4 text-primary" />
@@ -32,7 +32,7 @@ export function NextStepsList({ items }: { items: Section[] }) {
               {s.label}
             </span>
             <span className="ml-auto text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
-              Go →
+              {s.cta?.label ?? "Go"} →
             </span>
           </Link>
         </li>

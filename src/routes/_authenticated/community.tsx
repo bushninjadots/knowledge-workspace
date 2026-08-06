@@ -353,8 +353,8 @@ function CommunityPage() {
                       onClick={() => setTypeFilter(f.value)}
                       className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 min-h-[36px] ${
                         typeFilter === f.value
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-surface-elevated/50"
+                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
+                          : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated/50"
                       }`}
                     >
                       {icon && <span className="mr-1">{icon}</span>}

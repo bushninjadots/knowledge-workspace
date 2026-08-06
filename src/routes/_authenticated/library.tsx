@@ -85,7 +85,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
   const dbError = itemsError || collectionsError;
   if (dbError) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
@@ -130,7 +130,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-6 py-8">
       {/* Header */}
       <div className="mb-6 flex items-end justify-between">
         <div>
@@ -178,7 +178,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
           <Button
             size="sm"
-            className="gap-2 bg-brand-green text-background hover:bg-brand-green/90"
+            className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
             onClick={onNewNote}
           >
             <Plus className="h-3.5 w-3.5" />

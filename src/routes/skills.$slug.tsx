@@ -121,7 +121,7 @@ function SkillPage() {
 
   return (
     <Shell>
-      <div className="animate-room-enter mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
+      <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
@@ -559,6 +559,8 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
         icon={<Folder className="h-5 w-5" />}
         title="No projects yet"
         description={`No projects are using ${skillName} yet. Start one!`}
+        actionLabel="Open your studio"
+        actionHref="/profile"
         variant="projects"
       />
     );
