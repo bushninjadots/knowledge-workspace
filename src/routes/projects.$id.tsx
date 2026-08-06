@@ -23,6 +23,7 @@ import {
   Briefcase,
   FolderOpen,
   Link2,
+  GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -82,12 +83,13 @@ const ROLE_LABEL: Record<Contributor["role"], string> = {
   contributor: "Contributor",
 };
 
-type Tab = "overview" | "milestones" | "journal" | "discussion" | "roles" | "gallery" | "resources" | "contributors" | "community";
+type Tab = "overview" | "milestones" | "journal" | "discussion" | "roles" | "gallery" | "resources" | "contributors" | "community" | "knowledge";
 const TABS: { id: Tab; label: string; icon: typeof Target }[] = [
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "milestones", label: "Milestones", icon: Target },
   { id: "journal", label: "Journal", icon: Sparkles },
   { id: "discussion", label: "Discussion", icon: MessageCircle },
+  { id: "knowledge", label: "Knowledge", icon: GraduationCap },
   { id: "roles", label: "Roles", icon: Briefcase },
   { id: "gallery", label: "Gallery", icon: ImageIcon },
   { id: "resources", label: "Resources", icon: FolderOpen },
@@ -278,7 +280,7 @@ function ProjectPage() {
         {/* HERO / HEADER */}
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface">
           <div
-            className="relative aspect-[21/9] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
+            className="relative aspect-[2/1] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
             style={{ borderColor: accent ?? "transparent" }}
           >
             {coverSigned ? (
@@ -394,7 +396,9 @@ function ProjectPage() {
 
         {/* TABS — sticky for easy navigation */}
         <div className="sticky top-16 z-20 -mx-4 sm:-mx-8">
-          <div className="flex gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-4 py-2 backdrop-blur-md sm:px-8">
+          <div className="relative flex gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-4 py-2 backdrop-blur-md sm:px-8">
+            {/* Scroll-fade indicator on right edge */}
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-10 bg-gradient-to-l from-background/85 to-transparent sm:w-12" />
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const count = tabBadge(tab.id, { milestones, doneCount, updates, discussions, openRoles, communityPostCount, contributors });
@@ -619,6 +623,130 @@ function ProjectPage() {
           />
         )}
 
+        {activeTab === "knowledge" && (
+          <div className="space-y-6">
+            {/* What this project is about */}
+            {(project.description || project.vision || project.goal) && (
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-brand-purple" />
+                  <h3 className="text-sm font-semibold">Project Knowledge Base</h3>
+                </div>
+
+                {project.vision && (
+                  <div className="mb-4 rounded-lg border border-brand-purple/20 bg-brand-purple/5 p-4">
+                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-purple">Vision</h4>
+                    <div className="prose-custom mt-1 text-sm text-foreground/90">
+                      <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
+                    </div>
+                  </div>
+                )}
+
+                {project.goal && (
+                  <div className="mb-4 rounded-lg border border-brand-green/20 bg-brand-green/5 p-4">
+                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-green">Goal</h4>
+                    <div className="prose-custom mt-1 text-sm text-foreground/90">
+                      <Markdown remarkPlugins={[remarkGfm]}>{project.goal}</Markdown>
+                    </div>
+                  </div>
+                )}
+
+                {project.description && (
+                  <div className="rounded-lg border border-border/60 bg-background/40 p-4">
+                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">About</h4>
+                    <div className="prose-custom mt-1 text-sm leading-relaxed text-foreground/90">
+                      <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Skills used */}
+            {skills.length > 0 && (
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+                <h3 className="mb-3 text-sm font-semibold">Skills & Technologies</h3>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((s) => (
+                    <Link
+                      key={s.id}
+                      to="/skills/$slug"
+                      params={{ slug: s.slug }}
+                      className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition hover:opacity-80"
+                    >
+                      {s.name}
+                    </Link>
+                  ))}
+                  {project.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Resources as learning materials */}
+            {((project.resources ?? []) as { title: string; url: string; type: string }[]).length > 0 && (
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+                <h3 className="mb-3 text-sm font-semibold">Learning Resources</h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {((project.resources ?? []) as { title: string; url: string; type: string }[]).map((r, i) => (
+                    <a
+                      key={i}
+                      href={safeHref(r.url)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
+                    >
+                      <FolderOpen className="h-3.5 w-3.5 shrink-0 text-brand-purple" />
+                      <span className="truncate font-medium">{r.title}</span>
+                      <span className="ml-auto shrink-0 text-[10px] uppercase text-muted-foreground">{r.type}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Links */}
+            {links.length > 0 && (
+              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+                <h3 className="mb-3 text-sm font-semibold">External Links</h3>
+                <div className="flex flex-wrap gap-2">
+                  {links.map(([key, url]) => {
+                    const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
+                    const Icon = meta?.icon;
+                    return (
+                      <a
+                        key={key}
+                        href={safeHref(url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {Icon && <Icon className="h-3.5 w-3.5" />}
+                        {meta?.label ?? key}
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {!project.description && !project.vision && !project.goal && skills.length === 0 && (
+              <div className="rounded-xl border card-border bg-surface p-6 text-center">
+                <GraduationCap className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No knowledge base content yet. The project owner can add a description, vision, goal, skills, and resources.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "community" && (
           <ProjectCommunityPosts projectId={id} />
         )}
@@ -680,6 +808,8 @@ function tabBadge(
       return data.contributors.length > 0 ? String(data.contributors.length) : null;
     case "community":
       return data.communityPostCount > 0 ? String(data.communityPostCount) : null;
+    case "knowledge":
+      return null;
     default:
       return null;
   }

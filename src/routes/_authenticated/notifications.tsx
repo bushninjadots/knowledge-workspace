@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useNotifications, useNotificationRealtime } from "@/hooks/use-notifications";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
-import { NotificationSidebar } from "@/components/tethyr/notifications/notification-sidebar";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { NotificationType, Notification } from "@/hooks/use-notifications";
@@ -122,30 +121,22 @@ function NotificationsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <NotificationHeader />
-      <div className="mt-6 flex gap-8">
-        <aside className="hidden w-48 shrink-0 md:block">
-          <NotificationSidebar
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-          />
-        </aside>
-        <main className="min-w-0 flex-1">
-          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
-            <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
-              {TABS.map((tab) => (
-                <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <NotificationFeed
-            notifications={notifications}
-            isLoading={isLoading}
-            onNavigate={navigateToNotification}
-          />
-        </main>
-      </div>
+      <main className="mt-6 min-w-0">
+        <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
+          <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <NotificationFeed
+          notifications={notifications}
+          isLoading={isLoading}
+          onNavigate={navigateToNotification}
+        />
+      </main>
     </div>
   );
 }

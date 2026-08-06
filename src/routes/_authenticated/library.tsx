@@ -85,19 +85,17 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
   const dbError = itemsError || collectionsError;
   if (dbError) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-            <div>
-              <h2 className="font-display text-lg font-semibold text-destructive">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div>                <h2 className="font-display text-lg font-semibold text-amber-600">
                 Database tables not found
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 The library tables haven't been created in your Supabase project yet. Run the
                 migration SQL in your Supabase Dashboard → SQL Editor.
               </p>
-              <div className="mt-3 rounded-lg bg-background/60 p-3 font-mono text-xs text-destructive/80">
+              <div className="mt-3 rounded-lg bg-background/60 p-3 font-mono text-xs text-amber-600/80">
                 {dbError.message}
               </div>
               <div className="mt-4 space-y-1 text-xs text-muted-foreground">
@@ -140,7 +138,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <LibrarySearchBar value={search} onChange={setSearch} className="w-56" />
+          <LibrarySearchBar value={search} onChange={setSearch} className="w-64 sm:w-72" />
 
           <div className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5">
             <button

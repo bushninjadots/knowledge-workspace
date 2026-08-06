@@ -121,11 +121,11 @@ export function ProfileLayout({
       const t = setTimeout(() => {
         setRenderTab(nextTabRef.current);
         setPhase("unfolding");
-      }, 300);
+      }, 150);
       return () => clearTimeout(t);
     }
     if (phase === "unfolding") {
-      const t = setTimeout(() => setPhase("idle"), 300);
+      const t = setTimeout(() => setPhase("idle"), 150);
       return () => clearTimeout(t);
     }
   }, [phase]);

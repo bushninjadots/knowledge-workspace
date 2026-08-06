@@ -38,7 +38,6 @@ import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
 import { SessionResources } from "@/components/tethyr/sessions/session-resources";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
@@ -120,46 +119,36 @@ function SessionDetailPage() {
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         <HeroSection session={session} />
-        <InfoPanel session={session} />
 
-        {/* Status Actions */}
-        {isOrganizer && (
-          <>
-            <Separator className="bg-border/40" />
-            <StatusActions
-              session={session}
-              onStatusChange={async (status: SessionStatus) => {
-                try {
-                  await updateStatus.mutateAsync({ sessionId: id, status });
-                  toast.success(`Session ${status.replace("_", "")}`);
-                } catch {
-                  toast.error("Failed to update status");
-                }
-              }}
-              isUpdating={updateStatus.isPending}
-            />
-          </>
-        )}
+        {/* Info + Status — 2-column on desktop */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <InfoPanel session={session} />
+          <div className="space-y-4">
+            {isOrganizer && (
+              <StatusActions
+                session={session}
+                onStatusChange={async (status: SessionStatus) => {
+                  try {
+                    await updateStatus.mutateAsync({ sessionId: id, status });
+                    toast.success(`Session ${status.replace("_", "")}`);
+                  } catch {
+                    toast.error("Failed to update status");
+                  }
+                }}
+                isUpdating={updateStatus.isPending}
+              />
+            )}
+            {myParticipant && myParticipant.status === "invited" && (
+              <ParticipantActions
+                participantId={myParticipant.id}
+                sessionId={id}
+                onUpdateParticipantStatus={updateParticipantStatus}
+              />
+            )}
+          </div>
+        </div>
 
-        {/* Participant Actions (for non-organizers) */}
-        {myParticipant && myParticipant.status === "invited" && (
-          <>
-            <Separator className="bg-border/40" />
-            <ParticipantActions
-              participantId={myParticipant.id}
-              sessionId={id}
-              onUpdateParticipantStatus={updateParticipantStatus}
-            />
-          </>
-        )}
-
-        <Separator className="bg-border/40" />
-        <ParticipantList session={session} />
-
-        <Separator className="bg-border/40" />
-        <SessionResources sessionId={id} resources={resources} isOrganizer={isOrganizer} />
-
-        <Separator className="bg-border/40" />
+        {/* Notes — moved above participants */}
         <NotesSection
           notes={notes}
           noteText={noteText}
@@ -186,7 +175,19 @@ function SessionDetailPage() {
           currentUserId={me?.userId}
         />
 
-        <Separator className="bg-border/40" />
+        {/* Participants — grid on desktop */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">
+              Participants ({(session.participants ?? []).length})
+            </h2>
+          </div>
+          <ParticipantGrid session={session} />
+        </div>
+
+        <SessionResources sessionId={id} resources={resources} isOrganizer={isOrganizer} />
+
         <FollowUpActions
           session={session}
           userId={me?.userId}
@@ -461,58 +462,50 @@ function ParticipantActions({
 
 /* ───────── Participant List ───────── */
 
-function ParticipantList({ session }: { session: SessionWithParticipants }) {
+function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
   const participants = session.participants ?? [];
 
+  if (participants.length === 0) {
+    return <p className="text-sm text-muted-foreground">No participants yet.</p>;
+  }
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Users className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold text-foreground">
-          Participants ({participants.length})
-        </h2>
-      </div>
-      {participants.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No participants yet.</p>
-      ) : (
-        <div className="space-y-2">
-          {participants.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-4 py-2.5"
-            >
-              <SessionParticipantAvatar p={p} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-foreground">
-                  {p.profiles?.display_name ?? "Unknown"}
-                </div>
-                <div className="truncate text-xs text-muted-foreground">
-                  @{p.profiles?.handle ?? "—"}
-                </div>
-              </div>
-              <Badge
-                variant="outline"
-                className={`text-[10px] ${
-                  p.status === "accepted"
-                    ? "border-trust/40 text-trust"
-                    : p.status === "declined"
-                      ? "border-warning/40 text-warning"
-                      : p.status === "invited"
-                        ? "border-teaching/40 text-teaching"
-                        : ""
-                }`}
-              >
-                {p.status}
-              </Badge>
-              {p.role === "organizer" && (
-                <Badge variant="secondary" className="text-[10px]">
-                  Organizer
-                </Badge>
-              )}
+    <div className="grid gap-2 sm:grid-cols-2">
+      {participants.map((p) => (
+        <div
+          key={p.id}
+          className="flex items-center gap-3 rounded-xl border card-border bg-surface/30 px-4 py-2.5"
+        >
+          <SessionParticipantAvatar p={p} />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium text-foreground">
+              {p.profiles?.display_name ?? "Unknown"}
             </div>
-          ))}
+            <div className="truncate text-xs text-muted-foreground">
+              @{p.profiles?.handle ?? "—"}
+            </div>
+          </div>
+          <Badge
+            variant="outline"
+            className={`text-[10px] ${
+              p.status === "accepted"
+                ? "border-trust/40 text-trust"
+                : p.status === "declined"
+                  ? "border-warning/40 text-warning"
+                  : p.status === "invited"
+                    ? "border-teaching/40 text-teaching"
+                    : ""
+            }`}
+          >
+            {p.status}
+          </Badge>
+          {p.role === "organizer" && (
+            <Badge variant="secondary" className="text-[10px]">
+              Organizer
+            </Badge>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }

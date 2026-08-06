@@ -14,7 +14,6 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -46,7 +45,7 @@ function ChallengeDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-12 flex justify-center items-center min-h-[50vh]">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 flex justify-center items-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <Clock className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm font-medium">Loading challenge details...</p>
@@ -57,20 +56,20 @@ function ChallengeDetailPage() {
 
   if (error || !challenge) {
     return (
-      <div className="container max-w-4xl py-12 space-y-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 space-y-6">
         <Link
           to="/community"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Community
         </Link>
-        <Card className="p-8 text-center space-y-4">
+        <div className="rounded-xl border card-border bg-surface p-8 text-center">
           <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
-          <h2 className="text-xl font-bold">Challenge Not Found</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="mt-4 font-display text-xl font-semibold">Challenge Not Found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             This challenge may have been removed or does not exist.
           </p>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -109,7 +108,7 @@ function ChallengeDetailPage() {
   const isCompleted = challenge.my_participation?.status === "completed";
 
   return (
-    <div className="container max-w-4xl py-8 space-y-8 animate-fade-in">
+    <div className="animate-room-enter mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
       <Link
         to="/community"
         className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -117,8 +116,8 @@ function ChallengeDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back to Community Feed
       </Link>
 
-      {/* Challenge Header Card */}
-      <Card className="relative overflow-hidden border-border/60 bg-gradient-to-b from-card to-background p-6 md:p-8 space-y-6 shadow-lg">
+      {/* Challenge Header */}
+      <div className="rounded-xl border card-border bg-surface p-5 sm:p-6 space-y-5">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="space-y-3 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -206,11 +205,11 @@ function ChallengeDetailPage() {
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Progress & Actions Section if Joined */}
       {challenge.is_joined && challenge.my_participation && (
-        <Card className="p-6 space-y-4 border-trust/40 bg-trust">
+        <div className="rounded-xl border card-border bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5 text-trust" />
@@ -311,19 +310,14 @@ function ChallengeDetailPage() {
               </>
             );
           })()}
-        </Card>
+        </div>
       )}
 
       {/* Participant Roster */}
-      <Card className="p-6 space-y-4">
-        <CardHeader className="p-0 pb-3">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" /> Challenge Participants (
-            {challenge.participant_count ?? 0})
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-0">
+      <div className="rounded-xl border card-border bg-surface p-5 sm:p-6 space-y-4">
+        <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" /> Participants ({challenge.participant_count ?? 0})
+        </h2>
           {!challenge.participants || challenge.participants.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               No participants yet. Be the first to join!
@@ -365,8 +359,7 @@ function ChallengeDetailPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

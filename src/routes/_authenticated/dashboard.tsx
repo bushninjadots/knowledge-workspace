@@ -51,7 +51,6 @@ function DashboardPage() {
   const { data: connections = [], isLoading: connectionsLoading } = useConnections();
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
   const { data: myProjects = [], isLoading: projectsLoading } = useMyProjects();
-  const actionsLoading = sessionsLoading || connectionsLoading || unreadLoading || projectsLoading;
 
   // My Challenges
   const { data: myChallenges = [] } = useChallenges("active");
@@ -151,7 +150,6 @@ function DashboardPage() {
   const unreadMessageCount = unreadData?.total ?? 0;
   const activeProjects = myProjects.filter((p) => p.status === "active" || p.status === "planning");
   const activeProjectCount = activeProjects.length;
-  const hasActions = pendingInviteCount > 0 || unreadMessageCount > 0 || activeProjectCount > 0;
   const firstActiveProjectId = activeProjects[0]?.id;
 
   return (
@@ -219,118 +217,83 @@ function DashboardPage() {
         </div>
       </section>
 
-      {/* Action hub — what needs attention right now */}
-      {actionsLoading ? (
-        <div className="surface-section bg-noise">
-          <div className="px-5 py-4 sm:px-6 sm:py-5">
-            <div className="mb-3 h-4 w-24 animate-pulse rounded bg-surface-elevated" />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
-              ))}
-            </div>
+      {/* Action hub — each card loads independently, no blocking */}
+      <div className="surface-section bg-noise">
+        <div className="px-5 py-3 sm:px-6 sm:py-4">
+          <div className="mb-3 flex items-center gap-2.5">
+            <Zap className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+            <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
+              Action hub
+            </h2>
           </div>
-        </div>
-      ) : hasActions ? (
-        <div className="surface-section bg-noise">
-          <div className="px-5 py-3 sm:px-6 sm:py-4">
-            <div className="mb-3 flex items-center gap-2.5">
-              <Zap className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
-                Action hub
-              </h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {pendingInviteCount > 0 && (
-                <ActionCard
-                  icon={<UserPlus className="h-4 w-4" />}
-                  label="Pending invitations"
-                  count={pendingInviteCount}
-                  accent="var(--user-accent, var(--trust))"
-                  href={pendingSessionCount > 0 ? "/sessions" : "/profile"}
-                  detail={
-                    pendingSessionCount > 0 && pendingConnectionCount > 0
-                      ? `${pendingSessionCount} session, ${pendingConnectionCount} connection`
-                      : pendingSessionCount > 0
-                        ? `${pendingSessionCount} session request${pendingSessionCount > 1 ? "s" : ""}`
-                        : `${pendingConnectionCount} connection request${pendingConnectionCount > 1 ? "s" : ""}`
-                  }
-                />
-              )}
-              {unreadMessageCount > 0 && (
-                <ActionCard
-                  icon={<MessageSquare className="h-4 w-4" />}
-                  label="Unread messages"
-                  count={unreadMessageCount}
-                  accent="var(--learning)"
-                  href="/messages"
-                  detail={`${unreadMessageCount} unread message${unreadMessageCount > 1 ? "s" : ""}`}
-                />
-              )}
-              {activeProjectCount > 0 && (
-                <ActionCard
-                  icon={<Briefcase className="h-4 w-4" />}
-                  label="Active projects"
-                  count={activeProjectCount}
-                  accent="var(--brand-purple)"
-                  href={firstActiveProjectId ? `/projects/${firstActiveProjectId}` : "/profile"}
-                  detail={activeProjects.slice(0, 3).map((p) => p.title).join(", ")}
-                />
-              )}
-              {pct < 100 && (
-                <ActionCard
-                  icon={<Sparkles className="h-4 w-4" />}
-                  label="Profile completion"
-                  count={pct}
-                  countSuffix="%"
-                  accent="var(--user-accent-subtle, var(--learning-subtle))"
-                  href="/profile"
-                  detail={`${doneSteps}/${totalSteps} sections done`}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Pending invitations */}
+            {sessionsLoading || connectionsLoading ? (
+              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
+            ) : pendingInviteCount > 0 ? (
+              <ActionCard
+                icon={<UserPlus className="h-4 w-4" />}
+                label="Pending invitations"
+                count={pendingInviteCount}
+                accent="var(--user-accent, var(--trust))"
+                href={pendingSessionCount > 0 ? "/sessions" : "/profile"}
+                detail={
+                  pendingSessionCount > 0 && pendingConnectionCount > 0
+                    ? `${pendingSessionCount} session, ${pendingConnectionCount} connection`
+                    : pendingSessionCount > 0
+                      ? `${pendingSessionCount} session request${pendingSessionCount > 1 ? "s" : ""}`
+                      : `${pendingConnectionCount} connection request${pendingConnectionCount > 1 ? "s" : ""}`
+                }
+              />
+            ) : null}
 
-      {/* Continuous workspace surface — replaces floating cards */}
+            {/* Unread messages */}
+            {unreadLoading ? (
+              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
+            ) : unreadMessageCount > 0 ? (
+              <ActionCard
+                icon={<MessageSquare className="h-4 w-4" />}
+                label="Unread messages"
+                count={unreadMessageCount}
+                accent="var(--learning)"
+                href="/messages"
+                detail={`${unreadMessageCount} unread message${unreadMessageCount > 1 ? "s" : ""}`}
+              />
+            ) : null}
+
+            {/* Active projects */}
+            {projectsLoading ? (
+              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
+            ) : activeProjectCount > 0 ? (
+              <ActionCard
+                icon={<Briefcase className="h-4 w-4" />}
+                label="Active projects"
+                count={activeProjectCount}
+                accent="var(--brand-purple)"
+                href={firstActiveProjectId ? `/projects/${firstActiveProjectId}` : "/profile"}
+                detail={activeProjects.slice(0, 3).map((p) => p.title).join(", ")}
+              />
+            ) : null}
+
+            {/* Profile completion — always shows if incomplete, no loading needed */}
+            {pct < 100 && (
+              <ActionCard
+                icon={<Sparkles className="h-4 w-4" />}
+                label="Profile completion"
+                count={pct}
+                countSuffix="%"
+                accent="var(--user-accent-subtle, var(--learning-subtle))"
+                href="/profile"
+                detail={`${doneSteps}/${totalSteps} sections done`}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Continuous workspace surface — action-first ordering */}
       <div className="surface-section surface-divide bg-noise">
-        {pct < 100 && (
-          <WorkspaceSection
-            icon={<Sparkles className="h-4 w-4" />}
-            title="Next steps"
-            subtitle="A few things to finish before other people can find you."
-          >
-            <NextStepsList items={remaining} />
-          </WorkspaceSection>
-        )}
-
-        <WorkspaceSection
-          icon={<Folder className="h-4 w-4" />}
-          title="Projects for you"
-          subtitle="Projects matching your skills and interests."
-        >
-          <SuggestedProjects />
-        </WorkspaceSection>
-
-        <WorkspaceSection
-          icon={<Zap className="h-4 w-4" />}
-          title="People you connect with"
-          subtitle="Based on complementary skills, availability, and language."
-        >
-          <SuggestedCreators />
-        </WorkspaceSection>
-
-        <WorkspaceSection
-          icon={<Clock className="h-4 w-4" />}
-          title="Recent activity"
-          subtitle="Every meaningful action becomes part of your reputation history."
-        >
-          <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
-        </WorkspaceSection>
-
-        <ConnectionsCard />
-
+        {/* 1. YOUR WORK (highest priority) */}
         {activeProjects.length > 0 && (
           <WorkspaceSection
             icon={<Briefcase className="h-4 w-4" />}
@@ -432,6 +395,9 @@ function DashboardPage() {
           </WorkspaceSection>
         )}
 
+        {/* 2. CONNECTIONS */}
+        <ConnectionsCard />
+
         {todayOpps.length > 0 && (
           <WorkspaceSection
             icon={<TrendingUp className="h-4 w-4" />}
@@ -463,6 +429,40 @@ function DashboardPage() {
           </WorkspaceSection>
         )}
 
+        {/* 3. DISCOVERY */}
+        <WorkspaceSection
+          icon={<Folder className="h-4 w-4" />}
+          title="Projects for you"
+          subtitle="Projects matching your skills and interests."
+        >
+          <SuggestedProjects />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          icon={<Zap className="h-4 w-4" />}
+          title="People you connect with"
+          subtitle="Based on complementary skills, availability, and language."
+        >
+          <SuggestedCreators />
+        </WorkspaceSection>
+
+        <WorkspaceSection
+          icon={<Sparkles className="h-4 w-4" />}
+          title="Discover skills"
+          subtitle="Trending across the network."
+        >
+          <DiscoverSkills />
+        </WorkspaceSection>
+
+        {/* 4. ACTIVITY & PROGRESS (bottom) */}
+        <WorkspaceSection
+          icon={<Clock className="h-4 w-4" />}
+          title="Recent activity"
+          subtitle="Every meaningful action becomes part of your reputation history."
+        >
+          <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
+        </WorkspaceSection>
+
         {weeklyRep > 0 && (
           <WorkspaceSection
             icon={<Award className="h-4 w-4" />}
@@ -484,13 +484,15 @@ function DashboardPage() {
           </WorkspaceSection>
         )}
 
-        <WorkspaceSection
-          icon={<Sparkles className="h-4 w-4" />}
-          title="Discover skills"
-          subtitle="Trending across the network."
-        >
-          <DiscoverSkills />
-        </WorkspaceSection>
+        {pct < 100 && (
+          <WorkspaceSection
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Next steps"
+            subtitle="A few things to finish before other people can find you."
+          >
+            <NextStepsList items={remaining} />
+          </WorkspaceSection>
+        )}
       </div>
     </div>
   );

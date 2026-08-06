@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, Search, X, ArrowUp } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { NotificationDropdown } from "./notifications/notification-dropdown";
 import { GlobalSearch } from "./global-search";
@@ -19,6 +19,13 @@ export function AuthenticatedShell() {
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
   const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -69,6 +76,17 @@ export function AuthenticatedShell() {
         <main className="flex-1">
           <Outlet />
         </main>
+
+        {/* Scroll-to-top */}
+        {showScrollTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-lg transition hover:scale-105 hover:bg-surface-elevated"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
       </div>
 
       <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />

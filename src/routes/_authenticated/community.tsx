@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { Heart, Users, SlidersHorizontal, Search, X, ArrowUpDown, Plus, Filter, BookmarkCheck } from "lucide-react";
+import { Heart, Users, SlidersHorizontal, Search, X, Plus, BookmarkCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -451,15 +451,16 @@ function CommunityPage() {
           )}
 
           {showTypeTabs && (
-            <div className="sticky top-0 z-20 -mx-2 px-2 py-3 bg-background/85 backdrop-blur-md mb-4 border-b border-border/40 space-y-2.5">
-              <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+            <div className="sticky top-0 z-20 -mx-2 px-2 py-2 bg-background/85 backdrop-blur-md mb-4 border-b border-border/40 space-y-1.5">
+              {/* Row 1: type chips + sort/my-skills on same row */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
                 {TYPE_FILTERS.map((f) => {
                   const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
                   return (
                     <button
                       key={f.value}
                       onClick={() => setTypeFilter(f.value)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 min-h-[36px] ${
+                      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 ${
                         typeFilter === f.value
                           ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
                           : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated/50"
@@ -470,12 +471,38 @@ function CommunityPage() {
                     </button>
                   );
                 })}
+                <span className="mx-1 h-5 w-px shrink-0 bg-border/60" />
+                <button
+                  onClick={() => setMySkillsOnly(!mySkillsOnly)}
+                  className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
+                    mySkillsOnly
+                      ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BookmarkCheck className="mr-1 inline h-3 w-3" />
+                  My skills
+                </button>
+                {SORT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSortMode(opt.value)}
+                    className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
+                      sortMode === opt.value
+                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
 
+              {/* Row 2: focus chips */}
               <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
                 <button
                   onClick={() => setFocusFilter("all")}
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
                     focusFilter === "all"
                       ? "bg-surface-elevated text-foreground shadow-sm font-medium"
                       : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
@@ -487,43 +514,13 @@ function CommunityPage() {
                   <button
                     key={f}
                     onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-1 text-xs transition-all duration-200 ${
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
                       focusFilter === f
                         ? "bg-surface-elevated text-foreground shadow-sm font-medium"
                         : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
                     }`}
                   >
                     {f}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-1.5 pt-1">
-                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-                <button
-                  onClick={() => setMySkillsOnly(!mySkillsOnly)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
-                    mySkillsOnly
-                      ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <BookmarkCheck className="mr-1 inline h-3 w-3" />
-                  My skills
-                </button>
-                <span className="text-muted-foreground/40">·</span>
-                <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-                {SORT_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSortMode(opt.value)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-200 ${
-                      sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {opt.label}
                   </button>
                 ))}
               </div>
