@@ -12,6 +12,7 @@ import {
   useCreateDiscussionReply,
 } from "@/hooks/use-projects";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { timeAgo } from "@/lib/time";
 
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
@@ -28,15 +29,6 @@ const CATEGORY_LABEL: Record<DiscussionRow["category"], string> = {
   feedback: "Feedback",
   announcement: "Announcement",
 };
-
-function timeAgo(dateStr: string): string {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return "Just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(dateStr).toLocaleDateString();
-}
 
 function DiscussionThread({
   discussion,
