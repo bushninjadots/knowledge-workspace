@@ -15,7 +15,12 @@ export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) 
   if (coverUrl) {
     return (
       <div className="absolute inset-0">
-        <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+        <img
+          src={coverUrl}
+          alt=""
+          draggable={false}
+          className="pointer-events-none h-full w-full select-none object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
     );

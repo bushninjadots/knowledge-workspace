@@ -4,7 +4,7 @@ import { CATEGORY_COLORS, CATEGORY_ICON, inferCategory } from "@/lib/category-co
 import { CoverGradient, ProgressBar } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
-const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
+export const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
   active: { label: "Active", dot: "bg-brand-green" },
   planning: { label: "Planning", dot: "bg-teaching" },
   paused: { label: "Paused", dot: "bg-muted-foreground/40" },
@@ -19,6 +19,7 @@ interface ProjectShelfCoverProps {
   isContributor: boolean;
   prefersReducedMotion: boolean;
   forceFace?: boolean;
+  isActive?: boolean;
   onClick: () => void;
 }
 
@@ -27,7 +28,7 @@ function getMaxCardWidth(): number {
   return Math.min(vw * 0.65, 600);
 }
 
-function getCardWidth(absDist: number): number {
+export function getCardWidth(absDist: number): number {
   const maxW = getMaxCardWidth();
   if (absDist < 0.4) return maxW;
   if (absDist < 1.5) return maxW - (maxW - 240) * ((absDist - 0.4) / 1.1);
@@ -91,13 +92,30 @@ function getZIndex(absDist: number): number {
   return 1;
 }
 
+function getCardShadow(absDist: number): string {
+  if (absDist < 0.4) {
+    return [
+      "0 20px 44px -16px oklch(0.2 0.02 265 / 0.4)",
+      "0 6px 16px -6px oklch(0.2 0.02 265 / 0.25)",
+      "0 1px 2px oklch(0.2 0.02 265 / 0.12)",
+    ].join(", ");
+  }
+  if (absDist < 2) {
+    const t = Math.min(1, (absDist - 0.4) / 1.6);
+    return [
+      `0 ${(20 - 14 * t).toFixed(1)}px ${(44 - 30 * t).toFixed(1)}px -16px oklch(0.2 0.02 265 / ${(0.4 - 0.26 * t).toFixed(3)})`,
+      `0 ${(6 - 4 * t).toFixed(1)}px ${(16 - 10 * t).toFixed(1)}px -6px oklch(0.2 0.02 265 / ${(0.25 - 0.14 * t).toFixed(3)})`,
+    ].join(", ");
+  }
+  return "0 4px 10px -6px oklch(0.2 0.02 265 / 0.14)";
+}
+
 export function ProjectShelfCover(props: ProjectShelfCoverProps) {
   if (props.forceFace) return <ProjectShelfFace {...props} />;
   return <ProjectShelfCoverAnimated {...props} />;
 }
 
 function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShelfCoverProps) {
-  const category = inferCategory(project.tags);
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
 
@@ -106,7 +124,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
       layoutId={`shelf-card-${project.id}`}
       id={`shelf-card-${project.id}`}
       onClick={onClick}
-      className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none"
+      className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none shadow-sm transition-shadow hover:shadow-md"
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       aria-selected
@@ -157,6 +175,7 @@ function ProjectShelfCoverAnimated({
   meId,
   isContributor,
   prefersReducedMotion,
+  isActive,
   onClick,
 }: ProjectShelfCoverProps) {
   const category = inferCategory(project.tags);
@@ -175,14 +194,33 @@ function ProjectShelfCoverAnimated({
   const blurFilter = useTransform(absDist, getBlur);
   const cardOpacity = useTransform(absDist, getOpacity);
   const zIdx = useTransform(absDist, getZIndex);
+  const cardShadow = useTransform(absDist, getCardShadow);
   const faceOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [1, 1, 0, 0]);
   const spineOpacity = useTransform(absDist, [0, 0.7, 1.2, 5], [0, 0, 1, 1]);
+  const ringColor = `oklch(0.6 ${catColors.sat / 100} ${catColors.hue} / 0.55)`;
+  const glowColor = `oklch(0.6 ${catColors.sat / 100} ${catColors.hue} / 0.32)`;
+  const ringOpacity = useTransform(absDist, [0, 0.5, 1.1], [1, 0.5, 0]);
 
   return (
     <motion.div
       className="absolute"
       style={{ left: "50%", top: "50%", x: centerX, y: "-50%", zIndex: zIdx }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { delay: Math.min(index * 0.045, 0.5), type: "spring", stiffness: 260, damping: 24 }
+      }
     >
+      {/* Category ring / glow — on the wrapper so the bloom isn't clipped */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 rounded-2xl"
+        style={{
+          boxShadow: `0 0 0 1.5px ${ringColor}, 0 0 32px -4px ${glowColor}`,
+          opacity: ringOpacity,
+        }}
+      />
       <motion.button
         layoutId={`shelf-card-${project.id}`}
         id={`shelf-card-${project.id}`}
@@ -196,9 +234,10 @@ function ProjectShelfCoverAnimated({
           scale: cardScale,
           filter: blurFilter,
           opacity: cardOpacity,
+          boxShadow: cardShadow,
         }}
         onClick={onClick}
-        aria-selected={Math.abs(index) < 0.6}
+        aria-selected={isActive ?? Math.abs(index) < 0.6}
         role="option"
       >
         {/* Spine view */}
@@ -224,6 +263,15 @@ function ProjectShelfCoverAnimated({
             />
           </div>
           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", status.dot)} />
+
+          {/* Page-edge texture */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-70"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(to bottom, transparent 0px, transparent 6px, rgba(255,255,255,0.06) 6px, rgba(255,255,255,0.06) 7px)",
+            }}
+          />
         </motion.div>
 
         {/* Face view */}
@@ -233,6 +281,12 @@ function ProjectShelfCoverAnimated({
             coverUrl={project.cover_url}
             progress={project.progress_percent}
           />
+          {/* Specular sheen */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />
+          {/* Dimensional edge highlights */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/20 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-3 bg-gradient-to-l from-black/20 to-transparent" />
+
           <div className="absolute bottom-0 left-0 right-0 z-10">
             <ProgressBar progress={project.progress_percent} />
           </div>
