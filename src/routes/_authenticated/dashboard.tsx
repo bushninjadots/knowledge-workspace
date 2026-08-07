@@ -176,44 +176,66 @@ function DashboardPage() {
   );
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       {/* ── Welcome bar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Welcome back
-            </p>
-            <AvailabilitySelector
-              current={data.profile?.availability as AvailabilityStatus}
-              onSave={(s) => updateAvail.mutate(s)}
+      <section className="animate-border-glow relative overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
+        {/* Banner background */}
+        {data.bannerSigned && (
+          <div className="pointer-events-none absolute inset-0">
+            <div
+              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
+              style={{ backgroundImage: `url(${data.bannerSigned})` }}
             />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
           </div>
-          <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
-            Hey {firstName},{" "}
-            <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
-              what's next?
-            </span>
-          </h1>
+        )}
+        {/* Accent glow */}
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
+          style={{
+            background: data.bannerSigned
+              ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
+              : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
+          }}
+        />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Welcome back
+              </p>
+              <AvailabilitySelector
+                current={data.profile?.availability as AvailabilityStatus}
+                onSave={(s) => updateAvail.mutate(s)}
+              />
+            </div>
+            <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+              Hey {firstName},{" "}
+              <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
+                what's next?
+              </span>
+            </h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {pct < 100 && (
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
+              >
+                <CompletenessMini percent={pct} size={18} />
+                {pct}% complete
+              </Link>
+            )}
+            {data.profile?.reputation_score != null && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
+                <Award className="h-3.5 w-3.5" />
+                {data.profile.reputation_score} rep
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {pct < 100 && (
-            <Link
-              to="/profile"
-              className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
-            >
-              <CompletenessMini percent={pct} size={18} />
-              {pct}% complete
-            </Link>
-          )}
-          {data.profile?.reputation_score != null && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
-              <Award className="h-3.5 w-3.5" />
-              {data.profile.reputation_score} rep
-            </span>
-          )}
-        </div>
-      </div>
+      </section>
 
       {/* ── Today's focus — 4 prominent action cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -543,6 +565,7 @@ function DashboardPage() {
       >
         <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
       </SectionCard>
+      </div>
     </div>
   );
 }

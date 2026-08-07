@@ -108,7 +108,8 @@ function ChallengeDetailPage() {
   const isCompleted = challenge.my_participation?.status === "completed";
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
       <Link
         to="/community"
         className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -360,6 +361,7 @@ function ChallengeDetailPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

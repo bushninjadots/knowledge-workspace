@@ -296,7 +296,8 @@ function ProjectPage() {
         onSectionClick={scrollTo}
       />
 
-      <div className="animate-room-enter relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
+      <div className="animate-room-enter min-h-screen bg-noise">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0 space-y-6">
             {/* Status + meta strip */}
@@ -397,6 +398,7 @@ function ProjectPage() {
             }
             onSignIn={isSignedOut ? signInToJoin : undefined}
           />
+        </div>
         </div>
       </div>
 

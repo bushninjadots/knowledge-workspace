@@ -119,7 +119,8 @@ function NotificationsPage() {
       : allNotifications;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <NotificationHeader />
       <main className="mt-6 min-w-0">
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
@@ -137,6 +138,7 @@ function NotificationsPage() {
           onNavigate={navigateToNotification}
         />
       </main>
+      </div>
     </div>
   );
 }

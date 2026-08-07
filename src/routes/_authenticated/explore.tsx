@@ -12,6 +12,8 @@ import {
   Sparkles,
   BadgeCheck,
   Star,
+  TrendingUp,
+  Hash,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -398,12 +400,15 @@ function ExplorePage() {
         : opportunitiesLoading;
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      {/* Tab bar */}
-      <div
-        role="tablist"
-        className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit"
-      >
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto flex max-w-[90rem] gap-6 px-4 py-6 sm:px-6 sm:py-8">
+        {/* Main content */}
+        <div className="min-w-0 flex-1">
+          {/* Tab bar */}
+          <div
+            role="tablist"
+            className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit"
+          >
         <button
           role="tab"
           aria-selected={tab === "projects"}
@@ -445,13 +450,13 @@ function ExplorePage() {
         </button>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center gap-4 px-4 py-6" style={{ perspective: "1200px" }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-2xl bg-surface" />
-          ))}
-        </div>
-      ) : tab === "opportunities" ? (
+          {isLoading ? (
+            <div className="flex items-center gap-4 px-4 py-6" style={{ perspective: "1200px" }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-2xl bg-surface" />
+              ))}
+            </div>
+          ) : tab === "opportunities" ? (
         filteredOpportunities.length === 0 ? (
           <EmptyState
             icon={<Briefcase className="h-5 w-5" />}
@@ -553,8 +558,8 @@ function ExplorePage() {
                 </button>
               ))}
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              {filteredOpportunities.map((opportunity) => {
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {filteredOpportunities.map((opportunity, i) => {
                 const skillMatchCount =
                   oppSort === "match"
                     ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
@@ -562,7 +567,8 @@ function ExplorePage() {
                 return (
                   <div
                     key={opportunity.id}
-                    className="group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                    className="animate-room-enter group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                    style={{ animationDelay: `${i * 50}ms` }}
                   >
                     <Link
                       to="/projects/$id"
@@ -695,15 +701,16 @@ function ExplorePage() {
             ))}
           </div>
           {/* People grid */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCreators.map((c) => {
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredCreators.map((c, i) => {
               const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
               return (
                 <Link
                   key={c.id}
                   to="/u/$handle"
                   params={{ handle: c.handle ?? "" }}
-                  className="rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                  className="animate-room-enter rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                  style={{ animationDelay: `${i * 40}ms` }}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">
@@ -727,7 +734,129 @@ function ExplorePage() {
             })}
           </div>
         </>
+        )}
+        </div>
+
+        {/* Right sidebar — Discover panel */}
+        <aside className="hidden w-64 shrink-0 lg:block">
+          <DiscoverSidebar tab={tab} />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+// ── Discover Sidebar ──────────────────────────────────────────
+
+function DiscoverSidebar({ tab }: { tab: Tab }) {
+  const { data: stats } = useQuery({
+    queryKey: ["discover-sidebar-stats"],
+    queryFn: async () => {
+      const count = async (table: string) => {
+        const { count, error } = await (supabase as any)
+          .from(table)
+          .select("id", { count: "exact", head: true });
+        if (error) return 0;
+        return count ?? 0;
+      };
+      const [projects, creators, skills, opportunities] = await Promise.all([
+        count("projects"),
+        count("profiles"),
+        count("skills"),
+        (supabase as any)
+          .from("project_open_roles")
+          .select("id", { count: "exact", head: true })
+          .eq("is_filled", false)
+          .then(({ count }: { count: number | null }) => count ?? 0),
+      ]);
+      return { projects, creators, skills, opportunities };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: trendingSkills } = useQuery({
+    queryKey: ["discover-trending-skills"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("skills")
+        .select("id, name, slug, category")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      return (data ?? []) as { id: string; name: string; slug: string; category: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <div className="sticky top-24 space-y-5">
+      {/* Stats card */}
+      <div className="rounded-2xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <TrendingUp className="h-3.5 w-3.5" />
+          Quick stats
+        </h3>
+        <div className="mt-3 space-y-2">
+          <StatRow icon={<Folder className="h-3.5 w-3.5" />} label="Projects" value={stats?.projects} />
+          <StatRow icon={<Users className="h-3.5 w-3.5" />} label="Creators" value={stats?.creators} />
+          <StatRow icon={<Briefcase className="h-3.5 w-3.5" />} label="Open roles" value={stats?.opportunities} />
+          <StatRow icon={<Sparkles className="h-3.5 w-3.5" />} label="Skills" value={stats?.skills} />
+        </div>
+      </div>
+
+      {/* Trending skills */}
+      {trendingSkills && trendingSkills.length > 0 && (
+        <div className="rounded-2xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+          <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Hash className="h-3.5 w-3.5" />
+            Trending skills
+          </h3>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {trendingSkills.map((s) => (
+              <Link
+                key={s.id}
+                to="/skills/$slug"
+                params={{ slug: s.slug }}
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
+              >
+                {s.name}
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
+
+      {/* Contextual hint based on tab */}
+      <div className="rounded-2xl border border-dashed border-border/40 bg-surface/30 p-4">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {tab === "projects"
+            ? "Browse projects from the community. Use the shelf to flip through covers, or search for something specific."
+            : tab === "creators"
+              ? "Find people to collaborate with. Filter by craft or search by name."
+              : "Open roles waiting for someone like you. Match based on your skills."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StatRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: number;
+}) {
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <span className="flex items-center gap-1.5 text-muted-foreground">
+        {icon}
+        {label}
+      </span>
+      <span className="numeric font-medium tabular-nums text-foreground">
+        {value != null ? value.toLocaleString() : "–"}
+      </span>
     </div>
   );
 }
