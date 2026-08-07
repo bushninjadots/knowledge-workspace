@@ -6,15 +6,15 @@ import {
   Clock,
   Zap,
   Folder,
-  Calendar,
   Users,
-  MessageSquare,
-  Briefcase,
   UserPlus,
   TrendingUp,
   Award,
   Swords,
   Ticket,
+  Plus,
+  CalendarPlus,
+  Compass,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import { checkAndAwardAchievements } from "@/lib/reputation";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
+import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import { useChallenges } from "@/hooks/use-challenges";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -64,14 +65,12 @@ function DashboardPage() {
   const { data: connections = [], isLoading: connectionsLoading } = useConnections();
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
 
-  // My Challenges
   const { data: myChallenges = [] } = useChallenges("active");
   const joinedChallenges = useMemo(
     () => myChallenges.filter((c: any) => c.is_joined),
     [myChallenges],
   );
 
-  // Role Applications — sent by me
   const { data: myApplications = [] } = useQuery({
     queryKey: ["my-applications", data?.userId],
     queryFn: async () => {
@@ -88,14 +87,12 @@ function DashboardPage() {
     staleTime: 30_000,
   });
 
-  // Weekly reputation
   const weeklyRep = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const thisWeek = (data?.activity ?? []).filter((e: any) => new Date(e.created_at) >= weekAgo);
     return thisWeek.length;
   }, [data?.activity]);
 
-  // Today's opportunities
   const { data: todayOpps = [] } = useQuery({
     queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
@@ -136,7 +133,14 @@ function DashboardPage() {
   if (isLoading || !data) {
     return (
       <div className="mx-auto max-w-7xl p-4 sm:p-8">
-        <div className="h-40 animate-pulse rounded-3xl bg-surface/60" />
+        <div className="space-y-4">
+          <div className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface/60" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -147,8 +151,6 @@ function DashboardPage() {
     learnCount: data.learnIds.length,
     projectsCount: data.projects.length,
   };
-  // Already loaded by useCurrentUser above — no separate query needed.
-  // Keep the previous "most recently updated first" ordering.
   const myProjects = [...data.projects].sort(
     (a: any, b: any) =>
       new Date(b.updated_at ?? b.created_at).getTime() -
@@ -159,8 +161,8 @@ function DashboardPage() {
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
   const firstName = data.profile?.display_name?.split(/\s+/)[0] ?? data.profile?.handle ?? "member";
+  const stepsLoading = false;
 
-  // Action hub counts
   const pendingSessionCount = sessionRequests.filter(
     (r) => r.status === "pending" && r.to_user_id === data.userId,
   ).length;
@@ -169,484 +171,515 @@ function DashboardPage() {
   ).length;
   const pendingInviteCount = pendingSessionCount + pendingConnectionCount;
   const unreadMessageCount = unreadData?.total ?? 0;
-  const activeProjects = myProjects.filter((p) => p.status === "active" || p.status === "planning");
-  const activeProjectCount = activeProjects.length;
-  const firstActiveProjectId = activeProjects[0]?.id;
+  const activeProjects = myProjects.filter(
+    (p: ProjectRow) => p.status === "active" || p.status === "planning",
+  );
 
   return (
     <div className="animate-room-enter mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-      {/* Welcome */}
-      <section className="animate-border-glow relative rounded-xl border card-border bg-surface p-5 sm:p-6">
-        {/* Personalised banner background */}
-        {data.bannerSigned && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-            <div
-              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.12] saturate-50"
-              style={{ backgroundImage: `url(${data.bannerSigned})` }}
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
-          </div>
-        )}
-        {/* Fallback accent glow */}
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
-          style={{
-            background: data.bannerSigned
-              ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
-              : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
-          }}
-        />
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Welcome back
-              </p>
-              <AvailabilitySelector
-                current={data.profile?.availability as AvailabilityStatus}
-                onSave={(s) => updateAvail.mutate(s)}
-              />
-            </div>
-            <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
-              Hey {firstName}, let's{" "}
-              <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
-                keep going
-              </span>
-              .
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
-              {pct < 100
-                ? "Finish the last few steps on your profile so other people can discover you and start building together."
-                : "Your profile is looking great. Here's what's happening on Tethyr right now."}
+      {/* ── Welcome bar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Welcome back
             </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {pct < 100 && (
-                <Button asChild>
-                  <Link to="/profile">
-                    Continue profile <ArrowRight className="ml-1.5 h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
-              <Button asChild variant="outline">
-                <Link to="/community">Community feed</Link>
-              </Button>
-            </div>
+            <AvailabilitySelector
+              current={data.profile?.availability as AvailabilityStatus}
+              onSave={(s) => updateAvail.mutate(s)}
+            />
           </div>
-          <CompletenessRing percent={pct} done={doneSteps} total={totalSteps} />
+          <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+            Hey {firstName},{" "}
+            <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
+              what's next?
+            </span>
+          </h1>
         </div>
-      </section>
-
-      {/* Action hub — each card loads independently, no blocking */}
-      <div className="surface-section bg-noise">
-        <div className="px-5 py-3 sm:px-6 sm:py-4">
-          <div className="mb-3 flex items-center gap-2.5">
-            <Zap className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-            <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
-              Action hub
-            </h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Pending invitations */}
-            {sessionsLoading || connectionsLoading ? (
-              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
-            ) : pendingInviteCount > 0 ? (
-              <ActionCard
-                icon={<UserPlus className="h-4 w-4" />}
-                label="Pending invitations"
-                count={pendingInviteCount}
-                accent="var(--user-accent, var(--trust))"
-                href={pendingSessionCount > 0 ? "/sessions" : "/profile"}
-                detail={
-                  pendingSessionCount > 0 && pendingConnectionCount > 0
-                    ? `${pendingSessionCount} session, ${pendingConnectionCount} connection`
-                    : pendingSessionCount > 0
-                      ? `${pendingSessionCount} session request${pendingSessionCount > 1 ? "s" : ""}`
-                      : `${pendingConnectionCount} connection request${pendingConnectionCount > 1 ? "s" : ""}`
-                }
-              />
-            ) : null}
-
-            {/* Unread messages */}
-            {unreadLoading ? (
-              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
-            ) : unreadMessageCount > 0 ? (
-              <ActionCard
-                icon={<MessageSquare className="h-4 w-4" />}
-                label="Unread messages"
-                count={unreadMessageCount}
-                accent="var(--learning)"
-                href="/messages"
-                detail={`${unreadMessageCount} unread message${unreadMessageCount > 1 ? "s" : ""}`}
-              />
-            ) : null}
-
-            {/* Active projects — data already loaded with the user, no spinner needed */}
-            {activeProjectCount > 0 && (
-              <ActionCard
-                icon={<Briefcase className="h-4 w-4" />}
-                label="Active projects"
-                count={activeProjectCount}
-                accent="var(--brand-purple)"
-                href={firstActiveProjectId ? `/projects/${firstActiveProjectId}` : "/profile"}
-                detail={activeProjects
-                  .slice(0, 3)
-                  .map((p) => p.title)
-                  .join(", ")}
-              />
-            )}
-
-            {/* Profile completion — always shows if incomplete, no loading needed */}
-            {pct < 100 && (
-              <ActionCard
-                icon={<Sparkles className="h-4 w-4" />}
-                label="Profile completion"
-                count={pct}
-                countSuffix="%"
-                accent="var(--user-accent-subtle, var(--learning-subtle))"
-                href="/profile"
-                detail={`${doneSteps}/${totalSteps} sections done`}
-              />
-            )}
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {pct < 100 && (
+            <Link
+              to="/profile"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+            >
+              <CompletenessMini percent={pct} size={18} />
+              {pct}% complete
+            </Link>
+          )}
+          {data.profile?.reputation_score != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
+              <Award className="h-3.5 w-3.5" />
+              {data.profile.reputation_score} rep
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Continuous workspace surface — action-first ordering */}
-      <div className="surface-section surface-divide bg-noise">
-        {/* 1. YOUR WORK (highest priority) */}
-        {activeProjects.length > 0 && (
-          <WorkspaceSection
-            icon={<Briefcase className="h-4 w-4" />}
-            title="Continue your projects"
-            subtitle={`${activeProjects.length} active project${activeProjects.length !== 1 ? "s" : ""}`}
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              {activeProjects.slice(0, 4).map((p: any) => (
-                <Link
-                  key={p.id}
-                  to="/projects/$id"
-                  params={{ id: p.id }}
-                  className="group rounded-xl border card-border bg-surface-elevated/40 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="truncate text-sm font-medium" title={p.title}>{p.title}</p>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Progress value={p.progress_percent ?? 0} className="h-1.5" />
-                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                      {p.progress_percent ?? 0}%
-                    </span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="capitalize">{p.status}</span>
-                    {p.stage && (
-                      <>
-                        <span>·</span>
-                        <span className="capitalize">{p.stage}</span>
-                      </>
-                    )}
-                  </div>
-                </Link>
-              ))}
+      {/* ── Today's focus — 4 prominent action cards ── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 1. Continue your project */}
+        <TodayCard
+          icon={activeProjects.length > 0 ? Folder : Plus}
+          accent="var(--trust)"
+          title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
+          href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
+          highlight={activeProjects.length > 0}
+        >
+          {activeProjects.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
+                {activeProjects[0].title}
+              </p>
+              <div className="flex items-center gap-2">
+                <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
+                <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                  {activeProjects[0].progress_percent ?? 0}%
+                </span>
+              </div>
+              {activeProjects.length > 1 && (
+                <p className="text-[11px] text-muted-foreground">
+                  +{activeProjects.length - 1} more project{activeProjects.length > 2 ? "s" : ""}
+                </p>
+              )}
             </div>
-          </WorkspaceSection>
-        )}
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Create your first project to start building in public.
+            </p>
+          )}
+        </TodayCard>
 
-        {myApplications.length > 0 && (
-          <WorkspaceSection
-            icon={<Ticket className="h-4 w-4" />}
-            title="Your applications"
-            subtitle={`${myApplications.length} application${myApplications.length !== 1 ? "s" : ""}`}
-          >
-            <div className="grid gap-2 sm:grid-cols-2">
-              {myApplications.slice(0, 4).map((app: any) => (
-                <Link
-                  key={app.id}
-                  to="/projects/$id"
-                  params={{ id: app.project_open_roles?.projects?.id ?? "" }}
-                  search={{ section: "roles" } as Record<string, string>}
-                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">
-                      {app.project_open_roles?.title ?? "Role"}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {app.project_open_roles?.projects?.title ?? "Project"}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                      app.status === "accepted"
-                        ? "bg-trust/10 text-trust"
-                        : app.status === "declined"
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-surface-elevated text-muted-foreground"
-                    }`}
+        {/* 2. Pending invitations & messages */}
+        <TodayCard
+          icon={UserPlus}
+          accent="var(--learning)"            title={
+              sessionsLoading || connectionsLoading || unreadLoading
+                ? "Loading activity…"
+                : pendingInviteCount > 0 || unreadMessageCount > 0
+                  ? "You have activity"
+                  : "No pending invites"
+            }
+            href={
+              pendingSessionCount > 0
+                ? "/sessions"
+                : pendingConnectionCount > 0
+                  ? "/profile"
+                  : "/messages"
+            }
+            highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
+        >
+          <div className="mt-3 space-y-1.5">
+            {pendingSessionCount > 0 && (
+              <p className="text-xs">
+                <span className="font-semibold tabular-nums text-foreground">
+                  {pendingSessionCount}
+                </span>{" "}
+                session request{pendingSessionCount !== 1 ? "s" : ""}
+              </p>
+            )}
+            {pendingConnectionCount > 0 && (
+              <p className="text-xs">
+                <span className="font-semibold tabular-nums text-foreground">
+                  {pendingConnectionCount}
+                </span>{" "}
+                connection request{pendingConnectionCount !== 1 ? "s" : ""}
+              </p>
+            )}
+            {unreadMessageCount > 0 && (
+              <p className="text-xs">
+                <span className="font-semibold tabular-nums text-foreground">
+                  {unreadMessageCount}
+                </span>{" "}
+                unread message{unreadMessageCount !== 1 ? "s" : ""}
+              </p>
+            )}
+            {pendingInviteCount === 0 && unreadMessageCount === 0 && (
+              <p className="text-xs text-muted-foreground">
+                All clear — nothing needs your attention.
+              </p>
+            )}
+          </div>
+        </TodayCard>
+
+        {/* 3. Find collaborators */}
+        <TodayCard
+          icon={Users}
+          accent="var(--ai)"
+          title="Find collaborators"
+          href="/explore"
+        >
+          <p className="mt-3 text-xs text-muted-foreground">
+            Discover people with complementary skills who are open to team-ups.
+          </p>
+        </TodayCard>
+
+        {/* 4. Today's opportunities */}
+        <TodayCard
+          icon={TrendingUp}
+          accent="var(--brand-purple)"
+          title={
+            todayOpps.length > 0
+              ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
+              : "Browse opportunities"
+          }
+          href="/explore"
+          highlight={todayOpps.length > 0}
+        >
+          {todayOpps.length > 0 ? (
+            <div className="mt-3 space-y-1">
+              {todayOpps.slice(0, 2).map((opp: any) => (
+                <p key={opp.id} className="truncate text-xs text-muted-foreground">
+                  {opp.title} — {opp.projects?.title}
+                </p>
+              ))}
+              {todayOpps.length > 2 && (
+                <p className="text-[11px] text-muted-foreground">
+                  +{todayOpps.length - 2} more
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Check back as projects open new roles.
+            </p>
+          )}
+        </TodayCard>
+      </div>
+
+      {/* ── Quick start row ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <QuickStartLink to="/explore" icon={Compass} label="Explore projects" />
+        <QuickStartLink to="/community" icon={Sparkles} label="Community feed" />
+        <QuickStartLink to="/sessions" icon={CalendarPlus} label="Schedule a session" />
+        <QuickStartLink to="/explore" icon={Folder} label="Start a project" />
+      </div>
+
+      {/* ── Next steps (incomplete profiles) ── */}
+      {pct < 100 && remaining.length > 0 && (
+        <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+            <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
+            <span className="text-[11px] text-muted-foreground">
+              — {doneSteps}/{totalSteps} done
+            </span>
+          </div>
+          <NextStepsList items={remaining} />
+        </div>
+      )}
+
+      {/* ── Your work + Discover — 2-column layout ── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left column: Your work */}
+        <div className="space-y-6">
+          {/* Active projects list */}
+          {activeProjects.length > 0 && (
+            <SectionCard
+              icon={<Folder className="h-4 w-4" />}
+              title="Your projects"
+              action={
+                <Link to="/explore" className="text-[11px] font-medium text-primary hover:underline">
+                  View all
+                </Link>
+              }
+            >
+              <div className="space-y-2">
+                {activeProjects.slice(0, 3).map((p: any) => (
+                  <Link
+                    key={p.id}
+                    to="/projects/$id"
+                    params={{ id: p.id }}
+                    className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
                   >
-                    {app.status}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </WorkspaceSection>
-        )}
-
-        {joinedChallenges.length > 0 && (
-          <WorkspaceSection
-            icon={<Swords className="h-4 w-4" />}
-            title="Your challenges"
-            subtitle={`${joinedChallenges.length} joined`}
-          >
-            <div className="grid gap-2 sm:grid-cols-2">
-              {joinedChallenges.slice(0, 4).map((c: any) => (
-                <Link
-                  key={c.id}
-                  to="/challenges/$id"
-                  params={{ id: c.id }}
-                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium" title={c.title}>{c.title}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{c.difficulty}</p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
-                    {c.my_participation?.status ?? "joined"}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </WorkspaceSection>
-        )}
-
-        {/* 2. CONNECTIONS */}
-        <ConnectionsCard />
-
-        {todayOpps.length > 0 && (
-          <WorkspaceSection
-            icon={<TrendingUp className="h-4 w-4" />}
-            title="Today's opportunities"
-            subtitle={`${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`}
-          >
-            <div className="grid gap-2 sm:grid-cols-2">
-              {todayOpps.slice(0, 4).map((opp: any) => (
-                <Link
-                  key={opp.id}
-                  to="/projects/$id"
-                  params={{ id: opp.projects?.id ?? "" }}
-                  search={{ section: "roles" } as Record<string, string>}
-                  className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium" title={opp.title}>{opp.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">{opp.projects?.title}</p>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    {(opp.skills ?? []).slice(0, 2).map((s: string) => (
-                      <span
-                        key={s}
-                        className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[11px] text-[var(--user-accent,var(--primary))]"
-                      >
-                        {s}
+                    <div className="flex items-center justify-between">
+                      <p className="truncate text-sm font-medium" title={p.title}>
+                        {p.title}
+                      </p>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <Progress value={p.progress_percent ?? 0} className="h-1" />
+                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                        {p.progress_percent ?? 0}%
                       </span>
-                    ))}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </WorkspaceSection>
-        )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </SectionCard>
+          )}
 
-        {/* 3. DISCOVERY */}
-        <WorkspaceSection
-          icon={<Folder className="h-4 w-4" />}
-          title="Projects for you"
-          subtitle="Projects matching your skills and interests."
-        >
-          <SuggestedProjects />
-        </WorkspaceSection>
+          {/* Applications */}
+          {myApplications.length > 0 && (
+            <SectionCard
+              icon={<Ticket className="h-4 w-4" />}
+              title="Applications"
+              subtitle={`${myApplications.length} sent`}
+            >
+              <div className="space-y-1.5">
+                {myApplications.slice(0, 4).map((app: any) => (
+                  <Link
+                    key={app.id}
+                    to="/projects/$id"
+                    params={{ id: app.project_open_roles?.projects?.id ?? "" }}
+                    search={{ section: "roles" } as Record<string, string>}
+                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium">
+                        {app.project_open_roles?.title ?? "Role"}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {app.project_open_roles?.projects?.title ?? "Project"}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        app.status === "accepted"
+                          ? "bg-trust/10 text-trust"
+                          : app.status === "declined"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-surface-elevated text-muted-foreground"
+                      }`}
+                    >
+                      {app.status}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </SectionCard>
+          )}
 
-        <WorkspaceSection
-          icon={<Zap className="h-4 w-4" />}
-          title="People you connect with"
-          subtitle="Based on complementary skills, availability, and language."
-        >
-          <SuggestedCreators />
-        </WorkspaceSection>
+          {/* Challenges */}
+          {joinedChallenges.length > 0 && (
+            <SectionCard
+              icon={<Swords className="h-4 w-4" />}
+              title="Challenges"
+              subtitle={`${joinedChallenges.length} joined`}
+            >
+              <div className="space-y-1.5">
+                {joinedChallenges.slice(0, 3).map((c: any) => (
+                  <Link
+                    key={c.id}
+                    to="/challenges/$id"
+                    params={{ id: c.id }}
+                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium" title={c.title}>
+                        {c.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground capitalize">
+                        {c.difficulty}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
+                      {c.my_participation?.status ?? "joined"}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </SectionCard>
+          )}
 
-        <WorkspaceSection
-          icon={<Sparkles className="h-4 w-4" />}
-          title="Discover skills"
-          subtitle="Trending across the network."
-        >
-          <DiscoverSkills />
-        </WorkspaceSection>
+          {/* Connections */}
+          <ConnectionsCard />
+        </div>
 
-        {/* 4. ACTIVITY & PROGRESS (bottom) */}
-        <WorkspaceSection
-          icon={<Clock className="h-4 w-4" />}
-          title="Recent activity"
-          subtitle="Every meaningful action becomes part of your reputation history."
-        >
-          <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
-        </WorkspaceSection>
-
-        {weeklyRep > 0 && (
-          <WorkspaceSection
-            icon={<Award className="h-4 w-4" />}
-            title="This week"
-            subtitle={`${weeklyRep} reputation event${weeklyRep !== 1 ? "s" : ""}`}
+        {/* Right column: Discover */}
+        <div className="space-y-6">
+          <SectionCard
+            icon={<Folder className="h-4 w-4" />}
+            title="Projects for you"
+            subtitle="Matched to your skills"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex items-baseline gap-1">
-                <span className="font-display text-2xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
+            <SuggestedProjects />
+          </SectionCard>
+
+          <SectionCard
+            icon={<Users className="h-4 w-4" />}
+            title="People you'd connect with"
+            subtitle="Complementary skills"
+          >
+            <SuggestedCreators />
+          </SectionCard>
+
+          <SectionCard
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Trending skills"
+            subtitle="Across the network"
+          >
+            <DiscoverSkills />
+          </SectionCard>
+
+          {weeklyRep > 0 && (
+            <SectionCard
+              icon={<Award className="h-4 w-4" />}
+              title="This week"
+              subtitle={`${weeklyRep} activity event${weeklyRep !== 1 ? "s" : ""}`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="font-display text-xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
                   {data.profile?.reputation_score ?? 0}
                 </span>
-                <span className="text-xs text-muted-foreground">reputation</span>
+                <span className="text-[11px] text-muted-foreground">reputation</span>
+                <Link
+                  to="/profile"
+                  className="ml-auto text-[11px] font-medium text-primary hover:underline"
+                >
+                  Achievements →
+                </Link>
               </div>
-              <div className="h-8 w-px bg-border" />
-              <Link to="/profile" className="text-xs text-primary hover:underline">
-                View achievements →
-              </Link>
-            </div>
-          </WorkspaceSection>
-        )}
-
-        {pct < 100 && (
-          <WorkspaceSection
-            icon={<Sparkles className="h-4 w-4" />}
-            title="Next steps"
-            subtitle="A few things to finish before other people can find you."
-          >
-            <NextStepsList items={remaining} />
-          </WorkspaceSection>
-        )}
+            </SectionCard>
+          )}
+        </div>
       </div>
+
+      {/* ── Recent activity — full width ── */}
+      <SectionCard
+        icon={<Clock className="h-4 w-4" />}
+        title="Recent activity"
+        subtitle="Every action builds your reputation."
+      >
+        <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
+      </SectionCard>
     </div>
   );
 }
 
-function WorkspaceSection({
+/* ── Today focus card ── */
+
+function TodayCard({
+  icon: Icon,
+  accent,
+  title,
+  href,
+  children,
+  highlight,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  title: string;
+  href: string;
+  children: React.ReactNode;
+  highlight?: boolean;
+}) {
+  return (
+    <Link
+      to={href}
+      className={`group relative flex flex-col rounded-2xl border p-5 transition-all duration-200 ${
+        highlight
+          ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+          : "border-border/60 bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
+      }`}
+    >
+      <div className="flex items-start justify-between">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: accent, color: "#fff" }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+      </div>
+      <h3 className="mt-3 text-sm font-semibold">{title}</h3>
+      {children}
+    </Link>
+  );
+}
+
+/* ── Quick start link ── */
+
+function QuickStartLink({
+  to,
+  icon: Icon,
+  label,
+}: {
+  to: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface hover:text-foreground"
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </Link>
+  );
+}
+
+/* ── Section card ── */
+
+function SectionCard({
   icon,
   title,
   subtitle,
+  action,
   children,
 }: {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   title: string;
   subtitle?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="px-5 py-4 sm:px-6 sm:py-5">
-      <div className="mb-3 flex items-center gap-2.5">
-        <span className="text-muted-foreground">{icon}</span>
-        <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
-          {title}
-        </h2>
-        {subtitle && <span className="text-xs text-muted-foreground">— {subtitle}</span>}
+    <div className="rounded-2xl border card-border bg-surface p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
+          <h2 className="text-sm font-semibold truncate">{title}</h2>
+          {subtitle && (
+            <span className="hidden text-[11px] text-muted-foreground sm:inline">
+              — {subtitle}
+            </span>
+          )}
+        </div>
+        {action}
       </div>
       {children}
     </div>
   );
 }
 
-function ActionCard({
-  icon,
-  label,
-  count,
-  countSuffix,
-  accent,
-  href,
-  detail,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  count: number;
-  countSuffix?: string;
-  accent: string;
-  href: string;
-  detail?: string;
-}) {
-  return (
-    <Link
-      to={href}
-      className="group flex items-start gap-3 rounded-xl border card-border bg-surface-elevated/60 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
-    >
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: accent, color: "#fff" }}
-      >
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-0.5 font-display text-xl font-semibold tabular-nums">
-          {count}
-          {countSuffix ?? ""}
-        </p>
-        {detail && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{detail}</p>}
-      </div>
-    </Link>
-  );
-}
+/* ── Profile completeness mini ring ── */
 
-function CompletenessRing({
-  percent,
-  done,
-  total,
-}: {
-  percent: number;
-  done: number;
-  total: number;
-}) {
+function CompletenessMini({ percent, size = 18 }: { percent: number; size?: number }) {
   const gradientId = useId();
-  const radius = 46;
-  const c = 2 * Math.PI * radius;
+  const r = (size - 3) / 2;
+  const c = 2 * Math.PI * r;
   const offset = c - (percent / 100) * c;
+  const center = size / 2;
+
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative h-28 w-28 shrink-0">
-        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-          <circle
-            cx="60"
-            cy="60"
-            r={radius}
-            stroke="var(--surface-elevated)"
-            strokeWidth="10"
-            fill="none"
-          />
-          <circle
-            cx="60"
-            cy="60"
-            r={radius}
-            stroke={`url(#${gradientId})`}
-            strokeWidth="10"
-            fill="none"
-            strokeDasharray={c}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-[stroke-dashoffset] duration-700 ease-out"
-          />
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="var(--user-accent, var(--trust))" />
-              <stop offset="1" stopColor="var(--user-accent-subtle, var(--learning-subtle))" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="font-display text-2xl font-semibold">{percent}%</p>
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">complete</p>
-        </div>
-      </div>
-      <div className="text-sm">
-        <p className="font-medium">Profile completion</p>
-        <p className="mt-0.5 text-muted-foreground">
-          {done} of {total} sections done
-        </p>
-      </div>
-    </div>
+    <svg viewBox={`0 0 ${size} ${size}`} className="h-[18px] w-[18px] shrink-0 -rotate-90">
+      <circle
+        cx={center}
+        cy={center}
+        r={r}
+        stroke="var(--border)"
+        strokeWidth="2"
+        fill="none"
+      />
+      <circle
+        cx={center}
+        cy={center}
+        r={r}
+        stroke={`url(#${gradientId})`}
+        strokeWidth="2"
+        fill="none"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--user-accent, var(--trust))" />
+          <stop offset="1" stopColor="var(--ai)" />
+        </linearGradient>
+      </defs>
+    </svg>
   );
 }
