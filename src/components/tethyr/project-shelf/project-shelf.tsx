@@ -341,7 +341,7 @@ export function ProjectShelf({
     ? (CATEGORY_COLORS[inferCategory(activeProject.tags)] ?? CATEGORY_COLORS.Design)
     : CATEGORY_COLORS.Design;
   const spotlightBg = `radial-gradient(closest-side, oklch(0.62 ${spotlightColors.sat / 100} ${spotlightColors.hue} / 0.16), transparent 74%)`;
-  const floorShadowY = useTransform(displayOffset, () => getCardWidth(0) * (9 / 32) + 8);
+  const floorShadowY = useTransform(displayOffset, () => Math.max(getCardWidth(0) * (9 / 32), 280 / 2) + 12);
 
   return (
     <div className="space-y-6">
@@ -401,8 +401,8 @@ export function ProjectShelf({
             style={{
               perspective: "1200px",
               height: "50vh",
-              minHeight: "320px",
-              maxHeight: "480px",
+              minHeight: "400px",
+              maxHeight: "580px",
             }}
           >
             {/* Stage spotlight — follows the active project's category colour */}

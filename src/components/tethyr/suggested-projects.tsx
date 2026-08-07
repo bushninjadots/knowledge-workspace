@@ -133,14 +133,14 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{p.title}</p>
+              <p className="truncate text-sm font-medium" title={p.title}>{p.title}</p>
               {p.description && (
-                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={p.description ?? undefined}>{p.description}</p>
               )}
             </div>
             {p.stage && (
               <span
-                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${STAGE_COLORS[p.stage] ?? STAGE_COLORS.building}`}
+                className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[p.stage] ?? STAGE_COLORS.building}`}
               >
                 {STAGE_LABELS[p.stage] ?? p.stage}
               </span>
@@ -149,13 +149,13 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
 
           <div className="mt-3 flex flex-wrap gap-1">
             {p.looking_for_collaborators && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green">
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
                 <Users className="h-2.5 w-2.5" />
                 Seeking collaborators
               </span>
             )}
             {p.looking_for_feedback && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[10px] text-brand-purple">
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
                 <MessageSquare className="h-2.5 w-2.5" />
                 Wants feedback
               </span>
@@ -167,7 +167,7 @@ export function SuggestedProjects({ limit = 4 }: { limit?: number }) {
               {p.reasons.map((r: string) => (
                 <span
                   key={r}
-                  className="inline-flex items-center gap-1 rounded-full border border-brand-green/20 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green"
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-green/20 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green"
                 >
                   <Sparkles className="h-2.5 w-2.5" />
                   {r}

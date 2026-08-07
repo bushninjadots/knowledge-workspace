@@ -74,7 +74,7 @@ export function SessionsSidebar({
 }) {
   return (
     <nav className="flex flex-col gap-1">
-      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+      <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
         Sessions
       </p>
       {tabs.map((tab) => {
@@ -98,7 +98,7 @@ export function SessionsSidebar({
             />
             <span className="min-w-0 flex-1 text-left text-sm font-medium">{tab.label}</span>
             {tab.id === "requests" && pendingCount > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                 {pendingCount}
               </span>
             )}

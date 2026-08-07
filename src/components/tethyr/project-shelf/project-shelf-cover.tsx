@@ -31,9 +31,9 @@ function getMaxCardWidth(): number {
 export function getCardWidth(absDist: number): number {
   const maxW = getMaxCardWidth();
   if (absDist < 0.4) return maxW;
-  if (absDist < 1.5) return maxW - (maxW - 240) * ((absDist - 0.4) / 1.1);
-  if (absDist < 3) return 240 - 100 * ((absDist - 1.5) / 1.5);
-  return 140;
+  if (absDist < 1.5) return maxW - (maxW - 320) * ((absDist - 0.4) / 1.1);
+  if (absDist < 3) return 320 - 80 * ((absDist - 1.5) / 1.5);
+  return 240;
 }
 
 function getCardCenter(dist: number): number {
@@ -188,7 +188,7 @@ function ProjectShelfCoverAnimated({
   const absDist = useTransform(dist, (d) => Math.abs(d));
   const centerX = useTransform(dist, getCardCenter);
   const w = useTransform(absDist, getCardWidth);
-  const h = useTransform(w, (width) => Math.max((width * 9) / 16, 180));
+  const h = useTransform(w, (width) => Math.max((width * 9) / 16, 280));
   const rotateY = useTransform(dist, getRotateY);
   const cardScale = useTransform(absDist, getScale);
   const blurFilter = useTransform(absDist, getBlur);
@@ -242,31 +242,67 @@ function ProjectShelfCoverAnimated({
       >
         {/* Spine view */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2"
+          className="absolute inset-0 flex flex-col gap-2 p-4"
           style={{ opacity: spineOpacity }}
         >
-          <div
-            className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center"
-            style={{
-              backgroundColor: `oklch(0.5 ${(catColors?.sat ?? 60) / 100} ${catColors?.hue ?? 270} / 0.1)`,
-            }}
-          >
-            <Icon className="h-4 w-4 text-foreground" />
-          </div>
-          <span className="text-[10px] font-medium text-foreground text-center line-clamp-2 leading-tight [writing-mode:vertical-rl] [text-orientation:mixed] rotate-180 max-h-20">
-            {project.title}
-          </span>
-          <div className="h-1 w-12 shrink-0 rounded-full bg-white/10 overflow-hidden">
+          <div className="flex items-center gap-2.5">
             <div
-              className="h-full bg-white/40 rounded-full"
-              style={{ width: `${project.progress_percent}%` }}
-            />
+              className="h-9 w-9 shrink-0 rounded-lg flex items-center justify-center"
+              style={{
+                backgroundColor: `oklch(0.5 ${(catColors?.sat ?? 60) / 100} ${catColors?.hue ?? 270} / 0.12)`,
+              }}
+            >
+              <Icon className="h-4 w-4" style={{ color: `oklch(0.65 ${(catColors?.sat ?? 60) / 100} ${catColors?.hue ?? 270})` }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-foreground" title={project.title}>{project.title}</p>
+              {project.profiles && (
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {project.profiles.display_name || project.profiles.handle || "Member"}
+                </p>
+              )}
+            </div>
+            <span className={cn("h-2 w-2 shrink-0 rounded-full", status.dot)} />
           </div>
-          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", status.dot)} />
+
+          {/* Tags */}
+          {project.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {project.tags.slice(0, 3).map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border border-border/50 bg-surface-elevated/50 px-2 py-0.5 text-[11px] text-muted-foreground"
+                >
+                  {t}
+                </span>
+              ))}
+              {project.tags.length > 3 && (
+                <span className="text-[11px] text-muted-foreground/50">
+                  +{project.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="mt-auto space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+              <span>{project.progress_percent}%</span>
+              <span>{status.label}</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${project.progress_percent}%`,
+                  backgroundColor: `oklch(0.6 ${(catColors?.sat ?? 60) / 100} ${catColors?.hue ?? 270} / 0.7)`,
+                }}
+              />
+            </div>
+          </div>
 
           {/* Page-edge texture */}
           <div
-            className="pointer-events-none absolute inset-0 opacity-70"
+            className="pointer-events-none absolute inset-0 rounded-2xl opacity-70"
             style={{
               backgroundImage:
                 "repeating-linear-gradient(to bottom, transparent 0px, transparent 6px, rgba(255,255,255,0.06) 6px, rgba(255,255,255,0.06) 7px)",

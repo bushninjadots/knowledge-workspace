@@ -132,7 +132,7 @@ export function OpenRolesSection({
                       {r.skills.map((s) => (
                         <span
                           key={s}
-                          className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                          className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
                         >
                           {s}
                         </span>

@@ -61,7 +61,7 @@ function CalendarEventCard({
         onClick={onClick}
         className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-all hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
       >
-        <span className="truncate text-[11px] font-medium text-foreground">{session.title}</span>
+        <span className="truncate text-[11px] font-medium text-foreground" title={session.title}>{session.title}</span>
       </button>
     );
   }
@@ -73,15 +73,15 @@ function CalendarEventCard({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
-          <h4 className="truncate text-sm font-semibold text-foreground">{session.title}</h4>
+          <h4 className="truncate text-sm font-semibold text-foreground" title={session.title}>{session.title}</h4>
           <span
-            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${status.bg} ${status.color}`}
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
           >
             {status.label}
           </span>
         </div>
         <p className="mt-0.5 text-[11px] text-muted-foreground">{type}</p>
-        <div className="mt-1 flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-2.5 w-2.5" />
             {new Date(session.starts_at!).toLocaleTimeString(undefined, {
@@ -127,7 +127,7 @@ function DayView({
     <div className="relative">
       {HOURS.map((hour) => (
         <div key={hour} className="flex border-b border-border/30">
-          <div className="w-16 shrink-0 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground">
+          <div className="w-16 shrink-0 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
             {formatHour(hour)}
           </div>
           <div className="relative min-h-[3rem] flex-1 border-l border-border/20">
@@ -173,7 +173,7 @@ function WeekView({
               key={i}
               className={`py-2 text-center ${isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""}`}
             >
-              <p className="text-[10px] font-medium uppercase text-muted-foreground">
+              <p className="text-[11px] font-medium uppercase text-muted-foreground">
                 {dayNames[i]}
               </p>
               <p
@@ -192,7 +192,7 @@ function WeekView({
       <div className="grid grid-cols-[4rem_repeat(7,1fr)]">
         {HOURS.map((hour) => (
           <div key={hour} className="contents">
-            <div className="border-b border-border/30 py-2 pr-3 text-right text-[10px] font-medium text-muted-foreground">
+            <div className="border-b border-border/30 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
               {formatHour(hour)}
             </div>
             {weekDates.map((d, di) => {
@@ -206,7 +206,7 @@ function WeekView({
               return (
                 <div
                   key={di}
-                  className={`min-h-[2.5rem] border-b border-l border-border/30 ${
+                  className={`min-h-[3.5rem] border-b border-l border-border/30 ${
                     isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""
                   }`}
                 >
@@ -261,7 +261,7 @@ function MonthView({
         {dayNames.map((name) => (
           <div
             key={name}
-            className="py-2 text-center text-[10px] font-semibold uppercase text-muted-foreground"
+            className="py-2 text-center text-[11px] font-semibold uppercase text-muted-foreground"
           >
             {name}
           </div>
@@ -280,7 +280,7 @@ function MonthView({
           return (
             <div
               key={i}
-              className={`min-h-[6rem] border-b border-r border-border/20 p-1 ${
+              className={`min-h-[7rem] border-b border-r border-border/20 p-1.5 ${
                 isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""
               }`}
             >
@@ -303,7 +303,7 @@ function MonthView({
                   />
                 ))}
                 {daySessions.length > 3 && (
-                  <p className="text-[9px] text-muted-foreground text-right">
+                  <p className="text-[10px] text-muted-foreground text-right">
                     +{daySessions.length - 3} more
                   </p>
                 )}
@@ -361,7 +361,7 @@ function AgendaView({
                     : "bg-surface-elevated"
                 }`}
               >
-                <span className="text-[8px] font-semibold uppercase leading-none">
+                <span className="text-[10px] font-semibold uppercase leading-none">
                   {d.toLocaleDateString(undefined, { weekday: "short" })}
                 </span>
                 <span className="text-sm font-bold leading-tight">{d.getDate()}</span>
@@ -374,7 +374,7 @@ function AgendaView({
                     day: "numeric",
                   })}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {daySessions.length} session{daySessions.length !== 1 ? "s" : ""}
                 </p>
               </div>

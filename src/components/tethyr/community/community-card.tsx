@@ -43,11 +43,11 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors" title={space.name}>
             {space.name}
           </h3>
           {space.description && (
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground" title={space.description ?? undefined}>
               {space.description}
             </p>
           )}

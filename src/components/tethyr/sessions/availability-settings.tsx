@@ -185,7 +185,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
                 className="flex flex-col items-center gap-2 rounded-xl border border-border/40 bg-surface/30 p-3"
               >
                 <span className="text-[11px] font-semibold text-muted-foreground">{day}</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[10px] text-muted-foreground">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[11px] text-muted-foreground">
                   —
                 </div>
               </div>
@@ -228,7 +228,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
                 {slots.length > 0 ? (
                   <div className="space-y-1 text-center">
                     {slots.map((s) => (
-                      <p key={s.id} className={`text-[10px] font-medium ${statusStyle?.text}`}>
+                      <p key={s.id} className={`text-[11px] font-medium ${statusStyle?.text}`}>
                         {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
                       </p>
                     ))}

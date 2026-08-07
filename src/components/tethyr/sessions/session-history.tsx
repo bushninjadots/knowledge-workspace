@@ -17,7 +17,7 @@ function HistoryCard({ session }: { session: SessionWithParticipants }) {
     <div className="group flex items-start gap-4 rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50">
       {/* Date badge */}
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
-        <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+        <span className="text-[11px] font-semibold uppercase text-muted-foreground">
           {session.starts_at
             ? new Date(session.starts_at).toLocaleDateString(undefined, { weekday: "short" })
             : "—"}
@@ -38,12 +38,12 @@ function HistoryCard({ session }: { session: SessionWithParticipants }) {
             {formatDuration(session.duration_minutes)}
           </span>
           {session.skills && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-medium">
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium">
               {session.skills.name}
             </span>
           )}
           {session.projects && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-medium">
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium">
               📁 {session.projects.title}
             </span>
           )}
@@ -56,7 +56,7 @@ function HistoryCard({ session }: { session: SessionWithParticipants }) {
         </div>
       </div>
 
-      <span className="shrink-0 rounded-full bg-trust-subtle px-2 py-0.5 text-[10px] font-medium text-trust">
+      <span className="shrink-0 rounded-full bg-trust-subtle px-2 py-0.5 text-[11px] font-medium text-trust">
         🏁 Completed
       </span>
     </div>

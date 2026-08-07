@@ -150,7 +150,7 @@ export function LibrarySearchBar({
                       <Icon className={cn("h-3.5 w-3.5", iconColor)} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-sm font-medium" title={item.title}>
                         {highlightMatch(item.title, value)}
                       </p>
                       {item.content && (
@@ -159,7 +159,7 @@ export function LibrarySearchBar({
                         </p>
                       )}
                     </div>
-                    <span className="shrink-0 text-[10px] capitalize text-muted-foreground/40">
+                    <span className="shrink-0 text-[11px] capitalize text-muted-foreground/40">
                       {item.type}
                     </span>
                   </button>

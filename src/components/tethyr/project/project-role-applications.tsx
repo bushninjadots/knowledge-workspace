@@ -303,13 +303,13 @@ export function RoleApplicationsList({
               <div className="flex shrink-0 gap-1">
                 <button
                   onClick={() => onAccept?.(app.id, app.profile_id)}
-                  className="rounded-lg bg-brand-green/10 px-2 py-1 text-[10px] font-medium text-brand-green transition hover:bg-brand-green/20"
+                  className="rounded-lg bg-brand-green/10 px-2 py-1 text-[11px] font-medium text-brand-green transition hover:bg-brand-green/20"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => onDecline?.(app.id)}
-                  className="rounded-lg bg-destructive/10 px-2 py-1 text-[10px] font-medium text-destructive transition hover:bg-destructive/20"
+                  className="rounded-lg bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive transition hover:bg-destructive/20"
                 >
                   Decline
                 </button>
@@ -317,7 +317,7 @@ export function RoleApplicationsList({
             )}
             {app.status !== "pending" && (
               <span
-                className={`text-[10px] font-medium ${
+                className={`text-[11px] font-medium ${
                   app.status === "accepted" ? "text-brand-green" : "text-destructive"
                 }`}
               >

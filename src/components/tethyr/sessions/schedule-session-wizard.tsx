@@ -443,7 +443,7 @@ function StepParticipants({
                 <ParticipantAvatar
                   participant={p}
                   className="h-4 w-4"
-                  fallbackClassName="text-[8px]"
+                  fallbackClassName="text-[9px]"
                 />
                 {p.display_name ?? p.handle ?? "User"}
                 <button

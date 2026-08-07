@@ -207,6 +207,7 @@ export function PostCard({
                   to="/u/$handle"
                   params={{ handle: post.author.handle ?? "unknown" }}
                   className="truncate text-sm font-medium hover:underline"
+                  title={authorName}
                 >
                   {authorName}
                 </Link>
@@ -235,16 +236,16 @@ export function PostCard({
             <span>{authorTitle}</span>
             <span aria-hidden>·</span>
             {post.space_id ? (
-              <span className="rounded-full border border-brand-purple/40 bg-brand-purple/10 px-1.5 py-0 text-[10px] uppercase tracking-wider text-brand-purple">
+              <span className="rounded-full border border-brand-purple/40 bg-brand-purple/10 px-1.5 py-0 text-[11px] uppercase tracking-wider text-brand-purple">
                 Space
               </span>
             ) : (
-              <span className="rounded-full border border-border/60 px-1.5 py-0 text-[10px] uppercase tracking-wider">
+              <span className="rounded-full border border-border/60 px-1.5 py-0 text-[11px] uppercase tracking-wider">
                 {post.community}
               </span>
             )}
             {shared_from_space && (
-              <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[10px] text-learning">
+              <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[11px] text-learning">
                 Shared from {shared_from_space}
               </span>
             )}
@@ -270,19 +271,19 @@ export function PostCard({
               </button>
               {confirmDelete ? (
                 <div className="flex items-center gap-1 rounded-lg border border-destructive/40 bg-destructive/10 px-2 py-1">
-                  <span className="text-[10px] text-destructive">Delete?</span>
+                  <span className="text-[11px] text-destructive">Delete?</span>
                   <button
                     onClick={() => {
                       onDelete?.();
                       setConfirmDelete(false);
                     }}
-                    className="text-[10px] font-semibold text-destructive hover:underline"
+                    className="text-[11px] font-semibold text-destructive hover:underline"
                   >
                     Yes
                   </button>
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="text-[10px] text-muted-foreground hover:underline"
+                    className="text-[11px] text-muted-foreground hover:underline"
                   >
                     No
                   </button>
@@ -586,7 +587,7 @@ function CommentThreadInline({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2">
                     <span className="text-xs font-medium">{name}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       {timeAgo(c.created_at)}
                     </span>
                   </div>

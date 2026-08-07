@@ -99,7 +99,7 @@ export const EXPERIENCE_LABEL: Record<SkillExperienceLevel, string> = {
 
 export function ExperienceBadge({ level }: { level: SkillExperienceLevel }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[10px] text-muted-foreground">
+    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[11px] text-muted-foreground">
       {EXPERIENCE_LABEL[level]}
     </span>
   );
@@ -116,7 +116,7 @@ export function VerificationBadge({
     level === "community_recognized" ? Trophy : level === "proof_certified" ? Check : null;
   const content = (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${VERIFICATION_STYLE[level]}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${VERIFICATION_STYLE[level]}`}
     >
       {Icon && <Icon className="h-2.5 w-2.5" />}
       {VERIFICATION_LABEL[level]}
@@ -326,7 +326,7 @@ export function BannerStrip({
                 ))}
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {captionDraft.length}/{BANNER_CAPTION_MAX}
                 </span>
                 <Button
@@ -593,35 +593,35 @@ export function ProjectsCard({
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="truncate font-display font-semibold">{p.title}</h3>
+                    <h3 className="truncate font-display font-semibold" title={p.title}>{p.title}</h3>
                     {p.is_featured && <Trophy className="h-3.5 w-3.5 shrink-0 text-primary" />}
                   </div>
                   {p.goal && (
                     <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
                       <Target className="mt-0.5 h-3 w-3 shrink-0" />
-                      <span className="line-clamp-1">{p.goal}</span>
+                      <span className="line-clamp-1" title={p.goal}>{p.goal}</span>
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2">
                     <Progress value={p.progress_percent} className="h-1.5" />
-                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
                       {p.progress_percent}%
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-[10px] ${PROJECT_STATUS_STYLE[p.status]}`}
+                      className={`rounded-full border px-2 py-0.5 text-[11px] ${PROJECT_STATUS_STYLE[p.status]}`}
                     >
                       {PROJECT_STATUS_LABEL[p.status]}
                     </span>
                     {p.looking_for_feedback && (
-                      <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                      <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
                         <MessageCircle className="mr-1 inline h-3 w-3" />
                         Feedback
                       </span>
                     )}
                     {p.looking_for_collaborators && (
-                      <span className="rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2 py-0.5 text-[10px] text-[var(--brand-purple)]">
+                      <span className="rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2 py-0.5 text-[11px] text-[var(--brand-purple)]">
                         <UserPlus className="mr-1 inline h-3 w-3" />
                         Collab
                       </span>

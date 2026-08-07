@@ -560,7 +560,7 @@ function SkillsCard({
           <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
             {grouped.map(([category, items]) => (
               <div key={category}>
-                <p className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                <p className="mb-2 text-[11px] uppercase tracking-widest text-muted-foreground">
                   {category}
                 </p>
                 <div className="flex flex-wrap gap-2">

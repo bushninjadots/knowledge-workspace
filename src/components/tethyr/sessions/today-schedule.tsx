@@ -38,7 +38,7 @@ function SessionCard({
         <p className="text-lg font-bold tabular-nums text-foreground">
           {formatTime(session.starts_at)}
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           {formatDuration(session.duration_minutes)}
         </p>
       </div>
@@ -48,7 +48,7 @@ function SessionCard({
         <div className="flex items-start gap-2">
           <h3 className="text-sm font-semibold text-foreground">{session.title}</h3>
           <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.bg} ${status.color}`}
           >
             {status.icon} {status.label}
           </span>
@@ -57,7 +57,7 @@ function SessionCard({
 
         {session.skills && (
           <p className="mt-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-medium">
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium">
               {session.skills.name}
             </span>
           </p>

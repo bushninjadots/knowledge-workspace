@@ -578,20 +578,20 @@ function ExplorePage() {
                               Open role
                             </span>
                             {skillMatchCount > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[10px] font-medium text-[var(--user-accent,var(--primary))]">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
                                 <BadgeCheck className="h-3 w-3" />
                                 {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
                               </span>
                             )}
                           </div>
-                          <h2 className="mt-2 truncate font-display text-lg font-semibold">
+                          <h2 className="mt-2 truncate font-display text-lg font-semibold" title={opportunity.title}>
                             {opportunity.title}
                           </h2>
                         </div>
                         <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
                       </div>
                       {opportunity.description && (
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground" title={opportunity.description ?? undefined}>
                           {opportunity.description}
                         </p>
                       )}
@@ -710,7 +710,7 @@ function ExplorePage() {
                       {initial}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-sm font-medium" title={c.display_name || c.handle || undefined}>
                         {c.display_name || c.handle || "Untitled member"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">

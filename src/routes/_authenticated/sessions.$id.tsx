@@ -491,7 +491,7 @@ function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
           </div>
           <Badge
             variant="outline"
-            className={`text-[10px] ${
+            className={`text-[11px] ${
               p.status === "accepted"
                 ? "border-trust/40 text-trust"
                 : p.status === "declined"
@@ -504,7 +504,7 @@ function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
             {p.status}
           </Badge>
           {p.role === "organizer" && (
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge variant="secondary" className="text-[11px]">
               Organizer
             </Badge>
           )}

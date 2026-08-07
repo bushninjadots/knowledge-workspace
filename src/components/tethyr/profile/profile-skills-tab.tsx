@@ -54,7 +54,7 @@ export function ProfileSkillsTab({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{s.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{s.category}</span>
+                    <span className="text-[11px] text-muted-foreground">{s.category}</span>
                   </div>
                   {s.meta && (
                     <div className="mt-1 flex items-center gap-2">

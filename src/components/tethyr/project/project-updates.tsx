@@ -121,7 +121,7 @@ export function ProjectUpdatesJournal({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       {u.week_number != null && (
-                        <span className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-[10px] font-medium tabular-nums">
+                        <span className="rounded-full border border-border/60 bg-surface-elevated px-2 py-0.5 text-[11px] font-medium tabular-nums">
                           Week {u.week_number}
                         </span>
                       )}

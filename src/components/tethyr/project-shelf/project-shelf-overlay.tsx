@@ -145,7 +145,7 @@ export function ProjectShelfOverlay({
                   <div className="absolute left-4 top-4 flex items-center gap-2">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider backdrop-blur-sm",
+                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider backdrop-blur-sm",
                         STATUS_STYLES[project.status]?.badge ?? STATUS_STYLES.active.badge,
                       )}
                     >
@@ -158,7 +158,7 @@ export function ProjectShelfOverlay({
                       {STATUS_STYLES[project.status]?.label ?? "Active"}
                     </span>
                     {project.looking_for_collaborators && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-purple/20 px-2 py-0.5 text-[10px] font-medium text-brand-purple backdrop-blur-sm">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-purple/20 px-2 py-0.5 text-[11px] font-medium text-brand-purple backdrop-blur-sm">
                         <Users className="h-2.5 w-2.5" />
                         Open
                       </span>

@@ -75,7 +75,7 @@ export function NotificationSidebar({
             />
             <span className="min-w-0 flex-1 text-left text-sm font-medium">{cat.label}</span>
             {count > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                 {count}
               </span>
             )}

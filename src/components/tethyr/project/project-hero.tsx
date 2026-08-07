@@ -95,7 +95,7 @@ export function ProjectHero({
                       }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-background">
+                    <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-background">
                       {(creator.profile?.display_name ?? "?")[0].toUpperCase()}
                     </div>
                   )}
@@ -199,7 +199,7 @@ export function ProjectHero({
           style={{ width: `${project.progress_percent}%` }}
         />
       </div>
-      <span className="absolute bottom-2 right-4 text-[10px] font-medium uppercase tracking-wider text-white/50">
+      <span className="absolute bottom-2 right-4 text-[11px] font-medium uppercase tracking-wider text-white/50">
         {project.stage ?? "planning"}
       </span>
     </section>

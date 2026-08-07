@@ -88,7 +88,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4">
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {group.label}
             </p>
             <div className="flex flex-col">
@@ -120,7 +120,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {badge != null && (
-                      <span className="rounded-sm bg-border-strong/40 px-1.5 text-[10px] font-medium tabular-nums text-foreground">
+                      <span className="rounded-sm bg-border-strong/40 px-1.5 text-[11px] font-medium tabular-nums text-foreground">
                         {badge}
                       </span>
                     )}

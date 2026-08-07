@@ -100,7 +100,7 @@ export function NextSessionCountdown({
       </div>
       <div className="text-right">
         <p className="text-lg font-bold tabular-nums text-brand-green">{timeStr}</p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           {start.toLocaleDateString(undefined, {
             weekday: "short",
             month: "short",

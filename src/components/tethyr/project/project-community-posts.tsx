@@ -141,11 +141,11 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
               }
               className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-surface-elevated"
             >
-              <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[10px] text-muted-foreground">
+              <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[11px] text-muted-foreground">
                 {POST_TYPE_LABEL[post.type] ?? post.type}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{post.title}</span>
-              <span className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="shrink-0 flex items-center gap-1 text-[11px] text-muted-foreground">
                 <Clock className="h-2.5 w-2.5" />
                 {timeAgo(post.created_at)}
               </span>

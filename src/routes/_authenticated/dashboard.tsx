@@ -329,7 +329,7 @@ function DashboardPage() {
                   className="group rounded-xl border card-border bg-surface-elevated/40 p-4 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="truncate text-sm font-medium">{p.title}</p>
+                    <p className="truncate text-sm font-medium" title={p.title}>{p.title}</p>
                     <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
@@ -377,7 +377,7 @@ function DashboardPage() {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       app.status === "accepted"
                         ? "bg-trust/10 text-trust"
                         : app.status === "declined"
@@ -408,7 +408,7 @@ function DashboardPage() {
                   className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{c.title}</p>
+                    <p className="truncate font-medium" title={c.title}>{c.title}</p>
                     <p className="text-xs text-muted-foreground capitalize">{c.difficulty}</p>
                   </div>
                   <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
@@ -439,14 +439,14 @@ function DashboardPage() {
                   className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{opp.title}</p>
+                    <p className="truncate font-medium" title={opp.title}>{opp.title}</p>
                     <p className="truncate text-xs text-muted-foreground">{opp.projects?.title}</p>
                   </div>
                   <div className="flex shrink-0 gap-1">
                     {(opp.skills ?? []).slice(0, 2).map((s: string) => (
                       <span
                         key={s}
-                        className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] text-[var(--user-accent,var(--primary))]"
+                        className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[11px] text-[var(--user-accent,var(--primary))]"
                       >
                         {s}
                       </span>
@@ -638,7 +638,7 @@ function CompletenessRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p className="font-display text-2xl font-semibold">{percent}%</p>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">complete</p>
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">complete</p>
         </div>
       </div>
       <div className="text-sm">

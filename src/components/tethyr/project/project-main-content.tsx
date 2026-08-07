@@ -211,14 +211,14 @@ export function ProjectMainContent({
                 </Link>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {c.contribution_score > 0 && (
-                    <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary tabular-nums">
+                    <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">
                       Score: {c.contribution_score}
                     </span>
                   )}
                   {c.skills_used.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+                      className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
                     >
                       {s}
                     </span>

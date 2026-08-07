@@ -163,7 +163,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
           <span className="font-medium text-foreground">{notification.title}</span>
         </p>
         {notification.body && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{notification.body}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={notification.body}>{notification.body}</p>
         )}
         <div className="mt-2 flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">

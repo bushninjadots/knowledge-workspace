@@ -5,13 +5,22 @@ import { Footer } from "@/components/tethyr/footer";
 import {
   CommunitySpaces,
   FeaturedProjects,
-  HeroActivityPanel,
+  HeroShowcase,
   HowItWorks,
   LandingStats,
   RecentActivity,
   TrendingSkills,
 } from "@/components/tethyr/landing-sections";
+import { HeroQuickMatch } from "@/components/tethyr/hero-quick-match";
+import { SectionReveal } from "@/components/tethyr/section-reveal";
 import { Button } from "@/components/ui/button";
+
+function scrollToContent() {
+  document.getElementById("landing-content")?.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block: "start",
+  });
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,7 +50,7 @@ function HomePage() {
               "radial-gradient(circle, oklch(0.92 0.23 142 / 0.3), oklch(0.65 0.26 305 / 0.2), transparent 70%)",
           }}
         />
-        <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-28 sm:px-6 sm:pt-32 sm:pb-36">
+        <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-44 sm:px-6 sm:pt-32">
           <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm animate-stagger">
@@ -71,54 +80,80 @@ function HomePage() {
                 </Button>
               </div>
             </div>
-            <HeroActivityPanel />
+            <HeroShowcase />
           </div>
+
+          <HeroQuickMatch />
         </div>
+
+        <button
+          type="button"
+          onClick={scrollToContent}
+          aria-label="Scroll to content"
+          className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2.5 text-muted-foreground/80 transition hover:text-foreground md:flex"
+        >
+          <span className="text-[11px] font-medium tracking-[0.25em] uppercase">Scroll</span>
+          <span className="h-9 w-px animate-scroll-line bg-gradient-to-b from-muted-foreground/80 to-transparent" />
+        </button>
       </section>
 
       <LandingStats />
-      <HowItWorks />
-      <TrendingSkills />
-      <FeaturedProjects />
-      <RecentActivity />
-      <CommunitySpaces />
+      <main id="landing-content">
+        <SectionReveal>
+          <HowItWorks />
+        </SectionReveal>
+        <SectionReveal>
+          <TrendingSkills />
+        </SectionReveal>
+        <SectionReveal>
+          <FeaturedProjects />
+        </SectionReveal>
+        <SectionReveal>
+          <RecentActivity />
+        </SectionReveal>
+        <SectionReveal>
+          <CommunitySpaces />
+        </SectionReveal>
+      </main>
 
-      <section className="px-4 py-24 sm:px-6">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-border/60 bg-surface p-12 text-center sm:p-20">
-          <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
-          <div
-            className="pointer-events-none absolute inset-0 opacity-50"
-            style={{
-              background:
-                "radial-gradient(ellipse at 30% 0%, oklch(0.92 0.23 142 / 0.2), transparent 50%), radial-gradient(ellipse at 70% 100%, oklch(0.65 0.26 305 / 0.2), transparent 50%)",
-            }}
-          />
-          <div className="relative">
-            <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
-              Ready to build something <span className="text-gradient-brand">together</span>?
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-              Claim your handle and join the first wave of people building Tethyr together. People
-              become known through what they build.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button
-                asChild
-                size="lg"
-                variant="default"
-                className="shadow-glow-green transition-lift"
-              >
-                <Link to="/signup">
-                  Create your profile <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="transition-lift">
-                <Link to="/login">I already have an account</Link>
-              </Button>
+      <SectionReveal>
+        <section className="px-4 py-24 sm:px-6">
+          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-border/60 bg-surface p-12 text-center sm:p-20">
+            <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
+            <div
+              className="pointer-events-none absolute inset-0 opacity-50"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 30% 0%, oklch(0.92 0.23 142 / 0.2), transparent 50%), radial-gradient(ellipse at 70% 100%, oklch(0.65 0.26 305 / 0.2), transparent 50%)",
+              }}
+            />
+            <div className="relative">
+              <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
+                Ready to build something <span className="text-gradient-brand">together</span>?
+              </h2>
+              <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
+                Claim your handle and join the first wave of people building Tethyr together. People
+                become known through what they build.
+              </p>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="default"
+                  className="shadow-glow-green transition-lift"
+                >
+                  <Link to="/signup">
+                    Create your profile <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="transition-lift">
+                  <Link to="/login">I already have an account</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </SectionReveal>
 
       <Footer />
     </div>

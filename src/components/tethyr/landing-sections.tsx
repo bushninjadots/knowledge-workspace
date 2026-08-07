@@ -1,14 +1,20 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { animate, useInView, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   Boxes,
   Building2,
+  Clock,
   Compass,
   FolderKanban,
   Heart,
+  MessageCircle,
   MessageSquare,
   Sparkles,
+  Star,
+  Trophy,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -30,6 +36,34 @@ const sb = supabase as any;
 // Real data hooks — graceful fallbacks so the landing page never breaks
 // ============================================================================
 
+/** Counts up from 0 to a real stat value once it scrolls into view. */
+function AnimatedStat({ value }: { value: number }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const prefersReducedMotion = useReducedMotion();
+  const [display, setDisplay] = useState(prefersReducedMotion ? value : 0);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (prefersReducedMotion) {
+      setDisplay(value);
+      return;
+    }
+    const controls = animate(0, value, {
+      duration: 1.2,
+      ease: "easeOut",
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [inView, value, prefersReducedMotion]);
+
+  return (
+    <p ref={ref} className="numeric font-display text-xl font-semibold leading-none">
+      {display.toLocaleString()}
+    </p>
+  );
+}
+
 function useLandingStats() {
   return useQuery({
     queryKey: ["landing-stats"],
@@ -45,13 +79,16 @@ function useLandingStats() {
           return 0;
         }
       };
-      const [members, projects, spaces, skills] = await Promise.all([
+      const [members, projects, spaces, skills, posts, comments, challenges] = await Promise.all([
         count("profiles"),
         count("projects"),
         count("community_spaces"),
         count("skills"),
+        count("posts"),
+        count("comments"),
+        count("challenges"),
       ]);
-      return { members, projects, spaces, skills };
+      return { members, projects, spaces, skills, posts, comments, challenges };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -64,6 +101,7 @@ type LandingProject = {
   status: string;
   tags: string[];
   progress_percent: number;
+  is_featured: boolean;
   cover_url: string | null;
   profiles: {
     handle: string | null;
@@ -78,7 +116,7 @@ function useFeaturedProjects() {
       const { data, error } = await supabase
         .from("projects")
         .select(
-          "id, title, description, status, tags, progress_percent, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)",
+          "id, title, description, status, tags, progress_percent, is_featured, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)",
         )
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false })
@@ -108,32 +146,49 @@ export function LandingStats() {
   const { data: stats } = useLandingStats();
   if (
     !stats ||
-    (stats.members === 0 && stats.projects === 0 && stats.spaces === 0 && stats.skills === 0)
+    (stats.members === 0 &&
+      stats.projects === 0 &&
+      stats.spaces === 0 &&
+      stats.skills === 0 &&
+      stats.posts === 0 &&
+      stats.comments === 0 &&
+      stats.challenges === 0)
   ) {
     return null;
   }
   const items = [
-    { value: stats.members.toLocaleString(), label: "Members", icon: Users },
-    { value: stats.projects.toLocaleString(), label: "Projects", icon: FolderKanban },
-    { value: stats.spaces.toLocaleString(), label: "Community spaces", icon: Boxes },
-    { value: stats.skills.toLocaleString(), label: "Skills in the catalog", icon: Sparkles },
+    { value: stats.members, label: "Members", icon: Users },
+    { value: stats.projects, label: "Projects", icon: FolderKanban },
+    { value: stats.spaces, label: "Community spaces", icon: Boxes },
+    { value: stats.skills, label: "Skills in the catalog", icon: Sparkles },
+    { value: stats.posts, label: "Community posts", icon: MessageSquare },
+    { value: stats.comments, label: "Comments shared", icon: MessageCircle },
+    { value: stats.challenges, label: "Challenges", icon: Trophy },
   ];
   return (
-    <section className="border-y border-border/60 bg-surface/40">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-8 sm:px-6 md:grid-cols-4">
-        {items.map((item) => (
-          <div key={item.label} className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-surface">
-              <item.icon className="h-4 w-4 text-muted-foreground" />
+    <section className="group border-y border-border/60 bg-surface/40">
+      <div className="marquee-viewport overflow-hidden">
+        <div className="marquee-track mx-auto flex w-max animate-marquee items-center py-8 group-hover:[animation-play-state:paused]">
+          {[false, true].map((duplicate) => (
+            <div
+              key={duplicate ? "copy" : "original"}
+              aria-hidden={duplicate}
+              className="marquee-half flex items-center gap-10 pr-10"
+            >
+              {items.map((item) => (
+                <div key={item.label} className="flex shrink-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-surface">
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <AnimatedStat value={item.value} />
+                    <p className="mt-1 text-xs text-muted-foreground">{item.label}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="numeric font-display text-xl font-semibold leading-none">
-                {item.value}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{item.label}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -518,19 +573,17 @@ export function HeroActivityPanel() {
 
   if (isLoading) {
     return (
-      <div className="hidden lg:block">
-        <div className="animate-pulse rounded-3xl border border-border/60 bg-surface/80 p-5 backdrop-blur-sm">
-          <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="mb-4 flex items-center gap-3">
-              <div className="h-8 w-8 shrink-0 rounded-full bg-surface-elevated" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-2/3 rounded bg-surface-elevated" />
-                <div className="h-3 w-full rounded bg-surface-elevated" />
-              </div>
+      <div className="animate-pulse rounded-3xl border border-border/60 bg-surface/80 p-5 backdrop-blur-sm">
+        <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="mb-4 flex items-center gap-3">
+            <div className="h-8 w-8 shrink-0 rounded-full bg-surface-elevated" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-2/3 rounded bg-surface-elevated" />
+              <div className="h-3 w-full rounded bg-surface-elevated" />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -538,55 +591,169 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="relative hidden lg:block">
-      <div className="card-border rounded-3xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-green" />
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Live from the community
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          {featured.map((post) => {
-            const TypeIcon = TYPE_ICON[post.type];
-            const name = post.author.display_name || post.author.handle || "Member";
-            return (
-              <Link
-                key={post.id}
-                to="/community"
-                className="group -mx-2 rounded-xl px-2 py-2.5 transition hover:bg-surface-elevated/60"
-              >
-                <div className="flex items-center gap-2.5">
-                  <ActivityAuthor author={post.author} className="h-8 w-8" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate text-xs font-medium">{name}</span>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        · {timeAgo(post.created_at)}
-                      </span>
-                    </div>
-                    <p className="truncate text-xs font-medium text-muted-foreground transition group-hover:text-primary">
-                      {post.title}
-                    </p>
-                  </div>{" "}
-                  <TypeIcon className={`h-3.5 w-3.5 shrink-0 ${TYPE_ACCENT[post.type]}`} />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        <Link
-          to="/community"
-          className="mt-3 flex items-center justify-between rounded-xl border border-border/60 bg-surface-elevated/50 px-3 py-2 text-xs font-medium text-primary transition hover:bg-surface-elevated"
-        >
-          Open the community <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+    <div className="card-border rounded-3xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-green" />
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Live from the community
+        </span>
       </div>
+
+      <div className="flex flex-col gap-1">
+        {featured.map((post) => {
+          const TypeIcon = TYPE_ICON[post.type];
+          const name = post.author.display_name || post.author.handle || "Member";
+          return (
+            <Link
+              key={post.id}
+              to="/community"
+              className="group -mx-2 rounded-xl px-2 py-2.5 transition hover:bg-surface-elevated/60"
+            >
+              <div className="flex items-center gap-2.5">
+                <ActivityAuthor author={post.author} className="h-8 w-8" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-xs font-medium">{name}</span>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
+                      · {timeAgo(post.created_at)}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs font-medium text-muted-foreground transition group-hover:text-primary">
+                    {post.title}
+                  </p>
+                </div>{" "}
+                <TypeIcon className={`h-3.5 w-3.5 shrink-0 ${TYPE_ACCENT[post.type]}`} />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <Link
+        to="/community"
+        className="mt-3 flex items-center justify-between rounded-xl border border-border/60 bg-surface-elevated/50 px-3 py-2 text-xs font-medium text-primary transition hover:bg-surface-elevated"
+      >
+        Open the community <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+// ============================================================================
+// Featured project hero card — real project with real contributor count
+// ============================================================================
+
+function useContributorCount(projectId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["landing-project-contributors", projectId],
+    queryFn: async () => {
+      if (!projectId) return 0;
+      const { count, error } = await sb
+        .from("project_contributors")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", projectId);
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function FeaturedHeroCard() {
+  const { data: projects, isLoading } = useFeaturedProjects();
+  // Show a genuinely featured project when one exists, otherwise the newest one
+  // (labeled accordingly — never a misleading "Featured" badge).
+  const featuredProject = projects?.find((p) => p.is_featured) ?? null;
+  const latestProject = featuredProject ? null : (projects?.[0] ?? null);
+  const project = featuredProject ?? latestProject;
+  const isFeatured = featuredProject != null;
+  const { data: contributorCount } = useContributorCount(project?.id);
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse overflow-hidden rounded-3xl border border-border/60 bg-surface/80">
+        <div className="h-36 bg-surface-sunken" />
+        <div className="space-y-3 p-5">
+          <div className="h-3 w-28 rounded bg-surface-elevated" />
+          <div className="h-4 w-3/4 rounded bg-surface-elevated" />
+          <div className="h-3 w-full rounded bg-surface-elevated" />
+        </div>
+      </div>
+    );
+  }
+  if (!project) return null;
+
+  const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
+  const authorName = project.profiles?.display_name || project.profiles?.handle || "Member";
+  const progress = project.progress_percent ?? 0;
+
+  return (
+    <Link
+      to="/projects/$id"
+      params={{ id: project.id }}
+      className="card-border group overflow-hidden rounded-3xl border bg-surface/80 backdrop-blur-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+    >
+      <div className="relative h-36 overflow-hidden bg-surface-sunken">
+        {project.cover_url ? (
+          <img
+            src={project.cover_url}
+            alt=""
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <FolderKanban className="h-8 w-8 text-muted-foreground/40" />
+          </div>
+        )}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm">
+          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+          {status.label}
+        </div>
+      </div>
+      <div className="p-5">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {isFeatured ? (
+            <>
+              <Star className="h-3 w-3 text-primary" /> Featured project
+            </>
+          ) : (
+            <>
+              <Clock className="h-3 w-3 text-primary" /> Latest project
+            </>
+          )}
+        </div>
+        <h3 className="mt-2 truncate font-display text-lg font-semibold group-hover:text-primary">
+          {project.title}
+        </h3>
+        {project.description && (
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
+        )}
+        <p className="mt-2 text-xs text-muted-foreground">by {authorName}</p>
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" /> {contributorCount ?? "–"} contributors
+            </span>
+            <span className="numeric">{progress}% complete</span>
+          </div>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
+            <div className="h-full rounded-full bg-primary/80" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export function HeroShowcase() {
+  return (
+    <div className="relative hidden flex-col gap-6 lg:flex">
+      <HeroActivityPanel />
+      <FeaturedHeroCard />
     </div>
   );
 }

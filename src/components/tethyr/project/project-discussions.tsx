@@ -75,7 +75,7 @@ function DiscussionThread({
           <div className="flex flex-wrap items-center gap-2">
             {discussion.is_pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
             <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${CATEGORY_STYLE[discussion.category]}`}
+              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${CATEGORY_STYLE[discussion.category]}`}
             >
               {CATEGORY_LABEL[discussion.category]}
             </span>
@@ -83,7 +83,7 @@ function DiscussionThread({
               <Link
                 to="/community"
                 search={{ post: discussion.community_post_id } as Record<string, string>}
-                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2 py-0.5 text-[10px] font-medium text-learning transition hover:bg-learning"
+                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2 py-0.5 text-[11px] font-medium text-learning transition hover:bg-learning"
               >
                 <Users className="h-2.5 w-2.5" />
                 Also on Community

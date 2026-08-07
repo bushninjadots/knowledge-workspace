@@ -154,7 +154,7 @@ export function ActivityTimeline({
               <p className="text-sm text-foreground">{label}</p>
               <div className="flex items-center gap-2">
                 {points != null && points > 0 && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[10px] font-medium text-brand-green">
+                  <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[11px] font-medium text-brand-green">
                     <Zap className="h-2.5 w-2.5" />+{points}
                   </span>
                 )}

@@ -48,7 +48,7 @@ function UpcomingCard({
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
         {start ? (
           <>
-            <span className="text-[10px] font-semibold uppercase text-brand-green">
+            <span className="text-[11px] font-semibold uppercase text-brand-green">
               {start.toLocaleDateString(undefined, { weekday: "short" })}
             </span>
             <span className="text-lg font-bold tabular-nums text-foreground">
@@ -65,7 +65,7 @@ function UpcomingCard({
         <div className="flex items-start gap-2">
           <h3 className="text-sm font-semibold text-foreground">{session.title}</h3>
           <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${status.bg} ${status.color}`}
           >
             {status.icon} {status.label}
           </span>
@@ -95,12 +95,12 @@ function UpcomingCard({
 
         <div className="mt-2 flex items-center gap-3">
           {session.skills && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
               {session.skills.name}
             </span>
           )}
           {session.projects && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
               📁 {session.projects.title}
             </span>
           )}

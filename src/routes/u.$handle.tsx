@@ -455,7 +455,7 @@ function PublicProfileRoute() {
                     </h3>
                     {p.status && (
                       <span
-                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${PROJECT_STATUS_STYLE[p.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
+                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${PROJECT_STATUS_STYLE[p.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
                       >
                         {PROJECT_STATUS_LABEL[p.status as keyof typeof PROJECT_STATUS_LABEL] ??
                           p.status}
@@ -468,11 +468,11 @@ function PublicProfileRoute() {
                     </p>
                   )}
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[10px] text-muted-foreground">
+                    <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground">
                       {p.role}
                     </span>
                     {p.progress_percent != null && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         {p.progress_percent}%
                       </span>
                     )}

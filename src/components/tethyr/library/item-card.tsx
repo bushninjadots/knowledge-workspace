@@ -81,10 +81,11 @@ export function ItemCard({
             to="/library/$id"
             params={{ id: item.id }}
             className="block truncate text-sm font-medium hover:underline"
+            title={item.title}
           >
             {item.title}
           </Link>
-          {excerpt && <p className="mt-0.5 truncate text-xs text-muted-foreground">{excerpt}</p>}
+          {excerpt && <p className="mt-0.5 truncate text-xs text-muted-foreground" title={excerpt}>{excerpt}</p>}
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -181,6 +182,7 @@ export function ItemCard({
         to="/library/$id"
         params={{ id: item.id }}
         className="mb-1 block truncate text-sm font-medium hover:underline"
+        title={item.title}
       >
         {item.title}
       </Link>

@@ -263,7 +263,7 @@ export function AttachProjectPanel({
             <button
               key={tag}
               onClick={() => toggleFeedbackTag(tag)}
-              className={`rounded-full border px-2 py-0.5 text-[10px] transition ${
+              className={`rounded-full border px-2 py-0.5 text-[11px] transition ${
                 feedbackTags.includes(tag)
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"

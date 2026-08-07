@@ -110,7 +110,7 @@ export function LibrarySidebar({
 
         {/* Filters */}
         <div>
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Browse
           </p>
           <nav className="flex flex-col gap-0.5">
@@ -148,7 +148,7 @@ export function LibrarySidebar({
           <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
               onClick={() => setCollectionsOpen(!collectionsOpen)}
-              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
+              className="flex flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
             >
               {collectionsOpen ? (
                 <ChevronDown className="h-3 w-3" />
@@ -203,7 +203,7 @@ export function LibrarySidebar({
           <div className="mb-2 flex w-full items-center gap-1.5 px-2">
             <button
               onClick={() => setTagsOpen(!tagsOpen)}
-              className="flex flex-1 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
+              className="flex flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-muted-foreground"
             >
               {tagsOpen ? (
                 <ChevronDown className="h-3 w-3" />

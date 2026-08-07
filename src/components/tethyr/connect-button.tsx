@@ -83,7 +83,7 @@ export function ConnectButton({
                 rows={4}
                 maxLength={INTRO_MAX}
               />
-              <div className="text-right text-[10px] text-muted-foreground">
+              <div className="text-right text-[11px] text-muted-foreground">
                 {intro.length}/{INTRO_MAX}
               </div>
             </div>

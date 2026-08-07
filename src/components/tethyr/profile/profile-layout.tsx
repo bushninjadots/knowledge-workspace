@@ -432,7 +432,7 @@ function CompletenessRing({ value }: { value: number }) {
           {value}%
         </div>
       </div>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Complete</p>
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Complete</p>
     </div>
   );
 }

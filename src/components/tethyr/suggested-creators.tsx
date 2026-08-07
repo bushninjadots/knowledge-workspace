@@ -179,7 +179,7 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
                 {c.matchReasons.slice(0, 2).map((reason: string) => (
                   <span
                     key={reason}
-                    className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green"
+                    className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green"
                   >
                     <Zap className="h-2.5 w-2.5" />
                     {reason}

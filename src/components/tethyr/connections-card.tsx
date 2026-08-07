@@ -61,15 +61,16 @@ export function ConnectionsCard() {
                     to="/u/$handle"
                     params={{ handle: c.other.handle }}
                     className="truncate text-sm font-medium hover:text-primary"
+                    title={c.other?.display_name || c.other?.handle || undefined}
                   >
                     {c.other?.display_name || c.other?.handle}
                   </Link>
                 ) : (
-                  <p className="truncate text-sm font-medium">
+                  <p className="truncate text-sm font-medium" title={c.other?.display_name || "Member"}>
                     {c.other?.display_name || "Member"}
                   </p>
                 )}
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground" title={c.other?.creator_title || c.other?.category || undefined}>
                   {c.other?.creator_title || c.other?.category || "wants to tethyr"}
                 </p>
                 {c.intro_message && (
@@ -134,11 +135,12 @@ export function ConnectionsCard() {
                     to="/u/$handle"
                     params={{ handle: c.other.handle }}
                     className="truncate text-sm hover:text-primary"
+                    title={c.other?.display_name || c.other?.handle || undefined}
                   >
                     {c.other?.display_name || c.other?.handle}
                   </Link>
                 ) : (
-                  <p className="truncate text-sm">{c.other?.display_name || "Member"}</p>
+                  <p className="truncate text-sm" title={c.other?.display_name || "Member"}>{c.other?.display_name || "Member"}</p>
                 )}
                 <p className="truncate text-[11px] text-muted-foreground">Waiting for response</p>
               </div>
@@ -184,15 +186,16 @@ export function ConnectionsCard() {
                       to="/u/$handle"
                       params={{ handle: c.other.handle }}
                       className="block truncate text-sm font-medium hover:text-primary"
+                      title={c.other?.display_name || c.other?.handle || undefined}
                     >
                       {c.other?.display_name || c.other?.handle}
                     </Link>
                   ) : (
-                    <p className="truncate text-sm font-medium">
+                    <p className="truncate text-sm font-medium" title={c.other?.display_name || "Member"}>
                       {c.other?.display_name || "Member"}
                     </p>
                   )}
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="truncate text-xs text-muted-foreground" title={c.other?.creator_title || c.other?.category || undefined}>
                     {c.other?.creator_title || c.other?.category || "—"}
                   </p>
                 </div>

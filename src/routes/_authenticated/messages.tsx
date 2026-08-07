@@ -65,7 +65,7 @@ function MessagesPage() {
             <p className="text-[11px] text-muted-foreground">Where tethrs actually talk</p>
           </div>
           {unread && unread.total > 0 && (
-            <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+            <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
               {unread.total}
             </span>
           )}
@@ -160,7 +160,7 @@ function ConversationRow({
         <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
       </div>
       {unreadCount > 0 && (
-        <span className="shrink-0 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm">
+        <span className="shrink-0 rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-sm">
           {unreadCount}
         </span>
       )}
@@ -275,7 +275,7 @@ function Thread({
                   {m.body}
                 </div>
                 {isLastMine && (
-                  <span className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <span className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                     {m.read_at ? (
                       <>
                         <CheckCheck className="h-3 w-3 text-primary/60" />

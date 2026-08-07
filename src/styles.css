@@ -34,13 +34,11 @@
   --radius-xl: 5px;
   --radius-2xl: 5px;
   --radius-3xl: 6px;
-  --radius-4xl: 8px;  /* reserved: modals, images, hero sections */
+  --radius-4xl: 8px; /* reserved: modals, images, hero sections */
 
   /* --- Type -------------------------------------------------------------- */
-  --font-sans:
-    "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display:
-    "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* --- Surfaces ---------------------------------------------------------- */
@@ -100,7 +98,7 @@
   --shadow-glow-purple-soft: none;
   --shadow-card: none;
   --shadow-soft: none;
-  --shadow-lifted: 0 1px 3px 0 var(--shadow-tint);  /* dialogs only */
+  --shadow-lifted: 0 1px 3px 0 var(--shadow-tint); /* dialogs only */
 }
 
 /* ---------------------------------------------------------------------------
@@ -208,7 +206,7 @@
   --input: oklch(0.33 0.012 258);
   --ring: oklch(0.68 0.18 253);
 
-  --shadow-tint: oklch(0 0 0 / 0.60);
+  --shadow-tint: oklch(0 0 0 / 0.6);
 
   /* Semantic colours — punchy, visible, not washed-out */
   --trust: oklch(0.78 0.18 152);
@@ -221,13 +219,13 @@
 
   --teaching: oklch(0.82 0.16 82);
   --teaching-foreground: oklch(0.15 0.04 80);
-  --teaching-subtle: oklch(0.30 0.07 82);
+  --teaching-subtle: oklch(0.3 0.07 82);
 
   --ai: oklch(0.74 0.18 292);
   --ai-foreground: oklch(0.14 0.04 292);
   --ai-subtle: oklch(0.29 0.07 292);
 
-  --warning: oklch(0.70 0.22 25);
+  --warning: oklch(0.7 0.22 25);
   --warning-foreground: oklch(0.14 0.04 26);
   --warning-subtle: oklch(0.29 0.08 25);
 
@@ -242,7 +240,6 @@
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
 }
-
 
 @layer base {
   * {
@@ -492,6 +489,59 @@
   animation: gentle-pulse 2.4s ease-in-out infinite;
 }
 
+/* Stats marquee — seamless infinite scroll. Reduced-motion users get a static
+   wrapped grid instead (the global reduced-motion rule already stops the animation). */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee-scroll 36s linear infinite;
+}
+
+/* Hero scroll indicator — a small line that "drips" downward. */
+@keyframes scroll-line {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+@utility animate-scroll-line {
+  animation: scroll-line 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-viewport {
+    overflow: visible;
+  }
+  .marquee-track {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .marquee-half[aria-hidden="true"] {
+    display: none;
+  }
+}
+
 /* Animated accent border glow — rotates a conic gradient behind the element,
    visible through a 1px transparent gap. Used on hero cards and sidebars. */
 @keyframes accent-spin {
@@ -523,9 +573,13 @@
   animation-play-state: paused;
   opacity: 0;
   transition: opacity 400ms ease;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   padding: 1px;
 }

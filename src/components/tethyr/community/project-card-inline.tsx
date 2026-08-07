@@ -72,7 +72,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium">{name}</p>
           {stage && (
-            <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[10px] text-muted-foreground">
+            <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[11px] text-muted-foreground">
               {STAGE_LABEL[stage] ?? stage}
             </span>
           )}
@@ -84,7 +84,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
       {isExternal ? (
         <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       ) : (
-        <span className="text-[10px] text-muted-foreground">Open →</span>
+        <span className="text-[11px] text-muted-foreground">Open →</span>
       )}
     </div>
   );

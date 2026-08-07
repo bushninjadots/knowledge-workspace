@@ -142,7 +142,7 @@ function SkillPage() {
               <h1 className="font-display text-2xl font-semibold sm:text-3xl">{skill.name}</h1>
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${categoryBadge.color}`}
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${categoryBadge.color}`}
                 >
                   <categoryBadge.icon className="h-2.5 w-2.5" />
                   {skill.category}
@@ -600,27 +600,27 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="truncate text-sm font-medium">{proj.title}</p>
+              <p className="truncate text-sm font-medium" title={proj.title}>{proj.title}</p>
               {proj.stage && (
                 <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
                 >
                   {STAGE_LABELS[proj.stage] ?? proj.stage}
                 </span>
               )}
             </div>
             {proj.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{proj.description}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={proj.description ?? undefined}>{proj.description}</p>
             )}
             <div className="mt-2 flex flex-wrap gap-1">
               {proj.looking_for_collaborators && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[10px] text-brand-green">
+                <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
                   <Users className="h-2.5 w-2.5" />
                   Seeking collaborators
                 </span>
               )}
               {proj.looking_for_feedback && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[10px] text-brand-purple">
+                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
                   Wants feedback
                 </span>
               )}

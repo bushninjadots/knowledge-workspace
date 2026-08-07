@@ -146,7 +146,7 @@ function ChallengeDetailPage() {
                 <ChallengeAvatar
                   profile={challenge.creator}
                   className="h-5 w-5"
-                  fallbackClassName="text-[10px]"
+                  fallbackClassName="text-[11px]"
                 />
                 <span>Created by {challenge.creator?.display_name || "Community Member"}</span>
               </div>
@@ -348,7 +348,7 @@ function ChallengeDetailPage() {
 
                 <Badge
                   variant="outline"
-                  className={`text-[10px] capitalize ${
+                  className={`text-[11px] capitalize ${
                     part.status === "completed"
                       ? "bg-trust text-trust border-trust/40"
                       : "bg-secondary text-muted-foreground"

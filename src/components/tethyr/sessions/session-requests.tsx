@@ -33,7 +33,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
           <h3 className="text-sm font-semibold text-foreground">
             {otherUser?.display_name || otherUser?.handle || "Unknown"}
           </h3>
-          <span className="shrink-0 rounded-full bg-teaching-subtle px-2 py-0.5 text-[10px] font-medium text-teaching">
+          <span className="shrink-0 rounded-full bg-teaching-subtle px-2 py-0.5 text-[11px] font-medium text-teaching">
             📨 {isIncoming ? "Invitation" : "Request"}
           </span>
         </div>
@@ -61,7 +61,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
             {request.message}
           </div>
         )}
-        <p className="mt-1.5 text-[10px] text-muted-foreground">
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
           {new Date(request.created_at).toLocaleString()}
         </p>
       </div>

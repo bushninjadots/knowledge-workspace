@@ -444,7 +444,7 @@ export function ComposerBar({
             <div className="mt-1.5 flex items-center justify-end gap-1.5">
               <CharCount current={draft.length} max={MAX_CHARS} />
               <span
-                className={`text-[10px] tabular-nums ${draft.length > MAX_CHARS * 0.85 ? "text-destructive" : "text-muted-foreground"}`}
+                className={`text-[11px] tabular-nums ${draft.length > MAX_CHARS * 0.85 ? "text-destructive" : "text-muted-foreground"}`}
               >
                 {draft.length}/{MAX_CHARS}
               </span>
@@ -486,7 +486,7 @@ export function ComposerBar({
           <div className="space-y-2">
             {pollOptions.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/60 text-[10px] tabular-nums text-muted-foreground">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/60 text-[11px] tabular-nums text-muted-foreground">
                   {i + 1}
                 </span>
                 <input
@@ -511,7 +511,7 @@ export function ComposerBar({
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Ends</span>
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Ends</span>
             <input
               type="datetime-local"
               value={pollEndsAt}
@@ -526,7 +526,7 @@ export function ComposerBar({
                 <X className="h-3 w-3" />
               </button>
             )}
-            <span className="text-[10px] text-muted-foreground">optional</span>
+            <span className="text-[11px] text-muted-foreground">optional</span>
           </div>
 
           {pollOptions.length < 10 && (
