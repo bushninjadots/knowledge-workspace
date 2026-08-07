@@ -5,9 +5,10 @@ interface CoverGradientProps {
   tags: string[];
   coverUrl?: string | null;
   progress: number;
+  animated?: boolean;
 }
 
-export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) {
+export function CoverGradient({ tags, coverUrl, progress, animated = true }: CoverGradientProps) {
   const cat = inferCategory(tags);
   const c = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.Design;
   const prefersReducedMotion = useReducedMotion();
@@ -28,7 +29,7 @@ export function CoverGradient({ tags, coverUrl, progress }: CoverGradientProps) 
 
   const gradient = `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`;
 
-  if (prefersReducedMotion) {
+  if (!animated || prefersReducedMotion) {
     return <div className="absolute inset-0" style={{ background: gradient }} />;
   }
 

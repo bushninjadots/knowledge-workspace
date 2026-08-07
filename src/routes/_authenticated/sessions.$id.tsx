@@ -382,7 +382,11 @@ function StatusActions({
               size="sm"
               onClick={() => onStatusChange(t.next)}
               disabled={isUpdating}
-              className={isCancel ? "" : "bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"}
+              className={
+                isCancel
+                  ? ""
+                  : "bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+              }
             >
               {isUpdating ? (
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />

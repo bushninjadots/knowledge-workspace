@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { HandHeart, CheckCircle2, XCircle, Clock, Send } from "lucide-react";
+import { HandHeart, CheckCircle2, Clock, Send, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -64,50 +64,94 @@ export function ApplyToRoleButton({
   roleId,
   projectId: _projectId,
   isOwner,
+  meId,
+  myStatus,
 }: {
   roleId: string;
   projectId: string;
   isOwner: boolean;
+  /** Signed-in user id — skips the internal auth round-trip when provided. */
+  meId?: string | null;
+  /**
+   * Known application status for this role, fed from a batched query so many
+   * cards don't each fire their own query. `undefined` falls back to an
+   * internal per-role query; `null` means "definitely no application yet".
+   */
+  myStatus?: string | null;
 }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
+  // Optimistic flip after submitting so the button doesn't flicker while caches refetch.
+  const [localStatus, setLocalStatus] = useState<string | null | undefined>(undefined);
 
-  // Check if already applied
-  const { data: myApps = [] } = useQuery({
+  // Check if already applied — newest row first so a re-apply surfaces ahead of a stale decline.
+  // Also resolves sign-in state so signed-out visitors see a login prompt instead of a dead Apply.
+  const { data: myApps, isLoading: myAppsLoading } = useQuery({
     queryKey: ["my-role-applications", roleId],
-    queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
+    queryFn: async (): Promise<{ signedIn: boolean; apps: { id: string; status: string }[] }> => {
+      const id = meId ?? (await supabase.auth.getUser()).data.user?.id;
+      if (!id) return { signedIn: false, apps: [] };
       const { data, error } = await sb
         .from("project_role_applications")
         .select("id, status")
         .eq("role_id", roleId)
-        .eq("profile_id", user.id);
+        .eq("profile_id", id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as { id: string; status: string }[];
+      return { signedIn: true, apps: (data ?? []) as { id: string; status: string }[] };
     },
+    enabled: myStatus === undefined,
   });
 
   const applyMutation = useMutation({
     mutationFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const id = meId ?? (await supabase.auth.getUser()).data.user?.id;
+      if (!id) throw new Error("Not authenticated");
 
-      const { error } = await sb.from("project_role_applications").insert({
-        role_id: roleId,
-        profile_id: user.id,
-        message: message.trim() || null,
-      });
-      if (error) throw error;
+      // Idempotent apply: re-open a declined row (newest first), skip when a
+      // pending/accepted row already exists (prevents double-submit duplicates).
+      const { data: prior } = await sb
+        .from("project_role_applications")
+        .select("id, status")
+        .eq("role_id", roleId)
+        .eq("profile_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const priorApp = prior?.[0];
+      if (priorApp && priorApp.status !== "declined") {
+        // Already pending/accepted — the cache refetch will surface the chip.
+        return;
+      }
+
+      if (priorApp) {
+        const { error } = await sb
+          .from("project_role_applications")
+          .update({
+            status: "pending",
+            message: message.trim() || null,
+            // Bump so it surfaces at the top of the dashboard's "Your applications" again.
+            created_at: new Date().toISOString(),
+          })
+          .eq("id", priorApp.id);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from("project_role_applications").insert({
+          role_id: roleId,
+          profile_id: id,
+          message: message.trim() || null,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["role-applications", roleId] });
-      qc.invalidateQueries({ queryKey: ["my-role-applications", roleId] });
+      // Prefix matches both the per-role check and the explore batch query.
+      qc.invalidateQueries({ queryKey: ["my-role-applications"] });
+      // The dashboard "Your applications" section reads this key.
+      qc.invalidateQueries({ queryKey: ["my-applications"] });
+      setLocalStatus("pending");
       setShowForm(false);
       setMessage("");
       toast.success("Application submitted");
@@ -119,27 +163,55 @@ export function ApplyToRoleButton({
 
   if (isOwner) return null;
 
-  const existingApp = myApps[0];
+  // Resolve the current status: optimistic → batched prop → internal query.
+  const resolvedStatus =
+    localStatus !== undefined
+      ? localStatus
+      : myStatus !== undefined
+        ? myStatus
+        : myApps?.apps[0]?.status;
 
-  if (existingApp) {
+  // Avoid flashing the apply button while the internal check is in flight.
+  if (myStatus === undefined && myAppsLoading) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Clock className="h-3 w-3" />
+        Checking…
+      </span>
+    );
+  }
+
+  // Signed-out visitor — send them to the login page instead of a dead Apply button.
+  // (When myStatus is fed from a batched query the tab is authenticated, so this only
+  // triggers on the public project page where the internal query resolves sign-in.)
+  if (myStatus === undefined && myApps && !myAppsLoading && !myApps.signedIn) {
+    return (
+      <Link
+        to="/login"
+        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-brand-purple/40 hover:text-brand-purple"
+      >
+        <HandHeart className="h-3 w-3" />
+        Sign in to apply
+      </Link>
+    );
+  }
+
+  const wasDeclined = resolvedStatus === "declined";
+
+  // Accepted / pending rows are terminal states — show a quiet chip.
+  if (resolvedStatus && !wasDeclined) {
     return (
       <span
         className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-          existingApp.status === "accepted"
-            ? "text-brand-green"
-            : existingApp.status === "declined"
-              ? "text-destructive"
-              : "text-muted-foreground"
+          resolvedStatus === "accepted" ? "text-brand-green" : "text-muted-foreground"
         }`}
       >
-        {existingApp.status === "accepted" && <CheckCircle2 className="h-3 w-3" />}
-        {existingApp.status === "declined" && <XCircle className="h-3 w-3" />}
-        {existingApp.status === "pending" && <Clock className="h-3 w-3" />}
-        {existingApp.status === "accepted"
-          ? "Accepted"
-          : existingApp.status === "declined"
-            ? "Declined"
-            : "Application pending"}
+        {resolvedStatus === "accepted" ? (
+          <CheckCircle2 className="h-3 w-3" />
+        ) : (
+          <Clock className="h-3 w-3" />
+        )}
+        {resolvedStatus === "accepted" ? "Accepted" : "Application pending"}
       </span>
     );
   }
@@ -177,10 +249,14 @@ export function ApplyToRoleButton({
   return (
     <button
       onClick={() => setShowForm(true)}
-      className="flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-3 py-1.5 text-xs font-medium text-brand-purple transition hover:bg-brand-purple/20"
+      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+        wasDeclined
+          ? "border-border/60 bg-background/40 text-muted-foreground hover:border-brand-purple/40 hover:text-brand-purple"
+          : "border-brand-purple/40 bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20"
+      }`}
     >
-      <HandHeart className="h-3 w-3" />
-      Apply
+      {wasDeclined ? <RotateCcw className="h-3 w-3" /> : <HandHeart className="h-3 w-3" />}
+      {wasDeclined ? "Apply again" : "Apply"}
     </button>
   );
 }

@@ -8,11 +8,12 @@ import {
   useMotionValueEvent,
   animate,
 } from "framer-motion";
-import { ChevronLeft, ChevronRight, Keyboard } from "lucide-react";
+import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectShelfHeader } from "./project-shelf-header";
 import { ProjectShelfCover, STATUS_STYLES, getCardWidth } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
+import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { CATEGORY_COLORS, inferCategory } from "@/lib/category-colors";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -148,6 +149,26 @@ export function ProjectShelf({
     [maxOffset, displayOffset, prefersReducedMotion],
   );
 
+  const jumpTo = useCallback(
+    (index: number) => {
+      if (index < 0 || index > maxOffset) return;
+      displayOffset.stop();
+      if (prefersReducedMotion) {
+        displayOffset.set(index);
+        return;
+      }
+      const current = Math.round(displayOffset.get());
+      animate(displayOffset, index, {
+        type: "spring",
+        stiffness: 300,
+        damping: 28,
+        mass: 0.9,
+        velocity: (index - current) * 1.5,
+      });
+    },
+    [maxOffset, displayOffset, prefersReducedMotion],
+  );
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (overlayIndexRef.current != null) return; // overlay handles its own keys
@@ -155,7 +176,9 @@ export function ProjectShelf({
       if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.key === "ArrowLeft") navigate(-1);
       if (e.key === "ArrowRight") navigate(1);
-      if (e.key === "Enter" && projects[activeIndex]) updateOverlayIndex(activeIndex);
+      // Buttons (thumbs, arrows, cards) activate on their own native click.
+      if (e.key === "Enter" && !target?.closest("button, a") && projects[activeIndex])
+        updateOverlayIndex(activeIndex);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -330,7 +353,32 @@ export function ProjectShelf({
         count={projects.length}
       />
 
-      {isMobile ? (
+      {projects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed card-border bg-surface/50 px-6 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated">
+            <Folder className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">No projects match</p>
+            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+              {q || category !== "All"
+                ? "Try a different search term or category."
+                : "Check back soon — new projects land here regularly."}
+            </p>
+          </div>
+          {(q || category !== "All") && (
+            <button
+              onClick={() => {
+                setQ("");
+                setCategory("All");
+              }}
+              className="rounded-full border border-border/60 bg-background/60 px-4 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : isMobile ? (
         <div className="space-y-3 px-4">
           {projects.map((project, i) => (
             <ProjectShelfCover
@@ -446,51 +494,63 @@ export function ProjectShelf({
 
           {/* Caption + position bar */}
           {projects.length > 0 && (
-            <div className="flex items-center gap-4 px-1">
-              <div className="min-w-0 flex-1" aria-live="polite">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={activeProject?.id ?? "empty"}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
-                    className="min-w-0"
-                  >
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {activeProject?.title}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      by{" "}
-                      {activeProject?.profiles?.display_name ||
-                        activeProject?.profiles?.handle ||
-                        "Member"}{" "}
-                      · {STATUS_STYLES[activeProject?.status ?? ""]?.label ?? "Active"} ·{" "}
-                      {activeProject?.progress_percent ?? 0}% complete
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 px-1">
+                <div className="min-w-0 flex-1" aria-live="polite">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={activeProject?.id ?? "empty"}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
+                      className="min-w-0"
+                    >
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {activeProject?.title}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        by{" "}
+                        {activeProject?.profiles?.display_name ||
+                          activeProject?.profiles?.handle ||
+                          "Member"}{" "}
+                        · {STATUS_STYLES[activeProject?.status ?? ""]?.label ?? "Active"} ·{" "}
+                        {activeProject?.progress_percent ?? 0}% complete
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="numeric text-xs text-muted-foreground-subtle">
+                    {shownIndex + 1} / {projects.length}
+                  </span>
+                  <div className="h-1 w-24 overflow-hidden rounded-full bg-border">
+                    <motion.div
+                      className="h-full rounded-full bg-primary/80"
+                      animate={{ width: `${((shownIndex + 1) / projects.length) * 100}%` }}
+                      transition={
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : { type: "spring", stiffness: 300, damping: 30 }
+                      }
+                    />
+                  </div>
+                  <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground-subtle md:flex">
+                    <Keyboard className="h-3.5 w-3.5" />← → to browse
+                  </span>
+                </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="numeric text-xs text-muted-foreground-subtle">
-                  {shownIndex + 1} / {projects.length}
-                </span>
-                <div className="h-1 w-24 overflow-hidden rounded-full bg-border">
-                  <motion.div
-                    className="h-full rounded-full bg-primary/80"
-                    animate={{ width: `${((shownIndex + 1) / projects.length) * 100}%` }}
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 300, damping: 30 }
-                    }
-                  />
-                </div>
-                <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground-subtle md:flex">
-                  <Keyboard className="h-3.5 w-3.5" />← → to browse
-                </span>
-              </div>
+              {/* Thumbnail strip — jump straight to any project */}
+              {projects.length > 1 && (
+                <ProjectShelfThumbnails
+                  projects={projects}
+                  activeIndex={shownIndex}
+                  prefersReducedMotion={prefersReducedMotion ?? false}
+                  onSelect={jumpTo}
+                />
+              )}
             </div>
           )}
         </>

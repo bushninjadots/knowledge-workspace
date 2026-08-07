@@ -1,6 +1,6 @@
 # Community Following & Spaces Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement a one-way Following system and Community Spaces with moderation, replacing the two stubbed tabs in the community page.
 
@@ -28,7 +28,7 @@
 **Files:**
 - Create: `supabase/migrations/20260727000000_add_follows_table.sql`
 
-- [ ] **Step 1: Create the migration file**
+- [x] **Step 1: Create the migration file**
 
 ```sql
 -- Follows: one-way follow relationships between users.
@@ -61,11 +61,11 @@ CREATE POLICY "Users can unfollow others"
   USING (auth.uid() = follower_id);
 ```
 
-- [ ] **Step 2: Apply migration locally**
+- [x] **Step 2: Apply migration locally**
 
 Run: `npx supabase db reset` (or `npx supabase migration up` if preferred)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260727000000_add_follows_table.sql
@@ -83,7 +83,7 @@ git commit -m "feat(db): add follows table for one-way follow relationships"
 - Consumes: `supabase` client from `@/integrations/supabase/client`
 - Produces: `useFollowStatus`, `useFollowers`, `useFollowing`, `useFollowUser`, `useUnfollowUser`, `useFollowingFeed`
 
-- [ ] **Step 1: Create the hooks file with types and query keys**
+- [x] **Step 1: Create the hooks file with types and query keys**
 
 ```typescript
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,7 +97,7 @@ const FOLLOWING_KEY = (userId: string) => ["following", userId] as const;
 const FOLLOWING_FEED_KEY = ["following-feed"] as const;
 ```
 
-- [ ] **Step 2: Add `useFollowStatus` hook**
+- [x] **Step 2: Add `useFollowStatus` hook**
 
 ```typescript
 export function useFollowStatus(targetUserId: string) {
@@ -128,7 +128,7 @@ export function useFollowStatus(targetUserId: string) {
 }
 ```
 
-- [ ] **Step 3: Add `useFollowers` and `useFollowing` hooks**
+- [x] **Step 3: Add `useFollowers` and `useFollowing` hooks**
 
 ```typescript
 export function useFollowers(userId: string) {
@@ -178,7 +178,7 @@ export function useFollowing(userId: string) {
 }
 ```
 
-- [ ] **Step 4: Add `useFollowUser` and `useUnfollowUser` mutations**
+- [x] **Step 4: Add `useFollowUser` and `useUnfollowUser` mutations**
 
 ```typescript
 export function useFollowUser() {
@@ -225,7 +225,7 @@ export function useUnfollowUser() {
 }
 ```
 
-- [ ] **Step 5: Add `useFollowingFeed` hook**
+- [x] **Step 5: Add `useFollowingFeed` hook**
 
 This hook fetches posts from followed users, joining profiles and aggregating action stats — same pattern as `usePosts` in `use-community.ts` but filtered to followed users.
 
@@ -324,12 +324,12 @@ export function useFollowingFeed() {
 }
 ```
 
-- [ ] **Step 6: Run typecheck**
+- [x] **Step 6: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/hooks/use-follow.ts
@@ -347,7 +347,7 @@ git commit -m "feat(hooks): add follow/unfollow hooks and following feed query"
 - Consumes: `useFollowStatus`, `useFollowUser`, `useUnfollowUser` from `@/hooks/use-follow`
 - Produces: `FollowButton` component (imported by PostCard, profile pages)
 
-- [ ] **Step 1: Create FollowButton component**
+- [x] **Step 1: Create FollowButton component**
 
 ```typescript
 import { useState } from "react";
@@ -418,12 +418,12 @@ export function FollowButton({
 }
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/follow-button.tsx
@@ -441,7 +441,7 @@ git commit -m "feat(ui): add FollowButton component with hover-to-unfollow"
 - Consumes: `FollowButton` from `@/components/tethyr/follow-button`
 - Produces: No new exports — modifies existing PostCard rendering
 
-- [ ] **Step 1: Add FollowButton import to PostCard**
+- [x] **Step 1: Add FollowButton import to PostCard**
 
 At the top of `post-card.tsx`, add after the existing imports:
 
@@ -449,7 +449,7 @@ At the top of `post-card.tsx`, add after the existing imports:
 import { FollowButton } from "@/components/tethyr/follow-button";
 ```
 
-- [ ] **Step 2: Add FollowButton to the author header**
+- [x] **Step 2: Add FollowButton to the author header**
 
 In the `PostCard` component, find the `<div className="flex shrink-0 items-center gap-2">` block (around line 236). Add a FollowButton before the owner edit/delete buttons, only when the post author is not the current user:
 
@@ -464,12 +464,12 @@ In the `PostCard` component, find the `<div className="flex shrink-0 items-cente
 </div>
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/community/post-card.tsx
@@ -487,7 +487,7 @@ git commit -m "feat(ui): add FollowButton to community post cards"
 **Interfaces:**
 - Consumes: `FollowButton` from `@/components/tethyr/follow-button`
 
-- [ ] **Step 1: Add FollowButton to public profile (`u.$handle.tsx`)**
+- [x] **Step 1: Add FollowButton to public profile (`u.$handle.tsx`)**
 
 Add import at the top:
 
@@ -507,7 +507,7 @@ Find the action buttons section (around line 291, the `<div className="flex item
 </div>
 ```
 
-- [ ] **Step 2: Add FollowButton to authenticated profile layout (`profile-layout.tsx`)**
+- [x] **Step 2: Add FollowButton to authenticated profile layout (`profile-layout.tsx`)**
 
 Add import at the top:
 
@@ -537,12 +537,12 @@ Find the ACTION BUTTONS section for public profiles (around line 233, the `{!isO
 )}
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/u.\$handle.tsx src/components/tethyr/profile/profile-layout.tsx
@@ -559,7 +559,7 @@ git commit -m "feat(ui): add FollowButton to profile pages"
 **Interfaces:**
 - Consumes: `useFollowingFeed` from `@/hooks/use-follow`
 
-- [ ] **Step 1: Add import**
+- [x] **Step 1: Add import**
 
 At the top of `community.tsx`, add:
 
@@ -567,7 +567,7 @@ At the top of `community.tsx`, add:
 import { useFollowingFeed } from "@/hooks/use-follow";
 ```
 
-- [ ] **Step 2: Add followingFeed query call**
+- [x] **Step 2: Add followingFeed query call**
 
 Inside the `CommunityPage` function, after the existing hooks (around line 93), add:
 
@@ -575,7 +575,7 @@ Inside the `CommunityPage` function, after the existing hooks (around line 93), 
 const { data: followingFeed = [], isLoading: isLoadingFollowing } = useFollowingFeed();
 ```
 
-- [ ] **Step 3: Replace the hardcoded `list = []` for following**
+- [x] **Step 3: Replace the hardcoded `list = []` for following**
 
 In the `feed` useMemo (around line 161-162), replace:
 
@@ -593,7 +593,7 @@ With:
 
 Add `followingFeed` to the useMemo dependency array.
 
-- [ ] **Step 4: Update the Following tab empty state**
+- [x] **Step 4: Update the Following tab empty state**
 
 In the render section, find the Following empty state (around line 359-364). Replace:
 
@@ -655,12 +655,12 @@ With:
   )
 ```
 
-- [ ] **Step 5: Run typecheck**
+- [x] **Step 5: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/routes/_authenticated/community.tsx
@@ -673,15 +673,15 @@ git commit -m "feat(community): activate Following tab with real feed"
 
 Run the dev server (`npm run dev`), navigate to the community page, and verify:
 
-- [ ] Follow button appears on post cards (next to author name)
-- [ ] Follow/unfollow toggles correctly with toast notifications
-- [ ] Hovering "Following" button shows "Unfollow" text
-- [ ] Following tab shows posts from followed users (or empty state with correct message)
-- [ ] Follow button appears on public profile pages (`/u/:handle`)
-- [ ] Follow button appears on authenticated profile pages (`/profile/:userId`)
-- [ ] Own profile does not show a Follow button
-- [ ] Typecheck passes clean
-- [ ] Build passes (`npm run build`)
+- [x] Follow button appears on post cards (next to author name)
+- [x] Follow/unfollow toggles correctly with toast notifications
+- [x] Hovering "Following" button shows "Unfollow" text
+- [x] Following tab shows posts from followed users (or empty state with correct message)
+- [x] Follow button appears on public profile pages (`/u/:handle`)
+- [x] Follow button appears on authenticated profile pages (`/profile/:userId`)
+- [x] Own profile does not show a Follow button
+- [x] Typecheck passes clean
+- [x] Build passes (`npm run build`)
 
 **Commit checkpoint:**
 
@@ -698,7 +698,7 @@ git commit --allow-empty -m "checkpoint: Phase 1 — Following system complete"
 **Files:**
 - Create: `supabase/migrations/20260727100000_add_community_spaces.sql`
 
-- [ ] **Step 1: Create the migration file**
+- [x] **Step 1: Create the migration file**
 
 ```sql
 -- Community Spaces: named, moderated spaces for grouped posts.
@@ -808,11 +808,11 @@ SET space_id = (SELECT id FROM public.community_spaces WHERE slug = 'general')
 WHERE community = 'General' AND space_id IS NULL;
 ```
 
-- [ ] **Step 2: Apply migration locally**
+- [x] **Step 2: Apply migration locally**
 
 Run: `npx supabase db reset`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260727100000_add_community_spaces.sql
@@ -830,7 +830,7 @@ git commit -m "feat(db): add community_spaces, space_members tables and post int
 - Consumes: `supabase` client from `@/integrations/supabase/client`
 - Produces: All space-related hooks listed below
 
-- [ ] **Step 1: Create types and query keys**
+- [x] **Step 1: Create types and query keys**
 
 ```typescript
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -872,7 +872,7 @@ const SPACE_MEMBERS_KEY = (spaceId: string) => ["space-members", spaceId] as con
 const SPACE_POSTS_KEY = (spaceId: string) => ["space-posts", spaceId] as const;
 ```
 
-- [ ] **Step 2: Add `useCommunitySpaces` hook**
+- [x] **Step 2: Add `useCommunitySpaces` hook**
 
 ```typescript
 export function useCommunitySpaces() {
@@ -934,7 +934,7 @@ export function useCommunitySpaces() {
 }
 ```
 
-- [ ] **Step 3: Add `useCommunitySpace` hook (single space by slug)**
+- [x] **Step 3: Add `useCommunitySpace` hook (single space by slug)**
 
 ```typescript
 export function useCommunitySpace(slug: string) {
@@ -980,7 +980,7 @@ export function useCommunitySpace(slug: string) {
 }
 ```
 
-- [ ] **Step 4: Add CRUD mutations (create, update, delete)**
+- [x] **Step 4: Add CRUD mutations (create, update, delete)**
 
 ```typescript
 function slugify(name: string): string {
@@ -1067,7 +1067,7 @@ export function useDeleteSpace() {
 }
 ```
 
-- [ ] **Step 5: Add join/leave mutations**
+- [x] **Step 5: Add join/leave mutations**
 
 ```typescript
 export function useJoinSpace() {
@@ -1113,7 +1113,7 @@ export function useLeaveSpace() {
 }
 ```
 
-- [ ] **Step 6: Add member management hooks**
+- [x] **Step 6: Add member management hooks**
 
 ```typescript
 export function useSpaceMembers(spaceId: string) {
@@ -1196,7 +1196,7 @@ export function useRemoveMember() {
 }
 ```
 
-- [ ] **Step 7: Add pin/unpin post hook**
+- [x] **Step 7: Add pin/unpin post hook**
 
 ```typescript
 export function usePinPost() {
@@ -1217,7 +1217,7 @@ export function usePinPost() {
 }
 ```
 
-- [ ] **Step 8: Add space posts hook**
+- [x] **Step 8: Add space posts hook**
 
 ```typescript
 import type { PostRow, PostWithAuthor } from "@/hooks/use-community";
@@ -1296,12 +1296,12 @@ export function useCommunitySpacePosts(spaceId: string) {
 }
 ```
 
-- [ ] **Step 9: Run typecheck**
+- [x] **Step 9: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/hooks/use-community-spaces.ts
@@ -1319,7 +1319,7 @@ git commit -m "feat(hooks): add community spaces hooks (CRUD, members, posts)"
 - Consumes: `useJoinSpace`, `useLeaveSpace` from `@/hooks/use-community-spaces`, `CommunitySpace` type
 - Produces: `CommunityCard` component
 
-- [ ] **Step 1: Create CommunityCard component**
+- [x] **Step 1: Create CommunityCard component**
 
 ```typescript
 import { Link } from "@tanstack/react-router";
@@ -1400,12 +1400,12 @@ export function CommunityCard({ space }: { space: CommunitySpace }) {
 }
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/community/community-card.tsx
@@ -1423,7 +1423,7 @@ git commit -m "feat(ui): add CommunityCard component with join/leave"
 - Consumes: `useCreateSpace` from `@/hooks/use-community-spaces`
 - Produces: `CreateSpaceDialog` component
 
-- [ ] **Step 1: Create the dialog component**
+- [x] **Step 1: Create the dialog component**
 
 ```typescript
 import { useState } from "react";
@@ -1515,12 +1515,12 @@ export function CreateSpaceDialog({
 }
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/community/create-space-dialog.tsx
@@ -1537,7 +1537,7 @@ git commit -m "feat(ui): add CreateSpaceDialog for community creation"
 **Interfaces:**
 - Consumes: `useCommunitySpaces` from `@/hooks/use-community-spaces`, `CommunityCard`, `CreateSpaceDialog`
 
-- [ ] **Step 1: Add imports**
+- [x] **Step 1: Add imports**
 
 At the top of `community.tsx`, add:
 
@@ -1548,7 +1548,7 @@ import { CommunityCard } from "@/components/tethyr/community/community-card";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
 ```
 
-- [ ] **Step 2: Add state and query**
+- [x] **Step 2: Add state and query**
 
 Inside `CommunityPage`, add:
 
@@ -1558,7 +1558,7 @@ const [createSpaceOpen, setCreateSpaceOpen] = useState(false);
 const [spaceSearch, setSpaceSearch] = useState("");
 ```
 
-- [ ] **Step 3: Replace the Communities tab render**
+- [x] **Step 3: Replace the Communities tab render**
 
 Find the `nav === "communities"` render block (around line 347-358). Replace with:
 
@@ -1620,12 +1620,12 @@ Find the `nav === "communities"` render block (around line 347-358). Replace wit
   </div>
 ```
 
-- [ ] **Step 4: Run typecheck**
+- [x] **Step 4: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/_authenticated/community.tsx
@@ -1643,7 +1643,7 @@ git commit -m "feat(community): wire Communities tab with real spaces grid and c
 - Consumes: `useCommunitySpace`, `useLeaveSpace`, `useSpaceMembers` from `@/hooks/use-community-spaces`
 - Produces: `SpaceHeader` component
 
-- [ ] **Step 1: Create SpaceHeader component**
+- [x] **Step 1: Create SpaceHeader component**
 
 ```typescript
 import { Users, Settings, ArrowLeft } from "lucide-react";
@@ -1737,12 +1737,12 @@ export function SpaceHeader({
 }
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/community/space-header.tsx
@@ -1760,7 +1760,7 @@ git commit -m "feat(ui): add SpaceHeader for community space detail view"
 - Consumes: `useUpdateSpace`, `useDeleteSpace`, `useSpaceMembers`, `useUpdateMemberRole`, `useRemoveMember` from `@/hooks/use-community-spaces`
 - Produces: `SpaceSettingsDialog` component
 
-- [ ] **Step 1: Create SpaceSettingsDialog**
+- [x] **Step 1: Create SpaceSettingsDialog**
 
 ```typescript
 import { useState } from "react";
@@ -1958,12 +1958,12 @@ function MemberRow({
 }
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/community/space-settings-dialog.tsx
@@ -1981,7 +1981,7 @@ git commit -m "feat(ui): add SpaceSettingsDialog for space moderation"
 **Interfaces:**
 - Consumes: `useCommunitySpaces`, `useCommunitySpacePosts`, `SpaceHeader`, `SpaceSettingsDialog`
 
-- [ ] **Step 1: Add state for active space**
+- [x] **Step 1: Add state for active space**
 
 Inside `CommunityPage`, add:
 
@@ -2000,7 +2000,7 @@ import { SpaceHeader } from "@/components/tethyr/community/space-header";
 import { SpaceSettingsDialog } from "@/components/tethyr/community/space-settings-dialog";
 ```
 
-- [ ] **Step 2: Update CommunityCard to pass click handler**
+- [x] **Step 2: Update CommunityCard to pass click handler**
 
 Replace the `CommunityCard` usage in the Communities tab grid to include an onClick:
 
@@ -2040,7 +2040,7 @@ export function CommunityCard({
 
 Remove the `<Link>` wrapper and replace with `<button>` since we're handling navigation via state.
 
-- [ ] **Step 3: Add space-aware rendering in the feed area**
+- [x] **Step 3: Add space-aware rendering in the feed area**
 
 Before the main feed render block, add a check for active space:
 
@@ -2066,7 +2066,7 @@ Before the main feed render block, add a check for active space:
 )}
 ```
 
-- [ ] **Step 4: Override feed when viewing a space**
+- [x] **Step 4: Override feed when viewing a space**
 
 In the `feed` useMemo, add an early return for space view:
 
@@ -2080,7 +2080,7 @@ const feed = useMemo(() => {
 }, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, activeSpace, spacePosts]);
 ```
 
-- [ ] **Step 5: Update ComposerBar to pass space_id**
+- [x] **Step 5: Update ComposerBar to pass space_id**
 
 Modify the `ComposerBar` to accept an optional `spaceId` prop. In `composer-bar.tsx`:
 
@@ -2112,7 +2112,7 @@ In `useCreatePost`, add `space_id` to the insert:
 space_id: input.space_id ?? null,
 ```
 
-- [ ] **Step 6: Pass spaceId from community page to ComposerBar**
+- [x] **Step 6: Pass spaceId from community page to ComposerBar**
 
 When rendering ComposerBar in `community.tsx`, pass the active space:
 
@@ -2120,7 +2120,7 @@ When rendering ComposerBar in `community.tsx`, pass the active space:
 <ComposerBar editingPost={editingPost} onCancelEdit={cancelEdit} spaceId={activeSpace?.id} />
 ```
 
-- [ ] **Step 7: Update PostRow type to include new fields**
+- [x] **Step 7: Update PostRow type to include new fields**
 
 In `use-community.ts`, add to `PostRow`:
 
@@ -2129,7 +2129,7 @@ space_id: string | null;
 is_pinned: boolean;
 ```
 
-- [ ] **Step 8: Remove the hardcoded COMMUNITIES constant**
+- [x] **Step 8: Remove the hardcoded COMMUNITIES constant**
 
 In `src/lib/community-data.ts`, remove the `COMMUNITIES` export since it's now replaced by real data:
 
@@ -2140,12 +2140,12 @@ In `src/lib/community-data.ts`, remove the `COMMUNITIES` export since it's now r
 
 Keep the `Community` type for any remaining usage, or remove it if nothing else uses it.
 
-- [ ] **Step 9: Run typecheck**
+- [x] **Step 9: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/routes/_authenticated/community.tsx src/components/tethyr/community/community-card.tsx src/components/tethyr/community/composer-bar.tsx src/hooks/use-community.ts src/lib/community-data.ts
@@ -2162,7 +2162,7 @@ git commit -m "feat(community): wire space filtering, settings, and space-aware 
 **Interfaces:**
 - Consumes: `space_id` from `PostRow` (new field)
 
-- [ ] **Step 1: Add space chip to PostCard header**
+- [x] **Step 1: Add space chip to PostCard header**
 
 In the author meta line (around line 223-234), replace the community text chip with a space-aware one:
 
@@ -2187,12 +2187,12 @@ In the author meta line (around line 223-234), replace the community text chip w
 </div>
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/community/post-card.tsx
@@ -2205,17 +2205,17 @@ git commit -m "feat(ui): show space chip on posts belonging to a community space
 
 Run the dev server (`npm run dev`), navigate to the community page, and verify:
 
-- [ ] Communities tab shows a grid of spaces (initially just "General")
-- [ ] "Create space" button opens the dialog and creates a space
-- [ ] Clicking a space card filters the feed to that space's posts
-- [ ] SpaceHeader shows space info, member count, and settings gear (for owner)
-- [ ] SpaceSettingsDialog allows editing name/description and managing members
-- [ ] Join/Leave buttons on community cards work correctly
-- [ ] ComposerBar has a space selector when viewing a space
-- [ ] Posts in spaces show the "Space" chip
-- [ ] Deleting a space removes it from the grid
-- [ ] Typecheck passes clean
-- [ ] Build passes (`npm run build`)
+- [x] Communities tab shows a grid of spaces (initially just "General")
+- [x] "Create space" button opens the dialog and creates a space
+- [x] Clicking a space card filters the feed to that space's posts
+- [x] SpaceHeader shows space info, member count, and settings gear (for owner)
+- [x] SpaceSettingsDialog allows editing name/description and managing members
+- [x] Join/Leave buttons on community cards work correctly
+- [x] ComposerBar has a space selector when viewing a space
+- [x] Posts in spaces show the "Space" chip
+- [x] Deleting a space removes it from the grid
+- [x] Typecheck passes clean
+- [x] Build passes (`npm run build`)
 
 **Commit checkpoint:**
 

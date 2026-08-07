@@ -143,6 +143,7 @@ export function PostCard({
   onToggleAction,
   highlighted,
   shared_from_space,
+  skillOverlap,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -436,9 +437,7 @@ export function PostCard({
       )}
 
       {/* Poll display */}
-      {post.type === "poll" && pollData && (
-        <PollWidget pollData={pollData} postId={post.id} />
-      )}
+      {post.type === "poll" && pollData && <PollWidget pollData={pollData} postId={post.id} />}
 
       {post.skills.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">

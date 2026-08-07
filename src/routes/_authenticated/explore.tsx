@@ -2,10 +2,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Search, Folder, Users, Briefcase, ArrowRight, Sparkles, BadgeCheck, Star } from "lucide-react";
+import {
+  Compass,
+  Search,
+  Folder,
+  Users,
+  Briefcase,
+  ArrowRight,
+  Sparkles,
+  BadgeCheck,
+  Star,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
+import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 
@@ -131,18 +142,25 @@ function ExplorePage() {
       const raw = localStorage.getItem(OPP_FILTER_KEY);
       if (!raw) return {};
       return JSON.parse(raw) as Record<string, unknown>;
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   }
   function saveOppFilters(state: Record<string, unknown>) {
-    try { localStorage.setItem(OPP_FILTER_KEY, JSON.stringify(state)); }
-    catch { /* ignore */ }
+    try {
+      localStorage.setItem(OPP_FILTER_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore */
+    }
   }
 
   const savedOpp = loadOppFilters();
   const [tab, setTab] = useState<Tab>("projects");
   const [q, setQ] = useState((savedOpp.q as string) ?? "");
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
-  const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "latest");
+  const [oppSort, setOppSort] = useState<OppSortMode>(
+    (savedOpp.oppSort as OppSortMode) ?? "latest",
+  );
   const [activeNeed, setActiveNeed] = useState<string>((savedOpp.activeNeed as string) ?? "");
   const { data: skills = [] } = useSkillsCatalog();
 
@@ -245,6 +263,27 @@ function ExplorePage() {
     },
     enabled: tab === "opportunities",
     staleTime: 60_000,
+  });
+
+  // One batched query for my application status across all visible roles —
+  // avoids each Apply button firing its own query on the Opportunities tab.
+  const { data: myRoleStatus = {} } = useQuery({
+    queryKey: ["my-role-applications", "batch", meId ?? "anon"],
+    queryFn: async (): Promise<Record<string, string>> => {
+      if (!meId) return {};
+      const { data, error } = await supabase
+        .from("project_role_applications")
+        .select("role_id, status")
+        .eq("profile_id", meId);
+      if (error) return {};
+      const map: Record<string, string> = {};
+      for (const row of (data ?? []) as { role_id: string; status: string }[]) {
+        map[row.role_id] = row.status;
+      }
+      return map;
+    },
+    enabled: !!meId && tab === "opportunities",
+    staleTime: 30_000,
   });
 
   const { data: creators, isLoading: creatorsLoading } = useQuery({
@@ -426,7 +465,9 @@ function ExplorePage() {
           <>
             {/* Browse by need — quick chips */}
             <div className="mb-4">
-              <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">Browse by need</p>
+              <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                Browse by need
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {NEED_CHIPS.map((need) => (
                   <button
@@ -459,7 +500,9 @@ function ExplorePage() {
                 <button
                   onClick={() => setOppSort("latest")}
                   className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                    oppSort === "latest" ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    oppSort === "latest"
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   Latest
@@ -467,7 +510,9 @@ function ExplorePage() {
                 <button
                   onClick={() => setOppSort("match")}
                   className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                    oppSort === "match" ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    oppSort === "match"
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Star className="mr-1 inline h-3 w-3" />
@@ -482,7 +527,9 @@ function ExplorePage() {
                 {activeNeed && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
                     Need {activeNeed}
-                    <button onClick={() => setActiveNeed("")} className="ml-0.5">×</button>
+                    <button onClick={() => setActiveNeed("")} className="ml-0.5">
+                      ×
+                    </button>
                   </span>
                 )}
                 {oppSort === "match" && (
@@ -508,77 +555,96 @@ function ExplorePage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {filteredOpportunities.map((opportunity) => {
-                const skillMatchCount = oppSort === "match"
-                  ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
-                  : 0;
+                const skillMatchCount =
+                  oppSort === "match"
+                    ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
+                    : 0;
                 return (
-                  <Link
+                  <div
                     key={opportunity.id}
-                    to="/projects/$id"
-                    params={{ id: opportunity.project.id }}
                     className="group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs uppercase tracking-wider text-brand-purple">
-                            <Briefcase className="mr-1 inline h-3.5 w-3.5" />
-                            Open role
-                          </span>
-                          {skillMatchCount > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[10px] font-medium text-[var(--user-accent,var(--primary))]">
-                              <BadgeCheck className="h-3 w-3" />
-                              {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
+                    <Link
+                      to="/projects/$id"
+                      params={{ id: opportunity.project.id }}
+                      search={{ section: "roles" } as Record<string, string>}
+                      className="block"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs uppercase tracking-wider text-brand-purple">
+                              <Briefcase className="mr-1 inline h-3.5 w-3.5" />
+                              Open role
                             </span>
-                          )}
+                            {skillMatchCount > 0 && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[10px] font-medium text-[var(--user-accent,var(--primary))]">
+                                <BadgeCheck className="h-3 w-3" />
+                                {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
+                              </span>
+                            )}
+                          </div>
+                          <h2 className="mt-2 truncate font-display text-lg font-semibold">
+                            {opportunity.title}
+                          </h2>
                         </div>
-                        <h2 className="mt-2 truncate font-display text-lg font-semibold">
-                          {opportunity.title}
-                        </h2>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
                       </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </div>
-                    {opportunity.description && (
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                        {opportunity.description}
-                      </p>
-                    )}
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {opportunity.skills.length > 0 ? (
-                        opportunity.skills.map((skill) => {
-                          const isMySkill = mySkillNames.has(skill.toLowerCase());
-                          return (
-                            <span
-                              key={skill}
-                              className={`rounded-full border px-2.5 py-1 text-[11px] ${
-                                isMySkill
-                                  ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                  : "border-primary/25 bg-primary/5 text-primary"
-                              }`}
-                            >
-                              {skill}
-                            </span>
-                          );
-                        })
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <Sparkles className="h-3 w-3" /> Open to a range of skills
-                        </span>
+                      {opportunity.description && (
+                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                          {opportunity.description}
+                        </p>
                       )}
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {opportunity.skills.length > 0 ? (
+                          opportunity.skills.map((skill) => {
+                            const isMySkill = mySkillNames.has(skill.toLowerCase());
+                            return (
+                              <span
+                                key={skill}
+                                className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                                  isMySkill
+                                    ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                    : "border-primary/25 bg-primary/5 text-primary"
+                                }`}
+                              >
+                                {skill}
+                              </span>
+                            );
+                          })
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <Sparkles className="h-3 w-3" /> Open to a range of skills
+                          </span>
+                        )}
+                      </div>
+                    </Link>{" "}
+                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+                      <div className="min-w-0 truncate text-xs text-muted-foreground">
+                        <Link
+                          to="/projects/$id"
+                          params={{ id: opportunity.project.id }}
+                          search={{ section: "roles" } as Record<string, string>}
+                          className="font-medium text-foreground hover:underline"
+                        >
+                          {opportunity.project.title}
+                        </Link>
+                        {opportunity.project.profile?.display_name && (
+                          <span> · by {opportunity.project.profile.display_name}</span>
+                        )}
+                        {opportunity.project.stage && (
+                          <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
+                        )}
+                      </div>
+                      <ApplyToRoleButton
+                        roleId={opportunity.id}
+                        projectId={opportunity.project.id}
+                        isOwner={opportunity.project.profile_id === meId}
+                        meId={meId}
+                        myStatus={myRoleStatus[opportunity.id] ?? null}
+                      />
                     </div>
-                    <div className="mt-5 border-t border-border/50 pt-3 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{opportunity.project.title}</span>
-                      {opportunity.project.profile?.display_name && (
-                        <span> · by {opportunity.project.profile.display_name}</span>
-                      )}
-                      {opportunity.project.stage && (
-                        <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center gap-3">
-                      <span className="text-xs font-medium text-primary">Apply →</span>
-                    </div>
-                  </Link>
+                  </div>
                 );
               })}
             </div>

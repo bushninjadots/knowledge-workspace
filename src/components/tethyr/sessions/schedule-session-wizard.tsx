@@ -486,7 +486,9 @@ function StepType({ value, onChange }: { value: SessionType; onChange: (v: Sessi
             >
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                  selected ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]" : "bg-muted text-muted-foreground"
+                  selected
+                    ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />

@@ -169,7 +169,10 @@ function WeekView({
         {weekDates.map((d, i) => {
           const isToday = isSameDay(d, today);
           return (
-            <div key={i} className={`py-2 text-center ${isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""}`}>
+            <div
+              key={i}
+              className={`py-2 text-center ${isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""}`}
+            >
               <p className="text-[10px] font-medium uppercase text-muted-foreground">
                 {dayNames[i]}
               </p>
@@ -353,7 +356,9 @@ function AgendaView({
             <div className="mb-3 flex items-center gap-3">
               <div
                 className={`flex h-10 w-10 flex-col items-center justify-center rounded-xl ${
-                  isToday ? "bg-[var(--user-accent,var(--trust))] text-background" : "bg-surface-elevated"
+                  isToday
+                    ? "bg-[var(--user-accent,var(--trust))] text-background"
+                    : "bg-surface-elevated"
                 }`}
               >
                 <span className="text-[8px] font-semibold uppercase leading-none">

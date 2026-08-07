@@ -542,7 +542,10 @@ export function useVotePoll() {
       if (alreadyVoted) throw new Error("Already voted");
 
       // Add vote
-      const updatedVotes = [...(pollData.votes ?? []), { option_index: optionIndex, user_id: userId }];
+      const updatedVotes = [
+        ...(pollData.votes ?? []),
+        { option_index: optionIndex, user_id: userId },
+      ];
 
       const { error } = await sb
         .from("posts")

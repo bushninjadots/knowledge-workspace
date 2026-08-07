@@ -1,6 +1,6 @@
 # 3D Horizontal Project Shelf — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the explore page CSS masonry grid with an interactive 3D horizontal project shelf with spring-animated perspective transforms, spine-style non-active cards, and a fullscreen frosted-glass overlay on click.
 
@@ -37,19 +37,19 @@
 - Consumes: (nothing yet)
 - Produces: Empty component shells, category utility
 
-- [ ] **Step 1: Install framer-motion**
+- [x] **Step 1: Install framer-motion**
 
 ```bash
 bun add framer-motion
 ```
 
-- [ ] **Step 2: Create directory structure**
+- [x] **Step 2: Create directory structure**
 
 ```bash
 mkdir -p src/components/tethyr/project-shelf
 ```
 
-- [ ] **Step 3: Create category utility**
+- [x] **Step 3: Create category utility**
 
 Write `src/lib/category-colors.ts`:
 
@@ -84,7 +84,7 @@ export function inferCategory(tags: string[]): string {
 }
 ```
 
-- [ ] **Step 4: Create empty component shells**
+- [x] **Step 4: Create empty component shells**
 
 Each shell file exports a named function component. `project-shelf.tsx`:
 
@@ -145,7 +145,7 @@ export function ProjectShelfOverlay({ project, onClose }: {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json src/lib/category-colors.ts src/components/tethyr/project-shelf/
@@ -163,7 +163,7 @@ git commit -m "feat: install framer-motion, scaffold project-shelf components"
 - Consumes: `inferCategory`, `CATEGORY_COLORS` from `src/lib/category-colors.ts`
 - Produces: `<AnimatedCoverGradient category={string} />` component
 
-- [ ] **Step 1: Create the animated gradient component**
+- [x] **Step 1: Create the animated gradient component**
 
 `cover-gradient.tsx`:
 
@@ -219,7 +219,7 @@ export function ProgressBar({ progress }: { progress: number }) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/cover-gradient.tsx
@@ -239,7 +239,7 @@ git commit -m "feat: add animated cover gradient component"
 - Consumes: `CATEGORY_ICON`, `inferCategory` from `@/lib/category-colors`
 - Produces: Interactive card with perspective transforms, spine view, status indicators
 
-- [ ] **Step 1: Write the cover component**
+- [x] **Step 1: Write the cover component**
 
 ```typescript
 import { motion } from "framer-motion";
@@ -365,7 +365,7 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/project-shelf-cover.tsx
@@ -383,7 +383,7 @@ git commit -m "feat: build ProjectShelfCover with perspective transforms"
 - Consumes: `q`, `setQ`, `category`, `setCategory`, `count`
 - Produces: Search bar + filter chips with AnimatePresence on result count
 
-- [ ] **Step 1: Write the header component**
+- [x] **Step 1: Write the header component**
 
 ```typescript
 import { AnimatePresence, motion } from "framer-motion";
@@ -462,7 +462,7 @@ export function ProjectShelfHeader({ q, setQ, category, setCategory, count }: Pr
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/project-shelf-header.tsx
@@ -481,7 +481,7 @@ git commit -m "feat: build ProjectShelfHeader with search/filter"
 - Consumes: `ProjectRow[]`, `meId`, `contributorIds`
 - Produces: Shelf with `perspective(1200px)`, active index tracking, keyboard navigation, AnimatePresence exit/enter
 
-- [ ] **Step 1: Write the shelf container**
+- [x] **Step 1: Write the shelf container**
 
 ```typescript
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -597,7 +597,7 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/project-shelf.tsx
@@ -617,7 +617,7 @@ git commit -m "feat: build ProjectShelf container with navigation"
 - Consumes: `CATEGORY_ICON`, `inferCategory` from `@/lib/category-colors`
 - Produces: Fullscreen frosted-glass overlay with layoutId morph
 
-- [ ] **Step 1: Write the overlay component**
+- [x] **Step 1: Write the overlay component**
 
 ```typescript
 import { motion, AnimatePresence } from "framer-motion";
@@ -758,7 +758,7 @@ export function ProjectShelfOverlay({ project, onClose }: ProjectShelfOverlayPro
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/project-shelf-overlay.tsx
@@ -778,7 +778,7 @@ git commit -m "feat: build ProjectShelfOverlay with layoutId morph"
 - Consumes: `supabase` (existing)
 - Produces: Working explore page with shelf replacing masonry grid
 
-- [ ] **Step 1: Add `profile_id` to the explore query and fetch contributor data**
+- [x] **Step 1: Add `profile_id` to the explore query and fetch contributor data**
 
 Add `profile_id` to the Supabase select in the existing query:
 
@@ -792,7 +792,7 @@ New:
 "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
 ```
 
-- [ ] **Step 2: Add contributor check query after the projects query**
+- [x] **Step 2: Add contributor check query after the projects query**
 
 ```typescript
 const { data: contributors } = await supabase
@@ -813,7 +813,7 @@ const contributorIds = useMemo(() => {
 }, [contributors, meId]);
 ```
 
-- [ ] **Step 3: Replace masonry grid with ProjectShelf**
+- [x] **Step 3: Replace masonry grid with ProjectShelf**
 
 Replace the masonry grid section (currently lines 246-314 in explore.tsx) with:
 
@@ -831,7 +831,7 @@ Replace the masonry grid section (currently lines 246-314 in explore.tsx) with:
 
 Remove unused imports: `ArrowRight`, `Link` (if no longer used for the creator cards).
 
-- [ ] **Step 4: Update the loading state**
+- [x] **Step 4: Update the loading state**
 
 Replace the masonry skeleton with simpler shelf skeletons:
 
@@ -846,7 +846,7 @@ Replace the masonry skeleton with simpler shelf skeletons:
 </div>
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/_authenticated/explore.tsx
@@ -862,7 +862,7 @@ git commit -m "feat: wire ProjectShelf into explore page"
 - Modify: `src/components/tethyr/project-shelf/project-shelf.tsx`
 - Modify: `src/components/tethyr/project-shelf/project-shelf-overlay.tsx`
 
-- [ ] **Step 1: Add reduced-motion hook to shelf container**
+- [x] **Step 1: Add reduced-motion hook to shelf container**
 
 In `project-shelf.tsx`, import and use framer-motion's `useReducedMotion`:
 
@@ -884,22 +884,22 @@ const transition = prefersReducedMotion
   : { type: "spring" as const, stiffness: 300, damping: 30 };
 ```
 
-- [ ] **Step 2: Apply reduced-motion to cover component**
+- [x] **Step 2: Apply reduced-motion to cover component**
 
 In `project-shelf-cover.tsx`, accept a `prefersReducedMotion` prop and use `{ duration: 0 }` transitions when true.
 
-- [ ] **Step 3: Add focus management**
+- [x] **Step 3: Add focus management**
 
 In `project-shelf.tsx`:
 - When overlay opens, save the currently focused element
 - When overlay closes, restore focus to the triggering card
 - Add `aria-activedescendant` pointing to the active card
 
-- [ ] **Step 4: Verify keyboard nav**
+- [x] **Step 4: Verify keyboard nav**
 
 Ensure `ArrowLeft`/`ArrowRight` navigate, `Enter` opens overlay, `Escape` closes overlay. In the overlay, trap focus (call `focus()` on the close button on mount).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/
@@ -914,7 +914,7 @@ git commit -m "fix: a11y pass - reduced motion, focus management, keyboard nav"
 - Modify: `src/components/tethyr/project-shelf/project-shelf.tsx`
 - Modify: `src/components/tethyr/project-shelf/project-shelf-cover.tsx`
 
-- [ ] **Step 1: Add responsive detection**
+- [x] **Step 1: Add responsive detection**
 
 Use a `useMediaQuery` or CSS-based approach. Since the project doesn't have a `useMediaQuery` hook, use `window.matchMedia` in a `useEffect`:
 
@@ -929,7 +929,7 @@ useEffect(() => {
 }, []);
 ```
 
-- [ ] **Step 2: Mobile layout switch**
+- [x] **Step 2: Mobile layout switch**
 
 When `isMobile`:
 - Shelf becomes a vertical scrollable stack (not horizontal)
@@ -959,11 +959,11 @@ On mobile, render cards as a flat vertical list:
 )}
 ```
 
-- [ ] **Step 3: Mobile overlay as bottom sheet**
+- [x] **Step 3: Mobile overlay as bottom sheet**
 
 In `project-shelf-overlay.tsx`, detect mobile and render via `Dialog` from `@/components/ui/dialog` instead of framer-motion overlay.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/project-shelf/

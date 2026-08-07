@@ -1,6 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useId, useEffect, useMemo } from "react";
-import { ArrowRight, Sparkles, Clock, Zap, Folder, Calendar, Users, MessageSquare, Briefcase, UserPlus, TrendingUp, Award, Swords, Ticket } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  Clock,
+  Zap,
+  Folder,
+  Calendar,
+  Users,
+  MessageSquare,
+  Briefcase,
+  UserPlus,
+  TrendingUp,
+  Award,
+  Swords,
+  Ticket,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,10 +36,8 @@ import { checkAndAwardAchievements } from "@/lib/reputation";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
-import { useMyProjects } from "@/hooks/use-projects";
 import { useChallenges } from "@/hooks/use-challenges";
 import { supabase } from "@/integrations/supabase/client";
-
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -50,7 +63,6 @@ function DashboardPage() {
   const { data: sessionRequests = [], isLoading: sessionsLoading } = useSessionRequests();
   const { data: connections = [], isLoading: connectionsLoading } = useConnections();
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
-  const { data: myProjects = [], isLoading: projectsLoading } = useMyProjects();
 
   // My Challenges
   const { data: myChallenges = [] } = useChallenges("active");
@@ -61,33 +73,31 @@ function DashboardPage() {
 
   // Role Applications — sent by me
   const { data: myApplications = [] } = useQuery({
-    queryKey: ["my-applications", data.userId],
+    queryKey: ["my-applications", data?.userId],
     queryFn: async () => {
       const { data: apps, error } = await (supabase as any)
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
-        .eq("applicant_id", data.userId)
+        .eq("applicant_id", data?.userId)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) return [];
       return (apps ?? []) as any[];
     },
-    enabled: !!data.userId,
+    enabled: !!data?.userId,
     staleTime: 30_000,
   });
 
   // Weekly reputation
   const weeklyRep = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const thisWeek = (data.activity ?? []).filter(
-      (e: any) => new Date(e.created_at) >= weekAgo,
-    );
+    const thisWeek = (data?.activity ?? []).filter((e: any) => new Date(e.created_at) >= weekAgo);
     return thisWeek.length;
-  }, [data.activity]);
+  }, [data?.activity]);
 
   // Today's opportunities
   const { data: todayOpps = [] } = useQuery({
-    queryKey: ["today-opportunities", data.userId],
+    queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
       const { data: roles, error } = await (supabase as any)
         .from("project_open_roles")
@@ -137,6 +147,13 @@ function DashboardPage() {
     learnCount: data.learnIds.length,
     projectsCount: data.projects.length,
   };
+  // Already loaded by useCurrentUser above — no separate query needed.
+  // Keep the previous "most recently updated first" ordering.
+  const myProjects = [...data.projects].sort(
+    (a: any, b: any) =>
+      new Date(b.updated_at ?? b.created_at).getTime() -
+      new Date(a.updated_at ?? a.created_at).getTime(),
+  );
   const pct = completenessPercent(input);
   const remaining = nextSteps(input, 5);
   const totalSteps = sections(input).length;
@@ -144,8 +161,12 @@ function DashboardPage() {
   const firstName = data.profile?.display_name?.split(/\s+/)[0] ?? data.profile?.handle ?? "member";
 
   // Action hub counts
-  const pendingSessionCount = sessionRequests.filter((r) => r.status === "pending" && r.to_user_id === data.userId).length;
-  const pendingConnectionCount = connections.filter((c) => c.status === "pending" && c.addressee_id === data.userId).length;
+  const pendingSessionCount = sessionRequests.filter(
+    (r) => r.status === "pending" && r.to_user_id === data.userId,
+  ).length;
+  const pendingConnectionCount = connections.filter(
+    (c) => c.status === "pending" && c.addressee_id === data.userId,
+  ).length;
   const pendingInviteCount = pendingSessionCount + pendingConnectionCount;
   const unreadMessageCount = unreadData?.total ?? 0;
   const activeProjects = myProjects.filter((p) => p.status === "active" || p.status === "planning");
@@ -188,9 +209,7 @@ function DashboardPage() {
             </div>
             <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">
               Hey {firstName}, let's{" "}
-              <span
-                className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent"
-              >
+              <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
                 keep going
               </span>
               .
@@ -261,19 +280,20 @@ function DashboardPage() {
               />
             ) : null}
 
-            {/* Active projects */}
-            {projectsLoading ? (
-              <div className="h-24 animate-pulse rounded-xl bg-surface-elevated" />
-            ) : activeProjectCount > 0 ? (
+            {/* Active projects — data already loaded with the user, no spinner needed */}
+            {activeProjectCount > 0 && (
               <ActionCard
                 icon={<Briefcase className="h-4 w-4" />}
                 label="Active projects"
                 count={activeProjectCount}
                 accent="var(--brand-purple)"
                 href={firstActiveProjectId ? `/projects/${firstActiveProjectId}` : "/profile"}
-                detail={activeProjects.slice(0, 3).map((p) => p.title).join(", ")}
+                detail={activeProjects
+                  .slice(0, 3)
+                  .map((p) => p.title)
+                  .join(", ")}
               />
-            ) : null}
+            )}
 
             {/* Profile completion — always shows if incomplete, no loading needed */}
             {pct < 100 && (
@@ -345,21 +365,26 @@ function DashboardPage() {
                   key={app.id}
                   to="/projects/$id"
                   params={{ id: app.project_open_roles?.projects?.id ?? "" }}
+                  search={{ section: "roles" } as Record<string, string>}
                   className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{app.project_open_roles?.title ?? "Role"}</p>
+                    <p className="truncate font-medium">
+                      {app.project_open_roles?.title ?? "Role"}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {app.project_open_roles?.projects?.title ?? "Project"}
                     </p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    app.status === "accepted"
-                      ? "bg-trust/10 text-trust"
-                      : app.status === "declined"
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-surface-elevated text-muted-foreground"
-                  }`}>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      app.status === "accepted"
+                        ? "bg-trust/10 text-trust"
+                        : app.status === "declined"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-surface-elevated text-muted-foreground"
+                    }`}
+                  >
                     {app.status}
                   </span>
                 </Link>
@@ -410,6 +435,7 @@ function DashboardPage() {
                   key={opp.id}
                   to="/projects/$id"
                   params={{ id: opp.projects?.id ?? "" }}
+                  search={{ section: "roles" } as Record<string, string>}
                   className="flex items-center justify-between rounded-lg border card-border bg-surface-elevated/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
                 >
                   <div className="min-w-0">
@@ -418,7 +444,10 @@ function DashboardPage() {
                   </div>
                   <div className="flex shrink-0 gap-1">
                     {(opp.skills ?? []).slice(0, 2).map((s: string) => (
-                      <span key={s} className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] text-[var(--user-accent,var(--primary))]">
+                      <span
+                        key={s}
+                        className="rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] text-[var(--user-accent,var(--primary))]"
+                      >
                         {s}
                       </span>
                     ))}
@@ -516,9 +545,7 @@ function WorkspaceSection({
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground">
           {title}
         </h2>
-        {subtitle && (
-          <span className="text-xs text-muted-foreground">— {subtitle}</span>
-        )}
+        {subtitle && <span className="text-xs text-muted-foreground">— {subtitle}</span>}
       </div>
       {children}
     </div>
@@ -559,9 +586,7 @@ function ActionCard({
           {count}
           {countSuffix ?? ""}
         </p>
-        {detail && (
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{detail}</p>
-        )}
+        {detail && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{detail}</p>}
       </div>
     </Link>
   );

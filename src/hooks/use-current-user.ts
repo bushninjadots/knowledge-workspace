@@ -110,83 +110,82 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
 
   const profile = await fetchProfile(userId);
 
-  const [teach, learn, wishlist, projectsRes, activityRes] = await Promise.all([
-    safeQuery(
-      () =>
-        supabase
-          .from("profile_skills_teach")
-          .select("skill_id, verification_level, experience_level, proof_url, proof_note")
-          .eq("profile_id", userId),
-      { data: [], error: null },
-    ),
-    safeQuery(
-      () => supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
-      { data: [], error: null },
-    ),
-    safeQuery(
-      () => supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
-      { data: [], error: null },
-    ),
-    safeQuery(
-      () =>
-        supabase
-          .from("projects")
-          .select("*")
-          .eq("profile_id", userId)
-          .order("is_featured", { ascending: false })
-          .order("created_at", { ascending: false }),
-      { data: [], error: null },
-    ),
-    safeQuery(
-      () =>
-        supabase
-          .from("activity_events")
-          .select("*")
-          .eq("profile_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(30),
-      { data: [], error: null },
-    ),
-  ]);
+  // Run media signing alongside the data queries — no extra sequential round trips.
+  const [teach, learn, wishlist, projectsRes, activityRes, avatarRes, bannerRes] =
+    await Promise.all([
+      safeQuery(
+        () =>
+          supabase
+            .from("profile_skills_teach")
+            .select("skill_id, verification_level, experience_level, proof_url, proof_note")
+            .eq("profile_id", userId),
+        { data: [], error: null },
+      ),
+      safeQuery(
+        () => supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
+        { data: [], error: null },
+      ),
+      safeQuery(
+        () => supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
+        { data: [], error: null },
+      ),
+      safeQuery(
+        () =>
+          supabase
+            .from("projects")
+            .select("*")
+            .eq("profile_id", userId)
+            .order("is_featured", { ascending: false })
+            .order("created_at", { ascending: false }),
+        { data: [], error: null },
+      ),
+      safeQuery(
+        () =>
+          supabase
+            .from("activity_events")
+            .select("*")
+            .eq("profile_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(30),
+        { data: [], error: null },
+      ),
+      profile?.avatar_url
+        ? supabase.storage.from("avatars").createSignedUrl(profile.avatar_url, 60 * 60 * 24)
+        : Promise.resolve({ data: null, error: null }),
+      profile?.banner_url
+        ? supabase.storage.from("banners").createSignedUrl(profile.banner_url, 60 * 60 * 24)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
-  let avatarSigned: string | null = null;
-  if (profile?.avatar_url) {
-    const { data: s } = await supabase.storage
-      .from("avatars")
-      .createSignedUrl(profile.avatar_url, 60 * 60 * 24);
-    avatarSigned = s?.signedUrl ?? null;
-  }
-  let bannerSigned: string | null = null;
-  if (profile?.banner_url) {
-    const { data: s } = await supabase.storage
-      .from("banners")
-      .createSignedUrl(profile.banner_url, 60 * 60 * 24);
-    bannerSigned = s?.signedUrl ?? null;
-  }
+  const avatarSigned = (avatarRes as any)?.data?.signedUrl ?? null;
+  const bannerSigned = (bannerRes as any)?.data?.signedUrl ?? null;
 
   const projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
-  const coverUrls: Record<string, string> = {};
-  await Promise.all(
-    projects
-      .filter((p) => p.cover_url)
-      .map(async (p) => {
-        const { data: s } = await supabase.storage
-          .from("project-media")
-          .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
-        if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
-      }),
-  );
 
+  // Cover signing + project skills both depend on the projects list — run them together.
+  const coverUrls: Record<string, string> = {};
   const projectSkillIds: Record<string, string[]> = {};
   if (projects.length > 0) {
-    const { data: projectSkillsData } = await supabase
-      .from("project_skills")
-      .select("project_id, skill_id")
-      .in(
-        "project_id",
-        projects.map((p) => p.id),
-      );
-    for (const row of (projectSkillsData ?? []) as { project_id: string; skill_id: string }[]) {
+    const [, skillsRes] = await Promise.all([
+      Promise.all(
+        projects
+          .filter((p) => p.cover_url)
+          .map(async (p) => {
+            const { data: s } = await supabase.storage
+              .from("project-media")
+              .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
+            if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
+          }),
+      ),
+      supabase
+        .from("project_skills")
+        .select("project_id, skill_id")
+        .in(
+          "project_id",
+          projects.map((p) => p.id),
+        ),
+    ]);
+    for (const row of (skillsRes?.data ?? []) as { project_id: string; skill_id: string }[]) {
       if (!projectSkillIds[row.project_id]) projectSkillIds[row.project_id] = [];
       projectSkillIds[row.project_id].push(row.skill_id);
     }

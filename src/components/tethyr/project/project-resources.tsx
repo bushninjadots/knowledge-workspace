@@ -26,27 +26,42 @@ export function ResourcesSection({
   isOwner,
 }: {
   resources: ResourceItem[];
-  onUpdate: (items: ResourceItem[]) => void;
+  onUpdate: (items: ResourceItem[]) => void | Promise<void>;
   isOwner: boolean;
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [type, setType] = useState<ResourceItem["type"]>("article");
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim() || !url.trim()) return;
-    onUpdate([...resources, { title: title.trim(), url: url.trim(), type }]);
-    setTitle("");
-    setUrl("");
-    setType("article");
-    setShowAdd(false);
-    toast.success("Resource added");
+    setSaving(true);
+    try {
+      await onUpdate([...resources, { title: title.trim(), url: url.trim(), type }]);
+      setTitle("");
+      setUrl("");
+      setType("article");
+      setShowAdd(false);
+      toast.success("Resource added");
+    } catch {
+      // Error toast already shown by the caller.
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleRemove = (idx: number) => {
-    onUpdate(resources.filter((_, i) => i !== idx));
-    toast.success("Resource removed");
+  const handleRemove = async (idx: number) => {
+    setSaving(true);
+    try {
+      await onUpdate(resources.filter((_, i) => i !== idx));
+      toast.success("Resource removed");
+    } catch {
+      // Error toast already shown by the caller.
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -92,10 +107,10 @@ export function ResourcesSection({
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              disabled={!title.trim() || !url.trim()}
+              disabled={!title.trim() || !url.trim() || saving}
               className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
             >
-              Save
+              {saving ? "Saving…" : "Save"}
             </button>
             <button
               onClick={() => setShowAdd(false)}
@@ -132,7 +147,8 @@ export function ResourcesSection({
                 {isOwner && (
                   <button
                     onClick={() => handleRemove(idx)}
-                    className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                    disabled={saving}
+                    className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -152,28 +168,43 @@ export function GallerySection({
   isOwner,
 }: {
   gallery: GalleryItem[];
-  onUpdate: (items: GalleryItem[]) => void;
+  onUpdate: (items: GalleryItem[]) => void | Promise<void>;
   isOwner: boolean;
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!url.trim()) return;
-    onUpdate([
-      ...gallery,
-      { url: url.trim(), caption: caption.trim() || undefined, type: "image" },
-    ]);
-    setUrl("");
-    setCaption("");
-    setShowAdd(false);
-    toast.success("Image added");
+    setSaving(true);
+    try {
+      await onUpdate([
+        ...gallery,
+        { url: url.trim(), caption: caption.trim() || undefined, type: "image" },
+      ]);
+      setUrl("");
+      setCaption("");
+      setShowAdd(false);
+      toast.success("Image added");
+    } catch {
+      // Error toast already shown by the caller.
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleRemove = (idx: number) => {
-    onUpdate(gallery.filter((_, i) => i !== idx));
-    toast.success("Image removed");
+  const handleRemove = async (idx: number) => {
+    setSaving(true);
+    try {
+      await onUpdate(gallery.filter((_, i) => i !== idx));
+      toast.success("Image removed");
+    } catch {
+      // Error toast already shown by the caller.
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (gallery.length === 0 && !isOwner) return null;
@@ -210,10 +241,10 @@ export function GallerySection({
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
-              disabled={!url.trim()}
+              disabled={!url.trim() || saving}
               className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
             >
-              Save
+              {saving ? "Saving…" : "Save"}
             </button>
             <button
               onClick={() => setShowAdd(false)}
@@ -245,7 +276,8 @@ export function GallerySection({
               {isOwner && (
                 <button
                   onClick={() => handleRemove(idx)}
-                  className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive"
+                  disabled={saving}
+                  className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive disabled:opacity-40"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>

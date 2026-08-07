@@ -16,7 +16,8 @@ import { timeAgo } from "@/lib/time";
 
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
-  question: "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+  question:
+    "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   idea: "border-brand-green/40 bg-brand-green/10 text-brand-green",
   feedback: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
   announcement: "border-teaching/40 bg-teaching text-teaching",

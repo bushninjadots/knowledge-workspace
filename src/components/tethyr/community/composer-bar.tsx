@@ -263,9 +263,7 @@ export function ComposerBar({
     setUploadingFile(true);
     try {
       const path = `${me?.userId ?? "anon"}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage
-        .from("library-files")
-        .upload(path, file);
+      const { error: upErr } = await supabase.storage.from("library-files").upload(path, file);
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from("library-files").getPublicUrl(path);
       const link = `\n[${file.name}](${urlData.publicUrl})\n`;
@@ -475,7 +473,9 @@ export function ComposerBar({
         <div className="mt-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] p-4">
           <div className="mb-3 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-brand-purple" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-brand-purple">Poll</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-brand-purple">
+              Poll
+            </span>
           </div>
           <input
             value={pollQuestion}

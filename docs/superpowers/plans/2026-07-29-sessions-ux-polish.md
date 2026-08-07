@@ -1,6 +1,6 @@
 # Sessions UX Polish Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Fix four UX gaps in the sessions feature: editable availability, real profile stats, list filtering, and request flow polish.
 
@@ -27,7 +27,7 @@
 **Interfaces:**
 - Produces: `useSetSessionAvailability()`, `useCancelSessionRequest(id)`, `useSendSessionRequest(fromUserId, toUserId, data)`
 
-- [ ] **Step 1: Add `useSetSessionAvailability` mutation**
+- [x] **Step 1: Add `useSetSessionAvailability` mutation**
 
 ```ts
 export function useSetSessionAvailability() {
@@ -59,7 +59,7 @@ export function useSetSessionAvailability() {
 }
 ```
 
-- [ ] **Step 2: Add `useCancelSessionRequest` mutation**
+- [x] **Step 2: Add `useCancelSessionRequest` mutation**
 
 ```ts
 export function useCancelSessionRequest() {
@@ -83,7 +83,7 @@ export function useCancelSessionRequest() {
 }
 ```
 
-- [ ] **Step 3: Add `useSendSessionRequest` mutation**
+- [x] **Step 3: Add `useSendSessionRequest` mutation**
 
 ```ts
 export function useSendSessionRequest() {
@@ -119,12 +119,12 @@ export function useSendSessionRequest() {
 }
 ```
 
-- [ ] **Step 4: Run typecheck**
+- [x] **Step 4: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/hooks/use-sessions.ts
@@ -142,7 +142,7 @@ git commit -m "feat: add set-availability, cancel-request, send-request session 
 - Consumes: `useSetSessionAvailability()` from Task 1
 - Uses: `useSessionAvailability()` (already exists)
 
-- [ ] **Step 1: Add dialog imports and state**
+- [x] **Step 1: Add dialog imports and state**
 
 Add to `availability-settings.tsx`:
 
@@ -156,7 +156,7 @@ import { toast } from "sonner";
 import { useSetSessionAvailability } from "@/hooks/use-sessions";
 ```
 
-- [ ] **Step 2: Add the AvailabilityEditorDialog component**
+- [x] **Step 2: Add the AvailabilityEditorDialog component**
 
 ```tsx
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -281,18 +281,18 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
 }
 ```
 
-- [ ] **Step 3: Integrate into AvailabilitySettings**
+- [x] **Step 3: Integrate into AvailabilitySettings**
 
 Find the "Set Availability" placeholder button (currently a `<Button>` with no `onClick`) and replace it with `<AvailabilityEditorDialog>`.
 
 Also remove the hardcoded placeholder values in the "Preferences" section (timezone, buffer time, max sessions/day, preferred length) since they show fake data — replace with a simple "Coming soon" label or remove.
 
-- [ ] **Step 4: Run typecheck**
+- [x] **Step 4: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/tethyr/sessions/availability-settings.tsx
@@ -312,7 +312,7 @@ git commit -m "feat: add availability editor dialog"
 **Interfaces:**
 - Consumes: `useSessionStats(userId)`, `useSendSessionRequest()` from Task 1
 
-- [ ] **Step 1: Modify `useSessionStats` to accept optional userId**
+- [x] **Step 1: Modify `useSessionStats` to accept optional userId**
 
 Change the hook signature to accept an optional `userId` param. Default to current user for backwards compat:
 
@@ -328,11 +328,11 @@ export function useSessionStats(viewUserId?: string) {
 }
 ```
 
-- [ ] **Step 2: Wire profile-sessions-tab.tsx to real stats**
+- [x] **Step 2: Wire profile-sessions-tab.tsx to real stats**
 
 Replace the hardcoded `0` values with `useSessionStats(userId)`:
 
-- [ ] **Step 3: Create request-session-dialog.tsx**
+- [x] **Step 3: Create request-session-dialog.tsx**
 
 ```tsx
 import { useState } from "react";
@@ -420,7 +420,7 @@ export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }
 }
 ```
 
-- [ ] **Step 4: Add request button to profile layout**
+- [x] **Step 4: Add request button to profile layout**
 
 In `profile-layout.tsx`, find the FollowButton and add the Request Session dialog next to it (only for other users' profiles, not own profile). Check for existing pending request via `useSessionRequests()`, passing the `to_user_id` filter to detect duplicates client-side.
 
@@ -445,12 +445,12 @@ const hasPendingRequest = requests?.some(
 )}
 ```
 
-- [ ] **Step 5: Run typecheck**
+- [x] **Step 5: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/hooks/use-sessions.ts src/components/tethyr/sessions/request-session-dialog.tsx src/components/tethyr/profile/profile-sessions-tab.tsx src/components/tethyr/profile/profile-layout.tsx
@@ -470,7 +470,7 @@ git commit -m "feat: wire profile sessions stats, add request session dialog"
 **Interfaces:**
 - Produces: `<SessionFilters filters={filters} onChange={setFilters} />` shared component
 
-- [ ] **Step 1: Create session-filters.tsx**
+- [x] **Step 1: Create session-filters.tsx**
 
 ```tsx
 import { useState } from "react";
@@ -521,7 +521,7 @@ export function SessionFilters({ filters, onChange }: SessionFiltersProps) {
 }
 ```
 
-- [ ] **Step 2: Update sessions-layout.tsx**
+- [x] **Step 2: Update sessions-layout.tsx**
 
 Add filter state and filtering logic:
 
@@ -545,20 +545,20 @@ const filterSessions = useCallback((sessions: SessionWithParticipants[] | undefi
 
 Only show filters on the Upcoming and History tabs (not Calendar or Requests).
 
-- [ ] **Step 3: Update upcoming-sessions.tsx**
+- [x] **Step 3: Update upcoming-sessions.tsx**
 
 Ensure the component accepts the pre-filtered list — no changes needed if it already accepts `sessions: SessionWithParticipants[]`.
 
-- [ ] **Step 4: Update session-history.tsx**
+- [x] **Step 4: Update session-history.tsx**
 
 Same as Step 3 — verify the component accepts the filtered list via props.
 
-- [ ] **Step 5: Run typecheck**
+- [x] **Step 5: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/tethyr/sessions/session-filters.tsx src/components/tethyr/sessions/sessions-layout.tsx src/components/tethyr/sessions/upcoming-sessions.tsx src/components/tethyr/sessions/session-history.tsx
@@ -577,7 +577,7 @@ git commit -m "feat: add session list filtering by title and type"
 - Consumes: `useCancelSessionRequest()` from Task 1
 - Modifies: `useRespondToRequest` — add toast onSuccess/onError (this is in the existing component, not the hook)
 
-- [ ] **Step 1: Add cancel button to outgoing pending requests**
+- [x] **Step 1: Add cancel button to outgoing pending requests**
 
 In `session-requests.tsx`, find the section that renders outgoing pending requests with "Waiting for response". Add a Cancel button:
 
@@ -604,7 +604,7 @@ const cancelRequest = useCancelSessionRequest();
 </Button>
 ```
 
-- [ ] **Step 2: Add toast feedback to accept/decline**
+- [x] **Step 2: Add toast feedback to accept/decline**
 
 Find the existing Accept/Decline buttons and wrap their `onClick` handlers with toast feedback:
 
@@ -628,12 +628,12 @@ respondToRequest.mutate(
 );
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/sessions/session-requests.tsx

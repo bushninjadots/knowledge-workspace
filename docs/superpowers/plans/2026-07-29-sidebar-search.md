@@ -1,6 +1,6 @@
 # Sidebar Global Search — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make the sidebar search clickable, fast, and search all major data sources.
 
@@ -26,7 +26,7 @@
 **Interfaces:**
 - Exports: `GlobalSearch(props: { variant: 'inline' | 'dialog'; open?: boolean; onOpenChange?: (open: boolean) => void; className?: string })`
 
-- [ ] **Step 1: Add `variant`, `open`, `onOpenChange` props + dialog variant wrapper**
+- [x] **Step 1: Add `variant`, `open`, `onOpenChange` props + dialog variant wrapper**
 
 Replace the existing props type and component with this:
 
@@ -519,12 +519,12 @@ export function GlobalSearch({
 }
 ```
 
-- [ ] **Step 2: Verify the file compiles**
+- [x] **Step 2: Verify the file compiles**
 
 Run: `npx tsc --noEmit src/components/tethyr/global-search.tsx` (or `bunx tsc --noEmit`)
 Expected: No type errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/global-search.tsx
@@ -538,7 +538,7 @@ git commit -m "feat: enhance GlobalSearch with 6 data sources, keyboard nav, var
 **Files:**
 - Modify: `src/components/tethyr/dashboard-sidebar.tsx`
 
-- [ ] **Step 1: Replace the dead button with GlobalSearch inline variant**
+- [x] **Step 1: Replace the dead button with GlobalSearch inline variant**
 
 Replace the search button block (lines 62-75) with:
 
@@ -553,12 +553,12 @@ import { GlobalSearch } from "./global-search";
 
 And remove the `Search` import from lucide-react (but keep the other imports).
 
-- [ ] **Step 2: Verify the file compiles**
+- [x] **Step 2: Verify the file compiles**
 
 Run: `npx tsc --noEmit src/components/tethyr/dashboard-sidebar.tsx`
 Expected: No type errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/dashboard-sidebar.tsx
@@ -572,7 +572,7 @@ git commit -m "feat: mount GlobalSearch in DashboardSidebar"
 **Files:**
 - Modify: `src/components/tethyr/authenticated-shell.tsx`
 
-- [ ] **Step 1: Remove MobileSearch component and replace with GlobalSearch dialog**
+- [x] **Step 1: Remove MobileSearch component and replace with GlobalSearch dialog**
 
 Add import:
 ```tsx
@@ -586,12 +586,12 @@ Replace the `<MobileSearch open={searchOpen} onOpenChange={setSearchOpen} />` at
       <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
 ```
 
-- [ ] **Step 2: Verify the file compiles**
+- [x] **Step 2: Verify the file compiles**
 
 Run: `npx tsc --noEmit src/components/tethyr/authenticated-shell.tsx`
 Expected: No type errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/authenticated-shell.tsx
@@ -602,12 +602,12 @@ git commit -m "feat: replace MobileSearch with GlobalSearch dialog"
 
 ### Task 4: Verify everything works together
 
-- [ ] **Step 1: Run the build**
+- [x] **Step 1: Run the build**
 
 Run: `bun run build` or `npm run build`
 Expected: No errors
 
-- [ ] **Step 2: Verify no regressions in unauthenticated shell**
+- [x] **Step 2: Verify no regressions in unauthenticated shell**
 
 Run: `npx tsc --noEmit`
 Expected: No type errors across the project

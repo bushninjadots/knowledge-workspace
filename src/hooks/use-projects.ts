@@ -603,6 +603,12 @@ export function useAcceptRoleApplication() {
       qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
       qc.invalidateQueries({ queryKey: OPEN_ROLES_KEY(variables.projectId) });
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+      // Applicant's dashboard, the explore opportunities feed, and the
+      // accepted user's shelf "Contributing" badge re-sync.
+      qc.invalidateQueries({ queryKey: ["my-applications"] });
+      qc.invalidateQueries({ queryKey: ["my-role-applications"] });
+      qc.invalidateQueries({ queryKey: ["explore-opportunities"] });
+      qc.invalidateQueries({ queryKey: ["explore-contributors"] });
       toast.success("Application accepted");
     },
   });
@@ -621,6 +627,9 @@ export function useDeclineRoleApplication() {
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
       qc.invalidateQueries({ queryKey: OPEN_ROLES_KEY(variables.projectId) });
+      // Applicant's dashboard + explore opportunities feed re-sync.
+      qc.invalidateQueries({ queryKey: ["my-applications"] });
+      qc.invalidateQueries({ queryKey: ["my-role-applications"] });
       toast.success("Application declined");
     },
   });
@@ -659,6 +668,80 @@ export function useMyProjects() {
       }[];
     },
     staleTime: 30_000,
+  });
+}
+
+// ============================================================
+// Project Content (gallery + resources)
+// ============================================================
+
+// The project-detail query cache shape (matches the route's queryFn return).
+type ProjectDetailCache = {
+  project: ProjectDetail;
+  contributors: unknown[];
+  skills: unknown[];
+  coverSigned: string | null;
+  avatarSigned: Record<string, string>;
+};
+
+export function useUpdateProjectContent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      projectId: string;
+      gallery?: GalleryItem[];
+      resources?: ResourceItem[];
+    }) => {
+      const updates: Record<string, unknown> = {};
+      if (input.gallery !== undefined) updates.gallery = input.gallery;
+      if (input.resources !== undefined) updates.resources = input.resources;
+      if (Object.keys(updates).length === 0) return;
+
+      const { error } = await sb.from("projects").update(updates).eq("id", input.projectId);
+      if (error) throw error;
+    },
+    // Optimistic write so the UI updates instantly and the heavy project-detail
+    // refetch (signed URLs, skills, contributors) isn't needed just for this.
+    onMutate: async (input) => {
+      const key = PROJECT_KEY(input.projectId);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ProjectDetailCache>(key);
+      if (!previous) return { previous: undefined };
+      qc.setQueryData<ProjectDetailCache>(key, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          project: {
+            ...old.project,
+            ...(input.gallery !== undefined ? { gallery: input.gallery } : {}),
+            ...(input.resources !== undefined ? { resources: input.resources } : {}),
+          },
+        };
+      });
+      return { previous };
+    },
+    // Roll back only the field this write touched so a concurrent edit on the
+    // other field isn't clobbered by a stale full snapshot.
+    onError: (_err, input, context) => {
+      if (!context?.previous) return;
+      qc.setQueryData<ProjectDetailCache>(PROJECT_KEY(input.projectId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          project: {
+            ...old.project,
+            ...(input.gallery !== undefined ? { gallery: context.previous!.project.gallery } : {}),
+            ...(input.resources !== undefined
+              ? { resources: context.previous!.project.resources }
+              : {}),
+          },
+        };
+      });
+    },
+    // Background refetch keeps the server as source of truth once the write lands.
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+    },
   });
 }
 

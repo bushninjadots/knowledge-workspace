@@ -47,9 +47,11 @@ function sampleRegion(
 }
 
 /** Pick the most saturated colour from a set of samples. */
-function mostSaturated(
-  samples: { r: number; g: number; b: number }[],
-): { r: number; g: number; b: number } {
+function mostSaturated(samples: { r: number; g: number; b: number }[]): {
+  r: number;
+  g: number;
+  b: number;
+} {
   return samples.reduce((best, curr) => {
     const maxCurr = Math.max(curr.r, curr.g, curr.b);
     const minCurr = Math.min(curr.r, curr.g, curr.b);
@@ -144,7 +146,11 @@ export async function getDominantColor(url: string): Promise<string | null> {
             count++;
           }
           if (count === 0) return resolve(null);
-          const fallback = ensureVisible(Math.round(r / count), Math.round(g / count), Math.round(b / count));
+          const fallback = ensureVisible(
+            Math.round(r / count),
+            Math.round(g / count),
+            Math.round(b / count),
+          );
           resolve(`rgb(${fallback.r}, ${fallback.g}, ${fallback.b})`);
           return;
         }
@@ -169,8 +175,8 @@ export async function extractPalette(url: string): Promise<ExtractedPalette | nu
   if (!dominant) return null;
   return {
     dominant,
-    subtle: withAlpha(dominant, 0.10) ?? "transparent",
-    border: withAlpha(dominant, 0.30) ?? "transparent",
+    subtle: withAlpha(dominant, 0.1) ?? "transparent",
+    border: withAlpha(dominant, 0.3) ?? "transparent",
     glow: withAlpha(dominant, 0.06) ?? "transparent",
   };
 }

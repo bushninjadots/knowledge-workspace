@@ -32,7 +32,9 @@ export function MobileBottomNav({
                 : "text-muted-foreground active:text-foreground"
             }`}
           >
-            <Icon className={`h-5 w-5 ${isActive ? "fill-[var(--user-accent,var(--trust))]/15" : ""}`} />
+            <Icon
+              className={`h-5 w-5 ${isActive ? "fill-[var(--user-accent,var(--trust))]/15" : ""}`}
+            />
             <span>{item.label}</span>
           </button>
         );

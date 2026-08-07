@@ -1,6 +1,6 @@
 # Challenges Polish Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add create dialog, notifications, reputation points, and progress UX to the challenges feature.
 
@@ -28,7 +28,7 @@
 **Interfaces:**
 - Produces: `notification_type` enum values `challenge_join`, `challenge_complete`; `notify_challenge_event()` trigger function; `trg_reputation_challenge_completed()` trigger function
 
-- [ ] **Step 1: Create challenge notifications migration**
+- [x] **Step 1: Create challenge notifications migration**
 
 File: `supabase/migrations/20260729000000_challenge_notifications.sql`
 
@@ -123,7 +123,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 2: Create challenge reputation migration**
+- [x] **Step 2: Create challenge reputation migration**
 
 File: `supabase/migrations/20260729000001_challenge_reputation.sql`
 
@@ -162,7 +162,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260729000000_challenge_notifications.sql supabase/migrations/20260729000001_challenge_reputation.sql
@@ -180,7 +180,7 @@ git commit -m "feat: add challenge notification and reputation triggers"
 **Interfaces:**
 - Consumes: `useCreateChallenge()` from `@/hooks/use-challenges`
 
-- [ ] **Step 1: Create the dialog component**
+- [x] **Step 1: Create the dialog component**
 
 `src/components/tethyr/community/create-challenge-dialog.tsx`:
 
@@ -292,7 +292,7 @@ export function CreateChallengeDialog() {
 }
 ```
 
-- [ ] **Step 2: Add create button to community.tsx challenges tab**
+- [x] **Step 2: Add create button to community.tsx challenges tab**
 
 Find the challenges tab section in `community.tsx`. Add the `<CreateChallengeDialog />` button in the header area of the challenges tab, near where the challenge cards are listed.
 
@@ -307,12 +307,12 @@ import { CreateChallengeDialog } from "@/components/tethyr/community/create-chal
 </div>
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/community/create-challenge-dialog.tsx src/routes/_authenticated/community.tsx
@@ -329,11 +329,11 @@ git commit -m "feat: add create challenge dialog"
 **Interfaces:**
 - Consumes: `useUpdateChallengeProgress()` from `@/hooks/use-challenges`
 
-- [ ] **Step 1: Read the existing challenge detail page**
+- [x] **Step 1: Read the existing challenge detail page**
 
 Read `challenges.$id.tsx` to understand the current progress section structure before editing.
 
-- [ ] **Step 2: Enhance the progress section**
+- [x] **Step 2: Enhance the progress section**
 
 Replace the existing basic progress indicator with:
 
@@ -396,12 +396,12 @@ const progressPercent = currentStepIndex >= 0 ? (currentStepIndex / (STATUS_STEP
 
 Use the existing `useUpdateChallengeProgress` mutation hook. Keep the existing notes textarea for the completion step.
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/routes/_authenticated/challenges.$id.tsx
@@ -418,7 +418,7 @@ git commit -m "feat: enhance challenge progress UX with step flow and reputation
 **Interfaces:**
 - Consumes: Task 1's new notification type enum values (must run after Task 1 or notifications page will crash on unknown type)
 
-- [ ] **Step 1: Add challenge cases to useNotificationNavigator**
+- [x] **Step 1: Add challenge cases to useNotificationNavigator**
 
 In `notifications.tsx`, add to the `switch` statement:
 
@@ -439,12 +439,12 @@ Also add `challenge_join` and `challenge_complete` to a relevant category in the
 community: ["comment", "mention", "follow", "challenge_join", "challenge_complete"],
 ```
 
-- [ ] **Step 2: Run typecheck**
+- [x] **Step 2: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/routes/_authenticated/notifications.tsx

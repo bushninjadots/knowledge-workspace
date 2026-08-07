@@ -137,9 +137,8 @@ function CommunityPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>(
     (savedFilters.sortMode as SortMode) ?? "latest",
-  );  const [mySkillsOnly, setMySkillsOnly] = useState(
-    (savedFilters.mySkillsOnly as boolean) ?? false,
   );
+  const [mySkillsOnly, setMySkillsOnly] = useState((savedFilters.mySkillsOnly as boolean) ?? false);
 
   // Persist filters to localStorage on change
   useEffect(() => {
@@ -272,9 +271,7 @@ function CommunityPage() {
     }
 
     if (mySkillsOnly && mySkillNames.size > 0) {
-      list = list.filter((p) =>
-        p.skills.some((s) => mySkillNames.has(s.toLowerCase())),
-      );
+      list = list.filter((p) => p.skills.some((s) => mySkillNames.has(s.toLowerCase())));
     }
 
     if (searchQuery.trim()) {
@@ -397,10 +394,7 @@ function CommunityPage() {
                   <FilterBadge label="My skills only" onRemove={() => setMySkillsOnly(false)} />
                 )}
                 {sortMode !== "latest" && (
-                  <FilterBadge
-                    label={`Sort: ${sortMode}`}
-                    onRemove={() => setSortMode("latest")}
-                  />
+                  <FilterBadge label={`Sort: ${sortMode}`} onRemove={() => setSortMode("latest")} />
                 )}
                 {activeFilterCount > 1 && (
                   <button
@@ -714,9 +708,10 @@ function CommunityPage() {
           ) : (
             <div className="flex flex-col gap-5">
               {feed.map((post, index) => {
-                const overlap = sortMode === "recommended"
-                  ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
-                  : undefined;
+                const overlap =
+                  sortMode === "recommended"
+                    ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
+                    : undefined;
                 return (
                   <PostCardWithComments
                     key={post.id}
@@ -793,6 +788,7 @@ function PostCardWithComments({
   className,
   style,
   highlighted,
+  skillOverlap,
 }: {
   post: PostWithAuthor;
   saved: boolean;

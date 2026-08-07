@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { safeRedirectPath } from "@/lib/validators";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -39,6 +40,12 @@ const crafts = [
 ];
 
 function SignupPage() {
+  // Optional ?redirect=/path — continue to the intended page after signup.
+  // Only same-origin absolute paths are honored (open-redirect guard).
+  const { redirect: redirectParam } = useSearch({ strict: false }) as {
+    redirect?: string;
+  };
+  const redirectTarget = safeRedirectPath(redirectParam) ?? "/dashboard";
   const [craft, setCraft] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
@@ -81,7 +88,7 @@ function SignupPage() {
         return;
       }
       toast.success("Welcome to Tethyr ✨");
-      navigate({ to: "/dashboard" });
+      navigate({ to: redirectTarget });
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -96,7 +103,11 @@ function SignupPage() {
       footer={
         <>
           Already a member?{" "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link
+            to="/login"
+            search={redirectParam ? { redirect: redirectParam } : undefined}
+            className="text-primary hover:underline"
+          >
             Log in
           </Link>
         </>

@@ -145,7 +145,10 @@ export function ProfileLayout({
   });
 
   return (
-    <div className="animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8" style={accentStyle}>
+    <div
+      className="animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8"
+      style={accentStyle}
+    >
       <div className="space-y-6">
         {/* BANNER + HEADER */}
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">

@@ -99,6 +99,18 @@ export function sanitizeFilename(name: string): string {
   return name.replace(/[\\/]/g, "").replace(/\.\./g, "").replace(/^\.+/, "").trim();
 }
 
+// Post-auth redirect guard. Accepts only same-origin absolute paths and blocks
+// the classic open-redirect vectors: "//evil.com", "\\evil.com", "/\\evil.com"
+// and protocol-relative URLs like "/https://evil.com".
+export function safeRedirectPath(redirect: string | null | undefined): string | null {
+  if (!redirect || !redirect.startsWith("/")) return null;
+  // Protocol-relative (//host) and backslash tricks browsers normalize to //.
+  if (/^\/\//.test(redirect) || /^\/\\/.test(redirect) || redirect.includes(":")) return null;
+  if (redirect.includes("\\")) return null;
+  // Single slash or a clean internal path (e.g. /projects/abc?section=roles).
+  return redirect;
+}
+
 const LIBRARY_FILE_EXTS = [
   // Images
   "jpg",

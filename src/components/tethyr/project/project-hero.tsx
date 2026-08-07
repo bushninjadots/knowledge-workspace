@@ -1,15 +1,21 @@
-import { Bookmark, Share2, UserPlus } from "lucide-react";
+import { Bookmark, Share2, UserPlus, PenSquare } from "lucide-react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import type { ProjectDetail } from "@/hooks/use-projects";
-import type { Contributor } from "@/routes/projects.$id";
+import type { Contributor } from "./project-main-content";
 
 interface ProjectHeroProps {
   project: ProjectDetail;
   coverSigned: string | null;
   creator: Contributor | undefined;
   avatarSigned: Record<string, string>;
-  accent?: string | null;
+  /** Renders the "Join Project" CTA when the visitor can join. */
+  onJoin?: () => void;
+  /** Renders a "Post update" CTA (for owners/contributors) instead of Join. */
+  onPostUpdate?: () => void;
+  /** Renders a "Sign in to join" CTA for signed-out visitors. */
+  onSignIn?: () => void;
 }
 
 function InlineLink({
@@ -38,7 +44,9 @@ export function ProjectHero({
   coverSigned,
   creator,
   avatarSigned,
-  accent,
+  onJoin,
+  onPostUpdate,
+  onSignIn,
 }: ProjectHeroProps) {
   const prefersReducedMotion = useReducedMotion();
   const { scrollY } = useScroll();
@@ -122,16 +130,55 @@ export function ProjectHero({
                 {project.goal}
               </p>
             )}
+            {/* Compact CTA for mobile (the main CTA column is hidden below sm). */}
+            {onSignIn && (
+              <button
+                onClick={onSignIn}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90 sm:hidden"
+              >
+                <UserPlus className="h-4 w-4" />
+                Sign in to join
+              </button>
+            )}
           </div>
 
           <div className="hidden shrink-0 flex-col gap-2 sm:flex">
-            <button className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
-              Join Project
-            </button>
+            {onJoin ? (
+              <button
+                onClick={onJoin}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+              >
+                <UserPlus className="h-4 w-4" />
+                Join Project
+              </button>
+            ) : onPostUpdate ? (
+              <button
+                onClick={onPostUpdate}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+              >
+                <PenSquare className="h-4 w-4" />
+                Post update
+              </button>
+            ) : onSignIn ? (
+              <button
+                onClick={onSignIn}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+              >
+                <UserPlus className="h-4 w-4" />
+                Sign in to join
+              </button>
+            ) : null}
             <div className="flex gap-2">
               <button
+                onClick={() => {
+                  if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast.success("Link copied");
+                  }
+                }}
                 className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-sm transition hover:bg-white/20"
                 aria-label="Share"
+                title="Copy link"
               >
                 <Share2 className="h-4 w-4" />
               </button>

@@ -1,6 +1,6 @@
 # Project Detail Page — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Transform the existing project detail page (`/projects/$id`) from a functional tabbed layout into a premium single-scroll experience with full-bleed hero, sticky sidebar, and scroll-spy navigation.
 
@@ -31,7 +31,7 @@
 **Interfaces:**
 - Produces: `useProjectScrollSpy(sectionIds: string[]): { activeSection: string | null; scrollTo: (id: string) => void }`
 
-- [ ] **Step 1: Create the hook file**
+- [x] **Step 1: Create the hook file**
 
 ```typescript
 // src/hooks/use-project-scroll-spy.ts
@@ -70,12 +70,12 @@ export function useProjectScrollSpy(sectionIds: string[]) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS (no output)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/hooks/use-project-scroll-spy.ts
@@ -93,7 +93,7 @@ git commit -m "feat: add useProjectScrollSpy hook"
 - Consumes: `ProjectDetail` type from `@/hooks/use-projects` (fields used: `title`, `progress_percent`, `stage`, `status`, `looking_for_collaborators`, `looking_for_feedback`, `is_featured`, `goal`), `Contributor` type from `projects.$id.tsx`
 - Produces: `<ProjectHero project coverSigned creator avatarSigned accent />`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // src/components/tethyr/project/project-hero.tsx
@@ -215,12 +215,12 @@ export function ProjectHero({ project, coverSigned, creator, avatarSigned, accen
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/project/project-hero.tsx
@@ -238,7 +238,7 @@ git commit -m "feat: add ProjectHero component"
 - Consumes: `{ sections: { id: string; label: string }[]; activeSection: string | null; onSectionClick: (id: string) => void }`
 - Produces: visual dot/line nav component
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // src/components/tethyr/project/project-scroll-spy.tsx
@@ -286,12 +286,12 @@ export function ProjectScrollSpy({ sections, activeSection, onSectionClick }: Pr
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/project/project-scroll-spy.tsx
@@ -310,7 +310,7 @@ git commit -m "feat: add ProjectScrollSpy component"
 - Consumes: `ProjectDetail`, `SkillLite`, `openRoles`, links, `isOwner`, `isContributor`
 - Produces: `<ProjectSidebar project, skills, links, openRoles, milestones, isOwner, isContributor />`
 
-- [ ] **Step 1: Add compact variant to `ProjectTimeline`**
+- [x] **Step 1: Add compact variant to `ProjectTimeline`**
 
 Add a `variant` prop that lets the timeline render vertically as stacked steps:
 
@@ -372,7 +372,7 @@ if (variant === "compact") {
 }
 ```
 
-- [ ] **Step 2: Create `ProjectSidebar`**
+- [x] **Step 2: Create `ProjectSidebar`**
 
 ```tsx
 // src/components/tethyr/project/project-sidebar.tsx
@@ -523,12 +523,12 @@ export function ProjectSidebar({
 }
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/project/project-sidebar.tsx src/components/tethyr/project/project-timeline.tsx
@@ -546,7 +546,7 @@ git commit -m "feat: add ProjectSidebar + compact ProjectTimeline variant"
 - Consumes: All project data + existing sub-components
 - Produces: `<ProjectMainContent project contributors skills milestones updates discussions openRoles avatarSigned isOwner isContributor />`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // src/components/tethyr/project/project-main-content.tsx
@@ -734,12 +734,12 @@ export function ProjectMainContent({
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/project/project-main-content.tsx
@@ -756,7 +756,7 @@ git commit -m "feat: add ProjectMainContent component"
 **Interfaces:**
 - Produces: `<ProjectJoinModal open projectId openRoles onClose />`
 
-- [ ] **Step 1: Create the modal shell**
+- [x] **Step 1: Create the modal shell**
 
 ```tsx
 // src/components/tethyr/project/project-join-modal.tsx
@@ -835,12 +835,12 @@ export function ProjectJoinModal({ open, projectId, openRoles, onClose }: Projec
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/project/project-join-modal.tsx
@@ -858,11 +858,11 @@ git commit -m "feat: add ProjectJoinModal shell component"
 - Consumes: All components from Tasks 1–6
 - Wires everything together: replace tab-based layout with hero + scroll-spy + sidebar + main content + join modal
 
-- [ ] **Step 1: Export shared types + preserve loading/error states**
+- [x] **Step 1: Export shared types + preserve loading/error states**
 
 Add `export` to the existing `Contributor` and `PersonLite` type definitions so new components can import them. Keep the loading state (lines 227-233) and error state (lines 234-240) from the existing route — they remain unchanged.
 
-- [ ] **Step 2: Rewrite the route component layout**
+- [x] **Step 2: Rewrite the route component layout**
 
 Replace the return block and state management. Key changes:
 
@@ -933,7 +933,7 @@ const { activeSection, scrollTo } = useProjectScrollSpy(SECTIONS_DATA.map((s) =>
 </Shell>
 ```
 
-- [ ] **Step 3: Remove now-unused imports**
+- [x] **Step 3: Remove now-unused imports**
 
 Remove these imports from the route file (they've moved into `ProjectMainContent`):
 - `Markdown`, `remarkGfm`
@@ -950,12 +950,12 @@ KEEP using: `Link`, `useParams`, `createFileRoute`, `notFound`, `useQuery`, `for
 
 Keep `Contributor` and `PersonLite` type definitions (they're now `export`ed) — new components import them from the route.
 
-- [ ] **Step 4: Typecheck**
+- [x] **Step 4: Typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/projects.\$id.tsx

@@ -125,9 +125,7 @@ export function NotificationDropdown() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm leading-snug">{n.title}</p>
                 {n.body && (
-                  <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
-                    {n.body}
-                  </p>
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{n.body}</p>
                 )}
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{timeAgo(n.created_at)}</p>
               </div>

@@ -85,10 +85,14 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
   const dbError = itemsError || collectionsError;
   if (dbError) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        {" "}
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-            <div>                <h2 className="font-display text-lg font-semibold text-amber-600">
+            <div>
+              {" "}
+              <h2 className="font-display text-lg font-semibold text-amber-600">
                 Database tables not found
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Briefcase } from "lucide-react";
+import { ExternalLink, Briefcase, UserPlus } from "lucide-react";
 import { ProjectTimeline, type ProjectStage } from "./project-timeline";
 import type { ProjectDetail, OpenRoleRow } from "@/hooks/use-projects";
 
@@ -13,6 +13,9 @@ interface ProjectSidebarProps {
   isOwner: boolean;
   isContributor: boolean;
   onOpenRoleApply?: (roleId: string) => void;
+  onJoin?: () => void;
+  /** Signed-out visitors — deep-link to login with a redirect back to this project. */
+  onSignIn?: () => void;
 }
 
 export function ProjectSidebar({
@@ -25,12 +28,27 @@ export function ProjectSidebar({
   isOwner,
   isContributor,
   onOpenRoleApply,
+  onJoin,
+  onSignIn,
 }: ProjectSidebarProps) {
   return (
     <aside className="sticky top-24 self-start space-y-4">
-      {!isOwner && !isContributor && (
-        <button className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
+      {/* Only rendered for signed-in, non-member visitors — onJoin is undefined for signed-out guests. */}
+      {!isOwner && !isContributor && onJoin && (
+        <button
+          onClick={onJoin}
+          className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+        >
           Join this Project
+        </button>
+      )}
+      {!isOwner && !isContributor && onSignIn && (
+        <button
+          onClick={onSignIn}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+        >
+          <UserPlus className="h-4 w-4" />
+          Sign in to join
         </button>
       )}
 
@@ -139,9 +157,12 @@ export function ProjectSidebar({
         </div>
       </div>
 
-      {!isOwner && !isContributor && (
+      {!isOwner && !isContributor && onJoin && (
         <div className="sticky bottom-4 pt-2">
-          <button className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90">
+          <button
+            onClick={onJoin}
+            className="w-full rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+          >
             Request to Join
           </button>
         </div>

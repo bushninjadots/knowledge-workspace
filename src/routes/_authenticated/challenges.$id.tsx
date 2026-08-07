@@ -316,49 +316,50 @@ function ChallengeDetailPage() {
       {/* Participant Roster */}
       <div className="rounded-xl border card-border bg-surface p-5 sm:p-6 space-y-4">
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.04em] text-foreground flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" /> Participants ({challenge.participant_count ?? 0})
+          <Users className="h-4 w-4 text-muted-foreground" /> Participants (
+          {challenge.participant_count ?? 0})
         </h2>
-          {!challenge.participants || challenge.participants.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No participants yet. Be the first to join!
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {challenge.participants.map((part) => (
-                <div
-                  key={part.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <ChallengeAvatar
-                      profile={part.profile}
-                      className="h-8 w-8"
-                      fallbackClassName="text-xs"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {part.profile?.display_name || "Community Member"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        @{part.profile?.handle || "user"}
-                      </p>
-                    </div>
+        {!challenge.participants || challenge.participants.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">
+            No participants yet. Be the first to join!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {challenge.participants.map((part) => (
+              <div
+                key={part.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/40"
+              >
+                <div className="flex items-center gap-3">
+                  <ChallengeAvatar
+                    profile={part.profile}
+                    className="h-8 w-8"
+                    fallbackClassName="text-xs"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {part.profile?.display_name || "Community Member"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      @{part.profile?.handle || "user"}
+                    </p>
                   </div>
-
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] capitalize ${
-                      part.status === "completed"
-                        ? "bg-trust text-trust border-trust/40"
-                        : "bg-secondary text-muted-foreground"
-                    }`}
-                  >
-                    {part.status}
-                  </Badge>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] capitalize ${
+                    part.status === "completed"
+                      ? "bg-trust text-trust border-trust/40"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  {part.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

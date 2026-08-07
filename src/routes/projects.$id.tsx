@@ -1,44 +1,30 @@
 // Public-facing project workspace at /projects/:id. Anyone can view — even
 // signed-out — because projects, project_contributors, project_skills,
 // milestones, updates, discussions and open roles all carry public SELECT
-// policies. Phase 2.1: expanded project model with vision, gallery,
-// resources, milestones, weekly updates, discussions, and open roles.
-import { useState, useRef, useCallback } from "react";
-import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
+// policies. Single-scroll layout: full-bleed hero → two-column (sticky
+// sidebar + main content) with a scroll-spy dot nav on the left.
+import { useEffect, useMemo, useState } from "react";
+import {
+  createFileRoute,
+  notFound,
+  useParams,
+  Link,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import {
-  Target,
-  Users as UsersIcon,
-  MessageCircle,
-  UserPlus,
-  ImageIcon,
-  Trophy,
-  Clock,
-  Sparkles,
-  BookOpen,
-  PenSquare,
-  Briefcase,
-  FolderOpen,
-  Link2,
-  GraduationCap,
-} from "lucide-react";
+import { Trophy, Clock, Users as UsersIcon, MessageCircle, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Until Supabase types are regenerated after migration, cast new columns
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
-import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { Progress } from "@/components/ui/progress";
-import {
-  PROJECT_LINK_KEYS,
-  PROJECT_STATUS_LABEL,
-  PROJECT_STATUS_STYLE,
-} from "@/components/tethyr/profile-sections";
+import { PROJECT_STATUS_LABEL, PROJECT_STATUS_STYLE } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useProjectScrollSpy } from "@/hooks/use-project-scroll-spy";
 import {
   useMilestones,
   useProjectUpdates,
@@ -48,56 +34,17 @@ import {
   type ProjectDetail,
   type ProjectStage,
 } from "@/hooks/use-projects";
-import { MilestonesTimeline } from "@/components/tethyr/project/project-milestones";
-import { ProjectUpdatesJournal } from "@/components/tethyr/project/project-updates";
-import { ProjectDiscussions } from "@/components/tethyr/project/project-discussions";
-import { OpenRolesSection } from "@/components/tethyr/project/project-open-roles";
-import { GallerySection, ResourcesSection } from "@/components/tethyr/project/project-resources";
 import { ProjectTimeline } from "@/components/tethyr/project/project-timeline";
-// Role application components imported but not yet used in this route
-import { ProjectCommunityPosts } from "@/components/tethyr/project/project-community-posts";
+import { ProjectHero } from "@/components/tethyr/project/project-hero";
+import { ProjectScrollSpy } from "@/components/tethyr/project/project-scroll-spy";
+import { ProjectSidebar } from "@/components/tethyr/project/project-sidebar";
+import {
+  ProjectMainContent,
+  type Contributor,
+  type ProjectSection,
+} from "@/components/tethyr/project/project-main-content";
+import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
 import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
-
-type PersonLite = {
-  id: string;
-  handle: string | null;
-  display_name: string | null;
-  creator_title: string | null;
-  avatar_url: string | null;
-};
-
-export type Contributor = {
-  profile_id: string;
-  role: "creator" | "contributor" | "mentor";
-  contribution_score: number;
-  skills_used: string[];
-  profile: PersonLite | null;
-};
-
-type SkillLite = { id: string; slug: string; name: string; category: string };
-
-const ROLE_ORDER: Record<Contributor["role"], number> = { creator: 0, mentor: 1, contributor: 2 };
-const ROLE_LABEL: Record<Contributor["role"], string> = {
-  creator: "Creator",
-  mentor: "Mentor",
-  contributor: "Contributor",
-};
-
-type Tab = "overview" | "milestones" | "journal" | "discussion" | "roles" | "gallery" | "resources" | "contributors" | "community" | "knowledge";
-const TABS: { id: Tab; label: string; icon: typeof Target }[] = [
-  { id: "overview", label: "Overview", icon: BookOpen },
-  { id: "milestones", label: "Milestones", icon: Target },
-  { id: "journal", label: "Journal", icon: Sparkles },
-  { id: "discussion", label: "Discussion", icon: MessageCircle },
-  { id: "knowledge", label: "Knowledge", icon: GraduationCap },
-  { id: "roles", label: "Roles", icon: Briefcase },
-  { id: "gallery", label: "Gallery", icon: ImageIcon },
-  { id: "resources", label: "Resources", icon: FolderOpen },
-  { id: "contributors", label: "Contributors", icon: UsersIcon },
-  { id: "community", label: "Community", icon: Link2 },
-];
-
-
 
 export const Route = createFileRoute("/projects/$id")({
   head: () => ({
@@ -122,14 +69,14 @@ export const Route = createFileRoute("/projects/$id")({
 function ProjectPage() {
   const { id } = useParams({ from: "/projects/$id" });
   const { data: me } = useCurrentUser();
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const contentRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  // Which role to spotlight when the modal opens (from the sidebar's per-role Apply).
+  const [joinRoleId, setJoinRoleId] = useState<string | null>(null);
 
-  const switchTab = useCallback((tab: Tab) => {
-    setActiveTab(tab);
-    // Smooth scroll to top of content
-    contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  // Deep-link: ?section=roles scrolls to that section once the page has data.
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const sectionParam = searchParams.section;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["project-detail", id],
@@ -180,12 +127,10 @@ function ProjectPage() {
       }
       contributorsRes ??= { data: [] };
 
-      const [skillsRes] = await Promise.all([
-        supabase
-          .from("project_skills")
-          .select("skill_id, skills(id, slug, name, category)")
-          .eq("project_id", id),
-      ]);
+      const { data: skillsRes } = await supabase
+        .from("project_skills")
+        .select("skill_id, skills(id, slug, name, category)")
+        .eq("project_id", id);
 
       const contributors = (
         (contributorsRes.data ?? []) as unknown as {
@@ -201,11 +146,11 @@ function ProjectPage() {
           role: r.role as Contributor["role"],
           contribution_score: r.contribution_score ?? 0,
           skills_used: r.skills_used ?? [],
-          profile: (r.profiles as unknown as PersonLite) ?? null,
+          profile: (r.profiles as unknown as Contributor["profile"]) ?? null,
         }))
         .sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]) as Contributor[];
 
-      const skills = (skillsRes.data ?? [])
+      const skills = (skillsRes ?? [])
         .map((r) => r.skills as unknown as SkillLite | null)
         .filter((s): s is SkillLite => !!s);
 
@@ -248,6 +193,43 @@ function ProjectPage() {
   const { data: openRoles = [] } = useOpenRoles(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
+  const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
+
+  // Sections are driven by the data so the scroll-spy and content never drift.
+  // Owners always get gallery/resources sections (even empty) so they can add
+  // the first item — the sub-components self-hide for non-owners when empty.
+  const sections = useMemo(() => {
+    if (!data) return [] as ProjectSection[];
+    const { project, contributors, skills } = data;
+    const s: ProjectSection[] = [];
+    if (project.vision) s.push({ id: "vision", label: "Vision" });
+    if (project.description) s.push({ id: "about", label: "About" });
+    if (project.goal) s.push({ id: "goals", label: "Goal" });
+    if (skills.length > 0 || project.tags.length > 0) s.push({ id: "skills", label: "Skills" });
+    if (openRoles.length > 0) s.push({ id: "roles", label: "Open Roles" });
+    if (milestones.length > 0) s.push({ id: "milestones", label: "Milestones" });
+    if (updates.length > 0) s.push({ id: "journal", label: "Journal" });
+    if (discussions.length > 0) s.push({ id: "discussion", label: "Discussion" });
+    if (contributors.length > 0) s.push({ id: "contributors", label: "Contributors" });
+    if (isOwner || (project.gallery ?? []).length > 0) s.push({ id: "gallery", label: "Gallery" });
+    if (isOwner || (project.resources ?? []).length > 0)
+      s.push({ id: "resources", label: "Resources" });
+    s.push({ id: "community", label: "Community" });
+    return s;
+  }, [data, openRoles, milestones, updates, discussions, isOwner]);
+
+  const sectionIds = useMemo(() => sections.map((s) => s.id), [sections]);
+  const { activeSection, scrollTo } = useProjectScrollSpy(sectionIds);
+
+  // Scroll to a deep-linked section (e.g. ?section=roles) once data is ready.
+  useEffect(() => {
+    if (!data || !sectionParam) return;
+    const t = setTimeout(() => {
+      document.getElementById(sectionParam)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [data, sectionParam]);
+
   if (isLoading) {
     return (
       <Shell>
@@ -266,8 +248,15 @@ function ProjectPage() {
   const { project, contributors, skills, coverSigned, avatarSigned } = data;
   const creator = contributors.find((c) => c.role === "creator");
   const otherContributors = contributors.filter((c) => c.role !== "creator");
-  const isOwner = me?.userId === project.profile_id;
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
+  const canJoin = !!me?.userId && !isOwner && !isContributor;
+  const isSignedOut = !me?.userId && !isOwner && !isContributor;
+  // Signed-out visitors go to /login?redirect=/projects/:id and come back to the join modal.
+  const signInToJoin = () =>
+    navigate({
+      to: "/login",
+      search: { redirect: `/projects/${id}` } as Record<string, string>,
+    });
   const timeSinceStart = project.started_at
     ? formatDistanceToNowStrict(new Date(project.started_at), { addSuffix: true })
     : null;
@@ -276,82 +265,48 @@ function ProjectPage() {
 
   return (
     <Shell accentColor={accent}>
-      <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
-        {/* HERO / HEADER */}
-        <div className="relative overflow-hidden rounded-xl border card-border bg-surface">
-          <div
-            className="relative aspect-[2/1] w-full overflow-hidden border-b transition-colors duration-500 sm:aspect-[3/1]"
-            style={{ borderColor: accent ?? "transparent" }}
-          >
-            {coverSigned ? (
-              <img
-                src={coverSigned}
-                alt={`${project.title} cover`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40">
-                <ImageIcon className="h-8 w-8 text-background" />
-              </div>
-            )}
-          </div>
+      <ProjectHero
+        project={project}
+        coverSigned={coverSigned}
+        creator={creator}
+        avatarSigned={avatarSigned}
+        onJoin={
+          canJoin
+            ? () => {
+                setJoinRoleId(null);
+                setJoinModalOpen(true);
+              }
+            : undefined
+        }
+        onSignIn={isSignedOut ? signInToJoin : undefined}
+        onPostUpdate={
+          isOwner || isContributor
+            ? () =>
+                navigate({
+                  to: "/community",
+                  search: { attach_project: id } as Record<string, string>,
+                })
+            : undefined
+        }
+      />
 
-          <div className="p-6 sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-2xl font-semibold sm:text-3xl">
-                    {project.title}
-                  </h1>
-                  {project.is_featured && <Trophy className="h-4 w-4 shrink-0 text-primary" />}
-                </div>
-                {creator?.profile && (
-                  <Link
-                    to="/u/$handle"
-                    params={{ handle: creator.profile.handle ?? "" }}
-                    className="mt-1 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    <Avatar
-                      name={creator.profile.display_name ?? creator.profile.handle}
-                      src={avatarSigned[creator.profile_id]}
-                    />
-                    {creator.profile.display_name || creator.profile.handle}
-                  </Link>
-                )}
-              </div>
+      <ProjectScrollSpy
+        sections={sections}
+        activeSection={activeSection}
+        onSectionClick={scrollTo}
+      />
+
+      <div className="animate-room-enter relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0 space-y-6">
+            {/* Status + meta strip */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span
                 className={`shrink-0 rounded-full border px-3 py-1 text-xs ${PROJECT_STATUS_STYLE[project.status]}`}
               >
                 {PROJECT_STATUS_LABEL[project.status]}
               </span>
-              {(isOwner || isContributor) && (
-                <Link
-                  to="/community"
-                  search={{ attach_project: id } as Record<string, string>}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/20"
-                >
-                  <PenSquare className="h-3 w-3" />
-                  Post to Community
-                </Link>
-              )}
-            </div>
-
-            {project.goal && (
-              <p className="mt-4 flex items-start gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] p-3 text-sm text-foreground/90">
-                <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                {project.goal}
-              </p>
-            )}
-
-            <div className="mt-5 flex items-center gap-3">
-              <Progress value={project.progress_percent} className="h-2" />
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {project.progress_percent}% complete
-                {milestones.length > 0 && `· ${doneCount}/${milestones.length} milestones`}
-              </span>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {project.is_featured && <Trophy className="h-4 w-4 shrink-0 text-primary" />}
               {timeSinceStart && (
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" /> Started {timeSinceStart}
@@ -369,7 +324,7 @@ function ProjectPage() {
                 </span>
               )}
               {project.looking_for_collaborators && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 px-2.5 py-0.5 text-[var(--brand-purple)]">
+                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-2.5 py-0.5 text-brand-purple">
                   <UserPlus className="h-3 w-3" /> Open to collaborators
                 </span>
               )}
@@ -384,456 +339,89 @@ function ProjectPage() {
                 </Link>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* TIMELINE */}
-        <ProjectTimeline
-          currentStage={(project.stage ?? "planning") as ProjectStage}
-          isOwner={isOwner}
-          onStageChange={(stage) => updateStage.mutate({ projectId: id, stage })}
-        />
-
-        {/* TABS — sticky for easy navigation */}
-        <div className="sticky top-16 z-20 -mx-4 sm:-mx-8">
-          <div className="relative flex gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-4 py-2 backdrop-blur-md sm:px-8">
-            {/* Scroll-fade indicator on right edge */}
-            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-10 bg-gradient-to-l from-background/85 to-transparent sm:w-12" />
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const count = tabBadge(tab.id, { milestones, doneCount, updates, discussions, openRoles, communityPostCount, contributors });
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => switchTab(tab.id)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    activeTab === tab.id
-                      ? "bg-surface-elevated text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/50"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  {count !== null && (
-                    <span className="ml-0.5 rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0 text-[10px] tabular-nums text-[var(--user-accent,var(--primary))]">
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Content area */}
-        <div ref={contentRef}>
-
-        {/* TAB CONTENT */}
-
-        {/* TAB CONTENT */}
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* Vision */}
-            {project.vision && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <h3 className="mb-2 text-sm font-medium text-foreground/80">Vision</h3>
-                <div className="prose-custom text-sm text-foreground/90">
-                  <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {project.description && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <h3 className="mb-2 text-sm font-medium text-foreground/80">About</h3>
-                <div className="prose-custom text-sm leading-relaxed text-foreground/90">
-                  <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
-                </div>
-              </div>
-            )}
-
-            {/* Skills + Links row */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <SectionCard title="Skills involved" icon={<Target className="h-4 w-4" />}>
-                {skills.length === 0 && project.tags.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No skills tagged yet.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((s) => (
-                      <Link
-                        key={s.id}
-                        to="/skills/$slug"
-                        params={{ slug: s.slug }}
-                        className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition hover:opacity-80"
-                      >
-                        {s.name}
-                      </Link>
-                    ))}
-                    {project.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </SectionCard>
-
-              {links.length > 0 && (
-                <SectionCard title="Links">
-                  <div className="flex flex-wrap gap-2">
-                    {links.map(([key, url]) => {
-                      const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
-                      const Icon = meta?.icon;
-                      return (
-                        <a
-                          key={key}
-                          href={safeHref(url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          {Icon && <Icon className="h-3.5 w-3.5" />}
-                          {meta?.label ?? key}
-                        </a>
-                      );
-                    })}
-                  </div>
-                </SectionCard>
-              )}
+            {/* Progress summary */}
+            <div className="flex items-center gap-3">
+              <Progress value={project.progress_percent} className="h-2 flex-1" />
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {project.progress_percent}% complete
+                {milestones.length > 0 && ` · ${doneCount}/${milestones.length} milestones`}
+              </span>
             </div>
 
-            {/* Open Roles — preview in overview */}
-            {openRoles.length > 0 && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground/80">Open Roles</h3>
-                  <button
-                    onClick={() => switchTab("roles")}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    View all →
-                  </button>
-                </div>
-                <OpenRolesSection roles={openRoles.slice(0, 2)} projectId={id} isOwner={isOwner} />
-              </div>
-            )}
+            {/* Stage timeline */}
+            <ProjectTimeline
+              currentStage={(project.stage ?? "planning") as ProjectStage}
+              isOwner={isOwner}
+              onStageChange={(stage) => updateStage.mutate({ projectId: id, stage })}
+            />
+
+            {/* Single-scroll content */}
+            <ProjectMainContent
+              project={project}
+              contributors={contributors}
+              skills={skills}
+              links={links}
+              milestones={milestones}
+              updates={updates}
+              discussions={discussions}
+              openRoles={openRoles}
+              avatarSigned={avatarSigned}
+              isOwner={isOwner}
+              isContributor={isContributor}
+              sections={sections}
+            />
           </div>
-        )}
 
-        {activeTab === "milestones" && (
-          <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
-        )}
-
-        {activeTab === "journal" && (
-          <ProjectUpdatesJournal updates={updates} projectId={id} isContributor={isContributor} />
-        )}
-
-        {activeTab === "discussion" && (
-          <ProjectDiscussions
-            discussions={discussions}
-            projectId={id}
+          {/* Sticky sidebar */}
+          <ProjectSidebar
+            project={project}
+            skills={skills}
+            links={links}
+            openRoles={openRoles}
+            milestones={milestones}
+            contributors={contributors}
+            isOwner={isOwner}
             isContributor={isContributor}
-            isOwner={isOwner}
-          />
-        )}
-
-        {activeTab === "contributors" && (
-          <div className="space-y-6">
-            <SectionCard title="Contributors" icon={<UsersIcon className="h-4 w-4" />}>
-              {contributors.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No one listed yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {contributors.map((c) => (
-                    <div key={c.profile_id} className="rounded-xl bg-background/40 p-3">
-                      <Link
-                        to="/u/$handle"
-                        params={{ handle: c.profile?.handle ?? "" }}
-                        className="flex items-center gap-3 transition hover:opacity-80"
-                      >
-                        <Avatar
-                          name={c.profile?.display_name ?? c.profile?.handle}
-                          src={avatarSigned[c.profile_id]}
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
-                            {c.profile?.display_name || c.profile?.handle || "Unknown"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role]}</p>
-                        </div>
-                      </Link>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {c.contribution_score > 0 && (
-                          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary tabular-nums">
-                            Score: {c.contribution_score}
-                          </span>
-                        )}
-                        {c.skills_used.map((s) => (
-                          <span
-                            key={s}
-                            className="rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-
-            <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
-          </div>
-        )}
-
-        {activeTab === "roles" && (
-          <OpenRolesSection roles={openRoles} projectId={id} isOwner={isOwner} />
-        )}
-
-        {activeTab === "gallery" && (
-          <GallerySection
-            gallery={
-              (project.gallery ?? []) as {
-                url: string;
-                caption?: string;
-                type: "image" | "video";
-              }[]
+            onOpenRoleApply={(roleId) => {
+              setJoinRoleId(roleId);
+              setJoinModalOpen(true);
+            }}
+            onJoin={
+              canJoin
+                ? () => {
+                    setJoinRoleId(null);
+                    setJoinModalOpen(true);
+                  }
+                : undefined
             }
-            onUpdate={() => {}}
-            isOwner={isOwner}
+            onSignIn={isSignedOut ? signInToJoin : undefined}
           />
-        )}
-
-        {activeTab === "resources" && (
-          <ResourcesSection
-            resources={
-              (project.resources ?? []) as {
-                title: string;
-                url: string;
-                type: "article" | "tool" | "video" | "doc" | "other";
-              }[]
-            }
-            onUpdate={() => {}}
-            isOwner={isOwner}
-          />
-        )}
-
-        {activeTab === "knowledge" && (
-          <div className="space-y-6">
-            {/* What this project is about */}
-            {(project.description || project.vision || project.goal) && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-brand-purple" />
-                  <h3 className="text-sm font-semibold">Project Knowledge Base</h3>
-                </div>
-
-                {project.vision && (
-                  <div className="mb-4 rounded-lg border border-brand-purple/20 bg-brand-purple/5 p-4">
-                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-purple">Vision</h4>
-                    <div className="prose-custom mt-1 text-sm text-foreground/90">
-                      <Markdown remarkPlugins={[remarkGfm]}>{project.vision}</Markdown>
-                    </div>
-                  </div>
-                )}
-
-                {project.goal && (
-                  <div className="mb-4 rounded-lg border border-brand-green/20 bg-brand-green/5 p-4">
-                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-green">Goal</h4>
-                    <div className="prose-custom mt-1 text-sm text-foreground/90">
-                      <Markdown remarkPlugins={[remarkGfm]}>{project.goal}</Markdown>
-                    </div>
-                  </div>
-                )}
-
-                {project.description && (
-                  <div className="rounded-lg border border-border/60 bg-background/40 p-4">
-                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">About</h4>
-                    <div className="prose-custom mt-1 text-sm leading-relaxed text-foreground/90">
-                      <Markdown remarkPlugins={[remarkGfm]}>{project.description}</Markdown>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Skills used */}
-            {skills.length > 0 && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <h3 className="mb-3 text-sm font-semibold">Skills & Technologies</h3>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((s) => (
-                    <Link
-                      key={s.id}
-                      to="/skills/$slug"
-                      params={{ slug: s.slug }}
-                      className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition hover:opacity-80"
-                    >
-                      {s.name}
-                    </Link>
-                  ))}
-                  {project.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Resources as learning materials */}
-            {((project.resources ?? []) as { title: string; url: string; type: string }[]).length > 0 && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <h3 className="mb-3 text-sm font-semibold">Learning Resources</h3>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {((project.resources ?? []) as { title: string; url: string; type: string }[]).map((r, i) => (
-                    <a
-                      key={i}
-                      href={safeHref(r.url)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated"
-                    >
-                      <FolderOpen className="h-3.5 w-3.5 shrink-0 text-brand-purple" />
-                      <span className="truncate font-medium">{r.title}</span>
-                      <span className="ml-auto shrink-0 text-[10px] uppercase text-muted-foreground">{r.type}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Links */}
-            {links.length > 0 && (
-              <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-                <h3 className="mb-3 text-sm font-semibold">External Links</h3>
-                <div className="flex flex-wrap gap-2">
-                  {links.map(([key, url]) => {
-                    const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);
-                    const Icon = meta?.icon;
-                    return (
-                      <a
-                        key={key}
-                        href={safeHref(url)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        {Icon && <Icon className="h-3.5 w-3.5" />}
-                        {meta?.label ?? key}
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {!project.description && !project.vision && !project.goal && skills.length === 0 && (
-              <div className="rounded-xl border card-border bg-surface p-6 text-center">
-                <GraduationCap className="mx-auto h-8 w-8 text-muted-foreground/40" />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No knowledge base content yet. The project owner can add a description, vision, goal, skills, and resources.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "community" && (
-          <ProjectCommunityPosts projectId={id} />
-        )}
-
-        {/* Community Posts — always visible at bottom */}
-        {activeTab !== "community" && (
-          <div className="pt-2">
-            <ProjectCommunityPosts projectId={id} />
-          </div>
-        )}
-
         </div>
       </div>
+
+      <ProjectJoinModal
+        open={joinModalOpen}
+        projectId={id}
+        openRoles={openRoles}
+        meId={me?.userId ?? null}
+        focusRoleId={joinRoleId}
+        onClose={() => {
+          setJoinRoleId(null);
+          setJoinModalOpen(false);
+        }}
+      />
     </Shell>
   );
 }
 
-function Avatar({ name, src }: { name?: string | null; src?: string }) {
-  const initial = (name ?? "?").charAt(0).toUpperCase();
-  return (
-    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-brand">
-      {src ? (
-        <img src={src} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-background">
-          {initial}
-        </div>
-      )}
-    </div>
-  );
-}
+const ROLE_ORDER: Record<Contributor["role"], number> = {
+  creator: 0,
+  mentor: 1,
+  contributor: 2,
+};
 
-function tabBadge(
-  tabId: Tab,
-  data: {
-    milestones: { status: string }[];
-    doneCount: number;
-    updates: unknown[];
-    discussions: unknown[];
-    openRoles: unknown[];
-    communityPostCount: number;
-    contributors: unknown[];
-  },
-): string | null {
-  switch (tabId) {
-    case "milestones":
-      return data.milestones.length > 0 ? `${data.doneCount}/${data.milestones.length}` : null;
-    case "journal":
-      return data.updates.length > 0 ? String(data.updates.length) : null;
-    case "discussion":
-      return data.discussions.length > 0 ? String(data.discussions.length) : null;
-    case "roles":
-      return data.openRoles.length > 0 ? String(data.openRoles.length) : null;
-    case "gallery":
-      return null; // gallery doesn't have a count
-    case "resources":
-      return null; // resources don't have a separate count query
-    case "contributors":
-      return data.contributors.length > 0 ? String(data.contributors.length) : null;
-    case "community":
-      return data.communityPostCount > 0 ? String(data.communityPostCount) : null;
-    case "knowledge":
-      return null;
-    default:
-      return null;
-  }
-}
-
-function SectionCard({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-      <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground/80">
-        {icon}
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
+type SkillLite = { id: string; slug: string; name: string; category: string };
 
 function Shell({
   children,

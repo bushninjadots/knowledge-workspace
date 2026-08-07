@@ -60,7 +60,11 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
 
 const CATEGORY_BADGES: Record<string, { icon: typeof Wrench; color: string }> = {
   Creative: { icon: Palette, color: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple" },
-  Development: { icon: Hammer, color: "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]" },
+  Development: {
+    icon: Hammer,
+    color:
+      "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
+  },
   Community: { icon: Users, color: "border-brand-green/40 bg-brand-green/10 text-brand-green" },
 };
 

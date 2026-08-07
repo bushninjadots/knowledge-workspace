@@ -1,6 +1,6 @@
 # Notifications Overhaul — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make notifications clickable with contextual navigation, add category tabs, remove dead action buttons.
 
@@ -27,7 +27,7 @@
 - Consumes: `Notification` type from `@/hooks/use-notifications`
 - Consumes: `useMarkAsRead`, `useArchiveNotification`, `useDeleteNotification` hooks
 
-- [ ] **Step 1: Rewrite NotificationCard with clickable card + connection request actions**
+- [x] **Step 1: Rewrite NotificationCard with clickable card + connection request actions**
 
 Replace the entire file:
 
@@ -243,12 +243,12 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
 }
 ```
 
-- [ ] **Step 2: Verify typecheck**
+- [x] **Step 2: Verify typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors (note: `useRespondConnection` needs to exist — check `src/hooks/use-connections.ts`)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-card.tsx
@@ -262,7 +262,7 @@ git commit -m "feat: make NotificationCard clickable, remove dead action buttons
 **Files:**
 - Modify: `src/components/tethyr/notifications/notification-feed.tsx`
 
-- [ ] **Step 1: Rename `onAction` to `onNavigate` in feed props and usage**
+- [x] **Step 1: Rename `onAction` to `onNavigate` in feed props and usage**
 
 Replace the interface and component:
 
@@ -282,7 +282,7 @@ Replace the card rendering line:
 <NotificationCard key={n.id} notification={n} onNavigate={onNavigate} />
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-feed.tsx
@@ -296,7 +296,7 @@ git commit -m "feat: rename onAction to onNavigate in NotificationFeed"
 **Files:**
 - Modify: `src/routes/_authenticated/notifications.tsx`
 
-- [ ] **Step 1: Rewrite the notifications page with tabs + navigation handler**
+- [x] **Step 1: Rewrite the notifications page with tabs + navigation handler**
 
 ```tsx
 import { useState } from "react";
@@ -456,21 +456,21 @@ function NotificationsPage() {
 }
 ```
 
-- [ ] **Step 2: Verify Tabs component exists**
+- [x] **Step 2: Verify Tabs component exists**
 
 Check that `src/components/ui/tabs.tsx` exists. If not, create it using shadcn Tabs.
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: No type errors
 
-- [ ] **Step 4: Run build**
+- [x] **Step 4: Run build**
 
 Run: `npm run build`
 Expected: No errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/routes/_authenticated/notifications.tsx

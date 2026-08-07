@@ -1,6 +1,6 @@
 # Notifications Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build a full notification system with a notifications table, trigger-based generation, realtime delivery, a `/notifications` page with sidebar categories, a dropdown panel, and sidebar unread badge.
 
@@ -56,7 +56,7 @@
 
 - Produces: `notifications` table with all columns, 3 indexes, 3 RLS policies, GRANT statements
 
-- [ ] **Step 1: Create the migration file with table, indexes, and RLS**
+- [x] **Step 1: Create the migration file with table, indexes, and RLS**
 
 ```sql
 -- Notifications system
@@ -128,12 +128,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 ```
 
-- [ ] **Step 2: Verify migration syntax**
+- [x] **Step 2: Verify migration syntax**
 
 Run: `grep -c "CREATE TABLE\|CREATE INDEX\|CREATE POLICY" supabase/migrations/20260725120000_notifications.sql`
 Expected: `6` (1 table + 3 indexes + 3 policies minus the table = 6 lines with those keywords, but the count confirms all statements are present)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260725120000_notifications.sql
@@ -153,7 +153,7 @@ git commit -m "feat(notifications): add notifications table, indexes, and RLS po
 - Produces: 9 SECURITY DEFINER trigger functions + trigger attachments + realtime config
 - Consumes: existing tables (`messages`, `connections`, `comments`, `session_participants`, `user_achievements`, `skill_endorsements`, `project_contributors`, `profiles`)
 
-- [ ] **Step 1: Append the insert_notification helper function**
+- [x] **Step 1: Append the insert_notification helper function**
 
 Append to the migration file:
 
@@ -187,7 +187,7 @@ END;
 $$;
 ```
 
-- [ ] **Step 2: Append the message notification trigger**
+- [x] **Step 2: Append the message notification trigger**
 
 Append to the migration file:
 
@@ -234,7 +234,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 3: Append the connection notification trigger**
+- [x] **Step 3: Append the connection notification trigger**
 
 Append to the migration file:
 
@@ -292,7 +292,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 4: Append the comment notification trigger**
+- [x] **Step 4: Append the comment notification trigger**
 
 Append to the migration file:
 
@@ -341,7 +341,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 5: Append the mention notification trigger**
+- [x] **Step 5: Append the mention notification trigger**
 
 Append to the migration file:
 
@@ -393,7 +393,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 6: Append the session notification trigger**
+- [x] **Step 6: Append the session notification trigger**
 
 Append to the migration file:
 
@@ -452,7 +452,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 7: Append the achievement notification trigger**
+- [x] **Step 7: Append the achievement notification trigger**
 
 Append to the migration file:
 
@@ -488,7 +488,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 8: Append the endorsement notification trigger**
+- [x] **Step 8: Append the endorsement notification trigger**
 
 Append to the migration file:
 
@@ -532,7 +532,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 9: Append the project event notification trigger**
+- [x] **Step 9: Append the project event notification trigger**
 
 Append to the migration file:
 
@@ -586,7 +586,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 10: Append the follow notification trigger**
+- [x] **Step 10: Append the follow notification trigger**
 
 Append to the migration file:
 
@@ -632,7 +632,7 @@ SELECT public._create_trigger_if_table_exists(
 );
 ```
 
-- [ ] **Step 11: Append Realtime configuration**
+- [x] **Step 11: Append Realtime configuration**
 
 Append to the migration file:
 
@@ -645,7 +645,7 @@ ALTER TABLE public.notifications REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 ```
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add supabase/migrations/20260725120000_notifications.sql
@@ -665,7 +665,7 @@ git commit -m "feat(notifications): add trigger functions for all notification t
 - Produces: `NotificationType`, `Notification`, `NotificationFilters`, `useNotifications()`, `useUnreadNotificationCount()`, `useNotificationsByCategory()`
 - Consumes: `useCurrentUser()` from `src/hooks/use-current-user.ts`, `supabase` from `src/integrations/supabase/client.ts`
 
-- [ ] **Step 1: Create the hooks file with types and query hooks**
+- [x] **Step 1: Create the hooks file with types and query hooks**
 
 ```typescript
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -803,12 +803,12 @@ export function useNotificationsByCategory() {
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | head -20`
 Expected: No errors related to `use-notifications.ts`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/hooks/use-notifications.ts
@@ -828,7 +828,7 @@ git commit -m "feat(notifications): add notification query hooks"
 - Consumes: types and query keys from Task 3
 - Produces: `useMarkAsRead()`, `useMarkAllAsRead()`, `useArchiveNotification()`, `useDeleteNotification()`, realtime subscription effect
 
-- [ ] **Step 1: Append mutation hooks and realtime to the hooks file**
+- [x] **Step 1: Append mutation hooks and realtime to the hooks file**
 
 Append to `src/hooks/use-notifications.ts`:
 
@@ -956,12 +956,12 @@ export function useNotificationRealtime() {
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | head -20`
 Expected: No errors related to `use-notifications.ts`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/hooks/use-notifications.ts
@@ -982,7 +982,7 @@ git commit -m "feat(notifications): add mutation hooks and realtime subscription
 - Produces: `NotificationCard` component, `NOTIFICATION_CONFIG` map (icon, color, action label per type)
 - Uses: `Avatar`, `AvatarFallback`, `AvatarImage` from `@/components/ui/avatar`, `Button` from `@/components/ui/button`, `DropdownMenu` + content/trigger/items from `@/components/ui/dropdown-menu`, `Tooltip` + content/trigger from `@/components/ui/tooltip`
 
-- [ ] **Step 1: Create the notification card component**
+- [x] **Step 1: Create the notification card component**
 
 ```typescript
 import {
@@ -1146,12 +1146,12 @@ export function NotificationCard({ notification, actorName, actorAvatar, onActio
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep notification-card`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-card.tsx
@@ -1173,7 +1173,7 @@ git commit -m "feat(notifications): add notification card component"
 - Produces: `NotificationEmpty`, `NotificationHeader` components
 - Uses: `Button` from `@/components/ui/button`, `Bell` + `CheckCheck` from lucide-react, `Link` from `@tanstack/react-router`
 
-- [ ] **Step 1: Create the empty state component**
+- [x] **Step 1: Create the empty state component**
 
 ```typescript
 import { Bell, Compass, FolderOpen } from "lucide-react";
@@ -1206,7 +1206,7 @@ export function NotificationEmpty() {
 }
 ```
 
-- [ ] **Step 2: Create the header component**
+- [x] **Step 2: Create the header component**
 
 ```typescript
 import { Bell, CheckCheck } from "lucide-react";
@@ -1243,12 +1243,12 @@ export function NotificationHeader() {
 }
 ```
 
-- [ ] **Step 3: Verify no TypeScript errors**
+- [x] **Step 3: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep -E "notification-empty|notification-header"`
 Expected: No errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-empty.tsx src/components/tethyr/notifications/notification-header.tsx
@@ -1269,7 +1269,7 @@ git commit -m "feat(notifications): add empty state and header components"
 - Produces: `NotificationSidebar` component, `NOTIFICATION_CATEGORIES` config array
 - Props: `{ activeCategory: string; onCategoryChange: (cat: string) => void }`
 
-- [ ] **Step 1: Create the sidebar component**
+- [x] **Step 1: Create the sidebar component**
 
 ```typescript
 import {
@@ -1344,12 +1344,12 @@ export function NotificationSidebar({ activeCategory, onCategoryChange }: Notifi
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep notification-sidebar`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-sidebar.tsx
@@ -1370,7 +1370,7 @@ git commit -m "feat(notifications): add notification sidebar with category count
 - Produces: `NotificationFeed` component
 - Props: `{ notifications: Notification[]; isLoading: boolean; onAction?: (n: Notification) => void }`
 
-- [ ] **Step 1: Create the feed component with time grouping**
+- [x] **Step 1: Create the feed component with time grouping**
 
 ```typescript
 import { NotificationCard } from "./notification-card";
@@ -1464,12 +1464,12 @@ export function NotificationFeed({ notifications, isLoading, onAction }: Notific
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep notification-feed`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-feed.tsx
@@ -1490,7 +1490,7 @@ git commit -m "feat(notifications): add notification feed with time grouping"
 - Produces: `NotificationDropdown` component
 - Uses: `DropdownMenu` + content/trigger from `@/components/ui/dropdown-menu`, `Button` from `@/components/ui/button`, `Bell` from lucide-react, `Link` from `@tanstack/react-router`
 
-- [ ] **Step 1: Create the dropdown component**
+- [x] **Step 1: Create the dropdown component**
 
 ```typescript
 import { Bell, CheckCheck } from "lucide-react";
@@ -1579,12 +1579,12 @@ export function NotificationDropdown() {
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep notification-dropdown`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/tethyr/notifications/notification-dropdown.tsx
@@ -1604,7 +1604,7 @@ git commit -m "feat(notifications): add notification dropdown panel"
 - Consumes: `useNotifications()`, `useNotificationRealtime()` from `use-notifications.ts`, `NotificationHeader`, `NotificationSidebar`, `NotificationFeed` components
 - Produces: `NotificationsPage` component, TanStack Router route definition
 
-- [ ] **Step 1: Create the page route**
+- [x] **Step 1: Create the page route**
 
 ```typescript
 import { useState } from "react";
@@ -1671,12 +1671,12 @@ function NotificationsPage() {
 }
 ```
 
-- [ ] **Step 2: Verify no TypeScript errors**
+- [x] **Step 2: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep notifications`
 Expected: No errors
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/routes/_authenticated/notifications.tsx
@@ -1696,7 +1696,7 @@ git commit -m "feat(notifications): add notifications page route"
 - Consumes: `useUnreadNotificationCount()` from `use-notifications.ts`
 - Modifies: `rooms` array (line 22-30) to add Notifications entry, badge logic (line 104-105)
 
-- [ ] **Step 1: Add Bell import and useUnreadNotificationCount import**
+- [x] **Step 1: Add Bell import and useUnreadNotificationCount import**
 
 In `dashboard-sidebar.tsx`, add `Bell` to the lucide-react import and add the notifications import:
 
@@ -1722,7 +1722,7 @@ Add after the `useUnreadCounts` import:
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 ```
 
-- [ ] **Step 2: Add Notifications to the rooms array**
+- [x] **Step 2: Add Notifications to the rooms array**
 
 Insert after the Messages entry (line 26):
 
@@ -1730,7 +1730,7 @@ Insert after the Messages entry (line 26):
 { to: "/notifications", label: "Notifications", sub: "Activity feed", icon: Bell, live: true },
 ```
 
-- [ ] **Step 3: Add notification unread count hook and badge logic**
+- [x] **Step 3: Add notification unread count hook and badge logic**
 
 After `const { data: unread } = useUnreadCounts();` (line 35), add:
 
@@ -1749,12 +1749,12 @@ const badge =
       : null;
 ```
 
-- [ ] **Step 4: Verify no TypeScript errors**
+- [x] **Step 4: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep dashboard-sidebar`
 Expected: No errors
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/tethyr/dashboard-sidebar.tsx
@@ -1774,13 +1774,13 @@ git commit -m "feat(notifications): add notifications nav item with unread badge
 - Consumes: `NotificationDropdown` from `notification-dropdown.tsx`
 - Modifies: Mobile header bar (lines 177-193) to add bell icon between Search and end
 
-- [ ] **Step 1: Add NotificationDropdown import**
+- [x] **Step 1: Add NotificationDropdown import**
 
 ```typescript
 import { NotificationDropdown } from "./notifications/notification-dropdown";
 ```
 
-- [ ] **Step 2: Add bell icon to mobile header**
+- [x] **Step 2: Add bell icon to mobile header**
 
 After the Search button (line 192) and before the closing `</header>` tag, add:
 
@@ -1813,12 +1813,12 @@ The mobile header section becomes:
 </header>
 ```
 
-- [ ] **Step 3: Verify no TypeScript errors**
+- [x] **Step 3: Verify no TypeScript errors**
 
 Run: `npx tsc --noEmit 2>&1 | grep authenticated-shell`
 Expected: No errors
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/tethyr/authenticated-shell.tsx
@@ -1837,27 +1837,27 @@ git commit -m "feat(notifications): add bell icon and dropdown to mobile header"
 
 - None (verification only)
 
-- [ ] **Step 1: Run full TypeScript check**
+- [x] **Step 1: Run full TypeScript check**
 
 Run: `npx tsc --noEmit`
 Expected: Zero errors
 
-- [ ] **Step 2: Run ESLint on all notification files**
+- [x] **Step 2: Run ESLint on all notification files**
 
 Run: `npx eslint src/hooks/use-notifications.ts src/components/tethyr/notifications/ src/routes/_authenticated/notifications.tsx src/components/tethyr/dashboard-sidebar.tsx src/components/tethyr/authenticated-shell.tsx`
 Expected: Zero errors
 
-- [ ] **Step 3: Run Prettier on all notification files**
+- [x] **Step 3: Run Prettier on all notification files**
 
 Run: `npx prettier --write src/hooks/use-notifications.ts src/components/tethyr/notifications/ src/routes/_authenticated/notifications.tsx`
 Expected: Files formatted
 
-- [ ] **Step 4: Run TypeScript check again after formatting**
+- [x] **Step 4: Run TypeScript check again after formatting**
 
 Run: `npx tsc --noEmit`
 Expected: Zero errors
 
-- [ ] **Step 5: Commit formatting changes if any**
+- [x] **Step 5: Commit formatting changes if any**
 
 ```bash
 git add -A
