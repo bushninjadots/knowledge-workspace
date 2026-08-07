@@ -58,7 +58,7 @@ const RESOURCE_ICON: Record<string, typeof FileText> = {
   Tool: Wrench,
 };
 
-const TYPE_ACCENT: Record<PostType, string> = {
+export const TYPE_ACCENT: Record<PostType, string> = {
   showcase: "text-brand-green",
   question: "text-primary",
   project_update: "text-brand-green",
@@ -92,7 +92,7 @@ const TYPE_BORDER: Record<PostType, string> = {
   poll: "border-l-brand-purple",
 };
 
-const TYPE_ICON: Record<PostType, typeof Heart> = {
+export const TYPE_ICON: Record<PostType, typeof Heart> = {
   showcase: Rocket,
   question: HelpCircle,
   project_update: Zap,

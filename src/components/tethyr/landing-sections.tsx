@@ -6,14 +6,25 @@ import {
   Building2,
   Compass,
   FolderKanban,
+  Heart,
+  MessageSquare,
   Sparkles,
   UserPlus,
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
+import type { PostRow, PostType } from "@/hooks/use-community";
+import { POST_TYPE_LABEL } from "@/lib/community-data";
+import { timeAgo } from "@/lib/time";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DiscoverSkills } from "./discover-skills";
 import { STATUS_STYLES } from "./project-shelf/project-shelf-cover";
+import { TYPE_ACCENT, TYPE_ICON } from "./community/post-card";
+
+// Untyped tables (posts/comments/post_actions aren't in generated types yet)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
 
 // ============================================================================
 // Real data hooks — graceful fallbacks so the landing page never breaks
@@ -25,7 +36,7 @@ function useLandingStats() {
     queryFn: async () => {
       const count = async (table: string) => {
         try {
-          const { count: c, error } = await (supabase as any)
+          const { count: c, error } = await sb
             .from(table)
             .select("id", { count: "exact", head: true });
           if (error) return 0;
@@ -387,6 +398,279 @@ export function CommunitySpaces() {
             </Link>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// Real activity — recent community posts with real authors and counts
+// ============================================================================
+
+export type LandingActivityPost = {
+  id: string;
+  type: PostType;
+  title: string;
+  body: string;
+  created_at: string;
+  author: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  };
+  likes: number;
+  comments: number;
+};
+const ACTIVITY_FEED_SIZE = 6;
+
+function useRecentActivity() {
+  return useQuery({
+    queryKey: ["landing-activity"],
+    queryFn: async (): Promise<LandingActivityPost[]> => {
+      const { data: rawPosts, error } = await sb
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(ACTIVITY_FEED_SIZE);
+
+      if (error) {
+        // Table may not exist yet in fresh databases — return empty instead of crashing
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [];
+        }
+        throw error;
+      }
+      const posts = rawPosts as PostRow[];
+      if (posts.length === 0) return [];
+
+      // Authors
+      const authorIds = [...new Set(posts.map((p) => p.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, handle, avatar_url")
+        .in("id", authorIds);
+      const profileMap = new Map<string, LandingActivityPost["author"]>(
+        (profiles ?? []).map((p) => [
+          p.id,
+          {
+            display_name: p.display_name,
+            handle: p.handle,
+            avatar_url: p.avatar_url,
+          },
+        ]),
+      );
+
+      // Counts (posts, comments, post_actions are all viewable by everyone)
+      const postIds = posts.map((p) => p.id);
+      const [{ data: rawLikes }, { data: rawComments }] = await Promise.all([
+        sb.from("post_actions").select("post_id").eq("action", "like").in("post_id", postIds),
+        sb.from("comments").select("post_id").in("post_id", postIds),
+      ]);
+
+      const likeCount = new Map<string, number>();
+      for (const a of (rawLikes ?? []) as { post_id: string }[]) {
+        likeCount.set(a.post_id, (likeCount.get(a.post_id) ?? 0) + 1);
+      }
+      const commentCount = new Map<string, number>();
+      for (const c of (rawComments ?? []) as { post_id: string }[]) {
+        commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
+      }
+
+      return posts.map(
+        (p): LandingActivityPost => ({
+          id: p.id,
+          type: p.type,
+          title: p.title,
+          body: p.body,
+          created_at: p.created_at,
+          author: profileMap.get(p.author_id) ?? {
+            display_name: null,
+            handle: null,
+            avatar_url: null,
+          },
+          likes: likeCount.get(p.id) ?? 0,
+          comments: commentCount.get(p.id) ?? 0,
+        }),
+      );
+    },
+    staleTime: 60_000,
+  });
+}
+
+function ActivityAuthor({
+  author,
+  className,
+}: {
+  author: LandingActivityPost["author"];
+  className?: string;
+}) {
+  const name = author.display_name || author.handle || "Member";
+  return (
+    <Avatar className={className}>
+      {author.avatar_url ? <AvatarImage src={author.avatar_url} alt="" /> : null}
+      <AvatarFallback className="text-[11px]">{name.charAt(0).toUpperCase()}</AvatarFallback>
+    </Avatar>
+  );
+}
+
+export function HeroActivityPanel() {
+  const { data: posts, isLoading } = useRecentActivity();
+
+  if (isLoading) {
+    return (
+      <div className="hidden lg:block">
+        <div className="animate-pulse rounded-3xl border border-border/60 bg-surface/80 p-5 backdrop-blur-sm">
+          <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="mb-4 flex items-center gap-3">
+              <div className="h-8 w-8 shrink-0 rounded-full bg-surface-elevated" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-2/3 rounded bg-surface-elevated" />
+                <div className="h-3 w-full rounded bg-surface-elevated" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (!posts || posts.length === 0) return null;
+  const featured = posts.slice(0, 3);
+
+  return (
+    <div className="relative hidden lg:block">
+      <div className="card-border rounded-3xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-green" />
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Live from the community
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          {featured.map((post) => {
+            const TypeIcon = TYPE_ICON[post.type];
+            const name = post.author.display_name || post.author.handle || "Member";
+            return (
+              <Link
+                key={post.id}
+                to="/community"
+                className="group -mx-2 rounded-xl px-2 py-2.5 transition hover:bg-surface-elevated/60"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ActivityAuthor author={post.author} className="h-8 w-8" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-xs font-medium">{name}</span>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        · {timeAgo(post.created_at)}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs font-medium text-muted-foreground transition group-hover:text-primary">
+                      {post.title}
+                    </p>
+                  </div>{" "}
+                  <TypeIcon className={`h-3.5 w-3.5 shrink-0 ${TYPE_ACCENT[post.type]}`} />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        <Link
+          to="/community"
+          className="mt-3 flex items-center justify-between rounded-xl border border-border/60 bg-surface-elevated/50 px-3 py-2 text-xs font-medium text-primary transition hover:bg-surface-elevated"
+        >
+          Open the community <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export function RecentActivity() {
+  const { data: posts, isLoading } = useRecentActivity();
+
+  if (isLoading) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-40 animate-pulse rounded-2xl border border-border/60 bg-surface"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  if (!posts || posts.length === 0) return null;
+
+  return (
+    <section className="border-y border-border/60 bg-surface/40">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="section-label mb-3">Real activity</p>
+            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              What's happening in the community
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Showcases, questions, project updates, and collaboration requests — straight from the
+              feed.
+            </p>
+          </div>
+          <Link
+            to="/community"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary"
+          >
+            Join the conversation <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {" "}
+          {posts.map((post) => {
+            const TypeIcon = TYPE_ICON[post.type];
+            const name = post.author.display_name || post.author.handle || "Member";
+            return (
+              <Link
+                key={post.id}
+                to="/community"
+                className="card-border group flex flex-col rounded-2xl border bg-surface p-5 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ActivityAuthor author={post.author} className="h-9 w-9" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{name}</p>
+                    <p className="text-[11px] text-muted-foreground">{timeAgo(post.created_at)}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
+                  <TypeIcon className={`h-3 w-3 ${TYPE_ACCENT[post.type]}`} />
+                  <span className={TYPE_ACCENT[post.type]}>{POST_TYPE_LABEL[post.type]}</span>
+                </div>
+                <h3 className="mt-2 line-clamp-2 font-display text-base font-semibold group-hover:text-primary">
+                  {post.title}
+                </h3>
+                {post.body && (
+                  <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{post.body}</p>
+                )}
+                <div className="mt-auto flex items-center gap-4 pt-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Heart className="h-3.5 w-3.5" /> {post.likes}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <MessageSquare className="h-3.5 w-3.5" /> {post.comments}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
