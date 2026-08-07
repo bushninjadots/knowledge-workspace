@@ -13,7 +13,7 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Log in — Tethyr" },
-      { name: "description", content: "Log in to your Tethyr account." },
+      { name: "description", content: "Log in to Tethyr — the collaboration network where builders create together and get known for what they make." },
     ],
   }),
   component: LoginPage,
@@ -84,7 +84,7 @@ function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in to continue building and growing."
+      subtitle="Pick up where you left off. Your projects, your people, your progress."
       footer={
         <>
           New to Tethyr?{" "}

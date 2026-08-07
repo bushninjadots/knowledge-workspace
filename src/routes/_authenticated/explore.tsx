@@ -129,7 +129,7 @@ export const Route = createFileRoute("/_authenticated/explore")({
       { title: "Explore — Tethyr" },
       {
         name: "description",
-        content: "Discover projects, creators, and open opportunities on Tethyr.",
+        content: "Discover projects, builders, and open opportunities on Tethyr — the collaboration network where you get known for what you make.",
       },
     ],
   }),

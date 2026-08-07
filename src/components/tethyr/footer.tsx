@@ -8,8 +8,7 @@ export function Footer() {
         <div className="space-y-4 md:max-w-sm">
           <Logo variant="horizontal" size="md" />
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The collaborative home where people build together. Share, connect, and grow — skills
-            for the love of building.
+            The collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
@@ -99,9 +98,9 @@ export function Footer() {
       <div className="border-t border-border/60 px-4 py-6 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Tethyr. Connected by what you know.
+            © {new Date().getFullYear()} Tethyr. Known by what you make.
           </p>
-          <p className="text-xs text-muted-foreground">A trusted collaborative network</p>
+          <p className="text-xs text-muted-foreground">Build together. Grow together.</p>
         </div>
       </div>
     </footer>

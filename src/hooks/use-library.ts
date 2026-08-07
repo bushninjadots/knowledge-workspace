@@ -543,13 +543,17 @@ export function useUploadLibraryFile() {
       if (uploadError) throw uploadError;
 
       // Determine type from extension
-      const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
-      const docExts = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"];
-      const videoExts = ["mp4", "webm", "mov", "avi"];
-      const textExts = ["txt", "md", "csv", "json", "rtf"];
+      const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff", "tif", "ico", "heic", "heif"];
+      const docExts = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "odt", "ods", "odp", "pages", "numbers", "key"];
+      const videoExts = ["mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v"];
+      const audioExts = ["mp3", "wav", "aac", "ogg", "flac", "m4a", "wma", "aiff"];
+      const designExts = ["psd", "ai", "eps", "sketch", "fig", "xd", "indd", "afdesign", "afphoto"];
+      const modelExts = ["blend", "fbx", "obj", "stl", "glb", "gltf", "usd", "usdz", "dae", "3ds", "max", "ma", "mb", "c4d"];
+      const archiveExts = ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"];
+      const textExts = ["txt", "md", "csv", "json", "xml", "yaml", "yml", "toml", "rtf", "tex", "log"];
 
       let type: LibraryItem["type"] = "upload";
-      if (imageExts.includes(ext) || videoExts.includes(ext)) type = "upload";
+      if (imageExts.includes(ext) || videoExts.includes(ext) || audioExts.includes(ext) || designExts.includes(ext) || modelExts.includes(ext) || archiveExts.includes(ext)) type = "upload";
       else if (docExts.includes(ext) || textExts.includes(ext)) type = "document";
 
       // Build description content for text-based files

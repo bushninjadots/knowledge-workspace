@@ -99,7 +99,7 @@ function ResetPasswordPage() {
   return (
     <AuthShell
       title="Set a new password"
-      subtitle="Choose a secure password for your Tethyr account."
+      subtitle="Choose a new password and get back to building."
       footer={
         <>
           Remembered your password?{" "}

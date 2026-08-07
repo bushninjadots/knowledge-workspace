@@ -1,79 +1,91 @@
 # Tethyr
 
-> 🚧 **Project Status:** Tethyr is currently in active MVP development. Features and functionality may change frequently as the platform evolves.
+> **"It's where people build things together and get known for what they make."**
 
-Tethyr is a skill-sharing platform that helps people connect locally and online to teach, learn, and exchange skills without traditional tutoring barriers.
+Tethyr is the collaboration network where builders — developers, designers, writers, musicians, researchers, founders, artists, and anyone making something tangible — create projects together in public, grow through real contributions, and become known for what they make, not what they claim.
 
-The goal is to make learning more accessible by matching people who have skills with people who want to learn them, while building trust through profiles, reviews, and community features.
+---
+
+## What Tethyr Is
+
+Most platforms optimize for attention. Tethyr optimizes for progress.
+
+Most platforms reward posting. Tethyr rewards building.
+
+Most platforms showcase finished work. Tethyr celebrates the journey from idea to launch.
+
+Tethyr asks: **"What are you building next?"**
+
+---
+
+## Four Pillars
+
+- **Build** — Everything starts with making something. Projects are the center of the ecosystem.
+- **Connect** — People discover one another naturally through work, skills, communities, and shared interests.
+- **Grow** — Learning happens through collaboration, mentoring, challenges, and contributing to real projects.
+- **Earn Reputation** — Recognition comes from visible contributions, consistency, completed work, and helping others — not self-promotion.
 
 ---
 
 ## Features
 
-### Current
+### Identity
+- Profiles with handles, creator titles, banners, and personalized accent colors
+- Availability badges showing who's open to connect
+- Profile completeness with guided next steps
+- Reputation scores tied to real activity
 
-- User authentication, email confirmation, and password recovery
-- User profiles and profile completeness guidance
-- Skill listings, usage-ranked discovery, and skill hubs
-- Search and discovery for projects and creators
-- Profile customization and public studios
-- Project showcase and collaboration workspaces
-- Activity feed, reputation, endorsements, and achievements
-- Community feed, spaces, challenges, messages, notifications, and sessions
-- Private library with collections, tags, and signed file access
-- Opportunity discovery by open role, skill need, and active project
+### Projects
+- Full project lifecycle: planning → building → testing → launch → growing
+- Milestones, progress tracking, open roles with skill requirements
+- Contributor rosters with roles (creator, mentor, contributor)
+- 3D project shelf with drag-to-browse cover art
 
-### Planned
+### Skills
+- Teach/learn model (I can help with X, I want to grow in Y)
+- Verification levels, experience badges, and endorsements
+- Skill-to-project linking with match scoring
+- Skill hub pages with teachers, learners, and projects
 
-- Local nearby discovery
-- Wishlists for skills
-- Deeper messaging and session workflows
-- Mobile application
-- Local nearby discovery
-- Deeper messaging and session workflows
-- Knowledge layer for project documentation and shared resources
+### Collaboration
+- Session scheduling with calendar and availability settings
+- Connection requests and direct messaging
+- Role applications on projects with accept/decline flow
+
+### Community
+- 14 post types (discussions, showcases, questions, milestones, etc.)
+- Community spaces organized by topic
+- Challenges with progress tracking and reputation rewards
+- Activity feed with real-time updates
+
+### Discovery
+- Explore page with projects, people, and opportunities tabs
+- Search across profiles, skills, projects, library, and more
+- Suggested projects and creators matched to your skills
+
+### Library
+- Personal library for notes, files, and links
+- Collections, favorites, pins, and tags
 
 ---
 
 ## Tech Stack
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Supabase
-- GitHub
-- Lovable
+- React · TypeScript · Vite · Tailwind CSS
+- Supabase (auth, database, storage, real-time)
+- TanStack Router · TanStack Query · Framer Motion
 
 ---
 
 ## Getting Started
 
-Clone the repository:
-
 ```bash
 git clone https://github.com/YOUR_USERNAME/tethyr.git
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Run the development server:
-
-```bash
 npm run dev
 ```
 
----
-
-## Environment Variables
-
-Create a `.env` file in the project root.
-
-Required variables:
+### Environment Variables
 
 ```env
 SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
@@ -82,33 +94,9 @@ SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 
 ---
 
-## Project Goals
-
-Tethyr aims to become a trusted platform where people can:
-
-- Learn new skills
-- Teach others
-- Build portfolios
-- Meet local learners
-- Exchange knowledge fairly
-- Grow communities around learning
-
----
-
-## Development Workflow
-
-- Lovable is used for rapid feature generation.
-- GitHub is the source of truth.
-- VS Code is used for development, debugging, and manual improvements.
-- All significant changes are committed through Git.
-
----
-
 ## Status
 
-🚧 Active development (MVP)
-
-The project is under active development and features may change frequently.
+🚧 Active development (MVP). Features may change frequently.
 
 ---
 

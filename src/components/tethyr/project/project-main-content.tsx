@@ -21,6 +21,7 @@ import { ProjectDiscussions } from "./project-discussions";
 import { OpenRolesSection } from "./project-open-roles";
 import { GallerySection, ResourcesSection } from "./project-resources";
 import { ProjectCommunityPosts } from "./project-community-posts";
+import { ProjectReposSection } from "./project-repos";
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
 type LinkEntry = [string, string];
@@ -244,6 +245,8 @@ export function ProjectMainContent({
             isOwner={isOwner}
           />
         );
+      case "repos":
+        return <ProjectReposSection projectId={project.id} isOwner={isOwner} />;
       case "community":
         return <ProjectCommunityPosts projectId={project.id} />;
       default:

@@ -63,6 +63,7 @@ import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity
 import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
 import { ProfileCommunitiesTab } from "@/components/tethyr/profile/profile-communities-tab";
 import { ProfileReviewsTab } from "@/components/tethyr/profile/profile-reviews-tab";
+import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -218,6 +219,7 @@ function ProfilePage() {
               />
             </div>
             <LinksCard profile={profile} onChange={refresh} />
+            <GitHubConnect />
           </div>
         ),
         skills: (

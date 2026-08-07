@@ -113,35 +113,32 @@ export function safeRedirectPath(redirect: string | null | undefined): string | 
 
 const LIBRARY_FILE_EXTS = [
   // Images
-  "jpg",
-  "jpeg",
-  "png",
-  "webp",
-  "gif",
+  "jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "tiff", "tif", "ico", "heic", "heif",
+  // Raw / design files
+  "psd", "ai", "eps", "sketch", "fig", "xd", "indd", "afdesign", "afphoto",
   // Documents
-  "pdf",
-  "doc",
-  "docx",
-  "ppt",
-  "pptx",
-  "xls",
-  "xlsx",
-  // Text
-  "txt",
-  "md",
-  "csv",
-  "json",
-  "rtf",
-  // Video (short clips)
-  "mp4",
-  "webm",
-  "mov",
-  "avi",
+  "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "odt", "ods", "odp", "pages", "numbers", "key",
+  // Text & code
+  "txt", "md", "csv", "json", "xml", "yaml", "yml", "toml", "rtf", "tex", "log",
+  "html", "css", "scss", "less", "js", "jsx", "ts", "tsx", "py", "rb", "go", "rs", "java", "kt", "swift", "c", "cpp", "h", "sh", "bash", "zsh", "sql", "r", "lua", "php",
+  // Video
+  "mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v",
+  // Audio
+  "mp3", "wav", "aac", "ogg", "flac", "m4a", "wma", "aiff",
+  // 3D / CAD
+  "blend", "fbx", "obj", "stl", "glb", "gltf", "usd", "usdz", "dae", "3ds", "max", "ma", "mb", "c4d",
+  // Archives
+  "zip", "rar", "7z", "tar", "gz", "bz2", "xz",
+  // Fonts
+  "ttf", "otf", "woff", "woff2",
+  // Other
+  "unitypackage", "uproject", "apk", "ipa",
 ] as const;
 
-const VIDEO_EXTS = ["mp4", "webm", "mov", "avi"] as const;
-const MAX_DEFAULT_SIZE = 25 * 1024 * 1024; // 25 MB
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB for video
+const VIDEO_EXTS = ["mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v"] as const;
+const MAX_DEFAULT_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB for video
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100 MB for audio
 
 export function validateLibraryFile(
   file: File,
@@ -155,9 +152,10 @@ export function validateLibraryFile(
     };
   }
   const isVideo = (VIDEO_EXTS as readonly string[]).includes(ext);
-  const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_DEFAULT_SIZE;
+  const isAudio = ["mp3", "wav", "aac", "ogg", "flac", "m4a", "wma", "aiff"].includes(ext);
+  const maxSize = isVideo ? MAX_VIDEO_SIZE : isAudio ? MAX_AUDIO_SIZE : MAX_DEFAULT_SIZE;
   if (file.size > maxSize) {
-    const limit = isVideo ? "100 MB" : "25 MB";
+    const limit = isVideo ? "200 MB" : isAudio ? "100 MB" : "50 MB";
     return { ok: false, error: `File must be under ${limit}.` };
   }
   return { ok: true, ext };

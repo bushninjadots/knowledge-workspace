@@ -25,11 +25,11 @@ function scrollToContent() {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tethyr — Where people build together" },
+      { title: "Tethyr — Build together, get known for what you make" },
       {
         name: "description",
         content:
-          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
+          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
       },
     ],
   }),
@@ -58,11 +58,12 @@ function HomePage() {
                 Early access — now open
               </span>
               <h1 className="mt-8 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
-                Where people <span className="text-gradient-brand">build together</span>
+                Build together.<br />Get known for{" "}
+                <span className="text-gradient-brand">what you make</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
-                Build together. Grow together. People share what they know, grow their skills, and
-                become known through what they build together.
+                The collaboration network where builders create projects together, grow through real
+                contributions, and earn recognition for the work they do — not the claims they make.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 <Button
@@ -132,8 +133,8 @@ function HomePage() {
                 Ready to build something <span className="text-gradient-brand">together</span>?
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-                Claim your handle and join the first wave of people building Tethyr together. People
-                become known through what they build.
+                Claim your handle, start a project, and join builders creating work that speaks for
+                itself. You're known by what you make — not what you claim.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Button

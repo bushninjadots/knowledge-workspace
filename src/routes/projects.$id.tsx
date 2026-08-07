@@ -214,6 +214,7 @@ function ProjectPage() {
     if (isOwner || (project.gallery ?? []).length > 0) s.push({ id: "gallery", label: "Gallery" });
     if (isOwner || (project.resources ?? []).length > 0)
       s.push({ id: "resources", label: "Resources" });
+    if (isOwner) s.push({ id: "repos", label: "Repositories" });
     s.push({ id: "community", label: "Community" });
     return s;
   }, [data, openRoles, milestones, updates, discussions, isOwner]);

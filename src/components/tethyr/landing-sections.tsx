@@ -199,23 +199,23 @@ export function HowItWorks() {
     {
       n: "01",
       title: "Claim your profile",
-      desc: "Add your handle, your craft, and the skills you know or want to learn. Your profile is how people find you.",
+      desc: "Add your handle, your craft, and the skills you can teach or want to learn. Your profile tells the story of what you've built.",
       icon: UserPlus,
       href: "/signup",
-      cta: "Join Tethyr",
+      cta: "Start building",
     },
     {
       n: "02",
-      title: "Find your people",
-      desc: "Explore projects, open roles, and community spaces. Follow creators and connect with people working on the same things you are.",
+      title: "Find collaborators",
+      desc: "Explore projects, open roles, and community spaces. Connect with builders working on the same things — matched by complementary skills.",
       icon: Compass,
       href: "/explore",
-      cta: "Explore",
+      cta: "Discover",
     },
     {
       n: "03",
-      title: "Build together",
-      desc: "Join a project, contribute, and share progress. The work you build together becomes part of your reputation.",
+      title: "Build & earn recognition",
+      desc: "Join a project, contribute, and share progress. Every contribution builds your reputation — recognition comes from what you make, not what you claim.",
       icon: FolderKanban,
       href: "/community",
       cta: "See the community",
@@ -226,11 +226,11 @@ export function HowItWorks() {
       <div className="mb-12 max-w-2xl">
         <p className="section-label mb-3">How it works</p>
         <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          Three steps to building together
+          Build, connect, get recognized
         </h2>
         <p className="mt-3 text-muted-foreground">
-          Tethyr is a collaborative network — people become known through what they build, not
-          through profiles.
+          Three steps from claiming your identity to earning recognition through real work — not
+          résumés.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
@@ -265,10 +265,9 @@ export function TrendingSkills() {
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Trending skills</p>
-          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            What people are sharing right now
-          </h2>
+          <p className="section-label mb-3">Trending skills</p>            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              Skills people are building with right now
+            </h2>
         </div>
         <Link
           to="/explore"
@@ -307,7 +306,7 @@ export function FeaturedProjects() {
           <div className="max-w-2xl">
             <p className="section-label mb-3">Featured projects</p>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              Built by the community
+              What the community is building
             </h2>
           </div>
           <Link
@@ -406,10 +405,9 @@ export function CommunitySpaces() {
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Community spaces</p>
-          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            Find your people
-          </h2>
+          <p className="section-label mb-3">Community spaces</p>            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              Spaces where builders connect
+            </h2>
         </div>
         <Link
           to="/community"
@@ -784,11 +782,10 @@ export function RecentActivity() {
           <div className="max-w-2xl">
             <p className="section-label mb-3">Real activity</p>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              What's happening in the community
+              What the community is talking about
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Showcases, questions, project updates, and collaboration requests — straight from the
-              feed.
+              Showcases, project updates, collaboration requests, and discussions — live from builders across the network.
             </p>
           </div>
           <Link

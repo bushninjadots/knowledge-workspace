@@ -80,26 +80,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tethyr — Where people build together" },
+      { title: "Tethyr — Build together, get known for what you make" },
       {
         name: "description",
         content:
-          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
+          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
       },
       { name: "author", content: "Tethyr" },
-      { property: "og:title", content: "Tethyr — Where people build together" },
+      { property: "og:title", content: "Tethyr — Build together, get known for what you make" },
       {
         property: "og:description",
         content:
-          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
+          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Tethyr — Where people build together" },
+      { name: "twitter:title", content: "Tethyr — Build together, get known for what you make" },
       {
         name: "twitter:description",
         content:
-          "A collaborative network where people discover, build, collaborate, and grow. People become known through what they build together.",
+          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
       },
       {
         property: "og:image",
