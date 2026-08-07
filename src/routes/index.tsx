@@ -2,6 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
+import {
+  CommunitySpaces,
+  FeaturedProjects,
+  HowItWorks,
+  LandingStats,
+  TrendingSkills,
+} from "@/components/tethyr/landing-sections";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -63,6 +70,12 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <LandingStats />
+      <HowItWorks />
+      <TrendingSkills />
+      <FeaturedProjects />
+      <CommunitySpaces />
 
       <section className="px-4 py-24 sm:px-6">
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-border/60 bg-surface p-12 text-center sm:p-20">
