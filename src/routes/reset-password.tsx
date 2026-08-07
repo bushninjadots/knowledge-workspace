@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthErrorMessage } from "@/lib/auth-error";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -86,8 +87,10 @@ function ResetPasswordPage() {
       }
       toast.success("Password updated");
       navigate({ to: "/dashboard" });
-    } catch {
-      toast.error("Something went wrong. Please request a new reset link.");
+    } catch (err) {
+      toast.error(
+        getAuthErrorMessage(err, "Something went wrong. Please request a new reset link."),
+      );
     } finally {
       setLoading(false);
     }

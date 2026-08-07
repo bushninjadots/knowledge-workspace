@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthErrorMessage } from "@/lib/auth-error";
 import { safeRedirectPath } from "@/lib/validators";
 
 export const Route = createFileRoute("/login")({
@@ -51,8 +52,8 @@ function LoginPage() {
       }
       toast.success("Welcome back");
       navigate({ to: redirectTarget });
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      toast.error(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -73,8 +74,8 @@ function LoginPage() {
         return;
       }
       toast.success("Check your email for a password reset link");
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      toast.error(getAuthErrorMessage(err));
     } finally {
       setResetting(false);
     }

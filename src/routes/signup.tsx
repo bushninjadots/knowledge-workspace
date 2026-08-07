@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthErrorMessage } from "@/lib/auth-error";
 import { safeRedirectPath } from "@/lib/validators";
 
 export const Route = createFileRoute("/signup")({
@@ -89,8 +90,8 @@ function SignupPage() {
       }
       toast.success("Welcome to Tethyr ✨");
       navigate({ to: redirectTarget });
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      toast.error(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
