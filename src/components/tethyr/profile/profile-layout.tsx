@@ -49,9 +49,7 @@ export type Tab =
   | "skills"
   | "projects"
   | "communities"
-  | "activity"
-  | "sessions"
-  | "reviews";
+  | "activity";
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "overview", label: "Overview", icon: BarChart3 },
@@ -59,8 +57,6 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "projects", label: "Projects", icon: Sparkles },
   { id: "communities", label: "Communities", icon: Users },
   { id: "activity", label: "Activity", icon: Calendar },
-  { id: "sessions", label: "Sessions", icon: Clock },
-  { id: "reviews", label: "Reviews", icon: Star },
 ];
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {

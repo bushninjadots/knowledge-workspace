@@ -22,6 +22,7 @@ import { OpenRolesSection } from "./project-open-roles";
 import { GallerySection, ResourcesSection } from "./project-resources";
 import { ProjectCommunityPosts } from "./project-community-posts";
 import { ProjectReposSection } from "./project-repos";
+import { ProjectFilesSection, type ProjectFile } from "./project-files";
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
 type LinkEntry = [string, string];
@@ -58,6 +59,7 @@ interface ProjectMainContentProps {
   discussions: DiscussionRow[];
   openRoles: OpenRoleRow[];
   avatarSigned: Record<string, string>;
+  projectFiles?: ProjectFile[];
   isOwner: boolean;
   isContributor: boolean;
   sections: ProjectSection[];
@@ -73,6 +75,7 @@ export function ProjectMainContent({
   discussions,
   openRoles,
   avatarSigned,
+  projectFiles,
   isOwner,
   isContributor,
   sections,
@@ -235,6 +238,7 @@ export function ProjectMainContent({
             gallery={(project.gallery ?? []) as GalleryItem[]}
             onUpdate={async (items) => saveContent({ gallery: items })}
             isOwner={isOwner}
+            projectId={project.id}
           />
         );
       case "resources":
@@ -245,6 +249,8 @@ export function ProjectMainContent({
             isOwner={isOwner}
           />
         );
+      case "files":
+        return <ProjectFilesSection projectId={project.id} isOwner={isOwner} existingFiles={projectFiles ?? []} onFilesChanged={() => {}} />;
       case "repos":
         return <ProjectReposSection projectId={project.id} isOwner={isOwner} />;
       case "community":

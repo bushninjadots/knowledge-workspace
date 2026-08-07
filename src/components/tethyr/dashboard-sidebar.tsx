@@ -10,17 +10,20 @@ import {
   Settings,
   LogOut,
   Bell,
+  Plus,
 } from "lucide-react";
+import { useState } from "react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
 import { GlobalSearch } from "./global-search";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { ThemeToggle } from "./theme-toggle";
+import { ProjectDialog } from "./profile-sections";
 
 const groups = [
   {
@@ -54,7 +57,9 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: unread } = useUnreadCounts();
   const { data: notifUnread = 0 } = useUnreadNotificationCount();
   const { data: me } = useCurrentUser();
+  const { data: skills = [] } = useSkillsCatalog();
   const updateAvailability = useUpdateAvailability();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const initial =
     me?.profile?.display_name?.charAt(0).toUpperCase() ??
@@ -84,6 +89,18 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="px-3 py-3">
         <GlobalSearch variant="inline" />
       </div>
+
+      <div className="px-2 pb-2">
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="flex w-full items-center gap-2 rounded-sm bg-[var(--user-accent,var(--trust))] px-2 py-1.5 text-[13px] font-medium text-background transition hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          New project
+        </button>
+      </div>
+
+      <div className="mx-2 mb-2 h-px bg-border" />
 
       <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4">
         {groups.map((group) => (
@@ -180,6 +197,18 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           Sign out
         </button>
       </div>
+
+      {createOpen && me?.userId && (
+        <ProjectDialog
+          project={null}
+          userId={me.userId}
+          allSkills={skills}
+          initialSkillIds={[]}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onSaved={() => setCreateOpen(false)}
+        />
+      )}
     </aside>
   );
 }

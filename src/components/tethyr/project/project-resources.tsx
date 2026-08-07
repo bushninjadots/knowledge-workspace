@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { Plus, Trash2, FileText, Wrench, Video, BookOpen, Link2 } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { Plus, Trash2, FileText, Wrench, Video, BookOpen, Link2, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { safeHref } from "@/lib/validators";
+import { supabase } from "@/integrations/supabase/client";
+import { safeHref, validateLibraryFile } from "@/lib/validators";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
+
+const sb = supabase as any;
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   article: FileText,
@@ -166,15 +170,42 @@ export function GallerySection({
   gallery,
   onUpdate,
   isOwner,
+  projectId,
 }: {
   gallery: GalleryItem[];
   onUpdate: (items: GalleryItem[]) => void | Promise<void>;
   isOwner: boolean;
+  projectId?: string;
 }) {
+  const { data: me } = useCurrentUser();
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (!me?.userId || !projectId) return;
+    const check = validateLibraryFile(file);
+    if (!check.ok) { toast.error(check.error); return; }
+    setUploading(true);
+    try {
+      const path = `${projectId}/gallery-${Date.now()}.${check.ext}`;
+      const { error: upErr } = await sb.storage.from("project-media").upload(path, file);
+      if (upErr) throw upErr;
+      const { data: urlData } = sb.storage.from("project-media").getPublicUrl(path);
+      if (!urlData?.publicUrl) throw new Error("Failed to get public URL");
+      await onUpdate([...gallery, { url: urlData.publicUrl, caption: caption.trim() || undefined, type: "image" }]);
+      setCaption("");
+      setShowAdd(false);
+      toast.success("Image uploaded");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }, [me?.userId, projectId, gallery, caption, onUpdate]);
 
   const handleAdd = async () => {
     if (!url.trim()) return;
@@ -227,9 +258,29 @@ export function GallerySection({
       {showAdd && (
         <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
           <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ""; }}
+          />
+          <div className="flex gap-2">
+            {projectId && (
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground transition hover:text-foreground"
+              >
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                {uploading ? "Uploading…" : "Upload"}
+              </button>
+            )}
+            <span className="py-2 text-xs text-muted-foreground">or</span>
+          </div>
+          <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Image URL"
+            placeholder="https://... paste image URL"
             className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
           <input

@@ -9,7 +9,6 @@ import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects
 import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
 import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
 import { ProfileCommunitiesTab } from "@/components/tethyr/profile/profile-communities-tab";
-import { ProfileReviewsTab } from "@/components/tethyr/profile/profile-reviews-tab";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: () => ({
@@ -121,9 +120,12 @@ function PublicProfilePage() {
             />
           ),
           communities: <ProfileCommunitiesTab />,
-          activity: <ProfileActivityTab userId={ownData.userId} activity={ownData.activity} />,
-          sessions: <ProfileSessionsTab userId={ownData.userId} isOwnProfile={true} />,
-          reviews: <ProfileReviewsTab isOwnProfile={true} />,
+          activity: (
+            <div className="space-y-6">
+              <ProfileActivityTab userId={ownData.userId} activity={ownData.activity} />
+              <ProfileSessionsTab userId={ownData.userId} isOwnProfile={true} />
+            </div>
+          ),
         }}
       />
     );
@@ -199,9 +201,12 @@ function PublicProfilePage() {
           />
         ),
         communities: <ProfileCommunitiesTab />,
-        activity: <ProfileActivityTab userId={userId} activity={activity} />,
-        sessions: <ProfileSessionsTab userId={userId} isOwnProfile={false} />,
-        reviews: <ProfileReviewsTab isOwnProfile={false} />,
+        activity: (
+          <div className="space-y-6">
+            <ProfileActivityTab userId={userId} activity={activity} />
+            <ProfileSessionsTab userId={userId} isOwnProfile={false} />
+          </div>
+        ),
       }}
     />
   );

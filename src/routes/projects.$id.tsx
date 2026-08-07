@@ -34,7 +34,6 @@ import {
   type ProjectDetail,
   type ProjectStage,
 } from "@/hooks/use-projects";
-import { ProjectTimeline } from "@/components/tethyr/project/project-timeline";
 import { ProjectHero } from "@/components/tethyr/project/project-hero";
 import { ProjectScrollSpy } from "@/components/tethyr/project/project-scroll-spy";
 import { ProjectSidebar } from "@/components/tethyr/project/project-sidebar";
@@ -45,6 +44,7 @@ import {
 } from "@/components/tethyr/project/project-main-content";
 import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
 import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
+import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 export const Route = createFileRoute("/projects/$id")({
   head: () => ({
@@ -83,9 +83,9 @@ function ProjectPage() {
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
-        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, looking_for_feedback, looking_for_collaborators, is_featured";
       const BASIC_COLS =
-        "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
+        "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, uploaded_files, looking_for_feedback, looking_for_collaborators, is_featured";
 
       let project: any = null;
       for (const cols of [FULL_COLS, BASIC_COLS]) {
@@ -214,6 +214,8 @@ function ProjectPage() {
     if (isOwner || (project.gallery ?? []).length > 0) s.push({ id: "gallery", label: "Gallery" });
     if (isOwner || (project.resources ?? []).length > 0)
       s.push({ id: "resources", label: "Resources" });
+    if (isOwner || ((project.uploaded_files ?? []) as ProjectFile[]).length > 0)
+      s.push({ id: "files", label: "Files" });
     if (isOwner) s.push({ id: "repos", label: "Repositories" });
     s.push({ id: "community", label: "Community" });
     return s;
@@ -351,16 +353,10 @@ function ProjectPage() {
               </span>
             </div>
 
-            {/* Stage timeline */}
-            <ProjectTimeline
-              currentStage={(project.stage ?? "planning") as ProjectStage}
-              isOwner={isOwner}
-              onStageChange={(stage) => updateStage.mutate({ projectId: id, stage })}
-            />
-
             {/* Single-scroll content */}
             <ProjectMainContent
               project={project}
+              projectFiles={(project.uploaded_files ?? []) as ProjectFile[]}
               contributors={contributors}
               skills={skills}
               links={links}

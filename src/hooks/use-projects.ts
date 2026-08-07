@@ -31,6 +31,7 @@ export type ProjectDetail = {
   looking_for_feedback: boolean;
   looking_for_collaborators: boolean;
   is_featured: boolean;
+  uploaded_files?: Record<string, unknown>[];
   created_at: string;
   updated_at: string;
 };

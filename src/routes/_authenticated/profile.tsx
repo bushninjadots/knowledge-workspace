@@ -62,7 +62,6 @@ import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects
 import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
 import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
 import { ProfileCommunitiesTab } from "@/components/tethyr/profile/profile-communities-tab";
-import { ProfileReviewsTab } from "@/components/tethyr/profile/profile-reviews-tab";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -255,9 +254,12 @@ function ProfilePage() {
           />
         ),
         communities: <ProfileCommunitiesTab />,
-        activity: <ProfileActivityTab userId={userId} activity={activity} />,
-        sessions: <ProfileSessionsTab userId={userId} isOwnProfile={true} />,
-        reviews: <ProfileReviewsTab isOwnProfile={true} />,
+        activity: (
+          <div className="space-y-6">
+            <ProfileActivityTab userId={userId} activity={activity} />
+            <ProfileSessionsTab userId={userId} isOwnProfile={true} />
+          </div>
+        ),
       }}
     />
   );

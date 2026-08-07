@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Sparkles,
   Clock,
-  Zap,
   Folder,
   Users,
   UserPlus,
@@ -13,8 +12,6 @@ import {
   Swords,
   Ticket,
   Plus,
-  CalendarPlus,
-  Compass,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -27,6 +24,7 @@ import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
 import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
+import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import {
   AvailabilitySelector,
   useUpdateAvailability,
@@ -368,12 +366,9 @@ function DashboardPage() {
         </TodayCard>
       </div>
 
-      {/* ── Quick start row ── */}
+      {/* ── Quick actions ── */}
       <div className="flex flex-wrap items-center gap-2">
-        <QuickStartLink to="/explore" icon={Compass} label="Explore projects" />
-        <QuickStartLink to="/community" icon={Sparkles} label="Community feed" />
-        <QuickStartLink to="/sessions" icon={CalendarPlus} label="Schedule a session" />
-        <QuickStartLink to="/explore" icon={Folder} label="Start a project" />
+        <CreateProjectButton size="sm" variant="default" className="rounded-full" />
       </div>
 
       {/* ── Next steps (incomplete profiles) ── */}
@@ -607,28 +602,6 @@ function TodayCard({
       </div>
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
       {children}
-    </Link>
-  );
-}
-
-/* ── Quick start link ── */
-
-function QuickStartLink({
-  to,
-  icon: Icon,
-  label,
-}: {
-  to: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface hover:text-foreground"
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
     </Link>
   );
 }

@@ -444,11 +444,10 @@ function ExplorePage() {
               ? "bg-surface-elevated text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
-        >
-          <Briefcase className="h-3.5 w-3.5" />
-          Opportunities
-        </button>
-      </div>
+        >            <Briefcase className="h-3.5 w-3.5" />
+            Opportunities
+          </button>
+          </div>
 
           {isLoading ? (
             <div className="flex items-center gap-4 px-4 py-6" style={{ perspective: "1200px" }}>
