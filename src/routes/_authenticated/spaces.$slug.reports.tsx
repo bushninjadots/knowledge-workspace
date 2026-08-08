@@ -10,6 +10,8 @@ import {
   Clock,
   Flag,
   MessageSquareQuote,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ import {
   useCommunitySpace,
   useSpaceReportHistory,
   useUpdateReportStatus,
+  useBanMember,
   type PostReportRow,
 } from "@/hooks/use-community-spaces";
 
@@ -64,9 +67,12 @@ function SpaceReportsPage() {
   const { data: space, isLoading } = useCommunitySpace(slug);
   const { data: reports = [], isLoading: reportsLoading } = useSpaceReportHistory(space?.id ?? "");
   const updateReport = useUpdateReportStatus();
+  const banMember = useBanMember();
 
   const [dismissTarget, setDismissTarget] = useState<PostReportRow | null>(null);
   const [dismissNote, setDismissNote] = useState("");
+  const [banTarget, setBanTarget] = useState<PostReportRow | null>(null);
+  const [banReason, setBanReason] = useState("");
 
   if (isLoading) {
     return (
@@ -165,7 +171,7 @@ function SpaceReportsPage() {
                   <ReportCard
                     key={rep.id}
                     rep={rep}
-                    busy={updateReport.isPending}
+                    busy={updateReport.isPending || banMember.isPending}
                     onDismiss={() => {
                       setDismissTarget(rep);
                       setDismissNote("");
@@ -179,6 +185,10 @@ function SpaceReportsPage() {
                         },
                       )
                     }
+                    onBan={() => {
+                      setBanTarget(rep);
+                      setBanReason("");
+                    }}
                   />
                 ))
               )}
@@ -243,6 +253,60 @@ function SpaceReportsPage() {
         </div>
       )}
 
+      {/* Ban reporter dialog */}
+      <Dialog open={!!banTarget} onOpenChange={(open) => !open && setBanTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ban member</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Ban {banTarget?.reporter?.display_name || "this reporter"} from {space.name}? They'll be
+            removed from the community and blocked from joining or posting until the ban is lifted.
+          </p>
+          <div className="pt-2">
+            <Label htmlFor="ban-reason">Reason (optional)</Label>
+            <Textarea
+              id="ban-reason"
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value.slice(0, 200))}
+              rows={3}
+              placeholder="e.g. Repeated harassment after a warning"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setBanTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={banMember.isPending}
+              onClick={() => {
+                if (!banTarget) return;
+                banMember.mutate(
+                  {
+                    spaceId: space.id,
+                    userId: banTarget.reporter_id,
+                    reason: banReason,
+                  },
+                  {
+                    onSuccess: () => {
+                      toast.success("Member banned");
+                      setBanTarget(null);
+                      setBanReason("");
+                    },
+                    onError: (err) => toast.error(`Failed to ban: ${(err as Error).message}`),
+                  },
+                );
+              }}
+            >
+              <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+              Ban member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dismiss with optional note */}
       <Dialog open={!!dismissTarget} onOpenChange={(open) => !open && setDismissTarget(null)}>
         <DialogContent className="sm:max-w-md">
@@ -305,39 +369,89 @@ function ReportCard({
   busy,
   onDismiss,
   onResolve,
+  onBan,
 }: {
   rep: PostReportRow;
   busy: boolean;
   onDismiss: () => void;
   onResolve: () => void;
+  onBan: () => void;
 }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const hasBody = !!rep.post?.body;
+
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5">
-      <div className="min-w-0">
-        <p className="text-sm font-medium">
-          {rep.post?.title || "Post"}{" "}
-          <span className="font-normal text-muted-foreground">— {rep.reason}</span>
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Reported by {rep.reporter?.display_name || "Member"} · {timeAgo(rep.created_at)}
-          {rep.details ? ` — “${rep.details}”` : ""}
-        </p>
+    <div className="rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">
+            {rep.post?.title || "Post"}{" "}
+            <span className="font-normal text-muted-foreground">— {rep.reason}</span>
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Reported by {rep.reporter?.display_name || "Member"} · {timeAgo(rep.created_at)}
+            {rep.post_author?.display_name ? ` · posted by ${rep.post_author.display_name}` : ""}
+            {rep.details ? ` — “${rep.details}”` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {hasBody && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => setShowPreview((v) => !v)}
+            >
+              {showPreview ? (
+                <ChevronUp className="mr-1 h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="mr-1 h-3.5 w-3.5" />
+              )}
+              Preview
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs text-destructive"
+            disabled={busy}
+            onClick={onBan}
+            title="Ban the reporter from this community"
+          >
+            <ShieldAlert className="mr-1 h-3.5 w-3.5" /> Ban
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            disabled={busy}
+            onClick={onDismiss}
+          >
+            <XCircle className="mr-1 h-3.5 w-3.5" /> Dismiss
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={busy}
+            onClick={onResolve}
+          >
+            <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Resolve
+          </Button>
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-8 text-xs text-destructive"
-          disabled={busy}
-          onClick={onDismiss}
-        >
-          <XCircle className="mr-1 h-3.5 w-3.5" /> Dismiss
-        </Button>
-        <Button type="button" size="sm" className="h-8 text-xs" disabled={busy} onClick={onResolve}>
-          <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Resolve
-        </Button>
-      </div>
+
+      {showPreview && hasBody && (
+        <div className="mt-2.5 rounded-lg border border-border/50 bg-background/50 px-3 py-2.5">
+          <p className="text-sm font-semibold">{rep.post?.title}</p>
+          <p className="mt-1 line-clamp-6 whitespace-pre-wrap text-sm text-foreground/85">
+            {rep.post?.body}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

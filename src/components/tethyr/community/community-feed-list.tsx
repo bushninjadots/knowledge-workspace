@@ -29,6 +29,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
   skillOverlap,
   canModerate,
   reportCount,
+  dimThreshold,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -48,6 +49,8 @@ const PostCardWithComments = memo(function PostCardWithComments({
   canModerate?: boolean;
   /** Number of open reports on this post (visible to the space's moderators). */
   reportCount?: number;
+  /** Report count at which a post gets auto-dimmed. */
+  dimThreshold?: number;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
@@ -72,6 +75,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
         skillOverlap={skillOverlap}
         canModerate={canModerate}
         reportCount={reportCount}
+        dimThreshold={dimThreshold}
       />
     </div>
   );
@@ -289,6 +293,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
             skillOverlap={overlap}
             canModerate={canModerate}
             reportCount={canModerate ? (reportedPostCounts?.get(post.id) ?? 0) : undefined}
+            dimThreshold={activeSpace?.report_auto_dim_threshold ?? 3}
           />
         );
       })}

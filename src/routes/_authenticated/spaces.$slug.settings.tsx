@@ -50,6 +50,9 @@ import {
   useSpacePostReports,
   useUpdateReportStatus,
   useModerationLog,
+  useSpaceBans,
+  useBanMember,
+  useUnbanMember,
   type SpaceMember,
   type SpaceMemberRole,
   type SpaceVisibility,
@@ -57,6 +60,7 @@ import {
   type JoinRequestRow,
   type PostReportRow,
   type ModerationLogRow,
+  type SpaceBan,
 } from "@/hooks/use-community-spaces";
 
 export const Route = createFileRoute("/_authenticated/spaces/$slug/settings")({
@@ -112,6 +116,7 @@ function SpaceSettingsPage() {
   const { data: joinRequests = [] } = useSpaceJoinRequests(space?.id ?? "");
   const { data: spaceReports = [] } = useSpacePostReports(space?.id ?? "");
   const { data: modLog = [] } = useModerationLog(space?.id ?? "");
+  const { data: spaceBans = [] } = useSpaceBans(space?.id ?? "");
 
   const updateSpace = useUpdateSpace();
   const deleteSpace = useDeleteSpace();
@@ -120,6 +125,8 @@ function SpaceSettingsPage() {
   const approveRequest = useApproveJoinRequest();
   const rejectRequest = useRejectJoinRequest();
   const updateReport = useUpdateReportStatus();
+  const banMember = useBanMember();
+  const unbanMember = useUnbanMember();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -133,6 +140,8 @@ function SpaceSettingsPage() {
   const [page, setPage] = useState(1);
   const [dismissTarget, setDismissTarget] = useState<PostReportRow | null>(null);
   const [dismissNote, setDismissNote] = useState("");
+  const [banTarget, setBanTarget] = useState<{ user_id: string } | null>(null);
+  const [banReason, setBanReason] = useState("");
 
   const counts = useMemo(() => {
     const c = { owner: 0, moderator: 0, member: 0 };
@@ -168,6 +177,12 @@ function SpaceSettingsPage() {
     setJoinType(space.join_type ?? "auto");
     setRules(space.rules ?? []);
   }, [space]);
+
+  const [dimThreshold, setDimThreshold] = useState<number>(space?.report_auto_dim_threshold ?? 3);
+
+  useEffect(() => {
+    setDimThreshold(space?.report_auto_dim_threshold ?? 3);
+  }, [space?.report_auto_dim_threshold]);
 
   if (isLoading) {
     return (
@@ -209,7 +224,8 @@ function SpaceSettingsPage() {
     description.trim() !== (space.description ?? "") ||
     visibility !== (space.visibility ?? "public") ||
     joinType !== (space.join_type ?? "auto") ||
-    JSON.stringify(rules) !== JSON.stringify(space.rules ?? []);
+    JSON.stringify(rules) !== JSON.stringify(space.rules ?? []) ||
+    dimThreshold !== (space.report_auto_dim_threshold ?? 3);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -222,6 +238,7 @@ function SpaceSettingsPage() {
         visibility,
         join_type: joinType,
         rules: rules.filter(Boolean),
+        report_auto_dim_threshold: dimThreshold,
       });
       toast.success("Community settings saved");
     } catch (err) {
@@ -476,6 +493,48 @@ function SpaceSettingsPage() {
           </section>
         )}
 
+        <section className="rounded-lg border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4" />
+            Moderation
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Auto-dim threshold — posts with this many open reports get dimmed in the feed until a
+            moderator reviews them.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Auto-dim threshold</p>
+              <p className="text-xs text-muted-foreground">
+                Lower = stricter (posts get flagged sooner). Saved with the rest of your settings.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!isOwner || dimThreshold <= 1}
+                onClick={() => setDimThreshold((v) => Math.max(1, v - 1))}
+              >
+                −
+              </Button>
+              <span className="w-8 text-center text-sm font-semibold tabular-nums">
+                {dimThreshold}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!isOwner || dimThreshold >= 10}
+                onClick={() => setDimThreshold((v) => Math.min(10, v + 1))}
+              >
+                +
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {isOwner && (
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={!name.trim() || !dirty || updateSpace.isPending}>
@@ -495,6 +554,7 @@ function SpaceSettingsPage() {
         <p className="mt-1 text-xs text-muted-foreground">
           Members flagged these posts for breaking the community rules.
         </p>
+
         <div className="mt-4 space-y-2">
           {spaceReports.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
@@ -523,6 +583,20 @@ function SpaceSettingsPage() {
                     size="sm"
                     variant="outline"
                     className="h-8 text-xs text-destructive"
+                    disabled={updateReport.isPending || banMember.isPending}
+                    onClick={() => {
+                      setBanTarget({ user_id: rep.reporter_id });
+                      setBanReason("");
+                    }}
+                    title="Ban the reporter from this community"
+                  >
+                    <ShieldAlert className="mr-1 h-3.5 w-3.5" /> Ban
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
                     disabled={updateReport.isPending}
                     onClick={() => {
                       setDismissTarget(rep);
@@ -554,6 +628,56 @@ function SpaceSettingsPage() {
           )}
         </div>
       </section>
+
+      {/* Ban dialog — moderators can ban a reporter/member with a reason */}
+      <Dialog open={!!banTarget} onOpenChange={(open) => !open && setBanTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ban member</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Banned members are removed from {space.name} and blocked from joining or posting until
+            the ban is lifted. You can lift it anytime.
+          </p>
+          <div className="pt-2">
+            <Label htmlFor="ban-reason">Reason (optional)</Label>
+            <Textarea
+              id="ban-reason"
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value.slice(0, 200))}
+              rows={3}
+              placeholder="e.g. Repeated harassment after a warning"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setBanTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={banMember.isPending}
+              onClick={() => {
+                if (!banTarget) return;
+                banMember.mutate(
+                  { spaceId: space.id, userId: banTarget.user_id, reason: banReason },
+                  {
+                    onSuccess: () => {
+                      toast.success("Member banned");
+                      setBanTarget(null);
+                      setBanReason("");
+                    },
+                    onError: (err) => toast.error(`Failed to ban: ${(err as Error).message}`),
+                  },
+                );
+              }}
+            >
+              <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+              Ban member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dismiss with optional note — notifies the reporter when a note is left */}
       <Dialog open={!!dismissTarget} onOpenChange={(open) => !open && setDismissTarget(null)}>
@@ -608,6 +732,58 @@ function SpaceSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Banned members */}
+      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <Shield className="h-4 w-4" />
+          Banned members ({spaceBans.length})
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Banned members can't join or post in this community until the ban is lifted.
+        </p>
+        <div className="mt-4 space-y-2">
+          {spaceBans.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">No active bans.</p>
+          ) : (
+            spaceBans.map((ban: SpaceBan) => (
+              <div
+                key={ban.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {ban.profile?.display_name || "Member"}
+                    {ban.reason ? ` — ${ban.reason}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    @{ban.profile?.handle || "user"} · banned{" "}
+                    {new Date(ban.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                  disabled={unbanMember.isPending}
+                  onClick={() =>
+                    unbanMember.mutate(
+                      { spaceId: space.id, userId: ban.user_id },
+                      {
+                        onSuccess: () => toast.success("Ban lifted — they can re-join"),
+                        onError: () => toast.error("Failed to lift ban"),
+                      },
+                    )
+                  }
+                >
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Lift ban
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
 
       {/* Moderation log — audit trail of removals in this space */}
       <section className="mt-10 rounded-lg border border-border bg-card p-5">

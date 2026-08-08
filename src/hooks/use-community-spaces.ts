@@ -17,6 +17,8 @@ export type CommunitySpace = {
   visibility: SpaceVisibility;
   join_type: SpaceJoinType;
   rules: string[];
+  /** How many open reports it takes before a post is auto-dimmed (1-10). */
+  report_auto_dim_threshold: number;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -46,6 +48,21 @@ export type SpaceMember = {
   user_id: string;
   role: SpaceMemberRole;
   joined_at: string;
+  profile?: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  };
+};
+
+export type SpaceBan = {
+  id: string;
+  space_id: string;
+  user_id: string;
+  banned_by: string | null;
+  reason: string | null;
+  created_at: string;
+  lifted_at: string | null;
   profile?: {
     display_name: string | null;
     handle: string | null;
@@ -222,6 +239,7 @@ export function useCreateSpace() {
           description: input.description,
           join_type: input.join_type ?? "auto",
           rules: input.rules ?? [],
+          report_auto_dim_threshold: 3,
           created_by: me.user.id,
         })
         .select()
@@ -253,6 +271,7 @@ export function useUpdateSpace() {
       visibility?: SpaceVisibility;
       join_type?: SpaceJoinType;
       rules?: string[];
+      report_auto_dim_threshold?: number;
     }) => {
       const { id, ...updates } = input;
       const { error } = await sb
@@ -568,6 +587,12 @@ export type PostReportRow = {
   post?: {
     title: string | null;
     space_id: string | null;
+    body: string | null;
+    author_id: string | null;
+  };
+  post_author?: {
+    display_name: string | null;
+    handle: string | null;
   };
 };
 
@@ -663,8 +688,15 @@ export function usePostReports() {
             ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
                 title: null,
                 space_id: null,
+                body: null,
+                author_id: null,
               })
-            : { title: r.post_title_snapshot ?? null, space_id: null },
+            : {
+                title: r.post_title_snapshot ?? null,
+                space_id: null,
+                body: null,
+                author_id: null,
+              },
           reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
             display_name: "Unknown",
             handle: "user",
@@ -708,7 +740,7 @@ export function useSpaceReportHistory(spaceId: string) {
       const reporterIds = [...new Set(reports.map((r) => r.reporter_id))];
       const [postsRes, reportersRes] = await Promise.all([
         postIds.length > 0
-          ? supabase.from("posts").select("id, title, space_id").in("id", postIds)
+          ? supabase.from("posts").select("id, title, space_id, body, author_id").in("id", postIds)
           : { data: [] },
         reporterIds.length > 0
           ? supabase
@@ -717,6 +749,19 @@ export function useSpaceReportHistory(spaceId: string) {
               .in("id", reporterIds)
           : { data: [] },
       ]);
+      const postAuthorIds = [
+        ...new Set((postsRes.data ?? []).map((p) => p.author_id).filter(Boolean)),
+      ] as string[];
+      const { data: authorsData } =
+        postAuthorIds.length > 0
+          ? await supabase
+              .from("profiles")
+              .select("id, display_name, handle")
+              .in("id", postAuthorIds)
+          : { data: [] };
+      const authorMap = new Map(
+        (authorsData ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
       const postMap = new Map(
         (postsRes.data ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
@@ -730,22 +775,36 @@ export function useSpaceReportHistory(spaceId: string) {
           // Post removed — use the snapshot taken when it was deleted.
           return r.space_id_snapshot === spaceId;
         })
-        .map(
-          (r): PostReportRow => ({
+        .map((r): PostReportRow => {
+          const postRow = r.post_id ? (postMap.get(r.post_id) as PostReportRow["post"]) : null;
+          return {
             ...r,
             post: r.post_id
-              ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
+              ? (postRow ?? {
                   title: r.post_title_snapshot ?? null,
                   space_id: null,
+                  body: null,
+                  author_id: null,
                 })
-              : { title: r.post_title_snapshot ?? null, space_id: null },
+              : {
+                  title: r.post_title_snapshot ?? null,
+                  space_id: null,
+                  body: null,
+                  author_id: null,
+                },
+            post_author: postRow?.author_id
+              ? ((authorMap.get(postRow.author_id) as PostReportRow["post_author"]) ?? {
+                  display_name: "Unknown",
+                  handle: "user",
+                })
+              : undefined,
             reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
               display_name: "Unknown",
               handle: "user",
               avatar_url: null,
             },
-          }),
-        );
+          };
+        });
     },
     staleTime: 15_000,
     enabled: !!spaceId,
@@ -806,8 +865,15 @@ export function useSpacePostReports(spaceId: string) {
             ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
                 title: null,
                 space_id: null,
+                body: null,
+                author_id: null,
               })
-            : { title: r.post_title_snapshot ?? null, space_id: null },
+            : {
+                title: r.post_title_snapshot ?? null,
+                space_id: null,
+                body: null,
+                author_id: null,
+              },
           reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
             display_name: "Unknown",
             handle: "user",
@@ -864,6 +930,98 @@ export type ModerationLogRow = {
     handle: string | null;
   };
 };
+
+// ============================================================
+// Space bans
+// ============================================================
+
+const SPACE_BANS_KEY = (spaceId: string) => ["space-bans", spaceId] as const;
+
+/** Active bans in a space — powers the banned-members list in settings. */
+export function useSpaceBans(spaceId: string) {
+  return useQuery({
+    queryKey: SPACE_BANS_KEY(spaceId),
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("space_bans")
+        .select("id, space_id, user_id, banned_by, reason, created_at, lifted_at")
+        .eq("space_id", spaceId)
+        .is("lifted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as SpaceBan[];
+        }
+        throw error;
+      }
+
+      const rows = (data ?? []) as SpaceBan[];
+      const userIds = rows.map((r) => r.user_id);
+      const { data: profiles } =
+        userIds.length > 0
+          ? await supabase
+              .from("profiles")
+              .select("id, display_name, handle, avatar_url")
+              .in("id", userIds)
+          : { data: [] };
+      const profileMap = new Map(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return rows.map(
+        (r): SpaceBan => ({
+          ...r,
+          profile: (profileMap.get(r.user_id) as SpaceBan["profile"]) ?? {
+            display_name: "Unknown",
+            handle: "user",
+            avatar_url: null,
+          },
+        }),
+      );
+    },
+    staleTime: 15_000,
+    enabled: !!spaceId,
+  });
+}
+
+export function useBanMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { spaceId: string; userId: string; reason?: string }) => {
+      const { error } = await sb.rpc("ban_space_member", {
+        p_space_id: input.spaceId,
+        p_user_id: input.userId,
+        p_reason: input.reason?.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_BANS_KEY(variables.spaceId) });
+      qc.invalidateQueries({ queryKey: SPACE_MEMBERS_KEY(variables.spaceId) });
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+      qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(variables.spaceId) });
+    },
+  });
+}
+
+export function useUnbanMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { spaceId: string; userId: string }) => {
+      const { error } = await sb.rpc("unban_space_member", {
+        p_space_id: input.spaceId,
+        p_user_id: input.userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_BANS_KEY(variables.spaceId) });
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
 
 export function useModerationLog(spaceId: string) {
   return useQuery({

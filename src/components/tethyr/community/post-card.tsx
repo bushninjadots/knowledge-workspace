@@ -163,6 +163,7 @@ export function PostCard({
   skillOverlap,
   canModerate,
   reportCount,
+  dimThreshold,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -181,6 +182,8 @@ export function PostCard({
   canModerate?: boolean;
   /** Number of open reports on this post (visible to the space's moderators). */
   reportCount?: number;
+  /** Report count at which this post gets auto-dimmed (space setting). */
+  dimThreshold?: number;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -190,7 +193,7 @@ export function PostCard({
   const isOwner = me?.userId === post.author_id;
   const canModerateThis = canModerate && !isOwner;
   const reported = !!canModerateThis && (reportCount ?? 0) > 0;
-  const autoDimmed = !!canModerateThis && (reportCount ?? 0) >= 3;
+  const autoDimmed = !!canModerateThis && (reportCount ?? 0) >= (dimThreshold ?? 3);
   const liked = post.myActions.includes("like");
   const helpful = post.myActions.includes("helpful");
   const offered = post.myActions.includes("offer");
@@ -293,7 +296,7 @@ export function PostCard({
                 onClick={() => setConfirmDelete(true)}
                 title={
                   autoDimmed
-                    ? "Multiple open reports — click to remove this post"
+                    ? `${reportCount} open reports (auto-dimmed) — click to remove this post`
                     : "Reported by members — click to remove this post"
                 }
                 className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0 text-[11px] font-medium uppercase tracking-wider transition-colors ${
