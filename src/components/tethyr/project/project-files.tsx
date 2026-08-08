@@ -1,5 +1,21 @@
 import { useState, useRef, useCallback } from "react";
-import { Upload, X, ExternalLink, Download, FileText, Image, Film, Music, Box, Archive, Palette, FileCode, File as FileIcon, Plus, Loader2 } from "lucide-react";
+import {
+  Upload,
+  X,
+  ExternalLink,
+  Download,
+  FileText,
+  Image,
+  Film,
+  Music,
+  Box,
+  Archive,
+  Palette,
+  FileCode,
+  File as FileIcon,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +31,8 @@ type ProjectFile = {
   size: number;
   type: "image" | "video" | "audio" | "model" | "archive" | "document" | "other";
   uploaded_at: string;
+  /** Optional relative directory (e.g. "src/components") for repo-style trees. */
+  dir?: string;
 };
 
 function getFileIconType(name: string): typeof FileIcon {
@@ -64,55 +82,56 @@ export function ProjectFilesSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const handleUpload = useCallback(async (files: FileList | File[]) => {
-    if (!me?.userId) return;
-    setUploading(true);
-    let success = 0;
+  const handleUpload = useCallback(
+    async (files: FileList | File[]) => {
+      if (!me?.userId) return;
+      setUploading(true);
+      let success = 0;
 
-    for (const file of Array.from(files)) {
-      const check = validateLibraryFile(file);
-      if (!check.ok) {
-        toast.error(`${file.name}: ${check.error}`);
-        continue;
+      for (const file of Array.from(files)) {
+        const check = validateLibraryFile(file);
+        if (!check.ok) {
+          toast.error(`${file.name}: ${check.error}`);
+          continue;
+        }
+        try {
+          const path = `${projectId}/${Date.now()}-${file.name}`;
+          const { error: upErr } = await sb.storage.from("project-media").upload(path, file);
+          if (upErr) throw upErr;
+
+          // Update project's uploaded_files array via the projects table
+          const newFile: ProjectFile = {
+            name: file.name,
+            path,
+            size: file.size,
+            type: getFileType(file.name),
+            uploaded_at: new Date().toISOString(),
+          };
+
+          // Append to existing files
+          const updatedFiles = [...existingFiles, newFile];
+          const { error: updateErr } = await sb
+            .from("projects")
+            .update({ uploaded_files: updatedFiles })
+            .eq("id", projectId);
+          if (updateErr) throw updateErr;
+
+          existingFiles.push(newFile); // update local ref
+          success++;
+        } catch (err: any) {
+          toast.error(`${file.name}: ${err.message || "Upload failed"}`);
+        }
       }
-      try {
-        const path = `${projectId}/${Date.now()}-${file.name}`;
-        const { error: upErr } = await sb.storage
-          .from("project-media")
-          .upload(path, file);
-        if (upErr) throw upErr;
 
-        // Update project's uploaded_files array via the projects table
-        const newFile: ProjectFile = {
-          name: file.name,
-          path,
-          size: file.size,
-          type: getFileType(file.name),
-          uploaded_at: new Date().toISOString(),
-        };
-
-        // Append to existing files
-        const updatedFiles = [...existingFiles, newFile];
-        const { error: updateErr } = await sb
-          .from("projects")
-          .update({ uploaded_files: updatedFiles })
-          .eq("id", projectId);
-        if (updateErr) throw updateErr;
-
-        existingFiles.push(newFile); // update local ref
-        success++;
-      } catch (err: any) {
-        toast.error(`${file.name}: ${err.message || "Upload failed"}`);
+      setUploading(false);
+      if (success > 0) {
+        toast.success(`${success} file${success > 1 ? "s" : ""} uploaded`);
+        queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
+        onFilesChanged();
       }
-    }
-
-    setUploading(false);
-    if (success > 0) {
-      toast.success(`${success} file${success > 1 ? "s" : ""} uploaded`);
-      queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
-      onFilesChanged();
-    }
-  }, [me?.userId, projectId, existingFiles, queryClient, onFilesChanged]);
+    },
+    [me?.userId, projectId, existingFiles, queryClient, onFilesChanged],
+  );
 
   const handleRemove = async (index: number) => {
     const file = existingFiles[index];
@@ -135,13 +154,19 @@ export function ProjectFilesSection({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(true);
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
   };
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
     if (e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files);
   };
 
@@ -164,9 +189,13 @@ export function ProjectFilesSection({
             className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
           >
             {uploading ? (
-              <><Loader2 className="h-3 w-3 animate-spin" /> Uploading…</>
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" /> Uploading…
+              </>
             ) : (
-              <><Plus className="h-3 w-3" /> Upload files</>
+              <>
+                <Plus className="h-3 w-3" /> Upload files
+              </>
             )}
           </button>
         )}
@@ -220,7 +249,8 @@ export function ProjectFilesSection({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{file.name}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {formatFileSize(file.size)} · {file.type} · {new Date(file.uploaded_at).toLocaleDateString()}
+                    {formatFileSize(file.size)} · {file.type} ·{" "}
+                    {new Date(file.uploaded_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">

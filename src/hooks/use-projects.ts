@@ -32,6 +32,8 @@ export type ProjectDetail = {
   looking_for_collaborators: boolean;
   is_featured: boolean;
   uploaded_files?: Record<string, unknown>[];
+  readme?: string | null;
+  tools?: string[];
   created_at: string;
   updated_at: string;
 };
@@ -124,6 +126,7 @@ export const DISCUSSIONS_KEY = (projectId: string) => ["discussions", projectId]
 export const DISCUSSION_REPLIES_KEY = (discussionId: string) =>
   ["discussion-replies", discussionId] as const;
 export const OPEN_ROLES_KEY = (projectId: string) => ["open-roles", projectId] as const;
+export const PROJECT_ACTIVITY_KEY = (projectId: string) => ["project-activity", projectId] as const;
 
 // ============================================================
 // Milestones
@@ -203,6 +206,7 @@ export function useUpdateMilestone() {
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: MILESTONES_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
     },
   });
 }
@@ -313,6 +317,7 @@ export function useCreateProjectUpdate() {
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_UPDATES_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
     },
   });
 }
@@ -417,6 +422,7 @@ export function useCreateDiscussion() {
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: DISCUSSIONS_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
     },
   });
 }
@@ -568,6 +574,63 @@ export function useDeleteOpenRole() {
 }
 
 // ============================================================
+// Project Activity (trigger-recorded events)
+// ============================================================
+
+export type ProjectActivityRow = {
+  id: string;
+  project_id: string;
+  actor_id: string | null;
+  kind: "update" | "milestone_done" | "discussion" | "repo_linked" | "file_added" | string;
+  title: string;
+  body: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  actor?: { display_name: string | null; handle: string | null; avatar_url: string | null } | null;
+};
+
+export function useProjectActivity(projectId: string) {
+  return useQuery({
+    queryKey: PROJECT_ACTIVITY_KEY(projectId),
+    queryFn: async () => {
+      const { data: raw, error } = await sb
+        .from("project_activity")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      const rows = (raw ?? []) as Omit<ProjectActivityRow, "actor">[];
+
+      const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((a): a is string => !!a))];
+      // PostgREST rejects an empty .in() list — skip the join entirely when
+      // no rows carry an actor.
+      const { data: profiles } =
+        actorIds.length > 0
+          ? await supabase
+              .from("profiles")
+              .select("id, display_name, handle, avatar_url")
+              .in("id", actorIds)
+          : { data: [] };
+
+      const profileMap = new Map<string, Record<string, unknown>>(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return rows.map(
+        (r): ProjectActivityRow => ({
+          ...r,
+          actor: r.actor_id
+            ? ((profileMap.get(r.actor_id) as unknown as ProjectActivityRow["actor"]) ?? null)
+            : null,
+        }),
+      );
+    },
+    enabled: !!projectId,
+  });
+}
+
+// ============================================================
 // Role Applications — Accept / Decline
 // ============================================================
 
@@ -604,6 +667,9 @@ export function useAcceptRoleApplication() {
       qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
       qc.invalidateQueries({ queryKey: OPEN_ROLES_KEY(variables.projectId) });
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+      // Accepting fires both the contributor-joined and role-filled triggers,
+      // so the Activity timeline must re-sync.
+      qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
       // Applicant's dashboard, the explore opportunities feed, and the
       // accepted user's shelf "Contributing" badge re-sync.
       qc.invalidateQueries({ queryKey: ["my-applications"] });
@@ -740,6 +806,28 @@ export function useUpdateProjectContent() {
       });
     },
     // Background refetch keeps the server as source of truth once the write lands.
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
+    },
+  });
+}
+
+// ============================================================
+// Project README + tools
+// ============================================================
+
+export function useUpdateProjectReadme() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { projectId: string; readme?: string | null; tools?: string[] }) => {
+      const updates: Record<string, unknown> = {};
+      if (input.readme !== undefined) updates.readme = input.readme;
+      if (input.tools !== undefined) updates.tools = input.tools;
+      if (Object.keys(updates).length === 0) return;
+
+      const { error } = await sb.from("projects").update(updates).eq("id", input.projectId);
+      if (error) throw error;
+    },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_KEY(variables.projectId) });
     },

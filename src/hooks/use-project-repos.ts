@@ -93,6 +93,7 @@ export function useAddProjectRepo() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["project-repos", variables.project_id] });
+      queryClient.invalidateQueries({ queryKey: ["project-activity", variables.project_id] });
       toast.success("Repository linked");
     },
     onError: (error: Error) => {
@@ -106,10 +107,7 @@ export function useRemoveProjectRepo() {
 
   return useMutation({
     mutationFn: async (input: { id: string; project_id: string }) => {
-      const { error } = await sb
-        .from("project_repositories")
-        .delete()
-        .eq("id", input.id);
+      const { error } = await sb.from("project_repositories").delete().eq("id", input.id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -127,7 +125,12 @@ export function useRefreshRepoMetadata() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { id: string; project_id: string; url: string; provider: string }) => {
+    mutationFn: async (input: {
+      id: string;
+      project_id: string;
+      url: string;
+      provider: string;
+    }) => {
       let metadata: RepoMetadata = {};
 
       if (input.provider === "github") {
@@ -148,7 +151,9 @@ export function useRefreshRepoMetadata() {
                 topics: json.topics,
               };
             }
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }
       }
 

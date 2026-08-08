@@ -69,7 +69,10 @@ function DiscussionThread({
   const name = discussion.author?.display_name || discussion.author?.handle || "Unknown";
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-background/40 p-4">
+    <div
+      id={`discussion-${discussion.id}`}
+      className="scroll-mt-28 rounded-2xl border border-border/60 bg-background/40 p-4"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

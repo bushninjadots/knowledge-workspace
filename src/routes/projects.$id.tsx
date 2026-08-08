@@ -1,9 +1,9 @@
 // Public-facing project workspace at /projects/:id. Anyone can view — even
 // signed-out — because projects, project_contributors, project_skills,
 // milestones, updates, discussions and open roles all carry public SELECT
-// policies. Single-scroll layout: full-bleed hero → two-column (sticky
-// sidebar + main content) with a scroll-spy dot nav on the left.
-import { useEffect, useMemo, useState } from "react";
+// policies. Repository-workspace layout: compact header → sticky tab bar
+// (README / Files / Activity / People / Discussions) → tab panels.
+import { useCallback, useEffect, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -13,37 +13,35 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict } from "date-fns";
-import { Trophy, Clock, Users as UsersIcon, MessageCircle, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Until Supabase types are regenerated after migration, cast new columns
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
-import { Progress } from "@/components/ui/progress";
-import { PROJECT_STATUS_LABEL, PROJECT_STATUS_STYLE } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useProjectScrollSpy } from "@/hooks/use-project-scroll-spy";
 import {
   useMilestones,
   useProjectUpdates,
   useDiscussions,
   useOpenRoles,
-  useUpdateProjectStage,
   type ProjectDetail,
-  type ProjectStage,
 } from "@/hooks/use-projects";
-import { ProjectHero } from "@/components/tethyr/project/project-hero";
-import { ProjectScrollSpy } from "@/components/tethyr/project/project-scroll-spy";
-import { ProjectSidebar } from "@/components/tethyr/project/project-sidebar";
+import { useProjectRepos } from "@/hooks/use-project-repos";
+import { ProjectHeader } from "@/components/tethyr/project/project-header";
+import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
+import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
+import { ProjectFilesExplorer } from "@/components/tethyr/project/project-files-explorer";
+import { ProjectActivityTab } from "@/components/tethyr/project/project-activity";
+import { ProjectPeopleTab } from "@/components/tethyr/project/project-people";
+import { ProjectDiscussions } from "@/components/tethyr/project/project-discussions";
 import {
-  ProjectMainContent,
-  type Contributor,
-  type ProjectSection,
-} from "@/components/tethyr/project/project-main-content";
+  ProjectCommunityPosts,
+  useProjectCommunityPostCount,
+} from "@/components/tethyr/project/project-community-posts";
 import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
-import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
+import { ProjectSearchDialog } from "@/components/tethyr/project/project-search";
+import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 export const Route = createFileRoute("/projects/$id")({
@@ -53,6 +51,8 @@ export const Route = createFileRoute("/projects/$id")({
       { name: "description", content: "A project being built on Tethyr." },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) =>
+    search as Record<string, string | undefined>,
   component: ProjectPage,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">
@@ -66,26 +66,131 @@ export const Route = createFileRoute("/projects/$id")({
   ),
 });
 
+const ROLE_ORDER: Record<Contributor["role"], number> = {
+  creator: 0,
+  mentor: 1,
+  contributor: 2,
+};
+
+type SkillLite = { id: string; slug: string; name: string; category: string };
+
+const TAB_IDS: ProjectTab[] = ["readme", "files", "activity", "people", "discussions"];
+
+function isTab(value: unknown): value is ProjectTab {
+  return typeof value === "string" && (TAB_IDS as string[]).includes(value);
+}
+
 function ProjectPage() {
   const { id } = useParams({ from: "/projects/$id" });
   const { data: me } = useCurrentUser();
   const navigate = useNavigate();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
-  // Which role to spotlight when the modal opens (from the sidebar's per-role Apply).
-  const [joinRoleId, setJoinRoleId] = useState<string | null>(null);
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+  const [preselectPath, setPreselectPath] = useState<string | null>(null);
+  const [preselectNonce, setPreselectNonce] = useState(0);
 
-  // Deep-link: ?section=roles scrolls to that section once the page has data.
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const sectionParam = searchParams.section;
+  const tabParam = searchParams.tab;
+  const [tab, setTabState] = useState<ProjectTab>(() => (isTab(tabParam) ? tabParam : "readme"));
+
+  // Keep the tab in sync with the URL (back/forward, deep links).
+  useEffect(() => {
+    if (isTab(tabParam) && tabParam !== tab) setTabState(tabParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  const setTab = useCallback(
+    (next: ProjectTab, opts?: { scrollToTop?: boolean }) => {
+      setTabState(next);
+      navigate({
+        to: "/projects/$id",
+        params: { id },
+        search: { tab: next === "readme" ? undefined : next },
+        replace: true,
+      });
+      if (opts?.scrollToTop !== false) window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [navigate],
+  );
+
+  // Project search jump handlers — switch tab, then scroll/preselect once
+  // the target tab has mounted.
+  const jumpToFile = useCallback(
+    (path: string) => {
+      setTab("files", { scrollToTop: false });
+      requestAnimationFrame(() => {
+        setPreselectPath(path);
+        setPreselectNonce((n) => n + 1);
+      });
+    },
+    [setTab],
+  );
+
+  const jumpToDiscussion = useCallback(
+    (discussionId: string) => {
+      setTab("discussions", { scrollToTop: false });
+      // Double-rAF + timeout: let the discussions tab mount before scrolling.
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          document
+            .getElementById(`discussion-${discussionId}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 80);
+      });
+    },
+    [setTab],
+  );
+
+  const jumpToSection = useCallback(
+    (sectionId: string) => {
+      setTab("readme", { scrollToTop: false });
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          document
+            .getElementById(sectionId)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 80);
+      });
+    },
+    [setTab],
+  );
+
+  // Keyboard shortcuts: 1–5 switch tabs, "/" focuses the file search.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key >= "1" && e.key <= "5") {
+        const idx = Number(e.key) - 1;
+        if (TAB_IDS[idx]) {
+          e.preventDefault();
+          setTab(TAB_IDS[idx]);
+        }
+        return;
+      }
+      if (e.key === "/") {
+        e.preventDefault();
+        setProjectSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tab, setTab]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["project-detail", id],
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
-        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, looking_for_feedback, looking_for_collaborators, is_featured";
-      // Fallback deliberately omits the newest column (uploaded_files) so a
-      // database that hasn't run the latest migration still loads every project.
+        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, looking_for_feedback, looking_for_collaborators, is_featured";
+      // Fallback deliberately omits the newest columns (uploaded_files, readme,
+      // tools) so a database that hasn't run the latest migrations still loads.
       const BASIC_COLS =
         "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
 
@@ -186,54 +291,16 @@ function ProjectPage() {
   });
 
   const accent = useDominantColor(data?.coverSigned ?? null);
-  const updateStage = useUpdateProjectStage();
 
-  // Fetch new sections data
+  // Tab data
   const { data: milestones = [] } = useMilestones(id);
   const { data: updates = [] } = useProjectUpdates(id);
   const { data: discussions = [] } = useDiscussions(id);
   const { data: openRoles = [] } = useOpenRoles(id);
+  const { data: repos = [] } = useProjectRepos(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
-
-  // Sections are driven by the data so the scroll-spy and content never drift.
-  // Owners always get gallery/resources sections (even empty) so they can add
-  // the first item — the sub-components self-hide for non-owners when empty.
-  const sections = useMemo(() => {
-    if (!data) return [] as ProjectSection[];
-    const { project, contributors, skills } = data;
-    const s: ProjectSection[] = [];
-    if (project.vision) s.push({ id: "vision", label: "Vision" });
-    if (project.description) s.push({ id: "about", label: "About" });
-    if (project.goal) s.push({ id: "goals", label: "Goal" });
-    if (skills.length > 0 || project.tags.length > 0) s.push({ id: "skills", label: "Skills" });
-    if (openRoles.length > 0) s.push({ id: "roles", label: "Open Roles" });
-    if (milestones.length > 0) s.push({ id: "milestones", label: "Milestones" });
-    if (updates.length > 0) s.push({ id: "journal", label: "Journal" });
-    if (discussions.length > 0) s.push({ id: "discussion", label: "Discussion" });
-    if (contributors.length > 0) s.push({ id: "contributors", label: "Contributors" });
-    if (isOwner || (project.gallery ?? []).length > 0) s.push({ id: "gallery", label: "Gallery" });
-    if (isOwner || (project.resources ?? []).length > 0)
-      s.push({ id: "resources", label: "Resources" });
-    if (isOwner || ((project.uploaded_files ?? []) as ProjectFile[]).length > 0)
-      s.push({ id: "files", label: "Files" });
-    if (isOwner) s.push({ id: "repos", label: "Repositories" });
-    s.push({ id: "community", label: "Community" });
-    return s;
-  }, [data, openRoles, milestones, updates, discussions, isOwner]);
-
-  const sectionIds = useMemo(() => sections.map((s) => s.id), [sections]);
-  const { activeSection, scrollTo } = useProjectScrollSpy(sectionIds);
-
-  // Scroll to a deep-linked section (e.g. ?section=roles) once data is ready.
-  useEffect(() => {
-    if (!data || !sectionParam) return;
-    const t = setTimeout(() => {
-      document.getElementById(sectionParam)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 350);
-    return () => clearTimeout(t);
-  }, [data, sectionParam]);
 
   if (isLoading) {
     return (
@@ -252,152 +319,109 @@ function ProjectPage() {
 
   const { project, contributors, skills, coverSigned, avatarSigned } = data;
   const creator = contributors.find((c) => c.role === "creator");
-  const otherContributors = contributors.filter((c) => c.role !== "creator");
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
   const canJoin = !!me?.userId && !isOwner && !isContributor;
   const isSignedOut = !me?.userId && !isOwner && !isContributor;
-  // Signed-out visitors go to /login?redirect=/projects/:id and come back to the join modal.
   const signInToJoin = () =>
     navigate({
       to: "/login",
       search: { redirect: `/projects/${id}` } as Record<string, string>,
     });
-  const timeSinceStart = project.started_at
-    ? formatDistanceToNowStrict(new Date(project.started_at), { addSuffix: true })
-    : null;
   const links = Object.entries(project.links ?? {}).filter(([, url]) => !!url);
-  const doneCount = milestones.filter((m) => m.status === "done").length;
+  const projectFiles = (project.uploaded_files ?? []) as ProjectFile[];
+  const repoStats = repos[0]?.metadata
+    ? {
+        language: repos[0].metadata.language ?? null,
+        stars: repos[0].metadata.stargazers_count,
+        forks: repos[0].metadata.forks_count,
+      }
+    : undefined;
 
   return (
     <Shell accentColor={accent}>
-      <ProjectHero
+      <ProjectHeader
         project={project}
         coverSigned={coverSigned}
         creator={creator}
+        contributors={contributors}
         avatarSigned={avatarSigned}
-        onJoin={
-          canJoin
-            ? () => {
-                setJoinRoleId(null);
-                setJoinModalOpen(true);
-              }
-            : undefined
-        }
+        links={links}
+        repoStats={repoStats}
+        communityPostCount={communityPostCount}
+        onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
         onPostUpdate={
           isOwner || isContributor
-            ? () =>
-                navigate({
-                  to: "/community",
-                  search: { attach_project: id } as Record<string, string>,
-                })
+            ? () => setTab("activity")
             : undefined
         }
-      />
-
-      <ProjectScrollSpy
-        sections={sections}
-        activeSection={activeSection}
-        onSectionClick={scrollTo}
+        onOpenDiscussions={() => setTab("discussions")}
       />
 
       <div className="animate-room-enter min-h-screen bg-noise">
-        <div className="relative z-10 mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="min-w-0 space-y-6">
-            {/* Status + meta strip */}
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs ${PROJECT_STATUS_STYLE[project.status]}`}
-              >
-                {PROJECT_STATUS_LABEL[project.status]}
-              </span>
-              {project.is_featured && <Trophy className="h-4 w-4 shrink-0 text-primary" />}
-              {timeSinceStart && (
-                <span className="inline-flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> Started {timeSinceStart}
-                </span>
-              )}
-              {otherContributors.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <UsersIcon className="h-3.5 w-3.5" /> {otherContributors.length}{" "}
-                  {otherContributors.length === 1 ? "contributor" : "contributors"}
-                </span>
-              )}
-              {project.looking_for_feedback && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-primary">
-                  <MessageCircle className="h-3 w-3" /> Looking for feedback
-                </span>
-              )}
-              {project.looking_for_collaborators && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-2.5 py-0.5 text-brand-purple">
-                  <UserPlus className="h-3 w-3" /> Open to collaborators
-                </span>
-              )}
-              {communityPostCount > 0 && (
-                <Link
-                  to="/community"
-                  search={{ project: id } as Record<string, string>}
-                  className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2.5 py-0.5 text-xs text-learning transition hover:bg-learning"
-                >
-                  <MessageCircle className="h-3 w-3" /> {communityPostCount} community post
-                  {communityPostCount !== 1 ? "s" : ""}
-                </Link>
-              )}
-            </div>
-
-            {/* Progress summary */}
-            <div className="flex items-center gap-3">
-              <Progress value={project.progress_percent} className="h-2 flex-1" />
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {project.progress_percent}% complete
-                {milestones.length > 0 && ` · ${doneCount}/${milestones.length} milestones`}
-              </span>
-            </div>
-
-            {/* Single-scroll content */}
-            <ProjectMainContent
-              project={project}
-              projectFiles={(project.uploaded_files ?? []) as ProjectFile[]}
-              contributors={contributors}
-              skills={skills}
-              links={links}
-              milestones={milestones}
-              updates={updates}
-              discussions={discussions}
-              openRoles={openRoles}
-              avatarSigned={avatarSigned}
-              isOwner={isOwner}
-              isContributor={isContributor}
-              sections={sections}
-            />
-          </div>
-
-          {/* Sticky sidebar */}
-          <ProjectSidebar
-            project={project}
-            skills={skills}
-            links={links}
-            openRoles={openRoles}
-            milestones={milestones}
-            contributors={contributors}
-            isOwner={isOwner}
-            isContributor={isContributor}
-            onOpenRoleApply={(roleId) => {
-              setJoinRoleId(roleId);
-              setJoinModalOpen(true);
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
+          <ProjectTabs
+            active={tab}
+            onSelect={setTab}
+            counts={{
+              files: projectFiles.length,
+              discussions: discussions.length + communityPostCount,
             }}
-            onJoin={
-              canJoin
-                ? () => {
-                    setJoinRoleId(null);
-                    setJoinModalOpen(true);
-                  }
-                : undefined
-            }
-            onSignIn={isSignedOut ? signInToJoin : undefined}
           />
-        </div>
+
+          <div className="pt-6">
+            {tab === "readme" && (
+              <ProjectReadmeTab
+                project={project}
+                skills={skills}
+                projectFiles={projectFiles}
+                isOwner={isOwner}
+              />
+            )}
+            {tab === "files" && (
+              <ProjectFilesExplorer
+                projectId={id}
+                projectFiles={projectFiles}
+                isOwner={isOwner}
+                preselectPath={preselectPath}
+                preselectNonce={preselectNonce}
+              />
+            )}
+            {tab === "activity" && (
+              <ProjectActivityTab
+                projectId={id}
+                milestones={milestones}
+                updates={updates}
+                discussions={discussions}
+                projectFiles={projectFiles}
+                repos={repos}
+                isContributor={isContributor}
+              />
+            )}
+            {tab === "people" && (
+              <ProjectPeopleTab
+                projectId={id}
+                contributors={contributors}
+                avatarSigned={avatarSigned}
+                openRoles={openRoles}
+                isOwner={isOwner}
+                isContributor={isContributor}
+                onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
+                onSignIn={isSignedOut ? signInToJoin : undefined}
+              />
+            )}
+            {tab === "discussions" && (
+              <div className="space-y-6">
+                <ProjectDiscussions
+                  discussions={discussions}
+                  projectId={id}
+                  isContributor={isContributor}
+                  isOwner={isOwner}
+                />
+                <ProjectCommunityPosts projectId={id} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -406,23 +430,22 @@ function ProjectPage() {
         projectId={id}
         openRoles={openRoles}
         meId={me?.userId ?? null}
-        focusRoleId={joinRoleId}
-        onClose={() => {
-          setJoinRoleId(null);
-          setJoinModalOpen(false);
-        }}
+        onClose={() => setJoinModalOpen(false)}
+      />
+
+      <ProjectSearchDialog
+        open={projectSearchOpen}
+        onOpenChange={setProjectSearchOpen}
+        projectFiles={projectFiles}
+        discussions={discussions}
+        readme={project.readme}
+        onJumpFile={jumpToFile}
+        onJumpDiscussion={jumpToDiscussion}
+        onJumpSection={jumpToSection}
       />
     </Shell>
   );
 }
-
-const ROLE_ORDER: Record<Contributor["role"], number> = {
-  creator: 0,
-  mentor: 1,
-  contributor: 2,
-};
-
-type SkillLite = { id: string; slug: string; name: string; category: string };
 
 function Shell({
   children,
