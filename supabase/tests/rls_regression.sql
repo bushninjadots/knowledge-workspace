@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(31);
+SELECT plan(33);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -369,6 +369,31 @@ SELECT is(
     WHERE project_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')::bigint,
   0::bigint,
   '31. non-member cannot read private project activity'
+);
+
+-- ---------------------------------------------------------------------------
+-- 10. sessions: is_session_member() must be callable by authenticated users
+--     (regression: 42501 "permission denied for function is_session_member")
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.sessions(organizer_id, title)
+  VALUES ('11111111-1111-1111-1111-111111111111', 'Alice''s Build Session');
+
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE organizer_id = '11111111-1111-1111-1111-111111111111')::bigint,
+  1::bigint,
+  '32. organizer can read her own sessions'
+);
+
+-- The policy evaluates is_session_member() for rows owned by someone else;
+-- before the grant it raised 42501 instead of filtering.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE organizer_id = '11111111-1111-1111-1111-111111111111')::bigint,
+  0::bigint,
+  '33. non-member session read filtered (no permission-denied error)'
 );
 
 SELECT * FROM finish();

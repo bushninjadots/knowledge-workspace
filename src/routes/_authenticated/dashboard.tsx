@@ -77,7 +77,7 @@ function DashboardPage() {
       const { data: apps, error } = await (supabase as any)
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
-        .eq("applicant_id", data?.userId)
+        .eq("profile_id", data?.userId)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) return [];
