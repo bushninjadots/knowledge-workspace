@@ -8,14 +8,15 @@ export function Footer() {
         <div className="space-y-4 md:max-w-sm">
           <Logo variant="horizontal" size="md" />
           <p className="text-sm leading-relaxed text-muted-foreground">
-            The collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.
+            The collaboration network where builders create projects together, grow through real
+            contributions, and become known for what they make — not what they claim.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
             Active community
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:gap-12">
+        <div className="grid grid-cols-2 gap-8 md:gap-12">
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
               Platform
@@ -43,29 +44,6 @@ export function Footer() {
                   className="text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Community
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
-              Grow
-            </h3>
-            <ul className="space-y-2.5 text-sm">
-              <li>
-                <Link
-                  to="/explore"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Explore Projects
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/explore"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Find People Sharing
                 </Link>
               </li>
             </ul>

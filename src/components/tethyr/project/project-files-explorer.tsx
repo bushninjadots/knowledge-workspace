@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { validateLibraryFile } from "@/lib/validators";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { buildTree, type TreeNode, type TreeFile } from "@/lib/file-tree";
 import { getFileIconType, getFileType, formatFileSize, type ProjectFile } from "./project-files";
 import { ProjectReposSection } from "./project-repos";
@@ -97,6 +98,10 @@ function FolderRow({
 }
 
 function FileViewer({ file }: { file: TreeFile | null }) {
+  // project-media is a private bucket, so previews/downloads need a signed URL.
+  const { data: url } = useSignedStorageUrl("project-media", file?.path ?? null);
+  const signedUrl = url ?? "";
+
   if (!file) {
     return (
       <div className="flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/40 bg-background/30 px-6 text-center">
@@ -106,8 +111,6 @@ function FileViewer({ file }: { file: TreeFile | null }) {
     );
   }
 
-  const { data } = sb.storage.from("project-media").getPublicUrl(file.path ?? "");
-  const url = data?.publicUrl ?? "";
   const Icon = getFileIconType(file.name);
 
   return (
@@ -121,9 +124,9 @@ function FileViewer({ file }: { file: TreeFile | null }) {
         <span className="shrink-0 text-[11px] text-muted-foreground">
           {formatFileSize(file.size ?? 0)}
         </span>
-        {url && (
+        {signedUrl && (
           <a
-            href={url}
+            href={signedUrl}
             target="_blank"
             rel="noreferrer"
             download={file.name}
@@ -135,12 +138,16 @@ function FileViewer({ file }: { file: TreeFile | null }) {
         )}
       </div>
       <div className="flex-1 overflow-auto p-3">
-        {file.type === "image" && url ? (
-          <img src={url} alt={file.name} className="w-full rounded-lg border border-border/40" />
-        ) : file.type === "video" && url ? (
-          <video src={url} controls className="w-full rounded-lg border border-border/40" />
-        ) : file.type === "audio" && url ? (
-          <audio src={url} controls className="w-full" />
+        {file.type === "image" && signedUrl ? (
+          <img
+            src={signedUrl}
+            alt={file.name}
+            className="w-full rounded-lg border border-border/40"
+          />
+        ) : file.type === "video" && signedUrl ? (
+          <video src={signedUrl} controls className="w-full rounded-lg border border-border/40" />
+        ) : file.type === "audio" && signedUrl ? (
+          <audio src={signedUrl} controls className="w-full" />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
             <Icon className="h-8 w-8 text-muted-foreground/40" />
@@ -148,9 +155,9 @@ function FileViewer({ file }: { file: TreeFile | null }) {
             <p className="text-xs text-muted-foreground">
               {formatFileSize(file.size ?? 0)} · {file.type}
             </p>
-            {url && (
+            {signedUrl && (
               <a
-                href={url}
+                href={signedUrl}
                 target="_blank"
                 rel="noreferrer"
                 download={file.name}

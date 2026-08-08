@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 import type { PostRow, PostType } from "@/hooks/use-community";
 import { POST_TYPE_LABEL } from "@/lib/community-data";
@@ -265,9 +266,10 @@ export function TrendingSkills() {
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Trending skills</p>            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              Skills people are building with right now
-            </h2>
+          <p className="section-label mb-3">Trending skills</p>{" "}
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            Skills people are building with right now
+          </h2>
         </div>
         <Link
           to="/explore"
@@ -405,9 +407,10 @@ export function CommunitySpaces() {
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="section-label mb-3">Community spaces</p>            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-              Spaces where builders connect
-            </h2>
+          <p className="section-label mb-3">Community spaces</p>{" "}
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            Spaces where builders connect
+          </h2>
         </div>
         <Link
           to="/community"
@@ -417,42 +420,41 @@ export function CommunitySpaces() {
         </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {spaces.slice(0, 4).map((space) => {
-          const initial = space.name.charAt(0).toUpperCase();
-          return (
-            <Link
-              key={space.id}
-              to="/community"
-              className="card-border group rounded-2xl border bg-surface p-5 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-surface-elevated text-base font-semibold">
-                {space.avatar_url ? (
-                  <img
-                    src={space.avatar_url}
-                    alt=""
-                    className="h-full w-full rounded-xl object-cover"
-                  />
-                ) : (
-                  initial
-                )}
-              </div>
-              <h3 className="mt-4 truncate font-display text-base font-semibold group-hover:text-primary">
-                {space.name}
-              </h3>
-              {space.description && (
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                  {space.description}
-                </p>
-              )}
-              <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5" />
-                {space.visibility === "private" ? "Private space" : "Community space"}
-              </div>
-            </Link>
-          );
-        })}
+        {spaces.slice(0, 4).map((space) => (
+          <SpaceCard key={space.id} space={space} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function SpaceCard({ space }: { space: CommunitySpace }) {
+  const initial = space.name.charAt(0).toUpperCase();
+  // community_spaces.avatar_url stores a storage path — sign it to render.
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
+  return (
+    <Link
+      to="/community"
+      className="card-border group rounded-2xl border bg-surface p-5 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+    >
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-surface-elevated text-base font-semibold">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full rounded-xl object-cover" />
+        ) : (
+          initial
+        )}
+      </div>
+      <h3 className="mt-4 truncate font-display text-base font-semibold group-hover:text-primary">
+        {space.name}
+      </h3>
+      {space.description && (
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{space.description}</p>
+      )}
+      <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Building2 className="h-3.5 w-3.5" />
+        {space.visibility === "private" ? "Private space" : "Community space"}
+      </div>
+    </Link>
   );
 }
 
@@ -558,9 +560,11 @@ function ActivityAuthor({
   className?: string;
 }) {
   const name = author.display_name || author.handle || "Member";
+  // profiles.avatar_url stores a storage path — it needs a signed URL to render.
+  const { data: avatarUrl } = useSignedStorageUrl("avatars", author.avatar_url);
   return (
     <Avatar className={className}>
-      {author.avatar_url ? <AvatarImage src={author.avatar_url} alt="" /> : null}
+      {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
       <AvatarFallback className="text-[11px]">{name.charAt(0).toUpperCase()}</AvatarFallback>
     </Avatar>
   );
@@ -785,7 +789,8 @@ export function RecentActivity() {
               What the community is talking about
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Showcases, project updates, collaboration requests, and discussions — live from builders across the network.
+              Showcases, project updates, collaboration requests, and discussions — live from
+              builders across the network.
             </p>
           </div>
           <Link

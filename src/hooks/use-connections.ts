@@ -156,6 +156,15 @@ export function useSendConnection() {
       meId: string;
       introMessage?: string | null;
     }) => {
+      // A declined row can never go back to 'pending' (the addressee-only UPDATE
+      // policy + status check forbid it), so clear a stale declined request from
+      // this pair first, then send a fresh one.
+      await supabase
+        .from("connections")
+        .delete()
+        .eq("requester_id", meId)
+        .eq("addressee_id", addresseeId)
+        .eq("status", "declined");
       const { error } = await supabase.from("connections").insert({
         requester_id: meId,
         addressee_id: addresseeId,
@@ -177,7 +186,14 @@ export function useSendConnection() {
         updated_at: new Date().toISOString(),
         other: null,
       };
-      qc.setQueryData<ConnectionWithProfile[]>(key, (old) => [optimistic, ...(old ?? [])]);
+      qc.setQueryData<ConnectionWithProfile[]>(key, (old) => [
+        optimistic,
+        // Drop any stale row for this pair (e.g. a declined request being
+        // re-sent) so it doesn't linger alongside the optimistic pending row.
+        ...(old ?? []).filter(
+          (c) => !(c.requester_id === vars.meId && c.addressee_id === vars.addresseeId),
+        ),
+      ]);
       return { previous };
     },
     onError: (_e, _v, ctx) => {

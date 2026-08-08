@@ -70,6 +70,7 @@ function seedProject(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
     goal: null,
     vision: null,
     status: "active",
+    visibility: "public",
     stage: "building",
     started_at: "2026-01-01T00:00:00Z",
     progress_percent: 40,

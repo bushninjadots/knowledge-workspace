@@ -10,6 +10,7 @@ import {
   Users as UsersIcon,
   CalendarDays,
   Link as LinkIcon,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -146,6 +147,15 @@ export function ProjectHeader({
               >
                 {PROJECT_STATUS_LABEL[project.status]}
               </span>
+              {project.visibility === "private" && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                  title="Only the owner and contributors can view this project"
+                >
+                  <Lock className="h-3 w-3" />
+                  Private
+                </span>
+              )}
               {project.is_featured && (
                 <Trophy className="h-4 w-4 shrink-0 text-primary" aria-label="Featured" />
               )}

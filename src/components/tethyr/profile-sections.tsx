@@ -53,6 +53,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
+import { GalleryThumb } from "@/components/tethyr/project/project-resources";
 
 export type ProjectStatus = "planning" | "active" | "paused" | "completed";
 
@@ -502,6 +503,7 @@ export type ProjectRow = {
   goal: string | null;
   vision: string | null;
   status: ProjectStatus;
+  visibility: "public" | "private";
   stage: "planning" | "building" | "testing" | "launch" | "growing";
   started_at: string;
   progress_percent: number;
@@ -593,13 +595,17 @@ export function ProjectsCard({
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2">
-                    <h3 className="truncate font-display font-semibold" title={p.title}>{p.title}</h3>
+                    <h3 className="truncate font-display font-semibold" title={p.title}>
+                      {p.title}
+                    </h3>
                     {p.is_featured && <Trophy className="h-3.5 w-3.5 shrink-0 text-primary" />}
                   </div>
                   {p.goal && (
                     <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
                       <Target className="mt-0.5 h-3 w-3 shrink-0" />
-                      <span className="line-clamp-1" title={p.goal}>{p.goal}</span>
+                      <span className="line-clamp-1" title={p.goal}>
+                        {p.goal}
+                      </span>
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2">
@@ -704,6 +710,9 @@ export function ProjectDialog({
   const [description, setDescription] = useState(project?.description ?? "");
   const [goal, setGoal] = useState(project?.goal ?? "");
   const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "planning");
+  const [visibility, setVisibility] = useState<"public" | "private">(
+    project?.visibility ?? "public",
+  );
   const [progress, setProgress] = useState(project?.progress_percent ?? 0);
   const [coverPath, setCoverPath] = useState<string | null>(project?.cover_url ?? null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -787,6 +796,7 @@ export function ProjectDialog({
       goal: goal.trim() || null,
       vision: vision.trim() || null,
       status,
+      visibility,
       progress_percent: progress,
       cover_url: coverPath,
       gallery: galleryItems,
@@ -955,6 +965,29 @@ export function ProjectDialog({
             </div>
           </Field>
 
+          <Field label="Visibility">
+            <div className="flex flex-wrap gap-2">
+              {(["public", "private"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVisibility(v)}
+                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                    visibility === v
+                      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                      : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                  }`}
+                >
+                  {v === "public" ? "Public" : "Private"}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Public projects appear in Explore and on your profile. Private projects are only
+              visible to you and your contributors.
+            </p>
+          </Field>
+
           <Field label={`Progress — ${progress}%`}>
             <input
               type="range"
@@ -1059,7 +1092,7 @@ export function ProjectDialog({
             <div className="space-y-2">
               {galleryItems.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-xs">
-                  <img src={item.url} alt="" className="h-8 w-8 rounded object-cover" />
+                  <GalleryThumb url={item.url} alt="" className="h-8 w-8 rounded object-cover" />
                   <span className="min-w-0 flex-1 truncate">{item.caption ?? item.url}</span>
                   <button
                     onClick={() => setGalleryItems(galleryItems.filter((_, i) => i !== idx))}

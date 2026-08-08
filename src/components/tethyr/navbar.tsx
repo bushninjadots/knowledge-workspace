@@ -4,20 +4,22 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
-const links = [
-  { to: "/", label: "Home" },
-  { to: "/dashboard", label: "Dashboard" },
-];
+const links = [{ to: "/", label: "Home" }];
 
 export function Navbar() {
+  const { data: me } = useCurrentUser();
   const [open, setOpen] = useState(false);
+  const isAuthed = Boolean(me?.userId);
+  const navLinks = isAuthed ? [...links, { to: "/dashboard" as const, label: "Dashboard" }] : links;
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 bg-noise backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
         <nav className="hidden items-center gap-1 md:flex">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
@@ -31,12 +33,20 @@ export function Navbar() {
         </nav>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/login">Log in</Link>
-          </Button>
-          <Button asChild variant="default" size="sm" className="rounded-full">
-            <Link to="/signup">Join Tethyr</Link>
-          </Button>
+          {isAuthed ? (
+            <Button asChild variant="default" size="sm" className="rounded-full">
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button asChild variant="default" size="sm" className="rounded-full">
+                <Link to="/signup">Join Tethyr</Link>
+              </Button>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1 md:hidden">
           <ThemeToggle />
@@ -52,7 +62,7 @@ export function Navbar() {
       {open && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-4 py-4">
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
@@ -62,18 +72,28 @@ export function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <div className="mt-2 flex gap-2">
-              <Button asChild variant="outline" className="flex-1">
-                <Link to="/login" onClick={() => setOpen(false)}>
-                  Log in
-                </Link>
-              </Button>
-              <Button asChild variant="default" className="flex-1 rounded-full">
-                <Link to="/signup" onClick={() => setOpen(false)}>
-                  Join
-                </Link>
-              </Button>
-            </div>
+            {isAuthed ? (
+              <div className="mt-2">
+                <Button asChild variant="default" className="w-full rounded-full">
+                  <Link to="/dashboard" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-2 flex gap-2">
+                <Button asChild variant="outline" className="flex-1">
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    Log in
+                  </Link>
+                </Button>
+                <Button asChild variant="default" className="flex-1 rounded-full">
+                  <Link to="/signup" onClick={() => setOpen(false)}>
+                    Join
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}

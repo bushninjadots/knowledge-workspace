@@ -1,9 +1,20 @@
 import { useState, useRef, useCallback } from "react";
-import { Plus, Trash2, FileText, Wrench, Video, BookOpen, Link2, Upload, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  FileText,
+  Wrench,
+  Video,
+  BookOpen,
+  Link2,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref, validateLibraryFile } from "@/lib/validators";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
 
 const sb = supabase as any;
@@ -166,6 +177,31 @@ export function ResourcesSection({
   );
 }
 
+/**
+ * Renders a gallery image. Storage paths (project-media is a private bucket)
+ * are signed on demand; full http(s) URLs pass through untouched.
+ */
+export function GalleryThumb({
+  url,
+  alt,
+  className,
+}: {
+  url: string;
+  alt?: string;
+  className?: string;
+}) {
+  // safeHref returns "#" for anything that isn't a safe http(s) URL — so
+  // storage paths (project-media is a private bucket) get signed, external
+  // URLs pass through validated, and anything sketchy falls back to a blank.
+  const isExternal = safeHref(url) !== "#";
+  const { data: signedUrl } = useSignedStorageUrl("project-media", isExternal ? null : url);
+  const src = isExternal ? safeHref(url) : (signedUrl ?? "");
+  if (!src) {
+    return <div className={className ?? ""} aria-hidden />;
+  }
+  return <img src={src} alt={alt ?? ""} className={className} />;
+}
+
 export function GallerySection({
   gallery,
   onUpdate,
@@ -185,27 +221,36 @@ export function GallerySection({
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = useCallback(async (file: File) => {
-    if (!me?.userId || !projectId) return;
-    const check = validateLibraryFile(file);
-    if (!check.ok) { toast.error(check.error); return; }
-    setUploading(true);
-    try {
-      const path = `${projectId}/gallery-${Date.now()}.${check.ext}`;
-      const { error: upErr } = await sb.storage.from("project-media").upload(path, file);
-      if (upErr) throw upErr;
-      const { data: urlData } = sb.storage.from("project-media").getPublicUrl(path);
-      if (!urlData?.publicUrl) throw new Error("Failed to get public URL");
-      await onUpdate([...gallery, { url: urlData.publicUrl, caption: caption.trim() || undefined, type: "image" }]);
-      setCaption("");
-      setShowAdd(false);
-      toast.success("Image uploaded");
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  }, [me?.userId, projectId, gallery, caption, onUpdate]);
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      if (!me?.userId || !projectId) return;
+      const check = validateLibraryFile(file);
+      if (!check.ok) {
+        toast.error(check.error);
+        return;
+      }
+      setUploading(true);
+      try {
+        // project-media is a private bucket, so the gallery stores the storage
+        // *path* — GalleryThumb signs it at render time.
+        const path = `${projectId}/gallery-${Date.now()}.${check.ext}`;
+        const { error: upErr } = await sb.storage.from("project-media").upload(path, file);
+        if (upErr) throw upErr;
+        await onUpdate([
+          ...gallery,
+          { url: path, caption: caption.trim() || undefined, type: "image" },
+        ]);
+        setCaption("");
+        setShowAdd(false);
+        toast.success("Image uploaded");
+      } catch (err: any) {
+        toast.error(err.message || "Upload failed");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [me?.userId, projectId, gallery, caption, onUpdate],
+  );
 
   const handleAdd = async () => {
     if (!url.trim()) return;
@@ -262,7 +307,11 @@ export function GallerySection({
             type="file"
             accept="image/*,video/*"
             className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ""; }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFileUpload(f);
+              e.target.value = "";
+            }}
           />
           <div className="flex gap-2">
             {projectId && (
@@ -271,7 +320,11 @@ export function GallerySection({
                 disabled={uploading}
                 className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground transition hover:text-foreground"
               >
-                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                {uploading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Upload className="h-3.5 w-3.5" />
+                )}
                 {uploading ? "Uploading…" : "Upload"}
               </button>
             )}
@@ -314,8 +367,8 @@ export function GallerySection({
               key={idx}
               className="group relative overflow-hidden rounded-2xl border border-border/60"
             >
-              <img
-                src={safeHref(g.url)}
+              <GalleryThumb
+                url={g.url}
                 alt={g.caption ?? ""}
                 className="aspect-square w-full object-cover"
               />

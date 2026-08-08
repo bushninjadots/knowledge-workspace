@@ -51,8 +51,7 @@ export const Route = createFileRoute("/projects/$id")({
       { name: "description", content: "A project being built on Tethyr." },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) =>
-    search as Record<string, string | undefined>,
+  validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
   component: ProjectPage,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">
@@ -161,9 +160,7 @@ function ProjectPage() {
       const target = e.target as HTMLElement | null;
       const typing =
         target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable);
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (e.key >= "1" && e.key <= "5") {
@@ -188,9 +185,10 @@ function ProjectPage() {
     queryFn: async () => {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
-        "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, looking_for_feedback, looking_for_collaborators, is_featured";
+        "id, profile_id, title, description, goal, vision, status, visibility, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, readme, tools, looking_for_feedback, looking_for_collaborators, is_featured";
       // Fallback deliberately omits the newest columns (uploaded_files, readme,
-      // tools) so a database that hasn't run the latest migrations still loads.
+      // tools, visibility) so a database that hasn't run the latest migrations
+      // still loads.
       const BASIC_COLS =
         "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
 
@@ -350,11 +348,7 @@ function ProjectPage() {
         communityPostCount={communityPostCount}
         onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
-        onPostUpdate={
-          isOwner || isContributor
-            ? () => setTab("activity")
-            : undefined
-        }
+        onPostUpdate={isOwner || isContributor ? () => setTab("activity") : undefined}
         onOpenDiscussions={() => setTab("discussions")}
       />
 

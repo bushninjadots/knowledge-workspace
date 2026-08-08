@@ -61,8 +61,9 @@ export function AuthenticatedShell() {
           </button>
           <span className="text-[13px] font-semibold tracking-tight md:hidden">Tethyr</span>
           <div className="ml-auto flex items-center gap-1">
+            {/* Search lives in the sidebar (inline) on md+; the icon only shows on mobile */}
             <button
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground md:hidden"
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
             >

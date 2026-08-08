@@ -22,7 +22,6 @@ import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
 import { GlobalSearch } from "./global-search";
 import type { AvailabilityStatus } from "@/lib/skill-match";
-import { ThemeToggle } from "./theme-toggle";
 import { ProjectDialog } from "./profile-sections";
 
 const groups = [
@@ -186,8 +185,6 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <Settings className="h-3.5 w-3.5" />
           </Link>
         </div>
-
-        <ThemeToggle variant="row" className="px-2" />
 
         <button
           onClick={handleSignOut}

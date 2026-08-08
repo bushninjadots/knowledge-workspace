@@ -261,4 +261,72 @@ INSERT INTO public.skill_endorsements(profile_id, skill_id, endorsed_by)
 SELECT count(*) AS should_be_1 FROM public.skill_endorsements
   WHERE profile_id = '11111111-1111-1111-1111-111111111111';
 
+-- ---------------------------------------------------------------------------
+-- 8. project visibility + project-media storage
+--    Alice creates a PRIVATE project; files live under the project folder.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.projects(id, profile_id, title, visibility)
+  VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          '11111111-1111-1111-1111-111111111111', 'Alice Private', 'private')
+  ON CONFLICT (id) DO NOTHING;
+
+-- EXPECT: creator row was auto-added by the insert trigger.
+SELECT count(*) AS should_be_1 FROM public.project_contributors
+  WHERE project_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' AND role = 'creator';
+
+-- Alice adds bob as a contributor.
+INSERT INTO public.project_contributors(project_id, profile_id, role)
+  VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          '22222222-2222-2222-2222-222222222222', 'contributor');
+
+-- EXPECT: bob (contributor) can see the private project.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT count(*) AS contributor_sees_private FROM public.projects
+  WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+-- EXPECT: eve (non-member) cannot see it.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT count(*) AS non_member_cannot_see_private FROM public.projects
+  WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+-- EXPECT: anon cannot see it either.
+SET LOCAL role anon;
+SET LOCAL request.jwt.claims = json_build_object('role', 'anon')::text;
+SELECT count(*) AS anon_cannot_see_private FROM public.projects
+  WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+-- EXPECT: anon CAN still see alice's public project from section 6.
+SELECT count(*) AS anon_sees_public FROM public.projects WHERE title = 'Alice''s SaaS';
+
+-- Storage: owner can upload into her project's folder.
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO storage.objects (bucket_id, name, owner)
+  VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/owner-file.bin',
+          '11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: covers still work — owner can upload into her own uid folder.
+INSERT INTO storage.objects (bucket_id, name, owner)
+  VALUES ('project-media', '11111111-1111-1111-1111-111111111111/cover.png',
+          '11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: contributor can upload into the project's folder.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+INSERT INTO storage.objects (bucket_id, name, owner)
+  VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/bob-file.bin',
+          '22222222-2222-2222-2222-222222222222');
+
+-- EXPECT: eve (non-member) cannot upload into the project's folder.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO storage.objects (bucket_id, name, owner)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/eve-file.bin',
+              '33333333-3333-3333-3333-333333333333');
+    RAISE NOTICE 'REGRESSION: non-member uploaded into a project folder';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'OK: non-member project upload rejected';
+  END;
+END $$;
+
 ROLLBACK;

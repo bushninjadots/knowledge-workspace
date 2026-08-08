@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateLibraryFile } from "@/lib/validators";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 const sb = supabase as any;
 
@@ -148,11 +149,6 @@ export function ProjectFilesSection({
     }
   };
 
-  const getSignedUrl = (file: ProjectFile) => {
-    const { data } = sb.storage.from("project-media").getPublicUrl(file.path);
-    return data?.publicUrl ?? "";
-  };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -235,48 +231,9 @@ export function ProjectFilesSection({
       {/* File list */}
       {existingFiles.length > 0 && (
         <div className="space-y-1.5">
-          {existingFiles.map((file, i) => {
-            const Icon = getFileIconType(file.name);
-            const url = getSignedUrl(file);
-            return (
-              <div
-                key={i}
-                className="group flex items-center gap-3 rounded-xl border border-border/40 bg-background/40 px-3 py-2.5 transition hover:border-border/60"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{file.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {formatFileSize(file.size)} · {file.type} ·{" "}
-                    {new Date(file.uploaded_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    download={file.name}
-                    className="rounded-md p-1.5 text-muted-foreground transition hover:bg-surface hover:text-foreground"
-                    title="Download"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
-                  {isOwner && (
-                    <button
-                      onClick={() => handleRemove(i)}
-                      className="rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                      title="Remove"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {existingFiles.map((file, i) => (
+            <FileRow key={i} file={file} isOwner={isOwner} onRemove={() => handleRemove(i)} />
+          ))}
         </div>
       )}
 
@@ -295,6 +252,57 @@ export function ProjectFilesSection({
           {isDragOver ? "Drop to add more files" : "Drop more files here"}
         </div>
       )}
+    </div>
+  );
+}
+
+function FileRow({
+  file,
+  isOwner,
+  onRemove,
+}: {
+  file: ProjectFile;
+  isOwner: boolean;
+  onRemove: () => void;
+}) {
+  // project-media is a private bucket, so downloads need a signed URL.
+  const { data: url } = useSignedStorageUrl("project-media", file.path);
+  const Icon = getFileIconType(file.name);
+  return (
+    <div className="group flex items-center gap-3 rounded-xl border border-border/40 bg-background/40 px-3 py-2.5 transition hover:border-border/60">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{file.name}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {formatFileSize(file.size)} · {file.type} ·{" "}
+          {new Date(file.uploaded_at).toLocaleDateString()}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+        {url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            download={file.name}
+            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-surface hover:text-foreground"
+            title="Download"
+          >
+            <Download className="h-3.5 w-3.5" />
+          </a>
+        )}
+        {isOwner && (
+          <button
+            onClick={onRemove}
+            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+            title="Remove"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

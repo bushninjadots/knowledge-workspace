@@ -20,6 +20,7 @@ export type ProjectDetail = {
   goal: string | null;
   vision: string | null;
   status: "planning" | "active" | "paused" | "completed";
+  visibility: "public" | "private";
   stage: ProjectStage;
   started_at: string;
   progress_percent: number;
@@ -294,24 +295,32 @@ export function useCreateProjectUpdate() {
 
       if (error) throw error;
 
-      // Auto-publish to community feed as a project_update post
-      await sb
-        .from("posts")
-        .insert({
-          author_id: user.id,
-          type: "project_update",
-          title: input.title,
-          body: input.body,
-          community: "Projects",
-          project_data: {
-            project_id: input.projectId,
-            week_number: input.week_number ?? null,
-          },
-        })
-        .then(() => {})
-        .catch(() => {
-          // Non-fatal — community post is a bonus, not a requirement
-        });
+      // Auto-publish to community feed as a project_update post — but never
+      // for private projects: their updates stay inside the project.
+      const { data: projRow } = await sb
+        .from("projects")
+        .select("visibility")
+        .eq("id", input.projectId)
+        .maybeSingle();
+      if (projRow?.visibility !== "private") {
+        await sb
+          .from("posts")
+          .insert({
+            author_id: user.id,
+            type: "project_update",
+            title: input.title,
+            body: input.body,
+            community: "Projects",
+            project_data: {
+              project_id: input.projectId,
+              week_number: input.week_number ?? null,
+            },
+          })
+          .then(() => {})
+          .catch(() => {
+            // Non-fatal — community post is a bonus, not a requirement
+          });
+      }
 
       return data;
     },

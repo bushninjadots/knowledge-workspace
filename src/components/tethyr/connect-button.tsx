@@ -61,42 +61,29 @@ export function ConnectButton({
     );
   }
 
-  if (!existing) {
+  // No connection, or a declined one I initiated — both let me send/request again.
+  if (!existing || (existing.status === "declined" && existing.requester_id === meId)) {
+    const isResend = !!existing;
     return (
       <>
-        <Button size="sm" onClick={() => setInviteOpen(true)} className="gap-1.5">
-          <Link2 className="h-4 w-4" /> Tethyr
+        <Button
+          size="sm"
+          variant={isResend ? "outline" : "default"}
+          onClick={() => setInviteOpen(true)}
+          className="gap-1.5"
+        >
+          <Link2 className="h-4 w-4" />
+          {isResend ? "Request again" : "Tethyr"}
         </Button>
-        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tethyr with {targetName ?? "this person"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Add an optional note so they know why you're connecting.
-              </p>
-              <Textarea
-                value={intro}
-                onChange={(e) => setIntro(e.target.value.slice(0, INTRO_MAX))}
-                placeholder="Hey! Loved your work on…"
-                rows={4}
-                maxLength={INTRO_MAX}
-              />
-              <div className="text-right text-[11px] text-muted-foreground">
-                {intro.length}/{INTRO_MAX}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setInviteOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={submitTethyr} disabled={send.isPending}>
-                {send.isPending ? "Sending…" : "Send request"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <InviteDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          targetName={targetName}
+          intro={intro}
+          setIntro={setIntro}
+          submit={submitTethyr}
+          sending={send.isPending}
+        />
       </>
     );
   }
@@ -184,9 +171,63 @@ export function ConnectButton({
     );
   }
 
+  // I declined this person's request — surface it as a status, not a dead button.
+  // They can re-request from their side.
   return (
-    <Button size="sm" variant="outline" disabled className="gap-1.5">
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground">
+      <X className="h-3.5 w-3.5" />
       Declined
-    </Button>
+    </span>
+  );
+}
+
+function InviteDialog({
+  open,
+  onOpenChange,
+  targetName,
+  intro,
+  setIntro,
+  submit,
+  sending,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  targetName?: string | null;
+  intro: string;
+  setIntro: (v: string) => void;
+  submit: () => void;
+  sending: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Tethyr with {targetName ?? "this person"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Add an optional note so they know why you're connecting.
+          </p>
+          <Textarea
+            value={intro}
+            onChange={(e) => setIntro(e.target.value.slice(0, INTRO_MAX))}
+            placeholder="Hey! Loved your work on…"
+            rows={4}
+            maxLength={INTRO_MAX}
+          />
+          <div className="text-right text-[11px] text-muted-foreground">
+            {intro.length}/{INTRO_MAX}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={sending}>
+            {sending ? "Sending…" : "Send request"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

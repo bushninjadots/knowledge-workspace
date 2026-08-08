@@ -26,7 +26,6 @@ import { Route as AuthenticatedExploreRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
-import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library.$id'
 import { Route as AuthenticatedChallengesIdRouteImport } from './routes/_authenticated/challenges.$id'
 import { Route as AuthenticatedSpacesSlugSettingsRouteImport } from './routes/_authenticated/spaces.$slug.settings'
@@ -116,12 +115,6 @@ const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedSessionsRoute,
 } as any)
-const AuthenticatedProfileUserIdRoute =
-  AuthenticatedProfileUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => AuthenticatedProfileRoute,
-  } as any)
 const AuthenticatedLibraryIdRoute = AuthenticatedLibraryIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -151,14 +144,13 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
-  '/profile': typeof AuthenticatedProfileRouteWithChildren
+  '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
-  '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -173,14 +165,13 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
-  '/profile': typeof AuthenticatedProfileRouteWithChildren
+  '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
-  '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -197,14 +188,13 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
-  '/_authenticated/profile': typeof AuthenticatedProfileRouteWithChildren
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/_authenticated/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
-  '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
   '/_authenticated/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -228,7 +218,6 @@ export interface FileRouteTypes {
     | '/u/$handle'
     | '/challenges/$id'
     | '/library/$id'
-    | '/profile/$userId'
     | '/sessions/$id'
     | '/spaces/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/u/$handle'
     | '/challenges/$id'
     | '/library/$id'
-    | '/profile/$userId'
     | '/sessions/$id'
     | '/spaces/$slug/settings'
   id:
@@ -273,7 +261,6 @@ export interface FileRouteTypes {
     | '/u/$handle'
     | '/_authenticated/challenges/$id'
     | '/_authenticated/library/$id'
-    | '/_authenticated/profile/$userId'
     | '/_authenticated/sessions/$id'
     | '/_authenticated/spaces/$slug/settings'
   fileRoutesById: FileRoutesById
@@ -410,13 +397,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
     }
-    '/_authenticated/profile/$userId': {
-      id: '/_authenticated/profile/$userId'
-      path: '/$userId'
-      fullPath: '/profile/$userId'
-      preLoaderRoute: typeof AuthenticatedProfileUserIdRouteImport
-      parentRoute: typeof AuthenticatedProfileRoute
-    }
     '/_authenticated/library/$id': {
       id: '/_authenticated/library/$id'
       path: '/$id'
@@ -452,17 +432,6 @@ const AuthenticatedLibraryRouteChildren: AuthenticatedLibraryRouteChildren = {
 const AuthenticatedLibraryRouteWithChildren =
   AuthenticatedLibraryRoute._addFileChildren(AuthenticatedLibraryRouteChildren)
 
-interface AuthenticatedProfileRouteChildren {
-  AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
-}
-
-const AuthenticatedProfileRouteChildren: AuthenticatedProfileRouteChildren = {
-  AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
-}
-
-const AuthenticatedProfileRouteWithChildren =
-  AuthenticatedProfileRoute._addFileChildren(AuthenticatedProfileRouteChildren)
-
 interface AuthenticatedSessionsRouteChildren {
   AuthenticatedSessionsIdRoute: typeof AuthenticatedSessionsIdRoute
 }
@@ -483,7 +452,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
-  AuthenticatedProfileRoute: typeof AuthenticatedProfileRouteWithChildren
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedChallengesIdRoute: typeof AuthenticatedChallengesIdRoute
   AuthenticatedSpacesSlugSettingsRoute: typeof AuthenticatedSpacesSlugSettingsRoute
@@ -496,7 +465,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
-  AuthenticatedProfileRoute: AuthenticatedProfileRouteWithChildren,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedChallengesIdRoute: AuthenticatedChallengesIdRoute,
   AuthenticatedSpacesSlugSettingsRoute: AuthenticatedSpacesSlugSettingsRoute,
