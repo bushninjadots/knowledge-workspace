@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
 import {
@@ -37,6 +38,9 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { data: me } = useCurrentUser();
+  const isAuthed = Boolean(me?.userId);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -67,19 +71,34 @@ function HomePage() {
                 contributions, and earn recognition for the work they do — not the claims they make.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                <Button
-                  asChild
-                  size="lg"
-                  variant="default"
-                  className="shadow-glow-green transition-lift"
-                >
-                  <Link to="/signup">
-                    Join Tethyr <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="transition-lift">
-                  <Link to="/login">Log in</Link>
-                </Button>
+                {isAuthed ? (
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="default"
+                    className="shadow-glow-green transition-lift"
+                  >
+                    <Link to="/dashboard">
+                      Open your dashboard <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="default"
+                      className="shadow-glow-green transition-lift"
+                    >
+                      <Link to="/signup">
+                        Join Tethyr <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="transition-lift">
+                      <Link to="/login">Log in</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             <HeroShowcase />
@@ -138,19 +157,34 @@ function HomePage() {
                 itself. You're known by what you make — not what you claim.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Button
-                  asChild
-                  size="lg"
-                  variant="default"
-                  className="shadow-glow-green transition-lift"
-                >
-                  <Link to="/signup">
-                    Create your profile <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="transition-lift">
-                  <Link to="/login">I already have an account</Link>
-                </Button>
+                {isAuthed ? (
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="default"
+                    className="shadow-glow-green transition-lift"
+                  >
+                    <Link to="/dashboard">
+                      Back to your workspace <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="default"
+                      className="shadow-glow-green transition-lift"
+                    >
+                      <Link to="/signup">
+                        Create your profile <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="transition-lift">
+                      <Link to="/login">I already have an account</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

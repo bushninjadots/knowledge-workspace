@@ -1,4 +1,4 @@
-import { createStart, createMiddleware } from "@tanstack/react-start";
+import { createStart, createMiddleware, createCsrfMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 import { addSecurityHeaders } from "./lib/security-headers";
@@ -21,7 +21,14 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// Block cross-site requests to server functions (CSRF). Server functions are
+// same-origin RPC endpoints — including the GitHub-token ones — so a malicious
+// site must not be able to fire them while riding on a victim's auth cookie.
+const csrfMiddleware = createCsrfMiddleware({
+  filter: (ctx) => ctx.handlerType === "serverFn",
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [csrfMiddleware, errorMiddleware],
 }));

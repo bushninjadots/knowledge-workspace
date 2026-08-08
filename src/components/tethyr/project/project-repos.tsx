@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import {
   ExternalLink,
   Github,
@@ -10,12 +11,8 @@ import {
   Code2,
   RefreshCw,
   KeyRound,
-  Check,
-  X,
 } from "lucide-react";
-import { toast } from "sonner";
-import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
-import { githubTokenErrorMessage } from "@/lib/github";
+import { hasGithubToken } from "@/lib/github-server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -155,38 +152,11 @@ export function ProjectReposSection({
   const removeRepo = useRemoveProjectRepo();
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
-  const [tokenOpen, setTokenOpen] = useState(false);
-  const [tokenDraft, setTokenDraft] = useState("");
-  const queryClient = useQueryClient();
 
   const { data: hasToken = false } = useQuery({
     queryKey: ["github-token-status"],
     queryFn: () => hasGithubToken(),
     staleTime: 60_000,
-  });
-
-  const saveTokenMutation = useMutation({
-    mutationFn: (token: string) => saveGithubToken({ data: { token } }),
-    onSuccess: (res) => {
-      if (res.ok) {
-        setTokenDraft("");
-        setTokenOpen(false);
-        queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
-        toast.success(`GitHub token saved — authenticated as @${res.username}`);
-      } else {
-        toast.error(githubTokenErrorMessage(res.reason));
-      }
-    },
-  });
-
-  const removeTokenMutation = useMutation({
-    mutationFn: () => removeGithubToken(),
-    onSuccess: () => {
-      setTokenDraft("");
-      setTokenOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
-      toast.success("GitHub token removed");
-    },
   });
 
   const handleAdd = () => {
@@ -213,18 +183,19 @@ export function ProjectReposSection({
         </h3>
         {isOwner && (
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => setTokenOpen(!tokenOpen)}
+            <Link
+              to="/profile"
+              search={{ github: "token" }}
+              title="GitHub token — for private repos and to avoid rate limits. Managed once in your profile."
               className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition ${
                 hasToken
                   ? "border-[var(--user-accent,var(--trust))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--trust))]"
                   : "border-border/60 text-muted-foreground hover:text-foreground"
               }`}
-              title="GitHub token — for private repos and to avoid rate limits"
             >
               <KeyRound className="h-3 w-3" />
-              {hasToken ? "Token set" : "Token"}
-            </button>
+              {hasToken ? "Token set" : "Add token"}
+            </Link>
             <button
               onClick={() => setShowAdd(!showAdd)}
               className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
@@ -234,48 +205,7 @@ export function ProjectReposSection({
             </button>
           </div>
         )}
-      </div>{" "}
-      {tokenOpen && isOwner && (
-        <div className="mb-4 rounded-2xl border border-border/60 bg-background/40 p-3">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-            GitHub personal access token (optional)
-          </label>
-          <input
-            type="password"
-            value={tokenDraft}
-            onChange={(e) => setTokenDraft(e.target.value)}
-            placeholder="ghp_…"
-            autoComplete="off"
-            className="w-full rounded-md border border-border/60 bg-background px-3 py-1.5 text-xs outline-none focus:border-primary/50"
-          />
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            Lets Tethyr fetch metadata and READMEs from your <strong>private</strong> repos and
-            avoids GitHub&apos;s 60 requests/hour limit. Stored securely on Tethyr&apos;s server —
-            the token never reaches your browser. Fine-grained tokens work best (read-only access to
-            the repos you need).
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              onClick={() => saveTokenMutation.mutate(tokenDraft)}
-              disabled={saveTokenMutation.isPending}
-              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-50"
-            >
-              <Check className="h-3 w-3" />
-              Save
-            </button>
-            {hasToken && (
-              <button
-                onClick={() => removeTokenMutation.mutate()}
-                disabled={removeTokenMutation.isPending}
-                className="inline-flex items-center gap-1 rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-destructive disabled:opacity-50"
-              >
-                <X className="h-3 w-3" />
-                Remove
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
       {showAdd && (
         <div className="mb-4 flex gap-2 rounded-2xl border border-border/60 bg-background/40 p-3">
           <Input

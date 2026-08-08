@@ -76,7 +76,31 @@ export function useDisconnectGitHub() {
   });
 }
 
-export function GitHubConnect() {
+/** Where to create a fine-grained, read-only token on GitHub. */
+const GITHUB_TOKEN_URL = "https://github.com/settings/personal-access-tokens/new";
+
+/** One shared explainer so every entry point says the same thing. */
+function TokenHelper() {
+  return (
+    <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+      Create one at{" "}
+      <a
+        href={GITHUB_TOKEN_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary hover:underline"
+      >
+        github.com/settings/personal-access-tokens/new
+      </a>{" "}
+      — pick <strong>Fine-grained</strong>, choose <strong>read-only</strong> access to the repos
+      you use here (Contents + Metadata), then paste it above. Stored securely on Tethyr&apos;s
+      server — it never reaches your browser, and one entry covers your profile plus every
+      project&apos;s repo &amp; README flows.
+    </p>
+  );
+}
+
+export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boolean }) {
   const queryClient = useQueryClient();
   const { data: accounts = [], isLoading } = useConnectedAccounts();
   const connectGitHub = useConnectGitHub();
@@ -84,7 +108,7 @@ export function GitHubConnect() {
   const [username, setUsername] = useState("");
   const [editing, setEditing] = useState(false);
   const [tokenDraft, setTokenDraft] = useState("");
-  const [tokenEditing, setTokenEditing] = useState(false);
+  const [tokenEditing, setTokenEditing] = useState(autoOpenToken);
 
   const { data: tokenSet = false } = useQuery({
     queryKey: ["github-token-status"],
@@ -147,7 +171,7 @@ export function GitHubConnect() {
 
   if (githubAccount) {
     return (
-      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+      <div id="github-integration" className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#24292e] text-white">
@@ -256,12 +280,8 @@ export function GitHubConnect() {
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
-              </div>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                Stored securely on Tethyr&apos;s server and used from there — the token never
-                reaches your browser, and works from any device. Fine-grained read-only tokens work
-                best.
-              </p>
+              </div>{" "}
+              <TokenHelper />
             </div>
           )}
         </div>
@@ -271,7 +291,10 @@ export function GitHubConnect() {
 
   if (!editing) {
     return (
-      <div className="rounded-xl border border-dashed border-border/40 bg-surface/30 p-4 sm:p-5">
+      <div
+        id="github-integration"
+        className="rounded-xl border border-dashed border-border/40 bg-surface/30 p-4 sm:p-5"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated">
@@ -293,7 +316,7 @@ export function GitHubConnect() {
   }
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div id="github-integration" className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="space-y-3">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">GitHub username</label>
@@ -316,12 +339,8 @@ export function GitHubConnect() {
             onChange={(e) => setTokenDraft(e.target.value)}
             placeholder="ghp_… — enables private repos & README pulls"
             autoComplete="off"
-          />
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Validated against GitHub before saving and stored securely on Tethyr&apos;s server —
-            never in your browser. One entry covers your profile and all project repo/README flows.
-            Fine-grained read-only tokens work best.
-          </p>
+          />{" "}
+          <TokenHelper />
         </div>
         <div className="flex items-center justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   Pencil,
@@ -107,6 +107,27 @@ function ProfilePage() {
   const profileQuery = useCurrentUser();
   const skillsQuery = useSkillsCatalog();
   const refresh = profileQuery.refresh;
+
+  // Deep link from project repo sections: /profile?github=token scrolls to the
+  // GitHub card with the token editor already open.
+  const { github: githubParam } = useSearch({ strict: false }) as {
+    github?: string;
+  };
+  const focusGithubToken = githubParam === "token";
+  const githubScrolledRef = useRef(false);
+
+  // Scroll once the card is actually mounted (waits for the profile query to
+  // resolve instead of racing a fixed timeout).
+  useEffect(() => {
+    if (!focusGithubToken || !profileQuery.data || githubScrolledRef.current) return;
+    githubScrolledRef.current = true;
+    const t = setTimeout(() => {
+      document
+        .getElementById("github-integration")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [focusGithubToken, profileQuery.data]);
 
   if (profileQuery.isError) {
     return (
@@ -218,7 +239,7 @@ function ProfilePage() {
               />
             </div>
             <LinksCard profile={profile} onChange={refresh} />
-            <GitHubConnect />
+            <GitHubConnect autoOpenToken={focusGithubToken} />
           </div>
         ),
         skills: (

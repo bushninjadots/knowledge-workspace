@@ -1,18 +1,28 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Menu, X, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { supabase } from "@/integrations/supabase/client";
 
 const links = [{ to: "/", label: "Home" }];
 
 export function Navbar() {
   const { data: me } = useCurrentUser();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
   const navLinks = isAuthed ? [...links, { to: "/dashboard" as const, label: "Dashboard" }] : links;
+
+  async function handleSignOut() {
+    setOpen(false);
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login" });
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 bg-noise backdrop-blur-xl">
@@ -34,9 +44,19 @@ export function Navbar() {
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
           {isAuthed ? (
-            <Button asChild variant="default" size="sm" className="rounded-full">
-              <Link to="/dashboard">Dashboard</Link>
-            </Button>
+            <>
+              <Button asChild variant="default" size="sm" className="rounded-full">
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              <button
+                onClick={handleSignOut}
+                className="rounded-full p-2 text-muted-foreground transition hover:bg-surface hover:text-foreground"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm">
@@ -73,11 +93,15 @@ export function Navbar() {
               </Link>
             ))}
             {isAuthed ? (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
                 <Button asChild variant="default" className="w-full rounded-full">
                   <Link to="/dashboard" onClick={() => setOpen(false)}>
                     Dashboard
                   </Link>
+                </Button>
+                <Button variant="outline" className="w-full rounded-full" onClick={handleSignOut}>
+                  <LogOut className="mr-1 h-4 w-4" />
+                  Sign out
                 </Button>
               </div>
             ) : (
