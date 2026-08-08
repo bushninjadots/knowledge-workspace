@@ -84,7 +84,28 @@ localStorage.removeItem("tethyr-community-draft");
 
 ---
 
-## 7. Storage paths rendered as raw `<img src>` (RESOLVED)
+## 7. Pending production migrations (APPLY BEFORE DEPLOY — 2026-08-08)
+
+Validated locally via `supabase db reset` + `supabase test db` (26/26 RLS tests PASS).
+Apply to the remote DB before shipping the matching frontend:
+
+```bash
+supabase db push     # applies only the new files below (already-applied ones are skipped)
+# then optionally re-run local validation:
+supabase db reset && supabase test db
+```
+
+| Migration | What it does | Why it matters |
+|---|---|---|
+| `20260808160000_project_files_and_visibility.sql` | Fixes `project-media` storage RLS (owner+contributors can upload/delete into their project folder; covers stay under the owner's uid folder). Adds `projects.visibility` (`public`/`private`) + SELECT RLS that hides private projects from everyone except owner + contributors. | **Without it, every project file upload fails silently** (old policy required the first folder to be the uploader's uid, but files go under the project id), and there is no public/private option. |
+| `20260808170000_private_project_child_rls.sql` | Adds `is_project_visible()` helper + visibility-aware SELECT policies on `project_milestones`, `project_updates`, `project_discussions`, `discussion_replies`, `project_open_roles`, `project_activity`. Also drops `activity_events` self-insert policy (definer-only path, no client code inserts directly). | Closes the privacy gap where a private project's updates/discussions/activity were still world-readable via direct table queries. |
+| `20260808180000_expand_skill_catalog.sql` | Adds `skills.description` + `skills.tools[]`; enriches the catalog (~130 skills total) with definitions and common tools. | Powers the new definitions + "Common tools" chips on `/skills/:slug` and tooltips in DiscoverSkills. |
+
+**Frontend that depends on these:** signed-URL downloads/previews in `project-files.tsx` + `project-files-explorer.tsx`, the Public/Private toggle in the project dialog, the private badge on the project header, the skill-page descriptions/tools, and the `GalleryThumb` signed gallery renderer.
+
+---
+
+## 8. Storage paths rendered as raw `<img src>` (RESOLVED)
 
 **Error:** Cover/avatar images 404 against the app origin. Components used storage paths (e.g. `{userId}/{uuid}.png`) directly as `src`.
 
@@ -92,7 +113,7 @@ localStorage.removeItem("tethyr-community-draft");
 
 ---
 
-## 8. Misc fixes (RESOLVED)
+## 9. Misc fixes (RESOLVED)
 
 - **Dashboard 400 (`22P02`)**: `suggested-projects.tsx` filtered on `stage eq "archived"`, which isn't in the `project_stage` enum. Now filters `stage in (planning, building, testing, launch, growing)`.
 - **Library nested `<button>`**: The Collections/Tags toggles in `library-sidebar.tsx` contained a nested "+" `<button>` → hydration error. The "+" is now a sibling button.

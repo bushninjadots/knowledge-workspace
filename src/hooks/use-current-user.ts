@@ -35,7 +35,14 @@ export type Profile = {
 
 // ProjectRow and ActivityRow re-exported above from profile-sections.
 
-export type Skill = { id: string; slug: string; name: string; category: string };
+export type Skill = {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  description?: string | null;
+  tools?: string[] | null;
+};
 export type DiscoverableSkill = Skill & { usageCount: number };
 
 export type SkillVerificationLevel = "self_declared" | "proof_certified" | "community_recognized";
@@ -259,7 +266,7 @@ export function useTrendingSkills() {
     queryKey: ["trending-skills"],
     queryFn: async (): Promise<DiscoverableSkill[]> => {
       const [skillsRes, teachRes, learnRes, projectRes] = await Promise.all([
-        supabase.from("skills").select("id, slug, name, category"),
+        supabase.from("skills").select("id, slug, name, category, description"),
         supabase.from("profile_skills_teach").select("skill_id"),
         supabase.from("profile_skills_learn").select("skill_id"),
         supabase.from("project_skills").select("skill_id"),

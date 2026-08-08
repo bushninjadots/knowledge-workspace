@@ -88,6 +88,8 @@ function SkillPage() {
         slug: string;
         name: string;
         category: string;
+        description: string | null;
+        tools: string[];
       } | null;
     },
   });
@@ -183,7 +185,14 @@ function SkillPage() {
         </div>
 
         {/* Tab content */}
-        {tab === "overview" && <SkillOverview skillId={skill.id} skillName={skill.name} />}
+        {tab === "overview" && (
+          <SkillOverview
+            skillId={skill.id}
+            skillName={skill.name}
+            description={skill.description}
+            tools={skill.tools ?? []}
+          />
+        )}
         {tab === "people" && <SkillPeople skillId={skill.id} skillName={skill.name} />}
         {tab === "projects" && <SkillProjects skillId={skill.id} skillName={skill.name} />}
       </div>
@@ -193,7 +202,17 @@ function SkillPage() {
 
 // ── Overview Tab ──────────────────────────────────────────────
 
-function SkillOverview({ skillId, skillName }: { skillId: string; skillName: string }) {
+function SkillOverview({
+  skillId,
+  skillName,
+  description,
+  tools,
+}: {
+  skillId: string;
+  skillName: string;
+  description: string | null;
+  tools: string[];
+}) {
   const { data: stats } = useQuery({
     queryKey: ["skill-stats", skillId],
     queryFn: async () => {
@@ -278,10 +297,28 @@ function SkillOverview({ skillId, skillName }: { skillId: string; skillName: str
       {/* Workshop description */}
       <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This is a dedicated space for {skillName}. Browse the People tab to find people sharing
-          and growing, or check Projects to see what's being built with this skill.
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {description ||
+            `This is a dedicated space for ${skillName}. Browse the People tab to find people sharing and growing, or check Projects to see what's being built with this skill.`}
         </p>
+        {tools.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Common tools
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tools.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-elevated px-2.5 py-1 text-xs text-foreground transition hover:border-primary/40"
+                >
+                  <Wrench className="h-3 w-3 text-muted-foreground" />
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
             to="/explore"
@@ -600,7 +637,9 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="truncate text-sm font-medium" title={proj.title}>{proj.title}</p>
+              <p className="truncate text-sm font-medium" title={proj.title}>
+                {proj.title}
+              </p>
               {proj.stage && (
                 <span
                   className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
@@ -610,7 +649,12 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
               )}
             </div>
             {proj.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={proj.description ?? undefined}>{proj.description}</p>
+              <p
+                className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+                title={proj.description ?? undefined}
+              >
+                {proj.description}
+              </p>
             )}
             <div className="mt-2 flex flex-wrap gap-1">
               {proj.looking_for_collaborators && (

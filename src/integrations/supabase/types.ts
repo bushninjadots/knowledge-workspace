@@ -268,6 +268,42 @@ export type Database = {
           },
         ]
       }
+      connected_accounts: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          provider: string
+          provider_id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider: string
+          provider_id: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          provider_id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           addressee_id: string
@@ -1127,6 +1163,47 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activity: {
+        Row: {
+          actor_id: string | null
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json | null
+          project_id: string
+          title: string
+        }
+        Insert: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json | null
+          project_id: string
+          title: string
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activity_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_contributors: {
         Row: {
           contribution_score: number
@@ -1322,6 +1399,44 @@ export type Database = {
           },
         ]
       }
+      project_repositories: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          project_id: string
+          provider: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          provider?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          provider?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_role_applications: {
         Row: {
           created_at: string
@@ -1460,13 +1575,17 @@ export type Database = {
           media: Json
           profile_id: string
           progress_percent: number
+          readme: string | null
           resources: Json
           stage: Database["public"]["Enums"]["project_stage"]
           started_at: string
           status: Database["public"]["Enums"]["project_status"]
           tags: string[]
           title: string
+          tools: Json | null
           updated_at: string
+          uploaded_files: Json | null
+          visibility: string
           vision: string | null
         }
         Insert: {
@@ -1483,13 +1602,17 @@ export type Database = {
           media?: Json
           profile_id: string
           progress_percent?: number
+          readme?: string | null
           resources?: Json
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title: string
+          tools?: Json | null
           updated_at?: string
+          uploaded_files?: Json | null
+          visibility?: string
           vision?: string | null
         }
         Update: {
@@ -1506,13 +1629,17 @@ export type Database = {
           media?: Json
           profile_id?: string
           progress_percent?: number
+          readme?: string | null
           resources?: Json
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
           tags?: string[]
           title?: string
+          tools?: Json | null
           updated_at?: string
+          uploaded_files?: Json | null
+          visibility?: string
           vision?: string | null
         }
         Relationships: [
@@ -1903,23 +2030,29 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          description: string | null
           id: string
           name: string
           slug: string
+          tools: string[]
         }
         Insert: {
           category: string
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           slug: string
+          tools?: string[]
         }
         Update: {
           category?: string
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           slug?: string
+          tools?: string[]
         }
         Relationships: []
       }
@@ -1946,6 +2079,35 @@ export type Database = {
           {
             foreignKeyName: "user_achievements_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_layout_preferences: {
+        Row: {
+          layout: Json
+          page: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          layout?: Json
+          page: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          layout?: Json
+          page?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_layout_preferences_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1985,6 +2147,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_project_visible: { Args: { project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
