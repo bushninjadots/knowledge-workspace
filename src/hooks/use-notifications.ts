@@ -21,7 +21,13 @@ export type NotificationType =
   | "project_post"
   | "follow"
   | "challenge_join"
-  | "challenge_complete";
+  | "challenge_complete"
+  | "challenge_submitted"
+  | "challenge_resubmitted"
+  | "join_approved"
+  | "join_rejected"
+  | "post_report"
+  | "report_resolved";
 
 export interface Notification {
   id: string;

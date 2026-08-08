@@ -53,7 +53,15 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     follow: { icon: Heart, color: "text-warning" },
     challenge_join: { icon: Swords, color: "text-teaching" },
     challenge_complete: { icon: Flag, color: "text-trust" },
+    challenge_submitted: { icon: Swords, color: "text-learning" },
+    challenge_resubmitted: { icon: Swords, color: "text-learning" },
+    join_approved: { icon: UserCheck, color: "text-trust" },
+    join_rejected: { icon: UserX, color: "text-destructive" },
+    post_report: { icon: Flag, color: "text-warning" },
+    report_resolved: { icon: Flag, color: "text-trust" },
   };
+
+const FALLBACK_CONFIG = { icon: MessageCircle, color: "text-muted-foreground" };
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -77,7 +85,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
   const deleteNotif = useDeleteNotification();
   const respondConnection = useRespondConnection();
 
-  const config = NOTIFICATION_CONFIG[notification.type];
+  const config = NOTIFICATION_CONFIG[notification.type] ?? FALLBACK_CONFIG;
   const Icon = config.icon;
   const isUnread = !notification.read_at;
   const hasEntity = !!notification.entity_id;
@@ -163,7 +171,9 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
           <span className="font-medium text-foreground">{notification.title}</span>
         </p>
         {notification.body && (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={notification.body}>{notification.body}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={notification.body}>
+            {notification.body}
+          </p>
         )}
         <div className="mt-2 flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">

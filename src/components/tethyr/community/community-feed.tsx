@@ -16,7 +16,7 @@ import {
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
 import type { DiscoveryFocus } from "@/lib/community-data";
-import type { CommunitySpace } from "@/hooks/use-community-spaces";
+import { useSpaceReportedPostCounts, type CommunitySpace } from "@/hooks/use-community-spaces";
 
 const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, string>> = {
   projects: "project_update",
@@ -65,6 +65,13 @@ export function CommunityFeed({
   const { data: me } = useCurrentUser();
   const { data: posts = [], isLoading } = usePosts();
   const { data: followingFeed = [], isLoading: isLoadingFollowing } = useFollowingFeed();
+  // Moderators see a red “Reported” badge on posts with open reports, and
+  // posts with several reports are dimmed until reviewed. RLS scopes the
+  // query to the current space, so it is safe to fetch whenever a space is
+  // active.
+  const { data: reportedPostCounts = new Map<string, number>() } = useSpaceReportedPostCounts(
+    activeSpace?.id ?? "",
+  );
   const deletePost = useDeletePost();
   const toggleAction = useTogglePostAction();
   const { data: skillCatalog = [] } = useSkillsCatalog();
@@ -340,6 +347,7 @@ export function CommunityFeed({
             sortMode={sortMode}
             mySkillNames={mySkillNames}
             activeSpace={activeSpace}
+            reportedPostCounts={reportedPostCounts}
             onToggleSave={toggleSave}
             onToggleComments={toggleComments}
             onDelete={deletePostHandler}

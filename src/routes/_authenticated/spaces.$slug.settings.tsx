@@ -28,6 +28,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -124,6 +131,8 @@ function SpaceSettingsPage() {
   const [memberQuery, setMemberQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | SpaceMemberRole>("all");
   const [page, setPage] = useState(1);
+  const [dismissTarget, setDismissTarget] = useState<PostReportRow | null>(null);
+  const [dismissNote, setDismissNote] = useState("");
 
   const counts = useMemo(() => {
     const c = { owner: 0, moderator: 0, member: 0 };
@@ -515,15 +524,10 @@ function SpaceSettingsPage() {
                     variant="outline"
                     className="h-8 text-xs text-destructive"
                     disabled={updateReport.isPending}
-                    onClick={() =>
-                      updateReport.mutate(
-                        { reportId: rep.id, status: "dismissed" },
-                        {
-                          onSuccess: () => toast.success("Report dismissed"),
-                          onError: () => toast.error("Failed to dismiss"),
-                        },
-                      )
-                    }
+                    onClick={() => {
+                      setDismissTarget(rep);
+                      setDismissNote("");
+                    }}
                   >
                     <XCircle className="mr-1 h-3.5 w-3.5" /> Dismiss
                   </Button>
@@ -550,6 +554,60 @@ function SpaceSettingsPage() {
           )}
         </div>
       </section>
+
+      {/* Dismiss with optional note — notifies the reporter when a note is left */}
+      <Dialog open={!!dismissTarget} onOpenChange={(open) => !open && setDismissTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dismiss report</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            {dismissTarget?.post?.title || "This post"} — leave a note for the reporter and they'll
+            be notified with it. Leave it empty to dismiss silently.
+          </p>
+          <div className="pt-2">
+            <Label htmlFor="dismiss-note">Note to the reporter (optional)</Label>
+            <Textarea
+              id="dismiss-note"
+              value={dismissNote}
+              onChange={(e) => setDismissNote(e.target.value.slice(0, 500))}
+              rows={3}
+              placeholder="e.g. Thanks for flagging this — we reviewed it and it doesn't break the rules."
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDismissTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={updateReport.isPending}
+              onClick={() => {
+                if (!dismissTarget) return;
+                updateReport.mutate(
+                  { reportId: dismissTarget.id, status: "dismissed", note: dismissNote },
+                  {
+                    onSuccess: () => {
+                      toast.success(
+                        dismissNote.trim()
+                          ? "Report dismissed — the reporter was notified"
+                          : "Report dismissed",
+                      );
+                      setDismissTarget(null);
+                      setDismissNote("");
+                    },
+                    onError: () => toast.error("Failed to dismiss"),
+                  },
+                );
+              }}
+            >
+              <XCircle className="mr-1.5 h-3.5 w-3.5" />
+              Dismiss report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Moderation log — audit trail of removals in this space */}
       <section className="mt-10 rounded-lg border border-border bg-card p-5">

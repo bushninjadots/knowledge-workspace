@@ -1,4 +1,4 @@
-import { Users, Settings, Lock, Check, UserPlus, Hourglass } from "lucide-react";
+import { Users, Settings, Lock, Check, UserPlus, Hourglass, ShieldAlert } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -127,18 +127,24 @@ export function SpaceHeader({
 
         <div className="flex shrink-0 items-center gap-2">
           {canManage && (
-            <Button size="sm" variant="outline" className="rounded-full" asChild>
-              <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
-                <Settings className="mr-1.5 h-3.5 w-3.5" />
-                Settings
-              </Link>
-            </Button>
+            <>
+              <Button size="sm" variant="outline" className="rounded-full" asChild>
+                <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
+                  <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+                  Reports
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" className="rounded-full" asChild>
+                <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
+                  <Settings className="mr-1.5 h-3.5 w-3.5" />
+                  Settings
+                </Link>
+              </Button>
+            </>
           )}
           <Button
             size="sm"
-            variant={
-              space.is_member || space.has_pending_request ? "outline" : "default"
-            }
+            variant={space.is_member || space.has_pending_request ? "outline" : "default"}
             className="rounded-full"
             onClick={handleToggleMembership}
             disabled={joinPending}

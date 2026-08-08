@@ -36,10 +36,21 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   all: null,
   message: ["message"],
   session: ["session_invite", "session_update"],
-  community: ["comment", "mention", "follow", "challenge_join", "challenge_complete"],
+  community: [
+    "comment",
+    "mention",
+    "follow",
+    "challenge_join",
+    "challenge_complete",
+    "challenge_submitted",
+    "challenge_resubmitted",
+    "join_approved",
+    "join_rejected",
+  ],
   project: ["project_invite", "project_join", "project_post"],
   reputation: ["endorsement", "connection_request", "connection_accepted"],
   achievement: ["achievement"],
+  moderation: ["post_report", "report_resolved"],
 };
 
 const TABS = [
@@ -50,6 +61,7 @@ const TABS = [
   { key: "project", label: "Projects" },
   { key: "reputation", label: "Reputation" },
   { key: "achievement", label: "Achievements" },
+  { key: "moderation", label: "Moderation" },
 ] as const;
 
 function useNotificationNavigator() {
@@ -89,11 +101,19 @@ function useNotificationNavigator() {
         break;
       case "challenge_join":
       case "challenge_complete":
+      case "challenge_submitted":
+      case "challenge_resubmitted":
         if (n.entity_id) {
           navigate({ to: "/challenges/$id", params: { id: n.entity_id } });
         } else {
           navigate({ to: "/community" });
         }
+        break;
+      case "join_approved":
+      case "join_rejected":
+      case "post_report":
+      case "report_resolved":
+        navigate({ to: "/community" });
         break;
       default:
         toast.info("This notification doesn't have a linked page yet.");
@@ -121,23 +141,23 @@ function NotificationsPage() {
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      <NotificationHeader />
-      <main className="mt-6 min-w-0">
-        <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
-          <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <NotificationFeed
-          notifications={notifications}
-          isLoading={isLoading}
-          onNavigate={navigateToNotification}
-        />
-      </main>
+        <NotificationHeader />
+        <main className="mt-6 min-w-0">
+          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
+            <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <NotificationFeed
+            notifications={notifications}
+            isLoading={isLoading}
+            onNavigate={navigateToNotification}
+          />
+        </main>
       </div>
     </div>
   );

@@ -1,4 +1,13 @@
-import { Inbox, MessageCircle, Calendar, Users, FolderOpen, Star, Trophy } from "lucide-react";
+import {
+  Inbox,
+  MessageCircle,
+  Calendar,
+  Users,
+  FolderOpen,
+  Star,
+  Trophy,
+  ShieldAlert,
+} from "lucide-react";
 import { useNotificationsByCategory } from "@/hooks/use-notifications";
 
 const NOTIFICATION_CATEGORIES = [
@@ -29,6 +38,12 @@ const NOTIFICATION_CATEGORIES = [
     matchTypes: ["endorsement", "connection_request", "connection_accepted"],
   },
   { id: "achievement", label: "Achievements", icon: Trophy },
+  {
+    id: "moderation",
+    label: "Moderation",
+    icon: ShieldAlert,
+    matchTypes: ["post_report", "report_resolved"],
+  },
 ] as const;
 
 interface NotificationSidebarProps {

@@ -794,6 +794,51 @@ export type Database = {
           },
         ]
       }
+      moderation_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          post_title: string | null
+          space_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          post_title?: string | null
+          space_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          post_title?: string | null
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moderation_log_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "community_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -887,6 +932,63 @@ export type Database = {
           {
             foreignKeyName: "post_actions_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          moderator_note: string | null
+          post_id: string | null
+          post_title_snapshot: string | null
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          space_id_snapshot: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          moderator_note?: string | null
+          post_id?: string | null
+          post_title_snapshot?: string | null
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          space_id_snapshot?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          moderator_note?: string | null
+          post_id?: string | null
+          post_title_snapshot?: string | null
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          space_id_snapshot?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

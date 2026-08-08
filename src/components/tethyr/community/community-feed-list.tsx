@@ -28,6 +28,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
   highlighted,
   skillOverlap,
   canModerate,
+  reportCount,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -45,6 +46,8 @@ const PostCardWithComments = memo(function PostCardWithComments({
   skillOverlap?: number;
   /** True when the current user moderates this post's space. */
   canModerate?: boolean;
+  /** Number of open reports on this post (visible to the space's moderators). */
+  reportCount?: number;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
@@ -68,6 +71,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
         highlighted={highlighted}
         skillOverlap={skillOverlap}
         canModerate={canModerate}
+        reportCount={reportCount}
       />
     </div>
   );
@@ -113,6 +117,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   sortMode,
   mySkillNames,
   activeSpace,
+  reportedPostCounts,
   onToggleSave,
   onToggleComments,
   onDelete,
@@ -135,6 +140,8 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   sortMode: SortMode;
   mySkillNames: Set<string>;
   activeSpace?: CommunitySpace;
+  /** Post id → open report count — badges and dims reported posts for moderators. */
+  reportedPostCounts?: Map<string, number>;
   onToggleSave: (id: string) => void;
   onToggleComments: (id: string) => void;
   onDelete: (id: string) => void;
@@ -281,6 +288,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
             highlighted={post.id === highlightedPostId}
             skillOverlap={overlap}
             canModerate={canModerate}
+            reportCount={canModerate ? (reportedPostCounts?.get(post.id) ?? 0) : undefined}
           />
         );
       })}

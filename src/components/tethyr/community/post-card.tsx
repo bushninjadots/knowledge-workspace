@@ -162,6 +162,7 @@ export function PostCard({
   shared_from_space,
   skillOverlap,
   canModerate,
+  reportCount,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -178,6 +179,8 @@ export function PostCard({
   skillOverlap?: number;
   /** Space owner/moderator — may remove posts in their space (moderation). */
   canModerate?: boolean;
+  /** Number of open reports on this post (visible to the space's moderators). */
+  reportCount?: number;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -186,6 +189,8 @@ export function PostCard({
 
   const isOwner = me?.userId === post.author_id;
   const canModerateThis = canModerate && !isOwner;
+  const reported = !!canModerateThis && (reportCount ?? 0) > 0;
+  const autoDimmed = !!canModerateThis && (reportCount ?? 0) >= 3;
   const liked = post.myActions.includes("like");
   const helpful = post.myActions.includes("helpful");
   const offered = post.myActions.includes("offer");
@@ -212,9 +217,11 @@ export function PostCard({
   return (
     <article
       className={`card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
-        highlighted
-          ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
-          : ""
+        autoDimmed
+          ? "opacity-70 saturate-50"
+          : highlighted
+            ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
+            : ""
       }`}
     >
       {/* Header */}
@@ -279,6 +286,25 @@ export function PostCard({
               >
                 {post.flair}
               </span>
+            )}
+            {reported && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                title={
+                  autoDimmed
+                    ? "Multiple open reports — click to remove this post"
+                    : "Reported by members — click to remove this post"
+                }
+                className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0 text-[11px] font-medium uppercase tracking-wider transition-colors ${
+                  autoDimmed
+                    ? "border-destructive/60 bg-destructive/20 text-destructive hover:bg-destructive/30"
+                    : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
+                }`}
+              >
+                <Flag className="h-2.5 w-2.5" />
+                Reported{reportCount && reportCount > 1 ? ` (${reportCount})` : ""}
+              </button>
             )}
             {shared_from_space && (
               <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[11px] text-learning">
@@ -629,6 +655,14 @@ function ReportPostDialog({
     "Other",
   ];
 
+  function friendlyError(err: unknown) {
+    const msg = (err as Error)?.message ?? "";
+    if (msg.toLowerCase().includes("rate_limit")) {
+      return "You've filed too many reports recently — please wait a bit before reporting again.";
+    }
+    return `Failed to report: ${msg}`;
+  }
+
   function submit() {
     if (!reason.trim()) {
       toast.error("Pick a reason");
@@ -643,7 +677,7 @@ function ReportPostDialog({
           setReason("");
           setDetails("");
         },
-        onError: (err) => toast.error(`Failed to report: ${(err as Error).message}`),
+        onError: (err) => toast.error(friendlyError(err)),
       },
     );
   }
