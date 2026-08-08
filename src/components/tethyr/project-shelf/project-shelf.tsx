@@ -11,7 +11,7 @@ import {
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectShelfHeader } from "./project-shelf-header";
-import { ProjectShelfCover, STATUS_STYLES, getCardWidth } from "./project-shelf-cover";
+import { ProjectShelfCover, STATUS_STYLES, getCardHeight } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { CATEGORY_COLORS, inferCategory } from "@/lib/category-colors";
@@ -27,8 +27,10 @@ interface ProjectShelfProps {
   setCategory: (v: string) => void;
 }
 
-const SCROLL_SENSITIVITY = 0.001;
-const SNAP_DELAY_MS = 180;
+// Wheel delta (normalised to pixels) needed to flip one card. Roughly one
+// mouse notch per flip; trackpads accumulate small deltas into the same smooth
+// springs the keyboard arrows use.
+const WHEEL_FLIP_PX = 100;
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
@@ -50,9 +52,7 @@ export function ProjectShelf({
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
-  const snapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const lastWheelTimeRef = useRef(0);
-  const wheelVelocityRef = useRef(0); // units per ms
+  const wheelAccumRef = useRef(0); // leftover wheel delta carried between events
   const overlayIndexRef = useRef<number | null>(null);
   const dragSuppressClickRef = useRef(false);
   const dragStateRef = useRef<{
@@ -105,21 +105,6 @@ export function ProjectShelf({
       else container.removeAttribute("aria-activedescendant");
     }
   });
-
-  const snapToNearest = useCallback(
-    (velocityUnitsPerMs = 0) => {
-      if (maxOffset <= 0) return;
-      const nearest = clamp(Math.round(displayOffset.get()), 0, maxOffset);
-      animate(displayOffset, nearest, {
-        type: "spring",
-        stiffness: prefersReducedMotion ? 500 : 300,
-        damping: prefersReducedMotion ? 100 : 28,
-        mass: prefersReducedMotion ? 1 : 0.9,
-        velocity: prefersReducedMotion ? 0 : velocityUnitsPerMs * 500,
-      });
-    },
-    [maxOffset, displayOffset, prefersReducedMotion],
-  );
 
   const navigate = useCallback(
     (dir: -1 | 1) => {
@@ -184,41 +169,43 @@ export function ProjectShelf({
     return () => window.removeEventListener("keydown", handleKey);
   }, [navigate, activeIndex, projects, updateOverlayIndex]);
 
-  // Wheel scroll with inertia.
+  // Mouse / trackpad wheel — accumulates deltas and flips cards with the same
+  // smooth spring animation the arrow keys use, so scrolling feels deliberate
+  // instead of jittery (each notch = one card, no snap-back yank).
   useEffect(() => {
     const container = containerRef.current;
     if (!container || isMobile) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      displayOffset.stop();
-
-      const now = performance.now();
-      const dt = Math.max(1, now - lastWheelTimeRef.current);
-      lastWheelTimeRef.current = now;
-
-      let delta = -e.deltaY * SCROLL_SENSITIVITY;
-      if (dt < 50) delta *= 1.2;
-
-      const instVel = delta / dt; // units per ms
-      wheelVelocityRef.current = wheelVelocityRef.current * 0.55 + instVel * 0.45;
-
-      const next = clamp(displayOffset.get() + delta, 0, maxOffset);
-      displayOffset.set(next);
-
-      clearTimeout(snapTimerRef.current);
-      snapTimerRef.current = setTimeout(
-        () => snapToNearest(wheelVelocityRef.current),
-        SNAP_DELAY_MS,
-      );
+      // Normalise to pixels: Firefox reports lines, some devices report pages.
+      const px =
+        e.deltaMode === 1
+          ? e.deltaY * 40
+          : e.deltaMode === 2
+            ? e.deltaY * window.innerHeight
+            : e.deltaY;
+      wheelAccumRef.current += px;
+      // Count full steps first, then jump the accumulated distance once — the
+      // base offset is read before any animation frame ticks, so a fast burst
+      // advances by the right number of cards (not just one).
+      let steps = 0;
+      while (Math.abs(wheelAccumRef.current) >= WHEEL_FLIP_PX) {
+        const dir = wheelAccumRef.current > 0 ? 1 : -1;
+        wheelAccumRef.current -= dir * WHEEL_FLIP_PX;
+        steps += dir;
+      }
+      if (steps !== 0) {
+        // Page-mode deltas are enormous; never flip more than a handful per event.
+        const capped = clamp(steps, -8, 8);
+        const base = Math.round(displayOffset.get());
+        jumpTo(clamp(base + capped, 0, maxOffset));
+      }
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-      clearTimeout(snapTimerRef.current);
-    };
-  }, [isMobile, maxOffset, displayOffset, snapToNearest]);
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [isMobile, maxOffset, jumpTo]);
 
   const getPxPerStep = useCallback(() => {
     const w = containerRef.current?.clientWidth ?? 900;
@@ -281,8 +268,7 @@ export function ProjectShelf({
     // A fresh gesture is never a click-suppression carry-over.
     dragSuppressClickRef.current = false;
     displayOffset.stop();
-    clearTimeout(snapTimerRef.current);
-    wheelVelocityRef.current = 0;
+    wheelAccumRef.current = 0;
     dragStateRef.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
@@ -341,7 +327,9 @@ export function ProjectShelf({
     ? (CATEGORY_COLORS[inferCategory(activeProject.tags)] ?? CATEGORY_COLORS.Design)
     : CATEGORY_COLORS.Design;
   const spotlightBg = `radial-gradient(closest-side, oklch(0.62 ${spotlightColors.sat / 100} ${spotlightColors.hue} / 0.16), transparent 74%)`;
-  const floorShadowY = useTransform(displayOffset, () => Math.max(getCardWidth(0) * (9 / 32), 280 / 2) + 12);
+  // Shadow sits at the bottom edge of the front card, which now includes the
+  // project-info panel below the cover.
+  const floorShadowY = useTransform(displayOffset, () => getCardHeight(0) / 2 + 14);
 
   return (
     <div className="space-y-6">
@@ -400,9 +388,9 @@ export function ProjectShelf({
             className="relative"
             style={{
               perspective: "1200px",
-              height: "50vh",
-              minHeight: "400px",
-              maxHeight: "580px",
+              height: "52vh",
+              minHeight: "480px",
+              maxHeight: "640px",
             }}
           >
             {/* Stage spotlight — follows the active project's category colour */}

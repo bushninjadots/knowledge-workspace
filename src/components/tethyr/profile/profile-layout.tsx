@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import {
   Camera,
   MapPin,
@@ -7,7 +7,6 @@ import {
   BookOpen,
   Sparkles,
   Users,
-  BarChart3,
   Calendar,
   Star,
   MessageCircle,
@@ -23,6 +22,8 @@ import { FollowButton } from "@/components/tethyr/follow-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
+import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { PROFILE_MODULES } from "@/lib/workspace-layouts";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import {
@@ -44,20 +45,7 @@ import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sectio
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
-export type Tab =
-  | "overview"
-  | "skills"
-  | "projects"
-  | "communities"
-  | "activity";
-
-const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
-  { id: "overview", label: "Overview", icon: BarChart3 },
-  { id: "skills", label: "Skills", icon: GraduationCap },
-  { id: "projects", label: "Projects", icon: Sparkles },
-  { id: "communities", label: "Communities", icon: Users },
-  { id: "activity", label: "Activity", icon: Calendar },
-];
+export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {
   website: Globe,
@@ -98,33 +86,8 @@ export function ProfileLayout({
   onChange: () => void;
   tabContent: Record<Tab, React.ReactNode>;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [renderTab, setRenderTab] = useState<Tab>("overview");
-  const [phase, setPhase] = useState<"idle" | "folding" | "unfolding">("idle");
-  const nextTabRef = useRef<Tab>("overview");
   const [editOpen, setEditOpen] = useState(false);
   const palette = useUserPalette(bannerSigned);
-
-  const switchTab = (newTab: Tab) => {
-    if (newTab === activeTab || phase !== "idle") return;
-    nextTabRef.current = newTab;
-    setActiveTab(newTab);
-    setPhase("folding");
-  };
-
-  useEffect(() => {
-    if (phase === "folding") {
-      const t = setTimeout(() => {
-        setRenderTab(nextTabRef.current);
-        setPhase("unfolding");
-      }, 150);
-      return () => clearTimeout(t);
-    }
-    if (phase === "unfolding") {
-      const t = setTimeout(() => setPhase("idle"), 150);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
 
   const { data: requestsData } = useSessionRequests();
   const hasPendingRequest = (requestsData ?? []).some(
@@ -304,41 +267,19 @@ export function ProfileLayout({
           </div>
         </div>
 
-        {/* TABS + CONTENT */}
+        {/* WORKSPACE + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* MAIN CONTENT */}
+          {/* MAIN CONTENT — customizable module workspace (identity header
+              and sidebar stay fixed; the content beneath is the user's to
+              arrange, resize, hide and pin). */}
           <div className="min-w-0 flex-1">
-            {/* TAB NAV */}
-            <div className="mb-6 overflow-x-auto">
-              <div className="flex gap-1 rounded-2xl border bg-surface p-1">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const active = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => switchTab(tab.id)}
-                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition whitespace-nowrap ${
-                        active
-                          ? "bg-[var(--user-accent,var(--primary))] text-background"
-                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* TAB CONTENT */}
-            <div
-              className={`${phase !== "idle" ? "overflow-hidden" : ""}${phase === "folding" ? "animate-fold-up" : phase === "unfolding" ? "animate-fold-down" : ""}`}
-              style={{ transformOrigin: "top center" }}
-            >
-              {tabContent[renderTab]}
-            </div>
+            <WorkspaceGrid
+              page="profile"
+              userId={userId}
+              modules={PROFILE_MODULES}
+              canCustomize={isOwnProfile}
+              renderModule={(id) => tabContent[id as Tab] ?? null}
+            />
           </div>
 
           {/* SIDEBAR */}

@@ -25,6 +25,8 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
+import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
 import {
   AvailabilitySelector,
   useUpdateAvailability,
@@ -159,7 +161,6 @@ function DashboardPage() {
   const totalSteps = sections(input).length;
   const doneSteps = totalSteps - sections(input).filter((s) => !s.done).length;
   const firstName = data.profile?.display_name?.split(/\s+/)[0] ?? data.profile?.handle ?? "member";
-  const stepsLoading = false;
 
   const pendingSessionCount = sessionRequests.filter(
     (r) => r.status === "pending" && r.to_user_id === data.userId,
@@ -173,338 +174,341 @@ function DashboardPage() {
     (p: ProjectRow) => p.status === "active" || p.status === "planning",
   );
 
-  return (
-    <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-      {/* ── Welcome bar ── */}
-      <section className="animate-border-glow relative overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
-        {/* Banner background */}
-        {data.bannerSigned && (
-          <div className="pointer-events-none absolute inset-0">
+  // ── Module renderers ──────────────────────────────────────────────────────
+  // Each returns the module's body, or null when it has no content (the grid
+  // then omits it gracefully instead of breaking the layout).
+
+  const renderModule = (id: string): React.ReactNode => {
+    switch (id) {
+      case "welcome":
+        return (
+          <section className="animate-border-glow relative h-full overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
+            {/* Banner background */}
+            {data.bannerSigned && (
+              <div className="pointer-events-none absolute inset-0">
+                <div
+                  className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
+                  style={{ backgroundImage: `url(${data.bannerSigned})` }}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
+              </div>
+            )}
+            {/* Accent glow */}
             <div
-              className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
-              style={{ backgroundImage: `url(${data.bannerSigned})` }}
+              className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
+              style={{
+                background: data.bannerSigned
+                  ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
+                  : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
+              }}
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
-          </div>
-        )}
-        {/* Accent glow */}
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
-          style={{
-            background: data.bannerSigned
-              ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
-              : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
-          }}
-        />
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Welcome back
-              </p>
-              <AvailabilitySelector
-                current={data.profile?.availability as AvailabilityStatus}
-                onSave={(s) => updateAvail.mutate(s)}
-              />
-            </div>
-            <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
-              Hey {firstName},{" "}
-              <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
-                what's next?
-              </span>
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {pct < 100 && (
-              <Link
-                to="/profile"
-                className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
-              >
-                <CompletenessMini percent={pct} size={18} />
-                {pct}% complete
-              </Link>
-            )}
-            {data.profile?.reputation_score != null && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
-                <Award className="h-3.5 w-3.5" />
-                {data.profile.reputation_score} rep
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Today's focus — 4 prominent action cards ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* 1. Continue your project */}
-        <TodayCard
-          icon={activeProjects.length > 0 ? Folder : Plus}
-          accent="var(--trust)"
-          title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
-          href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
-          highlight={activeProjects.length > 0}
-        >
-          {activeProjects.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
-                {activeProjects[0].title}
-              </p>
-              <div className="flex items-center gap-2">
-                <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
-                <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                  {activeProjects[0].progress_percent ?? 0}%
-                </span>
+            <div className="relative flex h-full flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Welcome back
+                  </p>
+                  <AvailabilitySelector
+                    current={data.profile?.availability as AvailabilityStatus}
+                    onSave={(s) => updateAvail.mutate(s)}
+                  />
+                </div>
+                <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+                  Hey {firstName},{" "}
+                  <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
+                    what's next?
+                  </span>
+                </h1>
               </div>
-              {activeProjects.length > 1 && (
-                <p className="text-[11px] text-muted-foreground">
-                  +{activeProjects.length - 1} more project{activeProjects.length > 2 ? "s" : ""}
+              <div className="flex shrink-0 items-center gap-2">
+                {pct < 100 && (
+                  <Link
+                    to="/profile"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
+                  >
+                    <CompletenessMini percent={pct} size={18} />
+                    {pct}% complete
+                  </Link>
+                )}
+                {data.profile?.reputation_score != null && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
+                    <Award className="h-3.5 w-3.5" />
+                    {data.profile.reputation_score} rep
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+
+      case "today":
+        return (
+          <div className="grid h-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* 1. Continue your project */}
+            <TodayCard
+              icon={activeProjects.length > 0 ? Folder : Plus}
+              accent="var(--trust)"
+              title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
+              href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
+              highlight={activeProjects.length > 0}
+            >
+              {activeProjects.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
+                    {activeProjects[0].title}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
+                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                      {activeProjects[0].progress_percent ?? 0}%
+                    </span>
+                  </div>
+                  {activeProjects.length > 1 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      +{activeProjects.length - 1} more project
+                      {activeProjects.length > 2 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Create your first project to start building in public.
                 </p>
               )}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Create your first project to start building in public.
-            </p>
-          )}
-        </TodayCard>
+            </TodayCard>
 
-        {/* 2. Pending invitations & messages */}
-        <TodayCard
-          icon={UserPlus}
-          accent="var(--learning)"            title={
-              sessionsLoading || connectionsLoading || unreadLoading
-                ? "Loading activity…"
-                : pendingInviteCount > 0 || unreadMessageCount > 0
-                  ? "You have activity"
-                  : "No pending invites"
-            }
-            href={
-              pendingSessionCount > 0
-                ? "/sessions"
-                : pendingConnectionCount > 0
-                  ? "/profile"
-                  : "/messages"
-            }
-            highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
-        >
-          <div className="mt-3 space-y-1.5">
-            {pendingSessionCount > 0 && (
-              <p className="text-xs">
-                <span className="font-semibold tabular-nums text-foreground">
-                  {pendingSessionCount}
-                </span>{" "}
-                session request{pendingSessionCount !== 1 ? "s" : ""}
-              </p>
-            )}
-            {pendingConnectionCount > 0 && (
-              <p className="text-xs">
-                <span className="font-semibold tabular-nums text-foreground">
-                  {pendingConnectionCount}
-                </span>{" "}
-                connection request{pendingConnectionCount !== 1 ? "s" : ""}
-              </p>
-            )}
-            {unreadMessageCount > 0 && (
-              <p className="text-xs">
-                <span className="font-semibold tabular-nums text-foreground">
-                  {unreadMessageCount}
-                </span>{" "}
-                unread message{unreadMessageCount !== 1 ? "s" : ""}
-              </p>
-            )}
-            {pendingInviteCount === 0 && unreadMessageCount === 0 && (
-              <p className="text-xs text-muted-foreground">
-                All clear — nothing needs your attention.
-              </p>
-            )}
-          </div>
-        </TodayCard>
-
-        {/* 3. Find collaborators */}
-        <TodayCard
-          icon={Users}
-          accent="var(--ai)"
-          title="Find collaborators"
-          href="/explore"
-        >
-          <p className="mt-3 text-xs text-muted-foreground">
-            Discover people with complementary skills who are open to team-ups.
-          </p>
-        </TodayCard>
-
-        {/* 4. Today's opportunities */}
-        <TodayCard
-          icon={TrendingUp}
-          accent="var(--brand-purple)"
-          title={
-            todayOpps.length > 0
-              ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
-              : "Browse opportunities"
-          }
-          href="/explore"
-          highlight={todayOpps.length > 0}
-        >
-          {todayOpps.length > 0 ? (
-            <div className="mt-3 space-y-1">
-              {todayOpps.slice(0, 2).map((opp: any) => (
-                <p key={opp.id} className="truncate text-xs text-muted-foreground">
-                  {opp.title} — {opp.projects?.title}
-                </p>
-              ))}
-              {todayOpps.length > 2 && (
-                <p className="text-[11px] text-muted-foreground">
-                  +{todayOpps.length - 2} more
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Check back as projects open new roles.
-            </p>
-          )}
-        </TodayCard>
-      </div>
-
-      {/* ── Quick actions ── */}
-      <div className="flex flex-wrap items-center gap-2">
-        <CreateProjectButton size="sm" variant="default" className="rounded-full" />
-      </div>
-
-      {/* ── Next steps (incomplete profiles) ── */}
-      {pct < 100 && remaining.length > 0 && (
-        <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-            <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
-            <span className="text-[11px] text-muted-foreground">
-              — {doneSteps}/{totalSteps} done
-            </span>
-          </div>
-          <NextStepsList items={remaining} />
-        </div>
-      )}
-
-      {/* ── Your work + Discover — 2-column layout ── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Left column: Your work */}
-        <div className="space-y-6">
-          {/* Active projects list */}
-          {activeProjects.length > 0 && (
-            <SectionCard
-              icon={<Folder className="h-4 w-4" />}
-              title="Your projects"
-              action={
-                <Link to="/explore" className="text-[11px] font-medium text-primary hover:underline">
-                  View all
-                </Link>
+            {/* 2. Pending invitations & messages */}
+            <TodayCard
+              icon={UserPlus}
+              accent="var(--learning)"
+              title={
+                sessionsLoading || connectionsLoading || unreadLoading
+                  ? "Loading activity…"
+                  : pendingInviteCount > 0 || unreadMessageCount > 0
+                    ? "You have activity"
+                    : "No pending invites"
               }
+              href={
+                pendingSessionCount > 0
+                  ? "/sessions"
+                  : pendingConnectionCount > 0
+                    ? "/profile"
+                    : "/messages"
+              }
+              highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
             >
-              <div className="space-y-2">
-                {activeProjects.slice(0, 3).map((p: any) => (
-                  <Link
-                    key={p.id}
-                    to="/projects/$id"
-                    params={{ id: p.id }}
-                    className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="truncate text-sm font-medium" title={p.title}>
-                        {p.title}
-                      </p>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <Progress value={p.progress_percent ?? 0} className="h-1" />
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                        {p.progress_percent ?? 0}%
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+              <div className="mt-3 space-y-1.5">
+                {pendingSessionCount > 0 && (
+                  <p className="text-xs">
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {pendingSessionCount}
+                    </span>{" "}
+                    session request{pendingSessionCount !== 1 ? "s" : ""}
+                  </p>
+                )}
+                {pendingConnectionCount > 0 && (
+                  <p className="text-xs">
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {pendingConnectionCount}
+                    </span>{" "}
+                    connection request{pendingConnectionCount !== 1 ? "s" : ""}
+                  </p>
+                )}
+                {unreadMessageCount > 0 && (
+                  <p className="text-xs">
+                    <span className="font-semibold tabular-nums text-foreground">
+                      {unreadMessageCount}
+                    </span>{" "}
+                    unread message{unreadMessageCount !== 1 ? "s" : ""}
+                  </p>
+                )}
+                {pendingInviteCount === 0 && unreadMessageCount === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    All clear — nothing needs your attention.
+                  </p>
+                )}
               </div>
-            </SectionCard>
-          )}
+            </TodayCard>
 
-          {/* Applications */}
-          {myApplications.length > 0 && (
-            <SectionCard
-              icon={<Ticket className="h-4 w-4" />}
-              title="Applications"
-              subtitle={`${myApplications.length} sent`}
+            {/* 3. Find collaborators */}
+            <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
+              <p className="mt-3 text-xs text-muted-foreground">
+                Discover people with complementary skills who are open to team-ups.
+              </p>
+            </TodayCard>
+
+            {/* 4. Today's opportunities */}
+            <TodayCard
+              icon={TrendingUp}
+              accent="var(--brand-purple)"
+              title={
+                todayOpps.length > 0
+                  ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
+                  : "Browse opportunities"
+              }
+              href="/explore"
+              highlight={todayOpps.length > 0}
             >
-              <div className="space-y-1.5">
-                {myApplications.slice(0, 4).map((app: any) => (
-                  <Link
-                    key={app.id}
-                    to="/projects/$id"
-                    params={{ id: app.project_open_roles?.projects?.id ?? "" }}
-                    search={{ section: "roles" } as Record<string, string>}
-                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">
-                        {app.project_open_roles?.title ?? "Role"}
-                      </p>
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        {app.project_open_roles?.projects?.title ?? "Project"}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        app.status === "accepted"
-                          ? "bg-trust/10 text-trust"
-                          : app.status === "declined"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-surface-elevated text-muted-foreground"
-                      }`}
-                    >
-                      {app.status}
+              {todayOpps.length > 0 ? (
+                <div className="mt-3 space-y-1">
+                  {todayOpps.slice(0, 2).map((opp: any) => (
+                    <p key={opp.id} className="truncate text-xs text-muted-foreground">
+                      {opp.title} — {opp.projects?.title}
+                    </p>
+                  ))}
+                  {todayOpps.length > 2 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      +{todayOpps.length - 2} more
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Check back as projects open new roles.
+                </p>
+              )}
+            </TodayCard>
+          </div>
+        );
+
+      case "quick-actions":
+        return (
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border card-border bg-surface p-4">
+            <CreateProjectButton size="sm" variant="default" className="rounded-full" />
+          </div>
+        );
+
+      case "next-steps":
+        if (pct >= 100 || remaining.length === 0) return null;
+        return (
+          <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
+              <span className="text-[11px] text-muted-foreground">
+                — {doneSteps}/{totalSteps} done
+              </span>
+            </div>
+            <NextStepsList items={remaining} />
+          </div>
+        );
+
+      case "projects":
+        if (activeProjects.length === 0) return null;
+        return (
+          <SectionCard
+            icon={<Folder className="h-4 w-4" />}
+            title="Your projects"
+            action={
+              <Link to="/explore" className="text-[11px] font-medium text-primary hover:underline">
+                View all
+              </Link>
+            }
+          >
+            <div className="space-y-2">
+              {activeProjects.slice(0, 3).map((p: any) => (
+                <Link
+                  key={p.id}
+                  to="/projects/$id"
+                  params={{ id: p.id }}
+                  className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-sm font-medium" title={p.title}>
+                      {p.title}
+                    </p>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <Progress value={p.progress_percent ?? 0} className="h-1" />
+                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                      {p.progress_percent ?? 0}%
                     </span>
-                  </Link>
-                ))}
-              </div>
-            </SectionCard>
-          )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+        );
 
-          {/* Challenges */}
-          {joinedChallenges.length > 0 && (
-            <SectionCard
-              icon={<Swords className="h-4 w-4" />}
-              title="Challenges"
-              subtitle={`${joinedChallenges.length} joined`}
-            >
-              <div className="space-y-1.5">
-                {joinedChallenges.slice(0, 3).map((c: any) => (
-                  <Link
-                    key={c.id}
-                    to="/challenges/$id"
-                    params={{ id: c.id }}
-                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+      case "applications":
+        if (myApplications.length === 0) return null;
+        return (
+          <SectionCard
+            icon={<Ticket className="h-4 w-4" />}
+            title="Applications"
+            subtitle={`${myApplications.length} sent`}
+          >
+            <div className="space-y-1.5">
+              {myApplications.slice(0, 4).map((app: any) => (
+                <Link
+                  key={app.id}
+                  to="/projects/$id"
+                  params={{ id: app.project_open_roles?.projects?.id ?? "" }}
+                  search={{ section: "roles" } as Record<string, string>}
+                  className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium">
+                      {app.project_open_roles?.title ?? "Role"}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {app.project_open_roles?.projects?.title ?? "Project"}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      app.status === "accepted"
+                        ? "bg-trust/10 text-trust"
+                        : app.status === "declined"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-surface-elevated text-muted-foreground"
+                    }`}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium" title={c.title}>
-                        {c.title}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground capitalize">
-                        {c.difficulty}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
-                      {c.my_participation?.status ?? "joined"}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </SectionCard>
-          )}
+                    {app.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+        );
 
-          {/* Connections */}
-          <ConnectionsCard />
-        </div>
+      case "challenges":
+        if (joinedChallenges.length === 0) return null;
+        return (
+          <SectionCard
+            icon={<Swords className="h-4 w-4" />}
+            title="Challenges"
+            subtitle={`${joinedChallenges.length} joined`}
+          >
+            <div className="space-y-1.5">
+              {joinedChallenges.slice(0, 3).map((c: any) => (
+                <Link
+                  key={c.id}
+                  to="/challenges/$id"
+                  params={{ id: c.id }}
+                  className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium" title={c.title}>
+                      {c.title}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground capitalize">{c.difficulty}</p>
+                  </div>
+                  <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
+                    {c.my_participation?.status ?? "joined"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+        );
 
-        {/* Right column: Discover */}
-        <div className="space-y-6">
+      case "connections":
+        return <ConnectionsCard />;
+
+      case "suggested-projects":
+        return (
           <SectionCard
             icon={<Folder className="h-4 w-4" />}
             title="Projects for you"
@@ -512,7 +516,10 @@ function DashboardPage() {
           >
             <SuggestedProjects />
           </SectionCard>
+        );
 
+      case "suggested-creators":
+        return (
           <SectionCard
             icon={<Users className="h-4 w-4" />}
             title="People you'd connect with"
@@ -520,7 +527,10 @@ function DashboardPage() {
           >
             <SuggestedCreators />
           </SectionCard>
+        );
 
+      case "trending-skills":
+        return (
           <SectionCard
             icon={<Sparkles className="h-4 w-4" />}
             title="Trending skills"
@@ -528,38 +538,57 @@ function DashboardPage() {
           >
             <DiscoverSkills />
           </SectionCard>
+        );
 
-          {weeklyRep > 0 && (
-            <SectionCard
-              icon={<Award className="h-4 w-4" />}
-              title="This week"
-              subtitle={`${weeklyRep} activity event${weeklyRep !== 1 ? "s" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-display text-xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
-                  {data.profile?.reputation_score ?? 0}
-                </span>
-                <span className="text-[11px] text-muted-foreground">reputation</span>
-                <Link
-                  to="/profile"
-                  className="ml-auto text-[11px] font-medium text-primary hover:underline"
-                >
-                  Achievements →
-                </Link>
-              </div>
-            </SectionCard>
-          )}
-        </div>
-      </div>
+      case "week":
+        if (weeklyRep === 0) return null;
+        return (
+          <SectionCard
+            icon={<Award className="h-4 w-4" />}
+            title="This week"
+            subtitle={`${weeklyRep} activity event${weeklyRep !== 1 ? "s" : ""}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="font-display text-xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
+                {data.profile?.reputation_score ?? 0}
+              </span>
+              <span className="text-[11px] text-muted-foreground">reputation</span>
+              <Link
+                to="/profile"
+                className="ml-auto text-[11px] font-medium text-primary hover:underline"
+              >
+                Achievements →
+              </Link>
+            </div>
+          </SectionCard>
+        );
 
-      {/* ── Recent activity — full width ── */}
-      <SectionCard
-        icon={<Clock className="h-4 w-4" />}
-        title="Recent activity"
-        subtitle="Every action builds your reputation."
-      >
-        <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
-      </SectionCard>
+      case "activity":
+        return (
+          <SectionCard
+            icon={<Clock className="h-4 w-4" />}
+            title="Recent activity"
+            subtitle="Every action builds your reputation."
+          >
+            <ActivityTimeline profileId={data.userId} events={data.activity} limit={6} />
+          </SectionCard>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+        <WorkspaceGrid
+          page="dashboard"
+          userId={data.userId}
+          modules={DASHBOARD_MODULES}
+          renderModule={renderModule}
+          canCustomize={true}
+        />
       </div>
     </div>
   );
@@ -622,15 +651,13 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border card-border bg-surface p-5">
+    <div className="h-full rounded-2xl border card-border bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
           <h2 className="text-sm font-semibold truncate">{title}</h2>
           {subtitle && (
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">
-              — {subtitle}
-            </span>
+            <span className="hidden text-[11px] text-muted-foreground sm:inline">— {subtitle}</span>
           )}
         </div>
         {action}
@@ -651,14 +678,7 @@ function CompletenessMini({ percent, size = 18 }: { percent: number; size?: numb
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="h-[18px] w-[18px] shrink-0 -rotate-90">
-      <circle
-        cx={center}
-        cy={center}
-        r={r}
-        stroke="var(--border)"
-        strokeWidth="2"
-        fill="none"
-      />
+      <circle cx={center} cy={center} r={r} stroke="var(--border)" strokeWidth="2" fill="none" />
       <circle
         cx={center}
         cy={center}

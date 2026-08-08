@@ -736,3 +736,59 @@
     margin-bottom: 0.5rem;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Workspace grid (react-grid-layout v2) — restrained, accent-aware styling
+ * so the grid reads as Tethyr, not a generic dashboard builder.
+ * ------------------------------------------------------------------------- */
+.ws-grid .react-grid-item {
+  transition:
+    left 150ms ease,
+    top 150ms ease,
+    width 150ms ease,
+    height 150ms ease;
+}
+
+.ws-grid .react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+}
+
+.ws-grid .react-grid-item.react-grid-placeholder {
+  background: var(--user-accent, var(--primary));
+  opacity: 0.12;
+  border-radius: 1rem;
+  transition-duration: 80ms;
+}
+
+/* Resize handles — subtle, only meaningful while customizing */
+.ws-grid .react-grid-item > .react-resizable-handle {
+  opacity: 0;
+}
+
+.ws-grid .react-grid-item:hover > .react-resizable-handle,
+.ws-grid .react-grid-item.resizing > .react-resizable-handle {
+  opacity: 1;
+}
+
+.ws-grid .react-grid-item > .react-resizable-handle::after {
+  border-color: var(--user-accent, var(--muted-foreground));
+  opacity: 0.7;
+  width: 6px;
+  height: 6px;
+}
+
+/* Dragging cursor on the whole grid */
+.ws-grid .ws-drag-handle {
+  cursor: grab;
+}
+.ws-grid .ws-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Customize-mode module outline pulse */
+.ws-grid .react-grid-item.ws-editing {
+  outline: 1px dashed var(--user-accent-border, var(--border-strong));
+  outline-offset: -1px;
+  border-radius: 1rem;
+}

@@ -11,7 +11,7 @@ import {
   RecentActivity,
   TrendingSkills,
 } from "@/components/tethyr/landing-sections";
-import { HeroQuickMatch } from "@/components/tethyr/hero-quick-match";
+import { HeroActions } from "@/components/tethyr/hero-actions";
 import { SectionReveal } from "@/components/tethyr/section-reveal";
 import { Button } from "@/components/ui/button";
 
@@ -58,8 +58,9 @@ function HomePage() {
                 Early access — now open
               </span>
               <h1 className="mt-8 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
-                Build together.<br />Get known for{" "}
-                <span className="text-gradient-brand">what you make</span>
+                Build together.
+                <br />
+                Get known for <span className="text-gradient-brand">what you make</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
                 The collaboration network where builders create projects together, grow through real
@@ -84,7 +85,7 @@ function HomePage() {
             <HeroShowcase />
           </div>
 
-          <HeroQuickMatch />
+          <HeroActions />
         </div>
 
         <button

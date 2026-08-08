@@ -23,9 +23,9 @@
 | 1.2 | ✅ Marquee stats, animated counters, scroll indicator | Done |
 | 1.3 | ✅ Section reveal animations | Done |
 | 1.4 | ✅ Featured project card + live activity panel | Done |
-| 1.5 | ✅ HeroQuickMatch quick-search component | Done |
+| 1.5 | ✅ HeroActions — "What you can do here" cards aligned with the pillars | Done |
 | 1.6 | 🟡 Landing sections order: How It Works → Skills → Projects → Activity → Spaces. Could move Spaces before Activity for better flow. | Medium |
-| 1.7 | 🟢 QuickMatch search feels disconnected from the rest of the page — sits alone between hero and stats | Low |
+| 1.7 | ✅ QuickMatch search removed (feature retired) — replaced with HeroActions pillar cards | Done |
 
 ---
 
