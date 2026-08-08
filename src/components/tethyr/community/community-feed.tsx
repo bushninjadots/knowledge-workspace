@@ -237,6 +237,18 @@ export function CommunityFeed({
 
     if (nav === "trending") {
       list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
+    } else if (sortMode === "hot") {
+      // Reddit-style hot ranking: engagement (likes + 2×helpful + offers) with
+      // a time decay so fresh posts surface but strong posts stay visible.
+      // Ages are clamped ≥ 0 (clock skew can make created_at slightly future).
+      const now = Date.now();
+      const hotScore = new Map<string, number>();
+      for (const p of list) {
+        const score = p.stats.likes + p.stats.helpful * 2 + p.stats.offers * 3 + p.stats.saves;
+        const ageHours = Math.max(0, (now - new Date(p.created_at).getTime()) / 3_600_000);
+        hotScore.set(p.id, score / Math.pow(ageHours + 2, 1.5));
+      }
+      list = [...list].sort((a, b) => (hotScore.get(b.id) ?? 0) - (hotScore.get(a.id) ?? 0));
     } else if (sortMode === "recommended" && mySkillNames.size > 0) {
       list = [...list].sort((a, b) => {
         const aOverlap = a.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;

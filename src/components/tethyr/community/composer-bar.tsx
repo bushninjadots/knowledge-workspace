@@ -22,11 +22,14 @@ import {
   Plus,
   Check,
   ChevronDown,
+  Tag,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { QUICK_ACTIONS, type PostType } from "@/lib/community-data";
+import { QUICK_ACTIONS, POST_FLAIRS, flairClasses, type PostType } from "@/lib/community-data";
+import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   useCreatePost,
@@ -171,6 +174,12 @@ export function ComposerBar({
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [pollEndsAt, setPollEndsAt] = useState("");
+  const [flair, setFlair] = useState<string | null>(editingPost?.flair ?? null);
+  const [linkUrl, setLinkUrl] = useState(editingPost?.link_url ?? "");
+  const [showLinkInput, setShowLinkInput] = useState(!!editingPost?.link_url);
+  const [targetSpaceId, setTargetSpaceId] = useState<string | null>(editingPost?.space_id ?? null);
+  const { data: allSpaces = [] } = useCommunitySpaces();
+  const mySpaces = (allSpaces as CommunitySpace[]).filter((s) => s.is_member);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -218,6 +227,10 @@ export function ComposerBar({
     setTitle(editingPost?.title ?? "");
     setDraft(editingPost?.body ?? "");
     setImages(editingPost?.images ?? []);
+    setFlair(editingPost?.flair ?? null);
+    setLinkUrl(editingPost?.link_url ?? "");
+    setShowLinkInput(!!editingPost?.link_url);
+    setTargetSpaceId(editingPost?.space_id ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingPost?.id]);
 
@@ -377,6 +390,15 @@ export function ComposerBar({
       return;
     }
 
+    // Link posts need a valid URL
+    const trimmedLink = linkUrl.trim();
+    if (showLinkInput && trimmedLink) {
+      if (!/^https?:\/\//i.test(trimmedLink)) {
+        toast.error("Link URL must start with http:// or https://");
+        return;
+      }
+    }
+
     const postTitle =
       title.trim() || (bodyText.length > 80 ? bodyText.slice(0, 77) + "..." : bodyText);
 
@@ -388,6 +410,8 @@ export function ComposerBar({
           title: postTitle,
           body: bodyText,
           images: images.length > 0 ? images : undefined,
+          flair: flair ?? undefined,
+          link_url: showLinkInput && trimmedLink ? trimmedLink : null,
         });
         toast.success("Post updated");
       } else {
@@ -411,14 +435,18 @@ export function ComposerBar({
           title: postTitle,
           body: bodyText,
           community: me?.profile?.category || "General",
-          space_id: spaceId ?? null,
+          space_id: (spaceId ?? targetSpaceId) || null,
           images: images.length > 0 ? images : undefined,
           project_id: attachedProject?.projectId ?? null,
           project_snapshot: attachedProject?.snapshot ?? null,
           feedback_tags: feedbackTags.length > 0 ? feedbackTags : undefined,
           poll_data,
+          flair: flair ?? undefined,
+          link_url: showLinkInput && trimmedLink ? trimmedLink : null,
         });
-        toast.success("Posted to the community");
+        toast.success(
+          (spaceId ?? targetSpaceId) ? "Posted to the community" : "Posted to the community feed",
+        );
       }
       setDraft("");
       setTitle("");
@@ -429,6 +457,10 @@ export function ComposerBar({
       setPollQuestion("");
       setPollOptions(["", ""]);
       setPollEndsAt("");
+      setFlair(null);
+      setLinkUrl("");
+      setShowLinkInput(false);
+      setTargetSpaceId(null);
       setShowAttachPanel(false);
       localStorage.removeItem(DRAFT_KEY);
       onCancelEdit?.();
@@ -581,6 +613,120 @@ export function ComposerBar({
               Add option
             </button>
           )}
+        </div>
+      )}
+
+      {/* Post-to-space picker + link + flair (Reddit-style meta row) */}
+      {(focused || !!type || !!flair || showLinkInput || !!targetSpaceId || isEditing) && (
+        <div className="mt-3 space-y-2 rounded-xl border border-border/50 bg-background/30 p-3">
+          {/* Destination picker */}
+          {!spaceId && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <Users className="h-3 w-3" />
+                Post to
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+                      targetSpaceId
+                        ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
+                        : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Users className="h-3 w-3" />
+                    {targetSpaceId
+                      ? (mySpaces.find((s) => s.id === targetSpaceId)?.name ?? "Space")
+                      : "Community feed"}
+
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="max-h-72 w-60 overflow-y-auto">
+                  <DropdownMenuItem onClick={() => setTargetSpaceId(null)}>
+                    <span className="flex-1">Community feed (all)</span>
+                    {!targetSpaceId && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                  {mySpaces.length > 0 && <div className="my-1 h-px bg-border/60" />}
+                  {(mySpaces as CommunitySpace[]).map((s) => (
+                    <DropdownMenuItem key={s.id} onClick={() => setTargetSpaceId(s.id)}>
+                      <span className="flex-1 truncate">{s.name}</span>
+                      {targetSpaceId === s.id && <Check className="h-3.5 w-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                  {mySpaces.length === 0 && (
+                    <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                      You're not a member of any space yet.
+                    </p>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
+          {/* Link post field */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLinkInput((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+                showLinkInput
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Link2 className="h-3 w-3" />
+              Link
+            </button>
+            {showLinkInput && (
+              <input
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value.slice(0, 500))}
+                placeholder="https://…  (optional URL this post links to)"
+                className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+              />
+            )}
+            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <Tag className="h-3 w-3" />
+              Flair
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+                    flair
+                      ? `border-transparent ${flairClasses(flair)}`
+                      : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {flair ?? "Add flair"}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44">
+                {POST_FLAIRS.map((f) => (
+                  <DropdownMenuItem key={f.value} onClick={() => setFlair(f.value)}>
+                    <span
+                      className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${flairClasses(f.value)}`}
+                    />
+                    <span className="flex-1">{f.label}</span>
+                    {flair === f.value && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </DropdownMenuItem>
+                ))}
+                {flair && (
+                  <>
+                    <div className="my-1 h-px bg-border/60" />
+                    <DropdownMenuItem onClick={() => setFlair(null)}>
+                      <span className="flex-1 text-muted-foreground">Remove flair</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       )}
 

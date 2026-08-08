@@ -18,6 +18,8 @@ export type ChallengeRow = {
   start_date: string | null;
   end_date: string | null;
   max_participants: number | null;
+  /** Rubric the creator uses to judge submissions. */
+  pass_criteria: string | null;
   status: ChallengeStatus;
   created_by: string;
   created_at: string;
@@ -33,6 +35,8 @@ export type ChallengeRow = {
   my_participation?: ChallengeParticipantRow | null;
 };
 
+export type ChallengeReviewStatus = "none" | "submitted" | "passed" | "rejected";
+
 export type ChallengeParticipantRow = {
   id: string;
   challenge_id: string;
@@ -40,6 +44,12 @@ export type ChallengeParticipantRow = {
   status: "joined" | "in_progress" | "completed";
   progress: Record<string, unknown>;
   joined_at: string;
+  submission_url: string | null;
+  submission_note: string | null;
+  submitted_at: string | null;
+  review_status: ChallengeReviewStatus;
+  reviewer_note: string | null;
+  reviewed_at: string | null;
   profile?: {
     display_name: string | null;
     handle: string | null;
@@ -56,6 +66,7 @@ export type CreateChallengeInput = {
   start_date?: string | null;
   end_date?: string | null;
   max_participants?: number | null;
+  pass_criteria?: string | null;
 };
 
 export const CHALLENGES_KEY = ["challenges"] as const;
@@ -86,7 +97,9 @@ export function useChallenges(statusFilter: string = "active") {
       const challengeIds = challenges.map((c) => c.id);
       const { data: rawParticipants } = await sb
         .from("challenge_participants")
-        .select("challenge_id, user_id, status, progress, joined_at")
+        .select(
+          "challenge_id, user_id, status, progress, joined_at, review_status, submission_url, submission_note, submitted_at, reviewed_at, reviewer_note",
+        )
         .in("challenge_id", challengeIds);
 
       const participants = (rawParticipants ?? []) as ChallengeParticipantRow[];
@@ -215,6 +228,7 @@ export function useCreateChallenge() {
           start_date: input.start_date ?? null,
           end_date: input.end_date ?? null,
           max_participants: input.max_participants ?? null,
+          pass_criteria: input.pass_criteria ?? null,
           created_by: user.id,
         })
         .select()
@@ -303,6 +317,83 @@ export function useUpdateChallengeProgress() {
         })
         .eq("challenge_id", input.challengeId)
         .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: CHALLENGES_KEY });
+      qc.invalidateQueries({ queryKey: CHALLENGE_KEY(variables.challengeId) });
+    },
+  });
+}
+
+/**
+ * Participant submits their finished work for creator review.
+ * Sets status → completed and review_status → submitted.
+ */
+export function useSubmitChallengeWork() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      challengeId: string;
+      submissionUrl: string;
+      submissionNote?: string;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await sb
+        .from("challenge_participants")
+        .update({
+          status: "completed",
+          review_status: "submitted",
+          submission_url: input.submissionUrl,
+          submission_note: input.submissionNote?.trim() || null,
+          submitted_at: new Date().toISOString(),
+          reviewed_at: null,
+          reviewer_note: null,
+        })
+        .eq("challenge_id", input.challengeId)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: CHALLENGES_KEY });
+      qc.invalidateQueries({ queryKey: CHALLENGE_KEY(variables.challengeId) });
+    },
+  });
+}
+
+/**
+ * Challenge creator reviews a participant submission: pass or reject.
+ */
+export function useReviewChallengeSubmission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      challengeId: string;
+      participantId: string;
+      reviewStatus: "passed" | "rejected";
+      reviewerNote?: string;
+    }) => {
+      const { data, error } = await sb
+        .from("challenge_participants")
+        .update({
+          review_status: input.reviewStatus,
+          reviewer_note: input.reviewerNote?.trim() || null,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", input.participantId)
+        .eq("challenge_id", input.challengeId)
         .select()
         .single();
 

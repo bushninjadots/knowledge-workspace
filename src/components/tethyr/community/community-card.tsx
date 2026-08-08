@@ -1,12 +1,20 @@
-import { Users } from "lucide-react";
+import { Users, UserPlus, Hourglass, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useJoinSpace, useLeaveSpace, type CommunitySpace } from "@/hooks/use-community-spaces";
+import {
+  useJoinSpace,
+  useLeaveSpace,
+  useRequestToJoinSpace,
+  useCancelJoinRequest,
+  type CommunitySpace,
+} from "@/hooks/use-community-spaces";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 export function CommunityCard({ space, onClick }: { space: CommunitySpace; onClick?: () => void }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
+  const requestJoin = useRequestToJoinSpace();
+  const cancelRequest = useCancelJoinRequest();
   const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
 
   function handleToggleMembership(e: React.MouseEvent) {
@@ -18,6 +26,19 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         onSuccess: () => toast.success(`Left ${space.name}`),
         onError: () => toast.error("Failed to leave"),
       });
+    } else if (space.has_pending_request) {
+      cancelRequest.mutate(space.id, {
+        onSuccess: () => toast.success("Request cancelled"),
+        onError: () => toast.error("Failed to cancel request"),
+      });
+    } else if (space.join_type === "review") {
+      requestJoin.mutate(
+        { spaceId: space.id },
+        {
+          onSuccess: () => toast.success("Join request sent"),
+          onError: (err) => toast.error(`Failed to request: ${(err as Error).message}`),
+        },
+      );
     } else {
       joinSpace.mutate(space.id, {
         onSuccess: () => toast.success(`Joined ${space.name}!`),
@@ -25,6 +46,17 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
       });
     }
   }
+
+  const joinPending =
+    joinSpace.isPending || leaveSpace.isPending || requestJoin.isPending || cancelRequest.isPending;
+  const buttonLabel = space.is_member
+    ? "Joined"
+    : space.has_pending_request
+      ? "Requested"
+      : space.join_type === "review"
+        ? "Request to join"
+        : "Join";
+  const ButtonIcon = space.is_member ? Check : space.has_pending_request ? Hourglass : UserPlus;
 
   const initial = space.name.charAt(0).toUpperCase();
 
@@ -76,12 +108,13 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         </div>
         <Button
           size="sm"
-          variant={space.is_member ? "outline" : "default"}
+          variant={space.is_member || space.has_pending_request ? "outline" : "default"}
           className="rounded-full text-xs h-8 px-3.5"
           onClick={handleToggleMembership}
-          disabled={joinSpace.isPending || leaveSpace.isPending}
+          disabled={joinPending}
         >
-          {space.is_member ? "Joined" : "Join"}
+          <ButtonIcon className="mr-1 h-3 w-3" />
+          {buttonLabel}
         </Button>
       </div>
     </div>

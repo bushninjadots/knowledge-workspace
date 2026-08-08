@@ -13,6 +13,14 @@ import {
   Shield,
   Crown,
   User,
+  UserCheck,
+  UserPlus,
+  Hourglass,
+  Plus,
+  ShieldAlert,
+  ScrollText,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,9 +37,19 @@ import {
   useSpaceMembers,
   useUpdateMemberRole,
   useRemoveMember,
+  useSpaceJoinRequests,
+  useApproveJoinRequest,
+  useRejectJoinRequest,
+  useSpacePostReports,
+  useUpdateReportStatus,
+  useModerationLog,
   type SpaceMember,
   type SpaceMemberRole,
   type SpaceVisibility,
+  type SpaceJoinType,
+  type JoinRequestRow,
+  type PostReportRow,
+  type ModerationLogRow,
 } from "@/hooks/use-community-spaces";
 
 export const Route = createFileRoute("/_authenticated/spaces/$slug/settings")({
@@ -84,15 +102,24 @@ function SpaceSettingsPage() {
   const { data: space, isLoading } = useCommunitySpace(slug);
   const { data: me } = useCurrentUser();
   const { data: members = [] } = useSpaceMembers(space?.id ?? "");
+  const { data: joinRequests = [] } = useSpaceJoinRequests(space?.id ?? "");
+  const { data: spaceReports = [] } = useSpacePostReports(space?.id ?? "");
+  const { data: modLog = [] } = useModerationLog(space?.id ?? "");
 
   const updateSpace = useUpdateSpace();
   const deleteSpace = useDeleteSpace();
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
+  const approveRequest = useApproveJoinRequest();
+  const rejectRequest = useRejectJoinRequest();
+  const updateReport = useUpdateReportStatus();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<SpaceVisibility>("public");
+  const [joinType, setJoinType] = useState<SpaceJoinType>("auto");
+  const [rules, setRules] = useState<string[]>([]);
+  const [ruleInput, setRuleInput] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [memberQuery, setMemberQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | SpaceMemberRole>("all");
@@ -129,6 +156,8 @@ function SpaceSettingsPage() {
     setName(space.name);
     setDescription(space.description ?? "");
     setVisibility(space.visibility ?? "public");
+    setJoinType(space.join_type ?? "auto");
+    setRules(space.rules ?? []);
   }, [space]);
 
   if (isLoading) {
@@ -169,7 +198,9 @@ function SpaceSettingsPage() {
   const dirty =
     name.trim() !== space.name ||
     description.trim() !== (space.description ?? "") ||
-    visibility !== (space.visibility ?? "public");
+    visibility !== (space.visibility ?? "public") ||
+    joinType !== (space.join_type ?? "auto") ||
+    JSON.stringify(rules) !== JSON.stringify(space.rules ?? []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -180,6 +211,8 @@ function SpaceSettingsPage() {
         name: name.trim(),
         description: description.trim(),
         visibility,
+        join_type: joinType,
+        rules: rules.filter(Boolean),
       });
       toast.success("Community settings saved");
     } catch (err) {
@@ -274,6 +307,166 @@ function SpaceSettingsPage() {
           </div>
         </section>
 
+        <section className="rounded-lg border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold">Joining</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            How new people become members of this community.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <VisibilityOption
+              icon={<UserCheck className="h-4 w-4" />}
+              title="Anyone can join"
+              description="People join instantly — like a public subreddit."
+              selected={joinType === "auto"}
+              disabled={!isOwner}
+              onSelect={() => setJoinType("auto")}
+            />
+            <VisibilityOption
+              icon={<Hourglass className="h-4 w-4" />}
+              title="Request to join"
+              description="People request membership and owners approve each one."
+              selected={joinType === "review"}
+              disabled={!isOwner}
+              onSelect={() => setJoinType("review")}
+            />
+          </div>
+
+          <div className="mt-5 space-y-2">
+            <Label>Rules</Label>
+            <div className="flex gap-2">
+              <Input
+                value={ruleInput}
+                onChange={(e) => setRuleInput(e.target.value)}
+                placeholder="e.g. Be kind, no spam, credit your sources"
+                maxLength={120}
+                disabled={!isOwner}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && isOwner) {
+                    e.preventDefault();
+                    const v = ruleInput.trim();
+                    if (v && !rules.includes(v) && rules.length < 10) {
+                      setRules([...rules, v]);
+                      setRuleInput("");
+                    }
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!isOwner || !ruleInput.trim()}
+                onClick={() => {
+                  const v = ruleInput.trim();
+                  if (v && !rules.includes(v) && rules.length < 10) {
+                    setRules([...rules, v]);
+                    setRuleInput("");
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {rules.length > 0 && (
+              <ul className="space-y-1.5 pt-1">
+                {rules.map((rule, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg border border-border/60 bg-surface-elevated/50 px-3 py-1.5 text-xs"
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-semibold text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    {rule}
+                    <button
+                      type="button"
+                      disabled={!isOwner}
+                      onClick={() => setRules(rules.filter((_, j) => j !== i))}
+                      className="ml-auto rounded p-0.5 text-muted-foreground hover:text-destructive disabled:opacity-40"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {joinType === "review" && (
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Pending requests ({joinRequests.length})
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Approve someone to join, or reject their request.
+            </p>
+            <div className="mt-4 space-y-2">
+              {joinRequests.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">
+                  No pending requests right now.
+                </p>
+              ) : (
+                joinRequests.map((req: JoinRequestRow) => (
+                  <div
+                    key={req.user_id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {req.profile?.display_name || "Member"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        @{req.profile?.handle || "user"}
+                        {req.note ? ` — “${req.note}”` : ""}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 text-xs"
+                        disabled={approveRequest.isPending || rejectRequest.isPending}
+                        onClick={() =>
+                          approveRequest.mutate(
+                            { spaceId: space.id, userId: req.user_id },
+                            {
+                              onSuccess: () =>
+                                toast.success("Request approved — they can now post"),
+                              onError: () => toast.error("Failed to approve"),
+                            },
+                          )
+                        }
+                      >
+                        <UserCheck className="mr-1 h-3.5 w-3.5" /> Approve
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs text-destructive"
+                        disabled={approveRequest.isPending || rejectRequest.isPending}
+                        onClick={() =>
+                          rejectRequest.mutate(
+                            { spaceId: space.id, userId: req.user_id },
+                            {
+                              onSuccess: () => toast.success("Request rejected"),
+                              onError: () => toast.error("Failed to reject"),
+                            },
+                          )
+                        }
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )}
+
         {isOwner && (
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={!name.trim() || !dirty || updateSpace.isPending}>
@@ -283,6 +476,115 @@ function SpaceSettingsPage() {
           </div>
         )}
       </form>
+
+      {/* Reports queue — members flagged posts in this space */}
+      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4" />
+          Reported posts ({spaceReports.length})
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Members flagged these posts for breaking the community rules.
+        </p>
+        <div className="mt-4 space-y-2">
+          {spaceReports.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              No open reports right now.
+            </p>
+          ) : (
+            spaceReports.map((rep: PostReportRow) => (
+              <div
+                key={rep.id}
+                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {rep.post?.title || "Post"}{" "}
+                    <span className="font-normal text-muted-foreground">— {rep.reason}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Reported by {rep.reporter?.display_name || "Member"} ·{" "}
+                    {new Date(rep.created_at).toLocaleDateString()}
+                    {rep.details ? ` — “${rep.details}”` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs text-destructive"
+                    disabled={updateReport.isPending}
+                    onClick={() =>
+                      updateReport.mutate(
+                        { reportId: rep.id, status: "dismissed" },
+                        {
+                          onSuccess: () => toast.success("Report dismissed"),
+                          onError: () => toast.error("Failed to dismiss"),
+                        },
+                      )
+                    }
+                  >
+                    <XCircle className="mr-1 h-3.5 w-3.5" /> Dismiss
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={updateReport.isPending}
+                    onClick={() =>
+                      updateReport.mutate(
+                        { reportId: rep.id, status: "resolved" },
+                        {
+                          onSuccess: () => toast.success("Report resolved"),
+                          onError: () => toast.error("Failed to resolve"),
+                        },
+                      )
+                    }
+                  >
+                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Resolve
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Moderation log — audit trail of removals in this space */}
+      <section className="mt-10 rounded-lg border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold flex items-center gap-2">
+          <ScrollText className="h-4 w-4" />
+          Moderation log
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          A record of posts removed from this space and by whom.
+        </p>
+        <div className="mt-4 divide-y divide-border">
+          {modLog.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">Nothing removed yet.</p>
+          ) : (
+            modLog.map((entry: ModerationLogRow) => (
+              <div
+                key={entry.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm">
+                    {entry.action === "remove_post"
+                      ? `Removed post: ${entry.post_title || "Untitled"}`
+                      : "Unshared a post from this space"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    by {entry.actor?.display_name || "Unknown"} ·{" "}
+                    {new Date(entry.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
 
       <section className="mt-10 rounded-lg border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,8 @@ import {
   MessageCircle,
   Bookmark,
   HandHeart,
+  Link2,
+  Flag,
   CheckCircle2,
   FileText,
   Video,
@@ -34,17 +36,32 @@ import {
   BarChart3,
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Button } from "@/components/ui/button";
 import {
   POST_TYPE_LABEL,
   ACTIVE_LEARNING_GOALS,
+  flairClasses,
   type PostType,
   type CommentRow,
   type PostWithAuthor,
 } from "@/lib/community-data";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useAddComment, useVotePoll, type PollData } from "@/hooks/use-community";
+import {
+  useAddComment,
+  useUpdateComment,
+  useReportPost,
+  useVotePoll,
+  type PollData,
+} from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ProjectCardInline } from "@/components/tethyr/community/project-card-inline";
 import { ShareSpaceDialog } from "@/components/tethyr/community/share-space-dialog";
 import { timeAgo } from "@/lib/time";
@@ -144,6 +161,7 @@ export function PostCard({
   highlighted,
   shared_from_space,
   skillOverlap,
+  canModerate,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -158,16 +176,21 @@ export function PostCard({
   highlighted?: boolean;
   shared_from_space?: string | null;
   skillOverlap?: number;
+  /** Space owner/moderator — may remove posts in their space (moderation). */
+  canModerate?: boolean;
 }) {
   const { data: me } = useCurrentUser();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const isOwner = me?.userId === post.author_id;
+  const canModerateThis = canModerate && !isOwner;
   const liked = post.myActions.includes("like");
   const helpful = post.myActions.includes("helpful");
   const offered = post.myActions.includes("offer");
   const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
+  const canReport = !!post.space_id && !isOwner;
 
   const authorName = post.author.display_name || post.author.handle || "Unknown";
   const authorTitle = post.author.creator_title || post.author.category || "Member";
@@ -250,6 +273,13 @@ export function PostCard({
                 {post.community}
               </span>
             )}
+            {post.flair && (
+              <span
+                className={`rounded-full border px-1.5 py-0 text-[11px] font-medium ${flairClasses(post.flair)}`}
+              >
+                {post.flair}
+              </span>
+            )}
             {shared_from_space && (
               <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[11px] text-learning">
                 Shared from {shared_from_space}
@@ -263,21 +293,25 @@ export function PostCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {!isOwner && <FollowButton targetUserId={post.author_id} size="sm" />}
-          {isOwner && (
+          {!isOwner && !canModerateThis && <FollowButton targetUserId={post.author_id} size="sm" />}
+          {(isOwner || canModerateThis) && (
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={onEdit}
-                aria-label="Edit post"
-                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-                title="Edit post"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  aria-label="Edit post"
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                  title="Edit post"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
               {confirmDelete ? (
                 <div className="flex items-center gap-1 rounded-lg border border-destructive/40 bg-destructive/10 px-2 py-1">
-                  <span className="text-[11px] text-destructive">Delete?</span>
+                  <span className="text-[11px] text-destructive">
+                    {canModerateThis ? "Remove?" : "Delete?"}
+                  </span>
                   <button
                     onClick={() => {
                       onDelete?.();
@@ -298,7 +332,7 @@ export function PostCard({
                 <button
                   onClick={() => setConfirmDelete(true)}
                   className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  title="Delete post"
+                  title={canModerateThis ? "Remove post (moderation)" : "Delete post"}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -376,6 +410,26 @@ export function PostCard({
       <h3 className="font-title mt-3 text-base font-semibold leading-snug">
         <HighlightText text={post.title} query={searchQuery} />
       </h3>
+      {post.link_url && (
+        <a
+          href={post.link_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group mt-2 flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
+            <Link2 className="h-4 w-4 text-primary" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-foreground group-hover:underline">
+              {post.link_url.replace(/^https?:\/\//i, "").replace(/\/$/, "")}
+            </span>
+            <span className="block truncate text-[11px] text-muted-foreground">
+              {post.link_url}
+            </span>
+          </span>
+        </a>
+      )}
       <div className="prose-custom mt-1.5 text-sm text-foreground/90">
         <Markdown remarkPlugins={[remarkGfm]}>{post.body}</Markdown>
       </div>
@@ -502,6 +556,15 @@ export function PostCard({
           count={0}
           onClick={() => setShareDialogOpen(true)}
         />
+        {canReport && (
+          <ActionButton
+            icon={Flag}
+            label="Report"
+            count={0}
+            activeClass="text-destructive"
+            onClick={() => setReportOpen(true)}
+          />
+        )}
         <button
           onClick={() => onToggleAction?.("offer")}
           disabled={offered}
@@ -531,7 +594,108 @@ export function PostCard({
         postId={post.id}
         currentSpaceId={post.space_id}
       />
+
+      <ReportPostDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        postId={post.id}
+        postTitle={post.title}
+      />
     </article>
+  );
+}
+
+function ReportPostDialog({
+  open,
+  onOpenChange,
+  postId,
+  postTitle,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  postId: string;
+  postTitle: string;
+}) {
+  const reportPost = useReportPost();
+  const [reason, setReason] = useState("");
+  const [details, setDetails] = useState("");
+
+  const REASONS = [
+    "Breaks community rules",
+    "Spam or self-promotion",
+    "Harassment or hate",
+    "Misinformation",
+    "Off-topic",
+    "Other",
+  ];
+
+  function submit() {
+    if (!reason.trim()) {
+      toast.error("Pick a reason");
+      return;
+    }
+    reportPost.mutate(
+      { postId, reason: reason.trim(), details },
+      {
+        onSuccess: () => {
+          toast.success("Reported — the space moderators will review it");
+          onOpenChange(false);
+          setReason("");
+          setDetails("");
+        },
+        onError: (err) => toast.error(`Failed to report: ${(err as Error).message}`),
+      },
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Report this post</DialogTitle>
+        </DialogHeader>
+        <p className="line-clamp-2 text-xs text-muted-foreground" title={postTitle}>
+          “{postTitle}”
+        </p>
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-wrap gap-1.5">
+            {REASONS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setReason(r)}
+                className={`rounded-full border px-3 py-1 text-xs transition ${
+                  reason === r
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={details}
+            onChange={(e) => setDetails(e.target.value.slice(0, 500))}
+            placeholder="Anything else the moderators should know? (optional)"
+            rows={3}
+            className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={submit}
+            disabled={!reason.trim() || reportPost.isPending}
+          >
+            {reportPost.isPending ? "Reporting..." : "Submit report"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -544,6 +708,204 @@ function CommentThreadInline({
   comments: CommentRow[];
   isQuestion: boolean;
 }) {
+  // Build a reply tree: top-level comments first, replies nested under their
+  // parent, each level chronologically ordered. Cap the visible tree so long
+  // threads stay readable.
+  const tree = useMemo(() => {
+    const byParent = new Map<string | null, CommentRow[]>();
+    for (const c of comments) {
+      const key = c.parent_id ?? null;
+      if (!byParent.has(key)) byParent.set(key, []);
+      byParent.get(key)!.push(c);
+    }
+    const sortChrono = (list: CommentRow[]) =>
+      [...list].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const top = sortChrono(byParent.get(null) ?? []);
+    const children = (id: string) => sortChrono(byParent.get(id) ?? []);
+    return { top, children };
+  }, [comments]);
+
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <p className="text-xs text-muted-foreground">
+        {comments.length} comment{comments.length !== 1 ? "s" : ""}
+      </p>
+      <div className="mt-2 flex flex-col gap-2">
+        {tree.top.slice(0, 5).map((c) => (
+          <CommentNode
+            key={c.id}
+            comment={c}
+            depth={0}
+            childrenOf={tree.children}
+            isQuestion={isQuestion}
+            postId={postId}
+          />
+        ))}
+
+        <CommentComposer postId={postId} />
+      </div>
+    </div>
+  );
+}
+
+function CommentNode({
+  comment,
+  depth,
+  childrenOf,
+  isQuestion,
+  postId,
+}: {
+  comment: CommentRow;
+  depth: number;
+  childrenOf: (id: string) => CommentRow[];
+  isQuestion: boolean;
+  postId: string;
+}) {
+  const { data: me } = useCurrentUser();
+  const canEdit = comment.author_id === me?.userId;
+  const [replying, setReplying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const name = comment.author?.display_name || comment.author?.handle || "Unknown";
+  const initial = name.charAt(0).toUpperCase();
+  const children = childrenOf(comment.id);
+
+  return (
+    <div
+      className={`rounded-xl p-3 ${
+        comment.is_best_answer
+          ? "border border-brand-green/30 bg-brand-green/5"
+          : "bg-background/40"
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-green/80 text-[11px] font-semibold text-background">
+          {initial}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2">
+            <span className="text-xs font-medium">{name}</span>
+            <span className="text-[11px] text-muted-foreground">{timeAgo(comment.created_at)}</span>
+          </div>
+          {editing ? (
+            <CommentEditor
+              commentId={comment.id}
+              postId={postId}
+              initialBody={comment.body}
+              onCancel={() => setEditing(false)}
+              onSaved={() => setEditing(false)}
+            />
+          ) : (
+            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{comment.body}</p>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {isQuestion && comment.is_best_answer && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-brand-green">
+                <CheckCircle2 className="h-3 w-3" />
+                Best answer
+              </span>
+            )}
+            <button
+              onClick={() => setReplying((v) => !v)}
+              className="text-[11px] font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              {replying ? "Cancel" : "Reply"}
+            </button>
+            {canEdit && !editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-[11px] font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+          {replying && <CommentComposer postId={postId} parentId={comment.id} autoFocus />}
+        </div>
+      </div>
+
+      {children.length > 0 && depth < 3 && (
+        <div className="mt-2 space-y-2 border-l-2 border-border/50 pl-3">
+          {children.slice(0, 5).map((child) => (
+            <CommentNode
+              key={child.id}
+              comment={child}
+              depth={depth + 1}
+              childrenOf={childrenOf}
+              isQuestion={isQuestion}
+              postId={postId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CommentEditor({
+  commentId,
+  postId,
+  initialBody,
+  onCancel,
+  onSaved,
+}: {
+  commentId: string;
+  postId: string;
+  initialBody: string;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const updateComment = useUpdateComment();
+  const [text, setText] = useState(initialBody);
+
+  function save() {
+    const body = text.trim();
+    if (!body) return;
+    updateComment.mutate(
+      { commentId, postId, body },
+      {
+        onSuccess: onSaved,
+        onError: () => toast.error("Failed to update comment"),
+      },
+    );
+  }
+
+  return (
+    <div className="mt-1 flex flex-col gap-1.5">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, 2000))}
+        rows={3}
+        autoFocus
+        className="w-full resize-y rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={save}
+          disabled={!text.trim() || updateComment.isPending}
+          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+        >
+          {updateComment.isPending ? "..." : "Save"}
+        </button>
+        <button
+          onClick={onCancel}
+          className="rounded-lg border border-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CommentComposer({
+  postId,
+  parentId,
+  autoFocus,
+}: {
+  postId: string;
+  parentId?: string | null;
+  autoFocus?: boolean;
+}) {
   const addComment = useAddComment();
   const [newComment, setNewComment] = useState("");
 
@@ -551,7 +913,7 @@ function CommentThreadInline({
     const body = newComment.trim();
     if (!body) return;
     addComment.mutate(
-      { postId, body },
+      { postId, body, parentId },
       {
         onSuccess: () => setNewComment(""),
         onError: () => {},
@@ -560,69 +922,27 @@ function CommentThreadInline({
   }
 
   return (
-    <div className="mt-3 border-t border-border/60 pt-3">
-      <p className="text-xs text-muted-foreground">
-        {comments.length} comment{comments.length !== 1 ? "s" : ""}
-      </p>
-      <div className="mt-2 flex flex-col gap-2">
-        {comments.slice(0, 5).map((c) => {
-          const name = c.author?.display_name || c.author?.handle || "Unknown";
-          const initial = name.charAt(0).toUpperCase();
-          return (
-            <div
-              key={c.id}
-              className={`rounded-xl p-3 ${
-                c.is_best_answer
-                  ? "border border-brand-green/30 bg-brand-green/5"
-                  : "bg-background/40"
-              }`}
-            >
-              <div className="flex items-start gap-2.5">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-green/80 text-[11px] font-semibold text-background">
-                  {initial}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2">
-                    <span className="text-xs font-medium">{name}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {timeAgo(c.created_at)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-foreground/90">{c.body}</p>
-                  {isQuestion && c.is_best_answer && (
-                    <span className="mt-1 flex items-center gap-1 text-[11px] font-medium text-brand-green">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Best answer
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        <div className="flex items-start gap-2.5 mt-1">
-          <input
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submitComment();
-              }
-            }}
-            placeholder="Write a comment..."
-            className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-          />
-          <button
-            onClick={submitComment}
-            disabled={!newComment.trim() || addComment.isPending}
-            className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
-          >
-            {addComment.isPending ? "..." : "Reply"}
-          </button>
-        </div>
-      </div>
+    <div className="mt-1 flex items-start gap-2.5">
+      <input
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submitComment();
+          }
+        }}
+        placeholder={parentId ? "Write a reply..." : "Write a comment..."}
+        autoFocus={autoFocus}
+        className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+      />
+      <button
+        onClick={submitComment}
+        disabled={!newComment.trim() || addComment.isPending}
+        className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+      >
+        {addComment.isPending ? "..." : "Reply"}
+      </button>
     </div>
   );
 }

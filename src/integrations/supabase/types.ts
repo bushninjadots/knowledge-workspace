@@ -72,7 +72,13 @@ export type Database = {
           id: string
           joined_at: string
           progress: Json | null
+          review_status: string
+          reviewed_at: string | null
+          reviewer_note: string | null
           status: string
+          submission_note: string | null
+          submission_url: string | null
+          submitted_at: string | null
           user_id: string
         }
         Insert: {
@@ -80,7 +86,13 @@ export type Database = {
           id?: string
           joined_at?: string
           progress?: Json | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_note?: string | null
           status?: string
+          submission_note?: string | null
+          submission_url?: string | null
+          submitted_at?: string | null
           user_id: string
         }
         Update: {
@@ -88,7 +100,13 @@ export type Database = {
           id?: string
           joined_at?: string
           progress?: Json | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_note?: string | null
           status?: string
+          submission_note?: string | null
+          submission_url?: string | null
+          submitted_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -110,6 +128,7 @@ export type Database = {
           end_date: string | null
           id: string
           max_participants: number | null
+          pass_criteria: string | null
           skills: string[]
           start_date: string | null
           status: string
@@ -125,6 +144,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           max_participants?: number | null
+          pass_criteria?: string | null
           skills?: string[]
           start_date?: string | null
           status?: string
@@ -140,6 +160,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           max_participants?: number | null
+          pass_criteria?: string | null
           skills?: string[]
           start_date?: string | null
           status?: string
@@ -156,6 +177,7 @@ export type Database = {
           created_at: string
           id: string
           is_best_answer: boolean
+          parent_id: string | null
           post_id: string
         }
         Insert: {
@@ -164,6 +186,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id: string
         }
         Update: {
@@ -172,6 +195,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id?: string
         }
         Relationships: [
@@ -183,10 +207,53 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "comments_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_space_join_requests: {
+        Row: {
+          created_at: string
+          note: string | null
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_space_join_requests_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "community_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_space_join_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -234,7 +301,9 @@ export type Database = {
           created_by: string
           description: string
           id: string
+          join_type: string
           name: string
+          rules: string[]
           slug: string
           updated_at: string
         }
@@ -244,7 +313,9 @@ export type Database = {
           created_by: string
           description?: string
           id?: string
+          join_type?: string
           name: string
+          rules?: string[]
           slug: string
           updated_at?: string
         }
@@ -254,7 +325,9 @@ export type Database = {
           created_by?: string
           description?: string
           id?: string
+          join_type?: string
           name?: string
+          rules?: string[]
           slug?: string
           updated_at?: string
         }
@@ -868,11 +941,13 @@ export type Database = {
           community: string
           created_at: string
           feedback_tags: string[]
+          flair: string | null
           focus: string | null
           help_data: Json | null
           id: string
           images: string[]
           is_pinned: boolean
+          link_url: string | null
           poll_data: Json | null
           progress_data: Json | null
           project_data: Json | null
@@ -894,11 +969,13 @@ export type Database = {
           community?: string
           created_at?: string
           feedback_tags?: string[]
+          flair?: string | null
           focus?: string | null
           help_data?: Json | null
           id?: string
           images?: string[]
           is_pinned?: boolean
+          link_url?: string | null
           poll_data?: Json | null
           progress_data?: Json | null
           project_data?: Json | null
@@ -920,11 +997,13 @@ export type Database = {
           community?: string
           created_at?: string
           feedback_tags?: string[]
+          flair?: string | null
           focus?: string | null
           help_data?: Json | null
           id?: string
           images?: string[]
           is_pinned?: boolean
+          link_url?: string | null
           poll_data?: Json | null
           progress_data?: Json | null
           project_data?: Json | null
@@ -2130,6 +2209,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_space_join_request: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
       award_earned_achievements: {
         Args: never
         Returns: Database["public"]["Enums"]["achievement_type"][]
@@ -2184,6 +2267,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      reject_space_join_request: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       achievement_type:
@@ -2201,6 +2288,7 @@ export type Database = {
         | "reliable_collaborator"
         | "helped_ten_people"
         | "learner_journey"
+        | "challenge_winner"
       availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
@@ -2401,6 +2489,7 @@ export const Constants = {
         "reliable_collaborator",
         "helped_ten_people",
         "learner_journey",
+        "challenge_winner",
       ],
       availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [

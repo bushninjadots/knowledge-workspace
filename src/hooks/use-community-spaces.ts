@@ -6,6 +6,7 @@ const sb = supabase as any;
 export type SpaceMemberRole = "owner" | "moderator" | "member";
 
 export type SpaceVisibility = "public" | "private";
+export type SpaceJoinType = "auto" | "review";
 
 export type CommunitySpace = {
   id: string;
@@ -14,13 +15,31 @@ export type CommunitySpace = {
   description: string;
   avatar_url: string | null;
   visibility: SpaceVisibility;
+  join_type: SpaceJoinType;
+  rules: string[];
   created_by: string;
   created_at: string;
   updated_at: string;
   member_count?: number;
   is_member?: boolean;
   my_role?: SpaceMemberRole | null;
+  /** True when the current user has a pending join request (review-only spaces). */
+  has_pending_request?: boolean;
 };
+
+export type JoinRequestRow = {
+  space_id: string;
+  user_id: string;
+  note: string | null;
+  created_at: string;
+  profile?: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  };
+};
+
+const SPACE_JOIN_REQUESTS_KEY = (spaceId: string) => ["space-join-requests", spaceId] as const;
 
 export type SpaceMember = {
   space_id: string;
@@ -73,15 +92,26 @@ export function useCommunitySpaces() {
       }
 
       const myMembershipMap = new Map<string, SpaceMemberRole>();
+      const myPendingSet = new Set<string>();
       if (me.user) {
-        const { data: myMemberships } = await sb
-          .from("community_space_members")
-          .select("space_id, role")
-          .eq("user_id", me.user.id)
-          .in("space_id", spaceIds);
+        const [myMemberships, myRequests] = await Promise.all([
+          sb
+            .from("community_space_members")
+            .select("space_id, role")
+            .eq("user_id", me.user.id)
+            .in("space_id", spaceIds),
+          sb
+            .from("community_space_join_requests")
+            .select("space_id")
+            .eq("user_id", me.user.id)
+            .in("space_id", spaceIds),
+        ]);
 
-        for (const row of myMemberships ?? []) {
+        for (const row of myMemberships.data ?? []) {
           myMembershipMap.set(row.space_id, row.role as SpaceMemberRole);
+        }
+        for (const row of myRequests.data ?? []) {
+          myPendingSet.add(row.space_id);
         }
       }
 
@@ -91,6 +121,7 @@ export function useCommunitySpaces() {
           member_count: countMap.get(s.id) ?? 0,
           is_member: myMembershipMap.has(s.id),
           my_role: myMembershipMap.get(s.id) ?? null,
+          has_pending_request: myPendingSet.has(s.id),
         }),
       );
     },
@@ -118,14 +149,24 @@ export function useCommunitySpace(slug: string) {
         .eq("space_id", space.id);
 
       let myRole: SpaceMemberRole | null = null;
+      let hasPendingRequest = false;
       if (me.user) {
-        const { data: membership } = await sb
-          .from("community_space_members")
-          .select("role")
-          .eq("space_id", space.id)
-          .eq("user_id", me.user.id)
-          .maybeSingle();
-        myRole = (membership?.role as SpaceMemberRole) ?? null;
+        const [membership, myRequest] = await Promise.all([
+          sb
+            .from("community_space_members")
+            .select("role")
+            .eq("space_id", space.id)
+            .eq("user_id", me.user.id)
+            .maybeSingle(),
+          sb
+            .from("community_space_join_requests")
+            .select("space_id")
+            .eq("space_id", space.id)
+            .eq("user_id", me.user.id)
+            .maybeSingle(),
+        ]);
+        myRole = (membership.data?.role as SpaceMemberRole) ?? null;
+        hasPendingRequest = !!myRequest.data;
       }
 
       return {
@@ -133,6 +174,7 @@ export function useCommunitySpace(slug: string) {
         member_count: count ?? 0,
         is_member: !!myRole,
         my_role: myRole,
+        has_pending_request: hasPendingRequest,
       } as CommunitySpace;
     },
     staleTime: 30_000,
@@ -154,7 +196,12 @@ function slugify(name: string): string {
 export function useCreateSpace() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; description: string }) => {
+    mutationFn: async (input: {
+      name: string;
+      description: string;
+      join_type?: SpaceJoinType;
+      rules?: string[];
+    }) => {
       const { data: me } = await supabase.auth.getUser();
       if (!me.user) throw new Error("Not authenticated");
 
@@ -173,6 +220,8 @@ export function useCreateSpace() {
           name: input.name,
           slug,
           description: input.description,
+          join_type: input.join_type ?? "auto",
+          rules: input.rules ?? [],
           created_by: me.user.id,
         })
         .select()
@@ -202,6 +251,8 @@ export function useUpdateSpace() {
       name?: string;
       description?: string;
       visibility?: SpaceVisibility;
+      join_type?: SpaceJoinType;
+      rules?: string[];
     }) => {
       const { id, ...updates } = input;
       const { error } = await sb
@@ -255,6 +306,133 @@ export function useJoinSpace() {
       }
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
+
+// ============================================================
+// Join requests (review-type spaces)
+// ============================================================
+
+export function useSpaceJoinRequests(spaceId: string) {
+  return useQuery({
+    queryKey: SPACE_JOIN_REQUESTS_KEY(spaceId),
+    queryFn: async () => {
+      const { data: requests, error } = await sb
+        .from("community_space_join_requests")
+        .select("space_id, user_id, note, created_at")
+        .eq("space_id", spaceId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as JoinRequestRow[];
+        }
+        throw error;
+      }
+
+      const userIds = (requests ?? []).map((r: JoinRequestRow) => r.user_id);
+      const { data: profiles } =
+        userIds.length > 0
+          ? await supabase
+              .from("profiles")
+              .select("id, display_name, handle, avatar_url")
+              .in("id", userIds)
+          : { data: [] };
+
+      const profileMap = new Map<string, Record<string, unknown>>(
+        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return (requests ?? []).map(
+        (r: JoinRequestRow): JoinRequestRow => ({
+          ...r,
+          profile: (profileMap.get(r.user_id) as JoinRequestRow["profile"]) ?? {
+            display_name: "Unknown",
+            handle: "unknown",
+            avatar_url: null,
+          },
+        }),
+      );
+    },
+    staleTime: 15_000,
+    enabled: !!spaceId,
+  });
+}
+
+export function useRequestToJoinSpace() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { spaceId: string; note?: string }) => {
+      const { data: me } = await supabase.auth.getUser();
+      if (!me.user) throw new Error("Not authenticated");
+
+      const { error } = await sb.from("community_space_join_requests").insert({
+        space_id: input.spaceId,
+        user_id: me.user.id,
+        note: input.note?.trim() || null,
+      });
+      if (error) {
+        if (error.code === "23505") return; // already requested
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
+
+export function useCancelJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (spaceId: string) => {
+      const { data: me } = await supabase.auth.getUser();
+      if (!me.user) throw new Error("Not authenticated");
+      const { error } = await sb
+        .from("community_space_join_requests")
+        .delete()
+        .eq("space_id", spaceId)
+        .eq("user_id", me.user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
+
+export function useApproveJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { spaceId: string; userId: string }) => {
+      const { error } = await sb.rpc("approve_space_join_request", {
+        p_space_id: input.spaceId,
+        p_user_id: input.userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_JOIN_REQUESTS_KEY(variables.spaceId) });
+      qc.invalidateQueries({ queryKey: SPACE_MEMBERS_KEY(variables.spaceId) });
+      qc.invalidateQueries({ queryKey: SPACES_KEY });
+    },
+  });
+}
+
+export function useRejectJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { spaceId: string; userId: string }) => {
+      const { error } = await sb.rpc("reject_space_join_request", {
+        p_space_id: input.spaceId,
+        p_user_id: input.userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: SPACE_JOIN_REQUESTS_KEY(variables.spaceId) });
       qc.invalidateQueries({ queryKey: SPACES_KEY });
     },
   });
@@ -363,6 +541,231 @@ export function useRemoveMember() {
       qc.invalidateQueries({ queryKey: SPACE_MEMBERS_KEY(variables.spaceId) });
       qc.invalidateQueries({ queryKey: SPACES_KEY });
     },
+  });
+}
+
+// ============================================================
+// Post reports (flag for moderators)
+// ============================================================
+
+export type PostReportRow = {
+  id: string;
+  post_id: string;
+  reporter_id: string;
+  reason: string;
+  details: string | null;
+  status: "open" | "resolved" | "dismissed";
+  created_at: string;
+  reporter?: {
+    display_name: string | null;
+    handle: string | null;
+    avatar_url: string | null;
+  };
+  post?: {
+    title: string | null;
+    space_id: string | null;
+  };
+};
+
+const POST_REPORTS_KEY = ["post-reports"] as const;
+const SPACE_POST_REPORTS_KEY = (spaceId: string) => ["space-post-reports", spaceId] as const;
+const MODERATION_LOG_KEY = (spaceId: string) => ["moderation-log", spaceId] as const;
+
+export function usePostReports() {
+  return useQuery({
+    queryKey: POST_REPORTS_KEY,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("post_reports")
+        .select("id, post_id, reporter_id, reason, details, status, created_at")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as PostReportRow[];
+        }
+        throw error;
+      }
+
+      const reports = (data ?? []) as PostReportRow[];
+      const reporterIds = [...new Set(reports.map((r) => r.reporter_id))];
+      const postIds = [...new Set(reports.map((r) => r.post_id))];
+      const [{ data: reporters }, { data: posts }] = await Promise.all([
+        reporterIds.length > 0
+          ? supabase
+              .from("profiles")
+              .select("id, display_name, handle, avatar_url")
+              .in("id", reporterIds)
+          : { data: [] },
+        postIds.length > 0
+          ? supabase.from("posts").select("id, title, space_id").in("id", postIds)
+          : { data: [] },
+      ]);
+
+      const reporterMap = new Map(
+        (reporters ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+      const postMap = new Map(
+        (posts ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return reports.map(
+        (r): PostReportRow => ({
+          ...r,
+          reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
+            display_name: "Unknown",
+            handle: "user",
+            avatar_url: null,
+          },
+          post: (postMap.get(r.post_id) as PostReportRow["post"]) ?? {
+            title: null,
+            space_id: null,
+          },
+        }),
+      );
+    },
+    staleTime: 15_000,
+  });
+}
+
+export function useSpacePostReports(spaceId: string) {
+  return useQuery({
+    queryKey: SPACE_POST_REPORTS_KEY(spaceId),
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("post_reports")
+        .select("id, post_id, reporter_id, reason, details, status, created_at")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as PostReportRow[];
+        }
+        throw error;
+      }
+
+      const reports = (data ?? []) as PostReportRow[];
+      const postIds = [...new Set(reports.map((r) => r.post_id))];
+      const { data: posts } = await supabase
+        .from("posts")
+        .select("id, title, space_id")
+        .in("id", postIds);
+      const postMap = new Map(
+        (posts ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+      const inSpace = reports.filter((r) => postMap.get(r.post_id)?.space_id === spaceId);
+
+      const reporterIds = [...new Set(inSpace.map((r) => r.reporter_id))];
+      const { data: reporters } =
+        reporterIds.length > 0
+          ? await supabase
+              .from("profiles")
+              .select("id, display_name, handle, avatar_url")
+              .in("id", reporterIds)
+          : { data: [] };
+      const reporterMap = new Map(
+        (reporters ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return inSpace.map(
+        (r): PostReportRow => ({
+          ...r,
+          reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
+            display_name: "Unknown",
+            handle: "user",
+            avatar_url: null,
+          },
+          post: (postMap.get(r.post_id) as PostReportRow["post"]) ?? {
+            title: null,
+            space_id: null,
+          },
+        }),
+      );
+    },
+    staleTime: 15_000,
+    enabled: !!spaceId,
+  });
+}
+
+export function useUpdateReportStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { reportId: string; status: "resolved" | "dismissed" }) => {
+      const { error } = await sb
+        .from("post_reports")
+        .update({ status: input.status })
+        .eq("id", input.reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POST_REPORTS_KEY });
+      qc.invalidateQueries({ queryKey: ["space-post-reports"] });
+    },
+  });
+}
+
+// ============================================================
+// Moderation log
+// ============================================================
+
+export type ModerationLogRow = {
+  id: string;
+  space_id: string;
+  post_id: string | null;
+  post_title: string | null;
+  actor_id: string | null;
+  action: "remove_post" | "remove_share";
+  created_at: string;
+  actor?: {
+    display_name: string | null;
+    handle: string | null;
+  };
+};
+
+export function useModerationLog(spaceId: string) {
+  return useQuery({
+    queryKey: MODERATION_LOG_KEY(spaceId),
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("moderation_log")
+        .select("id, space_id, post_id, post_title, actor_id, action, created_at")
+        .eq("space_id", spaceId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as ModerationLogRow[];
+        }
+        throw error;
+      }
+
+      const rows = (data ?? []) as ModerationLogRow[];
+      const actorIds = [...new Set(rows.map((r) => r.actor_id).filter(Boolean))] as string[];
+      const { data: actors } =
+        actorIds.length > 0
+          ? await supabase.from("profiles").select("id, display_name, handle").in("id", actorIds)
+          : { data: [] };
+      const actorMap = new Map(
+        (actors ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      );
+
+      return rows.map(
+        (r): ModerationLogRow => ({
+          ...r,
+          actor: (actorMap.get(r.actor_id ?? "") as ModerationLogRow["actor"]) ?? {
+            display_name: "Unknown",
+            handle: "user",
+          },
+        }),
+      );
+    },
+    staleTime: 15_000,
+    enabled: !!spaceId,
   });
 }
 

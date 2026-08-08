@@ -41,6 +41,7 @@ export function CreateChallengeDialog({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
+  const [passCriteria, setPassCriteria] = useState("");
   const create = useCreateChallenge();
 
   const handleSubmit = () => {
@@ -68,6 +69,7 @@ export function CreateChallengeDialog({
         start_date: startDate || null,
         end_date: endDate || null,
         max_participants: maxParticipants ? parseInt(maxParticipants) : null,
+        pass_criteria: passCriteria.trim() || null,
       },
       {
         onSuccess: () => {
@@ -79,6 +81,7 @@ export function CreateChallengeDialog({
           setStartDate("");
           setEndDate("");
           setMaxParticipants("");
+          setPassCriteria("");
         },
         onError: (err) => toast.error(err.message || "Failed to create challenge"),
       },
@@ -145,6 +148,12 @@ export function CreateChallengeDialog({
             min="1"
             value={maxParticipants}
             onChange={(e) => setMaxParticipants(e.target.value)}
+          />
+          <Textarea
+            placeholder="Pass criteria (optional) — what must a submission include to pass? e.g. working demo + 3 commits + short write-up"
+            value={passCriteria}
+            onChange={(e) => setPassCriteria(e.target.value)}
+            rows={2}
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>

@@ -27,6 +27,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
   index,
   highlighted,
   skillOverlap,
+  canModerate,
 }: {
   post: PostWithAuthor;
   saved: boolean;
@@ -42,6 +43,8 @@ const PostCardWithComments = memo(function PostCardWithComments({
   index: number;
   highlighted?: boolean;
   skillOverlap?: number;
+  /** True when the current user moderates this post's space. */
+  canModerate?: boolean;
 }) {
   const { data: comments = [] } = useComments(showComments ? post.id : "");
 
@@ -64,6 +67,7 @@ const PostCardWithComments = memo(function PostCardWithComments({
         onToggleAction={(action) => onToggleAction(post.id, action)}
         highlighted={highlighted}
         skillOverlap={skillOverlap}
+        canModerate={canModerate}
       />
     </div>
   );
@@ -253,6 +257,13 @@ export const CommunityFeedList = memo(function CommunityFeedList({
           sortMode === "recommended"
             ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
             : undefined;
+        // Native space posts can be removed by the space's owners/moderators;
+        // shared posts belong to another space and are handled via unshare.
+        const isShared = (post as { is_shared?: boolean }).is_shared === true;
+        const canModerate =
+          !!activeSpace &&
+          !isShared &&
+          (activeSpace.my_role === "owner" || activeSpace.my_role === "moderator");
         return (
           <PostCardWithComments
             key={post.id}
@@ -269,6 +280,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
             index={index}
             highlighted={post.id === highlightedPostId}
             skillOverlap={overlap}
+            canModerate={canModerate}
           />
         );
       })}

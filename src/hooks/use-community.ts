@@ -88,6 +88,10 @@ export type PostRow = {
   images: string[];
   space_id: string | null;
   is_pinned: boolean;
+  /** Colored category tag shown next to the type (Reddit-style flair). */
+  flair: string | null;
+  /** When set, the post is a link post — the body links out to this URL. */
+  link_url: string | null;
   created_at: string;
   updated_at: string;
   // Joined from profiles
@@ -106,6 +110,8 @@ export type CommentRow = {
   author_id: string;
   body: string;
   is_best_answer: boolean;
+  /** When set, this comment is a reply to another comment (nested thread). */
+  parent_id: string | null;
   created_at: string;
   author?: {
     display_name: string | null;
@@ -149,6 +155,8 @@ export type CreatePostInput = {
   project_snapshot?: ProjectSnapshot | null;
   feedback_tags?: string[];
   space_id?: string | null;
+  flair?: string | null;
+  link_url?: string | null;
 };
 
 export type UpdatePostInput = {
@@ -159,6 +167,8 @@ export type UpdatePostInput = {
   community?: string;
   skills?: string[];
   images?: string[];
+  flair?: string | null;
+  link_url?: string | null;
 };
 
 // ============================================================
@@ -290,6 +300,8 @@ export function useCreatePost() {
           project_snapshot: input.project_snapshot ?? null,
           feedback_tags: input.feedback_tags ?? [],
           space_id: input.space_id ?? null,
+          flair: input.flair ?? null,
+          link_url: input.link_url ?? null,
         })
         .select()
         .single();
@@ -363,6 +375,7 @@ export function useComments(postId: string) {
         author_id: string;
         body: string;
         is_best_answer: boolean;
+        parent_id: string | null;
         created_at: string;
       }[];
 
@@ -395,7 +408,7 @@ export function useComments(postId: string) {
 export function useAddComment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { postId: string; body: string }) => {
+    mutationFn: async (input: { postId: string; body: string; parentId?: string | null }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -407,6 +420,7 @@ export function useAddComment() {
           post_id: input.postId,
           author_id: user.id,
           body: input.body,
+          parent_id: input.parentId ?? null,
         })
         .select()
         .single();
@@ -425,6 +439,22 @@ export function useDeleteComment() {
   return useMutation({
     mutationFn: async (input: { commentId: string; postId: string }) => {
       const { error } = await sb.from("comments").delete().eq("id", input.commentId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
+    },
+  });
+}
+
+export function useUpdateComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { commentId: string; postId: string; body: string }) => {
+      const { error } = await sb
+        .from("comments")
+        .update({ body: input.body })
+        .eq("id", input.commentId);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -494,6 +524,33 @@ export function useTogglePostAction() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+// ============================================================
+// Post reports (flag for space moderators)
+// ============================================================
+
+export function useReportPost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { postId: string; reason: string; details?: string }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await sb.from("post_reports").insert({
+        post_id: input.postId,
+        reporter_id: user.id,
+        reason: input.reason,
+        details: input.details?.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["post-reports"] });
     },
   });
 }

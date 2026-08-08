@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { DISCOVERY_FILTERS, type DiscoveryFocus } from "@/lib/community-data";
 import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
 
-export type SortMode = "latest" | "helpful" | "offers" | "recommended";
+export type SortMode = "latest" | "hot" | "helpful" | "offers" | "recommended";
 
 const SORT_OPTIONS: { label: string; value: SortMode }[] = [
   { label: "Latest", value: "latest" },
+  { label: "Hot", value: "hot" },
   { label: "Recommended", value: "recommended" },
   { label: "Most helpful", value: "helpful" },
   { label: "Most offers", value: "offers" },

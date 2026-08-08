@@ -1,11 +1,25 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
-import { Trophy, Users, Calendar, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import {
+  Trophy,
+  Users,
+  Calendar,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  ListChecks,
+  Hourglass,
+  XCircle,
+  FileText,
+  Award,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useJoinChallenge, useLeaveChallenge, type ChallengeRow } from "@/hooks/use-challenges";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 const TYPE_COLORS: Record<string, string> = {
   skill: "bg-brand-purple/10 text-brand-purple border-brand-purple/20",
@@ -94,6 +108,15 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
           </div>
         )}
 
+        {challenge.pass_criteria && (
+          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <ListChecks className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="line-clamp-2" title={challenge.pass_criteria}>
+              Pass: {challenge.pass_criteria}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
           <div className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
@@ -114,18 +137,22 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
       <CardFooter className="p-5 pt-0 flex items-center justify-between gap-3 border-t border-border/30 mt-2">
         <div className="flex items-center gap-2">
           {challenge.is_joined ? (
-            <Badge
-              variant="outline"
-              className="gap-1 border-brand-green/30 text-brand-green bg-brand-green/10 text-xs"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" /> Joined
-            </Badge>
+            <ReviewStatusBadge status={challenge.my_participation?.review_status} />
           ) : (
             <span className="text-xs text-muted-foreground">
               Created by {challenge.creator?.display_name || "Community Member"}
             </span>
           )}
         </div>
+
+        {challenge.is_joined &&
+          challenge.my_participation?.review_status === "passed" &&
+          challenge.my_participation?.submission_url && (
+            <PassedSubmissionLink
+              url={challenge.my_participation.submission_url}
+              reviewedAt={challenge.my_participation.reviewed_at}
+            />
+          )}
 
         <div className="flex items-center gap-2">
           <Button
@@ -152,5 +179,74 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
         </div>
       </CardFooter>
     </Card>
+  );
+}
+
+function PassedSubmissionLink({ url, reviewedAt }: { url: string; reviewedAt?: string | null }) {
+  const isHttp = /^https?:\/\//i.test(url ?? "");
+  const { data: signedUrl } = useSignedStorageUrl("challenge-submissions", isHttp ? null : url);
+  const href = isHttp ? url : (signedUrl ?? "#");
+  const label = isHttp ? "View submission" : (url?.split("/").pop() ?? "Download submission");
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/40 px-2.5 py-1 text-[11px] text-foreground transition-colors hover:border-primary/40"
+      >
+        <FileText className="h-3 w-3" />
+        {label}
+        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+      </a>
+      {reviewedAt && (
+        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Award className="h-3 w-3 text-trust" />
+          Passed {new Date(reviewedAt).toLocaleDateString()}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ReviewStatusBadge({ status }: { status?: string | null }) {
+  if (status === "passed") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-brand-green/30 text-brand-green bg-brand-green/10 text-xs"
+      >
+        <CheckCircle2 className="h-3.5 w-3.5" /> Passed
+      </Badge>
+    );
+  }
+  if (status === "submitted") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-teaching/30 text-teaching bg-teaching/10 text-xs"
+      >
+        <Hourglass className="h-3.5 w-3.5" /> Under review
+      </Badge>
+    );
+  }
+  if (status === "rejected") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-destructive/30 text-destructive bg-destructive/10 text-xs"
+      >
+        <XCircle className="h-3.5 w-3.5" /> Needs revision
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="outline"
+      className="gap-1 border-brand-green/30 text-brand-green bg-brand-green/10 text-xs"
+    >
+      <CheckCircle2 className="h-3.5 w-3.5" /> Joined
+    </Badge>
   );
 }

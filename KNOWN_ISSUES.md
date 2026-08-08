@@ -103,6 +103,34 @@ supabase db reset && supabase test db
 
 **Frontend that depends on these:** signed-URL downloads/previews in `project-files.tsx` + `project-files-explorer.tsx`, the Public/Private toggle in the project dialog, the private badge on the project header, the skill-page descriptions/tools, and the `GalleryThumb` signed gallery renderer.
 
+> **✅ Prod push status (2026-08-08):** RESOLVED. The drift was a single missing object set: migration `20260704070738` was recorded as applied on remote but its `messages` table, `connections.intro_message` column, and `trg_log_message()` function never landed. Added `20260804074935_repair_missing_messages.sql` (idempotent recreation, timestamped just before the failing consolidated migration), then `supabase db push` applied **all 18 pending migrations** (04074935 → 08230000) cleanly. `supabase migration list` shows 0 local-only migrations — local and remote are fully in sync, verified via `supabase db query --linked` (all tables + migration tracker tail present).
+
+---
+
+## 7b. Pending production migrations (BATCH 2 — 2026-08-08)
+
+Validated locally via `supabase db reset` + `supabase test db` (RLS suite PASS) + typecheck + unit tests + build.
+Apply after the drift in #7 is resolved:
+
+| Migration | What it does | Why it matters |
+|---|---|---|
+| `20260808190000_challenge_review_flow.sql` | Challenge submissions: `submission_url/note`, `submitted_at`, `review_status` (`none/submitted/passed/rejected`), `reviewer_note`, `reviewed_at` on `challenge_participants`; creator-only update policy; reputation + `challenge_winner` badge gated on review **pass** (replaces instant self-complete award); notify-creator / notify-participant triggers; private `challenge-submissions` storage bucket with participant-upload / creator-read policies. | **Without it, the challenge flow is unverified:** anyone can self-mark "completed" and farm +15 reputation with no proof. |
+| `20260808200000_community_join_and_posts.sql` | `community_spaces.join_type` (`auto`/`review`) + `rules[]`; `community_space_join_requests` table + RLS + `approve_space_join_request` / `reject_space_join_request` RPCs; `posts.flair` + `posts.link_url`. | Powers request-to-join communities (with owner approval) and Reddit-style flairs/link posts. |
+| `20260808210000_skill_catalog_growth.sql` | Expands the skill catalog further (Health, Finance, Education, Trades, more) with definitions + tools. | Keeps DiscoverSkills and `/skills/:slug` rich and role-accurate. |
+
+**Frontend that depends on these:** challenge detail page (submit-for-review + creator review panel), SpaceHeader/CommunityCard join-type buttons, space settings (join type, rules, pending-request approvals), composer (space picker, link field, flair picker), PostCard (flair badge + link card).
+
+---
+
+## 7c. Pending production migrations (BATCH 3 — 2026-08-08)
+
+> **✅ All pushed (2026-08-08).** After the drift repair in #7 unblocked the pipeline, these two were applied to prod and verified:
+
+| Migration | What it does | Why it matters |
+|---|---|---|
+| `20260808220000_join_request_notifications.sql` | Approve/reject join-request RPCs now send the requester a notification (`join_approved` / `join_rejected`) via `insert_notification`. | Requesters learn the outcome without polling; closes the notification asymmetry vs challenges. |
+| `20260808230000_challenge_pass_criteria.sql` | Adds `challenges.pass_criteria` (text). | Creators state the rubric up front; shown to participants pre-submit and to the creator during review. |
+
 ---
 
 ## 8. Storage paths rendered as raw `<img src>` (RESOLVED)

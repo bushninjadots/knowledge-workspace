@@ -1,10 +1,12 @@
-import { Users, Settings, Lock, Check } from "lucide-react";
+import { Users, Settings, Lock, Check, UserPlus, Hourglass } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useJoinSpace,
   useLeaveSpace,
+  useRequestToJoinSpace,
+  useCancelJoinRequest,
   type CommunitySpace,
   type SpaceMemberRole,
 } from "@/hooks/use-community-spaces";
@@ -21,6 +23,8 @@ export function SpaceHeader({
 }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
+  const requestJoin = useRequestToJoinSpace();
+  const cancelRequest = useCancelJoinRequest();
   const { data: avatarUrl } = useSignedStorageUrl("avatars", space.avatar_url);
 
   function handleToggleMembership() {
@@ -29,6 +33,19 @@ export function SpaceHeader({
         onSuccess: () => toast.success(`Left ${space.name}`),
         onError: () => toast.error("Failed to leave"),
       });
+    } else if (space.has_pending_request) {
+      cancelRequest.mutate(space.id, {
+        onSuccess: () => toast.success("Request cancelled"),
+        onError: () => toast.error("Failed to cancel request"),
+      });
+    } else if (space.join_type === "review") {
+      requestJoin.mutate(
+        { spaceId: space.id },
+        {
+          onSuccess: () => toast.success("Join request sent — an owner will review it"),
+          onError: (err) => toast.error(`Failed to request: ${(err as Error).message}`),
+        },
+      );
     } else {
       joinSpace.mutate(space.id, {
         onSuccess: () => toast.success(`Joined ${space.name}!`),
@@ -36,6 +53,17 @@ export function SpaceHeader({
       });
     }
   }
+
+  const joinPending =
+    joinSpace.isPending || leaveSpace.isPending || requestJoin.isPending || cancelRequest.isPending;
+  const buttonLabel = space.is_member
+    ? "Joined"
+    : space.has_pending_request
+      ? "Requested"
+      : space.join_type === "review"
+        ? "Request to join"
+        : "Join";
+  const ButtonIcon = space.is_member ? Check : space.has_pending_request ? Hourglass : UserPlus;
 
   const initial = space.name.charAt(0).toUpperCase();
   const canManage = myRole === "owner" || myRole === "moderator";
@@ -108,15 +136,48 @@ export function SpaceHeader({
           )}
           <Button
             size="sm"
-            variant={space.is_member ? "outline" : "default"}
+            variant={
+              space.is_member || space.has_pending_request ? "outline" : "default"
+            }
             className="rounded-full"
             onClick={handleToggleMembership}
-            disabled={joinSpace.isPending || leaveSpace.isPending}
+            disabled={joinPending}
+            title={
+              space.join_type === "review" && !space.is_member
+                ? "Owner approval required to join"
+                : undefined
+            }
           >
-            {space.is_member ? "Joined" : "Join"}
+            <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
+            {buttonLabel}
           </Button>
         </div>
       </div>
+
+      {space.join_type === "review" && !space.is_member && !space.has_pending_request && (
+        <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Hourglass className="h-3 w-3" />
+          Owner approval required — requests are reviewed before you can post.
+        </p>
+      )}
+
+      {space.rules && space.rules.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border/60 bg-background/40 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Community rules
+          </p>
+          <ol className="mt-2 space-y-1.5">
+            {space.rules.map((rule, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-semibold text-muted-foreground">
+                  {i + 1}
+                </span>
+                {rule}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {space.description && (
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">

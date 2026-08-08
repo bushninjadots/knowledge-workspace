@@ -92,3 +92,42 @@ export const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "open_role", label: "Post Open Role" },
   { type: "poll", label: "Create Poll" },
 ];
+
+// ============================================================
+// Post flairs (Reddit-style colored tags)
+// ============================================================
+
+export const POST_FLAIRS: { label: string; value: string }[] = [
+  { label: "New", value: "New" },
+  { label: "Meta", value: "Meta" },
+  { label: "News", value: "News" },
+  { label: "Tip", value: "Tip" },
+  { label: "Question", value: "Question" },
+  { label: "Tutorial", value: "Tutorial" },
+  { label: "Open Source", value: "Open Source" },
+  { label: "Career", value: "Career" },
+  { label: "Design", value: "Design" },
+  { label: "Dev", value: "Dev" },
+  { label: "Growth", value: "Growth" },
+  { label: "Discussion", value: "Discussion" },
+];
+
+const FLAIR_PALETTE = [
+  "bg-primary/10 text-primary border-primary/30",
+  "bg-brand-purple/10 text-brand-purple border-brand-purple/30",
+  "bg-brand-green/10 text-brand-green border-brand-green/30",
+  "bg-learning/10 text-learning border-learning/30",
+  "bg-trust/10 text-trust border-trust/30",
+  "bg-ai/10 text-ai border-ai/30",
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/** Deterministic chip classes for a flair value (stable across renders). */
+export function flairClasses(flair: string): string {
+  return FLAIR_PALETTE[hashString(flair.toLowerCase()) % FLAIR_PALETTE.length];
+}
