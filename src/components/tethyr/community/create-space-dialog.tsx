@@ -152,7 +152,12 @@ export function CreateSpaceDialog({
                   }
                 }}
               />
-              <Button type="button" variant="outline" onClick={addRule} disabled={!ruleInput.trim()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addRule}
+                disabled={!ruleInput.trim()}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>

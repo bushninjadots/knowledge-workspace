@@ -252,16 +252,14 @@ export function useProjectUpdates(projectId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return updates.map(
-        (u): ProjectUpdateRow => ({
-          ...u,
-          author: (profileMap.get(u.author_id) as unknown as ProjectUpdateRow["author"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-        }),
-      );
+      return updates.map((u): ProjectUpdateRow => ({
+        ...u,
+        author: (profileMap.get(u.author_id) as unknown as ProjectUpdateRow["author"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+      }));
     },
     enabled: !!projectId,
   });
@@ -384,17 +382,15 @@ export function useDiscussions(projectId: string) {
         countMap.set(r.discussion_id, (countMap.get(r.discussion_id) ?? 0) + 1);
       }
 
-      return discussions.map(
-        (d): DiscussionRow => ({
-          ...d,
-          author: (profileMap.get(d.author_id) as unknown as DiscussionRow["author"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-          reply_count: countMap.get(d.id) ?? 0,
-        }),
-      );
+      return discussions.map((d): DiscussionRow => ({
+        ...d,
+        author: (profileMap.get(d.author_id) as unknown as DiscussionRow["author"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+        reply_count: countMap.get(d.id) ?? 0,
+      }));
     },
     enabled: !!projectId,
   });
@@ -476,16 +472,14 @@ export function useDiscussionReplies(discussionId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return replies.map(
-        (r): DiscussionReplyRow => ({
-          ...r,
-          author: (profileMap.get(r.author_id) as unknown as DiscussionReplyRow["author"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-        }),
-      );
+      return replies.map((r): DiscussionReplyRow => ({
+        ...r,
+        author: (profileMap.get(r.author_id) as unknown as DiscussionReplyRow["author"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+      }));
     },
     enabled: !!discussionId,
   });
@@ -626,14 +620,12 @@ export function useProjectActivity(projectId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return rows.map(
-        (r): ProjectActivityRow => ({
-          ...r,
-          actor: r.actor_id
-            ? ((profileMap.get(r.actor_id) as unknown as ProjectActivityRow["actor"]) ?? null)
-            : null,
-        }),
-      );
+      return rows.map((r): ProjectActivityRow => ({
+        ...r,
+        actor: r.actor_id
+          ? ((profileMap.get(r.actor_id) as unknown as ProjectActivityRow["actor"]) ?? null)
+          : null,
+      }));
     },
     enabled: !!projectId,
   });

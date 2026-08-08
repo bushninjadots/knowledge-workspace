@@ -7,8 +7,7 @@ export const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "gif"] as const
 export const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
 export type ImageValidation =
-  | { ok: true; ext: string; contentType: string }
-  | { ok: false; error: string };
+  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateImageFile(file: File): ImageValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
@@ -59,8 +58,7 @@ export const ALLOWED_PROOF_MIMES = [
 ] as const;
 
 export type ProofFileValidation =
-  | { ok: true; ext: string; contentType: string }
-  | { ok: false; error: string };
+  { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateProofFile(file: File): ProofFileValidation {
   const rawExt = (file.name.split(".").pop() ?? "").toLowerCase();
@@ -113,26 +111,130 @@ export function safeRedirectPath(redirect: string | null | undefined): string | 
 
 const LIBRARY_FILE_EXTS = [
   // Images
-  "jpg", "jpeg", "png", "webp", "gif", "svg", "bmp", "tiff", "tif", "ico", "heic", "heif",
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+  "svg",
+  "bmp",
+  "tiff",
+  "tif",
+  "ico",
+  "heic",
+  "heif",
   // Raw / design files
-  "psd", "ai", "eps", "sketch", "fig", "xd", "indd", "afdesign", "afphoto",
+  "psd",
+  "ai",
+  "eps",
+  "sketch",
+  "fig",
+  "xd",
+  "indd",
+  "afdesign",
+  "afphoto",
   // Documents
-  "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "odt", "ods", "odp", "pages", "numbers", "key",
+  "pdf",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+  "odt",
+  "ods",
+  "odp",
+  "pages",
+  "numbers",
+  "key",
   // Text & code
-  "txt", "md", "csv", "json", "xml", "yaml", "yml", "toml", "rtf", "tex", "log",
-  "html", "css", "scss", "less", "js", "jsx", "ts", "tsx", "py", "rb", "go", "rs", "java", "kt", "swift", "c", "cpp", "h", "sh", "bash", "zsh", "sql", "r", "lua", "php",
+  "txt",
+  "md",
+  "csv",
+  "json",
+  "xml",
+  "yaml",
+  "yml",
+  "toml",
+  "rtf",
+  "tex",
+  "log",
+  "html",
+  "css",
+  "scss",
+  "less",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "py",
+  "rb",
+  "go",
+  "rs",
+  "java",
+  "kt",
+  "swift",
+  "c",
+  "cpp",
+  "h",
+  "sh",
+  "bash",
+  "zsh",
+  "sql",
+  "r",
+  "lua",
+  "php",
   // Video
-  "mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v",
+  "mp4",
+  "webm",
+  "mov",
+  "avi",
+  "mkv",
+  "wmv",
+  "flv",
+  "m4v",
   // Audio
-  "mp3", "wav", "aac", "ogg", "flac", "m4a", "wma", "aiff",
+  "mp3",
+  "wav",
+  "aac",
+  "ogg",
+  "flac",
+  "m4a",
+  "wma",
+  "aiff",
   // 3D / CAD
-  "blend", "fbx", "obj", "stl", "glb", "gltf", "usd", "usdz", "dae", "3ds", "max", "ma", "mb", "c4d",
+  "blend",
+  "fbx",
+  "obj",
+  "stl",
+  "glb",
+  "gltf",
+  "usd",
+  "usdz",
+  "dae",
+  "3ds",
+  "max",
+  "ma",
+  "mb",
+  "c4d",
   // Archives
-  "zip", "rar", "7z", "tar", "gz", "bz2", "xz",
+  "zip",
+  "rar",
+  "7z",
+  "tar",
+  "gz",
+  "bz2",
+  "xz",
   // Fonts
-  "ttf", "otf", "woff", "woff2",
+  "ttf",
+  "otf",
+  "woff",
+  "woff2",
   // Other
-  "unitypackage", "uproject", "apk", "ipa",
+  "unitypackage",
+  "uproject",
+  "apk",
+  "ipa",
 ] as const;
 
 const VIDEO_EXTS = ["mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v"] as const;

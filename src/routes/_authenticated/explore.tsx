@@ -129,7 +129,8 @@ export const Route = createFileRoute("/_authenticated/explore")({
       { title: "Explore — Tethyr" },
       {
         name: "description",
-        content: "Discover projects, builders, and open opportunities on Tethyr — the collaboration network where you get known for what you make.",
+        content:
+          "Discover projects, builders, and open opportunities on Tethyr — the collaboration network where you get known for what you make.",
       },
     ],
   }),
@@ -409,44 +410,46 @@ function ExplorePage() {
             role="tablist"
             className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit"
           >
-        <button
-          role="tab"
-          aria-selected={tab === "projects"}
-          onClick={() => setTab("projects")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-            tab === "projects"
-              ? "bg-surface-elevated text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Folder className="h-3.5 w-3.5" />
-          Projects
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === "creators"}
-          onClick={() => setTab("creators")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-            tab === "creators"
-              ? "bg-surface-elevated text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Users className="h-3.5 w-3.5" />
-          People
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === "opportunities"}
-          onClick={() => setTab("opportunities")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-            tab === "opportunities"
-              ? "bg-surface-elevated text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >            <Briefcase className="h-3.5 w-3.5" />
-            Opportunities
-          </button>
+            <button
+              role="tab"
+              aria-selected={tab === "projects"}
+              onClick={() => setTab("projects")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                tab === "projects"
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Folder className="h-3.5 w-3.5" />
+              Projects
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === "creators"}
+              onClick={() => setTab("creators")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                tab === "creators"
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              People
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === "opportunities"}
+              onClick={() => setTab("opportunities")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                tab === "opportunities"
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {" "}
+              <Briefcase className="h-3.5 w-3.5" />
+              Opportunities
+            </button>
           </div>
 
           {isLoading ? (
@@ -456,284 +459,295 @@ function ExplorePage() {
               ))}
             </div>
           ) : tab === "opportunities" ? (
-        filteredOpportunities.length === 0 ? (
-          <EmptyState
-            icon={<Briefcase className="h-5 w-5" />}
-            title="No open opportunities match"
-            description="Try a different need or check back as projects open new roles."
-            actionLabel="Browse projects"
-            actionHref="/explore"
-            variant="projects"
-          />
-        ) : (
-          <>
-            {/* Browse by need — quick chips */}
-            <div className="mb-4">
-              <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-                Browse by need
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {NEED_CHIPS.map((need) => (
-                  <button
-                    key={need.label}
-                    onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                      activeNeed === need.label
-                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                        : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                    }`}
-                  >
-                    Need {need.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            filteredOpportunities.length === 0 ? (
+              <EmptyState
+                icon={<Briefcase className="h-5 w-5" />}
+                title="No open opportunities match"
+                description="Try a different need or check back as projects open new roles."
+                actionLabel="Browse projects"
+                actionHref="/explore"
+                variant="projects"
+              />
+            ) : (
+              <>
+                {/* Browse by need — quick chips */}
+                <div className="mb-4">
+                  <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                    Browse by need
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {NEED_CHIPS.map((need) => (
+                      <button
+                        key={need.label}
+                        onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                          activeNeed === need.label
+                            ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                            : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                        }`}
+                      >
+                        Need {need.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Search + Sort */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search roles, skills, or projects…"
-                  className="border-0 bg-transparent focus-visible:ring-0"
-                />
-              </div>
-              <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-0.5">
-                <button
-                  onClick={() => setOppSort("latest")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                    oppSort === "latest"
-                      ? "bg-surface-elevated text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Latest
-                </button>
-                <button
-                  onClick={() => setOppSort("match")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                    oppSort === "match"
-                      ? "bg-surface-elevated text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Star className="mr-1 inline h-3 w-3" />
-                  Best match
-                </button>
-              </div>
-            </div>
-
-            {/* Applied filters */}
-            {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
-              <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                {activeNeed && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
-                    Need {activeNeed}
-                    <button onClick={() => setActiveNeed("")} className="ml-0.5">
-                      ×
-                    </button>
-                  </span>
-                )}
-                {oppSort === "match" && (
-                  <span className="text-[11px] text-muted-foreground">Sorted by skill match</span>
-                )}
-              </div>
-            )}
-
-            <div className="mb-4 flex flex-wrap gap-2">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCategory(c)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                    category === c
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {filteredOpportunities.map((opportunity, i) => {
-                const skillMatchCount =
-                  oppSort === "match"
-                    ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
-                    : 0;
-                return (
-                  <div
-                    key={opportunity.id}
-                    className="animate-room-enter group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
-                    <Link
-                      to="/projects/$id"
-                      params={{ id: opportunity.project.id }}
-                      search={{ section: "roles" } as Record<string, string>}
-                      className="block"
+                {/* Search + Sort */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="Search roles, skills, or projects…"
+                      className="border-0 bg-transparent focus-visible:ring-0"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-0.5">
+                    <button
+                      onClick={() => setOppSort("latest")}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                        oppSort === "latest"
+                          ? "bg-surface-elevated text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs uppercase tracking-wider text-brand-purple">
-                              <Briefcase className="mr-1 inline h-3.5 w-3.5" />
-                              Open role
-                            </span>
-                            {skillMatchCount > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
-                                <BadgeCheck className="h-3 w-3" />
-                                {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
-                              </span>
-                            )}
-                          </div>
-                          <h2 className="mt-2 truncate font-display text-lg font-semibold" title={opportunity.title}>
-                            {opportunity.title}
-                          </h2>
-                        </div>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                      </div>
-                      {opportunity.description && (
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground" title={opportunity.description ?? undefined}>
-                          {opportunity.description}
-                        </p>
-                      )}
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {opportunity.skills.length > 0 ? (
-                          opportunity.skills.map((skill) => {
-                            const isMySkill = mySkillNames.has(skill.toLowerCase());
-                            return (
-                              <span
-                                key={skill}
-                                className={`rounded-full border px-2.5 py-1 text-[11px] ${
-                                  isMySkill
-                                    ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                    : "border-primary/25 bg-primary/5 text-primary"
-                                }`}
-                              >
-                                {skill}
-                              </span>
-                            );
-                          })
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <Sparkles className="h-3 w-3" /> Open to a range of skills
-                          </span>
-                        )}
-                      </div>
-                    </Link>{" "}
-                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
-                      <div className="min-w-0 truncate text-xs text-muted-foreground">
+                      Latest
+                    </button>
+                    <button
+                      onClick={() => setOppSort("match")}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                        oppSort === "match"
+                          ? "bg-surface-elevated text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Star className="mr-1 inline h-3 w-3" />
+                      Best match
+                    </button>
+                  </div>
+                </div>
+
+                {/* Applied filters */}
+                {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
+                  <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                    {activeNeed && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+                        Need {activeNeed}
+                        <button onClick={() => setActiveNeed("")} className="ml-0.5">
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {oppSort === "match" && (
+                      <span className="text-[11px] text-muted-foreground">
+                        Sorted by skill match
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCategory(c)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        category === c
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {filteredOpportunities.map((opportunity, i) => {
+                    const skillMatchCount =
+                      oppSort === "match"
+                        ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
+                        : 0;
+                    return (
+                      <div
+                        key={opportunity.id}
+                        className="animate-room-enter group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                        style={{ animationDelay: `${i * 50}ms` }}
+                      >
                         <Link
                           to="/projects/$id"
                           params={{ id: opportunity.project.id }}
                           search={{ section: "roles" } as Record<string, string>}
-                          className="font-medium text-foreground hover:underline"
+                          className="block"
                         >
-                          {opportunity.project.title}
-                        </Link>
-                        {opportunity.project.profile?.display_name && (
-                          <span> · by {opportunity.project.profile.display_name}</span>
-                        )}
-                        {opportunity.project.stage && (
-                          <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
-                        )}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs uppercase tracking-wider text-brand-purple">
+                                  <Briefcase className="mr-1 inline h-3.5 w-3.5" />
+                                  Open role
+                                </span>
+                                {skillMatchCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
+                                    <BadgeCheck className="h-3 w-3" />
+                                    {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
+                                  </span>
+                                )}
+                              </div>
+                              <h2
+                                className="mt-2 truncate font-display text-lg font-semibold"
+                                title={opportunity.title}
+                              >
+                                {opportunity.title}
+                              </h2>
+                            </div>
+                            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                          </div>
+                          {opportunity.description && (
+                            <p
+                              className="mt-2 line-clamp-2 text-sm text-muted-foreground"
+                              title={opportunity.description ?? undefined}
+                            >
+                              {opportunity.description}
+                            </p>
+                          )}
+                          <div className="mt-4 flex flex-wrap gap-1.5">
+                            {opportunity.skills.length > 0 ? (
+                              opportunity.skills.map((skill) => {
+                                const isMySkill = mySkillNames.has(skill.toLowerCase());
+                                return (
+                                  <span
+                                    key={skill}
+                                    className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                                      isMySkill
+                                        ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                        : "border-primary/25 bg-primary/5 text-primary"
+                                    }`}
+                                  >
+                                    {skill}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <Sparkles className="h-3 w-3" /> Open to a range of skills
+                              </span>
+                            )}
+                          </div>
+                        </Link>{" "}
+                        <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+                          <div className="min-w-0 truncate text-xs text-muted-foreground">
+                            <Link
+                              to="/projects/$id"
+                              params={{ id: opportunity.project.id }}
+                              search={{ section: "roles" } as Record<string, string>}
+                              className="font-medium text-foreground hover:underline"
+                            >
+                              {opportunity.project.title}
+                            </Link>
+                            {opportunity.project.profile?.display_name && (
+                              <span> · by {opportunity.project.profile.display_name}</span>
+                            )}
+                            {opportunity.project.stage && (
+                              <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
+                            )}
+                          </div>
+                          <ApplyToRoleButton
+                            roleId={opportunity.id}
+                            projectId={opportunity.project.id}
+                            isOwner={opportunity.project.profile_id === meId}
+                            meId={meId}
+                            myStatus={myRoleStatus[opportunity.id] ?? null}
+                          />
+                        </div>
                       </div>
-                      <ApplyToRoleButton
-                        roleId={opportunity.id}
-                        projectId={opportunity.project.id}
-                        isOwner={opportunity.project.profile_id === meId}
-                        meId={meId}
-                        myStatus={myRoleStatus[opportunity.id] ?? null}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )
-      ) : tab === "projects" ? (
-        <ProjectShelf
-          projects={filteredProjects}
-          meId={meId}
-          contributorIds={contributorIds}
-          q={q}
-          setQ={setQ}
-          category={category}
-          setCategory={setCategory}
-        />
-      ) : filteredCreators.length === 0 ? (
-        <EmptyState
-          icon={<Compass className="h-5 w-5" />}
-          title="No people match yet"
-          description="Try clearing filters or searching a different craft."
-        />
-      ) : (
-        <>
-          {/* People tab search bar */}
-          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by name, handle, craft…"
-              className="border-0 bg-transparent focus-visible:ring-0"
+                    );
+                  })}
+                </div>
+              </>
+            )
+          ) : tab === "projects" ? (
+            <ProjectShelf
+              projects={filteredProjects}
+              meId={meId}
+              contributorIds={contributorIds}
+              q={q}
+              setQ={setQ}
+              category={category}
+              setCategory={setCategory}
             />
-          </div>
-          {/* People tab filter chips */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                  category === c
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-          {/* People grid */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredCreators.map((c, i) => {
-              const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
-              return (
-                <Link
-                  key={c.id}
-                  to="/u/$handle"
-                  params={{ handle: c.handle ?? "" }}
-                  className="animate-room-enter rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                  style={{ animationDelay: `${i * 40}ms` }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">
-                      {initial}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium" title={c.display_name || c.handle || undefined}>
-                        {c.display_name || c.handle || "Untitled member"}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {c.creator_title || c.category || "New member"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
-                    {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
-                    {c.country && <span>{c.country}</span>}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </>
-        )}
+          ) : filteredCreators.length === 0 ? (
+            <EmptyState
+              icon={<Compass className="h-5 w-5" />}
+              title="No people match yet"
+              description="Try clearing filters or searching a different craft."
+            />
+          ) : (
+            <>
+              {/* People tab search bar */}
+              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search by name, handle, craft…"
+                  className="border-0 bg-transparent focus-visible:ring-0"
+                />
+              </div>
+              {/* People tab filter chips */}
+              <div className="mb-6 flex flex-wrap gap-2">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCategory(c)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                      category === c
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+              {/* People grid */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredCreators.map((c, i) => {
+                  const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
+                  return (
+                    <Link
+                      key={c.id}
+                      to="/u/$handle"
+                      params={{ handle: c.handle ?? "" }}
+                      className="animate-room-enter rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">
+                          {initial}
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className="truncate text-sm font-medium"
+                            title={c.display_name || c.handle || undefined}
+                          >
+                            {c.display_name || c.handle || "Untitled member"}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {c.creator_title || c.category || "New member"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
+                        {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
+                        {c.country && <span>{c.country}</span>}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right sidebar — Discover panel */}
@@ -795,10 +809,26 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
           Quick stats
         </h3>
         <div className="mt-3 space-y-2">
-          <StatRow icon={<Folder className="h-3.5 w-3.5" />} label="Projects" value={stats?.projects} />
-          <StatRow icon={<Users className="h-3.5 w-3.5" />} label="Creators" value={stats?.creators} />
-          <StatRow icon={<Briefcase className="h-3.5 w-3.5" />} label="Open roles" value={stats?.opportunities} />
-          <StatRow icon={<Sparkles className="h-3.5 w-3.5" />} label="Skills" value={stats?.skills} />
+          <StatRow
+            icon={<Folder className="h-3.5 w-3.5" />}
+            label="Projects"
+            value={stats?.projects}
+          />
+          <StatRow
+            icon={<Users className="h-3.5 w-3.5" />}
+            label="Creators"
+            value={stats?.creators}
+          />
+          <StatRow
+            icon={<Briefcase className="h-3.5 w-3.5" />}
+            label="Open roles"
+            value={stats?.opportunities}
+          />
+          <StatRow
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            label="Skills"
+            value={stats?.skills}
+          />
         </div>
       </div>
 
@@ -838,15 +868,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
   );
 }
 
-function StatRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: number;
-}) {
+function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: number }) {
   return (
     <div className="flex items-center justify-between text-xs">
       <span className="flex items-center gap-1.5 text-muted-foreground">

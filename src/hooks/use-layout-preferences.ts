@@ -31,7 +31,7 @@ export function useLayoutPreferences(page: "dashboard" | "profile", userId?: str
     queryKey,
     queryFn: async (): Promise<PersistedLayout | null> => {
       if (!userId) return null;
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("user_layout_preferences")
         .select("layout")
         .eq("user_id", userId)
@@ -49,7 +49,7 @@ export function useLayoutPreferences(page: "dashboard" | "profile", userId?: str
   const save = useCallback(
     async (layout: PersistedLayout) => {
       if (!userId) return;
-      const { error } = await (supabase as any).from("user_layout_preferences").upsert(
+      const { error } = await supabase.from("user_layout_preferences").upsert(
         {
           user_id: userId,
           page,

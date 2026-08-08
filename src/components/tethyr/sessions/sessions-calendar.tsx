@@ -61,7 +61,9 @@ function CalendarEventCard({
         onClick={onClick}
         className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-all hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
       >
-        <span className="truncate text-[11px] font-medium text-foreground" title={session.title}>{session.title}</span>
+        <span className="truncate text-[11px] font-medium text-foreground" title={session.title}>
+          {session.title}
+        </span>
       </button>
     );
   }
@@ -73,7 +75,9 @@ function CalendarEventCard({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
-          <h4 className="truncate text-sm font-semibold text-foreground" title={session.title}>{session.title}</h4>
+          <h4 className="truncate text-sm font-semibold text-foreground" title={session.title}>
+            {session.title}
+          </h4>
           <span
             className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${status.bg} ${status.color}`}
           >

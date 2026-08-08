@@ -13,7 +13,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Log in — Tethyr" },
-      { name: "description", content: "Log in to Tethyr — the collaboration network where builders create together and get known for what they make." },
+      {
+        name: "description",
+        content:
+          "Log in to Tethyr — the collaboration network where builders create together and get known for what they make.",
+      },
     ],
   }),
   component: LoginPage,

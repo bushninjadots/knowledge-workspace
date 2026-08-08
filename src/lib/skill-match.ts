@@ -10,12 +10,7 @@ export type SkillMeta = {
 };
 
 export type AvailabilityStatus =
-  | "available"
-  | "busy"
-  | "learning"
-  | "looking_for_team"
-  | "mentoring"
-  | null;
+  "available" | "busy" | "learning" | "looking_for_team" | "mentoring" | null;
 
 export type MatchCandidate = {
   profile_id: string;

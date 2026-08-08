@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { fetchRepoMetaServer } from "@/lib/github-server";
+import type { RepoMeta } from "@/lib/github";
 
-const sb = supabase as any;
+const sb = supabase;
 
 export type ProjectRepo = {
   id: string;
@@ -14,16 +16,7 @@ export type ProjectRepo = {
   updated_at: string;
 };
 
-export type RepoMetadata = {
-  full_name?: string;
-  description?: string;
-  language?: string;
-  stargazers_count?: number;
-  forks_count?: number;
-  updated_at?: string;
-  topics?: string[];
-  private?: boolean;
-};
+export type RepoMetadata = RepoMeta;
 
 export function useProjectRepos(projectId: string) {
   return useQuery({
@@ -55,24 +48,12 @@ export function useAddProjectRepo() {
         if (match) {
           const [, owner, repo] = match;
           metadata.full_name = `${owner}/${repo}`;
-          // Try to fetch GitHub metadata
+          // Fetch metadata server-side (uses the user's stored token when present)
           try {
-            const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
-            if (res.ok) {
-              const json = await res.json();
-              metadata = {
-                full_name: json.full_name,
-                description: json.description,
-                language: json.language,
-                stargazers_count: json.stargazers_count,
-                forks_count: json.forks_count,
-                updated_at: json.updated_at,
-                topics: json.topics,
-                private: json.private,
-              };
-            }
+            const meta = await fetchRepoMetaServer({ data: { owner, repo } });
+            if (meta) metadata = meta;
           } catch {
-            // GitHub API may be rate-limited; use whatever we parsed
+            // Rate-limited or unreachable — keep whatever we parsed
           }
         }
       }
@@ -138,19 +119,8 @@ export function useRefreshRepoMetadata() {
         if (match) {
           const [, owner, repo] = match;
           try {
-            const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
-            if (res.ok) {
-              const json = await res.json();
-              metadata = {
-                full_name: json.full_name,
-                description: json.description,
-                language: json.language,
-                stargazers_count: json.stargazers_count,
-                forks_count: json.forks_count,
-                updated_at: json.updated_at,
-                topics: json.topics,
-              };
-            }
+            const meta = await fetchRepoMetaServer({ data: { owner, repo } });
+            if (meta) metadata = meta;
           } catch {
             /* ignore */
           }

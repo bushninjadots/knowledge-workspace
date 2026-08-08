@@ -250,7 +250,14 @@ export function ProjectMainContent({
           />
         );
       case "files":
-        return <ProjectFilesSection projectId={project.id} isOwner={isOwner} existingFiles={projectFiles ?? []} onFilesChanged={() => {}} />;
+        return (
+          <ProjectFilesSection
+            projectId={project.id}
+            isOwner={isOwner}
+            existingFiles={projectFiles ?? []}
+            onFilesChanged={() => {}}
+          />
+        );
       case "repos":
         return <ProjectReposSection projectId={project.id} isOwner={isOwner} />;
       case "community":

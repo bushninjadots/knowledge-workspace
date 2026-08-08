@@ -1,15 +1,46 @@
 import { useState } from "react";
-import { ExternalLink, Github, GitBranch, Star, Trash2, Plus, Code2, RefreshCw } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ExternalLink,
+  Github,
+  GitBranch,
+  Star,
+  Trash2,
+  Plus,
+  Code2,
+  RefreshCw,
+  KeyRound,
+  Check,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
+import { githubTokenErrorMessage } from "@/lib/github";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useProjectRepos, useAddProjectRepo, useRemoveProjectRepo, useRefreshRepoMetadata, type ProjectRepo } from "@/hooks/use-project-repos";
+import {
+  useProjectRepos,
+  useAddProjectRepo,
+  useRemoveProjectRepo,
+  useRefreshRepoMetadata,
+  type ProjectRepo,
+} from "@/hooks/use-project-repos";
 import { timeAgo } from "@/lib/time";
 
-function RepoCard({ repo, isOwner, onRemove }: { repo: ProjectRepo; isOwner: boolean; onRemove: () => void }) {
+function RepoCard({
+  repo,
+  isOwner,
+  onRemove,
+}: {
+  repo: ProjectRepo;
+  isOwner: boolean;
+  onRemove: () => void;
+}) {
   const refreshMeta = useRefreshRepoMetadata();
 
   const meta = repo.metadata;
-  const langColor = LANGUAGE_COLORS[meta.language?.toLowerCase() ?? ""] ?? "var(--muted-foreground)";
+  const langColor =
+    LANGUAGE_COLORS[meta.language?.toLowerCase() ?? ""] ?? "var(--muted-foreground)";
 
   return (
     <div className="group flex items-start gap-3 rounded-xl border card-border bg-background/40 p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
@@ -50,11 +81,16 @@ function RepoCard({ repo, isOwner, onRemove }: { repo: ProjectRepo; isOwner: boo
               {meta.forks_count.toLocaleString()}
             </span>
           )}
-          {meta.updated_at && (
-            <span>Updated {timeAgo(meta.updated_at)}</span>
-          )}
+          {meta.updated_at && <span>Updated {timeAgo(meta.updated_at)}</span>}
           <button
-            onClick={() => refreshMeta.mutate({ id: repo.id, project_id: repo.project_id, url: repo.url, provider: repo.provider })}
+            onClick={() =>
+              refreshMeta.mutate({
+                id: repo.id,
+                project_id: repo.project_id,
+                url: repo.url,
+                provider: repo.provider,
+              })
+            }
             disabled={refreshMeta.isPending}
             className="ml-auto rounded-md p-1 text-muted-foreground/50 transition hover:text-muted-foreground disabled:opacity-30"
             title="Refresh metadata"
@@ -119,12 +155,50 @@ export function ProjectReposSection({
   const removeRepo = useRemoveProjectRepo();
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
+  const [tokenOpen, setTokenOpen] = useState(false);
+  const [tokenDraft, setTokenDraft] = useState("");
+  const queryClient = useQueryClient();
+
+  const { data: hasToken = false } = useQuery({
+    queryKey: ["github-token-status"],
+    queryFn: () => hasGithubToken(),
+    staleTime: 60_000,
+  });
+
+  const saveTokenMutation = useMutation({
+    mutationFn: (token: string) => saveGithubToken({ data: { token } }),
+    onSuccess: (res) => {
+      if (res.ok) {
+        setTokenDraft("");
+        setTokenOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+        toast.success(`GitHub token saved — authenticated as @${res.username}`);
+      } else {
+        toast.error(githubTokenErrorMessage(res.reason));
+      }
+    },
+  });
+
+  const removeTokenMutation = useMutation({
+    mutationFn: () => removeGithubToken(),
+    onSuccess: () => {
+      setTokenDraft("");
+      setTokenOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+      toast.success("GitHub token removed");
+    },
+  });
 
   const handleAdd = () => {
     if (!url.trim()) return;
     addRepo.mutate(
       { project_id: projectId, url: url.trim() },
-      { onSuccess: () => { setUrl(""); setShowAdd(false); } }
+      {
+        onSuccess: () => {
+          setUrl("");
+          setShowAdd(false);
+        },
+      },
     );
   };
 
@@ -138,16 +212,70 @@ export function ProjectReposSection({
           Connected repositories
         </h3>
         {isOwner && (
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
-          >
-            <Plus className="h-3 w-3" />
-            Link repo
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTokenOpen(!tokenOpen)}
+              className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition ${
+                hasToken
+                  ? "border-[var(--user-accent,var(--trust))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--trust))]"
+                  : "border-border/60 text-muted-foreground hover:text-foreground"
+              }`}
+              title="GitHub token — for private repos and to avoid rate limits"
+            >
+              <KeyRound className="h-3 w-3" />
+              {hasToken ? "Token set" : "Token"}
+            </button>
+            <button
+              onClick={() => setShowAdd(!showAdd)}
+              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            >
+              <Plus className="h-3 w-3" />
+              Link repo
+            </button>
+          </div>
         )}
-      </div>
-
+      </div>{" "}
+      {tokenOpen && isOwner && (
+        <div className="mb-4 rounded-2xl border border-border/60 bg-background/40 p-3">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            GitHub personal access token (optional)
+          </label>
+          <input
+            type="password"
+            value={tokenDraft}
+            onChange={(e) => setTokenDraft(e.target.value)}
+            placeholder="ghp_…"
+            autoComplete="off"
+            className="w-full rounded-md border border-border/60 bg-background px-3 py-1.5 text-xs outline-none focus:border-primary/50"
+          />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            Lets Tethyr fetch metadata and READMEs from your <strong>private</strong> repos and
+            avoids GitHub&apos;s 60 requests/hour limit. Stored securely on Tethyr&apos;s server —
+            the token never reaches your browser. Fine-grained tokens work best (read-only access to
+            the repos you need).
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              onClick={() => saveTokenMutation.mutate(tokenDraft)}
+              disabled={saveTokenMutation.isPending}
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+            >
+              <Check className="h-3 w-3" />
+              Save
+            </button>
+            {hasToken && (
+              <button
+                onClick={() => removeTokenMutation.mutate()}
+                disabled={removeTokenMutation.isPending}
+                className="inline-flex items-center gap-1 rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-destructive disabled:opacity-50"
+              >
+                <X className="h-3 w-3" />
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {showAdd && (
         <div className="mb-4 flex gap-2 rounded-2xl border border-border/60 bg-background/40 p-3">
           <Input
@@ -162,7 +290,6 @@ export function ProjectReposSection({
           </Button>
         </div>
       )}
-
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (

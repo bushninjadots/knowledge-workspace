@@ -132,15 +132,13 @@ export function useCommunitySpaces() {
         }
       }
 
-      return (spaces ?? []).map(
-        (s: CommunitySpace): CommunitySpace => ({
-          ...s,
-          member_count: countMap.get(s.id) ?? 0,
-          is_member: myMembershipMap.has(s.id),
-          my_role: myMembershipMap.get(s.id) ?? null,
-          has_pending_request: myPendingSet.has(s.id),
-        }),
-      );
+      return (spaces ?? []).map((s: CommunitySpace): CommunitySpace => ({
+        ...s,
+        member_count: countMap.get(s.id) ?? 0,
+        is_member: myMembershipMap.has(s.id),
+        my_role: myMembershipMap.get(s.id) ?? null,
+        has_pending_request: myPendingSet.has(s.id),
+      }));
     },
     staleTime: 30_000,
   });
@@ -364,16 +362,14 @@ export function useSpaceJoinRequests(spaceId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return (requests ?? []).map(
-        (r: JoinRequestRow): JoinRequestRow => ({
-          ...r,
-          profile: (profileMap.get(r.user_id) as JoinRequestRow["profile"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-        }),
-      );
+      return (requests ?? []).map((r: JoinRequestRow): JoinRequestRow => ({
+        ...r,
+        profile: (profileMap.get(r.user_id) as JoinRequestRow["profile"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+      }));
     },
     staleTime: 15_000,
     enabled: !!spaceId,
@@ -509,16 +505,14 @@ export function useSpaceMembers(spaceId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return (members ?? []).map(
-        (m: SpaceMember): SpaceMember => ({
-          ...m,
-          profile: (profileMap.get(m.user_id) as SpaceMember["profile"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-        }),
-      );
+      return (members ?? []).map((m: SpaceMember): SpaceMember => ({
+        ...m,
+        profile: (profileMap.get(m.user_id) as SpaceMember["profile"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+      }));
     },
     staleTime: 30_000,
     enabled: !!spaceId,
@@ -681,29 +675,27 @@ export function usePostReports() {
         (posts ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return reports.map(
-        (r): PostReportRow => ({
-          ...r,
-          post: r.post_id
-            ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
-                title: null,
-                space_id: null,
-                body: null,
-                author_id: null,
-              })
-            : {
-                title: r.post_title_snapshot ?? null,
-                space_id: null,
-                body: null,
-                author_id: null,
-              },
-          reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
-            display_name: "Unknown",
-            handle: "user",
-            avatar_url: null,
-          },
-        }),
-      );
+      return reports.map((r): PostReportRow => ({
+        ...r,
+        post: r.post_id
+          ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
+              title: null,
+              space_id: null,
+              body: null,
+              author_id: null,
+            })
+          : {
+              title: r.post_title_snapshot ?? null,
+              space_id: null,
+              body: null,
+              author_id: null,
+            },
+        reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
+          display_name: "Unknown",
+          handle: "user",
+          avatar_url: null,
+        },
+      }));
     },
     staleTime: 15_000,
   });
@@ -858,29 +850,27 @@ export function useSpacePostReports(spaceId: string) {
         (reporters ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return inSpace.map(
-        (r): PostReportRow => ({
-          ...r,
-          post: r.post_id
-            ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
-                title: null,
-                space_id: null,
-                body: null,
-                author_id: null,
-              })
-            : {
-                title: r.post_title_snapshot ?? null,
-                space_id: null,
-                body: null,
-                author_id: null,
-              },
-          reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
-            display_name: "Unknown",
-            handle: "user",
-            avatar_url: null,
-          },
-        }),
-      );
+      return inSpace.map((r): PostReportRow => ({
+        ...r,
+        post: r.post_id
+          ? ((postMap.get(r.post_id) as PostReportRow["post"]) ?? {
+              title: null,
+              space_id: null,
+              body: null,
+              author_id: null,
+            })
+          : {
+              title: r.post_title_snapshot ?? null,
+              space_id: null,
+              body: null,
+              author_id: null,
+            },
+        reporter: (reporterMap.get(r.reporter_id) as PostReportRow["reporter"]) ?? {
+          display_name: "Unknown",
+          handle: "user",
+          avatar_url: null,
+        },
+      }));
     },
     staleTime: 15_000,
     enabled: !!spaceId,
@@ -970,16 +960,14 @@ export function useSpaceBans(spaceId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return rows.map(
-        (r): SpaceBan => ({
-          ...r,
-          profile: (profileMap.get(r.user_id) as SpaceBan["profile"]) ?? {
-            display_name: "Unknown",
-            handle: "user",
-            avatar_url: null,
-          },
-        }),
-      );
+      return rows.map((r): SpaceBan => ({
+        ...r,
+        profile: (profileMap.get(r.user_id) as SpaceBan["profile"]) ?? {
+          display_name: "Unknown",
+          handle: "user",
+          avatar_url: null,
+        },
+      }));
     },
     staleTime: 15_000,
     enabled: !!spaceId,
@@ -1051,15 +1039,13 @@ export function useModerationLog(spaceId: string) {
         (actors ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return rows.map(
-        (r): ModerationLogRow => ({
-          ...r,
-          actor: (actorMap.get(r.actor_id ?? "") as ModerationLogRow["actor"]) ?? {
-            display_name: "Unknown",
-            handle: "user",
-          },
-        }),
-      );
+      return rows.map((r): ModerationLogRow => ({
+        ...r,
+        actor: (actorMap.get(r.actor_id ?? "") as ModerationLogRow["actor"]) ?? {
+          display_name: "Unknown",
+          handle: "user",
+        },
+      }));
     },
     staleTime: 15_000,
     enabled: !!spaceId,

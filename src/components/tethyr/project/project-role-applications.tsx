@@ -45,16 +45,14 @@ export function useRoleApplications(roleId: string) {
         (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
 
-      return apps.map(
-        (a): RoleApplication => ({
-          ...a,
-          applicant: (profileMap.get(a.profile_id) as unknown as RoleApplication["applicant"]) ?? {
-            display_name: "Unknown",
-            handle: "unknown",
-            avatar_url: null,
-          },
-        }),
-      );
+      return apps.map((a): RoleApplication => ({
+        ...a,
+        applicant: (profileMap.get(a.profile_id) as unknown as RoleApplication["applicant"]) ?? {
+          display_name: "Unknown",
+          handle: "unknown",
+          avatar_url: null,
+        },
+      }));
     },
     enabled: !!roleId,
   });

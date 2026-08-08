@@ -24,16 +24,85 @@ import { cn } from "@/lib/utils";
 
 function getFileIcon(fileName: string) {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff", "tif", "ico", "heic", "heif"].includes(ext)) return Image;
+  if (
+    [
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "webp",
+      "svg",
+      "bmp",
+      "tiff",
+      "tif",
+      "ico",
+      "heic",
+      "heif",
+    ].includes(ext)
+  )
+    return Image;
   if (["mp4", "webm", "mov", "avi", "mkv", "wmv", "flv", "m4v"].includes(ext)) return Film;
   if (["mp3", "wav", "aac", "ogg", "flac", "m4a", "wma", "aiff"].includes(ext)) return Music;
-  if (["blend", "fbx", "obj", "stl", "glb", "gltf", "usd", "usdz", "dae", "3ds", "max", "ma", "mb", "c4d"].includes(ext)) return Box;
+  if (
+    [
+      "blend",
+      "fbx",
+      "obj",
+      "stl",
+      "glb",
+      "gltf",
+      "usd",
+      "usdz",
+      "dae",
+      "3ds",
+      "max",
+      "ma",
+      "mb",
+      "c4d",
+    ].includes(ext)
+  )
+    return Box;
   if (["zip", "rar", "7z", "tar", "gz", "bz2", "xz"].includes(ext)) return Archive;
-  if (["psd", "ai", "eps", "sketch", "fig", "xd", "indd", "afdesign", "afphoto"].includes(ext)) return Palette;
+  if (["psd", "ai", "eps", "sketch", "fig", "xd", "indd", "afdesign", "afphoto"].includes(ext))
+    return Palette;
   if (["pdf", "doc", "docx", "odt", "pages"].includes(ext)) return FileText;
   if (["xls", "xlsx", "csv", "ods", "numbers"].includes(ext)) return FileSpreadsheet;
   if (["txt", "md", "rtf", "tex", "log"].includes(ext)) return Type;
-  if (["json", "xml", "yaml", "yml", "toml", "html", "css", "scss", "less", "js", "jsx", "ts", "tsx", "py", "rb", "go", "rs", "java", "kt", "swift", "c", "cpp", "h", "sh", "bash", "zsh", "sql", "r", "lua", "php"].includes(ext)) return FileCode;
+  if (
+    [
+      "json",
+      "xml",
+      "yaml",
+      "yml",
+      "toml",
+      "html",
+      "css",
+      "scss",
+      "less",
+      "js",
+      "jsx",
+      "ts",
+      "tsx",
+      "py",
+      "rb",
+      "go",
+      "rs",
+      "java",
+      "kt",
+      "swift",
+      "c",
+      "cpp",
+      "h",
+      "sh",
+      "bash",
+      "zsh",
+      "sql",
+      "r",
+      "lua",
+      "php",
+    ].includes(ext)
+  )
+    return FileCode;
   return File;
 }
 

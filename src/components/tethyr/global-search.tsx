@@ -312,7 +312,9 @@ export function GlobalSearch({
           >
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
-              <p className="truncate text-sm" title={p.display_name || p.handle || undefined}>{p.display_name || p.handle || "Untitled member"}</p>
+              <p className="truncate text-sm" title={p.display_name || p.handle || undefined}>
+                {p.display_name || p.handle || "Untitled member"}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
                 {[p.creator_title, p.category].filter(Boolean).join("·") || "—"}
               </p>
@@ -334,7 +336,9 @@ export function GlobalSearch({
           >
             <GraduationCap className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
-              <p className="truncate text-sm" title={s.name}>{s.name}</p>
+              <p className="truncate text-sm" title={s.name}>
+                {s.name}
+              </p>
               <p className="truncate text-xs text-muted-foreground">{s.category}</p>
             </div>
           </button>,
@@ -376,7 +380,9 @@ export function GlobalSearch({
           >
             <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
-              <p className="truncate text-sm" title={l.title}>{l.title}</p>
+              <p className="truncate text-sm" title={l.title}>
+                {l.title}
+              </p>
               <p className="truncate text-xs text-muted-foreground">{l.type}</p>
             </div>
           </button>,

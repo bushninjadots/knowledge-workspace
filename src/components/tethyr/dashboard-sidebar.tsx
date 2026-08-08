@@ -129,7 +129,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
                       isActive
-                        ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-foreground"
+                        ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
                         : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
                     }`}
                   >

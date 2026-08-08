@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Github, ExternalLink, Check, Loader2 } from "lucide-react";
+import { Github, ExternalLink, Check, Loader2, KeyRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
+import { githubTokenErrorMessage } from "@/lib/github";
 
 const sb = supabase as any;
 
@@ -42,7 +44,7 @@ export function useConnectGitHub() {
             username: username.trim(),
             provider_id: username.trim(),
           },
-          { onConflict: "user_id,provider" }
+          { onConflict: "user_id,provider" },
         )
         .select()
         .single();
@@ -64,10 +66,7 @@ export function useDisconnectGitHub() {
 
   return useMutation({
     mutationFn: async () => {
-      const { error } = await sb
-        .from("connected_accounts")
-        .delete()
-        .eq("provider", "github");
+      const { error } = await sb.from("connected_accounts").delete().eq("provider", "github");
       if (error) throw error;
     },
     onSuccess: () => {
@@ -78,13 +77,65 @@ export function useDisconnectGitHub() {
 }
 
 export function GitHubConnect() {
+  const queryClient = useQueryClient();
   const { data: accounts = [], isLoading } = useConnectedAccounts();
   const connectGitHub = useConnectGitHub();
   const disconnectGitHub = useDisconnectGitHub();
   const [username, setUsername] = useState("");
   const [editing, setEditing] = useState(false);
+  const [tokenDraft, setTokenDraft] = useState("");
+  const [tokenEditing, setTokenEditing] = useState(false);
+
+  const { data: tokenSet = false } = useQuery({
+    queryKey: ["github-token-status"],
+    queryFn: () => hasGithubToken(),
+    staleTime: 60_000,
+  });
 
   const githubAccount = accounts.find((a) => a.provider === "github");
+
+  const saveToken = () => {
+    saveGithubToken({ data: { token: tokenDraft } }).then((res) => {
+      if (res.ok) {
+        setTokenDraft("");
+        setTokenEditing(false);
+        queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+        toast.success(`GitHub token saved — authenticated as @${res.username}`);
+      } else {
+        toast.error(githubTokenErrorMessage(res.reason));
+      }
+    });
+  };
+
+  const removeToken = () => {
+    removeGithubToken()
+      .then(() => {
+        setTokenDraft("");
+        setTokenEditing(false);
+        queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+        toast.success("GitHub token removed");
+      })
+      .catch(() => toast.error("Couldn't remove the token — try again"));
+  };
+
+  const handleConnect = async (usernameToConnect: string) => {
+    // Validate + store the token first so we never connect the account with a
+    // broken token (the token stays server-side, never touches the browser).
+    if (tokenDraft.trim()) {
+      const res = await saveGithubToken({ data: { token: tokenDraft } });
+      if (!res.ok) {
+        toast.error(githubTokenErrorMessage(res.reason));
+        return;
+      }
+      setTokenDraft("");
+    }
+    connectGitHub.mutate(usernameToConnect, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+        setEditing(false);
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -120,12 +171,99 @@ export function GitHubConnect() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => disconnectGitHub.mutate()}
+            onClick={() =>
+              disconnectGitHub.mutate(undefined, {
+                onSuccess: () => {
+                  removeGithubToken()
+                    .then(() => {
+                      queryClient.invalidateQueries({ queryKey: ["github-token-status"] });
+                      setTokenEditing(false);
+                    })
+                    .catch(() => {
+                      /* token cleanup is best-effort on disconnect */
+                    });
+                },
+              })
+            }
             disabled={disconnectGitHub.isPending}
             className="text-xs text-muted-foreground hover:text-destructive"
           >
             Disconnect
           </Button>
+        </div>
+
+        {/* Shared token row — one entry covers profile + all project repo/README flows */}
+        <div className="mt-3 rounded-lg border border-border/60 bg-background/40 px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <KeyRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium">GitHub token</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {tokenSet
+                    ? "Set — powers private repos & README pulls on your projects"
+                    : "Optional — enables private repos and lifts rate limits"}
+                </p>
+              </div>
+            </div>
+            {!tokenEditing &&
+              (tokenSet ? (
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    onClick={() => setTokenEditing(true)}
+                    className="text-xs text-muted-foreground transition hover:text-primary"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={removeToken}
+                    className="text-xs text-muted-foreground transition hover:text-destructive"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setTokenEditing(true)}
+                  className="shrink-0 text-xs font-medium text-primary transition hover:opacity-80"
+                >
+                  Add token
+                </button>
+              ))}
+          </div>
+          {tokenEditing && (
+            <div className="mt-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="password"
+                  value={tokenDraft}
+                  onChange={(e) => setTokenDraft(e.target.value)}
+                  placeholder="ghp_…"
+                  autoComplete="off"
+                  className="h-8 flex-1 border-border/60 text-xs"
+                />
+                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={saveToken}>
+                  <Check className="mr-1 h-3 w-3" />
+                  Save
+                </Button>
+                <button
+                  onClick={() => {
+                    setTokenEditing(false);
+                    setTokenDraft("");
+                  }}
+                  className="rounded-md p-1 text-muted-foreground transition hover:text-foreground"
+                  aria-label="Cancel token edit"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                Stored securely on Tethyr&apos;s server and used from there — the token never
+                reaches your browser, and works from any device. Fine-grained read-only tokens work
+                best.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -156,37 +294,54 @@ export function GitHubConnect() {
 
   return (
     <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
-      <div className="flex items-end gap-3">
-        <div className="flex-1 space-y-1.5">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">GitHub username</label>
           <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="your-username"
             onKeyDown={(e) => {
-              if (e.key === "Enter" && username.trim()) {
-                connectGitHub.mutate(username, { onSuccess: () => setEditing(false) });
-              }
+              if (e.key === "Enter" && username.trim()) handleConnect(username);
             }}
           />
         </div>
-        <Button
-          size="sm"
-          onClick={() => connectGitHub.mutate(username, { onSuccess: () => setEditing(false) })}
-          disabled={!username.trim() || connectGitHub.isPending}
-        >
-          {connectGitHub.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Check className="mr-1 h-3.5 w-3.5" />
-              Save
-            </>
-          )}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
-          Cancel
-        </Button>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            GitHub token <span className="font-normal text-muted-foreground/60">(optional)</span>
+          </label>
+          <Input
+            type="password"
+            value={tokenDraft}
+            onChange={(e) => setTokenDraft(e.target.value)}
+            placeholder="ghp_… — enables private repos & README pulls"
+            autoComplete="off"
+          />
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Validated against GitHub before saving and stored securely on Tethyr&apos;s server —
+            never in your browser. One entry covers your profile and all project repo/README flows.
+            Fine-grained read-only tokens work best.
+          </p>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => handleConnect(username)}
+            disabled={!username.trim() || connectGitHub.isPending}
+          >
+            {connectGitHub.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Check className="mr-1 h-3.5 w-3.5" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

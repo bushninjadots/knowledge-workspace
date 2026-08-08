@@ -28,7 +28,7 @@ export function AuthenticatedShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" style={themeStyle}>
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />
       </div>
@@ -50,7 +50,7 @@ export function AuthenticatedShell() {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col" style={themeStyle}>
+      <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
           <button
             className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"

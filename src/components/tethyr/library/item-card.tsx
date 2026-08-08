@@ -85,7 +85,11 @@ export function ItemCard({
           >
             {item.title}
           </Link>
-          {excerpt && <p className="mt-0.5 truncate text-xs text-muted-foreground" title={excerpt}>{excerpt}</p>}
+          {excerpt && (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground" title={excerpt}>
+              {excerpt}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">

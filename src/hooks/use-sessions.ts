@@ -5,12 +5,7 @@ import { useCurrentUser } from "./use-current-user";
 /* ───────── Types ───────── */
 
 export type SessionType =
-  | "skill_exchange"
-  | "mentoring"
-  | "project_meeting"
-  | "study_session"
-  | "workshop"
-  | "general";
+  "skill_exchange" | "mentoring" | "project_meeting" | "study_session" | "workshop" | "general";
 
 export type SessionStatus =
   | "draft"

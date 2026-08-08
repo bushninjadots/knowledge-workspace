@@ -330,8 +330,8 @@ function ProjectPage() {
   const repoStats = repos[0]?.metadata
     ? {
         language: repos[0].metadata.language ?? null,
-        stars: repos[0].metadata.stargazers_count,
-        forks: repos[0].metadata.forks_count,
+        stars: repos[0].metadata.stargazers_count ?? undefined,
+        forks: repos[0].metadata.forks_count ?? undefined,
       }
     : undefined;
 

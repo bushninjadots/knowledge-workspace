@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 export function useSignedStorageUrl(bucket: string, path: string | null | undefined) {
   return useQuery({

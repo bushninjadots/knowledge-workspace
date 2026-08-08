@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import type { ProjectDetail, GalleryItem, ResourceItem } from "@/hooks/use-projects";
 import { useUpdateProjectReadme, useUpdateProjectContent } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
+import { fetchRepoReadmeServer } from "@/lib/github-server";
+import { getRepoFullName } from "@/lib/github";
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
@@ -50,6 +52,8 @@ export function ProjectReadmeTab({
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [pulling, setPulling] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState<{ text: string; fullName: string } | null>(null);
   const [toolDraft, setToolDraft] = useState("");
   const [addingTool, setAddingTool] = useState(false);
 
@@ -74,38 +78,66 @@ export function ProjectReadmeTab({
     }
   };
 
-  const pullFromGitHub = async () => {
+  // Shared loader: fetch the linked repo's README and surface failures as toasts.
+  // Returns the text, or null when nothing usable came back.
+  const loadRepoReadme = async (): Promise<string | null> => {
     const repo = repos[0];
     if (!repo) {
       toast.error("Link a repository first — the README is imported from there");
-      return;
+      return null;
     }
+    const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
+      data: { fullName: getRepoFullName(repo) },
+    });
+    if (unauthorized) {
+      toast.error("GitHub rejected the saved token — check it and try again");
+      return null;
+    }
+    if (rateLimited) {
+      toast.error("GitHub is rate-limited right now — try again in a minute");
+      return null;
+    }
+    if (text === null) {
+      toast.error("No README found in the linked repository");
+      return null;
+    }
+    return text;
+  };
+
+  const pullFromGitHub = async () => {
     setPulling(true);
     try {
-      const fullName =
-        repo.metadata?.full_name ??
-        repo.url
-          .replace(/^https?:\/\/(www\.)?github\.com\//, "")
-          .replace(/\/$/, "")
-          .replace(/\.git$/, "");
-      for (const branch of ["HEAD", "main", "master"]) {
-        const res = await fetch(
-          `https://raw.githubusercontent.com/${fullName}/${branch}/README.md`,
-        );
-        if (res.ok) {
-          const text = await res.text();
-          setDraft(text);
-          setEditing(true);
-          toast.success("README imported — review it, then save");
-          return;
-        }
-      }
-      toast.error("No README found in the linked repository");
+      const text = await loadRepoReadme();
+      if (text === null) return;
+      setDraft(text);
+      setEditing(true);
+      toast.success("README imported — review it, then save");
     } catch {
       toast.error("Couldn't reach GitHub — try again");
     } finally {
       setPulling(false);
     }
+  };
+
+  const previewFromGitHub = async () => {
+    setPreviewing(true);
+    try {
+      const text = await loadRepoReadme();
+      if (text === null) return;
+      const fullName = repos[0] ? getRepoFullName(repos[0]) : "";
+      setPreview({ text, fullName });
+    } catch {
+      toast.error("Couldn't reach GitHub — try again");
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
+  const usePreviewReadme = () => {
+    if (!preview) return;
+    setDraft(preview.text);
+    setPreview(null);
+    setEditing(true);
   };
 
   const saveContent = async (patch: { gallery?: GalleryItem[]; resources?: ResourceItem[] }) => {
@@ -176,18 +208,32 @@ export function ProjectReadmeTab({
           {isOwner && !editing && (
             <div className="flex items-center gap-2">
               {repos.length > 0 && (
-                <button
-                  onClick={pullFromGitHub}
-                  disabled={pulling}
-                  className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
-                >
-                  {pulling ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Download className="h-3 w-3" />
-                  )}
-                  Pull from GitHub
-                </button>
+                <>
+                  <button
+                    onClick={previewFromGitHub}
+                    disabled={previewing}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                  >
+                    {previewing ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Eye className="h-3 w-3" />
+                    )}
+                    Preview from GitHub
+                  </button>
+                  <button
+                    onClick={pullFromGitHub}
+                    disabled={pulling}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                  >
+                    {pulling ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Download className="h-3 w-3" />
+                    )}
+                    Pull from GitHub
+                  </button>
+                </>
               )}
               <button
                 onClick={startEdit}
@@ -331,6 +377,40 @@ Write your project's story here. Markdown supported — headings, images, GIFs, 
           </div>
         )}
       </section>
+
+      {/* Live repo README preview — import-on-demand, never auto-saves */}
+      {preview && !editing && (
+        <section className="rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              Live preview — {preview.fullName}
+              <span className="rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                not saved
+              </span>
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={usePreviewReadme}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90"
+              >
+                <Download className="h-3 w-3" />
+                Use this README
+              </button>
+              <button
+                onClick={() => setPreview(null)}
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Dismiss
+              </button>
+            </div>
+          </div>
+          <div className="prose-custom max-h-[32rem] overflow-auto px-5 py-5 sm:px-6">
+            <Markdown remarkPlugins={[remarkGfm]}>{preview.text}</Markdown>
+          </div>
+        </section>
+      )}
 
       {/* Built with + Tools */}
       {(skills.length > 0 || repoLanguages.length > 0 || isOwner || tools.length > 0) && (

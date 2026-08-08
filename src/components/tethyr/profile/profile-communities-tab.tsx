@@ -52,10 +52,16 @@ export function ProfileCommunitiesTab() {
                   {space.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium group-hover:text-primary" title={space.name}>
+                  <p
+                    className="truncate text-sm font-medium group-hover:text-primary"
+                    title={space.name}
+                  >
                     {space.name}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground" title={space.description || undefined}>
+                  <p
+                    className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+                    title={space.description || undefined}
+                  >
                     {space.description || "A Tethyr community space"}
                   </p>
                   <p className="mt-2 text-[11px] text-muted-foreground">

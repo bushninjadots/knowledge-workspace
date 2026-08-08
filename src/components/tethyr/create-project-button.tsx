@@ -24,12 +24,7 @@ export function CreateProjectButton({
 
   return (
     <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
-        onClick={() => setOpen(true)}
-      >
+      <Button variant={variant} size={size} className={className} onClick={() => setOpen(true)}>
         <Plus className={size === "icon" ? "h-4 w-4" : "mr-1.5 h-3.5 w-3.5"} />
         {size !== "icon" && "Create"}
       </Button>

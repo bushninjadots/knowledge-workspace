@@ -83,12 +83,12 @@ const PROFILE_COLS_EXTENDED =
 async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
   for (const cols of [`${PROFILE_COLS_BASIC}, ${PROFILE_COLS_EXTENDED}`, PROFILE_COLS_BASIC]) {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("profiles")
       .select(cols)
       .eq("id", userId)
       .maybeSingle();
-    if (!error) return data as Profile | null;
+    if (!error) return (data ?? null) as unknown as Profile | null;
     // Retry on any schema/column error (missing column, schema cache, etc.)
     if (
       !error.message?.includes("column") &&
@@ -164,8 +164,8 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
         : Promise.resolve({ data: null, error: null }),
     ]);
 
-  const avatarSigned = (avatarRes as any)?.data?.signedUrl ?? null;
-  const bannerSigned = (bannerRes as any)?.data?.signedUrl ?? null;
+  const avatarSigned = avatarRes.data?.signedUrl ?? null;
+  const bannerSigned = bannerRes.data?.signedUrl ?? null;
 
   const projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
 

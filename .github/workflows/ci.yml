@@ -14,8 +14,32 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Pin to the local toolchain (bun 1.3.14 line) for reproducibility.
+          bun-version: 1.3.14
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Route smoke test boots the dev server and asserts public routes + the
+      # client-auth boundary respond correctly. Uses bun (matches local dev).
+      - run: npm run smoke
+      # Fail the build on moderate-or-higher dependency advisories. Known low
+      # severity (esbuild via tsx, Windows dev-server only) is tolerated.
+      - run: npm audit --audit-level=moderate
+
+  # Validates every migration's RLS policies against the pgTAP regression
+  # suite (supabase/tests/rls_regression.sql) on a fresh local Postgres.
+  db-rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase db reset
+      - run: supabase test db
+      - run: supabase stop --no-backup

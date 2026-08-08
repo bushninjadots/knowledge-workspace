@@ -13,7 +13,11 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Sign up — Tethyr" },
-      { name: "description", content: "Join Tethyr — the collaboration network where builders create projects together and get known for what they make." },
+      {
+        name: "description",
+        content:
+          "Join Tethyr — the collaboration network where builders create projects together and get known for what they make.",
+      },
     ],
   }),
   component: SignupPage,
@@ -183,7 +187,8 @@ function SignupPage() {
           {loading ? "Creating..." : "Create my profile"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          By joining you agree to build with respect and keep the network a place where creators thrive.
+          By joining you agree to build with respect and keep the network a place where creators
+          thrive.
         </p>
       </form>
     </AuthShell>

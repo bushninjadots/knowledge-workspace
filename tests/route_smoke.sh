@@ -20,7 +20,7 @@ bun run dev -- --host "${HOST}" --port "${PORT}" >"${LOG_FILE}" 2>&1 &
 SERVER_PID=$!
 
 ready="false"
-for _ in {1..30}; do
+for _ in {1..60}; do
   if curl -fsS "${BASE_URL}/" >/dev/null 2>&1; then
     ready="true"
     break

@@ -134,136 +134,136 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
   return (
     <div className="min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      {/* Header */}
-      <div className="mb-6 flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold">{title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {items.length} {items.length === 1 ? "item" : "items"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <LibrarySearchBar value={search} onChange={setSearch} className="w-64 sm:w-72" />
-
-          <div className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5">
-            <button
-              onClick={() => setLayout("grid")}
-              className={`rounded-md p-1.5 transition-colors ${
-                layout === "grid"
-                  ? "bg-surface-elevated text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label="Grid view"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setLayout("list")}
-              className={`rounded-md p-1.5 transition-colors ${
-                layout === "list"
-                  ? "bg-surface-elevated text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label="List view"
-            >
-              <List className="h-3.5 w-3.5" />
-            </button>
+        {/* Header */}
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold">{title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {items.length} {items.length === 1 ? "item" : "items"}
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            <LibrarySearchBar value={search} onChange={setSearch} className="w-64 sm:w-72" />
 
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 border-border/60 bg-surface/60 text-xs"
-            onClick={() => setShowUpload(!showUpload)}
-          >
-            Upload
-          </Button>
+            <div className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5">
+              <button
+                onClick={() => setLayout("grid")}
+                className={`rounded-md p-1.5 transition-colors ${
+                  layout === "grid"
+                    ? "bg-surface-elevated text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setLayout("list")}
+                className={`rounded-md p-1.5 transition-colors ${
+                  layout === "list"
+                    ? "bg-surface-elevated text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-label="List view"
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
-          <Button
-            size="sm"
-            className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
-            onClick={onNewNote}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Note
-          </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 border-border/60 bg-surface/60 text-xs"
+              onClick={() => setShowUpload(!showUpload)}
+            >
+              Upload
+            </Button>
+
+            <Button
+              size="sm"
+              className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+              onClick={onNewNote}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Note
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Upload zone */}
-      {showUpload && (
-        <div className="mb-6">
-          <FileUploadZone
-            collectionId={view.type === "collection" ? view.collectionId : undefined}
-            onUploaded={() => setShowUpload(false)}
-          />
-        </div>
-      )}
+        {/* Upload zone */}
+        {showUpload && (
+          <div className="mb-6">
+            <FileUploadZone
+              collectionId={view.type === "collection" ? view.collectionId : undefined}
+              onUploaded={() => setShowUpload(false)}
+            />
+          </div>
+        )}
 
-      {/* Collections row (when viewing All) */}
-      {view.type === "all" && collections.length > 0 && !search.trim() && (
-        <div className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Collections
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {collections.map((col) => (
-              <CollectionCard
-                key={col.id}
-                collection={col}
-                onClick={() => onViewChangeNavigate(col)}
-              />
+        {/* Collections row (when viewing All) */}
+        {view.type === "all" && collections.length > 0 && !search.trim() && (
+          <div className="mb-8">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Collections
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {collections.map((col) => (
+                <CollectionCard
+                  key={col.id}
+                  collection={col}
+                  onClick={() => onViewChangeNavigate(col)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Items */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center gap-4">
+            <EmptyState title={getEmptyTitle(view)} description={getEmptyDescription(view)} />
+            {view.type === "uploads" ? (
+              <div className="w-full max-w-md">
+                <FileUploadZone />
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="mt-3 gap-2 bg-brand-green text-background hover:bg-brand-green/90"
+                  onClick={onNewNote}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create note
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3 gap-2 border-border/60"
+                  onClick={() => setShowUpload(true)}
+                >
+                  Upload file
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : layout === "grid" ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((item) => (
+              <ItemCard key={item.id} item={item} layout="grid" />
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Items */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center gap-4">
-          <EmptyState title={getEmptyTitle(view)} description={getEmptyDescription(view)} />
-          {view.type === "uploads" ? (
-            <div className="w-full max-w-md">
-              <FileUploadZone />
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="mt-3 gap-2 bg-brand-green text-background hover:bg-brand-green/90"
-                onClick={onNewNote}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Create note
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 gap-2 border-border/60"
-                onClick={() => setShowUpload(true)}
-              >
-                Upload file
-              </Button>
-            </div>
-          )}
-        </div>
-      ) : layout === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <ItemCard key={item.id} item={item} layout="grid" />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {items.map((item) => (
-            <ItemCard key={item.id} item={item} layout="list" />
-          ))}
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col gap-2">
+            {items.map((item) => (
+              <ItemCard key={item.id} item={item} layout="list" />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -531,22 +531,20 @@ function useRecentActivity() {
         commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
       }
 
-      return posts.map(
-        (p): LandingActivityPost => ({
-          id: p.id,
-          type: p.type,
-          title: p.title,
-          body: p.body,
-          created_at: p.created_at,
-          author: profileMap.get(p.author_id) ?? {
-            display_name: null,
-            handle: null,
-            avatar_url: null,
-          },
-          likes: likeCount.get(p.id) ?? 0,
-          comments: commentCount.get(p.id) ?? 0,
-        }),
-      );
+      return posts.map((p): LandingActivityPost => ({
+        id: p.id,
+        type: p.type,
+        title: p.title,
+        body: p.body,
+        created_at: p.created_at,
+        author: profileMap.get(p.author_id) ?? {
+          display_name: null,
+          handle: null,
+          avatar_url: null,
+        },
+        likes: likeCount.get(p.id) ?? 0,
+        comments: commentCount.get(p.id) ?? 0,
+      }));
     },
     staleTime: 60_000,
   });

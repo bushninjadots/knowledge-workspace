@@ -188,7 +188,7 @@ export function computeCategoryBreakdown(
 // ── Achievement checking ──────────────────────────────────────
 
 export async function checkAndAwardAchievements(): Promise<AchievementType[]> {
-  const { data, error } = await (supabase as any).rpc("award_earned_achievements");
+  const { data, error } = await supabase.rpc("award_earned_achievements");
   if (error) throw error;
   return (data ?? []) as AchievementType[];
 }
