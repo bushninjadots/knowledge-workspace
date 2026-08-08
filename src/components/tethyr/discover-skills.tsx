@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTrendingSkills } from "@/hooks/use-current-user";
 import { Flame } from "lucide-react";
 import { EmptyState } from "./empty-state";
 
-export function DiscoverSkills({ limit = 12 }: { limit?: number }) {
+export const DiscoverSkills = memo(function DiscoverSkills({ limit = 12 }: { limit?: number }) {
   const { data: skills = [], isLoading } = useTrendingSkills();
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading trending skills…</div>;
@@ -35,4 +36,4 @@ export function DiscoverSkills({ limit = 12 }: { limit?: number }) {
       ))}
     </div>
   );
-}
+});

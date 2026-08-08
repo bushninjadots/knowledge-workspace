@@ -20,6 +20,8 @@ import {
   Paperclip,
   BarChart3,
   Plus,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,12 @@ import {
   VALID_POST_TYPES,
   type ProjectSnapshot,
 } from "@/hooks/use-community";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +61,17 @@ const ACTION_ICON: Record<string, typeof Rocket> = {
   open_role: UserPlus,
   poll: BarChart3,
 };
+
+// The composer shows three primary actions up front — the most common ways to
+// post — and tucks the rest behind a single "More" menu so the toolbar stays
+// calm before anyone has typed a word.
+const PRIMARY_ACTIONS = [
+  { type: "showcase", label: "Showcase" },
+  { type: "help_request", label: "Ask for help" },
+  { type: "collaboration_request", label: "Find collaborators" },
+] as const;
+
+const MORE_ACTIONS = QUICK_ACTIONS.filter((a) => !PRIMARY_ACTIONS.some((p) => p.type === a.type));
 
 const MAX_CHARS = 2000;
 const DRAFT_KEY = "tethyr-community-draft";
@@ -125,10 +144,13 @@ export function ComposerBar({
   editingPost,
   onCancelEdit,
   spaceId,
+  presetType,
 }: {
   editingPost?: PostWithAuthor | null;
   onCancelEdit?: () => void;
   spaceId?: string | null;
+  /** Post type to pre-select (from empty-state actions like "Share a showcase"). */
+  presetType?: string | null;
 }) {
   const { data: me } = useCurrentUser();
   const createPost = useCreatePost();
@@ -152,6 +174,7 @@ export function ComposerBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const appliedPresetRef = useRef<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
   // Read ?attach_project param to pre-fill attachment
@@ -233,6 +256,25 @@ export function ComposerBar({
       localStorage.removeItem(DRAFT_KEY);
     }
   }, [draft, title, type, images, isEditing]);
+
+  // Pre-select a post type from an empty-state action ("Share a showcase").
+  // One-shot per preset: never clobbers a saved draft or an edit session.
+  useEffect(() => {
+    if (!presetType || isEditing || appliedPresetRef.current === presetType) return;
+    if (!VALID_POST_TYPES.has(presetType)) return;
+    let hasDraft = false;
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        hasDraft = !!(parsed?.body || parsed?.type || parsed?.images?.length);
+      }
+    } catch {
+      // ignore
+    }
+    if (!hasDraft) setType(presetType);
+    appliedPresetRef.current = presetType;
+  }, [presetType, isEditing]);
 
   const handleImageUpload = useCallback(() => {
     fileInputRef.current?.click();
@@ -432,6 +474,7 @@ export function ComposerBar({
           />
           <Textarea
             ref={textareaRef}
+            id="community-composer-textarea"
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             onFocus={() => setFocused(true)}
@@ -668,7 +711,7 @@ export function ComposerBar({
           Project
         </button>
         <div className="mx-1 h-4 w-px bg-border/60" />
-        {QUICK_ACTIONS.map((a) => {
+        {PRIMARY_ACTIONS.map((a) => {
           const Icon = ACTION_ICON[a.type] ?? HelpCircle;
           const active = type === a.type;
           return (
@@ -686,6 +729,50 @@ export function ComposerBar({
             </button>
           );
         })}
+
+        {/* Every other post type lives behind a single "More" menu. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
+                type && MORE_ACTIONS.some((a) => a.type === type)
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+              }`}
+            >
+              {type && MORE_ACTIONS.some((a) => a.type === type) ? (
+                <>
+                  {(() => {
+                    const Icon = ACTION_ICON[type] ?? HelpCircle;
+                    return <Icon className="h-3.5 w-3.5" />;
+                  })()}
+                  {MORE_ACTIONS.find((a) => a.type === type)?.label}
+                </>
+              ) : (
+                <>
+                  More
+                  <ChevronDown className="h-3 w-3" />
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
+            {MORE_ACTIONS.map((a) => {
+              const Icon = ACTION_ICON[a.type] ?? HelpCircle;
+              const active = type === a.type;
+              return (
+                <DropdownMenuItem key={a.type} onClick={() => setType(active ? null : a.type)}>
+                  <Icon className="mr-2 h-3.5 w-3.5" />
+                  <span className="flex-1">{a.label}</span>
+                  {active && <Check className="h-3.5 w-3.5 text-primary" />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="mx-1 h-4 w-px bg-border/60" />
         <Button
           type="button"
           size="sm"

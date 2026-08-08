@@ -1,42 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { Heart, Users, SlidersHorizontal, Search, X, Plus, BookmarkCheck } from "lucide-react";
-import { toast } from "sonner";
-import { EmptyState } from "@/components/tethyr/empty-state";
-import { ComposerBar } from "@/components/tethyr/community/composer-bar";
-import { PostCard } from "@/components/tethyr/community/post-card";
 import {
   CommunityLeftSidebar,
   type CommunityNavId,
 } from "@/components/tethyr/community/left-sidebar";
 import { CommunityRightSidebar } from "@/components/tethyr/community/right-sidebar";
+import { CommunityFeed } from "@/components/tethyr/community/community-feed";
 import { MobileBottomNav } from "@/components/tethyr/community/mobile-bottom-nav";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
-  usePosts,
-  useDeletePost,
-  useComments,
-  useTogglePostAction,
-  type PostWithAuthor,
-} from "@/hooks/use-community";
-import { useChallenges } from "@/hooks/use-challenges";
-import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
-import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
-import { useFollowingFeed } from "@/hooks/use-follow";
-import { DISCOVERY_FILTERS, POST_TYPE_LABEL, type DiscoveryFocus } from "@/lib/community-data";
-import {
-  useCommunitySpaces,
   useCommunitySpace,
   useCommunitySpacePosts,
   type CommunitySpace,
 } from "@/hooks/use-community-spaces";
-import { CommunityCard } from "@/components/tethyr/community/community-card";
-import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
-import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
-import { SpaceHeader } from "@/components/tethyr/community/space-header";
-import { SpaceSettingsDialog } from "@/components/tethyr/community/space-settings-dialog";
 
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
@@ -59,126 +35,27 @@ export const Route = createFileRoute("/_authenticated/community")({
   ),
 });
 
-const NAV_TO_POST_TYPE: Partial<Record<CommunityNavId, string>> = {
-  projects: "project_update",
-  questions: "question",
-  resources: "resource",
-  help: "help_request",
-  collab: "collaboration_request",
-};
-
-const TYPE_FILTERS: { label: string; value: string | "all" }[] = [
-  { label: "All", value: "all" },
-  ...Object.entries(POST_TYPE_LABEL).map(([value, label]) => ({
-    label,
-    value,
-  })),
-];
-
-const TYPE_ICONS: Record<string, string> = {
-  project_update: "🚀",
-  question: "❓",
-  resource: "📚",
-  help_request: "🤝",
-  collaboration_request: "🔨",
-  tip: "💡",
-  showcase: "✨",
-  discussion: "💬",
-};
-
-type SortMode = "latest" | "helpful" | "offers" | "recommended";
-
-const SORT_OPTIONS: { label: string; value: SortMode }[] = [
-  { label: "Latest", value: "latest" },
-  { label: "Recommended", value: "recommended" },
-  { label: "Most helpful", value: "helpful" },
-  { label: "Most offers", value: "offers" },
-];
-
+/**
+ * Thin shell for /community. Owns page-level concerns only — which view is
+ * active, the mobile drawers, the deep-linked space, and the composer trigger
+ * (shared by the mobile FAB and empty states). The feed, header, list, rail
+ * and sidebar are extracted subcomponents that each own their own data.
+ */
 function CommunityPage() {
-  const { data: me } = useCurrentUser();
-  const { data: posts = [], isLoading } = usePosts();
-  const { data: challenges = [], isLoading: isLoadingChallenges } = useChallenges("active");
-  const { data: followingFeed = [], isLoading: isLoadingFollowing } = useFollowingFeed();
-  const deletePost = useDeletePost();
-  const toggleAction = useTogglePostAction();
-
-  const FILTER_STORE_KEY = "tethyr-community-filters";
-
-  function loadFilters() {
-    try {
-      const raw = localStorage.getItem(FILTER_STORE_KEY);
-      if (!raw) return {};
-      return JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      return {};
-    }
-  }
-
-  function saveFilters(state: Record<string, unknown>) {
-    try {
-      localStorage.setItem(FILTER_STORE_KEY, JSON.stringify(state));
-    } catch {
-      // ignore
-    }
-  }
-
-  const savedFilters = loadFilters();
-  const [nav, setNav] = useState<CommunityNavId>("home");
-  const [typeFilter, setTypeFilter] = useState<string | "all">(
-    (savedFilters.typeFilter as string) ?? "all",
-  );
-  const [focusFilter, setFocusFilter] = useState<DiscoveryFocus | "all">(
-    (savedFilters.focusFilter as DiscoveryFocus) ?? "all",
-  );
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>(
-    (savedFilters.sortMode as SortMode) ?? "latest",
-  );
-  const [mySkillsOnly, setMySkillsOnly] = useState((savedFilters.mySkillsOnly as boolean) ?? false);
-
-  // Persist filters to localStorage on change
-  useEffect(() => {
-    saveFilters({ typeFilter, focusFilter, sortMode, mySkillsOnly });
-  }, [typeFilter, focusFilter, sortMode, mySkillsOnly]);
-
-  const { data: skillCatalog = [] } = useSkillsCatalog();
-  // Build a set of skill NAMES the user teaches or learns
-  const mySkillNames = useMemo(() => {
-    const names = new Set<string>();
-    if (!me) return names;
-    const allUserSkillIds = new Set([...(me.teachIds ?? []), ...(me.learnIds ?? [])]);
-    for (const skill of skillCatalog) {
-      if (allUserSkillIds.has(skill.id)) {
-        names.add(skill.name.toLowerCase());
-      }
-    }
-    return names;
-  }, [me, skillCatalog]);
-  const activeFilterCount = [
-    typeFilter !== "all" ? 1 : 0,
-    focusFilter !== "all" ? 1 : 0,
-    mySkillsOnly ? 1 : 0,
-    sortMode !== "latest" ? 1 : 0,
-  ].reduce((a, b) => a + b, 0);
-  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
-  const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
-  const { data: spaces = [], isLoading: isLoadingSpaces } = useCommunitySpaces();
-  const [createSpaceOpen, setCreateSpaceOpen] = useState(false);
-  const [spaceSearch, setSpaceSearch] = useState("");
-  const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
-  const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
-  const { data: spacePosts = [] } = useCommunitySpacePosts(activeSpace?.id ?? "");
-  const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false);
-
-  // Deep-link: read ?post= and ?space= from URL
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const deepLinkedPostId = searchParams.post;
   const deepLinkedSpaceSlug = searchParams.space;
-  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+  const deepLinkedNav = searchParams.nav;
+
+  const [nav, setNav] = useState<CommunityNavId>("home");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileTrendingOpen, setMobileTrendingOpen] = useState(false);
+  const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
+  const [composerPresetType, setComposerPresetType] = useState<string | null>(null);
+
+  const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
+  const { data: spacePosts = [] } = useCommunitySpacePosts(activeSpace?.id ?? "");
 
   // If deep-linked to a space, auto-navigate to it
   useEffect(() => {
@@ -187,553 +64,65 @@ function CommunityPage() {
     }
   }, [deepLinkedSpaceSlug, activeSpaceSlug]);
 
-  // If deep-linked to a post, highlight it after a short delay
+  // If deep-linked to a nav destination (e.g. the Today digest's help/collab rows)
   useEffect(() => {
-    if (deepLinkedPostId) {
-      const timer = setTimeout(() => {
-        setHighlightedPostId(deepLinkedPostId);
-        const el = document.getElementById(`post-${deepLinkedPostId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        // Clear highlight after 3 seconds
-        const clearTimer = setTimeout(() => setHighlightedPostId(null), 3000);
-        return () => clearTimeout(clearTimer);
-      }, 300);
-      return () => clearTimeout(timer);
+    if (deepLinkedNav && deepLinkedNav !== nav) {
+      setNav(deepLinkedNav as CommunityNavId);
+      // A nav deep-link leaves the space view — the space feed overrides nav.
+      setActiveSpaceSlug(null);
     }
-  }, [deepLinkedPostId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkedNav]);
 
-  function toggleSave(id: string) {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function deletePostHandler(id: string) {
-    deletePost.mutate(id, {
-      onSuccess: () => toast.success("Post deleted"),
-      onError: () => toast.error("Failed to delete"),
-    });
-  }
-
-  function editPost(post: PostWithAuthor) {
-    setEditingPost(post);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function cancelEdit() {
-    setEditingPost(null);
-  }
-
-  function toggleComments(postId: string) {
-    setOpenComments((prev) => {
-      const next = new Set(prev);
-      if (next.has(postId)) next.delete(postId);
-      else next.add(postId);
-      return next;
-    });
-  }
-
-  function handleToggleAction(postId: string, action: "like" | "helpful" | "offer") {
-    if (!me?.userId) return;
-    const post = posts.find((p) => p.id === postId);
-    if (!post) return;
-    const isActive = post.myActions.includes(action);
-    toggleAction.mutate(
-      { postId, action, currentUserId: me.userId, isActive },
-      {
-        onError: () => toast.error("Failed"),
-      },
-    );
-  }
-
-  const effectiveTypeFilter = NAV_TO_POST_TYPE[nav] ?? (nav === "home" ? typeFilter : null);
-
-  const feed = useMemo(() => {
-    let list = posts;
-    if (activeSpace) {
-      list = spacePosts;
-    } else if (nav === "saved") {
-      list = list.filter((p) => savedIds.has(p.id));
-    } else if (nav === "following") {
-      list = followingFeed;
-    } else {
-      if (effectiveTypeFilter && effectiveTypeFilter !== "all") {
-        list = list.filter((p) => p.type === effectiveTypeFilter);
+  // Empty states and the mobile FAB drop the user straight into the composer
+  // (optionally with the post type pre-selected).
+  const focusComposer = useCallback((presetType?: string) => {
+    setNav("home");
+    setSearchQuery("");
+    if (presetType) setComposerPresetType(presetType);
+    requestAnimationFrame(() => {
+      const el = document.getElementById("community-composer-textarea");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        (el as HTMLTextAreaElement).focus();
       }
-      if (focusFilter !== "all") {
-        list = list.filter((p) => p.focus === focusFilter);
-      }
-    }
+    });
+  }, []);
 
-    if (mySkillsOnly && mySkillNames.size > 0) {
-      list = list.filter((p) => p.skills.some((s) => mySkillNames.has(s.toLowerCase())));
-    }
+  const openSpace = useCallback((space: CommunitySpace) => {
+    setActiveSpaceSlug(space.slug);
+    setNav("home");
+  }, []);
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.body.toLowerCase().includes(q) ||
-          (p.author.display_name ?? "").toLowerCase().includes(q) ||
-          (p.author.handle ?? "").toLowerCase().includes(q) ||
-          p.skills.some((s) => s.toLowerCase().includes(q)),
-      );
-    }
+  const closeSpace = useCallback(() => setActiveSpaceSlug(null), []);
 
-    if (nav === "trending") {
-      list = [...list].sort((a, b) => b.stats.likes - a.stats.likes);
-    } else if (sortMode === "recommended" && mySkillNames.size > 0) {
-      list = [...list].sort((a, b) => {
-        const aOverlap = a.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
-        const bOverlap = b.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length;
-        if (bOverlap !== aOverlap) return bOverlap - aOverlap;
-        return b.stats.likes - a.stats.likes;
-      });
-    } else if (sortMode === "helpful") {
-      list = [...list].sort((a, b) => b.stats.helpful - a.stats.helpful);
-    } else if (sortMode === "offers") {
-      list = [...list].sort((a, b) => b.stats.offers - a.stats.offers);
-    }
-
-    return list;
-  }, [
-    posts,
-    nav,
-    effectiveTypeFilter,
-    focusFilter,
-    savedIds,
-    searchQuery,
-    sortMode,
-    followingFeed,
-    activeSpace,
-    spacePosts,
-    mySkillsOnly,
-    mySkillNames,
-  ]);
-
-  const isSearching = searchQuery.trim().length > 0;
-  const showComposer = (nav === "home" && !isSearching) || !!editingPost;
-  const showTypeTabs = nav === "home" && !isSearching;
+  const openTrending = useCallback(() => setMobileTrendingOpen(true), []);
+  const openSidebar = useCallback(() => setMobileSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setMobileSidebarOpen(false), []);
+  const selectFromDrawer = useCallback((id: CommunityNavId) => {
+    setNav(id);
+    setMobileSidebarOpen(false);
+  }, []);
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
-        <CommunityLeftSidebar active={nav} onSelect={setNav} />
+        <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
 
-        <div className="min-w-0 flex-1">
-          <header className="mb-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
-                <h1 className="font-display text-2xl font-semibold">{navTitle(nav)}</h1>
-                <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-                  Share project updates, ask for help, request collaboration, or drop a resource.
-                  Every post has purpose.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileTrendingOpen(true)}
-                className="flex min-h-11 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Trending
-              </button>
-            </div>
-
-            <div className="relative mt-4">
-              <Search
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search the community"
-                placeholder="Search projects, skills, people, or ideas..."
-                className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-              />
-              {isSearching && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {isSearching && (
-              <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
-                {feed.length} result{feed.length !== 1 ? "s" : ""} for "{searchQuery}"
-              </p>
-            )}
-            {!isSearching && activeFilterCount > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {typeFilter !== "all" && (
-                  <FilterBadge
-                    label={`Type: ${TYPE_FILTERS.find((f) => f.value === typeFilter)?.label ?? typeFilter}`}
-                    onRemove={() => setTypeFilter("all")}
-                  />
-                )}
-                {focusFilter !== "all" && (
-                  <FilterBadge
-                    label={`Focus: ${focusFilter}`}
-                    onRemove={() => setFocusFilter("all")}
-                  />
-                )}
-                {mySkillsOnly && (
-                  <FilterBadge label="My skills only" onRemove={() => setMySkillsOnly(false)} />
-                )}
-                {sortMode !== "latest" && (
-                  <FilterBadge label={`Sort: ${sortMode}`} onRemove={() => setSortMode("latest")} />
-                )}
-                {activeFilterCount > 1 && (
-                  <button
-                    onClick={() => {
-                      setTypeFilter("all");
-                      setFocusFilter("all");
-                      setMySkillsOnly(false);
-                      setSortMode("latest");
-                    }}
-                    className="text-[11px] text-muted-foreground underline hover:text-foreground"
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
-            )}
-          </header>
-
-          {activeSpace && (
-            <SpaceHeader
-              space={activeSpace}
-              myRole={activeSpace.my_role ?? null}
-              onBack={() => setActiveSpaceSlug(null)}
-              onOpenSettings={() => setSpaceSettingsOpen(true)}
-            />
-          )}
-
-          {activeSpace && spaceSettingsOpen && (
-            <SpaceSettingsDialog
-              space={activeSpace}
-              open={spaceSettingsOpen}
-              onOpenChange={setSpaceSettingsOpen}
-              onDeleted={() => {
-                setActiveSpaceSlug(null);
-                setSpaceSettingsOpen(false);
-              }}
-            />
-          )}
-
-          {showComposer && (
-            <div className="mb-6">
-              <ComposerBar
-                editingPost={editingPost}
-                onCancelEdit={cancelEdit}
-                spaceId={activeSpace?.id}
-              />
-            </div>
-          )}
-
-          {showTypeTabs && (
-            <div className="sticky top-0 z-20 -mx-2 px-2 py-2 bg-background/85 backdrop-blur-md mb-4 border-b border-border/40 space-y-1.5">
-              {/* Row 1: type chips + sort/my-skills on same row */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-                {TYPE_FILTERS.map((f) => {
-                  const icon = f.value !== "all" ? TYPE_ICONS[f.value] : null;
-                  return (
-                    <button
-                      key={f.value}
-                      onClick={() => setTypeFilter(f.value)}
-                      className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 ${
-                        typeFilter === f.value
-                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated/50"
-                      }`}
-                    >
-                      {icon && <span className="mr-1">{icon}</span>}
-                      {f.label}
-                    </button>
-                  );
-                })}
-                <span className="mx-1 h-5 w-px shrink-0 bg-border/60" />
-                <button
-                  onClick={() => setMySkillsOnly(!mySkillsOnly)}
-                  className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
-                    mySkillsOnly
-                      ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <BookmarkCheck className="mr-1 inline h-3 w-3" />
-                  My skills
-                </button>
-                {SORT_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSortMode(opt.value)}
-                    className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
-                      sortMode === opt.value
-                        ? "bg-surface-elevated text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Row 2: focus chips */}
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-                <button
-                  onClick={() => setFocusFilter("all")}
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
-                    focusFilter === "all"
-                      ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
-                  }`}
-                >
-                  Any focus
-                </button>
-                {DISCOVERY_FILTERS.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFocusFilter(focusFilter === f ? "all" : f)}
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
-                      focusFilter === f
-                        ? "bg-surface-elevated text-foreground shadow-sm font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-elevated/30"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {nav === "challenges" ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Challenges</h2>
-                <CreateChallengeDialog />
-              </div>
-              {isLoadingChallenges ? (
-                <div className="flex flex-col gap-5">
-                  {[1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="animate-pulse rounded-2xl border border-border/50 bg-card/60 p-6 h-40"
-                    />
-                  ))}
-                </div>
-              ) : challenges.length === 0 ? (
-                <EmptyState
-                  icon={<Users className="h-5 w-5" />}
-                  title="No active challenges yet"
-                  description="Community challenges give people shared goals to learn and build together. Stay tuned for upcoming challenges!"
-                />
-              ) : (
-                <div className="flex flex-col gap-5">
-                  {challenges.map((c) => (
-                    <ChallengeCard key={c.id} challenge={c} />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : nav === "communities" ? (
-            <div>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={spaceSearch}
-                    onChange={(e) => setSpaceSearch(e.target.value)}
-                    placeholder="Search spaces..."
-                    className="h-9 rounded-xl border-border/60 bg-surface pl-9 pr-4 text-sm"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  className="rounded-full shrink-0"
-                  onClick={() => setCreateSpaceOpen(true)}
-                >
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Create space
-                </Button>
-              </div>
-              {isLoadingSpaces ? (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="animate-pulse rounded-3xl border border-border/50 bg-card/60 p-5 h-32"
-                    />
-                  ))}
-                </div>
-              ) : spaces.length === 0 ? (
-                <EmptyState
-                  icon={<Users className="h-5 w-5" />}
-                  title="No communities yet"
-                  description="Be the first to create a community space and bring people together."
-                />
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {spaces
-                    .filter((s: CommunitySpace) =>
-                      spaceSearch.trim()
-                        ? s.name.toLowerCase().includes(spaceSearch.toLowerCase()) ||
-                          s.description.toLowerCase().includes(spaceSearch.toLowerCase())
-                        : true,
-                    )
-                    .map((space: CommunitySpace) => (
-                      <CommunityCard
-                        key={space.id}
-                        space={space}
-                        onClick={() => {
-                          setActiveSpaceSlug(space.slug);
-                          setNav("home");
-                        }}
-                      />
-                    ))}
-                </div>
-              )}
-              <CreateSpaceDialog open={createSpaceOpen} onOpenChange={setCreateSpaceOpen} />
-            </div>
-          ) : nav === "following" ? (
-            isLoadingFollowing ? (
-              <div className="flex flex-col gap-5">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-32 rounded bg-surface-elevated" />
-                        <div className="h-3 w-48 rounded bg-surface-elevated" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : followingFeed.length === 0 ? (
-              <EmptyState
-                icon={<Heart className="h-5 w-5" />}
-                title="You're not following anyone yet"
-                description="Follow collaborators to see their posts here. Visit a profile and click Follow to get started."
-              />
-            ) : (
-              <div className="flex flex-col gap-5">
-                {followingFeed.map((post, index) => (
-                  <PostCardWithComments
-                    key={post.id}
-                    post={post}
-                    saved={savedIds.has(post.id)}
-                    onToggleSave={() => toggleSave(post.id)}
-                    searchQuery={undefined}
-                    showComments={openComments.has(post.id)}
-                    onToggleComments={() => toggleComments(post.id)}
-                    onDelete={() => deletePostHandler(post.id)}
-                    onEdit={() => editPost(post)}
-                    onToggleAction={(action) => handleToggleAction(post.id, action)}
-                    className="transition-lift animate-stagger"
-                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
-                    highlighted={post.id === highlightedPostId}
-                  />
-                ))}
-              </div>
-            )
-          ) : isLoading ? (
-            <div className="flex flex-col gap-5">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-32 rounded bg-surface-elevated" />
-                      <div className="h-3 w-48 rounded bg-surface-elevated" />
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    <div className="h-3 w-full rounded bg-surface-elevated" />
-                    <div className="h-3 w-3/4 rounded bg-surface-elevated" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : feed.length === 0 && isSearching ? (
-            <EmptyState
-              icon={<Search className="h-5 w-5" />}
-              title="No results found"
-              description={`Nothing matches "${searchQuery}". Try different keywords — project names, skill tags, or collaborator handles.`}
-            />
-          ) : feed.length === 0 && activeSpace ? (
-            <EmptyState
-              icon={<Users className="h-5 w-5" />}
-              title="This space is quiet"
-              description={`Be the first to post in ${activeSpace.name}. Share an update, ask a question, or start a conversation.`}
-            />
-          ) : feed.length === 0 ? (
-            <EmptyState
-              icon={<Users className="h-5 w-5" />}
-              title={
-                nav === "saved"
-                  ? "Nothing saved yet"
-                  : nav === "help"
-                    ? "No help requests"
-                    : "The community is quiet"
-              }
-              description={
-                nav === "saved"
-                  ? "Save a post to pin it here for quick access."
-                  : nav === "help"
-                    ? "When someone needs a hand, their request will appear here."
-                    : "Be the first to share a project update, ask a question, or request collaboration."
-              }
-            />
-          ) : (
-            <div className="flex flex-col gap-5">
-              {feed.map((post, index) => {
-                const overlap =
-                  sortMode === "recommended"
-                    ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
-                    : undefined;
-                return (
-                  <PostCardWithComments
-                    key={post.id}
-                    post={post}
-                    saved={savedIds.has(post.id)}
-                    onToggleSave={() => toggleSave(post.id)}
-                    searchQuery={isSearching ? searchQuery : undefined}
-                    showComments={openComments.has(post.id)}
-                    onToggleComments={() => toggleComments(post.id)}
-                    onDelete={() => deletePostHandler(post.id)}
-                    onEdit={() => editPost(post)}
-                    onToggleAction={(action) => handleToggleAction(post.id, action)}
-                    className="transition-lift animate-stagger"
-                    style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
-                    highlighted={post.id === highlightedPostId}
-                    skillOverlap={overlap}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <CommunityFeed
+          nav={nav}
+          onNavChange={setNav}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeSpace={activeSpace ?? undefined}
+          spacePosts={spacePosts}
+          composerPresetType={composerPresetType}
+          focusComposer={focusComposer}
+          deepLinkedPostId={deepLinkedPostId}
+          onBackSpace={closeSpace}
+          onOpenTrending={openTrending}
+          onOpenSpace={openSpace}
+        />
 
         <CommunityRightSidebar />
       </div>
@@ -741,7 +130,8 @@ function CommunityPage() {
       <MobileBottomNav
         active={nav}
         onSelect={setNav}
-        onOpenSidebar={() => setMobileSidebarOpen(true)}
+        onPost={focusComposer}
+        onOpenSidebar={openSidebar}
       />
 
       <Drawer open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
@@ -752,10 +142,9 @@ function CommunityPage() {
           <div className="overflow-y-auto px-4 pb-6">
             <CommunityLeftSidebar
               active={nav}
-              onSelect={(id) => {
-                setNav(id);
-                setMobileSidebarOpen(false);
-              }}
+              onSelect={selectFromDrawer}
+              onNavigate={closeSidebar}
+              className="w-full"
             />
           </div>
         </DrawerContent>
@@ -773,95 +162,4 @@ function CommunityPage() {
       </Drawer>
     </div>
   );
-}
-
-function PostCardWithComments({
-  post,
-  saved,
-  onToggleSave,
-  searchQuery,
-  showComments,
-  onToggleComments,
-  onDelete,
-  onEdit,
-  onToggleAction,
-  className,
-  style,
-  highlighted,
-  skillOverlap,
-}: {
-  post: PostWithAuthor;
-  saved: boolean;
-  onToggleSave: () => void;
-  searchQuery?: string;
-  showComments: boolean;
-  onToggleComments: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-  onToggleAction: (action: "like" | "helpful" | "offer") => void;
-  className?: string;
-  style?: React.CSSProperties;
-  highlighted?: boolean;
-  skillOverlap?: number;
-}) {
-  const { data: comments = [] } = useComments(showComments ? post.id : "");
-
-  return (
-    <div id={`post-${post.id}`} className={className} style={style}>
-      <PostCard
-        post={post}
-        saved={saved}
-        onToggleSave={onToggleSave}
-        searchQuery={searchQuery}
-        comments={comments}
-        showComments={showComments}
-        onToggleComments={onToggleComments}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onToggleAction={onToggleAction}
-        highlighted={highlighted}
-        skillOverlap={skillOverlap}
-      />
-    </div>
-  );
-}
-
-function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
-      {label}
-      <button onClick={onRemove} className="ml-0.5 rounded-full p-0.5 hover:bg-surface-elevated">
-        <X className="h-2.5 w-2.5" />
-      </button>
-    </span>
-  );
-}
-
-function navTitle(nav: CommunityNavId): string {
-  switch (nav) {
-    case "home":
-      return "Community Feed";
-    case "communities":
-      return "Communities";
-    case "help":
-      return "Help Requests";
-    case "collab":
-      return "Collaboration Requests";
-    case "projects":
-      return "Project Updates";
-    case "questions":
-      return "Questions";
-    case "resources":
-      return "Resources";
-    case "challenges":
-      return "Challenges";
-    case "following":
-      return "Following";
-    case "saved":
-      return "Saved";
-    case "trending":
-      return "Trending";
-    default:
-      return "Community";
-  }
 }

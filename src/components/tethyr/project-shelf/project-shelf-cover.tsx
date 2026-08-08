@@ -152,6 +152,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
           tags={project.tags}
           coverUrl={project.cover_url}
           progress={project.progress_percent}
+          fit="contain"
         />
         <div className="absolute left-3 top-3 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
@@ -337,6 +338,7 @@ function ProjectShelfCoverAnimated({
               tags={project.tags}
               coverUrl={project.cover_url}
               progress={project.progress_percent}
+              fit="contain"
             />
             {/* Specular sheen */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />

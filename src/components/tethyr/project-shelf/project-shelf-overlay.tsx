@@ -129,6 +129,7 @@ export function ProjectShelfOverlay({
                     tags={project.tags}
                     coverUrl={project.cover_url}
                     progress={project.progress_percent}
+                    fit="contain"
                   />
 
                   {/* Close button */}

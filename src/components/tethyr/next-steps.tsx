@@ -1,8 +1,9 @@
+import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Check, Circle } from "lucide-react";
 import type { Section } from "@/lib/profile-completeness";
 
-export function NextStepsList({ items }: { items: Section[] }) {
+export const NextStepsList = memo(function NextStepsList({ items }: { items: Section[] }) {
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-border/60 bg-surface/60 p-6 text-center">
@@ -39,4 +40,4 @@ export function NextStepsList({ items }: { items: Section[] }) {
       ))}
     </ul>
   );
-}
+});

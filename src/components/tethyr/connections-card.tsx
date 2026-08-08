@@ -1,4 +1,5 @@
 // Dashboard card: incoming requests + accepted tethrs (connections).
+import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Link2, Check, X, MessageSquare } from "lucide-react";
@@ -7,7 +8,7 @@ import { EmptyState } from "./empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections, useRespondConnection, useDeleteConnection } from "@/hooks/use-connections";
 
-export function ConnectionsCard() {
+export const ConnectionsCard = memo(function ConnectionsCard() {
   const { data: me } = useCurrentUser();
   const { data: connections, isLoading } = useConnections();
   const respond = useRespondConnection();
@@ -66,11 +67,17 @@ export function ConnectionsCard() {
                     {c.other?.display_name || c.other?.handle}
                   </Link>
                 ) : (
-                  <p className="truncate text-sm font-medium" title={c.other?.display_name || "Member"}>
+                  <p
+                    className="truncate text-sm font-medium"
+                    title={c.other?.display_name || "Member"}
+                  >
                     {c.other?.display_name || "Member"}
                   </p>
                 )}
-                <p className="truncate text-xs text-muted-foreground" title={c.other?.creator_title || c.other?.category || undefined}>
+                <p
+                  className="truncate text-xs text-muted-foreground"
+                  title={c.other?.creator_title || c.other?.category || undefined}
+                >
                   {c.other?.creator_title || c.other?.category || "wants to tethyr"}
                 </p>
                 {c.intro_message && (
@@ -140,7 +147,9 @@ export function ConnectionsCard() {
                     {c.other?.display_name || c.other?.handle}
                   </Link>
                 ) : (
-                  <p className="truncate text-sm" title={c.other?.display_name || "Member"}>{c.other?.display_name || "Member"}</p>
+                  <p className="truncate text-sm" title={c.other?.display_name || "Member"}>
+                    {c.other?.display_name || "Member"}
+                  </p>
                 )}
                 <p className="truncate text-[11px] text-muted-foreground">Waiting for response</p>
               </div>
@@ -191,11 +200,17 @@ export function ConnectionsCard() {
                       {c.other?.display_name || c.other?.handle}
                     </Link>
                   ) : (
-                    <p className="truncate text-sm font-medium" title={c.other?.display_name || "Member"}>
+                    <p
+                      className="truncate text-sm font-medium"
+                      title={c.other?.display_name || "Member"}
+                    >
                       {c.other?.display_name || "Member"}
                     </p>
                   )}
-                  <p className="truncate text-xs text-muted-foreground" title={c.other?.creator_title || c.other?.category || undefined}>
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={c.other?.creator_title || c.other?.category || undefined}
+                  >
                     {c.other?.creator_title || c.other?.category || "—"}
                   </p>
                 </div>
@@ -211,4 +226,4 @@ export function ConnectionsCard() {
       </div>
     </div>
   );
-}
+});

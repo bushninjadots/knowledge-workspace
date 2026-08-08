@@ -84,8 +84,10 @@ function ProjectPage() {
       // Try full column set first; fall back if extended columns are missing.
       const FULL_COLS =
         "id, profile_id, title, description, goal, vision, status, stage, started_at, progress_percent, cover_url, gallery, resources, links, tags, uploaded_files, looking_for_feedback, looking_for_collaborators, is_featured";
+      // Fallback deliberately omits the newest column (uploaded_files) so a
+      // database that hasn't run the latest migration still loads every project.
       const BASIC_COLS =
-        "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, uploaded_files, looking_for_feedback, looking_for_collaborators, is_featured";
+        "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
 
       let project: any = null;
       for (const cols of [FULL_COLS, BASIC_COLS]) {

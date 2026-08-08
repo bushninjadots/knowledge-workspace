@@ -1,5 +1,6 @@
 // Activity timeline — shows both activity_events and contribution_log entries
 // in a unified, chronologically sorted view.
+import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
@@ -76,7 +77,7 @@ function relative(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function ActivityTimeline({
+export const ActivityTimeline = memo(function ActivityTimeline({
   profileId,
   events: staticEvents,
   limit,
@@ -166,4 +167,4 @@ export function ActivityTimeline({
       })}
     </ol>
   );
-}
+});

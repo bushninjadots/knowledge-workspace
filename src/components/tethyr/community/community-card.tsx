@@ -28,11 +28,21 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
 
   const initial = space.name.charAt(0).toUpperCase();
 
+  // The card is a click target that contains its own Join/Leave button, so it
+  // must not be a <button> (a button cannot contain a button). A keyboard-
+  // accessible div keeps the open-space action while staying valid HTML.
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onClick?.()}
-      className="group flex flex-col rounded-3xl border border-border/60 bg-card/70 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--card))] hover:shadow-lg text-left w-full"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+      className="group flex w-full cursor-pointer flex-col rounded-3xl border border-border/60 bg-card/70 p-5 text-left backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--card))] hover:shadow-lg"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
@@ -43,11 +53,17 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors" title={space.name}>
+          <h3
+            className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors"
+            title={space.name}
+          >
             {space.name}
           </h3>
           {space.description && (
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground" title={space.description ?? undefined}>
+            <p
+              className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
+              title={space.description ?? undefined}
+            >
               {space.description}
             </p>
           )}
@@ -68,6 +84,6 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           {space.is_member ? "Joined" : "Join"}
         </Button>
       </div>
-    </button>
+    </div>
   );
 }

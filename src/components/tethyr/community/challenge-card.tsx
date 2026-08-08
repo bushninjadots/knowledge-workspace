@@ -73,7 +73,10 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
       </CardHeader>
 
       <CardContent className="p-5 pt-0 space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed" title={challenge.description}>
+        <p
+          className="text-sm text-muted-foreground line-clamp-2 leading-relaxed"
+          title={challenge.description}
+        >
           {challenge.description}
         </p>
 

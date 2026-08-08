@@ -1,4 +1,4 @@
-import { ArrowLeft, Users, Settings, Lock } from "lucide-react";
+import { Users, Settings, Lock, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,7 +18,6 @@ export function SpaceHeader({
   space: CommunitySpace;
   myRole: SpaceMemberRole | null;
   onBack: () => void;
-  onOpenSettings?: () => void;
 }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
@@ -42,42 +41,63 @@ export function SpaceHeader({
   const canManage = myRole === "owner" || myRole === "moderator";
 
   return (
-    <div className="mb-6 rounded-3xl border border-border/60 bg-card/70 p-6 backdrop-blur-sm">
-      <div className="flex items-start gap-4">
+    <div className="mb-8">
+      {/* Breadcrumb — Communities / space name */}
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground"
+      >
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back to the community feed"
-          className="mt-1 rounded-lg p-1.5 text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors"
+          className="rounded px-1 py-0.5 transition-colors hover:bg-surface-elevated hover:text-foreground"
         >
-          <ArrowLeft className="h-5 w-5" />
+          Communities
         </button>
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
-          ) : (
-            initial
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-semibold">{space.name}</h2>
-          {space.description && (
-            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{space.description}</p>
-          )}
-          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
-              {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
-            </span>
-            {space.visibility === "private" && (
-              <span className="flex items-center gap-1">
-                <Lock className="h-3.5 w-3.5" />
-                Private
-              </span>
+        <span aria-hidden className="text-muted-foreground/50">
+          /
+        </span>
+        <span className="truncate font-medium text-foreground/80">{space.name}</span>
+      </nav>
+
+      {/* Page title row */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initial
             )}
           </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="font-title truncate text-2xl font-semibold tracking-tight">
+                {space.name}
+              </h1>
+              {space.visibility === "private" && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                  <Lock className="h-3 w-3" />
+                  Private
+                </span>
+              )}
+              {space.is_member && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-green">
+                  <Check className="h-3.5 w-3.5" />
+                  Joined
+                </span>
+              )}
+            </div>
+            <p className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
+              </span>
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex shrink-0 items-center gap-2">
           {canManage && (
             <Button size="sm" variant="outline" className="rounded-full" asChild>
               <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
@@ -97,6 +117,12 @@ export function SpaceHeader({
           </Button>
         </div>
       </div>
+
+      {space.description && (
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          {space.description}
+        </p>
+      )}
     </div>
   );
 }

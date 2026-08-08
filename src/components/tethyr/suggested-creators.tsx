@@ -1,5 +1,6 @@
 // Skill-matched suggested creators — matches complementary teach/learn skills,
 // availability overlap, and language compatibility.
+import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Sparkles, Zap } from "lucide-react";
@@ -18,7 +19,11 @@ type CandidateSkills = {
   verification_level: string;
 };
 
-export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
+export const SuggestedCreators = memo(function SuggestedCreators({
+  limit = 6,
+}: {
+  limit?: number;
+}) {
   const { data: me } = useCurrentUser();
 
   const { data, isLoading } = useQuery({
@@ -192,4 +197,4 @@ export function SuggestedCreators({ limit = 6 }: { limit?: number }) {
       })}
     </div>
   );
-}
+});

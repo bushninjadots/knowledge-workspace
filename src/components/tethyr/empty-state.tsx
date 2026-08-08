@@ -281,6 +281,7 @@ export function EmptyState({
   description,
   actionLabel,
   actionHref,
+  onAction,
   variant = "default",
 }: {
   icon?: ReactNode;
@@ -288,20 +289,27 @@ export function EmptyState({
   description?: string;
   actionLabel?: string;
   actionHref?: string;
+  /** Callback variant of the action — use for in-page actions (dialogs, filters). */
+  onAction?: () => void;
   variant?: "projects" | "skills" | "community" | "messages" | "default";
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/40 bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
       <WorkshopIllustration variant={variant} />
       <div className="space-y-2">
-        <p className="font-display text-base font-medium text-foreground">{title}</p>
+        <p className="font-title text-base font-medium text-foreground">{title}</p>
         {description && (
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}
       </div>
-      {actionLabel && actionHref && (
+      {actionLabel && onAction && (
+        <Button size="sm" variant="outline" className="mt-1 rounded-full" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      )}
+      {actionLabel && actionHref && !onAction && (
         <Button asChild size="sm" variant="outline" className="mt-1 rounded-full">
           <Link to={actionHref}>{actionLabel}</Link>
         </Button>

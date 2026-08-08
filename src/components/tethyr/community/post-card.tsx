@@ -235,6 +235,12 @@ export function PostCard({
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
             <span>{authorTitle}</span>
             <span aria-hidden>·</span>
+            {/* Type reads as data — mono tag + left accent bar */}
+            <span
+              className={`font-mono text-[10px] font-medium uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
+            >
+              {POST_TYPE_LABEL[post.type]}
+            </span>
             {post.space_id ? (
               <span className="rounded-full border border-brand-purple/40 bg-brand-purple/10 px-1.5 py-0 text-[11px] uppercase tracking-wider text-brand-purple">
                 Space
@@ -250,7 +256,7 @@ export function PostCard({
               </span>
             )}
             <span aria-hidden>·</span>
-            <span className="flex items-center gap-1">
+            <span className="mono flex items-center gap-1 text-[10px]">
               <Clock className="h-3 w-3" />
               {timeAgo(post.created_at)}
             </span>
@@ -299,15 +305,6 @@ export function PostCard({
               )}
             </div>
           )}
-          <span
-            className={`flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider ${TYPE_ACCENT[post.type]}`}
-          >
-            {(() => {
-              const TypeIcon = TYPE_ICON[post.type];
-              return <TypeIcon className="h-3 w-3" />;
-            })()}
-            {POST_TYPE_LABEL[post.type]}
-          </span>
         </div>
       </div>
 
@@ -376,7 +373,7 @@ export function PostCard({
       )}
 
       {/* Body */}
-      <h3 className="mt-3 text-base font-semibold leading-snug">
+      <h3 className="font-title mt-3 text-base font-semibold leading-snug">
         <HighlightText text={post.title} query={searchQuery} />
       </h3>
       <div className="prose-custom mt-1.5 text-sm text-foreground/90">

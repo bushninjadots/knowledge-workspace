@@ -6,28 +6,41 @@ interface CoverGradientProps {
   coverUrl?: string | null;
   progress: number;
   animated?: boolean;
+  /**
+   * "cover" fills the frame (crops the image); "contain" shows the whole
+   * image centred on the category gradient (no cropping). Use "contain" for
+   * large hero covers so nothing gets cut off.
+   */
+  fit?: "cover" | "contain";
 }
 
-export function CoverGradient({ tags, coverUrl, progress, animated = true }: CoverGradientProps) {
+export function CoverGradient({
+  tags,
+  coverUrl,
+  progress,
+  animated = true,
+  fit = "cover",
+}: CoverGradientProps) {
   const cat = inferCategory(tags);
   const c = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.Design;
   const prefersReducedMotion = useReducedMotion();
+  const gradient = `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`;
 
   if (coverUrl) {
     return (
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" style={{ background: gradient }}>
         <img
           src={coverUrl}
           alt=""
           draggable={false}
-          className="pointer-events-none h-full w-full select-none object-cover"
+          className={`pointer-events-none h-full w-full select-none ${fit === "contain" ? "object-contain" : "object-cover"}`}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        {fit === "cover" && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        )}
       </div>
     );
   }
-
-  const gradient = `linear-gradient(135deg, oklch(0.4 ${c.sat / 100} ${c.hue}), oklch(0.25 ${c.sat / 100} ${c.hue + 30}))`;
 
   if (!animated || prefersReducedMotion) {
     return <div className="absolute inset-0" style={{ background: gradient }} />;

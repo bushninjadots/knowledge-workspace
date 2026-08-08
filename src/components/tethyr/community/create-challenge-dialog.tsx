@@ -19,8 +19,20 @@ import {
 import { toast } from "sonner";
 import { useCreateChallenge } from "@/hooks/use-challenges";
 
-export function CreateChallengeDialog() {
-  const [open, setOpen] = useState(false);
+export function CreateChallengeDialog({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  /** Optional controlled mode — lets callers open the dialog from elsewhere. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (controlledOnOpenChange) controlledOnOpenChange(v);
+    else setInternalOpen(v);
+  };
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<string>("skill");
