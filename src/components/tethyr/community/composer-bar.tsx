@@ -34,7 +34,13 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { QUICK_ACTIONS, POST_FLAIRS, flairClasses, type PostType } from "@/lib/community-data";
+import {
+  QUICK_ACTIONS,
+  POST_FLAIRS,
+  FEEDBACK_TAG_OPTIONS,
+  flairClasses,
+  type PostType,
+} from "@/lib/community-data";
 import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -53,6 +59,7 @@ import {
 import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
 import { supabase } from "@/integrations/supabase/client";
+import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-validation";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -165,6 +172,7 @@ export function ComposerBar({
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
   const [type, setType] = useState<string | null>(editingPost?.type ?? null);
+  const draftKey = me?.userId ? `${DRAFT_KEY}:${me.userId}` : null;
   const [title, setTitle] = useState(editingPost?.title ?? "");
   const [draft, setDraft] = useState(editingPost?.body ?? "");
   const [images, setImages] = useState<string[]>(editingPost?.images ?? []);
@@ -180,6 +188,7 @@ export function ComposerBar({
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [pollEndsAt, setPollEndsAt] = useState("");
+  const [draftReadyKey, setDraftReadyKey] = useState<string | null>(null);
   const [flair, setFlair] = useState<string | null>(editingPost?.flair ?? null);
   const [linkUrl, setLinkUrl] = useState(editingPost?.link_url ?? "");
   const [showLinkInput, setShowLinkInput] = useState(!!editingPost?.link_url);
@@ -247,8 +256,19 @@ export function ComposerBar({
 
   // Draft autosave
   useEffect(() => {
-    if (isEditing) return;
-    const saved = localStorage.getItem(DRAFT_KEY);
+    if (isEditing || !draftKey) return;
+
+    // Reset in-memory composer state before loading the next account's draft.
+    setDraft("");
+    setTitle("");
+    setType(null);
+    setImages([]);
+    setFeedbackTags([]);
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+    setPollEndsAt("");
+
+    const saved = localStorage.getItem(draftKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -258,23 +278,60 @@ export function ComposerBar({
           setType(parsed.type);
         } else if (parsed.type) {
           // Clear stale draft with invalid type
-          localStorage.removeItem(DRAFT_KEY);
+          localStorage.removeItem(draftKey);
         }
         if (parsed.images) setImages(parsed.images);
+        if (Array.isArray(parsed.feedbackTags)) setFeedbackTags(parsed.feedbackTags);
+        if (typeof parsed.pollQuestion === "string") setPollQuestion(parsed.pollQuestion);
+        if (Array.isArray(parsed.pollOptions)) setPollOptions(parsed.pollOptions);
+        if (typeof parsed.pollEndsAt === "string") setPollEndsAt(parsed.pollEndsAt);
       } catch {
         // ignore
       }
     }
-  }, [isEditing]);
+    setDraftReadyKey(draftKey);
+  }, [draftKey, isEditing]);
 
   useEffect(() => {
-    if (isEditing) return;
-    if (draft || type || images.length > 0) {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ body: draft, title, type, images }));
+    if (isEditing || !draftKey || draftReadyKey !== draftKey) return;
+    if (
+      draft ||
+      type ||
+      images.length > 0 ||
+      feedbackTags.length > 0 ||
+      pollQuestion ||
+      pollOptions.some(Boolean) ||
+      pollEndsAt
+    ) {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          body: draft,
+          title,
+          type,
+          images,
+          feedbackTags,
+          pollQuestion,
+          pollOptions,
+          pollEndsAt,
+        }),
+      );
     } else {
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey);
     }
-  }, [draft, title, type, images, isEditing]);
+  }, [
+    draftReadyKey,
+    draftKey,
+    draft,
+    title,
+    type,
+    images,
+    feedbackTags,
+    pollQuestion,
+    pollOptions,
+    pollEndsAt,
+    isEditing,
+  ]);
 
   // Pre-select a post type from an empty-state action ("Share a showcase").
   // One-shot per preset: never clobbers a saved draft or an edit session.
@@ -283,17 +340,25 @@ export function ComposerBar({
     if (!VALID_POST_TYPES.has(presetType)) return;
     let hasDraft = false;
     try {
-      const saved = localStorage.getItem(DRAFT_KEY);
+      if (!draftKey) return;
+      const saved = localStorage.getItem(draftKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        hasDraft = !!(parsed?.body || parsed?.type || parsed?.images?.length);
+        hasDraft = !!(
+          parsed?.body ||
+          parsed?.type ||
+          parsed?.images?.length ||
+          parsed?.feedbackTags?.length ||
+          parsed?.pollQuestion ||
+          parsed?.pollOptions?.some(Boolean)
+        );
       }
     } catch {
       // ignore
     }
     if (!hasDraft) setType(presetType);
     appliedPresetRef.current = presetType;
-  }, [presetType, isEditing]);
+  }, [draftKey, presetType, isEditing]);
 
   const handleImageUpload = useCallback(() => {
     fileInputRef.current?.click();
@@ -452,6 +517,23 @@ export function ComposerBar({
     const postTitle =
       title.trim() || (bodyText.length > 80 ? bodyText.slice(0, 77) + "..." : bodyText);
 
+    if (type === "feedback_request") {
+      const feedbackError = validateFeedbackRequest(feedbackTags);
+      if (feedbackError) {
+        toast.info(feedbackError);
+        setFocused(true);
+        return;
+      }
+    }
+
+    if (type === "poll") {
+      const pollError = validatePollDraft(pollOptions, pollEndsAt);
+      if (pollError) {
+        toast.error(pollError);
+        return;
+      }
+    }
+
     try {
       if (isEditing && editingPost) {
         await updatePost.mutateAsync({
@@ -474,11 +556,6 @@ export function ComposerBar({
                 ends_at: pollEndsAt ? new Date(pollEndsAt).toISOString() : null,
               }
             : undefined;
-
-        if (type === "poll" && poll_data!.options.length < 2) {
-          toast.error("A poll needs at least 2 options");
-          return;
-        }
 
         await createPost.mutateAsync({
           type: type as PostType,
@@ -512,7 +589,7 @@ export function ComposerBar({
       setShowLinkInput(false);
       setTargetSpaceId(null);
       setShowAttachPanel(false);
-      localStorage.removeItem(DRAFT_KEY);
+      if (draftKey) localStorage.removeItem(draftKey);
       onCancelEdit?.();
     } catch (err: any) {
       const msg = err?.message ?? err?.error?.message ?? "Something went wrong";
@@ -591,6 +668,44 @@ export function ComposerBar({
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {type === "feedback_request" && (
+        <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <MessageSquareMore className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+              What kind of feedback would help?
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {FEEDBACK_TAG_OPTIONS.map((tag) => {
+              const selected = feedbackTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() =>
+                    setFeedbackTags((current) =>
+                      selected ? current.filter((value) => value !== tag) : [...current, tag],
+                    )
+                  }
+                  className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/60 bg-background/40 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {selected && <Check className="mr-1 inline h-3 w-3" />}
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Select focused areas so people can give useful, specific feedback.
+          </p>
         </div>
       )}
 
@@ -866,37 +981,97 @@ export function ComposerBar({
           onFile={handleDroppedImage}
           className="hidden sm:flex h-8 w-32"
         />
-        <button type="button" onClick={handleH1} aria-label="Heading 1" title="Heading 1" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleH1}
+          aria-label="Heading 1"
+          title="Heading 1"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Heading1 className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleH2} aria-label="Heading 2" title="Heading 2" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleH2}
+          aria-label="Heading 2"
+          title="Heading 2"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Heading2 className="h-3.5 w-3.5" />
         </button>
         <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button type="button" onClick={handleBold} aria-label="Bold" title="Bold" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleBold}
+          aria-label="Bold"
+          title="Bold"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Bold className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleItalic} aria-label="Italic" title="Italic" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleItalic}
+          aria-label="Italic"
+          title="Italic"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Italic className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleStrikethrough} aria-label="Strikethrough" title="Strikethrough" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleStrikethrough}
+          aria-label="Strikethrough"
+          title="Strikethrough"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Strikethrough className="h-3.5 w-3.5" />
         </button>
         <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button type="button" onClick={handleBulletList} aria-label="Bullet list" title="Bullet list" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleBulletList}
+          aria-label="Bullet list"
+          title="Bullet list"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <List className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleNumberedList} aria-label="Numbered list" title="Numbered list" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleNumberedList}
+          aria-label="Numbered list"
+          title="Numbered list"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <ListOrdered className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleBlockquote} aria-label="Blockquote" title="Blockquote" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleBlockquote}
+          aria-label="Blockquote"
+          title="Blockquote"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Quote className="h-3.5 w-3.5" />
         </button>
-        <button type="button" onClick={handleLink} aria-label="Insert link" title="Insert link" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+        <button
+          type="button"
+          onClick={handleLink}
+          aria-label="Insert link"
+          title="Insert link"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+        >
           <Link2 className="h-3.5 w-3.5" />
         </button>
         <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button type="button" aria-label="Insert code block" onClick={handleCode} title="Code block" className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${showCodeInsert ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"}`}>
+        <button
+          type="button"
+          aria-label="Insert code block"
+          onClick={handleCode}
+          title="Code block"
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${showCodeInsert ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"}`}
+        >
           <Code2 className="h-3.5 w-3.5" />
           Code
         </button>

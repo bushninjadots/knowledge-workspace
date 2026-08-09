@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
+import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 
@@ -26,7 +27,13 @@ const OPP_FILTER_KEY = "tethyr-opportunity-filters";
 
 type OppSortMode = "latest" | "match" | "popular";
 
-const STAGE_RANK: Record<string, number> = { growing: 5, building: 4, launch: 3, testing: 2, planning: 1 };
+const STAGE_RANK: Record<string, number> = {
+  growing: 5,
+  building: 4,
+  launch: 3,
+  testing: 2,
+  planning: 1,
+};
 
 const NEED_CHIPS = [
   { label: "Designer", skills: ["design", "ui/ux", "graphic design", "illustration", "figma"] },
@@ -163,9 +170,7 @@ function ExplorePage() {
   const [tab, setTab] = useState<Tab>("projects");
   const [q, setQ] = useState((savedOpp.q as string) ?? "");
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
-  const [oppSort, setOppSort] = useState<OppSortMode>(
-    (savedOpp.oppSort as OppSortMode) ?? "latest",
-  );
+  const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "match");
   const [activeNeed, setActiveNeed] = useState<string>((savedOpp.activeNeed as string) ?? "");
   const { data: skills = [] } = useSkillsCatalog();
 
@@ -417,50 +422,52 @@ function ExplorePage() {
         {/* Main content */}
         <div className="min-w-0 flex-1">
           {/* Tab bar */}
-          <div
-            role="tablist"
-            className="mb-4 flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit"
-          >
-            <button
-              role="tab"
-              aria-selected={tab === "projects"}
-              onClick={() => setTab("projects")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                tab === "projects"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div
+              role="tablist"
+              className="flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit"
             >
-              <Folder className="h-3.5 w-3.5" />
-              Projects
-            </button>
-            <button
-              role="tab"
-              aria-selected={tab === "creators"}
-              onClick={() => setTab("creators")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                tab === "creators"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users className="h-3.5 w-3.5" />
-              People
-            </button>
-            <button
-              role="tab"
-              aria-selected={tab === "opportunities"}
-              onClick={() => setTab("opportunities")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                tab === "opportunities"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {" "}
-              <Briefcase className="h-3.5 w-3.5" />
-              Opportunities
-            </button>
+              <button
+                role="tab"
+                aria-selected={tab === "projects"}
+                onClick={() => setTab("projects")}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  tab === "projects"
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Folder className="h-3.5 w-3.5" />
+                Projects
+              </button>
+              <button
+                role="tab"
+                aria-selected={tab === "creators"}
+                onClick={() => setTab("creators")}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  tab === "creators"
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                People
+              </button>
+              <button
+                role="tab"
+                aria-selected={tab === "opportunities"}
+                onClick={() => setTab("opportunities")}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                  tab === "opportunities"
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                Opportunities
+              </button>
+            </div>
+            <CreateProjectButton label="Create project" className="rounded-full" />
           </div>
 
           {isLoading ? (
@@ -605,7 +612,7 @@ function ExplorePage() {
                         <Link
                           to="/projects/$id"
                           params={{ id: opportunity.project.id }}
-                          search={{ section: "roles" } as Record<string, string>}
+                          search={{ tab: "people" } as Record<string, string>}
                           className="block"
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -668,7 +675,7 @@ function ExplorePage() {
                             <Link
                               to="/projects/$id"
                               params={{ id: opportunity.project.id }}
-                              search={{ section: "roles" } as Record<string, string>}
+                              search={{ tab: "people" } as Record<string, string>}
                               className="font-medium text-foreground hover:underline"
                             >
                               {opportunity.project.title}

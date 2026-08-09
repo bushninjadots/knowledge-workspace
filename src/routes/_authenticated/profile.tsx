@@ -271,7 +271,6 @@ function ProfilePage() {
             skills={skills}
             projectSkillIds={projectSkillIds}
             onChange={refresh}
-            isOwnProfile={true}
           />
         ),
         communities: (
@@ -447,7 +446,7 @@ function SkillEditingSection({
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <TeachSkillsCard
-        title="Skills I Share"
+        title="Skills I teach"
         icon={<GraduationCap className="h-4 w-4" />}
         selected={teachSkills}
         allSkills={allSkills}
@@ -455,7 +454,7 @@ function SkillEditingSection({
         onChange={onChange}
       />
       <SkillsCard
-        title="Growing"
+        title="Skills I want to learn"
         accent="purple"
         icon={<BookOpen className="h-4 w-4" />}
         selected={learnSkills}

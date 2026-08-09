@@ -1,10 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useMotionValue,
-} from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, useMotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectShelfHeader } from "./project-shelf-header";
@@ -67,29 +62,6 @@ export function ProjectShelf({
     [maxOffset],
   );
 
-  // Mouse wheel scrolling
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el || maxOffset <= 0) return;
-    let wheelAccum = 0;
-    const THRESHOLD = 60;
-    const onWheel = (e: WheelEvent) => {
-      // Only intercept horizontal-ish scroll or when not inside a scrollable element
-      const target = e.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select, [contenteditable='true'], .overflow-y-auto, .overflow-auto")) return;
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // let horizontal scroll pass
-      e.preventDefault();
-      wheelAccum += e.deltaY;
-      if (Math.abs(wheelAccum) >= THRESHOLD) {
-        const dir = wheelAccum > 0 ? 1 : -1;
-        wheelAccum = 0;
-        setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
-      }
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [maxOffset]);
-
   const jumpTo = useCallback(
     (index: number) => {
       setActiveIndex(clamp(index, 0, maxOffset));
@@ -103,31 +75,40 @@ export function ProjectShelf({
   const dragActive = useRef(false);
   const SWIPE_THRESHOLD = 80;
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    if (maxOffset <= 0 || overlayIndex != null) return;
-    dragStartX.current = e.clientX;
-    dragActive.current = true;
-    dragX.set(0);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [maxOffset, overlayIndex, dragX]);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (maxOffset <= 0 || overlayIndex != null) return;
+      dragStartX.current = e.clientX;
+      dragActive.current = true;
+      dragX.set(0);
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    [maxOffset, overlayIndex, dragX],
+  );
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragActive.current) return;
-    const dx = e.clientX - dragStartX.current;
-    dragX.set(dx);
-  }, [dragX]);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragActive.current) return;
+      const dx = e.clientX - dragStartX.current;
+      dragX.set(dx);
+    },
+    [dragX],
+  );
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (!dragActive.current) return;
-    dragActive.current = false;
-    const dx = e.clientX - dragStartX.current;
-    dragX.set(0);
-    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
-      const dir = dx < 0 ? 1 : -1;
-      setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
-    }
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [maxOffset, dragX]);
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragActive.current) return;
+      dragActive.current = false;
+      const dx = e.clientX - dragStartX.current;
+      dragX.set(0);
+      if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+        const dir = dx < 0 ? 1 : -1;
+        setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
+      }
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    },
+    [maxOffset, dragX],
+  );
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -141,12 +122,9 @@ export function ProjectShelf({
     return () => window.removeEventListener("keydown", handleKey);
   }, [navigate, overlayIndex]);
 
-  const handleCardClick = useCallback(
-    (_project: ProjectRow, index: number) => {
-      setOverlayIndex(index);
-    },
-    [],
-  );
+  const handleCardClick = useCallback((_project: ProjectRow, index: number) => {
+    setOverlayIndex(index);
+  }, []);
 
   const closeOverlay = useCallback(() => {
     setOverlayIndex(null);
@@ -209,9 +187,10 @@ export function ProjectShelf({
         <div className="space-y-4">
           {/* Main carousel area */}
           <div className="relative flex items-center justify-center gap-4 sm:gap-6">
-            {/* Previous card peek */}
-            {activeIndex > 0 && (
-              <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+            {/* Keep both peek slots mounted so the center card stays anchored
+                when moving between the first and last project. */}
+            <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+              {activeIndex > 0 && (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`prev-${activeIndex}`}
@@ -220,14 +199,11 @@ export function ProjectShelf({
                     exit={{ opacity: 0, x: -20 }}
                     transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
                   >
-                    <MiniCard
-                      project={projects[activeIndex - 1]}
-                      onClick={() => navigate(-1)}
-                    />
+                    <MiniCard project={projects[activeIndex - 1]} onClick={() => navigate(-1)} />
                   </motion.div>
                 </AnimatePresence>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Center card */}
             <div className="w-full max-w-[560px] sm:max-w-[620px] xl:max-w-[700px] touch-pan-y">
@@ -242,9 +218,7 @@ export function ProjectShelf({
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   transition={
-                    prefersReducedMotion
-                      ? { duration: 0.1 }
-                      : { duration: 0.15, ease: "easeOut" }
+                    prefersReducedMotion ? { duration: 0.1 } : { duration: 0.15, ease: "easeOut" }
                   }
                   className="touch-none cursor-grab active:cursor-grabbing"
                 >
@@ -264,8 +238,8 @@ export function ProjectShelf({
             </div>
 
             {/* Next card peek */}
-            {activeIndex < maxOffset && (
-              <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+            <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+              {activeIndex < maxOffset && (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`next-${activeIndex}`}
@@ -274,14 +248,11 @@ export function ProjectShelf({
                     exit={{ opacity: 0, x: 20 }}
                     transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
                   >
-                    <MiniCard
-                      project={projects[activeIndex + 1]}
-                      onClick={() => navigate(1)}
-                    />
+                    <MiniCard project={projects[activeIndex + 1]} onClick={() => navigate(1)} />
                   </motion.div>
                 </AnimatePresence>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Navigation + counter bar */}
@@ -362,7 +333,9 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-2">
-        <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">{project.title}</p>
+        <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">
+          {project.title}
+        </p>
       </div>
     </button>
   );

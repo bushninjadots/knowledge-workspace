@@ -644,25 +644,13 @@ export function useAcceptRoleApplication() {
       roleId: string;
       projectId: string;
     }) => {
-      // Update application status
-      const { error } = await sb
-        .from("project_role_applications")
-        .update({ status: "accepted" })
-        .eq("id", input.applicationId);
+      const { error } = await sb.rpc("accept_project_role_application", {
+        p_application_id: input.applicationId,
+        p_profile_id: input.profileId,
+        p_role_id: input.roleId,
+        p_project_id: input.projectId,
+      });
       if (error) throw error;
-
-      // Add as contributor
-      const { error: contribErr } = await sb
-        .from("project_contributors")
-        .insert({ project_id: input.projectId, profile_id: input.profileId, role: "contributor" });
-      if (contribErr && !contribErr.message?.includes("duplicate")) throw contribErr;
-
-      // Fill the role
-      const { error: roleErr } = await sb
-        .from("project_open_roles")
-        .update({ is_filled: true, filled_by: input.profileId })
-        .eq("id", input.roleId);
-      if (roleErr) throw roleErr;
     },
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["role-applications", variables.roleId] });
@@ -686,10 +674,11 @@ export function useDeclineRoleApplication() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { applicationId: string; roleId: string; projectId: string }) => {
-      const { error } = await sb
-        .from("project_role_applications")
-        .update({ status: "declined" })
-        .eq("id", input.applicationId);
+      const { error } = await sb.rpc("decline_project_role_application", {
+        p_application_id: input.applicationId,
+        p_role_id: input.roleId,
+        p_project_id: input.projectId,
+      });
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

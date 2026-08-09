@@ -69,7 +69,9 @@ export function ReputationTierBadge({ score }: { score: number }) {
       <div className="min-w-0">
         <p className={`text-sm font-semibold ${current.color}`}>{current.name}</p>
         <p className="text-[11px] text-muted-foreground">
-          {next ? `${progress}% to ${next.name}` : "Max tier reached"}
+          {next
+            ? `${progress}% to ${next.name} · ${score}/${next.minScore} REP`
+            : "Max tier reached"}
         </p>
       </div>
     </div>

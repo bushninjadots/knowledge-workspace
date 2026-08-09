@@ -140,19 +140,14 @@ function ProjectPage() {
     [setTab],
   );
 
-  const jumpToSection = useCallback(
-    (sectionId: string) => {
-      // README is always visible — just scroll to the section
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          document
-            .getElementById(sectionId)
-            ?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 80);
-      });
-    },
-    [],
-  );
+  const jumpToSection = useCallback((sectionId: string) => {
+    // README is always visible — just scroll to the section
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    });
+  }, []);
 
   // Keyboard shortcuts: 1–4 switch secondary tabs, "/" focuses the file search.
   useEffect(() => {
@@ -405,8 +400,6 @@ function ProjectPage() {
                 openRoles={openRoles}
                 isOwner={isOwner}
                 isContributor={isContributor}
-                onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
-                onSignIn={isSignedOut ? signInToJoin : undefined}
               />
             )}
             {tab === "discussions" && (

@@ -8,7 +8,6 @@ import {
   Sparkles,
   Users,
   Calendar,
-  Star,
   MessageCircle,
   ExternalLink,
   Globe,
@@ -19,15 +18,12 @@ import {
   LayoutGrid,
   Briefcase,
   Activity,
-  FolderKanban,
-  Swords,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
-import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { PROFILE_MODULES } from "@/lib/workspace-layouts";
@@ -191,7 +187,9 @@ export function ProfileLayout({
                     {profile?.display_name || "Untitled member"}
                   </h1>
                   {profile?.creator_title && (
-                    <p className="mt-0.5 text-sm text-foreground/80 break-words">{profile.creator_title}</p>
+                    <p className="mt-0.5 text-sm text-foreground/80 break-words">
+                      {profile.creator_title}
+                    </p>
                   )}
                   <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
                 </div>
@@ -284,26 +282,16 @@ export function ProfileLayout({
           {/* MAIN CONTENT */}
           <div className="min-w-0 flex-1">
             {customizing && isOwnProfile ? (
-              <>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Customize layout</span>
-                    {" · "}Drag to rearrange · Resize modules
-                  </p>
-                  <Button size="sm" onClick={() => setCustomizing(false)}>
-                    <Check className="mr-1.5 h-3.5 w-3.5" />
-                    Done
-                  </Button>
-                </div>
-                <WorkspaceGrid
-                  page="profile"
-                  userId={userId}
-                  modules={PROFILE_MODULES}
-                  canCustomize={isOwnProfile}
-                  defaultCustomizing
-                  renderModule={(id) => tabContent[id as Tab] ?? null}
-                />
-              </>
+              <WorkspaceGrid
+                page="profile"
+                userId={userId}
+                modules={PROFILE_MODULES}
+                canCustomize={isOwnProfile}
+                defaultCustomizing
+                showModuleTitles={false}
+                onCustomizingChange={setCustomizing}
+                renderModule={(id) => tabContent[id as Tab] ?? null}
+              />
             ) : (
               <>
                 {/* Tab bar + customize button */}
@@ -338,9 +326,7 @@ export function ProfileLayout({
                 </div>
 
                 {/* Tab content */}
-                <div className="space-y-6">
-                  {tabContent[activeTab]}
-                </div>
+                <div className="space-y-6">{tabContent[activeTab]}</div>
               </>
             )}
           </div>
@@ -465,28 +451,10 @@ function ProfileSidebar({
       <div className="rounded-xl bg-surface-elevated/30 p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
         <div className="space-y-3">
-          <StatRow icon={GraduationCap} label="Skills shared" value={teachIds.length} />
-          <StatRow icon={BookOpen} label="Growing" value={learnIds.length} />
+          <StatRow icon={GraduationCap} label="Skills I teach" value={teachIds.length} />
+          <StatRow icon={BookOpen} label="Skills I want to learn" value={learnIds.length} />
           <StatRow icon={Sparkles} label="Projects" value={projects.length} />
-          <StatRow icon={Calendar} label="Activity" value={activity.length} />
-          {profile?.reputation_score != null && profile.reputation_score > 0 && (
-            <>
-              <div className="my-2 h-px bg-border/40" />
-              <div className="text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <Star className="h-3.5 w-3.5" />
-                  <span>Reputation</span>
-                  <ReputationTierBadge score={profile.reputation_score} />
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <EvidencePill label="Projects" value={projects.length} />
-                  <EvidencePill label="Skills" value={teachIds.length} />
-                  <EvidencePill label="Activity" value={activity.length} />
-                  <EvidencePill label="Score" value={profile.reputation_score} highlight />
-                </div>
-              </div>
-            </>
-          )}
+          <StatRow icon={Calendar} label="Activity events" value={activity.length} />
         </div>
       </div>
 
@@ -495,7 +463,9 @@ function ProfileSidebar({
         <div className="rounded-xl bg-surface-elevated/30 p-5">
           <h3 className="mb-3 text-sm font-semibold">
             Active projects
-            <span className="ml-1 font-normal text-muted-foreground">({activeProjects.length})</span>
+            <span className="ml-1 font-normal text-muted-foreground">
+              ({activeProjects.length})
+            </span>
           </h3>
           <div className="space-y-2">
             {activeProjects.slice(0, 3).map((p) => (
@@ -504,7 +474,9 @@ function ProfileSidebar({
                 href={`/projects/${p.id}`}
                 className="block rounded-xl border card-border bg-background/40 px-3 py-2 text-xs transition hover:border-[var(--user-accent-border,var(--border-strong))]"
               >
-                <span className="truncate block font-medium" title={p.title}>{p.title}</span>
+                <span className="truncate block font-medium" title={p.title}>
+                  {p.title}
+                </span>
                 <span className="mt-0.5 block text-[11px] text-muted-foreground capitalize">
                   {p.status}
                   {p.progress_percent != null && ` · ${p.progress_percent}%`}
@@ -512,9 +484,7 @@ function ProfileSidebar({
               </a>
             ))}
             {activeProjects.length > 3 && (
-              <p className="text-[11px] text-muted-foreground">
-                +{activeProjects.length - 3} more
-              </p>
+              <p className="text-[11px] text-muted-foreground">+{activeProjects.length - 3} more</p>
             )}
           </div>
         </div>
@@ -565,15 +535,6 @@ function StatRow({
         {label}
       </div>
       <span className="font-medium">{value}</span>
-    </div>
-  );
-}
-
-function EvidencePill({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
-  return (
-    <div className={`rounded-lg px-2.5 py-1.5 text-xs ${highlight ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))] font-semibold" : "bg-background/40 text-muted-foreground"}`}>
-      <span className="block text-lg font-bold tabular-nums leading-none">{value}</span>
-      <span className="text-[10px]">{label}</span>
     </div>
   );
 }

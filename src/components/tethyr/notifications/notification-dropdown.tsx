@@ -75,6 +75,18 @@ export function NotificationDropdown() {
           navigate({ to: "/explore" });
         }
         break;
+      case "role_application_accepted":
+      case "role_application_declined":
+        if (n.metadata?.project_id) {
+          navigate({
+            to: "/projects/$id",
+            params: { id: String(n.metadata.project_id) },
+            search: { tab: "people" } as Record<string, string>,
+          });
+        } else {
+          navigate({ to: "/explore" });
+        }
+        break;
       case "challenge_join":
       case "challenge_complete":
         if (n.entity_id) {

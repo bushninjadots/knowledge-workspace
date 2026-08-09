@@ -77,6 +77,16 @@ export type DiscoveryFocus = (typeof DISCOVERY_FILTERS)[number];
 
 export const ACTIVE_LEARNING_GOALS: string[] = [];
 
+export const FEEDBACK_TAG_OPTIONS = [
+  "UI Design",
+  "Code Review",
+  "Performance",
+  "Architecture",
+  "Writing",
+  "Strategy",
+  "General",
+] as const;
+
 export const QUICK_ACTIONS: { type: string; label: string }[] = [
   { type: "discussion", label: "Start Conversation" },
   { type: "showcase", label: "Showcase Project" },

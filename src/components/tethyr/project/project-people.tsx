@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Users as UsersIcon, UserPlus, Briefcase, HandHeart } from "lucide-react";
+import { Users as UsersIcon, Briefcase, HandHeart } from "lucide-react";
 import type { Contributor } from "./project-main-content";
 import type { OpenRoleRow } from "@/hooks/use-projects";
 import { OpenRolesSection } from "./project-open-roles";
@@ -17,8 +17,8 @@ export function ProjectPeopleTab({
   openRoles,
   isOwner,
   isContributor,
-  onJoin,
-  onSignIn,
+  onJoin: _onJoin,
+  onSignIn: _onSignIn,
 }: {
   projectId: string;
   contributors: Contributor[];
@@ -29,53 +29,10 @@ export function ProjectPeopleTab({
   onJoin?: () => void;
   onSignIn?: () => void;
 }) {
-  const canJoin = !!onJoin;
   const unfilledRoles = openRoles.filter((r) => !r.is_filled);
 
   return (
     <div className="space-y-6">
-      {/* Join CTA banner */}
-      {canJoin && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <UserPlus className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Want to work on this project?</p>
-              <p className="text-xs text-muted-foreground">
-                Join as a collaborator, or apply to a specific open role below.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onJoin}
-            className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
-          >
-            Join Project
-          </button>
-        </section>
-      )}
-      {onSignIn && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <UserPlus className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Want to work on this project?</p>
-              <p className="text-xs text-muted-foreground">Sign in to join as a collaborator.</p>
-            </div>
-          </div>
-          <button
-            onClick={onSignIn}
-            className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
-          >
-            Sign in to join
-          </button>
-        </section>
-      )}
-
       {/* People */}
       <section className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">

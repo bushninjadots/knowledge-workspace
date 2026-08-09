@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -212,6 +212,7 @@ export function PostCard({
   const projectData = post.project_data as Record<string, unknown> | null;
   const resourceData = post.resource_data as Record<string, unknown> | null;
   const pollData = post.poll_data as PollData | null;
+  const feedbackTags = post.feedback_tags ?? [];
 
   const matchedSkills = post.skills.filter((s) =>
     ACTIVE_LEARNING_GOALS.some((g) => g.toLowerCase() === s.toLowerCase()),
@@ -514,6 +515,25 @@ export function PostCard({
             return <Icon className="h-4 w-4 text-brand-purple" />;
           })()}
           <span className="text-muted-foreground">{String(resourceData.kind)}</span>
+        </div>
+      )}
+
+      {post.type === "feedback_request" && feedbackTags.length > 0 && (
+        <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+            <MessageSquareMore className="h-3.5 w-3.5" />
+            Feedback requested on
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {feedbackTags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-primary/30 bg-background/50 px-2.5 py-1 text-[11px] text-primary"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -989,9 +1009,16 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
   const votePoll = useVotePoll();
   const myVote = pollData.votes?.find((v) => v.user_id === me?.userId) ?? null;
   const totalVotes = pollData.votes?.length ?? 0;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!pollData.ends_at) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [pollData.ends_at]);
+  const hasEnded = !!pollData.ends_at && new Date(pollData.ends_at).getTime() <= now;
 
   function handleVote(optionIndex: number) {
-    if (myVote || votePoll.isPending || !me?.userId) return;
+    if (myVote || votePoll.isPending || !me?.userId || hasEnded) return;
     votePoll.mutate(
       { postId, optionIndex, userId: me.userId },
       {
@@ -1015,7 +1042,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
             <button
               key={i}
               onClick={() => handleVote(i)}
-              disabled={!!myVote || votePoll.isPending}
+              disabled={!!myVote || votePoll.isPending || hasEnded}
               className={`group relative w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
                 isVoted
                   ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
@@ -1051,7 +1078,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
         {pollData.ends_at && (
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            Ends {new Date(pollData.ends_at).toLocaleDateString()}
+            {hasEnded ? "Ended" : `Ends ${new Date(pollData.ends_at).toLocaleDateString()}`}
           </span>
         )}
       </div>

@@ -47,7 +47,13 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
     "join_approved",
     "join_rejected",
   ],
-  project: ["project_invite", "project_join", "project_post"],
+  project: [
+    "project_invite",
+    "project_join",
+    "project_post",
+    "role_application_accepted",
+    "role_application_declined",
+  ],
   reputation: ["endorsement", "connection_request", "connection_accepted"],
   achievement: ["achievement"],
   moderation: ["post_report", "report_resolved"],
@@ -93,6 +99,18 @@ function useNotificationNavigator() {
       case "project_join":
       case "project_post":
         navigate({ to: "/explore" });
+        break;
+      case "role_application_accepted":
+      case "role_application_declined":
+        if (n.metadata?.project_id) {
+          navigate({
+            to: "/projects/$id",
+            params: { id: String(n.metadata.project_id) },
+            search: { tab: "people" } as Record<string, string>,
+          });
+        } else {
+          navigate({ to: "/explore" });
+        }
         break;
       case "connection_request":
       case "connection_accepted":

@@ -31,6 +31,7 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
+import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
 import { GripVertical, Check } from "lucide-react";
@@ -259,13 +260,13 @@ function DashboardContent({
   const { data: connections = [], isLoading: connectionsLoading } = useConnections();
   const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
 
-  const { data: myChallenges = [] } = useChallenges("active");
+  const { data: myChallenges = [], isLoading: challengesLoading } = useChallenges("active");
   const joinedChallenges = useMemo(
     () => myChallenges.filter((c: any) => c.is_joined),
     [myChallenges],
   );
 
-  const { data: myApplications = [] } = useQuery({
+  const { data: myApplications = [], isLoading: applicationsLoading } = useQuery({
     queryKey: ["my-applications", data?.userId],
     queryFn: async () => {
       const { data: apps, error } = await (supabase as any)
@@ -287,7 +288,7 @@ function DashboardContent({
     return thisWeek.length;
   }, [data?.activity]);
 
-  const { data: todayOpps = [] } = useQuery({
+  const { data: todayOpps = [], isLoading: opportunitiesLoading } = useQuery({
     queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
       const { data: roles, error } = await (supabase as any)
@@ -365,7 +366,6 @@ function DashboardContent({
     (id: string): React.ReactNode => {
       switch (id) {
         case "projects":
-          if (activeProjects.length === 0) return null;
           return (
             <SectionCard
               icon={<Folder className="h-4 w-4" />}
@@ -379,102 +379,139 @@ function DashboardContent({
                 </Link>
               }
             >
-              <div className="space-y-2">
-                {activeProjects.slice(0, 3).map((p: any) => (
-                  <Link
-                    key={p.id}
-                    to="/projects/$id"
-                    params={{ id: p.id }}
-                    className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="truncate text-sm font-medium" title={p.title}>
-                        {p.title}
-                      </p>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <Progress value={p.progress_percent ?? 0} className="h-1" />
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                        {p.progress_percent ?? 0}%
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              {activeProjects.length === 0 ? (
+                <DashboardModuleEmpty
+                  copy="Give people a clear place to find what you're building."
+                  action={<CreateProjectButton label="Start a project" variant="outline" />}
+                />
+              ) : (
+                <div className="space-y-2">
+                  {activeProjects.slice(0, 3).map((p: any) => (
+                    <Link
+                      key={p.id}
+                      to="/projects/$id"
+                      params={{ id: p.id }}
+                      className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="truncate text-sm font-medium" title={p.title}>
+                          {p.title}
+                        </p>
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <Progress value={p.progress_percent ?? 0} className="h-1" />
+                        <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                          {p.progress_percent ?? 0}%
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </SectionCard>
           );
 
         case "applications":
-          if (myApplications.length === 0) return null;
+          if (applicationsLoading) return <DashboardModuleLoading title="Applications" />;
           return (
             <SectionCard
               icon={<Ticket className="h-4 w-4" />}
               title="Applications"
               subtitle={`${myApplications.length} sent`}
             >
-              <div className="space-y-1.5">
-                {myApplications.slice(0, 4).map((app: any) => (
-                  <Link
-                    key={app.id}
-                    to="/projects/$id"
-                    params={{ id: app.project_open_roles?.projects?.id ?? "" }}
-                    search={{ section: "roles" } as Record<string, string>}
-                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">
-                        {app.project_open_roles?.title ?? "Role"}
-                      </p>
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        {app.project_open_roles?.projects?.title ?? "Project"}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        app.status === "accepted"
-                          ? "bg-trust/10 text-trust"
-                          : app.status === "declined"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-surface-elevated text-muted-foreground"
-                      }`}
+              {myApplications.length === 0 ? (
+                <DashboardModuleEmpty
+                  copy="Applications you send will stay visible here."
+                  action={
+                    <Link
+                      to="/explore"
+                      className="text-xs font-medium text-primary hover:underline"
                     >
-                      {app.status}
-                    </span>
-                  </Link>
-                ))}
-              </div>
+                      Find open roles →
+                    </Link>
+                  }
+                />
+              ) : (
+                <div className="space-y-1.5">
+                  {myApplications.slice(0, 4).map((app: any) => (
+                    <Link
+                      key={app.id}
+                      to="/projects/$id"
+                      params={{ id: app.project_open_roles?.projects?.id ?? "" }}
+                      search={{ tab: "people" } as Record<string, string>}
+                      className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium">
+                          {app.project_open_roles?.title ?? "Role"}
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {app.project_open_roles?.projects?.title ?? "Project"}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          app.status === "accepted"
+                            ? "bg-trust/10 text-trust"
+                            : app.status === "declined"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-surface-elevated text-muted-foreground"
+                        }`}
+                      >
+                        {app.status}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </SectionCard>
           );
 
         case "challenges":
-          if (joinedChallenges.length === 0) return null;
+          if (challengesLoading) return <DashboardModuleLoading title="Challenges" />;
           return (
             <SectionCard
               icon={<Swords className="h-4 w-4" />}
               title="Challenges"
               subtitle={`${joinedChallenges.length} joined`}
             >
-              <div className="space-y-1.5">
-                {joinedChallenges.slice(0, 3).map((c: any) => (
-                  <Link
-                    key={c.id}
-                    to="/challenges/$id"
-                    params={{ id: c.id }}
-                    className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium" title={c.title}>
-                        {c.title}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground capitalize">{c.difficulty}</p>
-                    </div>
-                    <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
-                      {c.my_participation?.status ?? "joined"}
-                    </span>
-                  </Link>
-                ))}
-              </div>
+              {joinedChallenges.length === 0 ? (
+                <DashboardModuleEmpty
+                  copy="Join a challenge to turn practice into visible contribution."
+                  action={
+                    <Link
+                      to="/challenges"
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Browse challenges →
+                    </Link>
+                  }
+                />
+              ) : (
+                <div className="space-y-1.5">
+                  {joinedChallenges.slice(0, 3).map((c: any) => (
+                    <Link
+                      key={c.id}
+                      to="/challenges/$id"
+                      params={{ id: c.id }}
+                      className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium" title={c.title}>
+                          {c.title}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground capitalize">
+                          {c.difficulty}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[11px] text-muted-foreground capitalize">
+                        {c.my_participation?.status ?? "joined"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </SectionCard>
           );
 
@@ -552,13 +589,16 @@ function DashboardContent({
               <div
                 className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
                 style={{
-                  background: "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)",
+                  background:
+                    "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)",
                 }}
               />
               <div className="relative flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Welcome back
+                    </p>
                     <AvailabilitySelector
                       current={data?.profile?.availability as AvailabilityStatus}
                       onSave={(s) => updateAvail.mutate(s)}
@@ -600,49 +640,126 @@ function DashboardContent({
                 icon={activeProjects.length > 0 ? Folder : Plus}
                 accent="var(--trust)"
                 title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
-                href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
+                href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
+                action={
+                  activeProjects.length === 0 ? (
+                    <CreateProjectButton
+                      label="Create project"
+                      variant="outline"
+                      className="mt-3"
+                    />
+                  ) : undefined
+                }
                 highlight={activeProjects.length > 0}
               >
                 {activeProjects.length > 0 ? (
                   <div className="mt-3 space-y-2">
-                    <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>{activeProjects[0].title}</p>
+                    <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
+                      {activeProjects[0].title}
+                    </p>
                     <div className="flex items-center gap-2">
                       <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{activeProjects[0].progress_percent ?? 0}%</span>
+                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                        {activeProjects[0].progress_percent ?? 0}%
+                      </span>
                     </div>
                     {activeProjects.length > 1 && (
-                      <p className="text-[11px] text-muted-foreground">+{activeProjects.length - 1} more project{activeProjects.length > 2 ? "s" : ""}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        +{activeProjects.length - 1} more project
+                        {activeProjects.length > 2 ? "s" : ""}
+                      </p>
                     )}
                   </div>
                 ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">Create your first project to start building in public.</p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Create your first project to start building in public.
+                  </p>
                 )}
               </TodayCard>
               <TodayCard
                 icon={UserPlus}
                 accent="var(--learning)"
-                title={pendingInviteCount > 0 || unreadMessageCount > 0 ? "You have activity" : "No pending invites"}
-                href={pendingSessionCount > 0 ? "/sessions" : pendingConnectionCount > 0 ? "/profile" : "/messages"}
+                title={
+                  pendingInviteCount > 0 || unreadMessageCount > 0
+                    ? "You have activity"
+                    : "No pending invites"
+                }
+                href={
+                  pendingSessionCount > 0
+                    ? "/sessions"
+                    : pendingConnectionCount > 0
+                      ? "/profile"
+                      : "/messages"
+                }
                 highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
               >
                 <div className="mt-3 space-y-1.5">
-                  {pendingSessionCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{pendingSessionCount}</span> session request{pendingSessionCount !== 1 ? "s" : ""}</p>}
-                  {pendingConnectionCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{pendingConnectionCount}</span> connection request{pendingConnectionCount !== 1 ? "s" : ""}</p>}
-                  {unreadMessageCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{unreadMessageCount}</span> unread message{unreadMessageCount !== 1 ? "s" : ""}</p>}
-                  {pendingInviteCount === 0 && unreadMessageCount === 0 && <p className="text-xs text-muted-foreground">All clear — nothing needs your attention.</p>}
+                  {pendingSessionCount > 0 && (
+                    <p className="text-xs">
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {pendingSessionCount}
+                      </span>{" "}
+                      session request{pendingSessionCount !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                  {pendingConnectionCount > 0 && (
+                    <p className="text-xs">
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {pendingConnectionCount}
+                      </span>{" "}
+                      connection request{pendingConnectionCount !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                  {unreadMessageCount > 0 && (
+                    <p className="text-xs">
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {unreadMessageCount}
+                      </span>{" "}
+                      unread message{unreadMessageCount !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                  {pendingInviteCount === 0 && unreadMessageCount === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      All clear — nothing needs your attention.
+                    </p>
+                  )}
                 </div>
               </TodayCard>
               <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
-                <p className="mt-3 text-xs text-muted-foreground">Discover people with complementary skills who are open to team-ups.</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Discover people with complementary skills who are open to team-ups.
+                </p>
               </TodayCard>
-              <TodayCard icon={TrendingUp} accent="var(--brand-purple)" title={todayOpps.length > 0 ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}` : "Browse opportunities"} href="/explore" highlight={todayOpps.length > 0}>
-                {todayOpps.length > 0 ? (
+              <TodayCard
+                icon={TrendingUp}
+                accent="var(--brand-purple)"
+                title={
+                  todayOpps.length > 0
+                    ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
+                    : "Browse opportunities"
+                }
+                href="/explore"
+                highlight={todayOpps.length > 0}
+              >
+                {opportunitiesLoading ? (
+                  <p className="mt-3 text-xs text-muted-foreground">Loading open roles…</p>
+                ) : todayOpps.length > 0 ? (
                   <div className="mt-3 space-y-1">
-                    {todayOpps.slice(0, 2).map((opp: any) => <p key={opp.id} className="truncate text-xs text-muted-foreground">{opp.title} — {opp.projects?.title}</p>)}
-                    {todayOpps.length > 2 && <p className="text-[11px] text-muted-foreground">+{todayOpps.length - 2} more</p>}
+                    {todayOpps.slice(0, 2).map((opp: any) => (
+                      <p key={opp.id} className="truncate text-xs text-muted-foreground">
+                        {opp.title} — {opp.projects?.title}
+                      </p>
+                    ))}
+                    {todayOpps.length > 2 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        +{todayOpps.length - 2} more
+                      </p>
+                    )}
                   </div>
                 ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">Check back as projects open new roles.</p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Check back as projects open new roles.
+                  </p>
                 )}
               </TodayCard>
             </div>
@@ -655,10 +772,13 @@ function DashboardContent({
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
                   <h2 className="text-sm font-semibold">Profile complete!</h2>
-                  <span className="text-[11px] text-muted-foreground">— {doneSteps}/{totalSteps} done</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    — {doneSteps}/{totalSteps} done
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Your studio is fully set up. People can see everything you're about — projects, skills, and what you're building next.
+                  Your studio is fully set up. People can see everything you're about — projects,
+                  skills, and what you're building next.
                 </p>
               </div>
             );
@@ -708,6 +828,9 @@ function DashboardContent({
       pendingInviteCount,
       unreadMessageCount,
       todayOpps,
+      opportunitiesLoading,
+      applicationsLoading,
+      challengesLoading,
       updateAvail,
     ],
   );
@@ -716,26 +839,15 @@ function DashboardContent({
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         {customizing ? (
-          <>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Customize layout</span>
-                {" · "}Drag to rearrange · Resize modules
-              </p>
-              <Button size="sm" onClick={() => setCustomizing(false)}>
-                <Check className="mr-1.5 h-3.5 w-3.5" />
-                Done
-              </Button>
-            </div>
-            <WorkspaceGrid
-              page="dashboard"
-              userId={data?.userId}
-              modules={DASHBOARD_MODULES}
-              canCustomize={true}
-              defaultCustomizing
-              renderModule={renderModule}
-            />
-          </>
+          <WorkspaceGrid
+            page="dashboard"
+            userId={data?.userId}
+            modules={DASHBOARD_MODULES}
+            canCustomize={true}
+            defaultCustomizing
+            onCustomizingChange={setCustomizing}
+            renderModule={renderModule}
+          />
         ) : (
           <>
             <div className="flex items-center justify-end gap-3">
@@ -750,6 +862,7 @@ function DashboardContent({
               </Button>
             </div>
             {renderModule("welcome")}
+            <FirstSessionOnboarding data={data} />
             {renderModule("next-steps")}
             {renderModule("today")}
             <div className="grid gap-6 lg:grid-cols-3">
@@ -776,30 +889,50 @@ function DashboardContent({
 
 /* ── Today focus card ── */
 
+function DashboardModuleEmpty({ copy, action }: { copy: string; action: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs leading-relaxed text-muted-foreground">{copy}</p>
+      {action}
+    </div>
+  );
+}
+
+function DashboardModuleLoading({ title }: { title: string }) {
+  return (
+    <SectionCard icon={<Clock className="h-4 w-4" />} title={title}>
+      <div className="space-y-2" aria-label={`Loading ${title}`}>
+        <div className="h-3 w-2/3 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-surface-elevated" />
+      </div>
+    </SectionCard>
+  );
+}
+
 function TodayCard({
   icon: Icon,
   accent,
   title,
   href,
+  action,
   children,
   highlight,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   accent: string;
   title: string;
-  href: string;
+  href?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
   highlight?: boolean;
 }) {
-  return (
-    <Link
-      to={href}
-      className={`group relative flex flex-col rounded-xl border p-5 transition-all duration-200 ${
-        highlight
-          ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-          : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
-      }`}
-    >
+  const className = `group relative flex flex-col rounded-xl border p-5 transition-all duration-200 ${
+    highlight
+      ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+      : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
+  }`;
+  const content = (
+    <>
       <div className="flex items-start justify-between">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-xl"
@@ -807,11 +940,22 @@ function TodayCard({
         >
           <Icon className="h-4 w-4" />
         </div>
-        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+        {href && (
+          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+        )}
       </div>
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
       {children}
+      {action}
+    </>
+  );
+
+  return href ? (
+    <Link to={href} className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 
@@ -835,7 +979,9 @@ function SectionCard({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-          <h2 className="text-sm font-semibold truncate" title={title}>{title}</h2>
+          <h2 className="text-sm font-semibold truncate" title={title}>
+            {title}
+          </h2>
           {subtitle && (
             <span className="hidden text-[11px] text-muted-foreground sm:inline">— {subtitle}</span>
           )}

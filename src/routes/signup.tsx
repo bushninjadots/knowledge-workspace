@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthErrorMessage } from "@/lib/auth-error";
 import { safeRedirectPath } from "@/lib/validators";
+import { useSkillsCatalog } from "@/hooks/use-current-user";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -31,19 +32,6 @@ export const Route = createFileRoute("/signup")({
   ),
 });
 
-const crafts = [
-  "Video Editing",
-  "Graphic Design",
-  "Motion Design",
-  "Photography",
-  "YouTube",
-  "Streaming",
-  "SEO",
-  "WordPress",
-  "Development",
-  "Music",
-];
-
 function SignupPage() {
   // Optional ?redirect=/path — continue to the intended page after signup.
   // Only same-origin absolute paths are honored (open-redirect guard).
@@ -51,7 +39,9 @@ function SignupPage() {
     redirect?: string;
   };
   const redirectTarget = safeRedirectPath(redirectParam) ?? "/dashboard";
+  const { data: skills = [], isLoading: skillsLoading } = useSkillsCatalog();
   const [craft, setCraft] = useState<string | null>(null);
+  const skillChoices = useMemo(() => skills.slice(0, 36), [skills]);
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
@@ -166,21 +156,29 @@ function SignupPage() {
         </div>
         <div className="space-y-2">
           <Label>Your main craft</Label>
-          <div className="flex flex-wrap gap-2">
-            {crafts.map((c) => (
+          <p className="text-xs text-muted-foreground">
+            Choose the closest match. You can add more skills after joining.
+          </p>
+          <div className="flex max-h-40 flex-wrap gap-2 overflow-y-auto pr-1">
+            {(skillsLoading ? [] : skillChoices).map((skill) => (
               <button
-                key={c}
+                key={skill.id}
                 type="button"
-                onClick={() => setCraft(c)}
+                onClick={() => setCraft(skill.name)}
                 className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                  craft === c
+                  craft === skill.name
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 }`}
               >
-                {c}
+                {skill.name}
               </button>
             ))}
+            {!skillsLoading && skillChoices.length === 0 && (
+              <span className="text-xs text-muted-foreground">
+                You can choose skills in your studio after joining.
+              </span>
+            )}
           </div>
         </div>
         <Button type="submit" variant="default" className="w-full" disabled={loading}>

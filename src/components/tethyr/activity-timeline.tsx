@@ -28,6 +28,19 @@ type ActivityEvent = {
   source: "activity" | "contribution";
 };
 
+type ActivityGroup = ActivityEvent & { count: number; latestCreatedAt: string };
+
+function activityIdentity(event: ActivityEvent): string {
+  const entityId =
+    event.metadata.skill_id ??
+    event.metadata.project_id ??
+    event.metadata.post_id ??
+    event.metadata.comment_id ??
+    event.metadata.milestone_id ??
+    "";
+  return `${event.kind}|${String(entityId)}`;
+}
+
 const ICONS: Record<string, typeof Sparkles> = {
   joined_tethyr: Sparkles,
   avatar_updated: User,
@@ -115,19 +128,59 @@ export const ActivityTimeline = memo(function ActivityTimeline({
     ...(contributionEvents ?? []),
   ];
 
-  // Deduplicate by kind+created_at window (within 1 second)
-  const seen = new Set<string>();
-  const deduped = allEvents.filter((e) => {
-    const key = `${e.kind}-${Math.round(new Date(e.created_at).getTime() / 1000)}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Merge mirrored activity/contribution rows, then group repeated actions in a
+  // rolling window. A banner iteration (or similar burst) should read as one
+  // meaningful update rather than flooding the timeline.
+  const sortedEvents = [...allEvents].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+  const MIRROR_WINDOW_MS = 5 * 1000;
+  const merged: ActivityEvent[] = [];
+  for (const event of sortedEvents) {
+    const existing = merged.find(
+      (candidate) =>
+        activityIdentity(candidate) === activityIdentity(event) &&
+        Math.abs(new Date(candidate.created_at).getTime() - new Date(event.created_at).getTime()) <=
+          MIRROR_WINDOW_MS,
+    );
+    if (!existing) {
+      merged.push(event);
+      continue;
+    }
+    const existingPoints = Number(existing.metadata.points ?? 0);
+    const eventPoints = Number(event.metadata.points ?? 0);
+    existing.metadata = {
+      ...existing.metadata,
+      ...event.metadata,
+      ...(existingPoints || eventPoints ? { points: Math.max(existingPoints, eventPoints) } : {}),
+    };
+  }
 
-  // Sort newest first
-  deduped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const sorted = merged;
+  const GROUP_WINDOW_MS = 10 * 60 * 1000;
+  const groups: ActivityGroup[] = [];
+  for (const event of sorted) {
+    const previous = groups.find(
+      (group) =>
+        activityIdentity(group) === activityIdentity(event) &&
+        new Date(group.latestCreatedAt).getTime() - new Date(event.created_at).getTime() <=
+          GROUP_WINDOW_MS,
+    );
+    if (previous) {
+      previous.count += 1;
+      const previousPoints = Number(previous.metadata.points ?? 0);
+      const eventPoints = Number(event.metadata.points ?? 0);
+      previous.metadata = {
+        ...previous.metadata,
+        ...event.metadata,
+        ...(previousPoints || eventPoints ? { points: previousPoints + eventPoints } : {}),
+      };
+      continue;
+    }
+    groups.push({ ...event, count: 1, latestCreatedAt: event.created_at });
+  }
 
-  const rows = limit ? deduped.slice(0, limit) : deduped;
+  const rows = limit ? groups.slice(0, limit) : groups;
 
   if (rows.length === 0) {
     return (
@@ -152,7 +205,14 @@ export const ActivityTimeline = memo(function ActivityTimeline({
               <Icon className="h-3 w-3 text-primary" />
             </span>
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-foreground">{label}</p>
+              <p className="text-sm text-foreground">
+                {label}
+                {e.count > 1 && (
+                  <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+                    ×{e.count}
+                  </span>
+                )}
+              </p>
               <div className="flex items-center gap-2">
                 {points != null && points > 0 && (
                   <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[11px] font-medium text-brand-green">

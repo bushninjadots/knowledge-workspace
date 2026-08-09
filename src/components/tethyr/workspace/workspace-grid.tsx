@@ -41,6 +41,12 @@ type Props = {
   defaultCustomizing?: boolean;
   /** Extra class on the grid wrapper. */
   className?: string;
+  /** Notify a parent that owns the page-level customize state. */
+  onCustomizingChange?: (customizing: boolean) => void;
+  /** Hide module titles when the rendered module already owns its header. */
+  showModuleTitles?: boolean;
+  /** Hide the built-in toolbar when the page renders its own toolbar. */
+  showCustomizeBar?: boolean;
 };
 
 /**
@@ -56,6 +62,9 @@ export function WorkspaceGrid({
   canCustomize,
   defaultCustomizing,
   className,
+  onCustomizingChange,
+  showModuleTitles = true,
+  showCustomizeBar = true,
 }: Props) {
   const isMobile = useIsMobile();
   const { data: saved, isLoading, save } = useLayoutPreferences(page, userId);
@@ -63,7 +72,14 @@ export function WorkspaceGrid({
 
   const defaultItems = useMemo(() => stackDefault(modules), [modules]);
 
-  const [customizing, setCustomizing] = useState(defaultCustomizing ?? false);
+  const [customizing, setCustomizingState] = useState(defaultCustomizing ?? false);
+  const setCustomizing = useCallback(
+    (value: boolean) => {
+      setCustomizingState(value);
+      onCustomizingChange?.(value);
+    },
+    [onCustomizingChange],
+  );
   const [items, setItems] = useState<LayoutItem[]>(
     () => mergeLayout(modules, null, [], [], defaultItems).items,
   );
@@ -157,10 +173,14 @@ export function WorkspaceGrid({
     return map;
   }, [modules, renderModule]);
 
-  const visibleItems = useMemo(
-    () => items.filter((it) => !hidden.includes(it.i) && contents[it.i] != null),
-    [items, hidden, contents],
-  );
+  const visibleItems = useMemo(() => {
+    const visible = items.filter((it) => !hidden.includes(it.i) && contents[it.i] != null);
+    // Null modules must not preserve their old grid coordinates: otherwise a
+    // data-empty dashboard leaves tall, blank rows between the live modules.
+    const hasMissingModules =
+      visible.length !== items.filter((it) => !hidden.includes(it.i)).length;
+    return hasMissingModules ? packForPins(visible, pinned) : visible;
+  }, [items, hidden, contents, pinned]);
 
   const layouts = useMemo(() => ({ lg: visibleItems }), [visibleItems]);
 
@@ -243,7 +263,7 @@ export function WorkspaceGrid({
   return (
     <div className={className}>
       {/* ── Customize bar ── */}
-      {canCustomize && (
+      {canCustomize && showCustomizeBar && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {customizing ? (
             <>
@@ -316,6 +336,7 @@ export function WorkspaceGrid({
                   onHide={canCustomize ? () => hideModule(it.i) : undefined}
                   onResetSize={canCustomize ? () => resetSize(it.i) : undefined}
                   onMove={(dx, dy) => moveItem(it.i, dx, dy)}
+                  showTitle={showModuleTitles}
                 >
                   {contents[it.i]}
                 </ModuleShell>
@@ -367,6 +388,7 @@ function ModuleShell({
   onHide,
   onResetSize,
   onMove,
+  showTitle,
   children,
 }: {
   module: WorkspaceModule | undefined;
@@ -376,6 +398,7 @@ function ModuleShell({
   onHide?: () => void;
   onResetSize?: () => void;
   onMove?: (dx: number, dy: number) => void;
+  showTitle: boolean;
   children: React.ReactNode;
 }) {
   if (!customizing) {
@@ -391,9 +414,11 @@ function ModuleShell({
         >
           <GripVertical className="h-4 w-4" />
         </span>
-        {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-        <span className="truncate text-xs font-semibold">{module?.title ?? "Module"}</span>
-        {pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
+        {showTitle && Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+        {showTitle && (
+          <span className="truncate text-xs font-semibold">{module?.title ?? "Module"}</span>
+        )}
+        {showTitle && pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
         <div className="ml-auto flex items-center gap-0.5">
           {onMove && (
             <button

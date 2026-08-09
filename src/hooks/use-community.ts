@@ -568,46 +568,18 @@ export function useVotePoll() {
     mutationFn: async ({
       postId,
       optionIndex,
-      userId,
+      userId: _userId,
     }: {
       postId: string;
       optionIndex: number;
       userId: string;
     }) => {
-      // Fetch current poll data
-      const { data: post, error: fetchErr } = await sb
-        .from("posts")
-        .select("poll_data")
-        .eq("id", postId)
-        .single();
-
-      if (fetchErr) throw fetchErr;
-
-      const pollData = (post?.poll_data ?? {
-        question: "",
-        options: [],
-        votes: [],
-        ends_at: null,
-      }) as PollData;
-
-      // Check not already voted
-      const alreadyVoted = pollData.votes?.some((v) => v.user_id === userId);
-      if (alreadyVoted) throw new Error("Already voted");
-
-      // Add vote
-      const updatedVotes = [
-        ...(pollData.votes ?? []),
-        { option_index: optionIndex, user_id: userId },
-      ];
-
-      const { error } = await sb
-        .from("posts")
-        .update({ poll_data: { ...pollData, votes: updatedVotes } })
-        .eq("id", postId);
-
+      const { error } = await sb.rpc("vote_on_poll", {
+        p_post_id: postId,
+        p_option_index: optionIndex,
+      });
       if (error) throw error;
-
-      return { optionIndex, updatedVotes };
+      return { optionIndex };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: POSTS_KEY });

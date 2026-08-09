@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
+import { CreateProjectButton } from "./create-project-button";
 
 export function Navbar() {
   const { data: me, isLoading } = useCurrentUser();
@@ -41,6 +42,7 @@ export function Navbar() {
             <div className="h-8 w-20 animate-pulse rounded-full bg-surface-elevated" />
           ) : isAuthed ? (
             <>
+              <CreateProjectButton size="sm" label="Create project" className="rounded-full" />
               <Button asChild variant="default" size="sm" className="rounded-full">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
@@ -87,6 +89,12 @@ export function Navbar() {
             </Link>
             {isAuthed ? (
               <div className="mt-2 space-y-2">
+                <CreateProjectButton
+                  size="default"
+                  label="Create project"
+                  className="w-full rounded-full"
+                  onCreated={() => setOpen(false)}
+                />
                 <Button asChild variant="default" className="w-full rounded-full">
                   <Link to="/dashboard" onClick={() => setOpen(false)}>
                     Dashboard

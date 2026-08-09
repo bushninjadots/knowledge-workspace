@@ -19,6 +19,8 @@ export type NotificationType =
   | "project_invite"
   | "project_join"
   | "project_post"
+  | "role_application_accepted"
+  | "role_application_declined"
   | "follow"
   | "challenge_join"
   | "challenge_complete"

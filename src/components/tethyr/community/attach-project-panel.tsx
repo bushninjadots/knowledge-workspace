@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProjects } from "@/hooks/use-projects";
 import type { ProjectSnapshot } from "@/hooks/use-community";
+import { FEEDBACK_TAG_OPTIONS } from "@/lib/community-data";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
-
-const FEEDBACK_TAG_OPTIONS = ["UI Design", "Code Review", "Performance", "Architecture", "General"];
 
 type Props = {
   onAttach: (projectId: string | null, snapshot: ProjectSnapshot) => void;

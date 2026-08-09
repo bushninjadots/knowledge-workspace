@@ -105,7 +105,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     type: "prolific_teacher",
     label: "Prolific Sharer",
-    description: "Sharing 5+ skills",
+    description: "Teaching 5+ skills",
     icon: "BookOpen",
     color: "text-brand-green",
   },
@@ -169,8 +169,8 @@ export function computeCategoryBreakdown(
 
   const defs: { name: string; label: string; color: string }[] = [
     { name: "collaboration", label: "Collaboration", color: "text-primary" },
-    { name: "teaching", label: "Sharing", color: "text-brand-green" },
-    { name: "learning", label: "Growing", color: "text-brand-purple" },
+    { name: "teaching", label: "Skills I teach", color: "text-brand-green" },
+    { name: "learning", label: "Skills I want to learn", color: "text-brand-purple" },
     { name: "community", label: "Community", color: "text-teaching" },
     { name: "project_impact", label: "Project Impact", color: "text-brand-green" },
     { name: "reliability", label: "Reliability", color: "text-primary" },
