@@ -59,7 +59,7 @@ export function ProfileOverviewTab({
               <div>
                 <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <GraduationCap className="h-3.5 w-3.5" />
-                  Skills I teach
+                  Skills I share
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {teachSkills.slice(0, 6).map((s) => (
@@ -83,7 +83,7 @@ export function ProfileOverviewTab({
               <div>
                 <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <BookOpen className="h-3.5 w-3.5" />
-                  Skills I want to learn
+                  Skills I’m growing
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {learnSkills.slice(0, 6).map((s) => (

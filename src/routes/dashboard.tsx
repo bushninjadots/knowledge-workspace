@@ -78,7 +78,7 @@ function DashboardPage() {
   const isAuthed = Boolean(data?.userId);
 
   // ── Unauthenticated state: clean login / join gateway ──────────────────
-  if (!isLoading && !isAuthed) {
+  if (!isLoading && !isError && !isAuthed) {
     return (
       <AuthShell
         title="Your workspace awaits"
@@ -116,6 +116,25 @@ function DashboardPage() {
   }
 
   // ── Authenticated state: sidebar layout + dashboard grid ───────────────
+  if (isError) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <div className="hidden md:block w-60 shrink-0" />
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error?.message ?? "Something went wrong loading your data."}
+            </p>
+            <Button variant="outline" className="mt-4" onClick={() => refresh()}>
+              Try again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || !data) {
     return (
       <div className="flex min-h-screen bg-background">
@@ -128,25 +147,6 @@ function DashboardPage() {
                 <div key={i} className="h-32 animate-pulse rounded-xl bg-surface/60" />
               ))}
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex min-h-screen bg-background">
-        <div className="hidden md:block w-60 shrink-0" />
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center">
-            <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {error?.message ?? "Something went wrong loading your data."}
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => refresh()}>
-              Try again
-            </Button>
           </div>
         </div>
       </div>
@@ -845,6 +845,7 @@ function DashboardContent({
             modules={DASHBOARD_MODULES}
             canCustomize={true}
             defaultCustomizing
+            showModuleTitles={false}
             onCustomizingChange={setCustomizing}
             renderModule={renderModule}
           />

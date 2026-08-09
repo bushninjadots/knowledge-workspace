@@ -169,8 +169,8 @@ export function computeCategoryBreakdown(
 
   const defs: { name: string; label: string; color: string }[] = [
     { name: "collaboration", label: "Collaboration", color: "text-primary" },
-    { name: "teaching", label: "Skills I teach", color: "text-brand-green" },
-    { name: "learning", label: "Skills I want to learn", color: "text-brand-purple" },
+    { name: "teaching", label: "Skills I share", color: "text-brand-green" },
+    { name: "learning", label: "Skills I’m growing", color: "text-brand-purple" },
     { name: "community", label: "Community", color: "text-teaching" },
     { name: "project_impact", label: "Project Impact", color: "text-brand-green" },
     { name: "reliability", label: "Reliability", color: "text-primary" },

@@ -446,7 +446,7 @@ function SkillEditingSection({
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <TeachSkillsCard
-        title="Skills I teach"
+        title="Skills I share"
         icon={<GraduationCap className="h-4 w-4" />}
         selected={teachSkills}
         allSkills={allSkills}
@@ -454,7 +454,7 @@ function SkillEditingSection({
         onChange={onChange}
       />
       <SkillsCard
-        title="Skills I want to learn"
+        title="Skills I’m growing"
         accent="purple"
         icon={<BookOpen className="h-4 w-4" />}
         selected={learnSkills}

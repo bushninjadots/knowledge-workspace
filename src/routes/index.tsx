@@ -44,7 +44,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar publicOnly />
 
       <section className="relative overflow-hidden bg-noise">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
@@ -87,14 +87,10 @@ function HomePage() {
                       </Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/explore">
-                        Explore projects
-                      </Link>
+                      <Link to="/explore">Explore projects</Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/profile">
-                        Your studio
-                      </Link>
+                      <Link to="/profile">Your studio</Link>
                     </Button>
                   </>
                 ) : (
@@ -187,9 +183,7 @@ function HomePage() {
                       </Link>
                     </Button>
                     <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/explore">
-                        Explore projects
-                      </Link>
+                      <Link to="/explore">Explore projects</Link>
                     </Button>
                   </>
                 ) : (

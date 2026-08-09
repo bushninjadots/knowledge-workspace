@@ -9,7 +9,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateProjectButton } from "./create-project-button";
 
-export function Navbar() {
+export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
   const { data: me, isLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -26,20 +26,33 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 bg-noise backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
-        <nav className="hidden items-center gap-1 md:flex">
-          <Link
-            to="/"
-            className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-surface hover:text-foreground"
-            activeProps={{ className: "text-foreground bg-surface" }}
-            activeOptions={{ exact: true }}
-          >
-            Home
-          </Link>
-        </nav>
+        {!publicOnly && (
+          <nav className="hidden items-center gap-1 md:flex">
+            <Link
+              to="/"
+              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-surface hover:text-foreground"
+              activeProps={{ className: "text-foreground bg-surface" }}
+              activeOptions={{ exact: true }}
+            >
+              Home
+            </Link>
+          </nav>
+        )}
         <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
-          {isLoading ? (
-            <div className="h-8 w-20 animate-pulse rounded-full bg-surface-elevated" />
+          {!publicOnly && <ThemeToggle />}
+          {publicOnly || isLoading ? (
+            publicOnly ? (
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/login">Log in</Link>
+                </Button>
+                <Button asChild variant="default" size="sm" className="rounded-full">
+                  <Link to="/signup">Join Tethyr</Link>
+                </Button>
+              </>
+            ) : (
+              <div className="h-8 w-20 animate-pulse rounded-full bg-surface-elevated" />
+            )
           ) : isAuthed ? (
             <>
               <CreateProjectButton size="sm" label="Create project" className="rounded-full" />
@@ -66,18 +79,20 @@ export function Navbar() {
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggle />
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
+        {!publicOnly && (
+          <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle />
+            <button
+              onClick={() => setOpen((v) => !v)}
+              className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
+              aria-label="Toggle menu"
+            >
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        )}
       </div>
-      {open && (
+      {open && !publicOnly && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-4 py-4">
             <Link
@@ -87,7 +102,20 @@ export function Navbar() {
             >
               Home
             </Link>
-            {isAuthed ? (
+            {publicOnly ? (
+              <div className="mt-2 flex gap-2">
+                <Button asChild variant="outline" className="flex-1">
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    Log in
+                  </Link>
+                </Button>
+                <Button asChild variant="default" className="flex-1 rounded-full">
+                  <Link to="/signup" onClick={() => setOpen(false)}>
+                    Join Tethyr
+                  </Link>
+                </Button>
+              </div>
+            ) : isAuthed ? (
               <div className="mt-2 space-y-2">
                 <CreateProjectButton
                   size="default"

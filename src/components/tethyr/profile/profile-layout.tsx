@@ -451,8 +451,8 @@ function ProfileSidebar({
       <div className="rounded-xl bg-surface-elevated/30 p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
         <div className="space-y-3">
-          <StatRow icon={GraduationCap} label="Skills I teach" value={teachIds.length} />
-          <StatRow icon={BookOpen} label="Skills I want to learn" value={learnIds.length} />
+          <StatRow icon={GraduationCap} label="Skills I share" value={teachIds.length} />
+          <StatRow icon={BookOpen} label="Skills I’m growing" value={learnIds.length} />
           <StatRow icon={Sparkles} label="Projects" value={projects.length} />
           <StatRow icon={Calendar} label="Activity events" value={activity.length} />
         </div>
