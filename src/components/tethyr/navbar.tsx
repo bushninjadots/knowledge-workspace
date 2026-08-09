@@ -9,7 +9,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
-  const { data: me } = useCurrentUser();
+  const { data: me, isLoading } = useCurrentUser();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
@@ -37,7 +37,9 @@ export function Navbar() {
         </nav>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          {isAuthed ? (
+          {isLoading ? (
+            <div className="h-8 w-20 animate-pulse rounded-full bg-surface-elevated" />
+          ) : isAuthed ? (
             <>
               <Button asChild variant="default" size="sm" className="rounded-full">
                 <Link to="/dashboard">Dashboard</Link>

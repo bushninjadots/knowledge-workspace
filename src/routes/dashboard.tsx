@@ -31,8 +31,7 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
-import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
+
 import {
   AvailabilitySelector,
   useUpdateAvailability,
@@ -360,213 +359,6 @@ function DashboardContent({
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
       switch (id) {
-        case "welcome":
-          return (
-            <section className="animate-border-glow relative h-full overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
-              {data?.bannerSigned && (
-                <div className="pointer-events-none absolute inset-0">
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
-                    style={{ backgroundImage: `url(${data?.bannerSigned})` }}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
-                </div>
-              )}
-              <div
-                className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
-                style={{
-                  background: data?.bannerSigned
-                    ? "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)"
-                    : "radial-gradient(circle, var(--brand-purple), transparent 60%)",
-                }}
-              />
-              <div className="relative flex h-full flex-wrap items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Welcome back
-                    </p>
-                    <AvailabilitySelector
-                      current={data?.profile?.availability as AvailabilityStatus}
-                      onSave={(s) => updateAvail.mutate(s)}
-                    />
-                  </div>
-                  <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
-                    Hey {firstName},{" "}
-                    <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
-                      what's next?
-                    </span>
-                  </h1>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {pct < 100 && (
-                    <Link
-                      to="/profile"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
-                    >
-                      <CompletenessMini percent={pct} size={18} />
-                      {pct}% complete
-                    </Link>
-                  )}
-                  {data?.profile?.reputation_score != null && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
-                      <Award className="h-3.5 w-3.5" />
-                      {data?.profile?.reputation_score} rep
-                    </span>
-                  )}
-                </div>
-              </div>
-            </section>
-          );
-
-        case "today":
-          return (
-            <div className="grid h-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <TodayCard
-                icon={activeProjects.length > 0 ? Folder : Plus}
-                accent="var(--trust)"
-                title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
-                href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
-                highlight={activeProjects.length > 0}
-              >
-                {activeProjects.length > 0 ? (
-                  <div className="mt-3 space-y-2">
-                    <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
-                      {activeProjects[0].title}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
-                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                        {activeProjects[0].progress_percent ?? 0}%
-                      </span>
-                    </div>
-                    {activeProjects.length > 1 && (
-                      <p className="text-[11px] text-muted-foreground">
-                        +{activeProjects.length - 1} more project
-                        {activeProjects.length > 2 ? "s" : ""}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Create your first project to start building in public.
-                  </p>
-                )}
-              </TodayCard>
-
-              <TodayCard
-                icon={UserPlus}
-                accent="var(--learning)"
-                title={
-                  sessionsLoading || connectionsLoading || unreadLoading
-                    ? "Loading activity…"
-                    : pendingInviteCount > 0 || unreadMessageCount > 0
-                      ? "You have activity"
-                      : "No pending invites"
-                }
-                href={
-                  pendingSessionCount > 0
-                    ? "/sessions"
-                    : pendingConnectionCount > 0
-                      ? "/profile"
-                      : "/messages"
-                }
-                highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
-              >
-                <div className="mt-3 space-y-1.5">
-                  {pendingSessionCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {pendingSessionCount}
-                      </span>{" "}
-                      session request{pendingSessionCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {pendingConnectionCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {pendingConnectionCount}
-                      </span>{" "}
-                      connection request{pendingConnectionCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {unreadMessageCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {unreadMessageCount}
-                      </span>{" "}
-                      unread message{unreadMessageCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {pendingInviteCount === 0 && unreadMessageCount === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      All clear — nothing needs your attention.
-                    </p>
-                  )}
-                </div>
-              </TodayCard>
-
-              <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Discover people with complementary skills who are open to team-ups.
-                </p>
-              </TodayCard>
-
-              <TodayCard
-                icon={TrendingUp}
-                accent="var(--brand-purple)"
-                title={
-                  todayOpps.length > 0
-                    ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
-                    : "Browse opportunities"
-                }
-                href="/explore"
-                highlight={todayOpps.length > 0}
-              >
-                {todayOpps.length > 0 ? (
-                  <div className="mt-3 space-y-1">
-                    {todayOpps.slice(0, 2).map((opp: any) => (
-                      <p key={opp.id} className="truncate text-xs text-muted-foreground">
-                        {opp.title} — {opp.projects?.title}
-                      </p>
-                    ))}
-                    {todayOpps.length > 2 && (
-                      <p className="text-[11px] text-muted-foreground">
-                        +{todayOpps.length - 2} more
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Check back as projects open new roles.
-                  </p>
-                )}
-              </TodayCard>
-            </div>
-          );
-
-        case "quick-actions":
-          return (
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl border card-border bg-surface p-4">
-              <CreateProjectButton size="sm" variant="default" className="rounded-full" />
-            </div>
-          );
-
-        case "next-steps":
-          if (pct >= 100 || remaining.length === 0) return null;
-          return (
-            <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-                <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
-                <span className="text-[11px] text-muted-foreground">
-                  — {doneSteps}/{totalSteps} done
-                </span>
-              </div>
-              <NextStepsList items={remaining} />
-            </div>
-          );
-
         case "projects":
           if (activeProjects.length === 0) return null;
           return (
@@ -740,6 +532,146 @@ function DashboardContent({
             </SectionCard>
           );
 
+        case "welcome":
+          return (
+            <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-6 sm:p-8">
+              {data?.bannerSigned && (
+                <div className="pointer-events-none absolute inset-0">
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
+                    style={{ backgroundImage: `url(${data?.bannerSigned})` }}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
+                </div>
+              )}
+              <div
+                className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
+                style={{
+                  background: "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)",
+                }}
+              />
+              <div className="relative flex flex-wrap items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Welcome back</p>
+                    <AvailabilitySelector
+                      current={data?.profile?.availability as AvailabilityStatus}
+                      onSave={(s) => updateAvail.mutate(s)}
+                    />
+                  </div>
+                  <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+                    Hey {firstName},{" "}
+                    <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
+                      what's next?
+                    </span>
+                  </h1>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <CreateProjectButton size="sm" variant="default" className="rounded-full" />
+                  {pct < 100 && (
+                    <Link
+                      to="/profile"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
+                    >
+                      <CompletenessMini percent={pct} size={18} />
+                      {pct}% complete
+                    </Link>
+                  )}
+                  {data?.profile?.reputation_score != null && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
+                      <Award className="h-3.5 w-3.5" />
+                      {data?.profile?.reputation_score} rep
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+
+        case "today":
+          return (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <TodayCard
+                icon={activeProjects.length > 0 ? Folder : Plus}
+                accent="var(--trust)"
+                title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
+                href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : "/explore"}
+                highlight={activeProjects.length > 0}
+              >
+                {activeProjects.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>{activeProjects[0].title}</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
+                      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{activeProjects[0].progress_percent ?? 0}%</span>
+                    </div>
+                    {activeProjects.length > 1 && (
+                      <p className="text-[11px] text-muted-foreground">+{activeProjects.length - 1} more project{activeProjects.length > 2 ? "s" : ""}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-muted-foreground">Create your first project to start building in public.</p>
+                )}
+              </TodayCard>
+              <TodayCard
+                icon={UserPlus}
+                accent="var(--learning)"
+                title={pendingInviteCount > 0 || unreadMessageCount > 0 ? "You have activity" : "No pending invites"}
+                href={pendingSessionCount > 0 ? "/sessions" : pendingConnectionCount > 0 ? "/profile" : "/messages"}
+                highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
+              >
+                <div className="mt-3 space-y-1.5">
+                  {pendingSessionCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{pendingSessionCount}</span> session request{pendingSessionCount !== 1 ? "s" : ""}</p>}
+                  {pendingConnectionCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{pendingConnectionCount}</span> connection request{pendingConnectionCount !== 1 ? "s" : ""}</p>}
+                  {unreadMessageCount > 0 && <p className="text-xs"><span className="font-semibold tabular-nums text-foreground">{unreadMessageCount}</span> unread message{unreadMessageCount !== 1 ? "s" : ""}</p>}
+                  {pendingInviteCount === 0 && unreadMessageCount === 0 && <p className="text-xs text-muted-foreground">All clear — nothing needs your attention.</p>}
+                </div>
+              </TodayCard>
+              <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
+                <p className="mt-3 text-xs text-muted-foreground">Discover people with complementary skills who are open to team-ups.</p>
+              </TodayCard>
+              <TodayCard icon={TrendingUp} accent="var(--brand-purple)" title={todayOpps.length > 0 ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}` : "Browse opportunities"} href="/explore" highlight={todayOpps.length > 0}>
+                {todayOpps.length > 0 ? (
+                  <div className="mt-3 space-y-1">
+                    {todayOpps.slice(0, 2).map((opp: any) => <p key={opp.id} className="truncate text-xs text-muted-foreground">{opp.title} — {opp.projects?.title}</p>)}
+                    {todayOpps.length > 2 && <p className="text-[11px] text-muted-foreground">+{todayOpps.length - 2} more</p>}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-muted-foreground">Check back as projects open new roles.</p>
+                )}
+              </TodayCard>
+            </div>
+          );
+
+        case "next-steps":
+          if (pct >= 100) {
+            return (
+              <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+                  <h2 className="text-sm font-semibold">Profile complete!</h2>
+                  <span className="text-[11px] text-muted-foreground">— {doneSteps}/{totalSteps} done</span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Your studio is fully set up. People can see everything you're about — projects, skills, and what you're building next.
+                </p>
+              </div>
+            );
+          }
+          if (remaining.length === 0) return null;
+          return (
+            <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+                <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
+                <span className="text-[11px] text-muted-foreground">
+                  — {doneSteps}/{totalSteps} done
+                </span>
+              </div>
+              <NextStepsList items={remaining} />
+            </div>
+          );
+
         case "activity":
           return (
             <SectionCard
@@ -757,38 +689,45 @@ function DashboardContent({
     },
     [
       data,
-      updateAvail,
-      myProjects,
       activeProjects,
-      pct,
-      remaining,
-      totalSteps,
-      doneSteps,
-      firstName,
       joinedChallenges,
       myApplications,
-      todayOpps,
       weeklyRep,
+      pct,
+      remaining,
+      doneSteps,
+      totalSteps,
+      firstName,
       pendingSessionCount,
       pendingConnectionCount,
       pendingInviteCount,
       unreadMessageCount,
-      sessionsLoading,
-      connectionsLoading,
-      unreadLoading,
+      todayOpps,
+      updateAvail,
     ],
   );
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-        <WorkspaceGrid
-          page="dashboard"
-          userId={data.userId}
-          modules={DASHBOARD_MODULES}
-          renderModule={renderModule}
-          canCustomize={true}
-        />
+        {renderModule("welcome")}
+        {renderModule("next-steps")}
+        {renderModule("today")}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {renderModule("projects")}
+            {renderModule("applications")}
+            {renderModule("challenges")}
+            {renderModule("connections")}
+            {renderModule("activity")}
+          </div>
+          <div className="space-y-6">
+            {renderModule("suggested-projects")}
+            {renderModule("suggested-creators")}
+            {renderModule("trending-skills")}
+            {renderModule("week")}
+          </div>
+        </div>
       </div>
     </div>
   );

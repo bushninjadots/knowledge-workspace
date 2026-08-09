@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion, useMotionValue } from "framer-motion";
 import { X, ExternalLink, Users, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
@@ -36,6 +36,34 @@ export function ProjectShelfOverlay({
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // ── Swipe-to-dismiss ──
+  const panelY = useMotionValue(0);
+  const dragStartY = useRef(0);
+  const dragActive = useRef(false);
+  const DISMISS_THRESHOLD = 100;
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    dragStartY.current = e.clientY;
+    dragActive.current = true;
+    panelY.set(0);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [panelY]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragActive.current) return;
+    const dy = e.clientY - dragStartY.current;
+    if (dy > 0) panelY.set(dy); // only track downward
+  }, [panelY]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragActive.current) return;
+    dragActive.current = false;
+    const dy = e.clientY - dragStartY.current;
+    panelY.set(0);
+    if (dy >= DISMISS_THRESHOLD) onClose();
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, [panelY, onClose]);
 
   useEffect(() => {
     if (project) {
@@ -99,7 +127,6 @@ export function ProjectShelfOverlay({
           {/* Panel */}
           <motion.div
             ref={panelRef}
-            layoutId="shelf-overlay"
             role="dialog"
             aria-modal="true"
             aria-label={project.title}
@@ -107,21 +134,25 @@ export function ProjectShelfOverlay({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
+            style={{ y: panelY }}
             transition={
               prefersReducedMotion
                 ? { duration: 0 }
                 : { type: "spring" as const, stiffness: 200, damping: 25 }
             }
           >
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence initial={false}>
               <motion.div
                 key={project.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={
-                  prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: "easeOut" }
+                  prefersReducedMotion ? { duration: 0.1 } : { duration: 0.12, ease: "easeOut" }
                 }
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
               >
                 {/* Cover */}
                 <div className="relative aspect-video">
@@ -129,7 +160,7 @@ export function ProjectShelfOverlay({
                     tags={project.tags}
                     coverUrl={project.cover_url}
                     progress={project.progress_percent}
-                    fit="cover"
+                    fit="contain"
                   />
 
                   {/* Close button */}

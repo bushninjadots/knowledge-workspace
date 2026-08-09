@@ -274,10 +274,14 @@ function ProfilePage() {
             isOwnProfile={true}
           />
         ),
+        communities: (
+          <div className="space-y-6">
+            <ProfileCommunitiesTab />
+          </div>
+        ),
         activity: (
           <div className="space-y-6">
             <ProfileActivityTab userId={userId} activity={activity} />
-            <ProfileCommunitiesTab />
             <ProfileSessionsTab userId={userId} isOwnProfile={true} />
           </div>
         ),

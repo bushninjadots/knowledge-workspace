@@ -4,17 +4,13 @@ import {
   motion,
   useReducedMotion,
   useMotionValue,
-  useTransform,
-  useMotionValueEvent,
-  animate,
 } from "framer-motion";
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectShelfHeader } from "./project-shelf-header";
-import { ProjectShelfCover, STATUS_STYLES, getCardHeight } from "./project-shelf-cover";
+import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
-import { CATEGORY_COLORS, inferCategory } from "@/lib/category-colors";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 interface ProjectShelfProps {
@@ -26,11 +22,6 @@ interface ProjectShelfProps {
   category: string;
   setCategory: (v: string) => void;
 }
-
-// Wheel delta (normalised to pixels) needed to flip one card. Roughly one
-// mouse notch per flip; trackpads accumulate small deltas into the same smooth
-// springs the keyboard arrows use.
-const WHEEL_FLIP_PX = 100;
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
@@ -47,23 +38,10 @@ export function ProjectShelf({
 }: ProjectShelfProps) {
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
-  const wheelAccumRef = useRef(0); // leftover wheel delta carried between events
-  const overlayIndexRef = useRef<number | null>(null);
-  const dragSuppressClickRef = useRef(false);
-  const dragStateRef = useRef<{
-    pointerId: number;
-    startX: number;
-    lastX: number;
-    lastT: number;
-    startOffset: number;
-    velocity: number;
-    moved: boolean;
-  } | null>(null);
+  const maxOffset = Math.max(0, projects.length - 1);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
@@ -73,266 +51,112 @@ export function ProjectShelf({
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  const displayOffset = useMotionValue(0);
-  const maxOffset = Math.max(0, projects.length - 1);
-  const shownIndex = Math.min(activeIndex, maxOffset);
-
-  const updateOverlayIndex = useCallback((v: number | null) => {
-    overlayIndexRef.current = v;
-    setOverlayIndex(v);
-  }, []);
-
+  // Clamp index when projects change
   useEffect(() => {
-    if (projects.length === 0) return;
-    const clamped = Math.min(displayOffset.get(), maxOffset);
-    if (clamped !== displayOffset.get()) displayOffset.set(clamped);
-  }, [maxOffset, projects.length, displayOffset]);
-
-  // Keep the overlay index valid when the project list changes.
-  useEffect(() => {
-    if (projects.length === 0) updateOverlayIndex(null);
-    else if (overlayIndexRef.current != null)
-      updateOverlayIndex(Math.min(overlayIndexRef.current, maxOffset));
-  }, [projects.length, maxOffset, updateOverlayIndex]);
-
-  useMotionValueEvent(displayOffset, "change", (v) => {
-    const idx = clamp(Math.round(v), 0, maxOffset);
-    setActiveIndex((prev) => (prev === idx ? prev : idx));
-    const container = containerRef.current;
-    if (container) {
-      const id = projects[idx] ? `shelf-card-${projects[idx].id}` : undefined;
-      if (id) container.setAttribute("aria-activedescendant", id);
-      else container.removeAttribute("aria-activedescendant");
-    }
-  });
+    if (activeIndex > maxOffset) setActiveIndex(maxOffset);
+  }, [maxOffset, activeIndex]);
 
   const navigate = useCallback(
     (dir: -1 | 1) => {
       if (maxOffset <= 0) return;
-      displayOffset.stop();
-      const current = Math.round(displayOffset.get());
-      const next = clamp(current + dir, 0, maxOffset);
-      if (next === current) {
-        // At the edge — a small "thunk" so it feels physical.
-        if (!prefersReducedMotion) {
-          animate(
-            displayOffset,
-            [current, clamp(current + dir * 0.12, 0, maxOffset + 0.2), current],
-            { duration: 0.16, ease: "easeInOut" },
-          );
-        }
-        return;
+      setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
-      animate(displayOffset, next, {
-        type: "spring",
-        stiffness: 380,
-        damping: 30,
-        mass: 0.85,
-        velocity: prefersReducedMotion ? 0 : dir * 3,
-      });
     },
-    [maxOffset, displayOffset, prefersReducedMotion],
+    [maxOffset],
   );
+
+  // Mouse wheel scrolling
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || maxOffset <= 0) return;
+    let wheelAccum = 0;
+    const THRESHOLD = 60;
+    const onWheel = (e: WheelEvent) => {
+      // Only intercept horizontal-ish scroll or when not inside a scrollable element
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true'], .overflow-y-auto, .overflow-auto")) return;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // let horizontal scroll pass
+      e.preventDefault();
+      wheelAccum += e.deltaY;
+      if (Math.abs(wheelAccum) >= THRESHOLD) {
+        const dir = wheelAccum > 0 ? 1 : -1;
+        wheelAccum = 0;
+        setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [maxOffset]);
 
   const jumpTo = useCallback(
     (index: number) => {
-      if (index < 0 || index > maxOffset) return;
-      displayOffset.stop();
-      if (prefersReducedMotion) {
-        displayOffset.set(index);
-        return;
-      }
-      const current = Math.round(displayOffset.get());
-      animate(displayOffset, index, {
-        type: "spring",
-        stiffness: 340,
-        damping: 28,
-        mass: 0.85,
-        velocity: (index - current) * 2,
-      });
+      setActiveIndex(clamp(index, 0, maxOffset));
     },
-    [maxOffset, displayOffset, prefersReducedMotion],
+    [maxOffset],
   );
+
+  // ── Touch / pointer drag ──
+  const dragX = useMotionValue(0);
+  const dragStartX = useRef(0);
+  const dragActive = useRef(false);
+  const SWIPE_THRESHOLD = 80;
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (maxOffset <= 0 || overlayIndex != null) return;
+    dragStartX.current = e.clientX;
+    dragActive.current = true;
+    dragX.set(0);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [maxOffset, overlayIndex, dragX]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragActive.current) return;
+    const dx = e.clientX - dragStartX.current;
+    dragX.set(dx);
+  }, [dragX]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragActive.current) return;
+    dragActive.current = false;
+    const dx = e.clientX - dragStartX.current;
+    dragX.set(0);
+    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+      const dir = dx < 0 ? 1 : -1;
+      setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
+    }
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, [maxOffset, dragX]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (overlayIndexRef.current != null) return; // overlay handles its own keys
+      if (overlayIndex != null) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.key === "ArrowLeft") navigate(-1);
       if (e.key === "ArrowRight") navigate(1);
-      // Buttons (thumbs, arrows, cards) activate on their own native click.
-      if (e.key === "Enter" && !target?.closest("button, a") && projects[activeIndex])
-        updateOverlayIndex(activeIndex);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [navigate, activeIndex, projects, updateOverlayIndex]);
-
-  // Mouse / trackpad wheel — accumulates deltas and flips cards with the same
-  // smooth spring animation the arrow keys use, so scrolling feels deliberate
-  // instead of jittery (each notch = one card, no snap-back yank).
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || isMobile) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      // Normalise to pixels: Firefox reports lines, some devices report pages.
-      const px =
-        e.deltaMode === 1
-          ? e.deltaY * 40
-          : e.deltaMode === 2
-            ? e.deltaY * window.innerHeight
-            : e.deltaY;
-      wheelAccumRef.current += px;
-      // Count full steps first, then jump the accumulated distance once — the
-      // base offset is read before any animation frame ticks, so a fast burst
-      // advances by the right number of cards (not just one).
-      let steps = 0;
-      while (Math.abs(wheelAccumRef.current) >= WHEEL_FLIP_PX) {
-        const dir = wheelAccumRef.current > 0 ? 1 : -1;
-        wheelAccumRef.current -= dir * WHEEL_FLIP_PX;
-        steps += dir;
-      }
-      if (steps !== 0) {
-        // Page-mode deltas are enormous; never flip more than a handful per event.
-        const capped = clamp(steps, -8, 8);
-        const base = Math.round(displayOffset.get());
-        jumpTo(clamp(base + capped, 0, maxOffset));
-      }
-    };
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => container.removeEventListener("wheel", handleWheel);
-  }, [isMobile, maxOffset, jumpTo]);
-
-  const getPxPerStep = useCallback(() => {
-    const w = containerRef.current?.clientWidth ?? 900;
-    return Math.max(240, w * 0.34);
-  }, []);
-
-  // Drag-to-flip with momentum (desktop).
-  useEffect(() => {
-    const handlePointerMove = (e: PointerEvent) => {
-      const s = dragStateRef.current;
-      if (!s || s.pointerId !== e.pointerId) return;
-      const now = performance.now();
-      const dt = Math.max(1, now - s.lastT);
-      const instVel = ((e.clientX - s.lastX) / dt) * 1000; // px/s
-      s.velocity = s.velocity * 0.82 + instVel * 0.18;
-      s.lastX = e.clientX;
-      s.lastT = now;
-      if (Math.abs(e.clientX - s.startX) > 5) s.moved = true;
-      if (s.moved) {
-        setIsDragging(true);
-        displayOffset.set(
-          clamp(s.startOffset - (e.clientX - s.startX) / getPxPerStep(), 0, maxOffset),
-        );
-      }
-    };
-
-    const handlePointerEnd = (e: PointerEvent) => {
-      const s = dragStateRef.current;
-      if (!s || s.pointerId !== e.pointerId) return;
-      dragStateRef.current = null;
-      if (s.moved) {
-        dragSuppressClickRef.current = true;
-        const pxPerStep = getPxPerStep();
-        const flickUnits = (s.velocity * 0.16) / pxPerStep;
-        const target = clamp(Math.round(displayOffset.get() + flickUnits), 0, maxOffset);
-        animate(displayOffset, target, {
-          type: "spring",
-          stiffness: prefersReducedMotion ? 500 : 360,
-          damping: prefersReducedMotion ? 100 : 28,
-          mass: 0.85,
-          velocity: prefersReducedMotion ? 0 : (s.velocity / pxPerStep) * 0.7,
-        });
-      }
-      setIsDragging(false);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerEnd);
-    window.addEventListener("pointercancel", handlePointerEnd);
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerEnd);
-      window.removeEventListener("pointercancel", handlePointerEnd);
-    };
-  }, [maxOffset, displayOffset, getPxPerStep, prefersReducedMotion]);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (overlayIndexRef.current != null || projects.length <= 1) return;
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    // A fresh gesture is never a click-suppression carry-over.
-    dragSuppressClickRef.current = false;
-    displayOffset.stop();
-    wheelAccumRef.current = 0;
-    dragStateRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      lastX: e.clientX,
-      lastT: performance.now(),
-      startOffset: displayOffset.get(),
-      velocity: 0,
-      moved: false,
-    };
-  };
-
-  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (dragSuppressClickRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragSuppressClickRef.current = false;
-    }
-  };
+  }, [navigate, overlayIndex]);
 
   const handleCardClick = useCallback(
-    (project: ProjectRow, index: number) => {
-      lastFocusedRef.current = document.activeElement as HTMLElement;
-      displayOffset.stop();
-      displayOffset.set(index);
-      updateOverlayIndex(index);
+    (_project: ProjectRow, index: number) => {
+      setOverlayIndex(index);
     },
-    [displayOffset, updateOverlayIndex],
-  );
-
-  const overlayNav = useCallback(
-    (dir: -1 | 1) => {
-      const cur = overlayIndexRef.current;
-      if (cur == null || maxOffset <= 0) return;
-      const next = clamp(cur + dir, 0, maxOffset);
-      if (prefersReducedMotion) displayOffset.set(next);
-      else
-        animate(displayOffset, next, {
-          type: "spring",
-          stiffness: 360,
-          damping: 28,
-          mass: 0.85,
-        });
-      updateOverlayIndex(next);
-    },
-    [maxOffset, displayOffset, updateOverlayIndex, prefersReducedMotion],
+    [],
   );
 
   const closeOverlay = useCallback(() => {
-    updateOverlayIndex(null);
-    setTimeout(() => lastFocusedRef.current?.focus(), 200);
-  }, [updateOverlayIndex]);
+    setOverlayIndex(null);
+  }, []);
 
-  const activeProject =
-    projects.length > 0 ? projects[Math.min(activeIndex, projects.length - 1)] : undefined;
-  const spotlightColors = activeProject
-    ? (CATEGORY_COLORS[inferCategory(activeProject.tags)] ?? CATEGORY_COLORS.Design)
-    : CATEGORY_COLORS.Design;
-  const spotlightBg = `radial-gradient(closest-side, oklch(0.62 ${spotlightColors.sat / 100} ${spotlightColors.hue} / 0.16), transparent 74%)`;
-  // Shadow sits at the bottom edge of the front card, which now includes the
-  // project-info panel below the cover.
-  const floorShadowY = useTransform(displayOffset, () => getCardHeight(0) / 2 + 14);
+  const shownIndex = Math.min(activeIndex, maxOffset);
+  const activeProject = projects[shownIndex] ?? undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={containerRef}>
       <ProjectShelfHeader
         q={q}
         setQ={setQ}
@@ -342,10 +166,8 @@ export function ProjectShelf({
       />
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed card-border bg-surface/50 px-6 py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated">
-            <Folder className="h-5 w-5 text-muted-foreground" />
-          </div>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed card-border bg-surface/50 px-6 py-20 text-center">
+          <Folder className="h-10 w-10 text-muted-foreground/40" />
           <div>
             <p className="text-sm font-medium text-foreground">No projects match</p>
             <p className="mt-1 max-w-sm text-xs text-muted-foreground">
@@ -360,20 +182,20 @@ export function ProjectShelf({
                 setQ("");
                 setCategory("All");
               }}
-              className="rounded-full border border-border/60 bg-background/60 px-4 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
+              className="rounded-full border card-border bg-background/60 px-4 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
             >
               Clear filters
             </button>
           )}
         </div>
       ) : isMobile ? (
-        <div className="space-y-3 px-4">
+        /* Mobile: stacked list of cards */
+        <div className="space-y-3">
           {projects.map((project, i) => (
             <ProjectShelfCover
               key={project.id}
               project={project}
               index={i}
-              offset={displayOffset}
               meId={meId}
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
@@ -383,178 +205,165 @@ export function ProjectShelf({
           ))}
         </div>
       ) : (
-        <>
-          <div
-            className="relative"
-            style={{
-              perspective: "1400px",
-              height: "68vh",
-              minHeight: "540px",
-              maxHeight: "880px",
-            }}
-          >
-            {/* Stage spotlight — follows the active project's category colour */}
-            <AnimatePresence>
-              {activeProject && (
-                <motion.div
-                  key={activeProject.id}
-                  className="pointer-events-none absolute left-1/2 top-1/2 h-[92%] w-[min(72vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, ease: "easeOut" }}
-                  style={{ background: spotlightBg }}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Floor contact shadow under the front card */}
-            <motion.div
-              className="pointer-events-none absolute left-1/2 top-1/2 h-6 rounded-[50%] bg-black/10 blur-2xl dark:bg-black/45"
-              style={{ width: "min(56vw, 520px)", x: "-50%", y: floorShadowY }}
-            />
-
-            <div
-              ref={containerRef}
-              className={cn(
-                "absolute inset-0 select-none overflow-hidden",
-                isDragging ? "cursor-grabbing" : "cursor-grab",
-              )}
-              style={{ touchAction: "pan-y" }}
-              role="listbox"
-              aria-label="Projects"
-              onPointerDown={handlePointerDown}
-              onClickCapture={handleClickCapture}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${q}-${category}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
-                >
-                  {projects.map((project, i) => (
-                    <ProjectShelfCover
-                      key={project.id}
-                      project={project}
-                      index={i}
-                      offset={displayOffset}
-                      meId={meId}
-                      isContributor={contributorIds.has(project.id)}
-                      prefersReducedMotion={prefersReducedMotion ?? false}
-                      isActive={Math.abs(i - activeIndex) < 0.6}
-                      onClick={() => handleCardClick(project, i)}
+        /* Desktop: centered card carousel */
+        <div className="space-y-4">
+          {/* Main carousel area */}
+          <div className="relative flex items-center justify-center gap-4 sm:gap-6">
+            {/* Previous card peek */}
+            {activeIndex > 0 && (
+              <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`prev-${activeIndex}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 0.5, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+                  >
+                    <MiniCard
+                      project={projects[activeIndex - 1]}
+                      onClick={() => navigate(-1)}
                     />
-                  ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Center card */}
+            <div className="w-full max-w-[560px] sm:max-w-[620px] xl:max-w-[700px] touch-pan-y">
+              <AnimatePresence>
+                <motion.div
+                  key={activeProject?.id ?? "empty"}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  style={{ x: dragX }}
+                  onPointerDown={onPointerDown}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0.1 }
+                      : { duration: 0.15, ease: "easeOut" }
+                  }
+                  className="touch-none cursor-grab active:cursor-grabbing"
+                >
+                  {activeProject && (
+                    <ProjectShelfCover
+                      project={activeProject}
+                      index={activeIndex}
+                      meId={meId}
+                      isContributor={contributorIds.has(activeProject.id)}
+                      prefersReducedMotion={prefersReducedMotion ?? false}
+                      forceFace
+                      onClick={() => handleCardClick(activeProject, activeIndex)}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            {/* Prev / Next arrows */}
-            {projects.length > 1 && (
-              <>
-                <div className="absolute inset-y-0 left-3 z-30 flex items-center">
-                  <button
-                    onClick={() => navigate(-1)}
-                    disabled={activeIndex <= 0}
-                    aria-label="Previous project"
-                    title="Previous project (←)"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-background active:scale-95 disabled:pointer-events-none disabled:opacity-25"
+            {/* Next card peek */}
+            {activeIndex < maxOffset && (
+              <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`next-${activeIndex}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 0.5, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
                   >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="absolute inset-y-0 right-3 z-30 flex items-center">
-                  <button
-                    onClick={() => navigate(1)}
-                    disabled={activeIndex >= maxOffset}
-                    aria-label="Next project"
-                    title="Next project (→)"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background/70 text-foreground shadow-sm backdrop-blur-md transition-all hover:scale-105 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-background active:scale-95 disabled:pointer-events-none disabled:opacity-25"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              </>
+                    <MiniCard
+                      project={projects[activeIndex + 1]}
+                      onClick={() => navigate(1)}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             )}
           </div>
 
-          {/* Caption + position bar */}
-          {projects.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-4 px-1">
-                <div className="min-w-0 flex-1" aria-live="polite">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.div
-                      key={activeProject?.id ?? "empty"}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
-                      className="min-w-0"
-                    >
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {activeProject?.title}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        by{" "}
-                        {activeProject?.profiles?.display_name ||
-                          activeProject?.profiles?.handle ||
-                          "Member"}{" "}
-                        · {STATUS_STYLES[activeProject?.status ?? ""]?.label ?? "Active"} ·{" "}
-                        {activeProject?.progress_percent ?? 0}% complete
-                      </p>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="numeric text-xs text-muted-foreground-subtle">
-                    {shownIndex + 1} / {projects.length}
-                  </span>
-                  <div className="h-1 w-24 overflow-hidden rounded-full bg-border">
-                    <motion.div
-                      className="h-full rounded-full bg-primary/80"
-                      animate={{ width: `${((shownIndex + 1) / projects.length) * 100}%` }}
-                      transition={
-                        prefersReducedMotion
-                          ? { duration: 0 }
-                          : { type: "spring", stiffness: 300, damping: 30 }
-                      }
-                    />
-                  </div>
-                  <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground-subtle md:flex">
-                    <Keyboard className="h-3.5 w-3.5" />← → to browse
-                  </span>
-                </div>
-              </div>
-
-              {/* Thumbnail strip — jump straight to any project */}
-              {projects.length > 1 && (
-                <ProjectShelfThumbnails
-                  projects={projects}
-                  activeIndex={shownIndex}
-                  prefersReducedMotion={prefersReducedMotion ?? false}
-                  onSelect={jumpTo}
-                />
-              )}
+          {/* Navigation + counter bar */}
+          <div className="flex items-center justify-between gap-4 px-1">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(-1)}
+                disabled={activeIndex <= 0}
+                aria-label="Previous project"
+                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => navigate(1)}
+                disabled={activeIndex >= maxOffset}
+                aria-label="Next project"
+                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
+
+            <span className="numeric text-xs text-muted-foreground">
+              {shownIndex + 1} / {projects.length}
+            </span>
+
+            <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground md:flex">
+              <Keyboard className="h-3.5 w-3.5" />← → to browse
+            </span>
+          </div>
+
+          {/* Thumbnail strip */}
+          {projects.length > 1 && (
+            <ProjectShelfThumbnails
+              projects={projects}
+              activeIndex={shownIndex}
+              prefersReducedMotion={prefersReducedMotion ?? false}
+              onSelect={jumpTo}
+            />
           )}
-        </>
+        </div>
       )}
 
       <ProjectShelfOverlay
-        project={
-          overlayIndex == null
-            ? null
-            : (projects[Math.min(overlayIndex, projects.length - 1)] ?? null)
-        }
+        project={overlayIndex == null ? null : (projects[overlayIndex] ?? null)}
         index={overlayIndex}
         count={projects.length}
         onClose={closeOverlay}
-        onNav={overlayNav}
+        onNav={(dir) => {
+          const next = clamp((overlayIndex ?? 0) + dir, 0, maxOffset);
+          setActiveIndex(next);
+          setOverlayIndex(next);
+        }}
       />
     </div>
+  );
+}
+
+/* Small peek card for prev/next previews */
+function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group relative w-full cursor-pointer overflow-hidden rounded-xl border card-border bg-surface text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+    >
+      <div className="relative aspect-[3/4] w-full">
+        {project.cover_url ? (
+          <img
+            src={project.cover_url}
+            alt=""
+            className="h-full w-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+            draggable={false}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-surface-elevated to-surface-sunken" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 p-2">
+        <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">{project.title}</p>
+      </div>
+    </button>
   );
 }

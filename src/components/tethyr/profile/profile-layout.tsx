@@ -46,12 +46,13 @@ import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sectio
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
-export type Tab = "overview" | "skills" | "projects" | "activity";
+export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
 
 const TABS: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
   { id: "skills", label: "Skills", icon: GraduationCap },
   { id: "projects", label: "Projects", icon: Briefcase },
+  { id: "communities", label: "Communities", icon: Users },
   { id: "activity", label: "Activity", icon: Activity },
 ];
 
@@ -274,7 +275,7 @@ export function ProfileLayout({
 
         {/* TABS + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* MAIN CONTENT — clean tabbed sections with consistent scrolling */}
+          {/* MAIN CONTENT — clean tabbed sections */}
           <div className="min-w-0 flex-1">
             {/* Tab bar */}
             <div className="mb-4 flex items-center gap-1 rounded-2xl border card-border bg-surface p-1 w-fit">
@@ -294,7 +295,7 @@ export function ProfileLayout({
               ))}
             </div>
 
-            {/* Tab content — clean scrollable area */}
+            {/* Tab content */}
             <div className="space-y-6">
               {tabContent[activeTab]}
             </div>
@@ -416,19 +417,6 @@ function ProfileSidebar({
 
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">
-      {/* Public profile link */}
-      {handle && (
-        <a
-          href={`/u/${handle}`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-between rounded-2xl border border-dashed border-border/50 bg-surface/40 px-4 py-3 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface"
-        >
-          <span>View public profile</span>
-          <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
-        </a>
-      )}
-
       {/* STATS */}
       <div className="rounded-2xl border card-border bg-surface p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>

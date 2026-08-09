@@ -6,20 +6,15 @@ interface CoverGradientProps {
   coverUrl?: string | null;
   progress: number;
   animated?: boolean;
-  /**
-   * "cover" fills the frame (crops the image); "contain" shows the whole
-   * image centred on the category gradient (no cropping). Use "contain" for
-   * large hero covers so nothing gets cut off.
-   */
   fit?: "cover" | "contain";
 }
 
 export function CoverGradient({
   tags,
   coverUrl,
-  progress,
+  progress: _progress,
   animated = true,
-  fit = "cover",
+  fit = "contain",
 }: CoverGradientProps) {
   const cat = inferCategory(tags);
   const c = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.Design;
@@ -33,12 +28,10 @@ export function CoverGradient({
           src={coverUrl}
           alt=""
           draggable={false}
-          className={`pointer-events-none h-full w-full select-none ${fit === "contain" ? "object-contain" : "object-cover"}`}
+          className={`pointer-events-none h-full w-full select-none ${fit === "cover" ? "object-cover" : "object-contain"}`}
         />
-        {/* Multi-layered gradient for depth — gentle bottom fade so the
-            image breathes into the card, with a subtle vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.15))]" />
+        {/* Gentle bottom fade so the progress bar is visible */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
       </div>
     );
   }

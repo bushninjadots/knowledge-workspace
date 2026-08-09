@@ -38,8 +38,9 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { data: me } = useCurrentUser();
+  const { data: me, isLoading: authLoading } = useCurrentUser();
   const isAuthed = Boolean(me?.userId);
+  const ctaReady = !authLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,17 +72,31 @@ function HomePage() {
                 contributions, and earn recognition for the work they do — not the claims they make.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                {isAuthed ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="default"
-                    className="shadow-glow-green transition-lift"
-                  >
-                    <Link to="/dashboard">
-                      Open your dashboard <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                {!ctaReady ? (
+                  <div className="h-12 w-40 animate-pulse rounded-full bg-surface-elevated" />
+                ) : isAuthed ? (
+                  <>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="default"
+                      className="shadow-glow-green transition-lift"
+                    >
+                      <Link to="/dashboard">
+                        Dashboard <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="transition-lift">
+                      <Link to="/explore">
+                        Explore projects
+                      </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="transition-lift">
+                      <Link to="/profile">
+                        Your studio
+                      </Link>
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button
@@ -157,17 +172,26 @@ function HomePage() {
                 itself. You're known by what you make — not what you claim.
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                {isAuthed ? (
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="default"
-                    className="shadow-glow-green transition-lift"
-                  >
-                    <Link to="/dashboard">
-                      Back to your workspace <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                {!ctaReady ? (
+                  <div className="h-12 w-48 animate-pulse rounded-full bg-surface-elevated" />
+                ) : isAuthed ? (
+                  <>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="default"
+                      className="shadow-glow-green transition-lift"
+                    >
+                      <Link to="/dashboard">
+                        Back to your workspace <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="transition-lift">
+                      <Link to="/explore">
+                        Explore projects
+                      </Link>
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button
