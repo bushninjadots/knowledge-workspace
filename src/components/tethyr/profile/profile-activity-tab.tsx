@@ -13,7 +13,7 @@ export function ProfileActivityTab({
   return (
     <div className="space-y-6">
       {/* CONTRIBUTION GRAPH */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-4">
         <div className="mb-4 flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Contribution Graph</h3>
@@ -22,7 +22,7 @@ export function ProfileActivityTab({
       </div>
 
       {/* ACTIVITY TIMELINE */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-4">
         <div className="mb-4 flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Activity Timeline</h3>

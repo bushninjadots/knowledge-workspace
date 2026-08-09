@@ -175,7 +175,7 @@ export function ProjectReposSection({
   if (!isOwner && (!repos || repos.length === 0)) return null;
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <Code2 className="h-4 w-4 text-muted-foreground" />

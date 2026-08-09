@@ -23,14 +23,14 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
         <div className="h-6 w-32 animate-pulse rounded-full bg-surface-elevated" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-semibold">Tethrs</h2>

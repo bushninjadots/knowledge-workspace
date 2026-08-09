@@ -19,6 +19,8 @@ import {
   LayoutGrid,
   Briefcase,
   Activity,
+  FolderKanban,
+  Swords,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -298,6 +300,7 @@ export function ProfileLayout({
                   userId={userId}
                   modules={PROFILE_MODULES}
                   canCustomize={isOwnProfile}
+                  defaultCustomizing
                   renderModule={(id) => tabContent[id as Tab] ?? null}
                 />
               </>
@@ -459,7 +462,7 @@ function ProfileSidebar({
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">
       {/* STATS */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
         <div className="space-y-3">
           <StatRow icon={GraduationCap} label="Skills shared" value={teachIds.length} />
@@ -468,13 +471,19 @@ function ProfileSidebar({
           <StatRow icon={Calendar} label="Activity" value={activity.length} />
           {profile?.reputation_score != null && profile.reputation_score > 0 && (
             <>
-              <div className="my-2 h-px bg-border" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="my-2 h-px bg-border/40" />
+              <div className="text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <Star className="h-3.5 w-3.5" />
-                  <span className="text-sm">Reputation</span>
+                  <span>Reputation</span>
+                  <ReputationTierBadge score={profile.reputation_score} />
                 </div>
-                <ReputationTierBadge score={profile.reputation_score} />
+                <div className="grid grid-cols-2 gap-1.5">
+                  <EvidencePill label="Projects" value={projects.length} />
+                  <EvidencePill label="Skills" value={teachIds.length} />
+                  <EvidencePill label="Activity" value={activity.length} />
+                  <EvidencePill label="Score" value={profile.reputation_score} highlight />
+                </div>
               </div>
             </>
           )}
@@ -483,7 +492,7 @@ function ProfileSidebar({
 
       {/* Active projects highlight */}
       {activeProjects.length > 0 && (
-        <div className="rounded-xl border card-border bg-surface p-5">
+        <div className="rounded-xl bg-surface-elevated/30 p-5">
           <h3 className="mb-3 text-sm font-semibold">
             Active projects
             <span className="ml-1 font-normal text-muted-foreground">({activeProjects.length})</span>
@@ -513,7 +522,7 @@ function ProfileSidebar({
 
       {/* SOCIAL LINKS */}
       {hasSocialLinks && (
-        <div className="rounded-xl border card-border bg-surface p-5">
+        <div className="rounded-xl bg-surface-elevated/30 p-5">
           <h3 className="mb-3 text-sm font-semibold">Links</h3>
           <div className="space-y-1.5">
             {Object.entries(socialLinks).map(([key, url]) => {
@@ -556,6 +565,15 @@ function StatRow({
         {label}
       </div>
       <span className="font-medium">{value}</span>
+    </div>
+  );
+}
+
+function EvidencePill({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div className={`rounded-lg px-2.5 py-1.5 text-xs ${highlight ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))] font-semibold" : "bg-background/40 text-muted-foreground"}`}>
+      <span className="block text-lg font-bold tabular-nums leading-none">{value}</span>
+      <span className="text-[10px]">{label}</span>
     </div>
   );
 }

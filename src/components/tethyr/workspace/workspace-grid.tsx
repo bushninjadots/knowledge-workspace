@@ -37,6 +37,8 @@ type Props = {
   renderModule: (id: string) => React.ReactNode;
   /** Whether the current user is allowed to customize (own dashboard/profile). */
   canCustomize: boolean;
+  /** Start in customize mode immediately (for parent-triggered customize). */
+  defaultCustomizing?: boolean;
   /** Extra class on the grid wrapper. */
   className?: string;
 };
@@ -52,6 +54,7 @@ export function WorkspaceGrid({
   modules,
   renderModule,
   canCustomize,
+  defaultCustomizing,
   className,
 }: Props) {
   const isMobile = useIsMobile();
@@ -60,7 +63,7 @@ export function WorkspaceGrid({
 
   const defaultItems = useMemo(() => stackDefault(modules), [modules]);
 
-  const [customizing, setCustomizing] = useState(false);
+  const [customizing, setCustomizing] = useState(defaultCustomizing ?? false);
   const [items, setItems] = useState<LayoutItem[]>(
     () => mergeLayout(modules, null, [], [], defaultItems).items,
   );

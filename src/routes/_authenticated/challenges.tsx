@@ -114,7 +114,7 @@ function ChallengesPage() {
         </div>
 
         {/* Filters */}
-        <div className="space-y-4 rounded-xl border card-border bg-surface p-4">
+        <div className="space-y-4 rounded-xl bg-surface-elevated/30 p-4">
           {/* Search */}
           <div className="flex items-center gap-2 rounded-xl border card-border bg-background/60 px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />

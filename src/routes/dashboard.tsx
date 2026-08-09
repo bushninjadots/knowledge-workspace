@@ -234,7 +234,7 @@ function AuthenticatedDashboardLayout({
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-lg transition hover:scale-105 hover:bg-surface-elevated"
+            className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-sm transition hover:scale-105 hover:bg-surface-elevated"
             aria-label="Scroll to top"
           >
             <ArrowUp className="h-4 w-4 text-muted-foreground" />
@@ -539,7 +539,7 @@ function DashboardContent({
 
         case "welcome":
           return (
-            <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-6 sm:p-8">
+            <div className="relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 sm:p-8">
               {data?.bannerSigned && (
                 <div className="pointer-events-none absolute inset-0">
                   <div
@@ -732,6 +732,7 @@ function DashboardContent({
               userId={data?.userId}
               modules={DASHBOARD_MODULES}
               canCustomize={true}
+              defaultCustomizing
               renderModule={renderModule}
             />
           </>

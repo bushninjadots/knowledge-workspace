@@ -38,7 +38,7 @@ export function ProfileCommunitiesTab() {
 
   if (isError) {
     return (
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-4">
         <p className="text-sm text-muted-foreground">
           Community spaces could not be loaded.
         </p>
@@ -49,7 +49,7 @@ export function ProfileCommunitiesTab() {
   return (
     <div className="space-y-6">
       {/* Joined communities */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-xl bg-surface-elevated/30 p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -143,7 +143,7 @@ export function ProfileCommunitiesTab() {
 
       {/* Discover more spaces */}
       {discoverable.length > 0 && (
-        <div className="rounded-xl border card-border bg-surface p-5">
+        <div className="rounded-xl bg-surface-elevated/30 p-4">
           <div className="mb-4 flex items-center gap-2">
             <Plus className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold">Discover spaces</h3>

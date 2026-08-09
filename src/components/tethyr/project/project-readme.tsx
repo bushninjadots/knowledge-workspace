@@ -412,9 +412,10 @@ Write your project's story here. Markdown supported — headings, images, GIFs, 
         </section>
       )}
 
-      {/* Built with + Tools */}
+      {/* Built with + Tools — integrated into README flow */}
       {(skills.length > 0 || repoLanguages.length > 0 || isOwner || tools.length > 0) && (
-        <section className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5">
+        <section className="pt-6">
+          <div className="mb-4 h-px bg-border/40" />
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             Built with
@@ -506,14 +507,15 @@ Write your project's story here. Markdown supported — headings, images, GIFs, 
         </section>
       )}
 
-      {/* Project structure */}
+      {/* Project structure — integrated into README flow */}
       {structureText && (
-        <section className="rounded-xl bg-surface-elevated/30 p-4 sm:p-5">
+        <section className="pt-6">
+          <div className="mb-4 h-px bg-border/40" />
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FolderTree className="h-4 w-4 text-muted-foreground" />
             Project structure
           </h2>
-          <pre className="mt-3 overflow-x-auto rounded-xl bg-background/60 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-background/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
             {structureText}
           </pre>
         </section>

@@ -238,7 +238,7 @@ export function HowItWorks() {
         {steps.map((step) => (
           <div
             key={step.n}
-            className="card-border group relative overflow-hidden rounded-xl border bg-surface p-6 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+            className="group relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 transition hover:bg-surface-elevated/50"
           >
             <span className="numeric text-xs font-medium text-muted-foreground-subtle">
               {step.n}
@@ -326,7 +326,7 @@ export function FeaturedProjects() {
                 key={p.id}
                 to="/projects/$id"
                 params={{ id: p.id }}
-                className="card-border group flex flex-col overflow-hidden rounded-xl border bg-surface transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                className="group flex flex-col overflow-hidden rounded-xl bg-surface-elevated/30 transition hover:bg-surface-elevated/50"
               >
                 <div className="relative h-36 overflow-hidden bg-surface-sunken">
                   {p.cover_url ? (
@@ -435,7 +435,7 @@ function SpaceCard({ space }: { space: CommunitySpace }) {
   return (
     <Link
       to="/community"
-      className="card-border group rounded-xl border bg-surface p-5 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+      className="group rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50"
     >
       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-surface-elevated text-base font-semibold">
         {avatarUrl ? (
@@ -573,7 +573,7 @@ export function HeroActivityPanel() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-xl border card-border bg-surface/80 p-5 backdrop-blur-sm">
+      <div className="animate-pulse rounded-xl bg-surface-elevated/30 p-5 backdrop-blur-sm">
         <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="mb-4 flex items-center gap-3">
@@ -591,7 +591,7 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="card-border rounded-xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div className="rounded-xl bg-surface-elevated/30 p-5 backdrop-blur-sm transition hover:bg-surface-elevated/50">
       <div className="mb-3 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
@@ -675,7 +675,7 @@ export function FeaturedHeroCard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse overflow-hidden rounded-xl border card-border bg-surface/80">
+      <div className="animate-pulse overflow-hidden rounded-xl bg-surface-elevated/30">
         <div className="h-36 bg-surface-sunken" />
         <div className="space-y-3 p-5">
           <div className="h-3 w-28 rounded bg-surface-elevated" />
@@ -695,7 +695,7 @@ export function FeaturedHeroCard() {
     <Link
       to="/projects/$id"
       params={{ id: project.id }}
-      className="card-border group overflow-hidden rounded-xl border bg-surface/80 backdrop-blur-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+      className="group overflow-hidden rounded-xl bg-surface-elevated/30 backdrop-blur-sm transition-lift hover:bg-surface-elevated/50"
     >
       <div className="relative h-36 overflow-hidden bg-surface-sunken">
         {project.cover_url ? (
@@ -807,7 +807,7 @@ export function RecentActivity() {
               <Link
                 key={post.id}
                 to="/community"
-                className="card-border group flex flex-col rounded-xl border bg-surface p-5 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                className="group flex flex-col rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50"
               >
                 <div className="flex items-center gap-2.5">
                   <ActivityAuthor author={post.author} className="h-9 w-9" />

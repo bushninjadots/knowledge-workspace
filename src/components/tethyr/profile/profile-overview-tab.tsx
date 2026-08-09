@@ -1,5 +1,5 @@
-import { GraduationCap, BookOpen, Rocket, Star } from "lucide-react";
-import { VerificationBadge, ProjectsCard } from "@/components/tethyr/profile-sections";
+import { GraduationCap, BookOpen, Star } from "lucide-react";
+import { VerificationBadge } from "@/components/tethyr/profile-sections";
 import { ReputationCard } from "@/components/tethyr/reputation-display";
 import { AchievementGrid } from "@/components/tethyr/achievements";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
@@ -106,25 +106,7 @@ export function ProfileOverviewTab({
         </div>
       )}
 
-      {/* PROJECTS PREVIEW */}
-      {projects.length > 0 && (
-        <div className="rounded-xl bg-surface-elevated/30 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <Rocket className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Projects</h3>
-          </div>
-          <ProjectsCard
-            projects={projects.slice(0, 3)}
-            coverUrls={coverUrls}
-            userId={userId}
-            allSkills={skills}
-            projectSkillIds={projectSkillIds}
-            onChange={onChange}
-          />
-        </div>
-      )}
-
-      {/* VERIFICATION BADGES */}
+      {/* ACHIEVEMENTS */}
       <div className="rounded-xl bg-surface-elevated/30 p-5">
         <div className="mb-4 flex items-center gap-2">
           <Star className="h-4 w-4 text-muted-foreground" />

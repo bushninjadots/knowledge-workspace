@@ -62,7 +62,7 @@ export function OpenRolesSection({
   const unfilledRoles = roles.filter((r) => !r.is_filled);
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Open Roles</h3>
         {isOwner && (

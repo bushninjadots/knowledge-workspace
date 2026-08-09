@@ -242,6 +242,10 @@ function PublicProfileRoute() {
   const favouriteTools = profile.favourite_tools ?? [];
   const softwareStack = profile.software_stack ?? [];
 
+  // Split contributions: projects they created vs projects they contributed to
+  const builtProjects = contributedProjects.filter((p) => p.role === "creator");
+  const joinedProjects = contributedProjects.filter((p) => p.role !== "creator");
+
   return (
     <Shell accentColor={bannerAccent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
@@ -421,10 +425,14 @@ function PublicProfileRoute() {
           )}
         </SectionCard>
 
-        {/* ── Section 2: Project Contributions ── */}
+        {/* ── Section 2: Project Contributions — Built vs Contributed To ── */}
         <SectionCard
           title="Contributions"
-          subtitle="Projects this person has worked on"
+          subtitle={
+            contributedProjects.length > 0
+              ? `${contributedProjects.length} project${contributedProjects.length !== 1 ? "s" : ""} · ${builtProjects.length} built, ${joinedProjects.length} joined`
+              : "Projects this person has worked on"
+          }
           icon={
             <svg
               className="h-4 w-4"
@@ -441,44 +449,27 @@ function PublicProfileRoute() {
           {contributedProjects.length === 0 ? (
             <p className="text-sm text-muted-foreground">No project contributions visible yet.</p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {contributedProjects.map((p) => (
-                <Link
-                  key={p.id}
-                  to="/projects/$id"
-                  params={{ id: p.id }}
-                  className="transition-lift group rounded-xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
-                      {p.title}
-                    </h3>
-                    {p.status && (
-                      <span
-                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${PROJECT_STATUS_STYLE[p.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
-                      >
-                        {PROJECT_STATUS_LABEL[p.status as keyof typeof PROJECT_STATUS_LABEL] ??
-                          p.status}
-                      </span>
-                    )}
+            <div className="space-y-5">
+              {builtProjects.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    Built
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {builtProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
                   </div>
-                  {p.description && (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {p.description}
-                    </p>
-                  )}
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground">
-                      {p.role}
-                    </span>
-                    {p.progress_percent != null && (
-                      <span className="text-[11px] text-muted-foreground">
-                        {p.progress_percent}%
-                      </span>
-                    )}
+                </div>
+              )}
+              {joinedProjects.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    Contributing to
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {joinedProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
                   </div>
-                </Link>
-              ))}
+                </div>
+              )}
             </div>
           )}
         </SectionCard>
@@ -604,6 +595,45 @@ function PublicProfileRoute() {
   );
 }
 
+function ProjectCard({ project }: { project: ProjectLite }) {
+  return (
+    <Link
+      to="/projects/$id"
+      params={{ id: project.id }}
+      className="transition-lift group rounded-xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
+          {project.title}
+        </h3>
+        {project.status && (
+          <span
+            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${PROJECT_STATUS_STYLE[project.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
+          >
+            {PROJECT_STATUS_LABEL[project.status as keyof typeof PROJECT_STATUS_LABEL] ??
+              project.status}
+          </span>
+        )}
+      </div>
+      {project.description && (
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+          {project.description}
+        </p>
+      )}
+      <div className="mt-2 flex items-center gap-2">
+        <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground">
+          {project.role}
+        </span>
+        {project.progress_percent != null && (
+          <span className="text-[11px] text-muted-foreground">
+            {project.progress_percent}%
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 function SectionCard({
   title,
   subtitle,
@@ -616,7 +646,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="relative overflow-hidden rounded-xl bg-surface-elevated/30 p-4 sm:p-5">
       <div className="mb-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           {icon}
