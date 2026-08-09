@@ -1,4 +1,4 @@
-import { motion, useTransform, type MotionValue } from "framer-motion";
+import { motion, useTransform, useMotionValue, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CATEGORY_COLORS, CATEGORY_ICON, inferCategory } from "@/lib/category-colors";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
@@ -25,19 +25,19 @@ interface ProjectShelfCoverProps {
 
 function getMaxCardWidth(): number {
   const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
-  return Math.min(vw * 0.65, 600);
+  return Math.min(vw * 0.72, 760);
 }
 
 export function getCardWidth(absDist: number): number {
   const maxW = getMaxCardWidth();
   if (absDist < 0.4) return maxW;
-  if (absDist < 1.5) return maxW - (maxW - 320) * ((absDist - 0.4) / 1.1);
-  if (absDist < 3) return 320 - 80 * ((absDist - 1.5) / 1.5);
-  return 240;
+  if (absDist < 1.5) return maxW - (maxW - 360) * ((absDist - 0.4) / 1.1);
+  if (absDist < 3) return 360 - 100 * ((absDist - 1.5) / 1.5);
+  return 260;
 }
 
 /** Height of the project-info panel shown under the cover on the front card. */
-export const ACTIVE_INFO_H = 132;
+export const ACTIVE_INFO_H = 156;
 
 /**
  * Card height. Near the centre the card grows to show the cover image (16:9)
@@ -46,7 +46,7 @@ export const ACTIVE_INFO_H = 132;
  */
 export function getCardHeight(absDist: number): number {
   const w = getCardWidth(absDist);
-  const base = Math.max((w * 9) / 16, 280);
+  const base = Math.max((w * 9) / 16, 300);
   if (absDist < 0.6) return base + ACTIVE_INFO_H;
   if (absDist < 1) return base + ACTIVE_INFO_H * (1 - (absDist - 0.6) / 0.4);
   return base;
@@ -111,16 +111,16 @@ function getZIndex(absDist: number): number {
 function getCardShadow(absDist: number): string {
   if (absDist < 0.4) {
     return [
-      "0 20px 44px -16px oklch(0.2 0.02 265 / 0.4)",
-      "0 6px 16px -6px oklch(0.2 0.02 265 / 0.25)",
-      "0 1px 2px oklch(0.2 0.02 265 / 0.12)",
+      "0 28px 56px -18px oklch(0.2 0.03 265 / 0.45)",
+      "0 8px 20px -8px oklch(0.2 0.02 265 / 0.28)",
+      "0 2px 4px oklch(0.2 0.02 265 / 0.14)",
     ].join(", ");
   }
   if (absDist < 2) {
     const t = Math.min(1, (absDist - 0.4) / 1.6);
     return [
-      `0 ${(20 - 14 * t).toFixed(1)}px ${(44 - 30 * t).toFixed(1)}px -16px oklch(0.2 0.02 265 / ${(0.4 - 0.26 * t).toFixed(3)})`,
-      `0 ${(6 - 4 * t).toFixed(1)}px ${(16 - 10 * t).toFixed(1)}px -6px oklch(0.2 0.02 265 / ${(0.25 - 0.14 * t).toFixed(3)})`,
+      `0 ${(28 - 20 * t).toFixed(1)}px ${(56 - 38 * t).toFixed(1)}px -18px oklch(0.2 0.03 265 / ${(0.45 - 0.30 * t).toFixed(3)})`,
+      `0 ${(8 - 6 * t).toFixed(1)}px ${(20 - 12 * t).toFixed(1)}px -8px oklch(0.2 0.02 265 / ${(0.28 - 0.16 * t).toFixed(3)})`,
     ].join(", ");
   }
   return "0 4px 10px -6px oklch(0.2 0.02 265 / 0.14)";
@@ -140,22 +140,22 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
       layoutId={`shelf-card-${project.id}`}
       id={`shelf-card-${project.id}`}
       onClick={onClick}
-      className="relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none shadow-sm transition-shadow hover:shadow-md"
+      className="relative w-full cursor-pointer overflow-hidden rounded-2xl border card-border bg-surface text-left outline-none shadow-sm transition-shadow hover:shadow-md"
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       aria-selected
       role="option"
     >
-      {/* Cover image — nothing overlaid on the picture */}
+      {/* Cover image — clean 16:9 with subtle edge fades */}
       <div className="relative w-full shrink-0" style={{ aspectRatio: "16 / 9" }}>
         <CoverGradient
           tags={project.tags}
           coverUrl={project.cover_url}
           progress={project.progress_percent}
-          fit="contain"
+          fit="cover"
         />
-        <div className="absolute left-3 top-3 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+        <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
             <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
             {status.label}
           </span>
@@ -170,7 +170,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
             </span>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className="absolute bottom-0 left-0 right-0 z-10">
           <ProgressBar progress={project.progress_percent} />
         </div>
       </div>
@@ -195,6 +195,21 @@ function ProjectShelfCoverAnimated({
   const isOwn = project.profiles?.id === meId;
   const catColors = CATEGORY_COLORS[category];
 
+  // Parallax hover — mouse position relative to the front card
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  const parallaxX = useTransform(mouseX, [0, 1], [8, -8]);
+  const parallaxY = useTransform(mouseY, [0, 1], [5, -5]);
+  const handlePointerMove = (e: React.PointerEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
+  };
+  const handlePointerLeave = () => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  };
+
   const dist = useTransform(offset, (o) => index - o);
   const absDist = useTransform(dist, (d) => Math.abs(d));
   const centerX = useTransform(dist, getCardCenter);
@@ -218,13 +233,15 @@ function ProjectShelfCoverAnimated({
     <motion.div
       className="absolute"
       style={{ left: "50%", top: "50%", x: centerX, y: "-50%", zIndex: zIdx }}
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={
         prefersReducedMotion
           ? { duration: 0 }
-          : { delay: Math.min(index * 0.045, 0.5), type: "spring", stiffness: 260, damping: 24 }
+          : { delay: Math.min(index * 0.035, 0.4), type: "spring", stiffness: 300, damping: 26 }
       }
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
     >
       {/* Category ring / glow — on the wrapper so the bloom isn't clipped */}
       <motion.div
@@ -237,7 +254,7 @@ function ProjectShelfCoverAnimated({
       <motion.button
         layoutId={`shelf-card-${project.id}`}
         id={`shelf-card-${project.id}`}
-        className="relative cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-surface text-left outline-none will-change-transform"
+        className="relative cursor-pointer overflow-hidden rounded-2xl border card-border bg-surface text-left outline-none will-change-transform"
         style={{
           x: "-50%",
           y: "-50%",
@@ -332,36 +349,50 @@ function ProjectShelfCoverAnimated({
 
         {/* Face view — cover image on top (nothing covering it), info below */}
         <motion.div className="absolute inset-0 flex flex-col" style={{ opacity: faceOpacity }}>
-          {/* Cover image — clean 16:9 strip, no text on the picture */}
-          <div className="relative w-full shrink-0" style={{ aspectRatio: "16 / 9" }}>
-            <CoverGradient
-              tags={project.tags}
-              coverUrl={project.cover_url}
-              progress={project.progress_percent}
-              fit="contain"
-            />
+          {/* Cover image — 16:9 with subtle parallax on hover */}
+          <div className="relative w-full shrink-0 overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                x: prefersReducedMotion ? 0 : parallaxX,
+                y: prefersReducedMotion ? 0 : parallaxY,
+                scale: 1.04,
+              }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 300, damping: 34, mass: 0.8 }
+              }
+            >
+              <CoverGradient
+                tags={project.tags}
+                coverUrl={project.cover_url}
+                progress={project.progress_percent}
+                fit="cover"
+              />
+            </motion.div>
             {/* Specular sheen */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/12 via-transparent to-transparent" />
             {/* Dimensional edge highlights */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/20 to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-3 bg-gradient-to-l from-black/20 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/25 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-l from-black/25 to-transparent" />
 
             <div className="absolute bottom-0 left-0 right-0 z-10">
               <ProgressBar progress={project.progress_percent} />
             </div>
 
             <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
                 <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
                 {status.label}
               </span>
               {isOwn && (
-                <span className="rounded-full bg-brand-green/20 px-2 py-0.5 text-[10px] font-medium text-brand-green backdrop-blur-sm">
+                <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[10px] font-medium text-brand-green backdrop-blur-sm">
                   You
                 </span>
               )}
               {isContributor && (
-                <span className="rounded-full bg-brand-purple/20 px-2 py-0.5 text-[10px] font-medium text-brand-purple backdrop-blur-sm">
+                <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[10px] font-medium text-brand-purple backdrop-blur-sm">
                   Contributing
                 </span>
               )}
@@ -389,42 +420,50 @@ function ProjectCardInfo({
   status: { label: string; dot: string };
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden border-t border-black/10 p-3 dark:border-white/10">
+    <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
       <div className="flex items-start justify-between gap-2">
         <p
-          className="min-w-0 truncate text-[13px] font-semibold text-foreground"
+          className="min-w-0 truncate text-sm font-bold text-foreground"
           title={project.title}
         >
           {project.title}
         </p>
-        {project.looking_for_collaborators && (
-          <span className="inline-flex shrink-0 items-center rounded-full bg-brand-purple/15 px-1.5 py-0.5 text-[10px] font-medium text-brand-purple">
-            Open
+        <div className="flex shrink-0 items-center gap-1.5">
+          {project.looking_for_collaborators && (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-brand-purple/15 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
+              Open
+            </span>
+          )}
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {project.progress_percent}%
           </span>
-        )}
+        </div>
       </div>
       {project.profiles && (
-        <p className="truncate text-[11px] text-muted-foreground">
-          by {project.profiles.display_name || project.profiles.handle || "Member"}
+        <p className="truncate text-xs text-muted-foreground">
+          by {project.profiles.display_name || project.profiles.handle || "Member"}{"  "}
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/50 px-1.5 py-0 text-[10px] text-muted-foreground">
+            {status.label}
+          </span>
         </p>
       )}
       {project.description && (
-        <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground/90">
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
           {project.description}
         </p>
       )}
       <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
-        {project.tags.slice(0, 3).map((t) => (
+        {project.tags.slice(0, 4).map((t) => (
           <span
             key={t}
-            className="rounded-full border border-border/60 bg-surface-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+            className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[11px] text-muted-foreground"
           >
             {t}
           </span>
         ))}
-        <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-muted-foreground">
-          {project.progress_percent}% · {status.label}
-        </span>
+        {project.tags.length > 4 && (
+          <span className="text-[11px] text-muted-foreground/50">+{project.tags.length - 4}</span>
+        )}
       </div>
     </div>
   );

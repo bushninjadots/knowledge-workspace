@@ -89,7 +89,7 @@ export function SessionResources({
       </div>
 
       {isAdding && (
-        <div className="rounded-xl border border-border/40 bg-surface/30 p-3 space-y-2">
+        <div className="rounded-2xl border card-border bg-surface/30 p-3 space-y-2">
           <div className="space-y-1.5">
             <Label className="text-xs">Title</Label>
             <Input
@@ -140,7 +140,7 @@ export function SessionResources({
           {resources.map((resource) => (
             <div
               key={resource.id}
-              className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-3 py-2"
+              className="flex items-center gap-3 rounded-2xl border card-border bg-surface/30 px-3 py-2"
             >
               <ResourceIcon type={resource.resource_type} />
               <div className="min-w-0 flex-1">

@@ -276,7 +276,7 @@ export function NoteEditor({
   if (!editor) return null;
 
   return (
-    <div className="rounded-xl border border-border/40 bg-surface/40">
+    <div className="rounded-2xl border card-border bg-surface/40">
       {editable && <Toolbar editor={editor} />}
       <EditorContent editor={editor} />
     </div>

@@ -116,7 +116,7 @@ export function ProjectJoinModal({
             })}
           </div>
         ) : (
-          <div className="mt-4 rounded-xl border border-border/60 bg-background/40 p-4">
+          <div className="mt-4 rounded-2xl border card-border bg-background/40 p-4">
             <Briefcase className="h-5 w-5 text-muted-foreground/50" />
             <p className="mt-2 text-sm text-muted-foreground">
               This project isn't looking for collaborators right now. Follow its updates and

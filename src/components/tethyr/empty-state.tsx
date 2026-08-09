@@ -294,7 +294,7 @@ export function EmptyState({
   variant?: "projects" | "skills" | "community" | "messages" | "default";
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/40 bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed card-border bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
       <WorkshopIllustration variant={variant} />
       <div className="space-y-2">
         <p className="font-title text-base font-medium text-foreground">{title}</p>

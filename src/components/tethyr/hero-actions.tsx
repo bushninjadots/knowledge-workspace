@@ -49,7 +49,7 @@ export function HeroActions() {
           <Link
             key={action.title}
             to={action.to}
-            className="card-border group flex flex-col rounded-xl border bg-surface-elevated/40 p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/60"
+            className="card-border group flex flex-col rounded-2xl border bg-surface-elevated/40 p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/60"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-surface transition-colors group-hover:border-primary/40">
               <action.icon className="h-4 w-4 text-foreground" />

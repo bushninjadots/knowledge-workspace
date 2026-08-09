@@ -103,7 +103,7 @@ export function ProjectShelfOverlay({
             role="dialog"
             aria-modal="true"
             aria-label={project.title}
-            className="relative mx-4 w-full max-w-2xl overflow-hidden rounded-3xl border border-border/60 bg-surface shadow-2xl"
+            className="relative mx-4 w-full max-w-[832px] overflow-hidden rounded-2xl border card-border bg-surface shadow-2xl"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
@@ -129,7 +129,7 @@ export function ProjectShelfOverlay({
                     tags={project.tags}
                     coverUrl={project.cover_url}
                     progress={project.progress_percent}
-                    fit="contain"
+                    fit="cover"
                   />
 
                   {/* Close button */}
@@ -168,7 +168,7 @@ export function ProjectShelfOverlay({
 
                   {/* Title overlay */}
                   <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-lg font-semibold text-white drop-shadow-lg">
+                    <p className="text-xl font-bold text-white drop-shadow-lg">
                       {project.title}
                     </p>
                     {project.profiles && (
@@ -180,9 +180,9 @@ export function ProjectShelfOverlay({
                 </div>
 
                 {/* Content */}
-                <div className="space-y-4 p-6">
+                <div className="space-y-5 p-6 sm:p-8">
                   {project.description && (
-                    <p className="text-sm leading-relaxed text-muted-foreground">
+                    <p className="text-sm leading-relaxed text-muted-foreground/90">
                       {project.description}
                     </p>
                   )}

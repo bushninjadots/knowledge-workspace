@@ -419,7 +419,7 @@ function ExplorePage() {
           {/* Tab bar */}
           <div
             role="tablist"
-            className="mb-4 flex items-center gap-1 rounded-2xl border border-border/60 bg-surface p-1 w-fit"
+            className="mb-4 flex items-center gap-1 rounded-2xl border card-border bg-surface p-1 w-fit"
           >
             <button
               role="tab"
@@ -514,7 +514,7 @@ function ExplorePage() {
                       className="border-0 bg-transparent focus-visible:ring-0"
                     />
                   </div>
-                  <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-0.5">
+                  <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
                     <button
                       onClick={() => setOppSort("latest")}
                       className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
@@ -713,7 +713,7 @@ function ExplorePage() {
           ) : (
             <>
               {/* People tab search bar */}
-              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+              <div className="mb-4 flex items-center gap-2 rounded-2xl border card-border bg-surface px-3 py-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={q}
@@ -747,7 +747,7 @@ function ExplorePage() {
                       key={c.id}
                       to="/u/$handle"
                       params={{ handle: c.handle ?? "" }}
-                      className="animate-room-enter rounded-2xl border border-border/60 bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                      className="animate-room-enter rounded-2xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <div className="flex items-center gap-3">

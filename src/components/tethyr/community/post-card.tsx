@@ -444,7 +444,7 @@ export function PostCard({
           href={post.link_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group mt-2 flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          className="group mt-2 flex items-center gap-3 rounded-2xl border card-border bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
             <Link2 className="h-4 w-4 text-primary" />
@@ -1001,7 +1001,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-4">
+    <div className="mt-3 rounded-2xl border card-border bg-background/40 p-4">
       <div className="mb-3 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 text-brand-purple" />
         <p className="text-sm font-semibold">{pollData.question}</p>

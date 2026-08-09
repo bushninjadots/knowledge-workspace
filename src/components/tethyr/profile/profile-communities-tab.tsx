@@ -119,7 +119,7 @@ export function ProfileCommunitiesTab() {
             {pendingSpaces.map((space) => (
               <div
                 key={space.id}
-                className="flex items-center justify-between rounded-xl border border-border/60 bg-background/40 px-4 py-3"
+                className="flex items-center justify-between rounded-2xl border card-border bg-background/40 px-4 py-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teaching/10 text-xs font-semibold text-teaching">

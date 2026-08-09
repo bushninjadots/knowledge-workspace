@@ -42,7 +42,7 @@ export function OverviewCards({ stats }: { stats: Stats }) {
         return (
           <div
             key={card.label}
-            className="group rounded-2xl border border-border/40 bg-surface/30 p-4 transition-all hover:border-border/60 hover:bg-surface/50"
+            className="group rounded-2xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50"
           >
             <div className="flex items-start justify-between">
               <div>

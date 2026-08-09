@@ -588,7 +588,7 @@ function DashboardContent({
                     key={p.id}
                     to="/projects/$id"
                     params={{ id: p.id }}
-                    className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                    className="block rounded-2xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
                   >
                     <div className="flex items-center justify-between">
                       <p className="truncate text-sm font-medium" title={p.title}>
@@ -817,7 +817,7 @@ function TodayCard({
       className={`group relative flex flex-col rounded-2xl border p-5 transition-all duration-200 ${
         highlight
           ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-          : "border-border/60 bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
+          : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
       }`}
     >
       <div className="flex items-start justify-between">

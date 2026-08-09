@@ -46,11 +46,11 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search spaces..."
-            className="h-9 rounded-xl border-border/60 bg-surface pr-4 pl-9 text-sm"
+            className="h-9 rounded-xl border card-border bg-surface pr-4 pl-9 text-sm"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 rounded-xl border border-border/60 bg-surface p-0.5">
+          <div className="flex items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5">
             <button
               onClick={() => setSortMode("popular")}
               className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${

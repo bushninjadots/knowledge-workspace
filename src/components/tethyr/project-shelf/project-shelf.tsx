@@ -125,10 +125,10 @@ export function ProjectShelf({
       }
       animate(displayOffset, next, {
         type: "spring",
-        stiffness: 340,
-        damping: 32,
-        mass: 0.9,
-        velocity: prefersReducedMotion ? 0 : dir * 2.4,
+        stiffness: 380,
+        damping: 30,
+        mass: 0.85,
+        velocity: prefersReducedMotion ? 0 : dir * 3,
       });
     },
     [maxOffset, displayOffset, prefersReducedMotion],
@@ -145,10 +145,10 @@ export function ProjectShelf({
       const current = Math.round(displayOffset.get());
       animate(displayOffset, index, {
         type: "spring",
-        stiffness: 300,
+        stiffness: 340,
         damping: 28,
-        mass: 0.9,
-        velocity: (index - current) * 1.5,
+        mass: 0.85,
+        velocity: (index - current) * 2,
       });
     },
     [maxOffset, displayOffset, prefersReducedMotion],
@@ -243,10 +243,10 @@ export function ProjectShelf({
         const target = clamp(Math.round(displayOffset.get() + flickUnits), 0, maxOffset);
         animate(displayOffset, target, {
           type: "spring",
-          stiffness: prefersReducedMotion ? 500 : 320,
-          damping: prefersReducedMotion ? 100 : 30,
-          mass: 0.9,
-          velocity: prefersReducedMotion ? 0 : (s.velocity / pxPerStep) * 0.6,
+          stiffness: prefersReducedMotion ? 500 : 360,
+          damping: prefersReducedMotion ? 100 : 28,
+          mass: 0.85,
+          velocity: prefersReducedMotion ? 0 : (s.velocity / pxPerStep) * 0.7,
         });
       }
       setIsDragging(false);
@@ -307,9 +307,9 @@ export function ProjectShelf({
       else
         animate(displayOffset, next, {
           type: "spring",
-          stiffness: 320,
-          damping: 30,
-          mass: 0.9,
+          stiffness: 360,
+          damping: 28,
+          mass: 0.85,
         });
       updateOverlayIndex(next);
     },
@@ -387,10 +387,10 @@ export function ProjectShelf({
           <div
             className="relative"
             style={{
-              perspective: "1200px",
-              height: "52vh",
-              minHeight: "480px",
-              maxHeight: "640px",
+              perspective: "1400px",
+              height: "68vh",
+              minHeight: "540px",
+              maxHeight: "880px",
             }}
           >
             {/* Stage spotlight — follows the active project's category colour */}
@@ -398,11 +398,11 @@ export function ProjectShelf({
               {activeProject && (
                 <motion.div
                   key={activeProject.id}
-                  className="pointer-events-none absolute left-1/2 top-1/2 h-[88%] w-[min(60vw,640px)] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                  className="pointer-events-none absolute left-1/2 top-1/2 h-[92%] w-[min(72vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4 }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, ease: "easeOut" }}
                   style={{ background: spotlightBg }}
                 />
               )}
@@ -410,8 +410,8 @@ export function ProjectShelf({
 
             {/* Floor contact shadow under the front card */}
             <motion.div
-              className="pointer-events-none absolute left-1/2 top-1/2 h-5 rounded-[50%] bg-black/10 blur-xl dark:bg-black/45"
-              style={{ width: "min(48vw, 440px)", x: "-50%", y: floorShadowY }}
+              className="pointer-events-none absolute left-1/2 top-1/2 h-6 rounded-[50%] bg-black/10 blur-2xl dark:bg-black/45"
+              style={{ width: "min(56vw, 520px)", x: "-50%", y: floorShadowY }}
             />
 
             <div

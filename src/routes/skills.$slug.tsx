@@ -295,7 +295,7 @@ function SkillOverview({
       </div>
 
       {/* Workshop description */}
-      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+      <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
         <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {description ||

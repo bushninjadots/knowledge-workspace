@@ -749,7 +749,7 @@ export function ComposerBar({
       )}
 
       {showCodeInsert && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-2">
+        <div className="mt-3 flex items-center gap-2 rounded-2xl border card-border bg-background/40 p-2">
           <Code2 className="h-4 w-4 shrink-0 text-brand-purple" />
           <select
             value={codeLang}

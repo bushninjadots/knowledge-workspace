@@ -207,7 +207,7 @@ export function AttachProjectPanel({
               </Button>
             </div>
             {fetchedSnapshot && (
-              <div className="flex items-center gap-3 rounded-xl border border-border/60 p-2">
+              <div className="flex items-center gap-3 rounded-2xl border card-border p-2">
                 {fetchedSnapshot.logo ? (
                   <img
                     src={fetchedSnapshot.logo}

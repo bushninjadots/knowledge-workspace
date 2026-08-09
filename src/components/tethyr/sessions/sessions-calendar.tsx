@@ -342,7 +342,7 @@ function AgendaView({
 
   if (grouped.length === 0) {
     return (
-      <div className="rounded-2xl border border-border/40 bg-surface/20 p-12 text-center">
+      <div className="rounded-2xl border card-border bg-surface/20 p-12 text-center">
         <CalendarDays className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
         <p className="text-sm font-medium text-foreground">No upcoming sessions</p>
         <p className="mt-1 text-xs text-muted-foreground">Schedule a session to see it here.</p>
@@ -473,7 +473,7 @@ export function SessionsCalendar({
 
         <div className="flex items-center gap-2">
           {/* View switcher */}
-          <div className="flex rounded-xl border border-border/40 bg-surface/30 p-0.5">
+          <div className="flex rounded-xl border card-border bg-surface/30 p-0.5">
             {(["day", "week", "month", "agenda"] as CalendarView[]).map((v) => (
               <button
                 key={v}
@@ -502,7 +502,7 @@ export function SessionsCalendar({
       </div>
 
       {/* Calendar body */}
-      <div className="rounded-2xl border border-border/40 bg-surface/20 p-4">
+      <div className="rounded-2xl border card-border bg-surface/20 p-4">
         {view === "day" && (
           <DayView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />
         )}

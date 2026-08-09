@@ -114,7 +114,7 @@ function FileViewer({ file }: { file: TreeFile | null }) {
   const Icon = getFileIconType(file.name);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border/60 bg-background/40">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border card-border bg-background/40">
       <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2">
         <Icon className="h-4 w-4 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">

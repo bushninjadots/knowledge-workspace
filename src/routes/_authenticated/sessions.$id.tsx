@@ -302,7 +302,7 @@ function InfoPanel({ session }: { session: SessionWithParticipants }) {
         return (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface/30 px-4 py-3"
+            className="flex items-center gap-3 rounded-2xl border card-border bg-surface/30 px-4 py-3"
           >
             <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0">
@@ -478,7 +478,7 @@ function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
       {participants.map((p) => (
         <div
           key={p.id}
-          className="flex items-center gap-3 rounded-xl border card-border bg-surface/30 px-4 py-2.5"
+          className="flex items-center gap-3 rounded-2xl border card-border bg-surface/30 px-4 py-2.5"
         >
           <SessionParticipantAvatar p={p} />
           <div className="min-w-0 flex-1">
@@ -567,7 +567,7 @@ function NotesSection({
           {notes.map((note) => (
             <div
               key={note.id}
-              className="rounded-xl border border-border/40 bg-surface/30 px-4 py-3"
+              className="rounded-2xl border card-border bg-surface/30 px-4 py-3"
             >
               <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
               <div className="mt-2 flex items-center justify-between">

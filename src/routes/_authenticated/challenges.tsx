@@ -116,7 +116,7 @@ function ChallengesPage() {
         {/* Filters */}
         <div className="space-y-4 rounded-2xl border card-border bg-surface p-4">
           {/* Search */}
-          <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-xl border card-border bg-background/60 px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <Input
               value={search}

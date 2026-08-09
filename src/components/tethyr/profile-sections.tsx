@@ -148,7 +148,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         <div className="flex items-center gap-2">
@@ -1158,7 +1158,7 @@ export function ProjectDialog({
             </div>
           </Field>
 
-          <div className="grid gap-2 rounded-xl border border-border/60 bg-background/40 p-4">
+          <div className="grid gap-2 rounded-2xl border card-border bg-background/40 p-4">
             <Toggle
               label="Featured"
               description="Pin to top of your profile"

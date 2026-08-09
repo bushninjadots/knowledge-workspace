@@ -168,7 +168,7 @@ export function SpaceHeader({
       )}
 
       {space.rules && space.rules.length > 0 && (
-        <div className="mt-4 rounded-xl border border-border/60 bg-background/40 p-4">
+        <div className="mt-4 rounded-2xl border card-border bg-background/40 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Community rules
           </p>

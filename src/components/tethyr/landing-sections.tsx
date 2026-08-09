@@ -573,7 +573,7 @@ export function HeroActivityPanel() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-3xl border border-border/60 bg-surface/80 p-5 backdrop-blur-sm">
+      <div className="animate-pulse rounded-2xl border card-border bg-surface/80 p-5 backdrop-blur-sm">
         <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="mb-4 flex items-center gap-3">
@@ -591,7 +591,7 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="card-border rounded-3xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div className="card-border rounded-2xl border bg-surface/80 p-5 backdrop-blur-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]">
       <div className="mb-3 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
@@ -675,7 +675,7 @@ export function FeaturedHeroCard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse overflow-hidden rounded-3xl border border-border/60 bg-surface/80">
+      <div className="animate-pulse overflow-hidden rounded-2xl border card-border bg-surface/80">
         <div className="h-36 bg-surface-sunken" />
         <div className="space-y-3 p-5">
           <div className="h-3 w-28 rounded bg-surface-elevated" />
@@ -695,7 +695,7 @@ export function FeaturedHeroCard() {
     <Link
       to="/projects/$id"
       params={{ id: project.id }}
-      className="card-border group overflow-hidden rounded-3xl border bg-surface/80 backdrop-blur-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+      className="card-border group overflow-hidden rounded-2xl border bg-surface/80 backdrop-blur-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
     >
       <div className="relative h-36 overflow-hidden bg-surface-sunken">
         {project.cover_url ? (
