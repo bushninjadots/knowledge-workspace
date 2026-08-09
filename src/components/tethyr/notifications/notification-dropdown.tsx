@@ -17,6 +17,7 @@ import {
 } from "@/hooks/use-notifications";
 import { toast } from "sonner";
 import type { Notification } from "@/hooks/use-notifications";
+import { getNotificationDestination } from "@/lib/notification-destinations";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -42,62 +43,7 @@ export function NotificationDropdown() {
       onError: () => toast.error("Failed to mark as read"),
     });
 
-    // Navigate based on type
-    switch (n.type) {
-      case "message":
-        navigate({ to: "/messages" });
-        break;
-      case "comment":
-      case "mention":
-        navigate({ to: "/community" });
-        break;
-      case "session_invite":
-      case "session_update":
-        if (n.entity_id) {
-          navigate({ to: "/sessions/$id", params: { id: n.entity_id } });
-        } else {
-          navigate({ to: "/sessions" });
-        }
-        break;
-      case "achievement":
-      case "endorsement":
-      case "follow":
-      case "connection_request":
-      case "connection_accepted":
-        navigate({ to: "/profile" });
-        break;
-      case "project_invite":
-      case "project_join":
-      case "project_post":
-        if (n.entity_id) {
-          navigate({ to: "/projects/$id", params: { id: n.entity_id } });
-        } else {
-          navigate({ to: "/explore" });
-        }
-        break;
-      case "role_application_accepted":
-      case "role_application_declined":
-        if (n.metadata?.project_id) {
-          navigate({
-            to: "/projects/$id",
-            params: { id: String(n.metadata.project_id) },
-            search: { tab: "people" } as Record<string, string>,
-          });
-        } else {
-          navigate({ to: "/explore" });
-        }
-        break;
-      case "challenge_join":
-      case "challenge_complete":
-        if (n.entity_id) {
-          navigate({ to: "/challenges/$id", params: { id: n.entity_id } });
-        } else {
-          navigate({ to: "/community" });
-        }
-        break;
-      default:
-        toast.info("This notification doesn't have a linked page yet.");
-    }
+    navigate(getNotificationDestination(n));
   }
 
   return (

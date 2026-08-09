@@ -26,6 +26,8 @@ export type NotificationType =
   | "challenge_complete"
   | "challenge_submitted"
   | "challenge_resubmitted"
+  | "challenge_passed"
+  | "challenge_rejected"
   | "join_approved"
   | "join_rejected"
   | "post_report"

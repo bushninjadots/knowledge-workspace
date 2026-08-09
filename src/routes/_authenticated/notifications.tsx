@@ -6,7 +6,7 @@ import { NotificationFeed } from "@/components/tethyr/notifications/notification
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { NotificationType, Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { getNotificationDestination } from "@/lib/notification-destinations";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
@@ -44,6 +44,8 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
     "challenge_complete",
     "challenge_submitted",
     "challenge_resubmitted",
+    "challenge_passed",
+    "challenge_rejected",
     "join_approved",
     "join_rejected",
   ],
@@ -74,68 +76,7 @@ function useNotificationNavigator() {
   const navigate = useNavigate();
 
   return function navigateToNotification(n: Notification) {
-    switch (n.type) {
-      case "message":
-        navigate({ to: "/messages" });
-        break;
-      case "comment":
-      case "mention":
-        navigate({ to: "/community" });
-        break;
-      case "session_invite":
-      case "session_update":
-        if (n.entity_id) {
-          navigate({ to: "/sessions/$id", params: { id: n.entity_id } });
-        } else {
-          navigate({ to: "/sessions" });
-        }
-        break;
-      case "achievement":
-        navigate({ to: "/profile" });
-        break;
-      case "endorsement":
-        navigate({ to: "/profile" });
-        break;
-      case "project_join":
-      case "project_post":
-        navigate({ to: "/explore" });
-        break;
-      case "role_application_accepted":
-      case "role_application_declined":
-        if (n.metadata?.project_id) {
-          navigate({
-            to: "/projects/$id",
-            params: { id: String(n.metadata.project_id) },
-            search: { tab: "people" } as Record<string, string>,
-          });
-        } else {
-          navigate({ to: "/explore" });
-        }
-        break;
-      case "connection_request":
-      case "connection_accepted":
-      case "follow":
-        navigate({ to: "/profile" });
-        break;
-      case "challenge_join":
-      case "challenge_complete":
-      case "challenge_submitted":
-      case "challenge_resubmitted":
-        if (n.entity_id) {
-          navigate({ to: "/challenges/$id", params: { id: n.entity_id } });
-        } else {
-          navigate({ to: "/community" });
-        }
-        break;
-      case "join_approved":
-      case "join_rejected":
-      case "post_report":
-      case "report_resolved":
-        navigate({ to: "/community" });
-        break;
-      default:
-        toast.info("This notification doesn't have a linked page yet.");
-    }
+    navigate(getNotificationDestination(n));
   };
 }
 

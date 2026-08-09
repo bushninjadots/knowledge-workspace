@@ -26,7 +26,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [x] Ensure optional modules do not reserve layout space when their body is absent.
 - [x] Canonicalize visible skill language to “Skills I share” and “Skills I’m growing.”
 - [x] Add reputation-tier math regression tests and clarify the current/next-tier meaning.
-- [ ] Add focused component/browser regression tests for WorkspaceGrid ownership and dashboard error/empty rendering; reputation and label unit tests are now present.
+- [x] Add focused component regression tests for WorkspaceGrid ownership and dashboard loading/error/empty rendering; reputation and label unit tests are now present. Authenticated browser coverage remains queued in Stage 0.
 
 ## Stage 2 — Core collaboration flow verification
 
@@ -88,10 +88,26 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 ## Execution log
 
+### 2026-08-09 — Audit P0 challenge trust hardening
+
+- Verified the core collaboration audit surface and found a concrete gap: the broad participant UPDATE policy allowed a client-side `review_status = 'passed'` write even though the reputation trigger was intended to be creator-gated.
+- Added `20260809120000_harden_challenge_review.sql`: participant identity is immutable; participants can submit/resubmit evidence; only the challenge creator can pass/reject another participant; self-review and evidence-less submissions are rejected.
+- Added 39 pgTAP assertions covering the real none → submitted → rejected → resubmitted → passed flow, self-award prevention, evidence requirements, private-project child RLS, storage, and sessions. Local database was reset only; remote migration state was not changed.
+- Added a canonical notification destination map and wired challenge review outcomes plus role application outcomes consistently to their project/challenge destinations.
+- Frontend validation: 75 Vitest tests, TypeScript, production build, changed-file ESLint (0 errors/warnings), and `git diff --check` passed. Local RLS validation passed after migration reset; remote migration state remains pending and must be verified/applied separately before shipping.
+
+
 ### 2026-08-09 — Stage 1 started
 
 - Confirmed baseline: 59 tests passing.
 - Confirmed only pre-existing application changes are the public landing navbar/index edits.
 - Completed the source fixes for single-owner workspace chrome, dashboard error-state ordering, canonical skill labels, and reputation math.
-- Added unit coverage for reputation tiers and canonical labels; component/browser coverage for WorkspaceGrid and dashboard branches remains queued.
-- Validation: Prettier, TypeScript, 63 Vitest tests, production build, route smoke, and `git diff --check` passed; build emitted only existing Vite/chunk-size notices.
+- Added unit coverage for reputation tiers and canonical labels, plus component coverage for WorkspaceGrid ownership and dashboard state branches.
+- Validation: Prettier, TypeScript, 71 Vitest tests, production build, route smoke, and `git diff --check` passed; build emitted only existing Vite/chunk-size notices. Changed-file ESLint has no errors; existing dashboard warnings remain.
+
+### 2026-08-09 — Stage 1 regression coverage completed
+
+- Extracted the dashboard top-level state contract into `DashboardStateBoundary` without changing branch precedence.
+- Added coverage for signed-out, loading, error/retry, stale-data error precedence, and authenticated states.
+- Added WorkspaceGrid coverage proving child-owned headers remain single-owner in normal and customize modes, while grid-owned chrome renders exactly one title.
+- Validation: 71 Vitest tests, TypeScript, changed-file lint (0 errors), Prettier, production build, route smoke, and `git diff --check` passed.

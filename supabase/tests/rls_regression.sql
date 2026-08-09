@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(33);
+SELECT plan(39);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -372,7 +372,89 @@ SELECT is(
 );
 
 -- ---------------------------------------------------------------------------
--- 10. sessions: is_session_member() must be callable by authenticated users
+-- 10. challenge review: participants cannot self-award passes
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.challenges(id, title, description, created_by, status)
+  VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Review challenge', 'Review fixture',
+          '11111111-1111-1111-1111-111111111111', 'active')
+  ON CONFLICT (id) DO NOTHING;
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+INSERT INTO public.challenge_participants(
+    id, challenge_id, user_id, status
+  )
+  VALUES ('dddddddd-dddd-dddd-dddd-dddddddddddd',
+          'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          '22222222-2222-2222-2222-222222222222', 'in_progress')
+  ON CONFLICT (id) DO NOTHING;
+UPDATE public.challenge_participants
+  SET status = 'completed', review_status = 'submitted', submitted_at = now(),
+      submission_url = 'https://example.test/submission'
+  WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+
+SELECT throws_ok(
+  $$UPDATE public.challenge_participants
+      SET review_status = 'passed'
+      WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'$$,
+  NULL, '34. participant cannot self-award a challenge pass'
+);
+
+SELECT throws_ok(
+  $$UPDATE public.challenge_participants
+      SET submission_url = NULL
+      WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'$$,
+  NULL, '35. participant cannot submit without evidence'
+);
+
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+UPDATE public.challenge_participants
+  SET review_status = 'rejected', reviewer_note = 'Add more evidence', reviewed_at = now()
+  WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+UPDATE public.challenge_participants
+  SET review_status = 'submitted', status = 'completed', submitted_at = now(),
+      submission_url = 'https://example.test/resubmission', reviewer_note = NULL, reviewed_at = NULL
+  WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+UPDATE public.challenge_participants
+  SET review_status = 'passed', reviewed_at = now()
+  WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+SELECT is(
+  (SELECT review_status FROM public.challenge_participants
+    WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+  'passed',
+  '36. challenge creator can pass another participant after resubmission'
+);
+SELECT is(
+  (SELECT submission_url FROM public.challenge_participants
+    WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+  'https://example.test/resubmission',
+  '37. participant can resubmit evidence after rejection'
+);
+
+INSERT INTO public.challenge_participants(id, challenge_id, user_id, status)
+  VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+          'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          '11111111-1111-1111-1111-111111111111', 'completed')
+  ON CONFLICT (id) DO NOTHING;
+SELECT throws_ok(
+  $$UPDATE public.challenge_participants
+      SET review_status = 'passed'
+      WHERE id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'$$,
+  NULL, '38. challenge creator cannot pass their own participation'
+);
+
+SELECT is(
+  (SELECT count(*) FROM public.contribution_log
+    WHERE profile_id = '22222222-2222-2222-2222-222222222222'
+      AND action = 'challenge_completed'
+      AND metadata->>'challenge_id' = 'cccccccc-cccc-cccc-cccc-cccccccccccc')::bigint,
+  1::bigint,
+  '39. reputation is awarded once after a creator-approved pass'
+);
+
+-- ---------------------------------------------------------------------------
+-- 11. sessions: is_session_member() must be callable by authenticated users
 --     (regression: 42501 "permission denied for function is_session_member")
 -- ---------------------------------------------------------------------------
 SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');

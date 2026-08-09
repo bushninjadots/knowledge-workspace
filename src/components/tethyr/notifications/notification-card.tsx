@@ -58,6 +58,8 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     challenge_complete: { icon: Flag, color: "text-trust" },
     challenge_submitted: { icon: Swords, color: "text-learning" },
     challenge_resubmitted: { icon: Swords, color: "text-learning" },
+    challenge_passed: { icon: Trophy, color: "text-trust" },
+    challenge_rejected: { icon: Swords, color: "text-destructive" },
     join_approved: { icon: UserCheck, color: "text-trust" },
     join_rejected: { icon: UserX, color: "text-destructive" },
     post_report: { icon: Flag, color: "text-warning" },
