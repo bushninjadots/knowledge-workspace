@@ -11,6 +11,7 @@ import {
   LogOut,
   Bell,
   Plus,
+  Swords,
 } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "./logo";
@@ -45,6 +46,7 @@ const groups = [
     label: "Learning",
     items: [
       { to: "/profile", label: "Profile", icon: GraduationCap },
+      { to: "/challenges", label: "Challenges", icon: Swords },
       { to: "/sessions", label: "Sessions", icon: Trophy },
     ],
   },

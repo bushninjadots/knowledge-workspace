@@ -80,10 +80,10 @@ function ChallengeDetailPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 space-y-6">
         <Link
-          to="/community"
+          to="/challenges"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Community
+          <ArrowLeft className="h-4 w-4" /> Back to Challenges
         </Link>
         <div className="rounded-xl border card-border bg-surface p-8 text-center">
           <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -193,10 +193,10 @@ function ChallengeDetailPage() {
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 space-y-6">
         <Link
-          to="/community"
+          to="/challenges"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Community Feed
+          <ArrowLeft className="h-4 w-4" /> Back to Challenges
         </Link>
 
         {/* Challenge Header */}

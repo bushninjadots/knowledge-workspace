@@ -8,14 +8,11 @@ import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 
-const links = [{ to: "/", label: "Home" }];
-
 export function Navbar() {
   const { data: me } = useCurrentUser();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
-  const navLinks = isAuthed ? [...links, { to: "/dashboard" as const, label: "Dashboard" }] : links;
 
   async function handleSignOut() {
     setOpen(false);
@@ -29,17 +26,14 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
         <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-surface hover:text-foreground"
-              activeProps={{ className: "text-foreground bg-surface" }}
-              activeOptions={{ exact: true }}
-            >
-              {l.label}
-            </Link>
-          ))}
+          <Link
+            to="/"
+            className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-surface hover:text-foreground"
+            activeProps={{ className: "text-foreground bg-surface" }}
+            activeOptions={{ exact: true }}
+          >
+            Home
+          </Link>
         </nav>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
@@ -82,16 +76,13 @@ export function Navbar() {
       {open && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-4 py-4">
-            {navLinks.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                onClick={() => setOpen(false)}
-                className="rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ))}
+            <Link
+              to="/"
+              onClick={() => setOpen(false)}
+              className="rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            >
+              Home
+            </Link>
             {isAuthed ? (
               <div className="mt-2 space-y-2">
                 <Button asChild variant="default" className="w-full rounded-full">

@@ -22,15 +22,15 @@ const ACTIONS = [
     icon: CalendarClock,
     title: "Book a session",
     desc: "Mentor, pair up, or brainstorm one-on-one with another builder.",
-    to: "/sessions",
-    cta: "Schedule a session",
+    to: "/login",
+    cta: "Log in to schedule",
   },
   {
     icon: BadgeCheck,
     title: "Grow your reputation",
     desc: "Earn recognition through contributions, endorsements, and completed work.",
-    to: "/dashboard",
-    cta: "Track your progress",
+    to: "/signup",
+    cta: "Join to get started",
   },
 ];
 

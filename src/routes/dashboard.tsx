@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { memo, useCallback, useId, useEffect, useMemo } from "react";
+import { useCallback, useId, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  ArrowUp,
   Sparkles,
   Clock,
   Folder,
@@ -12,6 +13,11 @@ import {
   Swords,
   Ticket,
   Plus,
+  LogIn,
+  UserRoundPlus,
+  Menu,
+  Search,
+  X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -39,8 +45,14 @@ import { useUnreadCounts } from "@/hooks/use-messages";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import { useChallenges } from "@/hooks/use-challenges";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthShell } from "@/components/tethyr/auth-shell";
+import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
+import { NotificationDropdown } from "@/components/tethyr/notifications/notification-dropdown";
+import { GlobalSearch } from "@/components/tethyr/global-search";
+import { ThemeToggle } from "@/components/tethyr/theme-toggle";
+import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Tethyr" },
@@ -60,6 +72,186 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardPage() {
   const { data, isLoading, isError, error, refresh } = useCurrentUser();
+  const isAuthed = Boolean(data?.userId);
+
+  // ── Unauthenticated state: clean login / join gateway ──────────────────
+  if (!isLoading && !isAuthed) {
+    return (
+      <AuthShell
+        title="Your workspace awaits"
+        subtitle="Log in to pick up where you left off, or join Tethyr to start building in public."
+        footer={
+          <>
+            Already a member?{" "}
+            <Link to="/login" className="text-primary hover:underline">
+              Log in
+            </Link>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Button asChild variant="default" size="lg" className="w-full rounded-full">
+            <Link to="/login">
+              <LogIn className="mr-2 h-4 w-4" />
+              Log in
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full rounded-full">
+            <Link to="/signup">
+              <UserRoundPlus className="mr-2 h-4 w-4" />
+              Join Tethyr
+            </Link>
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            <Link to="/" className="transition-colors hover:text-foreground">
+              ← Back to home
+            </Link>
+          </p>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  // ── Authenticated state: sidebar layout + dashboard grid ───────────────
+  if (isLoading || !data) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <div className="hidden md:block w-60 shrink-0" />
+        <div className="flex-1 p-4 sm:p-8">
+          <div className="space-y-4">
+            <div className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface/60" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <div className="hidden md:block w-60 shrink-0" />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error?.message ?? "Something went wrong loading your data."}
+            </p>
+            <Button variant="outline" className="mt-4" onClick={() => refresh()}>
+              Try again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <AuthenticatedDashboardLayout data={data} />;
+}
+
+/* ── Sidebar layout (matches AuthenticatedShell) ─────────────────────────── */
+
+function AuthenticatedDashboardLayout({
+  data,
+}: {
+  data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
+}) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const palette = useUserPalette(data?.bannerSigned ?? null);
+  const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div className="flex min-h-screen bg-background" style={themeStyle}>
+      {/* Desktop sidebar */}
+      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
+        <DashboardSidebar />
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-foreground/20"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0">
+            <DashboardSidebar onNavigate={() => setSidebarOpen(false)} />
+          </div>
+          <button
+            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Top header bar */}
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
+          <button
+            className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          <span className="text-[13px] font-semibold tracking-tight md:hidden">Tethyr</span>
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground md:hidden"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+            <ThemeToggle />
+            <NotificationDropdown />
+          </div>
+        </header>
+
+        {/* Dashboard content */}
+        <main className="flex-1">
+          <DashboardContent data={data} />
+        </main>
+
+        {/* Scroll-to-top */}
+        {showScrollTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-lg transition hover:scale-105 hover:bg-surface-elevated"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+      </div>
+
+      <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+    </div>
+  );
+}
+
+/* ── Dashboard content (the workspace grid) ──────────────────────────────── */
+
+function DashboardContent({
+  data,
+}: {
+  data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
+}) {
   const updateAvail = useUpdateAvailability();
   const { data: sessionRequests = [], isLoading: sessionsLoading } = useSessionRequests();
   const { data: connections = [], isLoading: connectionsLoading } = useConnections();
@@ -116,10 +308,6 @@ function DashboardPage() {
     }
   }, [data?.userId]);
 
-  // Derived data is memoized so the memoized module widgets keep stable props
-  // and the workspace grid only re-renders modules whose data actually changed.
-  // These hooks stay above the early returns (hook order never varies) and
-  // guard against the not-yet-loaded user object.
   const input = useMemo(
     () => ({
       profile: data?.profile ?? null,
@@ -169,18 +357,12 @@ function DashboardPage() {
     [myProjects],
   );
 
-  // ── Module renderers ──────────────────────────────────────────────────────
-  // Each returns the module's body, or null when it has no content (the grid
-  // then omits it gracefully instead of breaking the layout). Stabilized with
-  // useCallback so the grid's contents memo survives unrelated re-renders.
-
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
       switch (id) {
         case "welcome":
           return (
             <section className="animate-border-glow relative h-full overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
-              {/* Banner background */}
               {data?.bannerSigned && (
                 <div className="pointer-events-none absolute inset-0">
                   <div
@@ -190,7 +372,6 @@ function DashboardPage() {
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
                 </div>
               )}
-              {/* Accent glow */}
               <div
                 className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
                 style={{
@@ -241,7 +422,6 @@ function DashboardPage() {
         case "today":
           return (
             <div className="grid h-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {/* 1. Continue your project */}
               <TodayCard
                 icon={activeProjects.length > 0 ? Folder : Plus}
                 accent="var(--trust)"
@@ -274,7 +454,6 @@ function DashboardPage() {
                 )}
               </TodayCard>
 
-              {/* 2. Pending invitations & messages */}
               <TodayCard
                 icon={UserPlus}
                 accent="var(--learning)"
@@ -327,14 +506,12 @@ function DashboardPage() {
                 </div>
               </TodayCard>
 
-              {/* 3. Find collaborators */}
               <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
                 <p className="mt-3 text-xs text-muted-foreground">
                   Discover people with complementary skills who are open to team-ups.
                 </p>
               </TodayCard>
 
-              {/* 4. Today's opportunities */}
               <TodayCard
                 icon={TrendingUp}
                 accent="var(--brand-purple)"
@@ -601,35 +778,6 @@ function DashboardPage() {
       unreadLoading,
     ],
   );
-
-  if (isError) {
-    return (
-      <div className="mx-auto max-w-7xl space-y-4 p-4 sm:p-8 text-center">
-        <h2 className="text-lg font-semibold text-foreground">Couldn't load your dashboard</h2>
-        <p className="text-sm text-muted-foreground">
-          {error?.message ?? "Something went wrong loading your data. Please try again."}
-        </p>
-        <Button variant="outline" onClick={() => refresh()}>
-          Try again
-        </Button>
-      </div>
-    );
-  }
-
-  if (isLoading || !data) {
-    return (
-      <div className="mx-auto max-w-7xl p-4 sm:p-8">
-        <div className="space-y-4">
-          <div className="h-24 animate-pulse rounded-2xl bg-surface/60" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface/60" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">

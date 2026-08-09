@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { Logo } from "./logo";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function Footer() {
+  const { data: me } = useCurrentUser();
+  const isAuthed = Boolean(me?.userId);
   return (
     <footer className="border-t border-border/60 bg-surface/30 bg-noise">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row md:items-start md:justify-between">
@@ -22,14 +25,16 @@ export function Footer() {
               Platform
             </h3>
             <ul className="space-y-2.5 text-sm">
-              <li>
-                <Link
-                  to="/dashboard"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Dashboard
-                </Link>
-              </li>
+              {isAuthed && (
+                <li>
+                  <Link
+                    to="/dashboard"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Dashboard
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
                   to="/explore"
