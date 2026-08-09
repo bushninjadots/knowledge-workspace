@@ -42,7 +42,7 @@ export function OverviewCards({ stats }: { stats: Stats }) {
         return (
           <div
             key={card.label}
-            className="group rounded-2xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50"
+            className="group rounded-xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -88,7 +88,7 @@ export function NextSessionCountdown({
   timeStr += `${minutes}m`;
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-brand-green/20 bg-brand-green/5 p-4">
+    <div className="flex items-center gap-3 rounded-xl border border-brand-green/20 bg-brand-green/5 p-4">
       <div className="rounded-xl bg-brand-green/10 p-2.5">
         <CalendarClock className="h-5 w-5 text-brand-green" />
       </div>
@@ -96,7 +96,7 @@ export function NextSessionCountdown({
         <p className="text-[11px] font-medium uppercase tracking-wider text-brand-green/80">
           Next Session
         </p>
-        <p className="truncate text-sm font-medium text-foreground">{nextSession.title}</p>
+        <p className="truncate text-sm font-medium text-foreground" title={nextSession.title}>{nextSession.title}</p>
       </div>
       <div className="text-right">
         <p className="text-lg font-bold tabular-nums text-brand-green">{timeStr}</p>

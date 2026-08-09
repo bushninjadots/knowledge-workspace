@@ -21,7 +21,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
   }
 
   return (
-    <div className="group flex items-start gap-4 rounded-2xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
+    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-background">
         {otherUser?.display_name?.charAt(0) ?? otherUser?.handle?.charAt(0) ?? "?"}
@@ -118,8 +118,8 @@ export function SessionRequests({ requests }: { requests: SessionRequest[] }) {
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-2xl border card-border bg-surface/20 p-12 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-elevated">
+      <div className="rounded-xl border card-border bg-surface/20 p-12 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
           <Clock className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-foreground">No session requests</p>

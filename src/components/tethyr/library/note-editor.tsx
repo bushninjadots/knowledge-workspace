@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -10,7 +10,10 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
+import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { common, createLowlight } from "lowlight";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Bold,
   Italic,
@@ -250,6 +253,7 @@ export function NoteEditor({
       TableCell,
       TableHeader,
       Image.configure({ HTMLAttributes: { class: "rounded-xl max-w-full" } }),
+      Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
     ],
     content,
     editable,
@@ -264,6 +268,71 @@ export function NoteEditor({
     },
   });
 
+  // ── Upload image to Supabase storage ──
+  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const path = `library-images/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("library-files").upload(path, file, {
+        contentType: file.type,
+        upsert: true,
+      });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("library-files").getPublicUrl(path);
+      return urlData.publicUrl;
+    } catch (err: any) {
+      toast.error(err?.message ?? "Image upload failed");
+      return null;
+    }
+  }, []);
+
+  // ── Handle image paste (Cmd/Ctrl+V) ──
+  useEffect(() => {
+    if (!editor || !editable) return;
+    const el = editor.view.dom;
+    const onPaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          const url = await uploadImage(file);
+          if (url) {
+            editor.chain().focus().setImage({ src: url }).run();
+          }
+          return;
+        }
+      }
+    };
+    el.addEventListener("paste", onPaste);
+    return () => el.removeEventListener("paste", onPaste);
+  }, [editor, editable, uploadImage]);
+
+  // ── Handle image drag-drop ──
+  useEffect(() => {
+    if (!editor || !editable) return;
+    const el = editor.view.dom;
+    const onDrop = async (e: DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith("image/")) {
+          e.preventDefault();
+          const url = await uploadImage(file);
+          if (url) {
+            const coords = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+            const pos = coords?.pos ?? editor.state.selection.anchor;
+            editor.chain().focus().setTextSelection(pos).setImage({ src: url }).run();
+          }
+          return;
+        }
+      }
+    };
+    el.addEventListener("drop", onDrop);
+    return () => el.removeEventListener("drop", onDrop);
+  }, [editor, editable, uploadImage]);
+
   // Sync external content changes
 
   useEffect(() => {
@@ -276,7 +345,7 @@ export function NoteEditor({
   if (!editor) return null;
 
   return (
-    <div className="rounded-2xl border card-border bg-surface/40">
+    <div className="rounded-xl border card-border bg-surface/40">
       {editable && <Toolbar editor={editor} />}
       <EditorContent editor={editor} />
     </div>

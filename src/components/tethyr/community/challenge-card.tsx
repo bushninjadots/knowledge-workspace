@@ -56,7 +56,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
   };
 
   return (
-    <Card className="group relative rounded-2xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300">
+    <Card className="group relative rounded-xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
       <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">

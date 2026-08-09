@@ -148,7 +148,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export function BannerStrip({
 
         {editingCaption ? (
           <div
-            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-2xl bg-background/85 p-3 backdrop-blur"
+            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-xl bg-background/85 p-3 backdrop-blur"
             onClick={(e) => e.stopPropagation()}
           >
             <Input
@@ -577,7 +577,7 @@ export function ProjectsCard({
           {projects.map((p) => (
             <div
               key={p.id}
-              className="card-border group relative overflow-hidden rounded-2xl border bg-background/40 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+              className="card-border group relative overflow-hidden rounded-xl border bg-background/40 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
             >
               <Link to="/projects/$id" params={{ id: p.id }} className="block text-left">
                 <div className="aspect-video overflow-hidden bg-background">
@@ -1158,7 +1158,7 @@ export function ProjectDialog({
             </div>
           </Field>
 
-          <div className="grid gap-2 rounded-2xl border card-border bg-background/40 p-4">
+          <div className="grid gap-2 rounded-xl border card-border bg-background/40 p-4">
             <Toggle
               label="Featured"
               description="Pin to top of your profile"

@@ -98,7 +98,7 @@ function SkillPage() {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl p-8">
-          <div className="h-40 animate-pulse rounded-3xl bg-surface/60" />
+          <div className="h-40 animate-pulse rounded-xl bg-surface/60" />
         </div>
       </Shell>
     );
@@ -137,7 +137,7 @@ function SkillPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
               <WorkshopIcon className="h-6 w-6" />
             </div>
             <div>
@@ -160,7 +160,7 @@ function SkillPage() {
 
         {/* Tabs — Workshop sections */}
         <div className="relative">
-          <div className="flex gap-1 rounded-2xl border border-border/60 bg-surface p-1">
+          <div className="flex gap-1 rounded-xl border border-border/60 bg-surface p-1">
             {TABS.map((t) => {
               const Icon = t.icon;
               const active = tab === t.id;
@@ -295,7 +295,7 @@ function SkillOverview({
       </div>
 
       {/* Workshop description */}
-      <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <h2 className="font-display text-lg font-semibold">What is {skillName}?</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {description ||
@@ -367,7 +367,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="card-border rounded-2xl border bg-surface p-4 text-center shadow-sm transition hover:shadow-md animate-room-enter"
+      className="card-border rounded-xl border bg-surface p-4 text-center shadow-sm transition hover:shadow-md animate-room-enter"
       style={{ animationDelay: `${delay * 75}ms` }}
     >
       <div className="flex justify-center">{icon}</div>
@@ -440,7 +440,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+          <div key={i} className="h-24 animate-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );
@@ -468,10 +468,10 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
               {initial}
             </div>
             <div className="min-w-0 flex-1">
@@ -515,7 +515,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+          <div key={i} className="h-24 animate-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );
@@ -543,10 +543,10 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
             key={row.profile_id}
             to="/u/$handle"
             params={{ handle: p.handle ?? "" }}
-            className="card-border flex items-center gap-3 rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
               {initial}
             </div>
             <div className="min-w-0 flex-1">
@@ -588,7 +588,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-2xl bg-surface/60" />
+          <div key={i} className="h-28 animate-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );
@@ -633,7 +633,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
             key={row.project_id}
             to="/projects/$id"
             params={{ id: proj.id }}
-            className="card-border rounded-2xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">

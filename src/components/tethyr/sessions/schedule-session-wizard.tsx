@@ -414,7 +414,7 @@ function StepParticipants({
       </div>
 
       {results.length > 0 && (
-        <div className="rounded-2xl border card-border bg-surface/50 divide-y divide-border/40">
+        <div className="rounded-xl border card-border bg-surface/50 divide-y divide-border/40">
           {results.map((p) => (
             <button
               key={p.id}
@@ -684,7 +684,7 @@ function StepSchedule({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-2xl border card-border bg-surface/50 px-4 py-3">
+        <div className="flex items-center gap-2 rounded-xl border card-border bg-surface/50 px-4 py-3">
           <Repeat className="h-4 w-4 text-muted-foreground" />
           <div className="flex-1">
             <div className="text-sm font-medium text-foreground">Recurring session</div>
@@ -725,7 +725,7 @@ function StepConfirm({ state, organizerName }: { state: WizardState; organizerNa
         </p>
       </div>
 
-      <div className="rounded-2xl border card-border bg-surface/50 p-4 space-y-3">
+      <div className="rounded-xl border card-border bg-surface/50 p-4 space-y-3">
         {/* Title + type */}
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]">

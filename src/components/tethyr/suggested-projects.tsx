@@ -109,7 +109,7 @@ export const SuggestedProjects = memo(function SuggestedProjects({
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="card-border h-28 animate-pulse rounded-2xl border bg-surface" />
+          <div key={i} className="card-border h-28 animate-pulse rounded-xl border bg-surface" />
         ))}
       </div>
     );
@@ -134,7 +134,7 @@ export const SuggestedProjects = memo(function SuggestedProjects({
           key={p.id}
           to="/projects/$id"
           params={{ id: p.id }}
-          className="card-border rounded-2xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+          className="card-border rounded-xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">

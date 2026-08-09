@@ -324,7 +324,7 @@ export function WorkspaceGrid({
 
       {/* ── Hidden modules tray (customize mode) ── */}
       {customizing && canCustomize && hidden.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-dashed border-border/70 bg-surface/40 p-4">
+        <div className="mt-5 rounded-xl border border-dashed border-border/70 bg-surface/40 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Hidden modules
           </p>
@@ -380,7 +380,7 @@ function ModuleShell({
   }
   const Icon = module?.icon;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface/70">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface/70">
       <div className="flex items-center gap-2 border-b border-border/60 bg-surface-elevated/60 px-3 py-2">
         <span
           className="ws-drag-handle flex shrink-0 cursor-grab items-center rounded-md p-0.5 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground active:cursor-grabbing"

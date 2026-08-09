@@ -36,7 +36,7 @@ export function ProfileSkillsTab({
       )}
 
       {/* TEACH SKILLS */}
-      <div className="rounded-2xl border card-border bg-surface p-5">
+      <div className="rounded-xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <GraduationCap className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Skills I teach</h3>
@@ -49,7 +49,7 @@ export function ProfileSkillsTab({
             {teachSkills.map((s) => (
               <div
                 key={s.id}
-                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3"
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export function ProfileSkillsTab({
       </div>
 
       {/* LEARN SKILLS */}
-      <div className="rounded-2xl border card-border bg-surface p-5">
+      <div className="rounded-xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Skills I want to learn</h3>
@@ -119,7 +119,7 @@ function SkillMatchCard({
   if (canTeach.length === 0 && canLearn.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
       <div className="mb-4 flex items-center gap-2">
         <ArrowRightLeft className="h-4 w-4 text-primary" />
         <h3 className="font-display text-base font-semibold">Skill Match</h3>

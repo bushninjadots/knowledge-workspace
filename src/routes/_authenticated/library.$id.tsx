@@ -210,7 +210,7 @@ function LibraryItemPage() {
         {item.type === "note" || item.type === "document" ? (
           <NoteEditor content={content} onChange={handleContentChange} />
         ) : item.type === "link" && item.url ? (
-          <div className="rounded-2xl border card-border bg-surface/40 p-6">
+          <div className="rounded-xl border card-border bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
               <Globe className="h-5 w-5 text-teaching" />
               <a
@@ -224,7 +224,7 @@ function LibraryItemPage() {
             </div>
           </div>
         ) : item.type === "upload" && fileUrl ? (
-          <div className="rounded-2xl border card-border bg-surface/40 p-6">
+          <div className="rounded-xl border card-border bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
               <Upload className="h-5 w-5 text-ai" />
               <a

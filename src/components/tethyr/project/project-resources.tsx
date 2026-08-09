@@ -80,7 +80,7 @@ export function ResourcesSection({
   };
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Resources</h3>
         {isOwner && (
@@ -95,7 +95,7 @@ export function ResourcesSection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -286,7 +286,7 @@ export function GallerySection({
   if (gallery.length === 0 && !isOwner) return null;
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Gallery</h3>
         {isOwner && (
@@ -301,7 +301,7 @@ export function GallerySection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <input
             ref={fileRef}
             type="file"
@@ -365,7 +365,7 @@ export function GallerySection({
           {gallery.map((g, idx) => (
             <div
               key={idx}
-              className="group relative overflow-hidden rounded-2xl border border-border/60"
+              className="group relative overflow-hidden rounded-xl border border-border/60"
             >
               <GalleryThumb
                 url={g.url}

@@ -129,7 +129,7 @@ export function LibrarySearchBar({
       </div>
 
       {showDropdown && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-2xl border card-border bg-surface shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border card-border bg-surface shadow-lg">
           {isLoading ? (
             <div className="px-4 py-3 text-xs text-muted-foreground">Searching…</div>
           ) : hasResults ? (

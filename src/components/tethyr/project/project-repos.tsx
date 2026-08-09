@@ -40,7 +40,7 @@ function RepoCard({
     LANGUAGE_COLORS[meta.language?.toLowerCase() ?? ""] ?? "var(--muted-foreground)";
 
   return (
-    <div className="group flex items-start gap-3 rounded-2xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div className="group flex items-start gap-3 rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
       <div className="mt-0.5 shrink-0">
         <Github className="h-5 w-5 text-foreground/70" />
       </div>
@@ -175,7 +175,7 @@ export function ProjectReposSection({
   if (!isOwner && (!repos || repos.length === 0)) return null;
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <Code2 className="h-4 w-4 text-muted-foreground" />
@@ -207,7 +207,7 @@ export function ProjectReposSection({
         )}
       </div>
       {showAdd && (
-        <div className="mb-4 flex gap-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 flex gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}

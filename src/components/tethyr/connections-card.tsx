@@ -23,14 +23,14 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="h-6 w-32 animate-pulse rounded-full bg-surface-elevated" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-semibold">Tethrs</h2>
@@ -51,9 +51,9 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
           {incoming.map((c) => (
             <div
               key={c.id}
-              className="flex flex-wrap items-start gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
+              className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
                 {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
           {outgoing.map((c) => (
             <div
               key={c.id}
-              className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 p-3"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated text-xs font-semibold">
                 {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
@@ -184,9 +184,9 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
             {accepted.slice(0, 6).map((c) => (
               <div
                 key={c.id}
-                className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 p-3"
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background">
                   {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">

@@ -1,15 +1,14 @@
 import { memo } from "react";
-import { BookOpen, FolderOpen, Activity, Users, MessagesSquare } from "lucide-react";
+import { FolderOpen, Activity, Users, MessagesSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type ProjectTab = "readme" | "files" | "activity" | "people" | "discussions";
+export type ProjectTab = "files" | "activity" | "people" | "discussions";
 
 export const PROJECT_TABS: {
   id: ProjectTab;
   label: string;
-  icon: typeof BookOpen;
+  icon: typeof FolderOpen;
 }[] = [
-  { id: "readme", label: "README", icon: BookOpen },
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "activity", label: "Activity", icon: Activity },
   { id: "people", label: "People", icon: Users },
@@ -21,8 +20,8 @@ export const ProjectTabs = memo(function ProjectTabs({
   onSelect,
   counts,
 }: {
-  active: ProjectTab;
-  onSelect: (tab: ProjectTab) => void;
+  active: ProjectTab | null;
+  onSelect: (tab: ProjectTab | null) => void;
   counts?: Partial<Record<ProjectTab, number>>;
 }) {
   return (

@@ -91,7 +91,7 @@ export function SpaceHeader({
       {/* Page title row */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -168,7 +168,7 @@ export function SpaceHeader({
       )}
 
       {space.rules && space.rules.length > 0 && (
-        <div className="mt-4 rounded-2xl border card-border bg-background/40 p-4">
+        <div className="mt-4 rounded-xl border card-border bg-background/40 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Community rules
           </p>

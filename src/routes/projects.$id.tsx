@@ -2,7 +2,7 @@
 // signed-out — because projects, project_contributors, project_skills,
 // milestones, updates, discussions and open roles all carry public SELECT
 // policies. Repository-workspace layout: compact header → sticky tab bar
-// (README / Files / Activity / People / Discussions) → tab panels.
+// (README as homepage, with Files / Activity / People / Discussions) below.
 import { useCallback, useEffect, useState } from "react";
 import {
   createFileRoute,
@@ -73,7 +73,7 @@ const ROLE_ORDER: Record<Contributor["role"], number> = {
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
 
-const TAB_IDS: ProjectTab[] = ["readme", "files", "activity", "people", "discussions"];
+const TAB_IDS: ProjectTab[] = ["files", "activity", "people", "discussions"];
 
 function isTab(value: unknown): value is ProjectTab {
   return typeof value === "string" && (TAB_IDS as string[]).includes(value);
@@ -90,7 +90,7 @@ function ProjectPage() {
 
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const tabParam = searchParams.tab;
-  const [tab, setTabState] = useState<ProjectTab>(() => (isTab(tabParam) ? tabParam : "readme"));
+  const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
   useEffect(() => {
@@ -99,12 +99,12 @@ function ProjectPage() {
   }, [tabParam]);
 
   const setTab = useCallback(
-    (next: ProjectTab, opts?: { scrollToTop?: boolean }) => {
+    (next: ProjectTab | null, opts?: { scrollToTop?: boolean }) => {
       setTabState(next);
       navigate({
         to: "/projects/$id",
         params: { id },
-        search: { tab: next === "readme" ? undefined : next },
+        search: next ? { tab: next } : undefined,
         replace: true,
       });
       if (opts?.scrollToTop !== false) window.scrollTo({ top: 0, behavior: "smooth" });
@@ -142,7 +142,7 @@ function ProjectPage() {
 
   const jumpToSection = useCallback(
     (sectionId: string) => {
-      setTab("readme", { scrollToTop: false });
+      // README is always visible — just scroll to the section
       requestAnimationFrame(() => {
         setTimeout(() => {
           document
@@ -151,10 +151,10 @@ function ProjectPage() {
         }, 80);
       });
     },
-    [setTab],
+    [],
   );
 
-  // Keyboard shortcuts: 1–5 switch tabs, "/" focuses the file search.
+  // Keyboard shortcuts: 1–4 switch secondary tabs, "/" focuses the file search.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -163,7 +163,7 @@ function ProjectPage() {
         (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key >= "1" && e.key <= "5") {
+      if (e.key >= "1" && e.key <= "4") {
         const idx = Number(e.key) - 1;
         if (TAB_IDS[idx]) {
           e.preventDefault();
@@ -354,24 +354,29 @@ function ProjectPage() {
 
       <div className="animate-room-enter min-h-screen bg-noise">
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
-          <ProjectTabs
-            active={tab}
-            onSelect={setTab}
-            counts={{
-              files: projectFiles.length,
-              discussions: discussions.length + communityPostCount,
-            }}
-          />
+          {/* README — the project's homepage, always visible */}
+          <div className="pt-6">
+            <ProjectReadmeTab
+              project={project}
+              skills={skills}
+              projectFiles={projectFiles}
+              isOwner={isOwner}
+            />
+          </div>
+
+          {/* Secondary workspace navigation */}
+          <div className="mt-10">
+            <ProjectTabs
+              active={tab}
+              onSelect={setTab}
+              counts={{
+                files: projectFiles.length,
+                discussions: discussions.length + communityPostCount,
+              }}
+            />
+          </div>
 
           <div className="pt-6">
-            {tab === "readme" && (
-              <ProjectReadmeTab
-                project={project}
-                skills={skills}
-                projectFiles={projectFiles}
-                isOwner={isOwner}
-              />
-            )}
             {tab === "files" && (
               <ProjectFilesExplorer
                 projectId={id}

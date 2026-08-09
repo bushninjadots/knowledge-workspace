@@ -43,7 +43,7 @@ export function ProjectShelfHeader({
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+      <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
           value={q}

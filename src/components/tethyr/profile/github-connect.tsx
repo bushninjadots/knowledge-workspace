@@ -163,7 +163,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="h-16 animate-pulse rounded-lg bg-surface/60" />
       </div>
     );
@@ -171,7 +171,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
 
   if (githubAccount) {
     return (
-      <div id="github-integration" className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+      <div id="github-integration" className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#24292e] text-white">
@@ -316,7 +316,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
   }
 
   return (
-    <div id="github-integration" className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div id="github-integration" className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="space-y-3">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">GitHub username</label>

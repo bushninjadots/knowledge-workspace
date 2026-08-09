@@ -121,7 +121,7 @@ export function ProjectMainContent({
         );
       case "goals":
         return (
-          <div className="flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
             <Target className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <p className="text-sm text-foreground/90">{project.goal}</p>
           </div>

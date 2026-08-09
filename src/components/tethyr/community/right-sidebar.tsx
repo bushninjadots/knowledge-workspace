@@ -19,7 +19,7 @@ function RailCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4">
+    <div className="rounded-xl border card-border bg-surface p-4">
       <p className="section-label mb-3 flex items-center gap-1.5 px-1">
         {icon}
         {title}

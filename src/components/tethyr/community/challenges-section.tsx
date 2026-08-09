@@ -24,7 +24,7 @@ export const ChallengesSection = memo(function ChallengesSection() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="animate-pulse rounded-2xl border card-border bg-surface h-40 p-6"
+              className="animate-pulse rounded-xl border card-border bg-surface h-40 p-6"
             />
           ))}
         </div>

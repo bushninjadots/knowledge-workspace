@@ -419,7 +419,7 @@ function ExplorePage() {
           {/* Tab bar */}
           <div
             role="tablist"
-            className="mb-4 flex items-center gap-1 rounded-2xl border card-border bg-surface p-1 w-fit"
+            className="mb-4 flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit"
           >
             <button
               role="tab"
@@ -466,7 +466,7 @@ function ExplorePage() {
           {isLoading ? (
             <div className="flex items-center gap-4 px-4 py-6" style={{ perspective: "1200px" }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-2xl bg-surface" />
+                <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-xl bg-surface" />
               ))}
             </div>
           ) : tab === "opportunities" ? (
@@ -505,7 +505,7 @@ function ExplorePage() {
 
                 {/* Search + Sort */}
                 <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border/60 bg-surface px-3 py-2">
+                  <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
                     <Search className="h-4 w-4 text-muted-foreground" />
                     <Input
                       value={q}
@@ -599,7 +599,7 @@ function ExplorePage() {
                     return (
                       <div
                         key={opportunity.id}
-                        className="animate-room-enter group rounded-2xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                        className="animate-room-enter group rounded-xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
                         style={{ animationDelay: `${i * 50}ms` }}
                       >
                         <Link
@@ -713,7 +713,7 @@ function ExplorePage() {
           ) : (
             <>
               {/* People tab search bar */}
-              <div className="mb-4 flex items-center gap-2 rounded-2xl border card-border bg-surface px-3 py-2">
+              <div className="mb-4 flex items-center gap-2 rounded-xl border card-border bg-surface px-3 py-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={q}
@@ -747,11 +747,11 @@ function ExplorePage() {
                       key={c.id}
                       to="/u/$handle"
                       params={{ handle: c.handle ?? "" }}
-                      className="animate-room-enter rounded-2xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                      className="animate-room-enter rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-purple text-sm font-semibold text-background">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background">
                           {initial}
                         </div>
                         <div className="min-w-0">
@@ -831,7 +831,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
   return (
     <div className="sticky top-24 space-y-5">
       {/* Stats card */}
-      <div className="rounded-2xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+      <div className="rounded-xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
         <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
           Quick stats
@@ -862,7 +862,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
 
       {/* Trending skills */}
       {trendingSkills && trendingSkills.length > 0 && (
-        <div className="rounded-2xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+        <div className="rounded-xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Hash className="h-3.5 w-3.5" />
             Trending skills
@@ -883,7 +883,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
       )}
 
       {/* Contextual hint based on tab */}
-      <div className="rounded-2xl border border-dashed border-border/40 bg-surface/30 p-4">
+      <div className="rounded-xl border border-dashed border-border/40 bg-surface/30 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           {tab === "projects"
             ? "Browse projects from the community. Use the shelf to flip through covers, or search for something specific."

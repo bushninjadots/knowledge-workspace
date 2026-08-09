@@ -165,8 +165,8 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
   if (availability.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="rounded-2xl border card-border bg-surface/20 p-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-elevated">
+        <div className="rounded-xl border card-border bg-surface/20 p-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="text-sm font-medium text-foreground">No availability set</p>
@@ -182,7 +182,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
             {DAYS.map((day) => (
               <div
                 key={day}
-                className="flex flex-col items-center gap-2 rounded-2xl border card-border bg-surface/30 p-3"
+                className="flex flex-col items-center gap-2 rounded-xl border card-border bg-surface/30 p-3"
               >
                 <span className="text-[11px] font-semibold text-muted-foreground">{day}</span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[11px] text-muted-foreground">

@@ -166,7 +166,7 @@ export function ProjectShelf({
       />
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed card-border bg-surface/50 px-6 py-20 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed card-border bg-surface/50 px-6 py-20 text-center">
           <Folder className="h-10 w-10 text-muted-foreground/40" />
           <div>
             <p className="text-sm font-medium text-foreground">No projects match</p>
@@ -353,7 +353,7 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
           <img
             src={project.cover_url}
             alt=""
-            className="h-full w-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+            className="h-full w-full object-contain opacity-70 group-hover:opacity-90 transition-opacity"
             draggable={false}
           />
         ) : (

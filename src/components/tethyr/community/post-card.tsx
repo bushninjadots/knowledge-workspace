@@ -229,7 +229,7 @@ export function PostCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -444,7 +444,7 @@ export function PostCard({
           href={post.link_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group mt-2 flex items-center gap-3 rounded-2xl border card-border bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+          className="group mt-2 flex items-center gap-3 rounded-xl border card-border bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
             <Link2 className="h-4 w-4 text-primary" />
@@ -464,7 +464,7 @@ export function PostCard({
       </div>
 
       {!!questionData?.best_answer && (
-        <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-3">
+        <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
             Best answer
           </p>
@@ -481,7 +481,7 @@ export function PostCard({
               key={i}
               src={src}
               alt={`Image ${i + 1}`}
-              className="w-full rounded-2xl border border-border/60 object-cover"
+              className="w-full rounded-xl border border-border/60 object-cover"
               style={{ maxHeight: post.images!.length === 1 ? "20rem" : "10rem" }}
             />
           ))}
@@ -489,7 +489,7 @@ export function PostCard({
       )}
 
       {post.type === "project_update" && projectData && (
-        <div className="mt-3 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mt-3 rounded-xl border border-border/60 bg-background/40 p-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Progress</span>
             <span>{String(projectData.progress ?? 0)}%</span>
@@ -508,7 +508,7 @@ export function PostCard({
       )}
 
       {post.type === "resource" && resourceData && (
-        <div className="mt-3 flex items-center gap-2 rounded-2xl border border-border/60 bg-background/40 p-3 text-sm">
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3 text-sm">
           {(() => {
             const Icon = RESOURCE_ICON[String(resourceData.kind)] ?? FileText;
             return <Icon className="h-4 w-4 text-brand-purple" />;
@@ -1001,7 +1001,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
   }
 
   return (
-    <div className="mt-3 rounded-2xl border card-border bg-background/40 p-4">
+    <div className="mt-3 rounded-xl border card-border bg-background/40 p-4">
       <div className="mb-3 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 text-brand-purple" />
         <p className="text-sm font-semibold">{pollData.question}</p>

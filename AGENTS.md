@@ -10,3 +10,117 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+---
+
+# Tethyr Design Constitution
+
+> **Do not optimize for "more polished." Optimize for more Tethyr.**
+
+## What Tethyr Is
+
+**A creative collaboration network where people become known through what they build.**
+
+Tethyr is not LinkedIn, Discord, GitHub, Behance, Fiverr, or a generic SaaS dashboard. It draws from all of them and commits to none. It is its own category.
+
+## What Tethyr Is NOT
+
+- A SaaS dashboard
+- LinkedIn
+- A job board
+- A skill marketplace
+- Discord
+- GitHub
+- A generic AI-generated app
+
+## The Primary Loop
+
+```
+DISCOVER → Explore work → Find people → Collaborate → Build → Contribute → Become known → DISCOVER
+```
+
+Every feature should support this loop. If it doesn't, reconsider it.
+
+## Visual Principles
+
+1. **Work before metadata.** People are represented through what they've built, not self-reported tags.
+2. **Projects are first-class citizens.** The project page is Tethyr's flagship experience.
+3. **People are represented through their work.** Identity comes from contributions, not claims.
+4. **Surfaces are not automatically cards.** Use sections, workspaces, and compositions — not just cards.
+5. **Use whitespace intentionally.** Breathing room creates hierarchy. Don't fill every pixel.
+6. **Avoid excessive rounded containers.** Not everything needs `rounded-2xl`. Use `rounded-lg` or `rounded-xl` for cards, `rounded-md` for inputs, `rounded-full` for avatars and tags only.
+7. **Avoid excessive shadows.** A subtle shadow on one elevated element is enough. Shadow on everything is noise.
+8. **Avoid visual noise.** No unnecessary gradients, glows, blur, or glass effects.
+9. **Use borders sparingly.** Not every surface needs a border. Use background contrast for hierarchy.
+10. **Dynamic user colors should accent, not dominate.** Banner → palette → tiny accents (border tint, active indicator, subtle glow, selection state, hover, progress indicator, avatar ring). The structure stays Tethyr. The accent becomes the user's identity.
+11. **Customization is a core identity feature.** "Your Tethyr space belongs to you" — dashboard, profile, and project layouts are user-arrangeable.
+12. **Interfaces should feel crafted, not assembled.** Every page should look like someone designed it intentionally.
+13. **Every page needs a strong visual hierarchy.** Level 0 (background) → Level 1 (subtle sections) → Level 2 (interactive surfaces) → Level 3 (focused) → Level 4 (modal). Not everything gets the same border treatment.
+14. **Never add a UI element merely because other social platforms have one.**
+15. **Prefer fewer, stronger components over many small cards.**
+
+## Border Hierarchy
+
+| Level | Treatment | Example |
+|---|---|---|
+| 0 — Page background | No border, `bg-background` | Page body |
+| 1 — Subtle sections | Background contrast only, no border | Content sections |
+| 2 — Interactive surfaces | `border card-border` (subtle) | Cards, panels |
+| 3 — Important/focused | Accent border via `--user-accent-border` | Active states, featured |
+| 4 — Modal/dialog | `border card-border` + shadow + backdrop | Dialogs, overlays |
+
+## Border Radius Scale
+
+| Element | Radius |
+|---|---|
+| Large containers / page sections | `rounded-xl` |
+| Cards | `rounded-lg` or `rounded-xl` |
+| Inputs | `rounded-md` or `rounded-lg` |
+| Buttons | `rounded-md` or `rounded-lg` |
+| Tags / badges | `rounded-full` |
+| Avatars | `rounded-full` |
+
+## The "Not Everything Is a Card" Rule
+
+Instead of "everything is a card," use:
+- **Surfaces** — background-differentiated areas
+- **Sections** — visually grouped content
+- **Workspaces** — interactive content areas
+- **Compositions** — intentionally arranged elements
+
+Cards should exist only when they represent an independent, self-contained object (a project, a person, a challenge).
+
+## Project Page: The Flagship
+
+The project page is Tethyr's most important view. It should feel like a **workspace**, not a collection of 12 cards behind 12 tabs.
+
+Structure: **README → identity → work → people → conversation → evidence**
+
+The README is the project homepage. Deep navigation (files, repos, timeline) comes after. The repository is one piece of the project, not the center.
+
+## Profile = "Your Studio"
+
+The profile is not "profile settings." It's **Your Studio** — where your work, skills, contributions, and identity live together. Projects should visually dominate.
+
+## AI Design Guardrails
+
+When making changes to Tethyr, you MUST follow these rules:
+
+- **Do not redesign existing interfaces unless explicitly instructed.**
+- **Do not introduce new card containers to solve spacing problems.**
+- **Do not increase border radius without design justification.**
+- **Do not add gradients, glows, shadows, blur or glass effects merely to make a UI feel "modern."**
+- **Do not convert sections into cards automatically.**
+- **Do not duplicate UI patterns from generic SaaS dashboards.**
+- **Do not introduce new navigation items without product justification.**
+- **Do not change typography hierarchy system-wide for a local issue.**
+- **Do not change the existing color system casually.**
+- **Do not replace established layouts with generic dashboard layouts.**
+- **Preserve intentional asymmetry and whitespace.**
+- **Prefer composition and hierarchy over decoration.**
+- **Before modifying a page, understand its existing visual language.**
+- **Make the smallest change necessary to solve the requested problem.**
+- **Audit first. Preserve existing composition. Change only what's requested.**
+- **When in doubt, remove — don't add.**
+
+**Most importantly: Do not optimize for "more polished." Optimize for more Tethyr.**

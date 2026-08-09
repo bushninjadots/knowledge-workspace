@@ -469,7 +469,7 @@ export function GlobalSearch({
           />
         </div>
         {open && enabled && (
-          <div className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-xl">
+          <div className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-xl">
             {renderResults()}
           </div>
         )}

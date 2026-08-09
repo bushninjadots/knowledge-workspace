@@ -31,6 +31,9 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
+import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
+import { GripVertical, Check } from "lucide-react";
 
 import {
   AvailabilitySelector,
@@ -118,10 +121,10 @@ function DashboardPage() {
         <div className="hidden md:block w-60 shrink-0" />
         <div className="flex-1 p-4 sm:p-8">
           <div className="space-y-4">
-            <div className="h-24 animate-pulse rounded-2xl bg-surface/60" />
+            <div className="h-24 animate-pulse rounded-xl bg-surface/60" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface/60" />
+                <div key={i} className="h-32 animate-pulse rounded-xl bg-surface/60" />
               ))}
             </div>
           </div>
@@ -356,6 +359,8 @@ function DashboardContent({
     [myProjects],
   );
 
+  const [customizing, setCustomizing] = useState(false);
+
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
       switch (id) {
@@ -380,7 +385,7 @@ function DashboardContent({
                     key={p.id}
                     to="/projects/$id"
                     params={{ id: p.id }}
-                    className="block rounded-2xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                    className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
                   >
                     <div className="flex items-center justify-between">
                       <p className="truncate text-sm font-medium" title={p.title}>
@@ -534,7 +539,7 @@ function DashboardContent({
 
         case "welcome":
           return (
-            <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-6 sm:p-8">
+            <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-6 sm:p-8">
               {data?.bannerSigned && (
                 <div className="pointer-events-none absolute inset-0">
                   <div
@@ -646,7 +651,7 @@ function DashboardContent({
         case "next-steps":
           if (pct >= 100) {
             return (
-              <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+              <div className="rounded-xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
                   <h2 className="text-sm font-semibold">Profile complete!</h2>
@@ -660,7 +665,7 @@ function DashboardContent({
           }
           if (remaining.length === 0) return null;
           return (
-            <div className="rounded-2xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
+            <div className="rounded-xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
               <div className="mb-3 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
                 <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
@@ -710,24 +715,59 @@ function DashboardContent({
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-        {renderModule("welcome")}
-        {renderModule("next-steps")}
-        {renderModule("today")}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            {renderModule("projects")}
-            {renderModule("applications")}
-            {renderModule("challenges")}
-            {renderModule("connections")}
-            {renderModule("activity")}
-          </div>
-          <div className="space-y-6">
-            {renderModule("suggested-projects")}
-            {renderModule("suggested-creators")}
-            {renderModule("trending-skills")}
-            {renderModule("week")}
-          </div>
-        </div>
+        {customizing ? (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Customize layout</span>
+                {" · "}Drag to rearrange · Resize modules
+              </p>
+              <Button size="sm" onClick={() => setCustomizing(false)}>
+                <Check className="mr-1.5 h-3.5 w-3.5" />
+                Done
+              </Button>
+            </div>
+            <WorkspaceGrid
+              page="dashboard"
+              userId={data?.userId}
+              modules={DASHBOARD_MODULES}
+              canCustomize={true}
+              renderModule={renderModule}
+            />
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => setCustomizing(true)}
+              >
+                <GripVertical className="mr-1.5 h-3.5 w-3.5" />
+                Customize
+              </Button>
+            </div>
+            {renderModule("welcome")}
+            {renderModule("next-steps")}
+            {renderModule("today")}
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="space-y-6 lg:col-span-2">
+                {renderModule("projects")}
+                {renderModule("applications")}
+                {renderModule("challenges")}
+                {renderModule("connections")}
+                {renderModule("activity")}
+              </div>
+              <div className="space-y-6">
+                {renderModule("suggested-projects")}
+                {renderModule("suggested-creators")}
+                {renderModule("trending-skills")}
+                {renderModule("week")}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -753,7 +793,7 @@ function TodayCard({
   return (
     <Link
       to={href}
-      className={`group relative flex flex-col rounded-2xl border p-5 transition-all duration-200 ${
+      className={`group relative flex flex-col rounded-xl border p-5 transition-all duration-200 ${
         highlight
           ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
           : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
@@ -790,11 +830,11 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-full rounded-2xl border card-border bg-surface p-5">
+    <div className="h-full rounded-xl bg-surface-elevated/30 p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-          <h2 className="text-sm font-semibold truncate">{title}</h2>
+          <h2 className="text-sm font-semibold truncate" title={title}>{title}</h2>
           {subtitle && (
             <span className="hidden text-[11px] text-muted-foreground sm:inline">— {subtitle}</span>
           )}

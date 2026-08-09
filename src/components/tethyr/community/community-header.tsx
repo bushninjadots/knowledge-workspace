@@ -111,7 +111,7 @@ export const CommunityHeader = memo(function CommunityHeader({
         <button
           type="button"
           onClick={onOpenTrending}
-          className="flex min-h-11 items-center gap-2 rounded-2xl border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
+          className="flex min-h-11 items-center gap-2 rounded-xl border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
         >
           <SlidersHorizontal className="h-4 w-4" />
           Trending

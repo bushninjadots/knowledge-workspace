@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export function NotificationEmpty() {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-surface-elevated">
         <Bell className="h-8 w-8 text-muted-foreground/40" />
       </div>
       <h3 className="text-lg font-medium text-foreground">You're all caught up</h3>

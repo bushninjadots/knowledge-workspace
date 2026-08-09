@@ -27,6 +27,9 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
+import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { PROFILE_MODULES } from "@/lib/workspace-layouts";
+import { GripVertical, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -97,6 +100,7 @@ export function ProfileLayout({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [customizing, setCustomizing] = useState(false);
   const palette = useUserPalette(bannerSigned);
 
   const { data: requestsData } = useSessionRequests();
@@ -120,7 +124,7 @@ export function ProfileLayout({
     >
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
+        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           {isOwnProfile ? (
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -163,15 +167,15 @@ export function ProfileLayout({
                     }
                   }}
                 >
-                  <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
+                  <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                     <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                   </div>
-                  <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-lg transition hover:scale-105">
+                  <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105">
                     <Camera className="h-4 w-4" />
                   </button>
                 </DragDropFileInput>
               ) : (
-                <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface shadow-lg shadow-primary/10 sm:h-32 sm:w-32">
+                <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                   <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                 </div>
               )}
@@ -181,11 +185,11 @@ export function ProfileLayout({
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-3">
                 <div className="min-w-0">
-                  <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
+                  <h1 className="font-display text-2xl font-semibold break-words sm:text-3xl">
                     {profile?.display_name || "Untitled member"}
                   </h1>
                   {profile?.creator_title && (
-                    <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+                    <p className="mt-0.5 text-sm text-foreground/80 break-words">{profile.creator_title}</p>
                   )}
                   <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
                 </div>
@@ -275,30 +279,67 @@ export function ProfileLayout({
 
         {/* TABS + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* MAIN CONTENT — clean tabbed sections */}
+          {/* MAIN CONTENT */}
           <div className="min-w-0 flex-1">
-            {/* Tab bar */}
-            <div className="mb-4 flex items-center gap-1 rounded-2xl border card-border bg-surface p-1 w-fit">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                    activeTab === tab.id
-                      ? "bg-surface-elevated text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <tab.icon className="h-3.5 w-3.5" />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            {customizing && isOwnProfile ? (
+              <>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Customize layout</span>
+                    {" · "}Drag to rearrange · Resize modules
+                  </p>
+                  <Button size="sm" onClick={() => setCustomizing(false)}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Done
+                  </Button>
+                </div>
+                <WorkspaceGrid
+                  page="profile"
+                  userId={userId}
+                  modules={PROFILE_MODULES}
+                  canCustomize={isOwnProfile}
+                  renderModule={(id) => tabContent[id as Tab] ?? null}
+                />
+              </>
+            ) : (
+              <>
+                {/* Tab bar + customize button */}
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit">
+                    {TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                          activeTab === tab.id
+                            ? "bg-surface-elevated text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <tab.icon className="h-3.5 w-3.5" />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  {isOwnProfile && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-muted-foreground"
+                      onClick={() => setCustomizing(true)}
+                    >
+                      <GripVertical className="mr-1.5 h-3.5 w-3.5" />
+                      Customize
+                    </Button>
+                  )}
+                </div>
 
-            {/* Tab content */}
-            <div className="space-y-6">
-              {tabContent[activeTab]}
-            </div>
+                {/* Tab content */}
+                <div className="space-y-6">
+                  {tabContent[activeTab]}
+                </div>
+              </>
+            )}
           </div>
 
           {/* SIDEBAR */}
@@ -361,7 +402,7 @@ function CompletenessRing({ value }: { value: number }) {
   const offset = c - (value / 100) * c;
   const gradientId = "completeness-ring";
   return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
       <div className="relative h-20 w-20">
         <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="hsl(var(--border))" strokeWidth="6" fill="none" />
@@ -418,7 +459,7 @@ function ProfileSidebar({
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">
       {/* STATS */}
-      <div className="rounded-2xl border card-border bg-surface p-5">
+      <div className="rounded-xl border card-border bg-surface p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
         <div className="space-y-3">
           <StatRow icon={GraduationCap} label="Skills shared" value={teachIds.length} />
@@ -442,7 +483,7 @@ function ProfileSidebar({
 
       {/* Active projects highlight */}
       {activeProjects.length > 0 && (
-        <div className="rounded-2xl border card-border bg-surface p-5">
+        <div className="rounded-xl border card-border bg-surface p-5">
           <h3 className="mb-3 text-sm font-semibold">
             Active projects
             <span className="ml-1 font-normal text-muted-foreground">({activeProjects.length})</span>
@@ -452,7 +493,7 @@ function ProfileSidebar({
               <a
                 key={p.id}
                 href={`/projects/${p.id}`}
-                className="block rounded-2xl border card-border bg-background/40 px-3 py-2 text-xs transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                className="block rounded-xl border card-border bg-background/40 px-3 py-2 text-xs transition hover:border-[var(--user-accent-border,var(--border-strong))]"
               >
                 <span className="truncate block font-medium" title={p.title}>{p.title}</span>
                 <span className="mt-0.5 block text-[11px] text-muted-foreground capitalize">
@@ -472,7 +513,7 @@ function ProfileSidebar({
 
       {/* SOCIAL LINKS */}
       {hasSocialLinks && (
-        <div className="rounded-2xl border card-border bg-surface p-5">
+        <div className="rounded-xl border card-border bg-surface p-5">
           <h3 className="mb-3 text-sm font-semibold">Links</h3>
           <div className="space-y-1.5">
             {Object.entries(socialLinks).map(([key, url]) => {

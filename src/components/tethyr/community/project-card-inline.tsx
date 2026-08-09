@@ -92,7 +92,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
   if (!project_id && !snapshot) return null;
 
   const cardClass =
-    "rounded-2xl border border-border/60 bg-background/40 p-3 block transition hover:bg-surface-elevated";
+    "rounded-xl border border-border/60 bg-background/40 p-3 block transition hover:bg-surface-elevated";
 
   if (isExternal && snapshot?.url) {
     return (

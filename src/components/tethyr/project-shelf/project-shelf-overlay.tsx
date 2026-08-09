@@ -130,7 +130,7 @@ export function ProjectShelfOverlay({
             role="dialog"
             aria-modal="true"
             aria-label={project.title}
-            className="relative mx-4 w-full max-w-[832px] overflow-hidden rounded-2xl border card-border bg-surface shadow-2xl"
+            className="relative mx-4 w-full max-w-[832px] overflow-hidden rounded-xl border card-border bg-surface shadow-2xl"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}

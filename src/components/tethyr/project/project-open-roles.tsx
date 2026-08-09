@@ -62,7 +62,7 @@ export function OpenRolesSection({
   const unfilledRoles = roles.filter((r) => !r.is_filled);
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Open Roles</h3>
         {isOwner && (
@@ -77,7 +77,7 @@ export function OpenRolesSection({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}

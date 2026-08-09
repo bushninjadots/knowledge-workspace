@@ -87,7 +87,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="animate-pulse rounded-2xl border card-border bg-surface h-32 p-5"
+              className="animate-pulse rounded-xl border card-border bg-surface h-32 p-5"
             />
           ))}
         </div>

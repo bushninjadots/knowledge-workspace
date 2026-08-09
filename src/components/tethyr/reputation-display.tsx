@@ -38,7 +38,7 @@ export function ReputationScore({
 export function ReputationTierBadge({ score }: { score: number }) {
   const { current, next, progress } = getTierProgress(score);
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-surface p-3">
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface p-3">
       <div className="relative h-12 w-12 shrink-0">
         <svg viewBox="0 0 48 48" className="h-full w-full -rotate-90">
           <circle
@@ -116,7 +116,7 @@ export function ReputationBreakdown({ profileId }: { profileId: string }) {
 
 export function ReputationCard({ profileId, score }: { profileId: string; score: number }) {
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated">
           <TrendingUp className="h-4 w-4 text-primary" />

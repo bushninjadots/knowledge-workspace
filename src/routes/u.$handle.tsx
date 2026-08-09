@@ -246,7 +246,7 @@ function PublicProfileRoute() {
     <Shell accentColor={bannerAccent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* ── Hero: Studio Backdrop ── */}
-        <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
+        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           <div
             className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
             style={{ borderColor: bannerAccent ?? "transparent" }}
@@ -270,7 +270,7 @@ function PublicProfileRoute() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             {/* Avatar — Creator Portrait */}
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
-              <div className="h-28 w-28 overflow-hidden rounded-3xl bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
+              <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
                 {avatarSigned ? (
                   <img
                     src={avatarSigned}
@@ -338,7 +338,7 @@ function PublicProfileRoute() {
               {meId && meId !== profile.id && (
                 <Link
                   to="/messages"
-                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Start a conversation
@@ -364,7 +364,7 @@ function PublicProfileRoute() {
                 return (
                   <div
                     key={s.id}
-                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                   >
                     <div className="flex items-center gap-3">
                       <Link
@@ -447,7 +447,7 @@ function PublicProfileRoute() {
                   key={p.id}
                   to="/projects/$id"
                   params={{ id: p.id }}
-                  className="transition-lift group rounded-2xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                  className="transition-lift group rounded-xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
@@ -616,7 +616,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           {icon}

@@ -134,7 +134,7 @@ export const SuggestedCreators = memo(function SuggestedCreators({
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="card-border h-24 animate-pulse rounded-2xl border bg-surface" />
+          <div key={i} className="card-border h-24 animate-pulse rounded-xl border bg-surface" />
         ))}
       </div>
     );
@@ -161,14 +161,14 @@ export const SuggestedCreators = memo(function SuggestedCreators({
             key={c.id}
             to="/u/$handle"
             params={{ handle: c.handle ?? "" }}
-            className="card-border rounded-2xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+            className="card-border rounded-xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-background">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
                 {initial}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
+                <p className="truncate text-sm font-medium" title={c.display_name || c.handle || "Untitled member"}>
                   {c.display_name || c.handle || "Untitled member"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">

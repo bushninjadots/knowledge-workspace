@@ -74,12 +74,12 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           onClick?.();
         }
       }}
-      className="group flex w-full cursor-pointer flex-col rounded-2xl border card-border bg-surface p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-lg"
+      className="group flex w-full cursor-pointer flex-col rounded-xl border card-border bg-surface p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
+            <img src={avatarUrl} alt="" className="h-full w-full rounded-xl object-cover" />
           ) : (
             initial
           )}

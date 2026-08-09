@@ -196,7 +196,7 @@ export function ProjectActivityTab({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+      <section className="rounded-xl border card-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <ActivityIcon className="h-4 w-4 text-muted-foreground" />
@@ -215,7 +215,7 @@ export function ProjectActivityTab({
         </div>
 
         {showPost && (
-          <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+          <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}

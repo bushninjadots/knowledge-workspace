@@ -13,6 +13,12 @@ import {
   Code2,
   Bold,
   Italic,
+  Strikethrough,
+  List,
+  ListOrdered,
+  Quote,
+  Heading1,
+  Heading2,
   X,
   Lightbulb,
   MessageSquareMore,
@@ -363,6 +369,50 @@ export function ComposerBar({
     setDraft(result.text.slice(0, MAX_CHARS));
   }
 
+  function handleStrikethrough() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "~~", "~~", "strikethrough");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleH1() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "# ", "", "Heading 1");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleH2() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "## ", "", "Heading 2");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleBulletList() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "\n- ", "", "list item");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleNumberedList() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "\n1. ", "", "list item");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleBlockquote() {
+    if (!textareaRef.current) return;
+    const result = insertMarkdown(textareaRef.current, "> ", "", "quoted text");
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
+  function handleLink() {
+    const url = window.prompt("URL:");
+    if (!url || !textareaRef.current) return;
+    const label = window.prompt("Link text:") || url;
+    const result = insertMarkdown(textareaRef.current, "[", `](${url})`, label);
+    setDraft(result.text.slice(0, MAX_CHARS));
+  }
+
   function handleCode() {
     setShowCodeInsert((v) => !v);
   }
@@ -493,7 +543,7 @@ export function ComposerBar({
       )}
 
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -513,7 +563,7 @@ export function ComposerBar({
             onBlur={() => setFocused(false)}
             placeholder="What are you building or learning today? Supports **bold**, _italic_, and```code```."
             rows={focused || draft.length > 80 ? 5 : 2}
-            className="min-h-16 resize-none rounded-2xl border-border/60 bg-background/40 transition-all font-mono text-sm"
+            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-all font-mono text-sm"
           />
           {focused && (
             <div className="mt-1.5 flex items-center justify-end gap-1.5">
@@ -749,7 +799,7 @@ export function ComposerBar({
       )}
 
       {showCodeInsert && (
-        <div className="mt-3 flex items-center gap-2 rounded-2xl border card-border bg-background/40 p-2">
+        <div className="mt-3 flex items-center gap-2 rounded-xl border card-border bg-background/40 p-2">
           <Code2 className="h-4 w-4 shrink-0 text-brand-purple" />
           <select
             value={codeLang}
@@ -816,32 +866,37 @@ export function ComposerBar({
           onFile={handleDroppedImage}
           className="hidden sm:flex h-8 w-32"
         />
-        <button
-          type="button"
-          onClick={handleBold}
-          aria-label="Bold"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
+        <button type="button" onClick={handleH1} aria-label="Heading 1" title="Heading 1" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <Heading1 className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" onClick={handleH2} aria-label="Heading 2" title="Heading 2" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <Heading2 className="h-3.5 w-3.5" />
+        </button>
+        <div className="mx-0.5 h-4 w-px bg-border/60" />
+        <button type="button" onClick={handleBold} aria-label="Bold" title="Bold" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
           <Bold className="h-3.5 w-3.5" />
         </button>
-        <button
-          type="button"
-          onClick={handleItalic}
-          aria-label="Italic"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
-        >
+        <button type="button" onClick={handleItalic} aria-label="Italic" title="Italic" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
           <Italic className="h-3.5 w-3.5" />
         </button>
-        <button
-          type="button"
-          aria-label="Insert code block"
-          onClick={handleCode}
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
-            showCodeInsert
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-          }`}
-        >
+        <button type="button" onClick={handleStrikethrough} aria-label="Strikethrough" title="Strikethrough" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <Strikethrough className="h-3.5 w-3.5" />
+        </button>
+        <div className="mx-0.5 h-4 w-px bg-border/60" />
+        <button type="button" onClick={handleBulletList} aria-label="Bullet list" title="Bullet list" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <List className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" onClick={handleNumberedList} aria-label="Numbered list" title="Numbered list" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <ListOrdered className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" onClick={handleBlockquote} aria-label="Blockquote" title="Blockquote" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <Quote className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" onClick={handleLink} aria-label="Insert link" title="Insert link" className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95">
+          <Link2 className="h-3.5 w-3.5" />
+        </button>
+        <div className="mx-0.5 h-4 w-px bg-border/60" />
+        <button type="button" aria-label="Insert code block" onClick={handleCode} title="Code block" className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${showCodeInsert ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"}`}>
           <Code2 className="h-3.5 w-3.5" />
           Code
         </button>

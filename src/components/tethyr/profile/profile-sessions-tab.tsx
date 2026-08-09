@@ -12,7 +12,7 @@ export function ProfileSessionsTab({
   const { data: stats, isLoading } = useSessionStats(userId);
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-5">
+    <div className="rounded-xl border card-border bg-surface p-5">
       <div className="mb-4 flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted-foreground" />
         <h3 className="text-sm font-semibold">Sessions</h3>
@@ -26,11 +26,11 @@ export function ProfileSessionsTab({
         <>
           {/* STATS ROW */}
           <div className="mb-6 grid grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-center">
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4 text-center">
               <div className="text-2xl font-bold text-primary">{stats?.completedCount ?? 0}</div>
               <div className="mt-1 text-xs text-muted-foreground">Completed</div>
             </div>
-            <div className="rounded-2xl border border-border/60 bg-background/40 p-4 text-center">
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4 text-center">
               <div className="text-2xl font-bold text-[var(--brand-purple)]">
                 {stats?.hoursThisMonth ?? 0}
               </div>

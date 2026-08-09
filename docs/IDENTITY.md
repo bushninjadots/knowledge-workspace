@@ -10,7 +10,7 @@ Every page, every interaction, every future feature should reinforce that senten
 
 Tethyr is the collaboration network where builders — developers, designers, writers, musicians, researchers, founders, artists, and anyone making something tangible — create projects together in public, grow through real contributions, and become known for what they make, not what they claim.
 
-It is not Skillshare. It is not GitHub. It is not LinkedIn. It is not Discord. It draws from all of them and commits to none of them. It is its own category.
+It is not Skillshare. It is not GitHub. It is not LinkedIn. It is not Discord. It is not a generic SaaS dashboard. It draws from all of them and commits to none of them. It is its own category.
 
 ---
 
@@ -39,7 +39,6 @@ The interface should never feel like enterprise software.
 It should feel like walking through a creative studio.
 
 Projects feel alive. Profiles feel personal. Communities feel active.
-
 The UI communicates movement, momentum, and progress rather than static information.
 
 Instead of asking: **"What information should we display?"**
@@ -60,31 +59,144 @@ People discover one another naturally through work, skills, communities, and sha
 Learning happens through collaboration, mentoring, challenges, and contributing to real projects.
 
 ### Earn Reputation
-Recognition comes from visible contributions, consistency, completed work, and helping others — not self-promotion.
+Recognition comes from visible contributions, consistency, completed work, and helping others — not self-promotion. **Evidence over score.**
 
 ---
 
-## The Platform Loop
+## The Primary Loop
 
 ```
-Discover
+DISCOVER
       ↓
-Join
+Explore work
+      ↓
+Find people
+      ↓
+Collaborate
       ↓
 Build
       ↓
 Contribute
       ↓
-Learn
+Become known
       ↓
-Earn Trust
-      ↓
-Unlock Opportunities
-      ↓
-Start Again
+DISCOVER
 ```
 
-This creates a compounding ecosystem where projects generate connections, connections generate new projects, and every completed contribution strengthens a member's reputation.
+This creates a compounding ecosystem where projects generate connections, connections generate new projects, and every completed contribution strengthens a member's reputation. Every feature should support this loop.
+
+---
+
+## The Product Structure
+
+```text
+                    TETHYR
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+      PEOPLE        PROJECTS      COMMUNITY
+        │             │             │
+      Skills        Work          Discussion
+      Identity      Progress      Collaboration
+      Reputation     Tools         Spaces
+        │             │             │
+        └─────────────┼─────────────┘
+                      │
+                 CONTRIBUTIONS
+                      │
+                 YOUR REPUTATION
+```
+
+**Projects are the gravity well.** Community conversations link back to projects. Skills are evidenced through projects. Reputation is earned through contributions to projects. People are discovered through the work they've done.
+
+---
+
+## Contribution Identity (Key Differentiator)
+
+Someone's identity should be a **graph of work**, not a self-reported list of skills.
+
+Instead of: "I claim to be a React developer."
+
+Show: "Here are the 11 projects I've actually contributed to."
+
+Tethyr should show:
+- **Built with** — tools and skills used across projects
+- **Contributed to** — projects someone has helped build
+- **Currently building** — active projects
+- **Collaborated with** — people they've worked alongside
+
+This turns every profile into an undeniable portfolio of real work.
+
+---
+
+## Project Page: The Flagship Experience
+
+The project page is Tethyr's most important view. It should feel like a **living workspace**, not a collection of tabs.
+
+Structure: **README → identity → work → people → conversation → evidence**
+
+- The **README** is the project homepage — what we're building, why, and how
+- Deep navigation (files, repos, timeline, resources) flows from the README
+- The repository is one piece of the project, not the center
+- Tools, contributors, milestones, and community posts orbit the project
+
+This differentiates Tethyr from GitHub:
+- GitHub: code repository first
+- Tethyr: **the human project first**
+
+---
+
+## Profile = "Your Studio"
+
+The profile is not a settings page. It's **Your Studio** — where your work, skills, contributions, and identity live together.
+
+Projects should visually dominate the identity. The user's work should be the first thing people see.
+
+Think: **Person → Work → Skills → Contributions → People**
+
+Not: Person → metadata → badges → statistics
+
+---
+
+## Community Revolves Around Projects
+
+Community should constantly connect back to: **People → projects → work → collaboration**
+
+- "We're looking for someone who knows Blender" → links to a project
+- "I just shipped the animation system" → attaches the work
+- "Looking for feedback on this" → links to the project
+
+The project is the **gravity well** that pulls everything together.
+
+---
+
+## Reputation: Evidence Over Score
+
+Reputation should be based on contribution, not gamified numbers.
+
+**What builds reputation:**
+- Projects contributed to
+- Projects completed
+- Collaborations
+- Endorsements from collaborators
+- Community contributions
+- Reliability (sessions attended, commitments met)
+- Verified skills (proven through work)
+- Years active
+
+A small reputation indicator may exist, but **the evidence is always more important than the number**.
+
+---
+
+## Skills: Evidence and Metadata, Not Main Identity
+
+Skills should be **evidence and metadata around someone's work**, not the product's main identity.
+
+Instead of: "Bryce — JavaScript · React · TypeScript · Design"
+
+Prefer: Show the projects first, with skills surfaced inside them as metadata.
+
+Skills become discoverability infrastructure — how you find people and projects — not the headline.
 
 ---
 
@@ -96,7 +208,7 @@ Every feature should satisfy at least one of these:
 - Helps someone find collaborators
 - Helps someone make progress
 - Helps someone discover interesting work
-- Helps someone earn trust
+- Helps someone earn trust through visible contributions
 - Helps someone grow their skills through real projects
 - Helps communities organize around creation
 
@@ -132,6 +244,8 @@ Not:
 | Reward posting | Rewards building |
 | Showcase finished work | Celebrates the journey from idea to launch |
 | Ask "What have you done?" | Asks "What are you building next?" |
+| Skills are claims | Skills are evidenced through work |
+| Profiles are resumes | Profiles are portfolios of contribution |
 
 ---
 
@@ -143,101 +257,10 @@ Not:
 | **Behance / Dribbble** | Visual project showcases, cover images, creative portfolios, identity through work |
 | **Polywork** | Multi-faceted identity, skills as teach/learn, creator titles, availability badges |
 | **Discord** | Topic-based community spaces, real-time feel, community as a destination |
-| **LinkedIn** | Professional networking, connections, endorsements, reputation, opportunities |
+| **Linear** | Clean, intentional UI. Border hierarchy. Crafted feel. Not over-decorated. |
+| **Vercel** | Typography-forward design. Restrained use of borders and shadows. |
 
 Tethyr doesn't copy any of them. It's its own category.
-
----
-
-## What People Do on Tethyr
-
-1. **Create a profile** that shows who they are as a maker — skills they can teach, skills they're learning, projects they've built
-2. **Start or join projects** — structured workspaces with milestones, roles, and progress tracking
-3. **Find collaborators** — matched by complementary skills and availability
-4. **Schedule sessions** — mentoring, pairing, brainstorming with other members
-5. **Participate in challenges** — structured skill-building with reputation rewards
-6. **Build community** — join spaces around crafts and interests, share updates, discuss work
-7. **Grow reputation** — earn through contributions, endorsements, and completed work
-8. **Discover opportunities** — open roles on active projects matched to their skills
-
----
-
-## What's Live Right Now
-
-This isn't aspirational. It's built. Here's what exists in the codebase today:
-
-### Identity Layer
-- Profiles with handles, display names, creator titles, banners, avatars
-- Dominant color extraction from banners → personalized accent colors throughout the UI
-- Availability badges showing who's open to connect
-- Profile completeness tracking with guided next steps
-- Reputation scores tied to real activity
-
-### Skills Layer
-- Teach/learn skill model (I can help with X, I want to grow in Y)
-- Verification levels and experience badges
-- Endorsements from other members
-- Skill-to-project linking
-- Skill match scoring for opportunities
-- Skill hub pages at `/skills/:slug` with teachers, learners, and projects
-
-### Project Layer
-- Full project lifecycle: planning → building → testing → launch → growing
-- Milestones with status tracking
-- Progress bars and percentage tracking
-- Open roles with skill requirements and application flow
-- Contributor rosters with roles (creator, mentor, contributor)
-- Project shelf — 3D browseable interface with drag-to-flip, spotlight, and cover art
-- Project community posts linking projects to the community feed
-- Resources, gallery, vision, goals sections
-- Looking for collaborators / looking for feedback flags
-
-### Collaboration Layer
-- Session scheduling with calendar, availability settings, and request flow
-- Session types: mentoring, pairing, brainstorming
-- Connection requests between members
-- Direct messaging
-- Role applications on projects with accept/decline flow
-
-### Community Layer
-- 14 post types (discussion, project, question, resource, milestone, etc.)
-- Community spaces with topic-based organization
-- Challenges with join/leave, progress tracking, and completion rewards
-- Follows between members
-- Activity feed with real-time updates
-- Comments and discussions
-
-### Reputation Layer
-- Achievement system
-- Reputation scores from activity, contributions, and endorsements
-- Weekly reputation tracking
-- Challenge completion rewards
-
-### Discovery Layer
-- Explore page with projects (3D shelf), people, and opportunities tabs
-- Search across profiles, skills, projects, library, posts, sessions
-- Suggested projects and creators matched to your skills
-- Trending skills
-- Category and need-based filtering
-- Discover sidebar with quick stats
-
-### Library Layer
-- Personal library for notes, files, and links
-- Collections for organization
-- Favorites, pins, tags
-- File uploads
-
-### Design Language
-- Living backgrounds (`bg-noise`, `bg-grid`, animated gradients)
-- Page entrance animations (`animate-room-enter`)
-- Staggered reveals on lists
-- Animated border glow on featured cards
-- Marquee stats on landing page
-- 3D project shelf with physics-based drag
-- User accent colors derived from banner images
-- Section reveal animations
-- Scroll indicators
-- Consistent `card-border` and `transition-lift` patterns
 
 ---
 
@@ -262,7 +285,28 @@ Before building anything new, ask:
 1. Does it help someone **build** something?
 2. Does it help someone **connect** with a collaborator?
 3. Does it help someone **grow** through real work?
-4. Does it help someone **earn recognition** for contributions?
+4. Does it help someone **earn recognition** for visible contributions?
 5. Does it feel like a **creative studio**, not enterprise software?
+6. Does it make Tethyr more like **Tethyr**, or more like everything else?
 
-If the answer to all five is no, reconsider.
+If the answer to all six is no, reconsider.
+
+---
+
+## Phase Priority: Design Coherence > Feature Expansion
+
+Tethyr already has enough functionality. The next phase is not "build more."
+
+The priority is:
+1. Re-establish the visual system
+2. Rework the project experience as the flagship
+3. Refine profile/studio
+4. Refine dashboard workspace
+5. Reduce cardification
+6. Reduce visual noise
+7. Strengthen typography and spacing hierarchy
+8. Make navigation more intentional
+9. Lock the design system so it can't randomly mutate
+10. Remove UI that doesn't serve the identity
+
+**Make Tethyr unmistakably Tethyr.**

@@ -81,7 +81,7 @@ export function MilestonesTimeline({
   };
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium text-foreground/80">Milestones</h3>
@@ -103,7 +103,7 @@ export function MilestonesTimeline({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}

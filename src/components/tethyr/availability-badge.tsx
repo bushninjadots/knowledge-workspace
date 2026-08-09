@@ -108,7 +108,7 @@ export function AvailabilitySelector({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 w-52 rounded-2xl border border-border/60 bg-surface p-1.5 shadow-xl">
+          <div className="absolute right-0 z-50 mt-1 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl">
             {STATUS_OPTIONS.map((opt) => {
               const Icon = opt.icon;
               const isActive = current === opt.value;

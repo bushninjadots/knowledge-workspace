@@ -72,7 +72,7 @@ function MessagesPage() {
         </header>
         <div className="flex-1 overflow-y-auto bg-noise">
           {isLoading ? (
-            <div className="m-2 h-16 animate-pulse rounded-2xl bg-surface" />
+            <div className="m-2 h-16 animate-pulse rounded-xl bg-surface" />
           ) : accepted.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -141,7 +141,7 @@ function ConversationRow({
       }`}
     >
       <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold transition-colors duration-200 ${
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-200 ${
           active
             ? "bg-primary text-primary-foreground"
             : "bg-brand-purple text-background group-hover:bg-brand-purple/90"
@@ -253,12 +253,12 @@ function Thread({
           </div>
         )}
         {conn.intro_message && (
-          <div className="mx-auto max-w-md rounded-2xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 text-center text-xs text-muted-foreground shadow-sm">
+          <div className="mx-auto max-w-md rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 text-center text-xs text-muted-foreground shadow-sm">
             <span className="font-medium text-foreground">Intro note:</span> {conn.intro_message}
           </div>
         )}
         {isLoading ? (
-          <div className="h-12 animate-pulse rounded-2xl bg-surface" />
+          <div className="h-12 animate-pulse rounded-xl bg-surface" />
         ) : messages.length > 0 ? (
           messages.map((m) => {
             const mine = m.sender_id === meId;
@@ -266,7 +266,7 @@ function Thread({
             return (
               <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                  className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${
                     mine
                       ? "bg-primary text-primary-foreground shadow-primary/10"
                       : "border border-border/60 bg-surface-elevated shadow-soft"
@@ -308,7 +308,7 @@ function Thread({
         )}
         {otherTyping && (
           <div className="flex items-start">
-            <div className="flex items-center gap-1.5 rounded-2xl border border-border/60 bg-surface-elevated px-3.5 py-2.5 shadow-sm">
+            <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-elevated px-3.5 py-2.5 shadow-sm">
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" />
@@ -320,7 +320,7 @@ function Thread({
 
       <div className="border-t border-border/60 p-3">
         <div className="flex items-end gap-2">
-          <div className="flex-1 rounded-2xl border border-border/60 bg-surface/80 transition-shadow duration-300 focus-within:border-primary/30 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0),0_0_12px_-3px_var(--user-accent,var(--trust))]">
+          <div className="flex-1 rounded-xl border border-border/60 bg-surface/80 transition-shadow duration-300 focus-within:border-primary/30 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0),0_0_12px_-3px_var(--user-accent,var(--trust))]">
             <Textarea
               value={draft}
               onChange={(e) => {
@@ -330,7 +330,7 @@ function Thread({
               placeholder={`Message ${name}…`}
               aria-label={`Message ${name}`}
               rows={1}
-              className="min-h-11 resize-none rounded-2xl border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="min-h-11 resize-none rounded-xl border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -342,7 +342,7 @@ function Thread({
           <Button
             onClick={submit}
             disabled={send.isPending || !draft.trim()}
-            className="h-11 w-11 shrink-0 gap-1.5 rounded-2xl shadow-sm transition-transform duration-150 active:scale-95"
+            className="h-11 w-11 shrink-0 gap-1.5 rounded-xl shadow-sm transition-transform duration-150 active:scale-95"
             size="icon"
           >
             <Send className="h-4 w-4" />

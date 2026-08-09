@@ -80,17 +80,6 @@ export const DASHBOARD_MODULES: WorkspaceModule[] = [
     maxH: 8,
   },
   {
-    id: "quick-actions",
-    title: "Quick actions",
-    icon: IconSparkles,
-    defaultW: 12,
-    defaultH: 3,
-    minW: 6,
-    maxW: 12,
-    minH: 2,
-    maxH: 5,
-  },
-  {
     id: "projects",
     title: "Your projects",
     icon: IconFolder,

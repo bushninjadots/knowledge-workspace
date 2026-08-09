@@ -114,7 +114,7 @@ function FileViewer({ file }: { file: TreeFile | null }) {
   const Icon = getFileIconType(file.name);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border card-border bg-background/40">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border card-border bg-background/40">
       <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2">
         <Icon className="h-4 w-4 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">
@@ -315,7 +315,7 @@ export function ProjectFilesExplorer({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border card-border bg-surface">
+      <section className="rounded-xl border card-border bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <LayoutGrid className="h-4 w-4 text-muted-foreground" />

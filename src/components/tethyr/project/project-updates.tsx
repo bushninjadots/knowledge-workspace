@@ -53,7 +53,7 @@ export function ProjectUpdatesJournal({
   };
 
   return (
-    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Development Journal</h3>
         {isContributor && (
@@ -68,7 +68,7 @@ export function ProjectUpdatesJournal({
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-2xl border border-border/60 bg-background/40 p-3">
+        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <div className="flex gap-2">
             <input
               value={title}
@@ -116,7 +116,7 @@ export function ProjectUpdatesJournal({
           {updates.map((u) => {
             const name = u.author?.display_name || u.author?.handle || "Unknown";
             return (
-              <div key={u.id} className="rounded-2xl border border-border/60 bg-background/40 p-4">
+              <div key={u.id} className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">

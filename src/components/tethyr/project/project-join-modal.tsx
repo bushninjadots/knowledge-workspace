@@ -53,7 +53,7 @@ export function ProjectJoinModal({
       aria-label="Join project"
     >
       <div
-        className="relative w-full max-w-md rounded-2xl border card-border bg-surface p-6 shadow-2xl"
+        className="relative w-full max-w-md rounded-xl border card-border bg-surface p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -116,7 +116,7 @@ export function ProjectJoinModal({
             })}
           </div>
         ) : (
-          <div className="mt-4 rounded-2xl border card-border bg-background/40 p-4">
+          <div className="mt-4 rounded-xl border card-border bg-background/40 p-4">
             <Briefcase className="h-5 w-5 text-muted-foreground/50" />
             <p className="mt-2 text-sm text-muted-foreground">
               This project isn't looking for collaborators right now. Follow its updates and

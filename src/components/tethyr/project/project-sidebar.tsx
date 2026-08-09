@@ -52,7 +52,7 @@ export function ProjectSidebar({
         </button>
       )}
 
-      <div className="rounded-2xl border border-border/60 bg-surface p-4">
+      <div className="rounded-xl border border-border/60 bg-surface p-4">
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Stage
         </h4>
@@ -64,7 +64,7 @@ export function ProjectSidebar({
       </div>
 
       {skills.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-surface p-4">
+        <div className="rounded-xl border border-border/60 bg-surface p-4">
           <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Skills
           </h4>
@@ -87,7 +87,7 @@ export function ProjectSidebar({
       )}
 
       {links.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-surface p-4">
+        <div className="rounded-xl border border-border/60 bg-surface p-4">
           <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Links
           </h4>
@@ -109,7 +109,7 @@ export function ProjectSidebar({
       )}
 
       {openRoles.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-surface p-4">
+        <div className="rounded-xl border border-border/60 bg-surface p-4">
           <h4 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Briefcase className="h-3 w-3" /> Open Roles
           </h4>
@@ -134,7 +134,7 @@ export function ProjectSidebar({
         </div>
       )}
 
-      <div className="rounded-2xl border border-border/60 bg-surface p-4">
+      <div className="rounded-xl border border-border/60 bg-surface p-4">
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Project Info
         </h4>
