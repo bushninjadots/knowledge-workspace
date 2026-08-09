@@ -24,7 +24,9 @@ import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
 
-type OppSortMode = "latest" | "match";
+type OppSortMode = "latest" | "match" | "popular";
+
+const STAGE_RANK: Record<string, number> = { growing: 5, building: 4, launch: 3, testing: 2, planning: 1 };
 
 const NEED_CHIPS = [
   { label: "Designer", skills: ["design", "ui/ux", "graphic design", "illustration", "figma"] },
@@ -377,6 +379,15 @@ function ExplorePage() {
       });
     }
 
+    // Popularity sorting — more skills + active project stage = higher ranking
+    if (oppSort === "popular") {
+      list = [...list].sort((a, b) => {
+        const aScore = a.skills.length + (STAGE_RANK[a.project.stage ?? ""] ?? 0);
+        const bScore = b.skills.length + (STAGE_RANK[b.project.stage ?? ""] ?? 0);
+        return bScore - aScore;
+      });
+    }
+
     return list;
   }, [opportunities, skills, q, category, oppSort, mySkillNames, activeNeed]);
 
@@ -515,6 +526,17 @@ function ExplorePage() {
                       Latest
                     </button>
                     <button
+                      onClick={() => setOppSort("popular")}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                        oppSort === "popular"
+                          ? "bg-surface-elevated text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <TrendingUp className="mr-1 inline h-3 w-3" />
+                      Popular
+                    </button>
+                    <button
                       onClick={() => setOppSort("match")}
                       className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                         oppSort === "match"
@@ -537,6 +559,12 @@ function ExplorePage() {
                         <button onClick={() => setActiveNeed("")} className="ml-0.5">
                           ×
                         </button>
+                      </span>
+                    )}
+                    {oppSort === "popular" && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
+                        <TrendingUp className="h-3 w-3" />
+                        Popular first
                       </span>
                     )}
                     {oppSort === "match" && (

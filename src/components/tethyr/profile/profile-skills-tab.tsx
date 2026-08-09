@@ -36,10 +36,10 @@ export function ProfileSkillsTab({
       )}
 
       {/* TEACH SKILLS */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-2xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-display text-base font-semibold">Skills I teach</h3>
+          <h3 className="text-sm font-semibold">Skills I teach</h3>
           <span className="ml-auto text-xs text-muted-foreground">{teachSkills.length} skills</span>
         </div>
         {teachSkills.length === 0 ? (
@@ -73,10 +73,10 @@ export function ProfileSkillsTab({
       </div>
 
       {/* LEARN SKILLS */}
-      <div className="rounded-xl border card-border bg-surface p-5">
+      <div className="rounded-2xl border card-border bg-surface p-5">
         <div className="mb-4 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-display text-base font-semibold">Skills I want to learn</h3>
+          <h3 className="text-sm font-semibold">Skills I want to learn</h3>
           <span className="ml-auto text-xs text-muted-foreground">{learnSkills.length} skills</span>
         </div>
         {learnSkills.length === 0 ? (
@@ -119,7 +119,7 @@ function SkillMatchCard({
   if (canTeach.length === 0 && canLearn.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
       <div className="mb-4 flex items-center gap-2">
         <ArrowRightLeft className="h-4 w-4 text-primary" />
         <h3 className="font-display text-base font-semibold">Skill Match</h3>

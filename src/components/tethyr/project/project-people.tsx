@@ -77,7 +77,7 @@ export function ProjectPeopleTab({
       )}
 
       {/* People */}
-      <section className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+      <section className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
           <UsersIcon className="h-4 w-4 text-muted-foreground" />
           Project people
@@ -156,7 +156,7 @@ export function ProjectPeopleTab({
         </div>
         <OpenRolesSection roles={openRoles} projectId={projectId} isOwner={isOwner} />
         {openRoles.length === 0 && !isOwner && (
-          <div className="rounded-xl border card-border bg-surface p-4 text-center">
+          <div className="rounded-2xl border card-border bg-surface p-4 text-center">
             <HandHeart className="mx-auto h-6 w-6 text-muted-foreground/40" />
             <p className="mt-2 text-sm text-muted-foreground">
               No open roles right now — but this project is worth watching.

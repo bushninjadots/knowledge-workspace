@@ -26,11 +26,11 @@ export function ProfileProjectsTab({
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-5">
+    <div className="rounded-2xl border card-border bg-surface p-5">
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Rocket className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-display text-base font-semibold">Projects</h3>
+          <h3 className="text-sm font-semibold">Projects</h3>
           <span className="text-xs text-muted-foreground">{projects.length} projects</span>
         </div>
         {isOwnProfile && (

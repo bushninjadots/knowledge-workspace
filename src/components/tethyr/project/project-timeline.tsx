@@ -71,7 +71,7 @@ export function ProjectTimeline({
   }
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
       <h3 className="mb-4 text-sm font-medium text-foreground/80">Project Timeline</h3>
 
       <div className="relative flex items-center justify-between">

@@ -274,10 +274,10 @@ function ProfilePage() {
             isOwnProfile={true}
           />
         ),
-        communities: <ProfileCommunitiesTab />,
         activity: (
           <div className="space-y-6">
             <ProfileActivityTab userId={userId} activity={activity} />
+            <ProfileCommunitiesTab />
             <ProfileSessionsTab userId={userId} isOwnProfile={true} />
           </div>
         ),
@@ -1339,9 +1339,9 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-base font-semibold">{title}</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {onEdit && (
           <Button variant="ghost" size="icon" className="rounded-full" onClick={onEdit}>
             <Pencil className="h-4 w-4" />

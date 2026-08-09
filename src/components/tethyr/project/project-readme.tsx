@@ -199,7 +199,7 @@ export function ProjectReadmeTab({
   return (
     <div className="space-y-8">
       {/* README document */}
-      <section className="rounded-xl border card-border bg-surface">
+      <section className="rounded-2xl border card-border bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -414,7 +414,7 @@ Write your project's story here. Markdown supported — headings, images, GIFs, 
 
       {/* Built with + Tools */}
       {(skills.length > 0 || repoLanguages.length > 0 || isOwner || tools.length > 0) && (
-        <section className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+        <section className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             Built with
@@ -508,7 +508,7 @@ Write your project's story here. Markdown supported — headings, images, GIFs, 
 
       {/* Project structure */}
       {structureText && (
-        <section className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+        <section className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FolderTree className="h-4 w-4 text-muted-foreground" />
             Project structure

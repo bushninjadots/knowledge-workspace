@@ -16,14 +16,15 @@ import {
   Twitter,
   Instagram,
   Twitch,
+  LayoutGrid,
+  Briefcase,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
-import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { PROFILE_MODULES } from "@/lib/workspace-layouts";
 import { ReputationTierBadge } from "@/components/tethyr/reputation-display";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import {
@@ -45,7 +46,14 @@ import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sectio
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
-export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
+export type Tab = "overview" | "skills" | "projects" | "activity";
+
+const TABS: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
+  { id: "overview", label: "Overview", icon: LayoutGrid },
+  { id: "skills", label: "Skills", icon: GraduationCap },
+  { id: "projects", label: "Projects", icon: Briefcase },
+  { id: "activity", label: "Activity", icon: Activity },
+];
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {
   website: Globe,
@@ -87,6 +95,7 @@ export function ProfileLayout({
   tabContent: Record<Tab, React.ReactNode>;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const palette = useUserPalette(bannerSigned);
 
   const { data: requestsData } = useSessionRequests();
@@ -110,7 +119,7 @@ export function ProfileLayout({
     >
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
+        <div className="relative overflow-hidden rounded-2xl border card-border bg-surface p-5 sm:p-6">
           {isOwnProfile ? (
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -255,31 +264,40 @@ export function ProfileLayout({
             </div>
 
             {/* COMPLETENESS (own) or REPUTATION (public) */}
-            <div className="shrink-0">
-              {isOwnProfile ? (
+            {isOwnProfile && (
+              <div className="shrink-0">
                 <CompletenessRing value={completeness} />
-              ) : profile?.reputation_score != null && profile.reputation_score > 0 ? (
-                <div className="space-y-2">
-                  <ReputationTierBadge score={profile.reputation_score} />
-                </div>
-              ) : null}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* WORKSPACE + SIDEBAR */}
+        {/* TABS + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* MAIN CONTENT — customizable module workspace (identity header
-              and sidebar stay fixed; the content beneath is the user's to
-              arrange, resize, hide and pin). */}
+          {/* MAIN CONTENT — clean tabbed sections with consistent scrolling */}
           <div className="min-w-0 flex-1">
-            <WorkspaceGrid
-              page="profile"
-              userId={userId}
-              modules={PROFILE_MODULES}
-              canCustomize={isOwnProfile}
-              renderModule={(id) => tabContent[id as Tab] ?? null}
-            />
+            {/* Tab bar */}
+            <div className="mb-4 flex items-center gap-1 rounded-2xl border card-border bg-surface p-1 w-fit">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? "bg-surface-elevated text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <tab.icon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content — clean scrollable area */}
+            <div className="space-y-6">
+              {tabContent[activeTab]}
+            </div>
           </div>
 
           {/* SIDEBAR */}
@@ -393,36 +411,82 @@ function ProfileSidebar({
 }) {
   const socialLinks = profile?.social_links ?? {};
   const hasSocialLinks = Object.values(socialLinks).some((v) => v);
+  const activeProjects = projects.filter((p) => p.status === "active");
+  const handle = profile?.handle;
 
   return (
-    <div className="w-full shrink-0 space-y-4 lg:w-72">
-      {/* REPUTATION */}
-      {profile?.reputation_score != null && profile.reputation_score > 0 && (
-        <div className="card-border rounded-3xl border bg-surface p-5">
-          <h3 className="mb-3 text-sm font-semibold">Reputation</h3>
-          <ReputationTierBadge score={profile.reputation_score} />
-        </div>
+    <div className="w-full shrink-0 space-y-3 lg:w-72">
+      {/* Public profile link */}
+      {handle && (
+        <a
+          href={`/u/${handle}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between rounded-2xl border border-dashed border-border/50 bg-surface/40 px-4 py-3 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface"
+        >
+          <span>View public profile</span>
+          <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+        </a>
       )}
 
       {/* STATS */}
-      <div className="card-border rounded-3xl border bg-surface p-5">
+      <div className="rounded-2xl border card-border bg-surface p-5">
         <h3 className="mb-3 text-sm font-semibold">Stats</h3>
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <StatRow icon={GraduationCap} label="Skills shared" value={teachIds.length} />
           <StatRow icon={BookOpen} label="Growing" value={learnIds.length} />
           <StatRow icon={Sparkles} label="Projects" value={projects.length} />
-          <StatRow icon={Calendar} label="Activity events" value={activity.length} />
-          {profile?.reputation_score != null && (
-            <StatRow icon={Star} label="Reputation" value={profile.reputation_score} />
+          <StatRow icon={Calendar} label="Activity" value={activity.length} />
+          {profile?.reputation_score != null && profile.reputation_score > 0 && (
+            <>
+              <div className="my-2 h-px bg-border" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Star className="h-3.5 w-3.5" />
+                  <span className="text-sm">Reputation</span>
+                </div>
+                <ReputationTierBadge score={profile.reputation_score} />
+              </div>
+            </>
           )}
         </div>
       </div>
 
+      {/* Active projects highlight */}
+      {activeProjects.length > 0 && (
+        <div className="rounded-2xl border card-border bg-surface p-5">
+          <h3 className="mb-3 text-sm font-semibold">
+            Active projects
+            <span className="ml-1 font-normal text-muted-foreground">({activeProjects.length})</span>
+          </h3>
+          <div className="space-y-2">
+            {activeProjects.slice(0, 3).map((p) => (
+              <a
+                key={p.id}
+                href={`/projects/${p.id}`}
+                className="block rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+              >
+                <span className="truncate block font-medium" title={p.title}>{p.title}</span>
+                <span className="mt-0.5 block text-[11px] text-muted-foreground capitalize">
+                  {p.status}
+                  {p.progress_percent != null && ` · ${p.progress_percent}%`}
+                </span>
+              </a>
+            ))}
+            {activeProjects.length > 3 && (
+              <p className="text-[11px] text-muted-foreground">
+                +{activeProjects.length - 3} more
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* SOCIAL LINKS */}
       {hasSocialLinks && (
-        <div className="card-border rounded-3xl border bg-surface p-5">
+        <div className="rounded-2xl border card-border bg-surface p-5">
           <h3 className="mb-3 text-sm font-semibold">Links</h3>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {Object.entries(socialLinks).map(([key, url]) => {
               if (!url) return null;
               const Icon = SOCIAL_ICONS[key] ?? Globe;
@@ -432,11 +496,11 @@ function ProfileSidebar({
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-surface-sunken hover:text-foreground"
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{key}</span>
-                  <ExternalLink className="ml-auto h-3 w-3 shrink-0 opacity-50" />
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate capitalize">{key}</span>
+                  <ExternalLink className="ml-auto h-3 w-3 shrink-0 opacity-40" />
                 </a>
               );
             })}

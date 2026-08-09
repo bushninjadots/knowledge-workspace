@@ -80,7 +80,7 @@ export function ResourcesSection({
   };
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Resources</h3>
         {isOwner && (
@@ -286,7 +286,7 @@ export function GallerySection({
   if (gallery.length === 0 && !isOwner) return null;
 
   return (
-    <div className="rounded-xl border card-border bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border card-border bg-surface p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Gallery</h3>
         {isOwner && (

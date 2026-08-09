@@ -85,7 +85,7 @@ function FeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-5">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="card-border animate-pulse rounded-3xl border bg-surface p-5 sm:p-6">
+        <div key={i} className="card-border animate-pulse rounded-2xl border bg-surface p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <div className="h-11 w-11 rounded-2xl bg-surface-elevated" />
             <div className="flex-1 space-y-2">
