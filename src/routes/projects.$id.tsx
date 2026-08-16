@@ -308,7 +308,12 @@ function ProjectPage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="p-8 text-sm text-muted-foreground">Loading…</div>
+        <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
+          <div className="h-40 rounded-xl bg-surface" />
+          <div className="h-8 w-2/3 rounded bg-surface" />
+          <div className="h-4 w-full rounded bg-surface" />
+          <div className="h-4 w-5/6 rounded bg-surface" />
+        </div>
       </Shell>
     );
   }

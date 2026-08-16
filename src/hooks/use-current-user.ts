@@ -245,6 +245,22 @@ export function useCurrentUser() {
   };
 }
 
+/**
+ * Lightweight signed-in check for public surfaces (landing, auth pages) that
+ * only need to know whether a session exists — avoids the full current-user
+ * fetch (profile, skills, projects, activity, signed URLs).
+ */
+export function useAuthUser() {
+  return useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user ?? null;
+    },
+    staleTime: 30_000,
+  });
+}
+
 export function useSkillsCatalog() {
   return useQuery({
     queryKey: ["skills"],

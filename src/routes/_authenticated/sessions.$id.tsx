@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -79,6 +79,11 @@ function SessionDetailPage() {
   const updateParticipantStatus = useUpdateParticipantStatus();
 
   const [noteText, setNoteText] = useState("");
+
+  // Replace the generic tab title with the session's real title once loaded.
+  useEffect(() => {
+    if (session?.title) document.title = `${session.title} — Tethyr`;
+  }, [session?.title]);
 
   if (isLoading) {
     return (

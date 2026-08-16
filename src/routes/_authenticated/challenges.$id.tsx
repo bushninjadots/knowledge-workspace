@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Trophy,
@@ -64,6 +64,11 @@ function ChallengeDetailPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isCreator = me?.userId === challenge?.created_by;
+
+  // Replace the generic tab title with the challenge's real title once loaded.
+  useEffect(() => {
+    if (challenge?.title) document.title = `${challenge.title} — Tethyr`;
+  }, [challenge?.title]);
 
   if (isLoading) {
     return (

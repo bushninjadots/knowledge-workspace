@@ -6,6 +6,7 @@ import { ProjectShelfHeader } from "./project-shelf-header";
 import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
+import { clamp, dragDirection, wheelStep } from "./shelf-navigation";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 interface ProjectShelfProps {
@@ -16,10 +17,6 @@ interface ProjectShelfProps {
   setQ: (v: string) => void;
   category: string;
   setCategory: (v: string) => void;
-}
-
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v));
 }
 
 export function ProjectShelf({
@@ -33,7 +30,9 @@ export function ProjectShelf({
 }: ProjectShelfProps) {
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
   const maxOffset = Math.max(0, projects.length - 1);
@@ -51,22 +50,33 @@ export function ProjectShelf({
     if (activeIndex > maxOffset) setActiveIndex(maxOffset);
   }, [maxOffset, activeIndex]);
 
-  const navigate = useCallback(
+  const advance = useCallback(
     (dir: -1 | 1) => {
       if (maxOffset <= 0) return;
+      setDirection(dir);
       setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
     },
     [maxOffset],
   );
 
+  const navigate = useCallback(
+    (dir: -1 | 1) => {
+      if (maxOffset <= 0) return;
+      advance(dir);
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    },
+    [maxOffset, advance],
+  );
+
   const jumpTo = useCallback(
     (index: number) => {
-      setActiveIndex(clamp(index, 0, maxOffset));
+      const target = clamp(index, 0, maxOffset);
+      setDirection(target > activeIndex ? 1 : -1);
+      setActiveIndex(target);
     },
-    [maxOffset],
+    [maxOffset, activeIndex],
   );
 
   // ── Touch / pointer drag ──
@@ -102,7 +112,8 @@ export function ProjectShelf({
       const dx = e.clientX - dragStartX.current;
       dragX.set(0);
       if (Math.abs(dx) >= SWIPE_THRESHOLD) {
-        const dir = dx < 0 ? 1 : -1;
+        const dir = dragDirection(dx);
+        setDirection(dir);
         setActiveIndex((prev) => clamp(prev + dir, 0, maxOffset));
       }
       (e.target as HTMLElement).releasePointerCapture(e.pointerId);
@@ -122,6 +133,32 @@ export function ProjectShelf({
     return () => window.removeEventListener("keydown", handleKey);
   }, [navigate, overlayIndex]);
 
+  // Mouse wheel browses the shelf left/right instead of scrolling the page.
+  // Native listener (not React's passive onWheel) so preventDefault works.
+  const wheelAccum = useRef(0);
+  const wheelLocked = useRef(false);
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (maxOffset <= 0 || overlayIndex != null) return;
+      e.preventDefault();
+      if (wheelLocked.current) return;
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (delta === 0) return;
+      const step = wheelStep(wheelAccum.current, delta);
+      wheelAccum.current = step.accumulated;
+      if (!step.direction) return;
+      wheelLocked.current = true;
+      advance(step.direction);
+      window.setTimeout(() => {
+        wheelLocked.current = false;
+      }, 320);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [maxOffset, overlayIndex, advance, isMobile]);
+
   const handleCardClick = useCallback((_project: ProjectRow, index: number) => {
     setOverlayIndex(index);
   }, []);
@@ -132,6 +169,18 @@ export function ProjectShelf({
 
   const shownIndex = Math.min(activeIndex, maxOffset);
   const activeProject = projects[shownIndex] ?? undefined;
+
+  const slideVariants = prefersReducedMotion
+    ? {
+        enter: () => ({ opacity: 0 }),
+        center: { opacity: 1 },
+        exit: () => ({ opacity: 0 }),
+      }
+    : {
+        enter: (dir: number) => ({ x: dir > 0 ? 120 : -120, opacity: 0 }),
+        center: { x: 0, opacity: 1 },
+        exit: (dir: number) => ({ x: dir > 0 ? -120 : 120, opacity: 0 }),
+      };
 
   return (
     <div className="space-y-6" ref={containerRef}>
@@ -186,7 +235,10 @@ export function ProjectShelf({
         /* Desktop: centered card carousel */
         <div className="space-y-4">
           {/* Main carousel area */}
-          <div className="relative flex items-center justify-center gap-4 sm:gap-6">
+          <div
+            ref={carouselRef}
+            className="relative flex items-center justify-center gap-4 sm:gap-6"
+          >
             {/* Keep both peek slots mounted so the center card stays anchored
                 when moving between the first and last project. */}
             <div className="hidden sm:block w-[120px] xl:w-[160px] shrink-0">
@@ -207,32 +259,37 @@ export function ProjectShelf({
 
             {/* Center card */}
             <div className="w-full max-w-[560px] sm:max-w-[620px] xl:max-w-[700px] touch-pan-y">
-              <AnimatePresence>
+              <AnimatePresence mode="popLayout" custom={direction} initial={false}>
                 <motion.div
                   key={activeProject?.id ?? "empty"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0 }}
-                  style={{ x: dragX }}
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
                   transition={
-                    prefersReducedMotion ? { duration: 0.1 } : { duration: 0.15, ease: "easeOut" }
+                    prefersReducedMotion ? { duration: 0.1 } : { duration: 0.22, ease: "easeOut" }
                   }
-                  className="touch-none cursor-grab active:cursor-grabbing"
                 >
-                  {activeProject && (
-                    <ProjectShelfCover
-                      project={activeProject}
-                      index={activeIndex}
-                      meId={meId}
-                      isContributor={contributorIds.has(activeProject.id)}
-                      prefersReducedMotion={prefersReducedMotion ?? false}
-                      forceFace
-                      onClick={() => handleCardClick(activeProject, activeIndex)}
-                    />
-                  )}
+                  <motion.div
+                    style={{ x: dragX }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    className="touch-none cursor-grab active:cursor-grabbing"
+                  >
+                    {activeProject && (
+                      <ProjectShelfCover
+                        project={activeProject}
+                        index={activeIndex}
+                        meId={meId}
+                        isContributor={contributorIds.has(activeProject.id)}
+                        prefersReducedMotion={prefersReducedMotion ?? false}
+                        forceFace
+                        onClick={() => handleCardClick(activeProject, activeIndex)}
+                      />
+                    )}
+                  </motion.div>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -281,7 +338,8 @@ export function ProjectShelf({
             </span>
 
             <span className="hidden items-center gap-1.5 text-[11px] text-muted-foreground md:flex">
-              <Keyboard className="h-3.5 w-3.5" />← → to browse
+              <Keyboard className="h-3.5 w-3.5" />
+              Scroll or ← → to browse
             </span>
           </div>
 

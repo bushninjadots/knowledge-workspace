@@ -227,7 +227,17 @@ function PublicProfileRoute() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="p-8 text-sm text-muted-foreground">Loading…</div>
+        <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
+          <div className="h-48 rounded-xl bg-surface" />
+          <div className="flex items-center gap-4">
+            <div className="h-28 w-28 rounded-full bg-surface" />
+            <div className="flex-1 space-y-3">
+              <div className="h-6 w-1/3 rounded bg-surface" />
+              <div className="h-4 w-1/4 rounded bg-surface" />
+            </div>
+          </div>
+          <div className="h-24 rounded-xl bg-surface" />
+        </div>
       </Shell>
     );
   }
@@ -257,7 +267,7 @@ function PublicProfileRoute() {
         {/* ── Hero: Studio Backdrop ── */}
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           <div
-            className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-3xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
+            className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
             style={{ borderColor: bannerAccent ?? "transparent" }}
           >
             {bannerSigned ? (

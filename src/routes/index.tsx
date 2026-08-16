@@ -1,21 +1,62 @@
+import { lazy, Suspense } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuthUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
-import {
-  CommunitySpaces,
-  FeaturedProjects,
-  HeroShowcase,
-  HowItWorks,
-  LandingStats,
-  RecentActivity,
-  TrendingSkills,
-} from "@/components/tethyr/landing-sections";
+import { HeroShowcase } from "@/components/tethyr/landing/hero-showcase";
+import { LandingStats } from "@/components/tethyr/landing/landing-stats";
 import { HeroActions } from "@/components/tethyr/hero-actions";
 import { SectionReveal } from "@/components/tethyr/section-reveal";
 import { Button } from "@/components/ui/button";
 import { canonicalLinks } from "@/lib/seo";
+
+// Below-the-fold landing sections are code-split so their JS stays off the
+// initial critical path — the landing bundle's size was the dominant driver of
+// the page's total blocking time. They still stream in via Suspense during SSR,
+// so search engines keep seeing the full page.
+const HowItWorks = lazy(() =>
+  import("@/components/tethyr/landing/how-it-works").then((m) => ({ default: m.HowItWorks })),
+);
+const TrendingSkills = lazy(() =>
+  import("@/components/tethyr/landing/trending-skills").then((m) => ({
+    default: m.TrendingSkills,
+  })),
+);
+const FeaturedProjects = lazy(() =>
+  import("@/components/tethyr/landing/featured-projects").then((m) => ({
+    default: m.FeaturedProjects,
+  })),
+);
+const RecentActivity = lazy(() =>
+  import("@/components/tethyr/landing/recent-activity").then((m) => ({
+    default: m.RecentActivity,
+  })),
+);
+const CommunitySpaces = lazy(() =>
+  import("@/components/tethyr/landing/community-spaces").then((m) => ({
+    default: m.CommunitySpaces,
+  })),
+);
+
+function SectionSkeleton() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6" aria-hidden="true">
+      <div className="mb-10 space-y-3">
+        <div className="h-3 w-24 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-8 w-72 animate-pulse rounded bg-surface-elevated" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-44 animate-pulse rounded-xl border border-border/60 bg-surface"
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function scrollToContent() {
   document.getElementById("landing-content")?.scrollIntoView({
@@ -40,8 +81,8 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { data: me, isLoading: authLoading } = useCurrentUser();
-  const isAuthed = Boolean(me?.userId);
+  const { data: authUser, isLoading: authLoading } = useAuthUser();
+  const isAuthed = Boolean(authUser?.id);
   const ctaReady = !authLoading;
 
   return (
@@ -134,19 +175,29 @@ function HomePage() {
       <LandingStats />
       <main id="landing-content">
         <SectionReveal>
-          <HowItWorks />
+          <Suspense fallback={<SectionSkeleton />}>
+            <HowItWorks />
+          </Suspense>
         </SectionReveal>
         <SectionReveal>
-          <TrendingSkills />
+          <Suspense fallback={<SectionSkeleton />}>
+            <TrendingSkills />
+          </Suspense>
         </SectionReveal>
         <SectionReveal>
-          <FeaturedProjects />
+          <Suspense fallback={<SectionSkeleton />}>
+            <FeaturedProjects />
+          </Suspense>
         </SectionReveal>
         <SectionReveal>
-          <RecentActivity />
+          <Suspense fallback={<SectionSkeleton />}>
+            <RecentActivity />
+          </Suspense>
         </SectionReveal>
         <SectionReveal>
-          <CommunitySpaces />
+          <Suspense fallback={<SectionSkeleton />}>
+            <CommunitySpaces />
+          </Suspense>
         </SectionReveal>
       </main>
 
