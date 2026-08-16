@@ -50,6 +50,7 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle
     achievement: { icon: Trophy, color: "text-teaching" },
     project_invite: { icon: FolderPlus, color: "text-trust" },
     project_join: { icon: Users, color: "text-trust" },
+    team_invite: { icon: Users, color: "text-trust" },
     project_post: { icon: MessageSquare, color: "text-learning" },
     role_application_accepted: { icon: BriefcaseBusiness, color: "text-trust" },
     role_application_declined: { icon: BriefcaseBusiness, color: "text-destructive" },

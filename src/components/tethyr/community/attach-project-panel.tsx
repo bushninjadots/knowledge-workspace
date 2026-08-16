@@ -47,8 +47,8 @@ export function AttachProjectPanel({
       });
       if (error) throw error;
       setFetchedSnapshot(data as ProjectSnapshot);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to fetch preview");
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message ?? "Failed to fetch preview");
     } finally {
       setFetching(false);
     }
@@ -97,8 +97,8 @@ export function AttachProjectPanel({
       setNewName("");
       setNewDesc("");
       toast.success("Project created and attached");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to create project");
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message ?? "Failed to create project");
     } finally {
       setCreating(false);
     }

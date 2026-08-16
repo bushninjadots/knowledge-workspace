@@ -22,7 +22,7 @@ import { buildTree, type TreeNode, type TreeFile } from "@/lib/file-tree";
 import { getFileIconType, getFileType, formatFileSize, type ProjectFile } from "./project-files";
 import { ProjectReposSection } from "./project-repos";
 
-const sb = supabase as any;
+const sb = supabase;
 
 function FolderRow({
   node,
@@ -266,8 +266,8 @@ export function ProjectFilesExplorer({
             path,
           });
           success++;
-        } catch (err: any) {
-          toast.error(`${file.name}: ${err.message || "Upload failed"}`);
+        } catch (err: unknown) {
+          toast.error(`${file.name}: ${(err as Error).message || "Upload failed"}`);
         }
       }
 

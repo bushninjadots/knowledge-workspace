@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.project_needs (
   project_id  uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   title       text NOT NULL,
   note        text,
+  skill_id    uuid REFERENCES public.skills(id) ON DELETE SET NULL,
   urgency     text NOT NULL DEFAULT 'normal' CHECK (urgency IN ('low', 'normal', 'high')),
   is_filled   boolean NOT NULL DEFAULT false,
   filled_by   uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -26,6 +27,9 @@ CREATE INDEX IF NOT EXISTS project_needs_project_idx
 
 CREATE INDEX IF NOT EXISTS project_needs_open_idx
   ON public.project_needs (is_filled, urgency, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS project_needs_skill_idx
+  ON public.project_needs (skill_id, is_filled);
 
 ALTER TABLE public.project_needs ENABLE ROW LEVEL SECURITY;
 

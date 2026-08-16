@@ -36,7 +36,7 @@ import {
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
-import { safeHref, isSafeUrl } from "@/lib/validators";
+import { safeHref, isSafeUrl, sanitizeFilename, validateLibraryFile } from "@/lib/validators";
 
 export const Route = createFileRoute("/_authenticated/challenges/$id")({
   head: () => ({
@@ -122,10 +122,16 @@ function ChallengeDetailPage() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !me?.userId || !challenge) return;
+    const check = validateLibraryFile(file);
+    if (!check.ok) {
+      toast.error(check.error);
+      return;
+    }
+    const safeName = sanitizeFilename(file.name) || `submission.${check.ext}`;
     setUploading(true);
     try {
-      // Path: <participantId>/<challengeId>/<timestamp>-<name>
-      const path = `${me.userId}/${challenge.id}/${Date.now()}-${file.name}`;
+      // Path: <participantId>/<challengeId>/<timestamp>-<safe-name>
+      const path = `${me.userId}/${challenge.id}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("challenge-submissions")
         .upload(path, file);

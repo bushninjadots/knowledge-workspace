@@ -37,7 +37,7 @@ export const SuggestedCreators = memo(function SuggestedCreators({
       const targetLangs = me.profile?.languages ?? [];
 
       // Fetch candidate profiles (exclude self, must have a name)
-      const { data: profiles } = await (supabase as any)
+      const { data: profiles } = await supabase
         .from("profiles")
         .select(
           "id, handle, display_name, creator_title, category, avatar_url, availability, languages",
@@ -48,7 +48,7 @@ export const SuggestedCreators = memo(function SuggestedCreators({
 
       if (!profiles || profiles.length === 0) return [];
 
-      const candidateIds = (profiles as any[]).map((p: any) => p.id);
+      const candidateIds = profiles.map((p) => p.id);
 
       // Fetch teach + learn skills for all candidates in parallel
       const [teachRes, learnRes] = await Promise.all([
@@ -97,8 +97,8 @@ export const SuggestedCreators = memo(function SuggestedCreators({
       }
 
       // Score each candidate
-      const scored = (profiles as any[])
-        .map((p: any) => {
+      const scored = profiles
+        .map((p) => {
           const teach = teachMap.get(p.id) ?? [];
           const learn = learnMap.get(p.id) ?? [];
           const { score, reasons } = computeMatchScore({
@@ -168,7 +168,10 @@ export const SuggestedCreators = memo(function SuggestedCreators({
                 {initial}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium" title={c.display_name || c.handle || "Untitled member"}>
+                <p
+                  className="truncate text-sm font-medium"
+                  title={c.display_name || c.handle || "Untitled member"}
+                >
                   {c.display_name || c.handle || "Untitled member"}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">

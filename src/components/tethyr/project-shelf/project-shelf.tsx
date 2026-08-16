@@ -1,9 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion, useMotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ProjectShelfHeader } from "./project-shelf-header";
-import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
+import { ProjectShelfCover } from "./project-shelf-cover";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { clamp, dragDirection, wheelStep } from "./shelf-navigation";

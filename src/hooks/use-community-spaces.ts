@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// Until Supabase types are regenerated after migration, cast new tables
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
 export type SpaceMemberRole = "owner" | "moderator" | "member";

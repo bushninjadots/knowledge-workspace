@@ -105,7 +105,7 @@ function PublicProfileRoute() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-profile", handle],
     queryFn: async () => {
-      const { data: profile, error } = await (supabase as any)
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select(
           "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score",
@@ -176,7 +176,7 @@ function PublicProfileRoute() {
       // Fetch projects this user has contributed to
       let contributedProjects: ProjectLite[] = [];
       try {
-        const { data: contribRows } = await (supabase as any)
+        const { data: contribRows } = await supabase
           .from("project_contributors")
           .select(
             "project_id, role, projects(id, title, description, status, stage, progress_percent, cover_url, tags)",
@@ -185,7 +185,7 @@ function PublicProfileRoute() {
           .limit(6);
         if (contribRows) {
           contributedProjects = contribRows
-            .map((r: any) => {
+            .map((r): ProjectLite | null => {
               const p = r.projects;
               if (!p) return null;
               return {
@@ -374,7 +374,7 @@ function PublicProfileRoute() {
           icon={<GraduationCap className="h-4 w-4" />}
         >
           {teachSkills.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Not sharing any studios yet.</p>
+            <p className="text-sm text-muted-foreground">Not sharing any skills yet.</p>
           ) : (
             <div className="space-y-3">
               {teachSkills.map((s) => {

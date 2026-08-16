@@ -20,7 +20,8 @@ export type NotificationDestination =
     }
   | { to: "/projects/$id"; params: { id: string } }
   | { to: "/challenges" }
-  | { to: "/challenges/$id"; params: { id: string } };
+  | { to: "/challenges/$id"; params: { id: string } }
+  | { to: "/teams/$slug"; params: { slug: string } };
 
 /**
  * Every notification must resolve to a permission-safe product destination.
@@ -51,6 +52,10 @@ export function getNotificationDestination(
     case "project_join":
     case "project_post":
       return entity_id ? { to: "/projects/$id", params: { id: entity_id } } : { to: "/explore" };
+    case "team_invite": {
+      const slug = typeof metadata.team_slug === "string" ? metadata.team_slug : null;
+      return slug ? { to: "/teams/$slug", params: { slug } } : { to: "/profile" };
+    }
     case "role_application_accepted":
     case "role_application_declined": {
       const projectId = typeof metadata.project_id === "string" ? metadata.project_id : null;

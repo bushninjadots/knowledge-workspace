@@ -190,27 +190,24 @@ function DashboardContent({
   data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
 }) {
   const updateAvail = useUpdateAvailability();
-  const { data: sessionRequests = [], isLoading: sessionsLoading } = useSessionRequests();
-  const { data: connections = [], isLoading: connectionsLoading } = useConnections();
-  const { data: unreadData, isLoading: unreadLoading } = useUnreadCounts();
+  const { data: sessionRequests = [] } = useSessionRequests();
+  const { data: connections = [] } = useConnections();
+  const { data: unreadData } = useUnreadCounts();
 
   const { data: myChallenges = [], isLoading: challengesLoading } = useChallenges("active");
-  const joinedChallenges = useMemo(
-    () => myChallenges.filter((c: any) => c.is_joined),
-    [myChallenges],
-  );
+  const joinedChallenges = useMemo(() => myChallenges.filter((c) => c.is_joined), [myChallenges]);
 
   const { data: myApplications = [], isLoading: applicationsLoading } = useQuery({
     queryKey: ["my-applications", data?.userId],
     queryFn: async () => {
-      const { data: apps, error } = await (supabase as any)
+      const { data: apps, error } = await supabase
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
         .eq("profile_id", data?.userId)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) return [];
-      return (apps ?? []) as any[];
+      return apps ?? [];
     },
     enabled: !!data?.userId,
     staleTime: 30_000,
@@ -218,22 +215,22 @@ function DashboardContent({
 
   const weeklyRep = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const thisWeek = (data?.activity ?? []).filter((e: any) => new Date(e.created_at) >= weekAgo);
+    const thisWeek = (data?.activity ?? []).filter((e) => new Date(e.created_at) >= weekAgo);
     return thisWeek.length;
   }, [data?.activity]);
 
   const { data: todayOpps = [], isLoading: opportunitiesLoading } = useQuery({
     queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
-      const { data: roles, error } = await (supabase as any)
+      const { data: roles, error } = await supabase
         .from("project_open_roles")
         .select("id, title, skills, projects(title, id, status)")
         .eq("is_filled", false)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) return [];
-      return ((roles ?? []) as any[]).filter(
-        (r: any) => r.projects && ["planning", "active"].includes(r.projects.status),
+      return (roles ?? []).filter(
+        (r) => r.projects && ["planning", "active"].includes(r.projects.status),
       );
     },
     staleTime: 60_000,
@@ -257,7 +254,7 @@ function DashboardContent({
   const myProjects = useMemo(
     () =>
       [...(data?.projects ?? [])].sort(
-        (a: any, b: any) =>
+        (a, b) =>
           new Date(b.updated_at ?? b.created_at).getTime() -
           new Date(a.updated_at ?? a.created_at).getTime(),
       ),
@@ -318,7 +315,7 @@ function DashboardContent({
                 />
               ) : (
                 <div className="space-y-2">
-                  {activeProjects.slice(0, 3).map((p: any) => (
+                  {activeProjects.slice(0, 3).map((p) => (
                     <Link
                       key={p.id}
                       to="/projects/$id"
@@ -366,7 +363,7 @@ function DashboardContent({
                 />
               ) : (
                 <div className="space-y-1.5">
-                  {myApplications.slice(0, 4).map((app: any) => (
+                  {myApplications.slice(0, 4).map((app) => (
                     <Link
                       key={app.id}
                       to="/projects/$id"
@@ -422,7 +419,7 @@ function DashboardContent({
                 />
               ) : (
                 <div className="space-y-1.5">
-                  {joinedChallenges.slice(0, 3).map((c: any) => (
+                  {joinedChallenges.slice(0, 3).map((c) => (
                     <Link
                       key={c.id}
                       to="/challenges/$id"
@@ -677,7 +674,7 @@ function DashboardContent({
                   <p className="mt-3 text-xs text-muted-foreground">Loading open roles…</p>
                 ) : todayOpps.length > 0 ? (
                   <div className="mt-3 space-y-1">
-                    {todayOpps.slice(0, 2).map((opp: any) => (
+                    {todayOpps.slice(0, 2).map((opp) => (
                       <p key={opp.id} className="truncate text-xs text-muted-foreground">
                         {opp.title} — {opp.projects?.title}
                       </p>

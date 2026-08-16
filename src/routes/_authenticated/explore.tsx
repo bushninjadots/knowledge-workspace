@@ -146,6 +146,7 @@ type NeedRow = {
   note: string | null;
   urgency: "low" | "normal" | "high";
   created_at: string;
+  skills: { name: string } | null;
   projects: {
     id: string;
     title: string;
@@ -326,10 +327,10 @@ function ExplorePage() {
   const { data: needs = [] } = useQuery({
     queryKey: ["explore-needs"],
     queryFn: async (): Promise<NeedRow[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("project_needs")
         .select(
-          "id, title, note, urgency, created_at, projects(id, title, status, profile_id, profiles(handle, display_name))",
+          "id, title, note, urgency, created_at, skills(name), projects(id, title, status, profile_id, profiles(handle, display_name))",
         )
         .eq("is_filled", false)
         .order("created_at", { ascending: false })
@@ -561,6 +562,20 @@ function ExplorePage() {
                               ? ` · by ${n.projects.profiles.display_name}`
                               : ""}
                           </p>
+                          {n.skills?.name && (
+                            <span
+                              className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+                                mySkillNames.has(n.skills.name.toLowerCase())
+                                  ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                  : "border-brand-purple/30 bg-brand-purple/5 text-brand-purple"
+                              }`}
+                            >
+                              {n.skills.name}
+                              {mySkillNames.has(n.skills.name.toLowerCase()) && (
+                                <BadgeCheck className="h-3 w-3" />
+                              )}
+                            </span>
+                          )}
                         </div>
                         <span
                           className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${NEED_BADGE[n.urgency]}`}
@@ -899,22 +914,24 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
   const { data: stats } = useQuery({
     queryKey: ["discover-sidebar-stats"],
     queryFn: async () => {
-      const count = async (table: string) => {
-        const { count, error } = await (supabase as any)
-          .from(table)
-          .select("id", { count: "exact", head: true });
-        if (error) return 0;
-        return count ?? 0;
-      };
       const [projects, creators, skills, opportunities] = await Promise.all([
-        count("projects"),
-        count("profiles"),
-        count("skills"),
-        (supabase as any)
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .then(({ count }) => count ?? 0),
+        supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .then(({ count }) => count ?? 0),
+        supabase
+          .from("skills")
+          .select("id", { count: "exact", head: true })
+          .then(({ count }) => count ?? 0),
+        supabase
           .from("project_open_roles")
           .select("id", { count: "exact", head: true })
           .eq("is_filled", false)
-          .then(({ count }: { count: number | null }) => count ?? 0),
+          .then(({ count }) => count ?? 0),
       ]);
       return { projects, creators, skills, opportunities };
     },

@@ -61,7 +61,9 @@ function LibraryItemPage() {
     }
     supabase.storage
       .from("library-files")
-      .createSignedUrl(item.file_url, 60 * 10)
+      // download:true forces Content-Disposition: attachment so uploaded files
+      // (HTML, SVG, etc.) are downloaded rather than rendered in-browser.
+      .createSignedUrl(item.file_url, 60 * 10, { download: true })
       .then(({ data, error }) => {
         if (active) setFileUrl(error ? null : (data?.signedUrl ?? null));
       });
@@ -244,8 +246,7 @@ function LibraryItemPage() {
               <Upload className="h-5 w-5 text-ai" />
               <a
                 href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                download={item.title || undefined}
                 className="text-sm text-brand-green underline hover:opacity-80"
               >
                 {item.file_type ?? "File"}

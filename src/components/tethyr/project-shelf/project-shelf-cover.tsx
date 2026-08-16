@@ -27,12 +27,7 @@ export function ProjectShelfCover(props: ProjectShelfCoverProps) {
  * Clean, static project card — full cover image at 16:9,
  * info panel below. No 3D transforms, no animation math.
  */
-function ProjectShelfFace({
-  project,
-  meId,
-  isContributor,
-  onClick,
-}: ProjectShelfCoverProps) {
+function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShelfCoverProps) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
 
@@ -81,7 +76,10 @@ function ProjectShelfFace({
       {/* Info panel */}
       <div className="flex flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
         <div className="flex items-start justify-between gap-2">
-          <p className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors" title={project.title}>
+          <p
+            className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors"
+            title={project.title}
+          >
             {project.title}
           </p>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -97,7 +95,10 @@ function ProjectShelfFace({
         </div>
 
         {project.profiles && (
-          <p className="truncate text-xs text-muted-foreground" title={`by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`}>
+          <p
+            className="truncate text-xs text-muted-foreground"
+            title={`by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`}
+          >
             by {project.profiles.display_name || project.profiles.handle || "Member"}
             {" · "}
             {status.label}

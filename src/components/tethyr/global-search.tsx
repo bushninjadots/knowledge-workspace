@@ -250,8 +250,16 @@ export function GlobalSearch({
     }
   }
 
+  type SearchRoute =
+    | { to: "/u/$handle"; params: { handle: string } }
+    | { to: "/skills/$slug"; params: { slug: string } }
+    | { to: "/explore" }
+    | { to: "/library/$id"; params: { id: string } }
+    | { to: "/community" }
+    | { to: "/sessions/$id"; params: { id: string } };
+
   function activateItem(index: number) {
-    const allHits: Array<{ to: () => { to: string; params?: Record<string, string> } | null }> = [
+    const allHits: Array<{ to: () => SearchRoute | null }> = [
       ...profileHits.map((h) => ({
         to: () => (h.handle ? { to: "/u/$handle" as const, params: { handle: h.handle } } : null),
       })),
@@ -281,7 +289,7 @@ export function GlobalSearch({
     if (!route) return;
     setQ("");
     setOpen(false);
-    navigate(route as any);
+    navigate(route);
   }
 
   function renderResults() {

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
 import { githubTokenErrorMessage } from "@/lib/github";
 
-const sb = supabase as any;
+const sb = supabase;
 
 type ConnectedAccount = {
   id: string;
@@ -35,11 +35,16 @@ export function useConnectGitHub() {
 
   return useMutation({
     mutationFn: async (username: string) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       // Store the GitHub username as a connected account
       const { data, error } = await sb
         .from("connected_accounts")
         .upsert(
           {
+            user_id: user.id,
             provider: "github",
             username: username.trim(),
             provider_id: username.trim(),

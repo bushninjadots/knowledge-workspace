@@ -104,16 +104,16 @@ export const ActivityTimeline = memo(function ActivityTimeline({
     queryKey: ["contribution-log", profileId ?? "none"],
     queryFn: async (): Promise<ActivityEvent[]> => {
       if (!profileId) return [];
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("contribution_log")
         .select("id, action, points, metadata, created_at")
         .eq("profile_id", profileId)
         .order("created_at", { ascending: false })
         .limit(30);
-      return (data ?? []).map((row: any) => ({
+      return (data ?? []).map((row) => ({
         id: row.id,
         kind: row.action,
-        metadata: { ...row.metadata, points: row.points },
+        metadata: { ...(row.metadata as Record<string, unknown>), points: row.points },
         created_at: row.created_at,
         source: "contribution" as const,
       }));
@@ -198,7 +198,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
       {rows.map((e) => {
         const Icon = ICONS[e.kind] ?? Sparkles;
         const label = (LABELS[e.kind] ?? (() => e.kind.replaceAll("_", "")))(e.metadata ?? {});
-        const points = (e.metadata as any)?.points as number | undefined;
+        const points = e.metadata?.points as number | undefined;
         return (
           <li key={e.id} className="relative">
             <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border/70">

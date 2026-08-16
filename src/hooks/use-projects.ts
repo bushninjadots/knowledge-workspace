@@ -2,9 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Until Supabase types are regenerated after migration, cast new tables
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 // ============================================================
 // Types
@@ -201,8 +199,27 @@ export function useUpdateMilestone() {
       due_date?: string;
       position?: number;
     }) => {
-      const { id, projectId: _projectId, ...updates } = input;
-      const { error } = await sb.from("project_milestones").update(updates).eq("id", id);
+      const updates: {
+        title?: string;
+        description?: string;
+        status?: MilestoneRow["status"];
+        due_date?: string;
+        position?: number;
+        completed_by?: string | null;
+      } = {};
+      if (input.title !== undefined) updates.title = input.title;
+      if (input.description !== undefined) updates.description = input.description;
+      if (input.status !== undefined) updates.status = input.status;
+      if (input.due_date !== undefined) updates.due_date = input.due_date;
+      if (input.position !== undefined) updates.position = input.position;
+      // Attribute the completion so the Credits roll can credit the actor.
+      if (input.status === "done") {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) updates.completed_by = user.id;
+      }
+      const { error } = await sb.from("project_milestones").update(updates).eq("id", input.id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
@@ -301,9 +318,8 @@ export function useCreateProjectUpdate() {
         .eq("id", input.projectId)
         .maybeSingle();
       if (projRow?.visibility !== "private") {
-        await sb
-          .from("posts")
-          .insert({
+        try {
+          await sb.from("posts").insert({
             author_id: user.id,
             type: "project_update",
             title: input.title,
@@ -313,11 +329,10 @@ export function useCreateProjectUpdate() {
               project_id: input.projectId,
               week_number: input.week_number ?? null,
             },
-          })
-          .then(() => {})
-          .catch(() => {
-            // Non-fatal — community post is a bonus, not a requirement
           });
+        } catch {
+          // Non-fatal — community post is a bonus, not a requirement
+        }
       }
 
       return data;
@@ -585,6 +600,7 @@ export type ProjectNeedRow = {
   project_id: string;
   title: string;
   note: string | null;
+  skill_id: string | null;
   urgency: "low" | "normal" | "high";
   is_filled: boolean;
   filled_by: string | null;
@@ -632,6 +648,7 @@ export function useCreateProjectNeed() {
       projectId: string;
       title: string;
       note?: string;
+      skillId?: string | null;
       urgency?: ProjectNeedRow["urgency"];
     }) => {
       const { data, error } = await sb
@@ -640,6 +657,7 @@ export function useCreateProjectNeed() {
           project_id: input.projectId,
           title: input.title,
           note: input.note ?? null,
+          skill_id: input.skillId ?? null,
           urgency: input.urgency ?? "normal",
         })
         .select()
@@ -862,7 +880,7 @@ export function useUpdateProjectContent() {
       gallery?: GalleryItem[];
       resources?: ResourceItem[];
     }) => {
-      const updates: Record<string, unknown> = {};
+      const updates: { gallery?: GalleryItem[]; resources?: ResourceItem[] } = {};
       if (input.gallery !== undefined) updates.gallery = input.gallery;
       if (input.resources !== undefined) updates.resources = input.resources;
       if (Object.keys(updates).length === 0) return;
@@ -923,7 +941,7 @@ export function useUpdateProjectReadme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { projectId: string; readme?: string | null; tools?: string[] }) => {
-      const updates: Record<string, unknown> = {};
+      const updates: { readme?: string | null; tools?: string[] } = {};
       if (input.readme !== undefined) updates.readme = input.readme;
       if (input.tools !== undefined) updates.tools = input.tools;
       if (Object.keys(updates).length === 0) return;

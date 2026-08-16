@@ -25,6 +25,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
+import { Route as TeamsSlugRouteImport } from './routes/teams.$slug'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as AuthenticatedChallengesIdRouteImport } from './routes/_authenticated/challenges.$id'
 import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library.$id'
@@ -112,6 +113,11 @@ const SkillsSlugRoute = SkillsSlugRouteImport.update({
   path: '/skills/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamsSlugRoute = TeamsSlugRouteImport.update({
+  id: '/teams/$slug',
+  path: '/teams/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
+  '/teams/$slug': typeof TeamsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
+  '/teams/$slug': typeof TeamsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
+  '/teams/$slug': typeof TeamsSlugRoute
   '/u/$handle': typeof UHandleRoute
   '/_authenticated/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/projects/$id'
     | '/skills/$slug'
+    | '/teams/$slug'
     | '/u/$handle'
     | '/challenges/$id'
     | '/library/$id'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/projects/$id'
     | '/skills/$slug'
+    | '/teams/$slug'
     | '/u/$handle'
     | '/challenges/$id'
     | '/library/$id'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sessions'
     | '/projects/$id'
     | '/skills/$slug'
+    | '/teams/$slug'
     | '/u/$handle'
     | '/_authenticated/challenges/$id'
     | '/_authenticated/library/$id'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ProjectsIdRoute: typeof ProjectsIdRoute
   SkillsSlugRoute: typeof SkillsSlugRoute
+  TeamsSlugRoute: typeof TeamsSlugRoute
   UHandleRoute: typeof UHandleRoute
 }
 
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/skills/$slug'
       fullPath: '/skills/$slug'
       preLoaderRoute: typeof SkillsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams/$slug': {
+      id: '/teams/$slug'
+      path: '/teams/$slug'
+      fullPath: '/teams/$slug'
+      preLoaderRoute: typeof TeamsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/$handle': {
@@ -537,6 +557,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ProjectsIdRoute: ProjectsIdRoute,
   SkillsSlugRoute: SkillsSlugRoute,
+  TeamsSlugRoute: TeamsSlugRoute,
   UHandleRoute: UHandleRoute,
 }
 export const routeTree = rootRouteImport

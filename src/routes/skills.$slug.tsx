@@ -25,7 +25,7 @@ import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { canonicalLinks } from "@/lib/seo";
 
-const sb = supabase as any;
+const sb = supabase;
 
 export const Route = createFileRoute("/skills/$slug")({
   head: ({ params }) => ({
@@ -277,14 +277,15 @@ function SkillOverview({
         .limit(6);
       if (!data) return [];
       const seen = new Set<string>();
-      return (data as any[])
+      return data
         .filter((r) => {
           if (seen.has(r.skill_id)) return false;
           seen.add(r.skill_id);
           return true;
         })
         .slice(0, 4)
-        .map((r) => r.skills) as { id: string; name: string; slug: string; category: string }[];
+        .map((r) => r.skills)
+        .filter((s): s is { id: string; name: string; slug: string; category: string } => !!s);
     },
   });
 
@@ -456,7 +457,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
         )
         .eq("skill_id", skillId)
         .order("created_at", { ascending: false });
-      return (data ?? []) as any[];
+      return data ?? [];
     },
   });
 
@@ -531,7 +532,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
         )
         .eq("skill_id", skillId)
         .order("created_at", { ascending: false });
-      return (data ?? []) as any[];
+      return data ?? [];
     },
   });
 
@@ -604,7 +605,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
           "project_id, projects(id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id)",
         )
         .eq("skill_id", skillId);
-      return (data ?? []) as any[];
+      return data ?? [];
     },
   });
 

@@ -27,7 +27,7 @@ import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { PROFILE_MODULES } from "@/lib/workspace-layouts";
-import { GripVertical, Check } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -443,7 +443,6 @@ function ProfileSidebar({
   const socialLinks = profile?.social_links ?? {};
   const hasSocialLinks = Object.values(socialLinks).some((v) => v);
   const activeProjects = projects.filter((p) => p.status === "active");
-  const handle = profile?.handle;
 
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">

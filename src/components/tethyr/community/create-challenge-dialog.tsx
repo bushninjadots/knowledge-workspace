@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useCreateChallenge } from "@/hooks/use-challenges";
+import {
+  useCreateChallenge,
+  type ChallengeType,
+  type ChallengeDifficulty,
+} from "@/hooks/use-challenges";
 
 export function CreateChallengeDialog({
   open: controlledOpen,
@@ -58,14 +62,14 @@ export function CreateChallengeDialog({
       {
         title: title.trim(),
         description: description.trim(),
-        type: type as any,
+        type: type as ChallengeType,
         skills: skills
           ? skills
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean)
           : [],
-        difficulty: difficulty as any,
+        difficulty: difficulty as ChallengeDifficulty,
         start_date: startDate || null,
         end_date: endDate || null,
         max_participants: maxParticipants ? parseInt(maxParticipants) : null,

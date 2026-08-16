@@ -17,7 +17,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
 
-const sb = supabase as any;
+const sb = supabase;
 
 const RESOURCE_ICON: Record<string, typeof FileText> = {
   article: FileText,
@@ -243,8 +243,8 @@ export function GallerySection({
         setCaption("");
         setShowAdd(false);
         toast.success("Image uploaded");
-      } catch (err: any) {
-        toast.error(err.message || "Upload failed");
+      } catch (err: unknown) {
+        toast.error((err as Error).message || "Upload failed");
       } finally {
         setUploading(false);
       }

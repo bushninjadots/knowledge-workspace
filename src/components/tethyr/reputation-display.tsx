@@ -82,7 +82,7 @@ export function ReputationBreakdown({ profileId }: { profileId: string }) {
   const { data } = useQuery({
     queryKey: ["reputation-breakdown", profileId],
     queryFn: async (): Promise<ReputationCategory[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("contribution_log")
         .select("category, points")
         .eq("profile_id", profileId);

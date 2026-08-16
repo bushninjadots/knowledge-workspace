@@ -13,13 +13,12 @@ export const Route = createFileRoute("/_authenticated/notifications")({
     meta: [{ title: "Notifications — Tethyr" }],
   }),
   component: NotificationsPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Notifications unavailable</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {error?.message ||
-            "Unable to load notifications. The notifications service may be temporarily unavailable."}
+          Unable to load notifications. Please try again.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Button onClick={() => window.location.reload()}>Try again</Button>

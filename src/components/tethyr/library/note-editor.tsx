@@ -10,6 +10,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
+import { SignedImage } from "./signed-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { common, createLowlight } from "lowlight";
 import { toast } from "sonner";
@@ -37,8 +38,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { validateImageFile } from "@/lib/validators";
 
 const lowlight = createLowlight(common);
+
+// External image URLs use the stock Image extension; storage paths go through
+// SignedImage (which signs at render). Keep them from fighting over the same
+// `<img>` tag by scoping each parser.
+const ExternalImage = Image.extend({
+  parseHTML() {
+    return [{ tag: 'img[src]:not([src*="library-images"])' }];
+  },
+}).configure({ HTMLAttributes: { class: "rounded-xl max-w-full" } });
 
 function ToolbarButton({
   onClick,
@@ -66,6 +77,7 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
     >
       {children}
     </Button>
@@ -252,7 +264,8 @@ export function NoteEditor({
       TableRow,
       TableCell,
       TableHeader,
-      Image.configure({ HTMLAttributes: { class: "rounded-xl max-w-full" } }),
+      ExternalImage,
+      SignedImage,
       Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
     ],
     content,
@@ -271,16 +284,32 @@ export function NoteEditor({
   // ── Upload image to Supabase storage ──
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     try {
-      const path = `library-images/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+      const check = validateImageFile(file);
+      if (!check.ok) {
+        toast.error(check.error);
+        return null;
+      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Sign in to add images");
+        return null;
+      }
+      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "_") || `image.${check.ext}`;
+      // library-files is a private bucket whose RLS requires the owner's id as
+      // the first path folder — use that and sign a short-lived URL to render.
+      const path = `${user.id}/library-images/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("library-files").upload(path, file, {
-        contentType: file.type,
+        contentType: check.contentType,
         upsert: true,
       });
       if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from("library-files").getPublicUrl(path);
-      return urlData.publicUrl;
-    } catch (err: any) {
-      toast.error(err?.message ?? "Image upload failed");
+      // Store the storage *path*, not a signed URL — SignedImage signs it at
+      // render time so pasted images never expire.
+      return path;
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message ?? "Image upload failed");
       return null;
     }
   }, []);
@@ -297,9 +326,13 @@ export function NoteEditor({
           e.preventDefault();
           const file = item.getAsFile();
           if (!file) continue;
-          const url = await uploadImage(file);
-          if (url) {
-            editor.chain().focus().setImage({ src: url }).run();
+          const path = await uploadImage(file);
+          if (path) {
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "signedImage", attrs: { src: path } })
+              .run();
           }
           return;
         }
@@ -319,11 +352,16 @@ export function NoteEditor({
       for (const file of Array.from(files)) {
         if (file.type.startsWith("image/")) {
           e.preventDefault();
-          const url = await uploadImage(file);
-          if (url) {
+          const path = await uploadImage(file);
+          if (path) {
             const coords = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
             const pos = coords?.pos ?? editor.state.selection.anchor;
-            editor.chain().focus().setTextSelection(pos).setImage({ src: url }).run();
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(pos)
+              .insertContent({ type: "signedImage", attrs: { src: path } })
+              .run();
           }
           return;
         }

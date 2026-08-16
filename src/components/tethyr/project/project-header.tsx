@@ -7,7 +7,6 @@ import {
   GitBranch,
   Trophy,
   MessageCircle,
-  Users as UsersIcon,
   CalendarDays,
   Link as LinkIcon,
   Lock,

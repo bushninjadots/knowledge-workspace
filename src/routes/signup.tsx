@@ -80,7 +80,7 @@ function SignupPage() {
         },
       });
       if (error) {
-        toast.error(error.message);
+        toast.error(getAuthErrorMessage(error));
         return;
       }
       if (!data.session) {

@@ -56,7 +56,7 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast.error(error.message);
+        toast.error(getAuthErrorMessage(error));
         return;
       }
       toast.success("Welcome back");
@@ -79,7 +79,7 @@ function LoginPage() {
         redirectTo: `${window.location.origin}/reset-password${redirectTarget !== "/dashboard" ? `?redirect=${encodeURIComponent(redirectTarget)}` : ""}`,
       });
       if (error) {
-        toast.error(error.message);
+        toast.error(getAuthErrorMessage(error));
         return;
       }
       toast.success("Check your email for a password reset link");

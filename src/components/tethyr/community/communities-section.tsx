@@ -101,10 +101,9 @@ export const CommunitiesSection = memo(function CommunitiesSection({
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {sortedSpaces
-            .map((space: CommunitySpace) => (
-              <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
-            ))}
+          {sortedSpaces.map((space: CommunitySpace) => (
+            <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
+          ))}
         </div>
       )}
       <CreateSpaceDialog open={createOpen} onOpenChange={setCreateOpen} />

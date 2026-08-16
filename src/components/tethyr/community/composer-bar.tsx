@@ -9,7 +9,6 @@ import {
   Handshake,
   Sparkles,
   ImagePlus,
-  FilePlus,
   Code2,
   Bold,
   Italic,
@@ -60,6 +59,7 @@ import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
 import { supabase } from "@/integrations/supabase/client";
 import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-validation";
+import { validateImageFile } from "@/lib/validators";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -197,9 +197,7 @@ export function ComposerBar({
   const mySpaces = (allSpaces as CommunitySpace[]).filter((s) => s.is_member);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
   const appliedPresetRef = useRef<string | null>(null);
-  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Read ?attach_project param to pre-fill attachment
   useEffect(() => {
@@ -368,10 +366,14 @@ export function ComposerBar({
     const files = e.target.files;
     if (!files) return;
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) continue;
       if (images.length >= 4) {
         toast.info("Maximum 4 images per post");
         break;
+      }
+      const check = validateImageFile(file);
+      if (!check.ok) {
+        toast.error(check.error);
+        continue;
       }
       const reader = new FileReader();
       reader.onload = () => {
@@ -382,33 +384,14 @@ export function ComposerBar({
     e.target.value = "";
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadingFile(true);
-    try {
-      const path = `${me?.userId ?? "anon"}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("library-files").upload(path, file);
-      if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from("library-files").getPublicUrl(path);
-      const link = `\n[${file.name}](${urlData.publicUrl})\n`;
-      setDraft((prev) => (prev + link).slice(0, MAX_CHARS));
-      toast.success("File attached");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Upload failed");
-    } finally {
-      setUploadingFile(false);
-    }
-  }
-
   function handleDroppedImage(file: File) {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Only images are supported");
-      return;
-    }
     if (images.length >= 4) {
       toast.info("Maximum 4 images per post");
+      return;
+    }
+    const check = validateImageFile(file);
+    if (!check.ok) {
+      toast.error(check.error);
       return;
     }
     const reader = new FileReader();
@@ -591,9 +574,9 @@ export function ComposerBar({
       setShowAttachPanel(false);
       if (draftKey) localStorage.removeItem(draftKey);
       onCancelEdit?.();
-    } catch (err: any) {
-      const msg = err?.message ?? err?.error?.message ?? "Something went wrong";
-      toast.error(msg);
+    } catch (err: unknown) {
+      const e = err as { message?: string; error?: { message?: string } };
+      toast.error(e?.message ?? e?.error?.message ?? "Something went wrong");
     }
   }
 
@@ -638,7 +621,7 @@ export function ComposerBar({
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="What are you building or learning today? Supports **bold**, _italic_, and```code```."
+            placeholder="What are you building or learning today? Supports **bold**, _italic_, and ```code```."
             rows={focused || draft.length > 80 ? 5 : 2}
             className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-all font-mono text-sm"
           />
@@ -953,13 +936,6 @@ export function ComposerBar({
           className="hidden"
           onChange={onFileChange}
         />
-        <input
-          ref={docInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,.zip,.rar,.7z,.mp4,.mov,.psd,.ai,.sketch,.fig"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
         <button
           onClick={handleImageUpload}
           disabled={images.length >= 4}
@@ -967,14 +943,6 @@ export function ComposerBar({
         >
           <ImagePlus className="h-3.5 w-3.5" />
           Image
-        </button>
-        <button
-          onClick={() => docInputRef.current?.click()}
-          disabled={uploadingFile}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
-        >
-          <FilePlus className="h-3.5 w-3.5" />
-          {uploadingFile ? "Uploading…" : "File"}
         </button>
         <InlineDropZone
           accept="image/*"

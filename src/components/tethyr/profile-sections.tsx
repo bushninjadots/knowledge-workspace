@@ -517,6 +517,7 @@ export type ProjectRow = {
   looking_for_collaborators: boolean;
   is_featured: boolean;
   created_at: string;
+  updated_at: string;
 };
 
 export const PROJECT_LINK_KEYS: { key: string; label: string; icon: typeof Github }[] = [
@@ -824,7 +825,7 @@ export function ProjectDialog({
       is_featured: featured,
     };
 
-    async function trySave(payload: Record<string, any>) {
+    async function trySave(payload: Record<string, unknown>) {
       if (project) {
         return await sb.from("projects").update(payload).eq("id", project.id);
       }

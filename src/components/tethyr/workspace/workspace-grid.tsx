@@ -175,7 +175,7 @@ export function WorkspaceGrid({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [customizing]);
+  }, [customizing, setCustomizing]);
 
   // Evaluate module content once so visibility filtering and rendering agree.
   const contents = useMemo(() => {

@@ -1493,6 +1493,7 @@ export type Database = {
       }
       project_milestones: {
         Row: {
+          completed_by: string | null
           created_at: string
           description: string | null
           due_date: string | null
@@ -1504,6 +1505,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -1515,6 +1517,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          completed_by?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -1526,6 +1529,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_milestones_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_milestones_project_id_fkey"
             columns: ["project_id"]
@@ -2371,6 +2381,217 @@ export type Database = {
           },
         ]
       }
+      teams: {
+        Row: {
+          avatar_url: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          avatar_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invites: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string
+          profile_id: string
+          status: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by: string
+          profile_id: string
+          status?: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string
+          profile_id?: string
+          status?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invites_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          joined_at: string
+          profile_id: string
+          role: string
+          team_id: string
+        }
+        Insert: {
+          joined_at?: string
+          profile_id: string
+          role?: string
+          team_id: string
+        }
+        Update: {
+          joined_at?: string
+          profile_id?: string
+          role?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_projects: {
+        Row: {
+          project_id: string
+          team_id: string
+        }
+        Insert: {
+          project_id: string
+          team_id: string
+        }
+        Update: {
+          project_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_projects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_needs: {
+        Row: {
+          created_at: string
+          filled_by: string | null
+          id: string
+          is_filled: boolean
+          note: string | null
+          project_id: string
+          skill_id: string | null
+          title: string
+          urgency: string
+        }
+        Insert: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id: string
+          skill_id?: string | null
+          title: string
+          urgency?: string
+        }
+        Update: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id?: string
+          skill_id?: string | null
+          title?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_needs_filled_by_fkey"
+            columns: ["filled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2387,6 +2608,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      accept_project_role_application: {
+        Args: {
+          p_application_id: string
+          p_profile_id: string
+          p_project_id: string
+          p_role_id: string
+        }
+        Returns: undefined
+      }
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -2397,6 +2627,14 @@ export type Database = {
       }
       ban_space_member: {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      decline_project_role_application: {
+        Args: {
+          p_application_id: string
+          p_project_id: string
+          p_role_id: string
+        }
         Returns: undefined
       }
       insert_notification: {

@@ -15,9 +15,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Until Supabase types are regenerated after migration, cast new columns
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -34,6 +32,7 @@ import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
 import { ProjectNeeds } from "@/components/tethyr/project/project-needs";
+import { ProjectCredits } from "@/components/tethyr/project/project-credits";
 import { ProjectFilesExplorer } from "@/components/tethyr/project/project-files-explorer";
 import { ProjectActivityTab } from "@/components/tethyr/project/project-activity";
 import { ProjectPeopleTab } from "@/components/tethyr/project/project-people";
@@ -116,7 +115,7 @@ function ProjectPage() {
       });
       if (opts?.scrollToTop !== false) window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [navigate],
+    [navigate, id],
   );
 
   // Project search jump handlers — switch tab, then scroll/preselect once
@@ -194,11 +193,11 @@ function ProjectPage() {
       const BASIC_COLS =
         "id, profile_id, title, description, goal, status, started_at, progress_percent, cover_url, links, tags, looking_for_feedback, looking_for_collaborators, is_featured";
 
-      let project: any = null;
+      let project: ProjectDetail | null = null;
       for (const cols of [FULL_COLS, BASIC_COLS]) {
         const res = await sb.from("projects").select(cols).eq("id", id).maybeSingle();
         if (!res.error) {
-          project = res.data;
+          project = res.data as unknown as ProjectDetail;
           break;
         }
         if (
@@ -215,12 +214,9 @@ function ProjectPage() {
       const BASIC_CONTRIB_COLS =
         "profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)";
 
-      let contributorsRes: any = null;
+      let contributorsRes: { data: unknown[] | null } | null = null;
       for (const cols of [FULL_CONTRIB_COLS, BASIC_CONTRIB_COLS]) {
-        const res = await (supabase as any)
-          .from("project_contributors")
-          .select(cols)
-          .eq("project_id", id);
+        const res = await supabase.from("project_contributors").select(cols).eq("project_id", id);
         if (!res.error) {
           contributorsRes = res;
           break;
@@ -443,6 +439,8 @@ function ProjectPage() {
               </section>
             )}
           </div>
+
+          <ProjectCredits projectId={id} />
         </div>
       </div>
 

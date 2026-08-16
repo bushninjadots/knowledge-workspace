@@ -96,7 +96,9 @@ export function NextSessionCountdown({
         <p className="text-[11px] font-medium uppercase tracking-wider text-brand-green/80">
           Next Session
         </p>
-        <p className="truncate text-sm font-medium text-foreground" title={nextSession.title}>{nextSession.title}</p>
+        <p className="truncate text-sm font-medium text-foreground" title={nextSession.title}>
+          {nextSession.title}
+        </p>
       </div>
       <div className="text-right">
         <p className="text-lg font-bold tabular-nums text-brand-green">{timeStr}</p>

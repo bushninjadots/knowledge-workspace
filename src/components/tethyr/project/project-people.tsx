@@ -3,6 +3,7 @@ import { Users as UsersIcon, Briefcase, HandHeart } from "lucide-react";
 import type { Contributor } from "./project-main-content";
 import type { OpenRoleRow } from "@/hooks/use-projects";
 import { OpenRolesSection } from "./project-open-roles";
+import { useProjectTeams } from "@/hooks/use-teams";
 
 const ROLE_LABEL: Record<Contributor["role"], string> = {
   creator: "Creator",
@@ -16,7 +17,6 @@ export function ProjectPeopleTab({
   avatarSigned,
   openRoles,
   isOwner,
-  isContributor,
   onJoin: _onJoin,
   onSignIn: _onSignIn,
 }: {
@@ -30,9 +30,29 @@ export function ProjectPeopleTab({
   onSignIn?: () => void;
 }) {
   const unfilledRoles = openRoles.filter((r) => !r.is_filled);
+  const { data: teams = [] } = useProjectTeams(projectId);
 
   return (
     <div className="space-y-6">
+      {/* Built by crew */}
+      {teams.length > 0 && (
+        <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          Built by
+          {teams.map((t, i) => (
+            <span key={t.id} className="flex items-center gap-1.5">
+              {i > 0 && <span aria-hidden>·</span>}
+              <Link
+                to="/teams/$slug"
+                params={{ slug: t.slug }}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                {t.name}
+              </Link>
+            </span>
+          ))}
+        </p>
+      )}
+
       {/* People */}
       <section className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
         <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">

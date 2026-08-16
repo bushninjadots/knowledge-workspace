@@ -53,8 +53,7 @@ export const SuggestedProjects = memo(function SuggestedProjects({
       const targetLearnIds = new Set(me.learnIds);
       const targetTeachIds = new Set(me.teachIds);
 
-      // Cast to any because stage/vision/gallery/resources aren't in generated types yet
-      const { data: projects } = await (supabase as any)
+      const { data: projects } = await supabase
         .from("projects")
         .select(
           "id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id",
@@ -72,7 +71,7 @@ export const SuggestedProjects = memo(function SuggestedProjects({
         .select("project_id, skill_id")
         .in(
           "project_id",
-          (projects as any[]).map((p: any) => p.id),
+          projects.map((p) => p.id),
         );
 
       const skillMap = new Map<string, string[]>();
@@ -83,8 +82,8 @@ export const SuggestedProjects = memo(function SuggestedProjects({
       }
 
       // Score each project
-      const scored = (projects as any[])
-        .map((p: any) => {
+      const scored = projects
+        .map((p) => {
           const projectSkillIds = skillMap.get(p.id) ?? [];
           const { score, reasons } = scoreProjectMatch({
             projectSkillIds,
@@ -95,8 +94,8 @@ export const SuggestedProjects = memo(function SuggestedProjects({
           });
           return { ...p, skill_ids: projectSkillIds, score, reasons };
         })
-        .filter((p: any) => p.score > 0)
-        .sort((a: any, b: any) => b.score - a.score)
+        .filter((p) => p.score > 0)
+        .sort((a, b) => b.score - a.score)
         .slice(0, limit);
 
       return scored;

@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import {
   Upload,
   X,
-  ExternalLink,
   Download,
   FileText,
   Image,
@@ -17,14 +16,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateLibraryFile } from "@/lib/validators";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
-const sb = supabase as any;
+const sb = supabase;
 
 type ProjectFile = {
   name: string;
@@ -119,8 +117,8 @@ export function ProjectFilesSection({
 
           existingFiles.push(newFile); // update local ref
           success++;
-        } catch (err: any) {
-          toast.error(`${file.name}: ${err.message || "Upload failed"}`);
+        } catch (err: unknown) {
+          toast.error(`${file.name}: ${(err as Error).message || "Upload failed"}`);
         }
       }
 
@@ -144,8 +142,8 @@ export function ProjectFilesSection({
       toast.success("File removed");
       queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
       onFilesChanged();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to remove file");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Failed to remove file");
     }
   };
 

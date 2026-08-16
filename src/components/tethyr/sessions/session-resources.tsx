@@ -144,13 +144,19 @@ export function SessionResources({
             >
               <ResourceIcon type={resource.resource_type} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-foreground" title={resource.title}>{resource.title}</div>
+                <div
+                  className="truncate text-sm font-medium text-foreground"
+                  title={resource.title}
+                >
+                  {resource.title}
+                </div>
                 {resource.url && (
                   <a
                     href={resource.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate text-xs text-primary hover:underline" title={resource.url}
+                    className="truncate text-xs text-primary hover:underline"
+                    title={resource.url}
                   >
                     {resource.url}
                   </a>

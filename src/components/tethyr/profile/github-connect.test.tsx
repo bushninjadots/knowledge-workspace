@@ -77,7 +77,9 @@ function createFakeSupabase({ accounts = [] }: { accounts?: Account[] } = {}) {
     };
     return builder;
   });
-  const auth = { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) };
+  const auth = {
+    getUser: vi.fn(async () => ({ data: { user: { id: "test-user" } }, error: null })),
+  };
   return { from, auth };
 }
 

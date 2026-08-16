@@ -69,7 +69,7 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
   } = useQuery({
     queryKey: ["achievements", profileId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("user_achievements")
         .select("achievement, awarded_at")
         .eq("profile_id", profileId)

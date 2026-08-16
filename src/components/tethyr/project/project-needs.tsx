@@ -7,6 +7,7 @@ import {
   useDeleteProjectNeed,
   useFillProjectNeed,
 } from "@/hooks/use-projects";
+import { useSkillsCatalog } from "@/hooks/use-current-user";
 
 const URGENCY_META: Record<
   ProjectNeedRow["urgency"],
@@ -43,10 +44,15 @@ export function ProjectNeeds({
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [skillId, setSkillId] = useState("");
   const [urgency, setUrgency] = useState<ProjectNeedRow["urgency"]>("normal");
   const createNeed = useCreateProjectNeed();
   const fillNeed = useFillProjectNeed();
   const deleteNeed = useDeleteProjectNeed();
+  const { data: catalog = [] } = useSkillsCatalog();
+
+  const sortedSkills = [...catalog].sort((a, b) => a.name.localeCompare(b.name));
+  const skillName = (id: string | null) => catalog.find((s) => s.id === id)?.name ?? null;
 
   const open = needs.filter((n) => !n.is_filled);
   if (open.length === 0 && !canManage) return null;
@@ -58,10 +64,12 @@ export function ProjectNeeds({
         projectId,
         title: title.trim(),
         note: note.trim() || undefined,
+        skillId: skillId || null,
         urgency,
       });
       setTitle("");
       setNote("");
+      setSkillId("");
       setUrgency("normal");
       setShowAdd(false);
       toast.success("Need posted");
@@ -141,6 +149,19 @@ export function ProjectNeeds({
             rows={2}
             className="w-full resize-none rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
+          <select
+            value={skillId}
+            onChange={(e) => setSkillId(e.target.value)}
+            aria-label="Related skill (optional)"
+            className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          >
+            <option value="">No specific skill</option>
+            {sortedSkills.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1" role="group" aria-label="Urgency">
               {URGENCIES.map((u) => (
@@ -199,6 +220,11 @@ export function ProjectNeeds({
                   >
                     {URGENCY_META[n.urgency].label}
                   </span>
+                  {n.skill_id && skillName(n.skill_id) && (
+                    <span className="rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
+                      {skillName(n.skill_id)}
+                    </span>
+                  )}
                 </div>
                 {n.note && <p className="mt-1 text-sm text-muted-foreground">{n.note}</p>}
               </div>

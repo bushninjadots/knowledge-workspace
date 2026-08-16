@@ -1,17 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
+import { Swords, Search, Filter } from "lucide-react";
 import {
-  Trophy,
-  Swords,
-  Search,
-  Filter,
-  Plus,
-} from "lucide-react";
-import { useChallenges, type ChallengeType, type ChallengeDifficulty } from "@/hooks/use-challenges";
+  useChallenges,
+  type ChallengeType,
+  type ChallengeDifficulty,
+} from "@/hooks/use-challenges";
 import { ChallengeCard } from "@/components/tethyr/community/challenge-card";
 import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
 import { EmptyState } from "@/components/tethyr/empty-state";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const TYPE_FILTERS: { label: string; value: ChallengeType | "all" }[] = [
@@ -33,12 +30,6 @@ const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: "Upcoming", value: "draft" },
   { label: "Completed", value: "completed" },
 ];
-
-const TYPE_COLORS: Record<string, string> = {
-  skill: "bg-brand-purple/10 text-brand-purple border-brand-purple/20",
-  project: "bg-primary/10 text-primary border-primary/20",
-  learning: "bg-brand-green/10 text-brand-green border-brand-green/20",
-};
 
 export const Route = createFileRoute("/_authenticated/challenges")({
   head: () => ({
@@ -68,9 +59,7 @@ function ChallengesPage() {
   );
 
   const displayed = useMemo(() => {
-    let list = statusFilter === "active"
-      ? challenges
-      : filteredChallenges;
+    let list = statusFilter === "active" ? challenges : filteredChallenges;
 
     if (typeFilter !== "all") {
       list = list.filter((c) => c.type === typeFilter);
@@ -198,16 +187,25 @@ function ChallengesPage() {
           <EmptyState
             icon={<Swords className="h-5 w-5" />}
             title={
-              search || typeFilter !== "all" || difficultyFilter !== "all" || statusFilter !== "active"
+              search ||
+              typeFilter !== "all" ||
+              difficultyFilter !== "all" ||
+              statusFilter !== "active"
                 ? "No challenges match your filters"
                 : "No challenges yet"
             }
             description={
-              search || typeFilter !== "all" || difficultyFilter !== "all" || statusFilter !== "active"
+              search ||
+              typeFilter !== "all" ||
+              difficultyFilter !== "all" ||
+              statusFilter !== "active"
                 ? "Try adjusting your search or filters to find more challenges."
                 : "Kick one off — a challenge gives people a shared goal to learn and build together."
             }
-            {...(search || typeFilter !== "all" || difficultyFilter !== "all" || statusFilter !== "active"
+            {...(search ||
+            typeFilter !== "all" ||
+            difficultyFilter !== "all" ||
+            statusFilter !== "active"
               ? {}
               : { actionLabel: "Create a challenge", onAction: () => setCreateOpen(true) })}
             variant="default"

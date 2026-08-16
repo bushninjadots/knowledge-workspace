@@ -43,27 +43,36 @@ export function ProjectShelfOverlay({
   const dragActive = useRef(false);
   const DISMISS_THRESHOLD = 100;
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    dragStartY.current = e.clientY;
-    dragActive.current = true;
-    panelY.set(0);
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [panelY]);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      dragStartY.current = e.clientY;
+      dragActive.current = true;
+      panelY.set(0);
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    },
+    [panelY],
+  );
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!dragActive.current) return;
-    const dy = e.clientY - dragStartY.current;
-    if (dy > 0) panelY.set(dy); // only track downward
-  }, [panelY]);
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragActive.current) return;
+      const dy = e.clientY - dragStartY.current;
+      if (dy > 0) panelY.set(dy); // only track downward
+    },
+    [panelY],
+  );
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (!dragActive.current) return;
-    dragActive.current = false;
-    const dy = e.clientY - dragStartY.current;
-    panelY.set(0);
-    if (dy >= DISMISS_THRESHOLD) onClose();
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [panelY, onClose]);
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragActive.current) return;
+      dragActive.current = false;
+      const dy = e.clientY - dragStartY.current;
+      panelY.set(0);
+      if (dy >= DISMISS_THRESHOLD) onClose();
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    },
+    [panelY, onClose],
+  );
 
   useEffect(() => {
     if (project) {
@@ -199,9 +208,7 @@ export function ProjectShelfOverlay({
 
                   {/* Title overlay */}
                   <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-xl font-bold text-white drop-shadow-lg">
-                      {project.title}
-                    </p>
+                    <p className="text-xl font-bold text-white drop-shadow-lg">{project.title}</p>
                     {project.profiles && (
                       <p className="text-sm text-white/80 drop-shadow">
                         by {project.profiles.display_name || project.profiles.handle || "Member"}

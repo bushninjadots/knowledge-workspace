@@ -39,9 +39,7 @@ export function ProfileCommunitiesTab() {
   if (isError) {
     return (
       <div className="rounded-xl bg-surface-elevated/30 p-4">
-        <p className="text-sm text-muted-foreground">
-          Community spaces could not be loaded.
-        </p>
+        <p className="text-sm text-muted-foreground">Community spaces could not be loaded.</p>
       </div>
     );
   }

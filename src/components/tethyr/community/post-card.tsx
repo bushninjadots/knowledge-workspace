@@ -973,7 +973,7 @@ function CommentComposer({
       { postId, body, parentId },
       {
         onSuccess: () => setNewComment(""),
-        onError: () => {},
+        onError: () => toast.error("Couldn't post your comment — please try again"),
       },
     );
   }
