@@ -577,6 +577,119 @@ export function useDeleteOpenRole() {
 }
 
 // ============================================================
+// Project Needs ("need help now")
+// ============================================================
+
+export type ProjectNeedRow = {
+  id: string;
+  project_id: string;
+  title: string;
+  note: string | null;
+  urgency: "low" | "normal" | "high";
+  is_filled: boolean;
+  filled_by: string | null;
+  created_at: string;
+};
+
+export const NEEDS_KEY = (projectId: string) => ["project-needs", projectId] as const;
+
+const NEED_URGENCY_RANK: Record<ProjectNeedRow["urgency"], number> = {
+  high: 0,
+  normal: 1,
+  low: 2,
+};
+
+export function useProjectNeeds(projectId: string) {
+  return useQuery({
+    queryKey: NEEDS_KEY(projectId),
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("project_needs")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        // Table may not exist yet before the migration lands — return empty.
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+      const rows = (data ?? []) as ProjectNeedRow[];
+      return [...rows].sort((a, b) => {
+        const rank = NEED_URGENCY_RANK[a.urgency] - NEED_URGENCY_RANK[b.urgency];
+        if (rank !== 0) return rank;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateProjectNeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      projectId: string;
+      title: string;
+      note?: string;
+      urgency?: ProjectNeedRow["urgency"];
+    }) => {
+      const { data, error } = await sb
+        .from("project_needs")
+        .insert({
+          project_id: input.projectId,
+          title: input.title,
+          note: input.note ?? null,
+          urgency: input.urgency ?? "normal",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as ProjectNeedRow;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: NEEDS_KEY(variables.projectId) });
+    },
+  });
+}
+
+export function useFillProjectNeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; projectId: string }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await sb
+        .from("project_needs")
+        .update({ is_filled: true, filled_by: user.id })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: NEEDS_KEY(variables.projectId) });
+      qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
+    },
+  });
+}
+
+export function useDeleteProjectNeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; projectId: string }) => {
+      const { error } = await sb.from("project_needs").delete().eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: NEEDS_KEY(variables.projectId) });
+    },
+  });
+}
+
+// ============================================================
 // Project Activity (trigger-recorded events)
 // ============================================================
 

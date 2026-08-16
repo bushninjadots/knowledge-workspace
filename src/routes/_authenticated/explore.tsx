@@ -14,6 +14,7 @@ import {
   Star,
   TrendingUp,
   Hash,
+  Zap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -45,6 +46,13 @@ const NEED_CHIPS = [
   { label: "Marketer", skills: ["marketing", "seo", "social media", "growth"] },
   { label: "Mentor", skills: ["mentoring", "teaching", "coaching"] },
 ];
+
+const NEED_LABEL: Record<string, string> = { high: "High", normal: "Soon", low: "Whenever" };
+const NEED_BADGE: Record<string, string> = {
+  high: "border-destructive/30 bg-destructive/5 text-destructive",
+  normal: "border-brand-green/30 bg-brand-green/5 text-brand-green",
+  low: "border-border/60 bg-surface text-muted-foreground",
+};
 
 export type ProjectRow = {
   id: string;
@@ -130,6 +138,24 @@ type Opportunity = {
       creator_title: string | null;
     } | null;
   };
+};
+
+type NeedRow = {
+  id: string;
+  title: string;
+  note: string | null;
+  urgency: "low" | "normal" | "high";
+  created_at: string;
+  projects: {
+    id: string;
+    title: string;
+    status: string;
+    profile_id: string;
+    profiles: {
+      handle: string | null;
+      display_name: string | null;
+    } | null;
+  } | null;
 };
 
 export const Route = createFileRoute("/_authenticated/explore")({
@@ -294,6 +320,35 @@ function ExplorePage() {
     },
     enabled: !!meId && tab === "opportunities",
     staleTime: 30_000,
+  });
+
+  // Open "need help now" asks, surfaced at the top of the Opportunities tab.
+  const { data: needs = [] } = useQuery({
+    queryKey: ["explore-needs"],
+    queryFn: async (): Promise<NeedRow[]> => {
+      const { data, error } = await (supabase as any)
+        .from("project_needs")
+        .select(
+          "id, title, note, urgency, created_at, projects(id, title, status, profile_id, profiles(handle, display_name))",
+        )
+        .eq("is_filled", false)
+        .order("created_at", { ascending: false })
+        .limit(12);
+      if (error) {
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+      const rank = { high: 0, normal: 1, low: 2 } as const;
+      return ((data ?? []) as NeedRow[])
+        .filter((n) => n.projects && ["planning", "active"].includes(n.projects.status))
+        .sort((a, b) => {
+          const diff = rank[a.urgency] - rank[b.urgency];
+          if (diff !== 0) return diff;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+    },
+    enabled: tab === "opportunities",
+    staleTime: 60_000,
   });
 
   const { data: creators, isLoading: creatorsLoading } = useQuery({
@@ -478,230 +533,273 @@ function ExplorePage() {
               ))}
             </div>
           ) : tab === "opportunities" ? (
-            filteredOpportunities.length === 0 ? (
-              <EmptyState
-                icon={<Briefcase className="h-5 w-5" />}
-                title="No open opportunities match"
-                description="Try a different need or check back as projects open new roles."
-                actionLabel="Browse projects"
-                onAction={() => setTab("projects")}
-                variant="projects"
-              />
-            ) : (
-              <>
-                {/* Browse by need — quick chips */}
-                <div className="mb-4">
-                  <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-                    Browse by need
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {NEED_CHIPS.map((need) => (
-                      <button
-                        key={need.label}
-                        onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                          activeNeed === need.label
-                            ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                            : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                        }`}
+            <>
+              {needs.length > 0 && (
+                <div className="mb-6">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-destructive" />
+                    <h2 className="text-sm font-semibold">Needs now</h2>
+                    <span className="text-xs text-muted-foreground">
+                      Urgent asks from projects looking for help
+                    </span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {needs.slice(0, 6).map((n) => (
+                      <Link
+                        key={n.id}
+                        to="/projects/$id"
+                        params={{ id: n.projects!.id }}
+                        className="group flex items-start justify-between gap-3 rounded-xl border card-border bg-surface p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
                       >
-                        Need {need.label}
-                      </button>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium group-hover:text-primary">
+                            {n.title}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {n.projects?.title}
+                            {n.projects?.profiles?.display_name
+                              ? ` · by ${n.projects.profiles.display_name}`
+                              : ""}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${NEED_BADGE[n.urgency]}`}
+                        >
+                          {NEED_LABEL[n.urgency]}
+                        </span>
+                      </Link>
                     ))}
                   </div>
                 </div>
-
-                {/* Search + Sort */}
-                <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                      placeholder="Search roles, skills, or projects…"
-                      className="border-0 bg-transparent focus-visible:ring-0"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
-                    <button
-                      onClick={() => setOppSort("latest")}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                        oppSort === "latest"
-                          ? "bg-surface-elevated text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Latest
-                    </button>
-                    <button
-                      onClick={() => setOppSort("popular")}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                        oppSort === "popular"
-                          ? "bg-surface-elevated text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <TrendingUp className="mr-1 inline h-3 w-3" />
-                      Popular
-                    </button>
-                    <button
-                      onClick={() => setOppSort("match")}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                        oppSort === "match"
-                          ? "bg-surface-elevated text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Star className="mr-1 inline h-3 w-3" />
-                      Best match
-                    </button>
-                  </div>
-                </div>
-
-                {/* Applied filters */}
-                {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
-                  <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                    {activeNeed && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
-                        Need {activeNeed}
-                        <button onClick={() => setActiveNeed("")} className="ml-0.5">
-                          ×
-                        </button>
-                      </span>
-                    )}
-                    {oppSort === "popular" && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
-                        <TrendingUp className="h-3 w-3" />
-                        Popular first
-                      </span>
-                    )}
-                    {oppSort === "match" && (
-                      <span className="text-[11px] text-muted-foreground">
-                        Sorted by skill match
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {CATEGORIES.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCategory(c)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                        category === c
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {filteredOpportunities.map((opportunity, i) => {
-                    const skillMatchCount =
-                      oppSort === "match"
-                        ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
-                        : 0;
-                    return (
-                      <div
-                        key={opportunity.id}
-                        className="animate-room-enter group rounded-xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-                        style={{ animationDelay: `${i * 50}ms` }}
-                      >
-                        <Link
-                          to="/projects/$id"
-                          params={{ id: opportunity.project.id }}
-                          search={{ tab: "people" } as Record<string, string>}
-                          className="block"
+              )}
+              {filteredOpportunities.length === 0 ? (
+                <EmptyState
+                  icon={<Briefcase className="h-5 w-5" />}
+                  title="No open opportunities match"
+                  description="Try a different need or check back as projects open new roles."
+                  actionLabel="Browse projects"
+                  onAction={() => setTab("projects")}
+                  variant="projects"
+                />
+              ) : (
+                <>
+                  {/* Browse by need — quick chips */}
+                  <div className="mb-4">
+                    <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      Browse by need
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {NEED_CHIPS.map((need) => (
+                        <button
+                          key={need.label}
+                          onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                            activeNeed === need.label
+                              ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                          }`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs uppercase tracking-wider text-brand-purple">
-                                  <Briefcase className="mr-1 inline h-3.5 w-3.5" />
-                                  Open role
-                                </span>
-                                {skillMatchCount > 0 && (
-                                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
-                                    <BadgeCheck className="h-3 w-3" />
-                                    {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
+                          Need {need.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Search + Sort */}
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search roles, skills, or projects…"
+                        className="border-0 bg-transparent focus-visible:ring-0"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
+                      <button
+                        onClick={() => setOppSort("latest")}
+                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                          oppSort === "latest"
+                            ? "bg-surface-elevated text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Latest
+                      </button>
+                      <button
+                        onClick={() => setOppSort("popular")}
+                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                          oppSort === "popular"
+                            ? "bg-surface-elevated text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <TrendingUp className="mr-1 inline h-3 w-3" />
+                        Popular
+                      </button>
+                      <button
+                        onClick={() => setOppSort("match")}
+                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                          oppSort === "match"
+                            ? "bg-surface-elevated text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Star className="mr-1 inline h-3 w-3" />
+                        Best match
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Applied filters */}
+                  {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
+                    <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                      {activeNeed && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+                          Need {activeNeed}
+                          <button onClick={() => setActiveNeed("")} className="ml-0.5">
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {oppSort === "popular" && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
+                          <TrendingUp className="h-3 w-3" />
+                          Popular first
+                        </span>
+                      )}
+                      {oppSort === "match" && (
+                        <span className="text-[11px] text-muted-foreground">
+                          Sorted by skill match
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCategory(c)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                          category === c
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredOpportunities.map((opportunity, i) => {
+                      const skillMatchCount =
+                        oppSort === "match"
+                          ? opportunity.skills.filter((s) => mySkillNames.has(s.toLowerCase()))
+                              .length
+                          : 0;
+                      return (
+                        <div
+                          key={opportunity.id}
+                          className="animate-room-enter group rounded-xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                          style={{ animationDelay: `${i * 50}ms` }}
+                        >
+                          <Link
+                            to="/projects/$id"
+                            params={{ id: opportunity.project.id }}
+                            search={{ tab: "people" } as Record<string, string>}
+                            className="block"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs uppercase tracking-wider text-brand-purple">
+                                    <Briefcase className="mr-1 inline h-3.5 w-3.5" />
+                                    Open role
                                   </span>
-                                )}
+                                  {skillMatchCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-1.5 py-0 text-[11px] font-medium text-[var(--user-accent,var(--primary))]">
+                                      <BadgeCheck className="h-3 w-3" />
+                                      {skillMatchCount} match{skillMatchCount !== 1 ? "es" : ""}
+                                    </span>
+                                  )}
+                                </div>
+                                <h2
+                                  className="mt-2 truncate font-display text-lg font-semibold"
+                                  title={opportunity.title}
+                                >
+                                  {opportunity.title}
+                                </h2>
                               </div>
-                              <h2
-                                className="mt-2 truncate font-display text-lg font-semibold"
-                                title={opportunity.title}
-                              >
-                                {opportunity.title}
-                              </h2>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
                             </div>
-                            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                          </div>
-                          {opportunity.description && (
-                            <p
-                              className="mt-2 line-clamp-2 text-sm text-muted-foreground"
-                              title={opportunity.description ?? undefined}
-                            >
-                              {opportunity.description}
-                            </p>
-                          )}
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {opportunity.skills.length > 0 ? (
-                              opportunity.skills.map((skill) => {
-                                const isMySkill = mySkillNames.has(skill.toLowerCase());
-                                return (
-                                  <span
-                                    key={skill}
-                                    className={`rounded-full border px-2.5 py-1 text-[11px] ${
-                                      isMySkill
-                                        ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                        : "border-primary/25 bg-primary/5 text-primary"
-                                    }`}
-                                  >
-                                    {skill}
-                                  </span>
-                                );
-                              })
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                                <Sparkles className="h-3 w-3" /> Open to a range of skills
-                              </span>
+                            {opportunity.description && (
+                              <p
+                                className="mt-2 line-clamp-2 text-sm text-muted-foreground"
+                                title={opportunity.description ?? undefined}
+                              >
+                                {opportunity.description}
+                              </p>
                             )}
+                            <div className="mt-4 flex flex-wrap gap-1.5">
+                              {opportunity.skills.length > 0 ? (
+                                opportunity.skills.map((skill) => {
+                                  const isMySkill = mySkillNames.has(skill.toLowerCase());
+                                  return (
+                                    <span
+                                      key={skill}
+                                      className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                                        isMySkill
+                                          ? "border-[var(--user-accent,var(--primary))]/25 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                          : "border-primary/25 bg-primary/5 text-primary"
+                                      }`}
+                                    >
+                                      {skill}
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Sparkles className="h-3 w-3" /> Open to a range of skills
+                                </span>
+                              )}
+                            </div>
+                          </Link>{" "}
+                          <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+                            <div className="min-w-0 truncate text-xs text-muted-foreground">
+                              <Link
+                                to="/projects/$id"
+                                params={{ id: opportunity.project.id }}
+                                search={{ tab: "people" } as Record<string, string>}
+                                className="font-medium text-foreground hover:underline"
+                              >
+                                {opportunity.project.title}
+                              </Link>
+                              {opportunity.project.profile?.display_name && (
+                                <span> · by {opportunity.project.profile.display_name}</span>
+                              )}
+                              {opportunity.project.stage && (
+                                <span className="ml-1 capitalize">
+                                  · {opportunity.project.stage}
+                                </span>
+                              )}
+                            </div>
+                            <ApplyToRoleButton
+                              roleId={opportunity.id}
+                              projectId={opportunity.project.id}
+                              isOwner={opportunity.project.profile_id === meId}
+                              meId={meId}
+                              myStatus={myRoleStatus[opportunity.id] ?? null}
+                            />
                           </div>
-                        </Link>{" "}
-                        <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
-                          <div className="min-w-0 truncate text-xs text-muted-foreground">
-                            <Link
-                              to="/projects/$id"
-                              params={{ id: opportunity.project.id }}
-                              search={{ tab: "people" } as Record<string, string>}
-                              className="font-medium text-foreground hover:underline"
-                            >
-                              {opportunity.project.title}
-                            </Link>
-                            {opportunity.project.profile?.display_name && (
-                              <span> · by {opportunity.project.profile.display_name}</span>
-                            )}
-                            {opportunity.project.stage && (
-                              <span className="ml-1 capitalize">· {opportunity.project.stage}</span>
-                            )}
-                          </div>
-                          <ApplyToRoleButton
-                            roleId={opportunity.id}
-                            projectId={opportunity.project.id}
-                            isOwner={opportunity.project.profile_id === meId}
-                            meId={meId}
-                            myStatus={myRoleStatus[opportunity.id] ?? null}
-                          />
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </>
           ) : tab === "projects" ? (
             <ProjectShelf
               projects={filteredProjects}

@@ -26,12 +26,14 @@ import {
   useProjectUpdates,
   useDiscussions,
   useOpenRoles,
+  useProjectNeeds,
   type ProjectDetail,
 } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
+import { ProjectNeeds } from "@/components/tethyr/project/project-needs";
 import { ProjectFilesExplorer } from "@/components/tethyr/project/project-files-explorer";
 import { ProjectActivityTab } from "@/components/tethyr/project/project-activity";
 import { ProjectPeopleTab } from "@/components/tethyr/project/project-people";
@@ -300,6 +302,7 @@ function ProjectPage() {
   const { data: updates = [] } = useProjectUpdates(id);
   const { data: discussions = [] } = useDiscussions(id);
   const { data: openRoles = [] } = useOpenRoles(id);
+  const { data: needs = [] } = useProjectNeeds(id);
   const { data: repos = [] } = useProjectRepos(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
@@ -376,6 +379,8 @@ function ProjectPage() {
               isOwner={isOwner}
             />
           </section>
+
+          <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
 
           {/* Secondary workspace navigation: deeper project evidence and collaboration views. */}
           <div role="group" aria-label="Project workspace views" className="mt-10">
