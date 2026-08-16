@@ -3,11 +3,10 @@ import {
   Home,
   FolderOpen,
   Compass,
-  GraduationCap,
+  User,
   Users,
   MessageSquare,
   Trophy,
-  Settings,
   LogOut,
   Bell,
   Swords,
@@ -28,8 +27,15 @@ const groups = [
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: Home },
-      { to: "/explore", label: "Projects", icon: FolderOpen },
-      { to: "/library", label: "Library", icon: Compass },
+      { to: "/library", label: "Library", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Discover",
+    items: [
+      { to: "/explore", label: "Explore", icon: Compass },
+      { to: "/challenges", label: "Challenges", icon: Swords },
+      { to: "/sessions", label: "Sessions", icon: Trophy },
     ],
   },
   {
@@ -41,12 +47,8 @@ const groups = [
     ],
   },
   {
-    label: "Learning",
-    items: [
-      { to: "/profile", label: "Profile", icon: GraduationCap },
-      { to: "/challenges", label: "Challenges", icon: Swords },
-      { to: "/sessions", label: "Sessions", icon: Trophy },
-    ],
+    label: "Account",
+    items: [{ to: "/profile", label: "Your Studio", icon: User }],
   },
 ] as const;
 
@@ -171,14 +173,6 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
               {me?.profile?.creator_title || "Member"}
             </p>
           </div>
-          <Link
-            to="/profile"
-            className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
-            aria-label="Settings"
-            onClick={onNavigate}
-          >
-            <Settings className="h-3.5 w-3.5" />
-          </Link>
         </div>
 
         <button

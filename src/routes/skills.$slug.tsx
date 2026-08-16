@@ -23,6 +23,7 @@ import { VerificationBadge, ExperienceBadge } from "@/components/tethyr/profile-
 import { AvailabilityBadge } from "@/components/tethyr/availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
+import { canonicalLinks } from "@/lib/seo";
 
 const sb = supabase as any;
 
@@ -32,16 +33,19 @@ export const Route = createFileRoute("/skills/$slug")({
       { title: `${params.slug} — Tethyr` },
       {
         name: "description",
-        content: `Enter ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
+        content: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
       },
     ],
+    links: canonicalLinks(`/skills/${encodeURIComponent(params.slug)}`),
   }),
   component: SkillPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Skill not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We couldn't load this skill hub. Please try again.
+        </p>
         <Link to="/explore" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to explore
         </Link>
@@ -160,13 +164,23 @@ function SkillPage() {
 
         {/* Tabs — Workshop sections */}
         <div className="relative">
-          <div className="flex gap-1 rounded-xl border border-border/60 bg-surface p-1">
+          <div
+            role="tablist"
+            aria-label="Skill workshop sections"
+            className="flex gap-1 rounded-xl border border-border/60 bg-surface p-1"
+          >
             {TABS.map((t) => {
               const Icon = t.icon;
               const active = tab === t.id;
               return (
                 <button
                   key={t.id}
+                  id={`skill-tab-${t.id}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  aria-controls={`skill-panel-${t.id}`}
+                  aria-label={t.label}
                   onClick={() => setTab(t.id)}
                   className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                     active
@@ -186,15 +200,25 @@ function SkillPage() {
 
         {/* Tab content */}
         {tab === "overview" && (
-          <SkillOverview
-            skillId={skill.id}
-            skillName={skill.name}
-            description={skill.description}
-            tools={skill.tools ?? []}
-          />
+          <div id="skill-panel-overview" role="tabpanel" aria-labelledby="skill-tab-overview">
+            <SkillOverview
+              skillId={skill.id}
+              skillName={skill.name}
+              description={skill.description}
+              tools={skill.tools ?? []}
+            />
+          </div>
         )}
-        {tab === "people" && <SkillPeople skillId={skill.id} skillName={skill.name} />}
-        {tab === "projects" && <SkillProjects skillId={skill.id} skillName={skill.name} />}
+        {tab === "people" && (
+          <div id="skill-panel-people" role="tabpanel" aria-labelledby="skill-tab-people">
+            <SkillPeople skillId={skill.id} skillName={skill.name} />
+          </div>
+        )}
+        {tab === "projects" && (
+          <div id="skill-panel-projects" role="tabpanel" aria-labelledby="skill-tab-projects">
+            <SkillProjects skillId={skill.id} skillName={skill.name} />
+          </div>
+        )}
       </div>
     </Shell>
   );

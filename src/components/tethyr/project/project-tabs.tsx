@@ -25,11 +25,7 @@ export const ProjectTabs = memo(function ProjectTabs({
   counts?: Partial<Record<ProjectTab, number>>;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Project workspace"
-      className="sticky top-16 z-20 -mx-4 border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl sm:-mx-8 sm:px-8"
-    >
+    <div className="sticky top-16 z-20 -mx-4 border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl sm:-mx-8 sm:px-8">
       <div className="flex gap-1 overflow-x-auto scrollbar-none">
         {PROJECT_TABS.map((tab, index) => {
           const Icon = tab.icon;
@@ -38,8 +34,8 @@ export const ProjectTabs = memo(function ProjectTabs({
           return (
             <button
               key={tab.id}
-              role="tab"
-              aria-selected={isActive}
+              type="button"
+              aria-pressed={isActive}
               title={`${tab.label} (${index + 1})`}
               onClick={() => onSelect(tab.id)}
               className={cn(

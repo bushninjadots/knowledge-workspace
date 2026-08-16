@@ -30,40 +30,47 @@ Tethyr asks: **"What are you building next?"**
 ## Features
 
 ### Identity
+
 - Profiles with handles, creator titles, banners, and personalized accent colors
 - Availability badges showing who's open to connect
 - Profile completeness with guided next steps
 - Reputation scores tied to real activity
 
 ### Projects
+
 - Full project lifecycle: planning → building → testing → launch → growing
 - Milestones, progress tracking, open roles with skill requirements
 - Contributor rosters with roles (creator, mentor, contributor)
 - 3D project shelf with drag-to-browse cover art
 
 ### Skills
+
 - Teach/learn model (I can help with X, I want to grow in Y)
 - Verification levels, experience badges, and endorsements
 - Skill-to-project linking with match scoring
 - Skill hub pages with teachers, learners, and projects
 
 ### Collaboration
+
 - Session scheduling with calendar and availability settings
 - Connection requests and direct messaging
 - Role applications on projects with accept/decline flow
 
 ### Community
+
 - 14 post types (discussions, showcases, questions, milestones, etc.)
 - Community spaces organized by topic
 - Challenges with progress tracking and reputation rewards
 - Activity feed with real-time updates
 
 ### Discovery
+
 - Explore page with projects, people, and opportunities tabs
 - Search across profiles, skills, projects, library, and more
 - Suggested projects and creators matched to your skills
 
 ### Library
+
 - Personal library for notes, files, and links
 - Collections, favorites, pins, and tags
 
@@ -90,7 +97,10 @@ npm run dev
 ```env
 SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+VITE_PUBLIC_SITE_URL=https://your-public-domain.example
 ```
+
+`VITE_PUBLIC_SITE_URL` is required in production for canonical links and sitemap URLs. Use the deployed origin without a trailing slash.
 
 ---
 

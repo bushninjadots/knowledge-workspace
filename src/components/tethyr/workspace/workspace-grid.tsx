@@ -47,6 +47,8 @@ type Props = {
   showModuleTitles?: boolean;
   /** Hide the built-in toolbar when the page renders its own toolbar. */
   showCustomizeBar?: boolean;
+  /** Apply dashboard-only migrations for modules intentionally moved out of the grid. */
+  migrateRetiredModules?: boolean;
 };
 
 /**
@@ -65,6 +67,7 @@ export function WorkspaceGrid({
   onCustomizingChange,
   showModuleTitles = true,
   showCustomizeBar = true,
+  migrateRetiredModules = false,
 }: Props) {
   const isMobile = useIsMobile();
   const { data: saved, isLoading, save } = useLayoutPreferences(page, userId);
@@ -81,7 +84,7 @@ export function WorkspaceGrid({
     [onCustomizingChange],
   );
   const [items, setItems] = useState<LayoutItem[]>(
-    () => mergeLayout(modules, null, [], [], defaultItems).items,
+    () => mergeLayout(modules, null, [], [], defaultItems, migrateRetiredModules).items,
   );
   const [hidden, setHidden] = useState<string[]>([]);
   const [pinned, setPinned] = useState<string[]>([]);
@@ -112,7 +115,15 @@ export function WorkspaceGrid({
   // Load saved layout once the preferences arrive.
   useEffect(() => {
     if (isLoading) return;
-    const merged = mergeLayout(modules, saved?.items, saved?.hidden, saved?.pinned, defaultItems);
+    const merged = mergeLayout(
+      modules,
+      saved?.items,
+      saved?.hidden,
+      saved?.pinned,
+      defaultItems,
+      migrateRetiredModules,
+    );
+
     setItems(packForPins(merged.items, merged.pinned));
     setHidden(merged.hidden);
     setPinned(merged.pinned);

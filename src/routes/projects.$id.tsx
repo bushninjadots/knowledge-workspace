@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import { canonicalLinks } from "@/lib/seo";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   useMilestones,
@@ -45,17 +46,21 @@ import type { Contributor } from "@/components/tethyr/project/project-main-conte
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 export const Route = createFileRoute("/projects/$id")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
       { title: "Project — Tethyr" },
-      { name: "description", content: "A project being built on Tethyr." },
+      {
+        name: "description",
+        content: "Explore this project and the work being built with Tethyr.",
+      },
     ],
+    links: canonicalLinks(`/projects/${encodeURIComponent(params.id)}`),
   }),
   validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
   component: ProjectPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">
-      {error.message}
+      This project couldn't be loaded. Please try again.
     </div>
   ),
   notFoundComponent: () => (
@@ -285,6 +290,11 @@ function ProjectPage() {
 
   const accent = useDominantColor(data?.coverSigned ?? null);
 
+  // Replace the generic tab title with the project's real title once loaded.
+  useEffect(() => {
+    if (data?.project?.title) document.title = `${data.project.title} — Tethyr`;
+  }, [data?.project?.title]);
+
   // Tab data
   const { data: milestones = [] } = useMilestones(id);
   const { data: updates = [] } = useProjectUpdates(id);
@@ -349,18 +359,21 @@ function ProjectPage() {
 
       <div className="animate-room-enter min-h-screen bg-noise">
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
-          {/* README — the project's homepage, always visible */}
-          <div className="pt-6">
+          {/* The README is the project's homepage: identity, intent, and work context. */}
+          <section aria-labelledby="project-homepage-heading" className="pt-6">
+            <h2 id="project-homepage-heading" className="sr-only">
+              Project homepage
+            </h2>
             <ProjectReadmeTab
               project={project}
               skills={skills}
               projectFiles={projectFiles}
               isOwner={isOwner}
             />
-          </div>
+          </section>
 
-          {/* Secondary workspace navigation */}
-          <div className="mt-10">
+          {/* Secondary workspace navigation: deeper project evidence and collaboration views. */}
+          <div role="group" aria-label="Project workspace views" className="mt-10">
             <ProjectTabs
               active={tab}
               onSelect={setTab}
@@ -373,37 +386,43 @@ function ProjectPage() {
 
           <div className="pt-6">
             {tab === "files" && (
-              <ProjectFilesExplorer
-                projectId={id}
-                projectFiles={projectFiles}
-                isOwner={isOwner}
-                preselectPath={preselectPath}
-                preselectNonce={preselectNonce}
-              />
+              <section aria-label="Project files">
+                <ProjectFilesExplorer
+                  projectId={id}
+                  projectFiles={projectFiles}
+                  isOwner={isOwner}
+                  preselectPath={preselectPath}
+                  preselectNonce={preselectNonce}
+                />
+              </section>
             )}
             {tab === "activity" && (
-              <ProjectActivityTab
-                projectId={id}
-                milestones={milestones}
-                updates={updates}
-                discussions={discussions}
-                projectFiles={projectFiles}
-                repos={repos}
-                isContributor={isContributor}
-              />
+              <section aria-label="Project activity">
+                <ProjectActivityTab
+                  projectId={id}
+                  milestones={milestones}
+                  updates={updates}
+                  discussions={discussions}
+                  projectFiles={projectFiles}
+                  repos={repos}
+                  isContributor={isContributor}
+                />
+              </section>
             )}
             {tab === "people" && (
-              <ProjectPeopleTab
-                projectId={id}
-                contributors={contributors}
-                avatarSigned={avatarSigned}
-                openRoles={openRoles}
-                isOwner={isOwner}
-                isContributor={isContributor}
-              />
+              <section aria-label="Project people">
+                <ProjectPeopleTab
+                  projectId={id}
+                  contributors={contributors}
+                  avatarSigned={avatarSigned}
+                  openRoles={openRoles}
+                  isOwner={isOwner}
+                  isContributor={isContributor}
+                />
+              </section>
             )}
             {tab === "discussions" && (
-              <div className="space-y-6">
+              <section aria-label="Project discussions" className="space-y-6">
                 <ProjectDiscussions
                   discussions={discussions}
                   projectId={id}
@@ -411,7 +430,7 @@ function ProjectPage() {
                   isOwner={isOwner}
                 />
                 <ProjectCommunityPosts projectId={id} />
-              </div>
+              </section>
             )}
           </div>
         </div>

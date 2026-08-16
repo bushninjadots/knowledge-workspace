@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthErrorMessage } from "@/lib/auth-error";
 import { safeRedirectPath } from "@/lib/validators";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -18,14 +19,18 @@ export const Route = createFileRoute("/login")({
         content:
           "Log in to Tethyr — the collaboration network where builders create together and get known for what they make.",
       },
+      ...robotsMeta(),
     ],
+    links: canonicalLinks("/login"),
   }),
   component: LoginPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong on our end. Please try again.
+        </p>
       </div>
     </div>
   ),
@@ -71,7 +76,7 @@ function LoginPage() {
     setResetting(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password${redirectTarget !== "/dashboard" ? `?redirect=${encodeURIComponent(redirectTarget)}` : ""}`,
       });
       if (error) {
         toast.error(error.message);

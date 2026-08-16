@@ -16,6 +16,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/library/$id")({
+  head: () => ({
+    meta: [
+      { title: "Library item — Tethyr" },
+      { name: "description", content: "A note or resource in your Tethyr library." },
+    ],
+  }),
   component: LibraryItemPage,
 });
 
@@ -42,6 +48,10 @@ function LibraryItemPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id]);
+
+  useEffect(() => {
+    if (item?.title) document.title = `${item.title} — Tethyr`;
+  }, [item?.title]);
 
   useEffect(() => {
     let active = true;
@@ -130,6 +140,7 @@ function LibraryItemPage() {
             size="icon"
             className="h-8 w-8"
             onClick={() => navigate({ to: "/library" })}
+            aria-label="Back to Library"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -154,6 +165,7 @@ function LibraryItemPage() {
             size="icon"
             className="h-8 w-8"
             onClick={() => toggleFav.mutate({ id: item.id, is_favorite: !item.is_favorite })}
+            aria-label={item.is_favorite ? "Remove from favorites" : "Add to favorites"}
           >
             <Star
               className={`h-4 w-4 ${
@@ -166,6 +178,7 @@ function LibraryItemPage() {
             size="icon"
             className="h-8 w-8"
             onClick={() => togglePin.mutate({ id: item.id, is_pinned: !item.is_pinned })}
+            aria-label={item.is_pinned ? "Unpin" : "Pin to top"}
           >
             <Pin
               className={`h-4 w-4 ${
@@ -179,6 +192,7 @@ function LibraryItemPage() {
             size="icon"
             className="h-8 w-8 text-destructive"
             onClick={handleDelete}
+            aria-label="Delete item"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -203,6 +217,7 @@ function LibraryItemPage() {
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
           placeholder="Untitled"
+          aria-label="Title"
           className="mb-6 w-full bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/40 font-display"
         />
 

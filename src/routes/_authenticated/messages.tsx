@@ -23,11 +23,13 @@ export const Route = createFileRoute("/_authenticated/messages")({
     ],
   }),
   component: MessagesPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong on our end. Please try again.
+        </p>
       </div>
     </div>
   ),
@@ -212,7 +214,13 @@ function Thread({
   return (
     <>
       <header className="flex h-16 items-center gap-3 border-b border-border/60 px-4">
-        <Button variant="ghost" size="icon" className="sm:hidden" onClick={onBack}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="sm:hidden"
+          onClick={onBack}
+          aria-label="Back to messages"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background shadow-sm">
@@ -303,7 +311,9 @@ function Thread({
             <p className="mt-2 text-sm text-muted-foreground">
               This is the very beginning of your conversation with {name}.
             </p>
-            <p className="text-xs text-muted-foreground">No pressure, but"hi"is a great opener.</p>
+            <p className="text-xs text-muted-foreground">
+              No pressure, but "hi" is a great opener.
+            </p>
           </div>
         )}
         {otherTyping && (
@@ -344,6 +354,7 @@ function Thread({
             disabled={send.isPending || !draft.trim()}
             className="h-11 w-11 shrink-0 gap-1.5 rounded-xl shadow-sm transition-transform duration-150 active:scale-95"
             size="icon"
+            aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>

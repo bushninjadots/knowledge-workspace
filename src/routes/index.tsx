@@ -15,6 +15,7 @@ import {
 import { HeroActions } from "@/components/tethyr/hero-actions";
 import { SectionReveal } from "@/components/tethyr/section-reveal";
 import { Button } from "@/components/ui/button";
+import { canonicalLinks } from "@/lib/seo";
 
 function scrollToContent() {
   document.getElementById("landing-content")?.scrollIntoView({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/")({
           "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
       },
     ],
+    links: canonicalLinks("/"),
   }),
   component: HomePage,
 });

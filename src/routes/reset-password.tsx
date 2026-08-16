@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
@@ -7,19 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthErrorMessage } from "@/lib/auth-error";
+import { safeRedirectPath } from "@/lib/validators";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Reset password — Tethyr" },
       { name: "description", content: "Set a new password for your Tethyr account." },
+      ...robotsMeta(),
     ],
+    links: canonicalLinks("/reset-password"),
   }),
   component: ResetPasswordPage,
 });
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { redirect: redirectParam } = useSearch({ strict: false }) as {
+    redirect?: string;
+  };
+  const redirectTarget = safeRedirectPath(redirectParam) ?? "/dashboard";
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,7 +94,7 @@ function ResetPasswordPage() {
         return;
       }
       toast.success("Password updated");
-      navigate({ to: "/dashboard" });
+      navigate({ to: redirectTarget });
     } catch (err) {
       toast.error(
         getAuthErrorMessage(err, "Something went wrong. Please request a new reset link."),
@@ -103,7 +111,11 @@ function ResetPasswordPage() {
       footer={
         <>
           Remembered your password?{" "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link
+            to="/login"
+            search={redirectParam ? { redirect: redirectParam } : undefined}
+            className="text-primary hover:underline"
+          >
             Log in
           </Link>
         </>

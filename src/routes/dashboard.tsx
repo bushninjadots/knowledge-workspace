@@ -18,7 +18,6 @@ import {
   X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
@@ -32,7 +31,6 @@ import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
-import { GripVertical } from "lucide-react";
 
 import {
   AvailabilitySelector,
@@ -52,20 +50,25 @@ import { NotificationDropdown } from "@/components/tethyr/notifications/notifica
 import { GlobalSearch } from "@/components/tethyr/global-search";
 import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Tethyr" },
       { name: "description", content: "Your Tethyr dashboard." },
+      ...robotsMeta(),
     ],
+    links: canonicalLinks("/dashboard"),
   }),
   component: DashboardPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong on our end. Please try again.
+        </p>
       </div>
     </div>
   ),
@@ -290,8 +293,6 @@ function DashboardContent({
     () => myProjects.filter((p: ProjectRow) => p.status === "active" || p.status === "planning"),
     [myProjects],
   );
-
-  const [customizing, setCustomizing] = useState(false);
 
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
@@ -768,52 +769,33 @@ function DashboardContent({
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-        {customizing ? (
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+        <section aria-label="Dashboard priorities" className="space-y-6">
+          {renderModule("welcome")}
+          <FirstSessionOnboarding data={data} />
+          {renderModule("next-steps")}
+          {renderModule("today")}
+        </section>
+
+        <section aria-labelledby="dashboard-modules-heading" className="space-y-4">
+          <div>
+            <h2 id="dashboard-modules-heading" className="font-display text-lg font-semibold">
+              Your workspace
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Keep the tools and signals you use to build, connect, and contribute close at hand.
+            </p>
+          </div>
           <WorkspaceGrid
             page="dashboard"
             userId={data?.userId}
             modules={DASHBOARD_MODULES}
             canCustomize={true}
-            defaultCustomizing
             showModuleTitles={false}
-            onCustomizingChange={setCustomizing}
             renderModule={renderModule}
+            migrateRetiredModules
           />
-        ) : (
-          <>
-            <div className="flex items-center justify-end gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-muted-foreground"
-                onClick={() => setCustomizing(true)}
-              >
-                <GripVertical className="mr-1.5 h-3.5 w-3.5" />
-                Customize
-              </Button>
-            </div>
-            {renderModule("welcome")}
-            <FirstSessionOnboarding data={data} />
-            {renderModule("next-steps")}
-            {renderModule("today")}
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="space-y-6 lg:col-span-2">
-                {renderModule("projects")}
-                {renderModule("applications")}
-                {renderModule("challenges")}
-                {renderModule("connections")}
-                {renderModule("activity")}
-              </div>
-              <div className="space-y-6">
-                {renderModule("suggested-projects")}
-                {renderModule("suggested-creators")}
-                {renderModule("trending-skills")}
-                {renderModule("week")}
-              </div>
-            </div>
-          </>
-        )}
+        </section>
       </div>
     </div>
   );

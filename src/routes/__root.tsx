@@ -113,9 +113,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     links: [
-      ...(import.meta.env.VITE_PUBLIC_SITE_URL
-        ? [{ rel: "canonical", href: import.meta.env.VITE_PUBLIC_SITE_URL }]
-        : []),
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

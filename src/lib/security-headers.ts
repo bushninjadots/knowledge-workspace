@@ -1,14 +1,17 @@
+const isDevelopment = import.meta.env.DEV === true || process.env.NODE_ENV === "development";
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-XSS-Protection": "0",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   "Content-Security-Policy": [
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http://localhost:54321 http://127.0.0.1:54321",

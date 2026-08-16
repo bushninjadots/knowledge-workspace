@@ -75,11 +75,13 @@ export const Route = createFileRoute("/_authenticated/profile")({
     ],
   }),
   component: ProfilePage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Studio failed to load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong while loading your studio. Please try again.
+        </p>
         <a href="/profile" className="mt-4 inline-block text-sm text-primary hover:underline">
           Try again
         </a>
@@ -721,25 +723,35 @@ function TeachSkillsCard({
       ) : (
         <div className="flex flex-wrap gap-2">
           {selected.map((s) => (
-            <button
+            <div
               key={s.id}
-              type="button"
-              onClick={() => setProofEditing(s)}
-              className="group flex flex-col items-start gap-1 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 text-left transition hover:border-[var(--user-accent-border,var(--primary))]/70"
+              className="group flex flex-col items-start gap-1 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 transition hover:border-[var(--user-accent-border,var(--primary))]/70"
             >
+              <button
+                type="button"
+                onClick={() => setProofEditing(s)}
+                className="flex flex-col items-start gap-1 text-left"
+                title={`Edit proof for ${s.name}`}
+              >
+                <span className="text-xs font-medium text-primary group-hover:underline">
+                  {s.name}
+                </span>
+                <span className="flex flex-wrap items-center gap-1">
+                  <VerificationBadge
+                    level={s.meta.verification_level}
+                    proofUrl={s.meta.proof_url}
+                  />
+                  <ExperienceBadge level={s.meta.experience_level} />
+                </span>
+              </button>
               <Link
                 to="/skills/$slug"
                 params={{ slug: s.slug }}
-                className="text-xs text-primary hover:underline"
-                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
               >
-                {s.name}
+                View skill
               </Link>
-              <div className="flex flex-wrap items-center gap-1">
-                <VerificationBadge level={s.meta.verification_level} proofUrl={s.meta.proof_url} />
-                <ExperienceBadge level={s.meta.experience_level} />
-              </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

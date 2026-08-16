@@ -424,12 +424,13 @@ function ExplorePage() {
           {/* Tab bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div
-              role="tablist"
+              role="group"
+              aria-label="Explore views"
               className="flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit"
             >
               <button
-                role="tab"
-                aria-selected={tab === "projects"}
+                type="button"
+                aria-pressed={tab === "projects"}
                 onClick={() => setTab("projects")}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                   tab === "projects"
@@ -441,8 +442,8 @@ function ExplorePage() {
                 Projects
               </button>
               <button
-                role="tab"
-                aria-selected={tab === "creators"}
+                type="button"
+                aria-pressed={tab === "creators"}
                 onClick={() => setTab("creators")}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                   tab === "creators"
@@ -454,8 +455,8 @@ function ExplorePage() {
                 People
               </button>
               <button
-                role="tab"
-                aria-selected={tab === "opportunities"}
+                type="button"
+                aria-pressed={tab === "opportunities"}
                 onClick={() => setTab("opportunities")}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                   tab === "opportunities"
@@ -471,7 +472,7 @@ function ExplorePage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center gap-4 px-4 py-6" style={{ perspective: "1200px" }}>
+            <div className="flex items-center gap-4 px-4 py-6">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-xl bg-surface" />
               ))}
@@ -483,7 +484,7 @@ function ExplorePage() {
                 title="No open opportunities match"
                 description="Try a different need or check back as projects open new roles."
                 actionLabel="Browse projects"
-                actionHref="/explore"
+                onAction={() => setTab("projects")}
                 variant="projects"
               />
             ) : (

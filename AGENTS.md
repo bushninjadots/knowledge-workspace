@@ -17,6 +17,20 @@
 
 > **Do not optimize for "more polished." Optimize for more Tethyr.**
 
+## Canonical Tethyr References
+
+Start with the [`Tethyr documentation index`](docs/README.md) for ownership and precedence. Use these documents together; they are intentionally separated by ownership so they do not become competing constitutions:
+
+- [`docs/TETHYR_PRODUCT.md`](docs/TETHYR_PRODUCT.md) — product identity, primary loop, pillars, and product decisions
+- [`docs/TETHYR_DESIGN.md`](docs/TETHYR_DESIGN.md) — design direction, composition intent, and visual anti-patterns
+- [`docs/TETHYR_DESIGN_SYSTEM.md`](docs/TETHYR_DESIGN_SYSTEM.md) — implementation guidance for surfaces, typography, spacing, states, and responsive behavior
+- [`docs/TETHYR_UX_RULES.md`](docs/TETHYR_UX_RULES.md) — required reasoning, design-review, implementation, and validation workflow
+- [`docs/TETHYR_ARCHITECTURE.md`](docs/TETHYR_ARCHITECTURE.md) — route, component, data, server, and documentation ownership
+- [`docs/TETHYR_IMPLEMENTATION_STAGES.md`](docs/TETHYR_IMPLEMENTATION_STAGES.md) — current staged execution priorities
+- Dated audit files in [`docs/`](docs/) — current or historical findings, not replacements for this constitution
+
+Before a significant UI or product change: inspect the current implementation, identify the user goal and information hierarchy, reuse existing owners, propose the smallest strong change, implement it, and perform a second UX/design review with state, responsive, accessibility, and test validation. Follow [`docs/TETHYR_UX_RULES.md`](docs/TETHYR_UX_RULES.md).
+
 ## What Tethyr Is
 
 **A creative collaboration network where people become known through what they build.**
@@ -61,28 +75,29 @@ Every feature should support this loop. If it doesn't, reconsider it.
 
 ## Border Hierarchy
 
-| Level | Treatment | Example |
-|---|---|---|
-| 0 — Page background | No border, `bg-background` | Page body |
-| 1 — Subtle sections | Background contrast only, no border | Content sections |
-| 2 — Interactive surfaces | `border card-border` (subtle) | Cards, panels |
-| 3 — Important/focused | Accent border via `--user-accent-border` | Active states, featured |
-| 4 — Modal/dialog | `border card-border` + shadow + backdrop | Dialogs, overlays |
+| Level                    | Treatment                                | Example                 |
+| ------------------------ | ---------------------------------------- | ----------------------- |
+| 0 — Page background      | No border, `bg-background`               | Page body               |
+| 1 — Subtle sections      | Background contrast only, no border      | Content sections        |
+| 2 — Interactive surfaces | `border card-border` (subtle)            | Cards, panels           |
+| 3 — Important/focused    | Accent border via `--user-accent-border` | Active states, featured |
+| 4 — Modal/dialog         | `border card-border` + shadow + backdrop | Dialogs, overlays       |
 
 ## Border Radius Scale
 
-| Element | Radius |
-|---|---|
-| Large containers / page sections | `rounded-xl` |
-| Cards | `rounded-lg` or `rounded-xl` |
-| Inputs | `rounded-md` or `rounded-lg` |
-| Buttons | `rounded-md` or `rounded-lg` |
-| Tags / badges | `rounded-full` |
-| Avatars | `rounded-full` |
+| Element                          | Radius                       |
+| -------------------------------- | ---------------------------- |
+| Large containers / page sections | `rounded-xl`                 |
+| Cards                            | `rounded-lg` or `rounded-xl` |
+| Inputs                           | `rounded-md` or `rounded-lg` |
+| Buttons                          | `rounded-md` or `rounded-lg` |
+| Tags / badges                    | `rounded-full`               |
+| Avatars                          | `rounded-full`               |
 
 ## The "Not Everything Is a Card" Rule
 
 Instead of "everything is a card," use:
+
 - **Surfaces** — background-differentiated areas
 - **Sections** — visually grouped content
 - **Workspaces** — interactive content areas

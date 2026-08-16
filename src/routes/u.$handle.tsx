@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import { canonicalLinks } from "@/lib/seo";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import {
@@ -75,16 +76,20 @@ type ProjectLite = {
 };
 
 export const Route = createFileRoute("/u/$handle")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
-      { title: "Profile — Tethyr" },
-      { name: "description", content: "A creator building on Tethyr." },
+      { title: `@${params.handle} — Tethyr` },
+      {
+        name: "description",
+        content: `Explore @${params.handle}'s work, skills, and projects on Tethyr.`,
+      },
     ],
+    links: canonicalLinks(`/u/${encodeURIComponent(params.handle)}`),
   }),
   component: PublicProfileRoute,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="mx-auto max-w-2xl p-8 text-sm text-destructive" role="alert">
-      {error.message}
+      This person's studio couldn't be loaded. Please try again.
     </div>
   ),
   notFoundComponent: () => (
@@ -354,8 +359,8 @@ function PublicProfileRoute() {
 
         {/* ── Section 1: Skills They Teach (with endorsements) ── */}
         <SectionCard
-          title="Studios"
-          subtitle="Skills they share and can help you with"
+          title="Skills they share"
+          subtitle="What they can help you with"
           icon={<GraduationCap className="h-4 w-4" />}
         >
           {teachSkills.length === 0 ? (
@@ -456,7 +461,9 @@ function PublicProfileRoute() {
                     Built
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {builtProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+                    {builtProjects.map((p) => (
+                      <ProjectCard key={p.id} project={p} />
+                    ))}
                   </div>
                 </div>
               )}
@@ -466,7 +473,9 @@ function PublicProfileRoute() {
                     Contributing to
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {joinedProjects.map((p) => <ProjectCard key={p.id} project={p} />)}
+                    {joinedProjects.map((p) => (
+                      <ProjectCard key={p.id} project={p} />
+                    ))}
                   </div>
                 </div>
               )}
@@ -476,7 +485,7 @@ function PublicProfileRoute() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* ── Section 3: Currently Learning ── */}
-          <SectionCard title="Currently learning" icon={<Sparkles className="h-4 w-4" />}>
+          <SectionCard title="Skills they're growing" icon={<Sparkles className="h-4 w-4" />}>
             {learnSkills.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing yet.</p>
             ) : (
@@ -616,18 +625,14 @@ function ProjectCard({ project }: { project: ProjectLite }) {
         )}
       </div>
       {project.description && (
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-          {project.description}
-        </p>
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
       )}
       <div className="mt-2 flex items-center gap-2">
         <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground">
           {project.role}
         </span>
         {project.progress_percent != null && (
-          <span className="text-[11px] text-muted-foreground">
-            {project.progress_percent}%
-          </span>
+          <span className="text-[11px] text-muted-foreground">{project.progress_percent}%</span>
         )}
       </div>
     </Link>

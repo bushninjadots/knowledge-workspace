@@ -50,11 +50,13 @@ export const Route = createFileRoute("/_authenticated/sessions/$id")({
     ],
   }),
   component: SessionDetailPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Session not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We couldn't load this session. Please try again.
+        </p>
         <Link to="/sessions" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to sessions
         </Link>
@@ -110,6 +112,7 @@ function SessionDetailPage() {
           <button
             onClick={() => navigate({ to: "/sessions" })}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Back to sessions"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -554,6 +557,7 @@ function NotesSection({
           onClick={onAddNote}
           disabled={!noteText.trim() || isAdding}
           className="shrink-0 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+          aria-label="Add note"
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
@@ -565,10 +569,7 @@ function NotesSection({
       ) : (
         <div className="space-y-2">
           {notes.map((note) => (
-            <div
-              key={note.id}
-              className="rounded-xl border card-border bg-surface/30 px-4 py-3"
-            >
+            <div key={note.id} className="rounded-xl border card-border bg-surface/30 px-4 py-3">
               <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
               <div className="mt-2 flex items-center justify-between">
                 <div className="text-[11px] text-muted-foreground">

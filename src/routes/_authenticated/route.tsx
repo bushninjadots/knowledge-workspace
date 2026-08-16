@@ -1,9 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthenticatedShell } from "@/components/tethyr/authenticated-shell";
+import { robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  head: () => ({ meta: robotsMeta() }),
   component: AuthenticatedShell,
   beforeLoad: async () => {
     try {

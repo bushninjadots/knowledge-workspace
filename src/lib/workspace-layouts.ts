@@ -3,7 +3,6 @@ import {
   BarChart as IconBarChart,
   Calendar as IconCalendar,
   Clock as IconClock,
-  Compass as IconCompass,
   Folder as IconFolder,
   GraduationCap as IconGraduationCap,
   Sparkles as IconSparkles,
@@ -45,40 +44,11 @@ export const GRID_MARGIN: [number, number] = [14, 14];
 // Dashboard modules — each maps to an existing dashboard section.
 // ---------------------------------------------------------------------------
 
+// Priority surfaces stay in the page flow so the dashboard answers "what's next?"
+// before the user enters the customizable workspace below.
+export const RETIRED_DASHBOARD_MODULE_IDS = ["welcome", "today", "next-steps"] as const;
+
 export const DASHBOARD_MODULES: WorkspaceModule[] = [
-  {
-    id: "welcome",
-    title: "Welcome",
-    icon: IconSparkles,
-    defaultW: 12,
-    defaultH: 6,
-    minW: 6,
-    maxW: 12,
-    minH: 4,
-    maxH: 8,
-  },
-  {
-    id: "today",
-    title: "Today's focus",
-    icon: IconCompass,
-    defaultW: 12,
-    defaultH: 7,
-    minW: 6,
-    maxW: 12,
-    minH: 5,
-    maxH: 10,
-  },
-  {
-    id: "next-steps",
-    title: "Next steps",
-    icon: IconSparkles,
-    defaultW: 12,
-    defaultH: 5,
-    minW: 6,
-    maxW: 12,
-    minH: 3,
-    maxH: 8,
-  },
   {
     id: "projects",
     title: "Your projects",
@@ -293,20 +263,31 @@ export function mergeLayout(
   hidden?: string[],
   pinned?: string[],
   defaults?: PersistedLayoutItem[] | null,
+  migrateRetiredModules = false,
 ): { items: PersistedLayoutItem[]; hidden: string[]; pinned: string[] } {
   const byId = new Map(modules.map((m) => [m.id, m]));
   const defaultById = new Map((defaults ?? []).map((d) => [d.i, d]));
+  const savedItems = saved ?? [];
+  const hasRetiredModules =
+    migrateRetiredModules &&
+    savedItems.some((item) =>
+      RETIRED_DASHBOARD_MODULE_IDS.includes(
+        item.i as (typeof RETIRED_DASHBOARD_MODULE_IDS)[number],
+      ),
+    );
+  const survivingYs = savedItems.filter((item) => byId.has(item.i)).map((item) => item.y);
+  const legacyYOffset = hasRetiredModules && survivingYs.length > 0 ? Math.min(...survivingYs) : 0;
   const items: PersistedLayoutItem[] = [];
 
   for (const m of modules) {
-    const savedItem = saved?.find((s) => s.i === m.id);
+    const savedItem = savedItems.find((s) => s.i === m.id);
     const defItem = defaultById.get(m.id);
     const w = clampDim(savedItem?.w ?? defItem?.w ?? m.defaultW, m.minW ?? 1, m.maxW ?? GRID_COLS);
     const h = clampDim(savedItem?.h ?? defItem?.h ?? m.defaultH, m.minH ?? 1, m.maxH ?? 20);
     items.push({
       i: m.id,
       x: clampDim(savedItem?.x ?? defItem?.x ?? 0, 0, GRID_COLS - w),
-      y: savedItem?.y ?? defItem?.y ?? 0,
+      y: Math.max(0, (savedItem?.y ?? defItem?.y ?? 0) - legacyYOffset),
       w,
       h,
       minW: m.minW,

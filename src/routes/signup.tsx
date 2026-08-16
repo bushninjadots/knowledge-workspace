@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthErrorMessage } from "@/lib/auth-error";
 import { safeRedirectPath } from "@/lib/validators";
 import { useSkillsCatalog } from "@/hooks/use-current-user";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -19,14 +20,18 @@ export const Route = createFileRoute("/signup")({
         content:
           "Join Tethyr — the collaboration network where builders create projects together and get known for what they make.",
       },
+      ...robotsMeta(),
     ],
+    links: canonicalLinks("/signup"),
   }),
   component: SignupPage,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Something went wrong on our end. Please try again.
+        </p>
       </div>
     </div>
   ),
@@ -66,7 +71,7 @@ function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}${redirectTarget}`,
           data: {
             display_name: name,
             handle: cleanHandle,

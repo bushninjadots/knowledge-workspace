@@ -87,3 +87,37 @@ if [[ "${status}" != "200" ]]; then
 fi
 rm -f /tmp/tethyr-dashboard.html
 echo "ok /dashboard client auth boundary (${status})"
+
+robots_headers="$(mktemp -t tethyr-robots.XXXXXX.headers)"
+robots_body="$(mktemp -t tethyr-robots.XXXXXX.body)"
+curl -sS -D "${robots_headers}" -o "${robots_body}" "${BASE_URL}/robots.txt"
+if ! grep -Fq "Sitemap: ${BASE_URL}/sitemap.xml" "${robots_body}" || ! grep -Fq "Disallow: /dashboard" "${robots_body}"; then
+  echo "/robots.txt: expected sitemap and authenticated-route directives" >&2
+  cat "${robots_body}" >&2
+  rm -f "${robots_headers}" "${robots_body}"
+  exit 1
+fi
+rm -f "${robots_headers}" "${robots_body}"
+echo "ok /robots.txt sitemap and private paths"
+
+sitemap_headers="$(mktemp -t tethyr-sitemap.XXXXXX.headers)"
+sitemap_body="$(mktemp -t tethyr-sitemap.XXXXXX.body)"
+curl -sS -D "${sitemap_headers}" -o "${sitemap_body}" "${BASE_URL}/sitemap.xml"
+if ! grep -qi "content-type: application/xml" "${sitemap_headers}" || ! grep -Fq "<urlset" "${sitemap_body}" || ! grep -Fq "<loc>${BASE_URL}/</loc>" "${sitemap_body}"; then
+  echo "/sitemap.xml: expected XML sitemap containing the homepage" >&2
+  cat "${sitemap_headers}" >&2
+  cat "${sitemap_body}" >&2
+  rm -f "${sitemap_headers}" "${sitemap_body}"
+  exit 1
+fi
+rm -f "${sitemap_headers}" "${sitemap_body}"
+echo "ok /sitemap.xml XML and homepage"
+
+private_robots="$(curl -sS -D - -o /dev/null "${BASE_URL}/dashboard" | tr -d '\r' | awk -F': ' 'tolower($1) == "x-robots-tag" { print $2; exit }')"
+public_robots="$(curl -sS -D - -o /dev/null "${BASE_URL}/" | tr -d '\r' | awk -F': ' 'tolower($1) == "x-robots-tag" { print $2; exit }')"
+if [[ "${private_robots}" != "noindex, nofollow, noarchive" ]] || [[ -n "${public_robots}" ]]; then
+  echo "robots headers: expected private noindex and indexable homepage" >&2
+  echo "dashboard=${private_robots@Q} homepage=${public_robots@Q}" >&2
+  exit 1
+fi
+echo "ok robots headers (private noindex, public indexable)"
