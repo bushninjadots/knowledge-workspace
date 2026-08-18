@@ -26,10 +26,13 @@ import {
 export function CreateChallengeDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  projectId,
 }: {
   /** Optional controlled mode — lets callers open the dialog from elsewhere. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Pre-link the new challenge to this project (e.g. opened from a project page). */
+  projectId?: string | null;
 } = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -74,6 +77,7 @@ export function CreateChallengeDialog({
         end_date: endDate || null,
         max_participants: maxParticipants ? parseInt(maxParticipants) : null,
         pass_criteria: passCriteria.trim() || null,
+        project_id: projectId ?? null,
       },
       {
         onSuccess: () => {

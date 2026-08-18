@@ -24,6 +24,8 @@ export type ChallengeRow = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  /** Optional project this challenge is tied to. */
+  project_id: string | null;
   // Joined stats & creator info
   creator?: {
     display_name: string | null;
@@ -67,6 +69,8 @@ export type CreateChallengeInput = {
   end_date?: string | null;
   max_participants?: number | null;
   pass_criteria?: string | null;
+  /** Optional project this challenge is tied to. */
+  project_id?: string | null;
 };
 
 export const CHALLENGES_KEY = ["challenges"] as const;
@@ -229,6 +233,7 @@ export function useCreateChallenge() {
           end_date: input.end_date ?? null,
           max_participants: input.max_participants ?? null,
           pass_criteria: input.pass_criteria ?? null,
+          project_id: input.project_id ?? null,
           created_by: user.id,
         })
         .select()
@@ -240,6 +245,29 @@ export function useCreateChallenge() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CHALLENGES_KEY });
     },
+  });
+}
+
+/** Challenges tied to a specific project (active ones first). */
+export function useProjectChallenges(projectId: string) {
+  return useQuery({
+    queryKey: [...CHALLENGES_KEY, "project", projectId] as const,
+    queryFn: async () => {
+      const { data, error } = await sb
+        .from("challenges")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+      if (error) {
+        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+          return [] as ChallengeRow[];
+        }
+        throw error;
+      }
+      return (data ?? []) as ChallengeRow[];
+    },
+    enabled: !!projectId,
   });
 }
 

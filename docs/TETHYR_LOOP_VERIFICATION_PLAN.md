@@ -173,3 +173,16 @@ ways to make their first contribution without dead ends.
   strangers and anonymous visitors, so meeting URLs stay inside the team).
 - Added pgTAP assertions 57–58; suite now 58/58. `tsc` clean, 112 Vitest tests,
   core-loop + smoke browser tests green.
+
+### 2026-08-18 — Phase 3 (Stage 5): challenges wired back to projects
+
+- Added a **Challenges** section to the project page (public, like all challenge
+  content) listing the challenges tied to the project, with a Create Challenge
+  action for the team that pre-links the new challenge to the project.
+- Migration `20260818090000_project_challenges_visibility`: new `project_id`
+  column on `challenges`, plus a hardened insert policy so a challenge can only
+  be linked to a project by someone on that project's team. Demo seed now ties
+  each seeded challenge to its creator's project.
+- Added pgTAP assertions 59–60; suite now 60/60. `tsc` clean, 112 Vitest tests,
+  core-loop + smoke browser tests green. Sessions + challenges now both relate
+  visibly to projects.

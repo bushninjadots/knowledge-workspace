@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(58);
+SELECT plan(60);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -735,6 +735,27 @@ SELECT is(
     WHERE id = 'c0c0c0c0-0000-4000-8000-000000000006')::bigint,
   0::bigint,
   '58. a non-contributor cannot read the project''s sessions'
+);
+
+-- ---------------------------------------------------------------------------
+-- 18. Project challenges: linking requires being on the project's team
+-- ---------------------------------------------------------------------------
+-- Eve is not on Alice's project, so she cannot hang a challenge on it.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT throws_ok(
+  $$INSERT INTO public.challenges(title, description, created_by, project_id)
+      VALUES ('Eve Challenge', 'x', '33333333-3333-3333-3333-333333333333',
+              'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')$$,
+  NULL, '59. a non-contributor cannot link a challenge to a project'
+);
+
+-- Bob is a contributor of Alice's project, so linking works.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT lives_ok(
+  $$INSERT INTO public.challenges(title, description, created_by, project_id)
+      VALUES ('Bob Challenge', 'x', '22222222-2222-2222-2222-222222222222',
+              'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')$$,
+  '60. a project contributor can link a challenge to the project'
 );
 
 SELECT * FROM finish();

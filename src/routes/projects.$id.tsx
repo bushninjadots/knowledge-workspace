@@ -30,6 +30,7 @@ import {
 } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
 import { useProjectSessions } from "@/hooks/use-sessions";
+import { useProjectChallenges } from "@/hooks/use-challenges";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
@@ -45,6 +46,7 @@ import {
   useProjectCommunityPostCount,
 } from "@/components/tethyr/project/project-community-posts";
 import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
+import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
 import { ScheduleSessionWizard } from "@/components/tethyr/sessions/schedule-session-wizard";
 import { ProjectSearchDialog } from "@/components/tethyr/project/project-search";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
@@ -321,6 +323,7 @@ function ProjectPage() {
   const { data: needs = [] } = useProjectNeeds(id);
   const { data: repos = [] } = useProjectRepos(id);
   const { data: projectSessions = [] } = useProjectSessions(id);
+  const { data: projectChallenges = [] } = useProjectChallenges(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
@@ -524,6 +527,57 @@ function ProjectPage() {
               )}
             </section>
           )}
+
+          {/* Challenges — structured builds tied to this project. */}
+          <section
+            id="project-challenges"
+            aria-labelledby="project-challenges-heading"
+            className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="project-challenges-heading"
+                  className="font-display text-lg font-semibold tracking-tight"
+                >
+                  Challenges
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Structured builds tied to this project — join one to level up and earn evidence.
+                </p>
+              </div>
+              {isContributor && <CreateChallengeDialog projectId={id} />}
+            </div>
+
+            {projectChallenges.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                No challenges tied to this project yet.
+              </p>
+            ) : (
+              <ul className="mt-4 divide-y divide-border/50">
+                {projectChallenges.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      to="/challenges/$id"
+                      params={{ id: c.id }}
+                      className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{c.title}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {c.difficulty}
+                          {c.end_date ? ` · ends ${new Date(c.end_date).toLocaleDateString()}` : ""}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] capitalize text-muted-foreground">
+                        {c.type.replace(/_/g, " ")}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {/* Conversation */}
           <section

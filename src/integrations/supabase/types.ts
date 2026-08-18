@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -134,6 +129,7 @@ export type Database = {
           id: string
           max_participants: number | null
           pass_criteria: string | null
+          project_id: string | null
           skills: string[]
           start_date: string | null
           status: string
@@ -150,6 +146,7 @@ export type Database = {
           id?: string
           max_participants?: number | null
           pass_criteria?: string | null
+          project_id?: string | null
           skills?: string[]
           start_date?: string | null
           status?: string
@@ -166,6 +163,7 @@ export type Database = {
           id?: string
           max_participants?: number | null
           pass_criteria?: string | null
+          project_id?: string | null
           skills?: string[]
           start_date?: string | null
           status?: string
@@ -173,7 +171,15 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "challenges_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comments: {
         Row: {
@@ -2688,6 +2694,10 @@ export type Database = {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
+      is_space_owner: {
+        Args: { p_space_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       is_space_owner_or_moderator: {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
@@ -3014,3 +3024,4 @@ export const Constants = {
     },
   },
 } as const
+
