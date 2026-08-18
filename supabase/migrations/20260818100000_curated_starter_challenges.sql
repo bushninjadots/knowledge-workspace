@@ -25,13 +25,15 @@ ALTER TABLE public.challenges
 -- 2. Tethyr Team curator account
 -- ---------------------------------------------------------------------------
 -- The curator is a real staff account so starter submissions can be reviewed
--- and pass-gated reputation stays real. The password is randomized here (no
--- known credential ships to production); the local demo seed resets it to
--- password123 so dev/test can log in as the curator.
+-- and pass-gated reputation stays real. The password is a random placeholder
+-- that is not a valid bcrypt hash, so nobody can log in with a known
+-- credential — the team claims the account via the normal password-reset
+-- flow. The local demo seed resets it to password123 so dev/test can log in
+-- as the curator.
 DO $$
 DECLARE
   _curator uuid := 'a1d676d3-1a76-401f-bc30-0e4195569e27';
-  _pw text := crypt(gen_random_uuid()::text, gen_salt('bf', 10));
+  _pw text := '!placeholder-' || gen_random_uuid()::text;
 BEGIN
   INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password,
