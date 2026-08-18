@@ -18,12 +18,12 @@ describe("normalizeRole", () => {
 });
 
 describe("creditTextFor", () => {
-  it("wraps update and discussion titles, passes through full sentences", () => {
+  it("wraps update titles, passes through full-sentence kinds", () => {
     expect(creditTextFor({ kind: "update", title: "Beta launch" })).toBe(
       "Posted update “Beta launch”",
     );
-    expect(creditTextFor({ kind: "discussion", title: "API design" })).toBe(
-      "Started discussion “API design”",
+    expect(creditTextFor({ kind: "discussion", title: "Started discussion: API design" })).toBe(
+      "Started discussion: API design",
     );
     expect(creditTextFor({ kind: "contributor_joined", title: "x" })).toBe(
       "Joined the project as a contributor",
@@ -75,7 +75,7 @@ describe("compileProjectCredits", () => {
         {
           actor_id: "u2",
           kind: "discussion",
-          title: "API design",
+          title: "Started discussion: API design",
           created_at: "2026-02-01T00:00:00Z",
         },
         { actor_id: "u1", kind: "update", title: "Week 8", created_at: "2026-03-01T00:00:00Z" },
@@ -93,7 +93,7 @@ describe("compileProjectCredits", () => {
     expect(result[0].credit_count).toBe(2);
 
     // A non-creator shows their latest credit text and date.
-    expect(result[1].credit_text).toBe("Started discussion “API design”");
+    expect(result[1].credit_text).toBe("Started discussion: API design");
   });
 
   it("keeps the latest credit for an actor with several events", () => {

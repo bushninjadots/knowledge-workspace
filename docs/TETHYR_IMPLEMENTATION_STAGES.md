@@ -43,9 +43,9 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 **Goal:** make the project page feel like a human collaboration workspace.
 
-- [ ] Recompose first-view hierarchy: README/identity → current work → people/roles → conversation → evidence.
-- [ ] Add a concise current-work/needed-next summary.
-- [ ] Keep files, repos, resources, activity, and timeline available as secondary tools.
+- [x] Recompose first-view hierarchy: README/identity → current work → people/roles → conversation → evidence.
+- [x] Add a concise current-work/needed-next summary.
+- [x] Keep files, repos, resources, activity, and timeline available as secondary tools.
 - [ ] Remove or consolidate duplicate project actions/sections only after runtime confirmation.
 
 ## Stage 4 — Studio and dashboard simplification

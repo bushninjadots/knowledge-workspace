@@ -55,15 +55,14 @@ export function normalizeRole(role: string): CreditRole {
 
 /**
  * Map a project_activity event to a human credit sentence. Events whose title
- * is already a complete sentence (file_added, role_filled, need_filled) are
- * passed through verbatim.
+ * is already a complete sentence (discussion, file_added, role_filled,
+ * need_filled) are passed through verbatim — the activity trigger stores
+ * "Started discussion: …" and friends, so wrapping them again double-prefixes.
  */
 export function creditTextFor(row: { kind: string; title: string }): string {
   switch (row.kind) {
     case "update":
       return `Posted update “${row.title}”`;
-    case "discussion":
-      return `Started discussion “${row.title}”`;
     case "contributor_joined":
       return "Joined the project as a contributor";
     default:

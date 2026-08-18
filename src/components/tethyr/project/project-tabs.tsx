@@ -1,8 +1,8 @@
 import { memo } from "react";
-import { FolderOpen, Activity, Users, MessagesSquare } from "lucide-react";
+import { FolderOpen, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type ProjectTab = "files" | "activity" | "people" | "discussions";
+export type ProjectTab = "files" | "activity";
 
 export const PROJECT_TABS: {
   id: ProjectTab;
@@ -11,8 +11,6 @@ export const PROJECT_TABS: {
 }[] = [
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "activity", label: "Activity", icon: Activity },
-  { id: "people", label: "People", icon: Users },
-  { id: "discussions", label: "Discussions", icon: MessagesSquare },
 ];
 
 export const ProjectTabs = memo(function ProjectTabs({

@@ -126,3 +126,24 @@ ways to make their first contribution without dead ends.
 - Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
   9/9, changed-file ESLint clean, and a browser check confirms the section and
   its ordering.
+
+### 2026-08-18 — Phase 2 completed (project page recomposition)
+
+- Re-composed the project page to the full Stage 3 hierarchy. People/roles and
+  conversation are now inline (always visible) instead of tabbed, credits are
+  repositioned as the "evidence" that closes the page, and **Files + Activity**
+  remain the only tabbed secondary tools at the bottom:
+
+  `README/identity → Current work → Need help now → People → Conversation
+  → Credits (evidence) → [Files | Activity]`
+
+- Preserved deep links: `?tab=people` and `?tab=discussions` (used by role-app
+  notifications, Explore, and the dashboard) now scroll to the inline sections;
+  header "N posts" and "Post update" actions scroll to their targets.
+- Fixed a credit-roll double-prefix exposed by the repositioning: discussion
+  credits rendered `Started discussion “Started discussion: …”` because the
+  activity trigger already stored the full sentence and `creditTextFor` wrapped
+  it again.
+- Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
+  9/9, core-loop browser test green, changed-file ESLint clean, and browser
+  checks confirm ordering, deep-link scrolling, and clean credit text.

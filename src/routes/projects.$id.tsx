@@ -80,7 +80,7 @@ const ROLE_ORDER: Record<Contributor["role"], number> = {
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
 
-const TAB_IDS: ProjectTab[] = ["files", "activity", "people", "discussions"];
+const TAB_IDS: ProjectTab[] = ["files", "activity"];
 
 function isTab(value: unknown): value is ProjectTab {
   return typeof value === "string" && (TAB_IDS as string[]).includes(value);
@@ -103,6 +103,21 @@ function ProjectPage() {
   useEffect(() => {
     if (isTab(tabParam) && tabParam !== tab) setTabState(tabParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  // Legacy deep links (?tab=people / ?tab=discussions) now target the inline
+  // sections instead of tabs, since People and Conversation are always visible.
+  useEffect(() => {
+    if (tabParam === "people" || tabParam === "discussions") {
+      const sectionId = tabParam === "people" ? "project-people" : "project-discussions";
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          document
+            .getElementById(sectionId)
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      });
+    }
   }, [tabParam]);
 
   const setTab = useCallback(
@@ -132,20 +147,20 @@ function ProjectPage() {
     [setTab],
   );
 
-  const jumpToDiscussion = useCallback(
-    (discussionId: string) => {
-      setTab("discussions", { scrollToTop: false });
-      // Double-rAF + timeout: let the discussions tab mount before scrolling.
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          document
-            .getElementById(`discussion-${discussionId}`)
-            ?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 80);
-      });
-    },
-    [setTab],
-  );
+  const scrollToSection = useCallback((sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const jumpToDiscussion = useCallback((discussionId: string) => {
+    // Discussions are inline now, so jump straight to the thread.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document
+          .getElementById(`discussion-${discussionId}`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    });
+  }, []);
 
   const jumpToSection = useCallback((sectionId: string) => {
     // README is always visible — just scroll to the section
@@ -165,7 +180,7 @@ function ProjectPage() {
         (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key >= "1" && e.key <= "4") {
+      if (e.key >= "1" && e.key <= "2") {
         const idx = Number(e.key) - 1;
         if (TAB_IDS[idx]) {
           e.preventDefault();
@@ -358,8 +373,15 @@ function ProjectPage() {
         communityPostCount={communityPostCount}
         onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
-        onPostUpdate={isOwner || isContributor ? () => setTab("activity") : undefined}
-        onOpenDiscussions={() => setTab("discussions")}
+        onPostUpdate={
+          isOwner || isContributor
+            ? () => {
+                setTab("activity", { scrollToTop: false });
+                setTimeout(() => scrollToSection("project-activity"), 80);
+              }
+            : undefined
+        }
+        onOpenDiscussions={() => scrollToSection("project-discussions")}
       />
 
       <div className="animate-room-enter min-h-screen bg-noise">
@@ -402,16 +424,65 @@ function ProjectPage() {
 
           <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
 
-          {/* Secondary workspace navigation: deeper project evidence and collaboration views. */}
-          <div role="group" aria-label="Project workspace views" className="mt-10">
-            <ProjectTabs
-              active={tab}
-              onSelect={setTab}
-              counts={{
-                files: projectFiles.length,
-                discussions: discussions.length + communityPostCount,
-              }}
-            />
+          {/* People & roles */}
+          <section
+            id="project-people"
+            aria-labelledby="project-people-heading"
+            className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+          >
+            <h2
+              id="project-people-heading"
+              className="font-display text-lg font-semibold tracking-tight"
+            >
+              People
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Who's building this, and the roles they're looking to fill.
+            </p>
+            <div className="mt-4">
+              <ProjectPeopleTab
+                projectId={id}
+                contributors={contributors}
+                avatarSigned={avatarSigned}
+                openRoles={openRoles}
+                isOwner={isOwner}
+                isContributor={isContributor}
+              />
+            </div>
+          </section>
+
+          {/* Conversation */}
+          <section
+            id="project-discussions"
+            aria-labelledby="project-discussions-heading"
+            className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+          >
+            <h2
+              id="project-discussions-heading"
+              className="font-display text-lg font-semibold tracking-tight"
+            >
+              Conversation
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Questions, feedback, and updates from the team.
+            </p>
+            <div className="mt-4 space-y-6">
+              <ProjectDiscussions
+                discussions={discussions}
+                projectId={id}
+                isContributor={isContributor}
+                isOwner={isOwner}
+              />
+              <ProjectCommunityPosts projectId={id} />
+            </div>
+          </section>
+
+          {/* Evidence */}
+          <ProjectCredits projectId={id} />
+
+          {/* Secondary tools: files and activity stay tabbed, below the story. */}
+          <div role="group" aria-label="Project files and activity" className="mt-10">
+            <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
           </div>
 
           <div className="pt-6">
@@ -427,7 +498,7 @@ function ProjectPage() {
               </section>
             )}
             {tab === "activity" && (
-              <section aria-label="Project activity">
+              <section id="project-activity" aria-label="Project activity">
                 <ProjectActivityTab
                   projectId={id}
                   milestones={milestones}
@@ -439,32 +510,7 @@ function ProjectPage() {
                 />
               </section>
             )}
-            {tab === "people" && (
-              <section aria-label="Project people">
-                <ProjectPeopleTab
-                  projectId={id}
-                  contributors={contributors}
-                  avatarSigned={avatarSigned}
-                  openRoles={openRoles}
-                  isOwner={isOwner}
-                  isContributor={isContributor}
-                />
-              </section>
-            )}
-            {tab === "discussions" && (
-              <section aria-label="Project discussions" className="space-y-6">
-                <ProjectDiscussions
-                  discussions={discussions}
-                  projectId={id}
-                  isContributor={isContributor}
-                  isOwner={isOwner}
-                />
-                <ProjectCommunityPosts projectId={id} />
-              </section>
-            )}
           </div>
-
-          <ProjectCredits projectId={id} />
         </div>
       </div>
 
