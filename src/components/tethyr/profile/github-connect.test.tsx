@@ -28,6 +28,10 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: fake.supabase,
 }));
 
+vi.mock("@/hooks/use-current-user", () => ({
+  useAuthUser: () => ({ data: { id: "test-user" } }),
+}));
+
 vi.mock("@/lib/github-server", () => ({
   hasGithubToken: (...args: unknown[]) => fake.serverFns.hasGithubToken(...args),
   saveGithubToken: (...args: unknown[]) => fake.serverFns.saveGithubToken(...args),

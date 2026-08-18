@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
 import { githubTokenErrorMessage } from "@/lib/github";
@@ -18,8 +19,13 @@ type ConnectedAccount = {
 };
 
 export function useConnectedAccounts() {
+  const { data: user } = useAuthUser();
   return useQuery({
     queryKey: ["connected-accounts"],
+    // `connected_accounts` is auth-only (RLS `TO authenticated`). Gate on the
+    // signed-in user so the query never fires anonymously during SSR or before
+    // the session is loaded — otherwise PostgREST returns 403.
+    enabled: !!user,
     queryFn: async (): Promise<ConnectedAccount[]> => {
       const { data, error } = await sb
         .from("connected_accounts")

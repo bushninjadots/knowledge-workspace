@@ -15,7 +15,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [x] Record the forensic audit and its evidence limitations.
 - [x] Capture the current test/build/typecheck/smoke baseline.
 - [x] Verify remote migration state before shipping database-dependent changes. (2026-08-18: 8 pending migrations pushed — GitHub tokens, role-app notifications, poll vote RPC, challenge-review hardening, project needs, milestone attribution, teams, milestone reputation.)
-- [ ] Establish authenticated browser coverage for dashboard, Studio customization, Explore, project People, and project creation.
+- [x] Establish a repeatable authenticated browser smoke test (`tests/seed_browser_smoke.py`) covering dashboard, Explore, Studio, community, challenges, sessions, and the project page. Interactive flows (Studio customization, project creation, project People) still need dedicated coverage.
 
 ## Stage 1 — Trust and state clarity (current)
 
@@ -71,7 +71,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 **Goal:** harden the seams before feature expansion.
 
-- [ ] Replace high-risk Supabase `as any` boundaries with typed query/mutation adapters.
+- [x] Replace high-risk Supabase `as any` boundaries with typed query/mutation adapters. (2026-08-18: all hand-written `as any` sites removed; the only remaining ones are auto-generated in `routeTree.gen.ts`.)
 - [ ] Add tests for permissions, loading/error/empty states, and notification destinations.
 - [ ] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation.
 - [ ] Audit meaningful image alt text and dynamic-accent contrast.
