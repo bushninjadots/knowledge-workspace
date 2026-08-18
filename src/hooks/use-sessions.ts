@@ -100,6 +100,7 @@ export const sessionKeys = {
   detail: (id: string) => [...sessionKeys.all, "detail", id] as const,
   today: (userId: string) => [...sessionKeys.all, "today", userId] as const,
   upcoming: (userId: string) => [...sessionKeys.all, "upcoming", userId] as const,
+  project: (projectId: string) => [...sessionKeys.all, "project", projectId] as const,
   participants: (sessionId: string) => [...sessionKeys.all, "participants", sessionId] as const,
   requests: (userId: string) => [...sessionKeys.all, "requests", userId] as const,
   availability: (userId: string) => [...sessionKeys.all, "availability", userId] as const,
@@ -146,6 +147,17 @@ async function fetchSessionsForUser(userId: string): Promise<SessionWithParticip
     .from("sessions")
     .select(SESSION_SELECT)
     .or(sessionsForUserFilter(userId, participantSessionIds))
+    .order("starts_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as SessionWithParticipants[];
+}
+
+async function fetchSessionsForProject(projectId: string): Promise<SessionWithParticipants[]> {
+  const { data, error } = await sb
+    .from("sessions")
+    .select(SESSION_SELECT)
+    .eq("project_id", projectId)
+    .not("status", "eq", "cancelled")
     .order("starts_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
@@ -342,6 +354,14 @@ export function useSessions() {
     queryKey: sessionKeys.list(userId ?? ""),
     queryFn: () => fetchSessionsForUser(userId!),
     enabled: !!userId,
+  });
+}
+
+export function useProjectSessions(projectId: string) {
+  return useQuery({
+    queryKey: sessionKeys.project(projectId),
+    queryFn: () => fetchSessionsForProject(projectId),
+    enabled: !!projectId,
   });
 }
 

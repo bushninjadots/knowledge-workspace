@@ -158,3 +158,18 @@ ways to make their first contribution without dead ends.
 - Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
   9/9, changed-file ESLint clean, and a browser check confirms the module is
   gone while Projects/Activity/Challenges/Applications remain.
+
+### 2026-08-18 — Phase 3 (Stage 5): sessions wired back to projects
+
+- Added a **Sessions** section to the project page (visible to the team) so a
+  project's live working time lives next to its people, conversation, and
+  evidence. A "Schedule session" action opens the existing wizard pre-linked to
+  the project (`projectId` prop), and `useProjectSessions(projectId)` fetches
+  the project's sessions.
+- Fixed the RLS gap this exposed: sessions were readable only by the organizer
+  and explicit participants, so a project's own contributors couldn't see the
+  project's sessions. New migration `20260818080000_project_sessions_visibility`
+  lets project contributors read project-linked sessions (still hidden from
+  strangers and anonymous visitors, so meeting URLs stay inside the team).
+- Added pgTAP assertions 57–58; suite now 58/58. `tsc` clean, 112 Vitest tests,
+  core-loop + smoke browser tests green.

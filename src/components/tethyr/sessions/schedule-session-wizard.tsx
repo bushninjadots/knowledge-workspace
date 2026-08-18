@@ -131,12 +131,18 @@ const INITIAL: WizardState = {
 export function ScheduleSessionWizard({
   open,
   onOpenChange,
+  projectId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-link the new session to this project (e.g. opened from a project page). */
+  projectId?: string | null;
 }) {
   const [step, setStep] = useState(0);
-  const [state, setState] = useState<WizardState>(INITIAL);
+  const [state, setState] = useState<WizardState>(() => ({
+    ...INITIAL,
+    projectId: projectId ?? null,
+  }));
   const { data: me } = useCurrentUser();
   const createSession = useCreateSession();
 
@@ -155,7 +161,7 @@ export function ScheduleSessionWizard({
     onOpenChange(false);
     setTimeout(() => {
       setStep(0);
-      setState(INITIAL);
+      setState({ ...INITIAL, projectId: projectId ?? null });
     }, 200);
   }
 

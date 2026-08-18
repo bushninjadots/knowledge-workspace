@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(56);
+SELECT plan(58);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -705,6 +705,36 @@ SELECT throws_ok(
       VALUES ('b0b0b0b0-0000-4000-8000-000000000005',
               '22222222-2222-2222-2222-222222222222', 'organizer')$$,
   NULL, '56. a user cannot self-insert as session organizer'
+);
+
+-- ---------------------------------------------------------------------------
+-- 17. Project sessions: project contributors can read the project's sessions
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.sessions(id, organizer_id, title, project_id)
+  VALUES ('c0c0c0c0-0000-4000-8000-000000000006',
+          '11111111-1111-1111-1111-111111111111',
+          'Alice Project Sync',
+          'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+  ON CONFLICT (id) DO NOTHING;
+
+-- Bob is a contributor of the project but neither organizer nor participant
+-- of the session; the new policy should let the team read it.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE id = 'c0c0c0c0-0000-4000-8000-000000000006')::bigint,
+  1::bigint,
+  '57. a project contributor can read the project''s sessions'
+);
+
+-- Eve is neither a contributor nor a participant: still hidden.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE id = 'c0c0c0c0-0000-4000-8000-000000000006')::bigint,
+  0::bigint,
+  '58. a non-contributor cannot read the project''s sessions'
 );
 
 SELECT * FROM finish();

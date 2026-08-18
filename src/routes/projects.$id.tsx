@@ -12,6 +12,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
+import { CalendarPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +29,7 @@ import {
   type ProjectDetail,
 } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
+import { useProjectSessions } from "@/hooks/use-sessions";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
@@ -43,6 +45,7 @@ import {
   useProjectCommunityPostCount,
 } from "@/components/tethyr/project/project-community-posts";
 import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
+import { ScheduleSessionWizard } from "@/components/tethyr/sessions/schedule-session-wizard";
 import { ProjectSearchDialog } from "@/components/tethyr/project/project-search";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
@@ -91,6 +94,7 @@ function ProjectPage() {
   const { data: me } = useCurrentUser();
   const navigate = useNavigate();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [preselectPath, setPreselectPath] = useState<string | null>(null);
   const [preselectNonce, setPreselectNonce] = useState(0);
@@ -316,6 +320,7 @@ function ProjectPage() {
   const { data: openRoles = [] } = useOpenRoles(id);
   const { data: needs = [] } = useProjectNeeds(id);
   const { data: repos = [] } = useProjectRepos(id);
+  const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
@@ -451,6 +456,75 @@ function ProjectPage() {
             </div>
           </section>
 
+          {/* Sessions — live working time on this project, visible to the team. */}
+          {isContributor && (
+            <section
+              id="project-sessions"
+              aria-labelledby="project-sessions-heading"
+              className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2
+                    id="project-sessions-heading"
+                    className="font-display text-lg font-semibold tracking-tight"
+                  >
+                    Sessions
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Live working time on this project — past, present, and next.
+                  </p>
+                </div>
+                {isContributor && (
+                  <button
+                    type="button"
+                    onClick={() => setScheduleOpen(true)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                  >
+                    <CalendarPlus className="h-3 w-3" />
+                    Schedule session
+                  </button>
+                )}
+              </div>
+
+              {projectSessions.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  No sessions scheduled for this project yet.
+                </p>
+              ) : (
+                <ul className="mt-4 divide-y divide-border/50">
+                  {projectSessions.map((s) => (
+                    <li key={s.id}>
+                      <Link
+                        to="/sessions/$id"
+                        params={{ id: s.id }}
+                        className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{s.title}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {s.starts_at
+                              ? new Date(s.starts_at).toLocaleString(undefined, {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })
+                              : "Unscheduled"}
+                            {s.organizer?.display_name ? ` · ${s.organizer.display_name}` : ""}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[11px] uppercase tracking-wider text-muted-foreground">
+                          {s.status.replace(/_/g, " ")}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           {/* Conversation */}
           <section
             id="project-discussions"
@@ -521,6 +595,8 @@ function ProjectPage() {
         meId={me?.userId ?? null}
         onClose={() => setJoinModalOpen(false)}
       />
+
+      <ScheduleSessionWizard open={scheduleOpen} onOpenChange={setScheduleOpen} projectId={id} />
 
       <ProjectSearchDialog
         open={projectSearchOpen}
