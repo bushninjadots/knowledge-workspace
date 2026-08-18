@@ -262,6 +262,16 @@ export function useInviteToTeam(teamId: string) {
       if (pErr) throw pErr;
       if (!profile) throw new Error("No member with that handle");
 
+      // Don't invite someone who is already in the crew — their accept would
+      // hit the team_members primary key and fail.
+      const { data: existingMember } = await sb
+        .from("team_members")
+        .select("profile_id")
+        .eq("team_id", teamId)
+        .eq("profile_id", profile.id)
+        .maybeSingle();
+      if (existingMember) throw new Error("Already a member of this crew");
+
       const { error } = await sb.from("team_invites").insert({
         team_id: teamId,
         profile_id: profile.id,

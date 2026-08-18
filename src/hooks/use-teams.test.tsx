@@ -178,6 +178,25 @@ describe("useInviteToTeam", () => {
     });
   });
 
+  it("rejects inviting someone who is already a member", async () => {
+    resetHandlers();
+    fake.handlers["profiles:select"] = () => ({ data: { id: "profile-2" }, error: null });
+    fake.handlers["team_members:select"] = () => ({
+      data: { profile_id: "profile-2" },
+      error: null,
+    });
+
+    const { result } = renderHookWithClient(() => useInviteToTeam("team-1"));
+    await act(async () => {
+      await expect(result.current.mutateAsync("maya")).rejects.toThrow(
+        "Already a member of this crew",
+      );
+    });
+
+    const invite = fake.calls.find((c) => c.table === "team_invites" && c.action === "insert");
+    expect(invite).toBeUndefined();
+  });
+
   it("treats a duplicate pending invite (23505) as success", async () => {
     resetHandlers();
     fake.handlers["profiles:select"] = () => ({ data: { id: "profile-2" }, error: null });

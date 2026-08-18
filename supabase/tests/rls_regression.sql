@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(48);
+SELECT plan(56);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -567,17 +567,144 @@ SELECT is(
   '47. non-member can see posts in a public space'
 );
 
--- A member who joins the private space can then see it.
+-- A non-member cannot self-join a private space (no self-serve access).
 SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
-INSERT INTO public.community_space_members(space_id, user_id, role)
-  VALUES ('f0f0f0f0-0000-4000-8000-000000000001',
-          '22222222-2222-2222-2222-222222222222', 'member')
+SELECT throws_ok(
+  $$INSERT INTO public.community_space_members(space_id, user_id, role)
+      VALUES ('f0f0f0f0-0000-4000-8000-000000000001',
+              '22222222-2222-2222-2222-222222222222', 'member')$$,
+  NULL, '48. a non-member cannot self-join a private space'
+);
+
+-- ---------------------------------------------------------------------------
+-- 13. Team membership: no self-granted lead, and a crew keeps its last lead
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.teams(id, name, slug, created_by)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000001', 'Alice Crew', 'alice-crew',
+          '11111111-1111-1111-1111-111111111111')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT throws_ok(
+  $$DELETE FROM public.team_members
+      WHERE team_id = 'b0b0b0b0-0000-4000-8000-000000000001'
+        AND profile_id = '11111111-1111-1111-1111-111111111111'$$,
+  NULL, '49. the last lead cannot remove themself'
+);
+
+SELECT throws_ok(
+  $$UPDATE public.team_members SET role = 'contributor'
+      WHERE team_id = 'b0b0b0b0-0000-4000-8000-000000000001'
+        AND profile_id = '11111111-1111-1111-1111-111111111111'$$,
+  NULL, '50. the last lead cannot demote themself'
+);
+
+INSERT INTO public.team_invites(team_id, profile_id, invited_by)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000001',
+          '22222222-2222-2222-2222-222222222222',
+          '11111111-1111-1111-1111-111111111111')
+  ON CONFLICT DO NOTHING;
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT throws_ok(
+  $$INSERT INTO public.team_members(team_id, profile_id, role)
+      VALUES ('b0b0b0b0-0000-4000-8000-000000000001',
+              '22222222-2222-2222-2222-222222222222', 'lead')$$,
+  NULL, '51. an invitee cannot self-insert as lead'
+);
+
+INSERT INTO public.team_members(team_id, profile_id, role)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000001',
+          '22222222-2222-2222-2222-222222222222', 'contributor')
   ON CONFLICT DO NOTHING;
 SELECT is(
-  (SELECT count(*) FROM public.community_spaces
-    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  (SELECT count(*) FROM public.team_members
+    WHERE team_id = 'b0b0b0b0-0000-4000-8000-000000000001'
+      AND profile_id = '22222222-2222-2222-2222-222222222222'
+      AND role = 'contributor')::bigint,
   1::bigint,
-  '48. a member can see a private space after joining'
+  '52. an invitee can join as contributor'
+);
+
+-- ---------------------------------------------------------------------------
+-- 14. Space membership: no self-granted owner, moderators can't depose owners
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.community_spaces(id, name, slug, description, created_by, visibility, join_type)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000002', 'Alice Space', 'alice-space-2', 'x',
+          '11111111-1111-1111-1111-111111111111', 'public', 'auto')
+  ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.community_space_members(space_id, user_id, role)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000002',
+          '11111111-1111-1111-1111-111111111111', 'owner')
+  ON CONFLICT DO NOTHING;
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT throws_ok(
+  $$INSERT INTO public.community_space_members(space_id, user_id, role)
+      VALUES ('b0b0b0b0-0000-4000-8000-000000000002',
+              '22222222-2222-2222-2222-222222222222', 'owner')$$,
+  NULL, '53. a non-member cannot self-insert as space owner'
+);
+
+INSERT INTO public.community_space_members(space_id, user_id, role)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000002',
+          '22222222-2222-2222-2222-222222222222', 'member')
+  ON CONFLICT DO NOTHING;
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+UPDATE public.community_space_members SET role = 'moderator'
+  WHERE space_id = 'b0b0b0b0-0000-4000-8000-000000000002'
+    AND user_id = '22222222-2222-2222-2222-222222222222';
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+DELETE FROM public.community_space_members
+  WHERE space_id = 'b0b0b0b0-0000-4000-8000-000000000002'
+    AND user_id = '11111111-1111-1111-1111-111111111111';
+SELECT is(
+  (SELECT count(*) FROM public.community_space_members
+    WHERE space_id = 'b0b0b0b0-0000-4000-8000-000000000002'
+      AND user_id = '11111111-1111-1111-1111-111111111111'
+      AND role = 'owner')::bigint,
+  1::bigint,
+  '54. a moderator cannot remove an owner'
+);
+
+-- ---------------------------------------------------------------------------
+-- 15. Role applications: applicants can't self-accept
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.projects(id, profile_id, title, visibility)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000003',
+          '11111111-1111-1111-1111-111111111111', 'Alice Roles', 'public')
+  ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.project_open_roles(id, project_id, title)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000004',
+          'b0b0b0b0-0000-4000-8000-000000000003', 'Tester')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT throws_ok(
+  $$INSERT INTO public.project_role_applications(role_id, profile_id, status)
+      VALUES ('b0b0b0b0-0000-4000-8000-000000000004',
+              '22222222-2222-2222-2222-222222222222', 'accepted')$$,
+  NULL, '55. an applicant cannot self-accept an application'
+);
+
+-- ---------------------------------------------------------------------------
+-- 16. Session participants: no self-granted organizer role
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.sessions(id, organizer_id, title)
+  VALUES ('b0b0b0b0-0000-4000-8000-000000000005',
+          '11111111-1111-1111-1111-111111111111', 'Alice Session')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT throws_ok(
+  $$INSERT INTO public.session_participants(session_id, profile_id, role)
+      VALUES ('b0b0b0b0-0000-4000-8000-000000000005',
+              '22222222-2222-2222-2222-222222222222', 'organizer')$$,
+  NULL, '56. a user cannot self-insert as session organizer'
 );
 
 SELECT * FROM finish();
