@@ -6,9 +6,10 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PostRow, PostType } from "@/hooks/use-community";
 
-// Untyped tables (posts/comments/post_actions aren't in generated types yet)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
+
+type LandingCountTable =
+  "profiles" | "projects" | "community_spaces" | "skills" | "posts" | "comments" | "challenges";
 
 /** Counts up from 0 to a real stat value once it scrolls into view. */
 export function AnimatedStat({ value }: { value: number }) {
@@ -42,7 +43,7 @@ export function useLandingStats() {
   return useQuery({
     queryKey: ["landing-stats"],
     queryFn: async () => {
-      const count = async (table: string) => {
+      const count = async (table: LandingCountTable) => {
         try {
           const { count: c, error } = await sb
             .from(table)

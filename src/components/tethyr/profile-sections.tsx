@@ -35,9 +35,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Until Supabase types are regenerated after migration, cast new columns
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+import type { Database } from "@/integrations/supabase/types";
+
+const sb = supabase;
+type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
@@ -790,7 +791,7 @@ export function ProjectDialog({
       }
       cleanLinks[k] = val;
     }
-    const fullPayload = {
+    const fullPayload: ProjectInsert = {
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
@@ -810,7 +811,7 @@ export function ProjectDialog({
     };
 
     // Basic payload without Phase 2 columns — fallback if they don't exist yet.
-    const basicPayload = {
+    const basicPayload: ProjectInsert = {
       profile_id: userId,
       title: title.trim(),
       description: description.trim() || null,
@@ -825,7 +826,7 @@ export function ProjectDialog({
       is_featured: featured,
     };
 
-    async function trySave(payload: Record<string, unknown>) {
+    async function trySave(payload: ProjectInsert) {
       if (project) {
         return await sb.from("projects").update(payload).eq("id", project.id);
       }

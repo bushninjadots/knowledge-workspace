@@ -106,8 +106,7 @@ export const sessionKeys = {
   stats: (userId: string) => [...sessionKeys.all, "stats", userId] as const,
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const sb = supabase as any;
+const sb = supabase;
 
 /* ───────── Fetchers ───────── */
 
@@ -130,7 +129,7 @@ async function fetchParticipatingSessionIds(userId: string): Promise<string[]> {
     .select("session_id")
     .eq("profile_id", userId);
   if (error) throw error;
-  return (data ?? []).map((r: any) => r.session_id as string);
+  return (data ?? []).map((r) => r.session_id);
 }
 
 // PostgREST cannot reference embedded resources inside an or() filter, so the
@@ -213,10 +212,7 @@ async function fetchSessionStats(userId: string) {
       .or(scopeFilter),
   ]);
 
-  const totalHours = (hoursRes.data ?? []).reduce(
-    (sum: number, s: any) => sum + (s.duration_minutes ?? 0),
-    0,
-  );
+  const totalHours = (hoursRes.data ?? []).reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0);
 
   return {
     upcomingCount: upcomingRes.count ?? 0,
@@ -318,11 +314,14 @@ export function useSessionNotes(sessionId: string) {
 
 export function useAddSessionNote() {
   const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
   return useMutation({
     mutationFn: async ({ sessionId, content }: { sessionId: string; content: string }) => {
+      if (!userId) throw new Error("Not authenticated");
       const { data, error } = await sb
         .from("session_notes")
-        .insert({ session_id: sessionId, content, version: 1 })
+        .insert({ session_id: sessionId, content, version: 1, created_by: userId })
         .select()
         .single();
       if (error) throw error;
@@ -428,6 +427,8 @@ export function useCreateSession() {
       project_id?: string;
       participant_ids?: string[];
     }) => {
+      if (!userId) throw new Error("Not authenticated");
+
       const { data: session, error } = await sb
         .from("sessions")
         .insert({
@@ -455,7 +456,12 @@ export function useCreateSession() {
       if (error) throw error;
 
       if (input.participant_ids && input.participant_ids.length > 0) {
-        const participants = input.participant_ids.map((pid: string) => ({
+        const participants: {
+          session_id: string;
+          profile_id: string;
+          role: ParticipantRole;
+          status: ParticipantStatus;
+        }[] = input.participant_ids.map((pid: string) => ({
           session_id: session.id,
           profile_id: pid,
           role: "participant",
@@ -545,6 +551,8 @@ export function useRespondToRequest() {
 
 export function useAddSessionResource() {
   const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
 
   return useMutation({
     mutationFn: async ({
@@ -558,6 +566,7 @@ export function useAddSessionResource() {
       url?: string;
       resourceType?: string;
     }) => {
+      if (!userId) throw new Error("Not authenticated");
       const { data, error } = await sb
         .from("session_resources")
         .insert({
@@ -565,6 +574,7 @@ export function useAddSessionResource() {
           title,
           url: url ?? null,
           resource_type: resourceType ?? "link",
+          user_id: userId,
         })
         .select()
         .single();
@@ -697,8 +707,15 @@ export function useSetSessionAvailability() {
 
   return useMutation({
     mutationFn: async (
-      slots: { day_of_week: number; start_time: string; end_time: string; status: string }[],
+      slots: {
+        day_of_week: number;
+        start_time: string;
+        end_time: string;
+        status: "available" | "unavailable" | "tentative";
+      }[],
     ) => {
+      if (!userId) throw new Error("Not authenticated");
+
       const { error: delError } = await sb
         .from("session_availability")
         .delete()
@@ -731,6 +748,7 @@ export function useCancelSessionRequest() {
 
   return useMutation({
     mutationFn: async (requestId: string) => {
+      if (!userId) throw new Error("Not authenticated");
       const { error } = await sb
         .from("session_requests")
         .update({ status: "cancelled" })
@@ -752,7 +770,7 @@ export function useSendSessionRequest() {
   return useMutation({
     mutationFn: async ({
       toUserId,
-      sessionType,
+      sessionType: _sessionType,
       message,
       suggestedTime,
     }: {
@@ -761,10 +779,10 @@ export function useSendSessionRequest() {
       message?: string;
       suggestedTime?: string;
     }) => {
+      if (!userId) throw new Error("Not authenticated");
       const { error } = await sb.from("session_requests").insert({
         from_user_id: userId,
         to_user_id: toUserId,
-        session_type: sessionType || null,
         message: message || null,
         suggested_time: suggestedTime || null,
       });

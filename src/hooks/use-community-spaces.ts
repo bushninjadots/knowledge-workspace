@@ -1,9 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Until Supabase types are regenerated after migration, cast new tables
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 export type SpaceMemberRole = "owner" | "moderator" | "member";
 
@@ -99,7 +97,7 @@ export function useCommunitySpaces() {
 
       const { data: me } = await supabase.auth.getUser();
 
-      const spaceIds = (spaces ?? []).map((s: CommunitySpace) => s.id);
+      const spaceIds = ((spaces ?? []) as CommunitySpace[]).map((s) => s.id);
       const { data: memberCounts } = await sb
         .from("community_space_members")
         .select("space_id")
@@ -134,7 +132,7 @@ export function useCommunitySpaces() {
         }
       }
 
-      return (spaces ?? []).map((s: CommunitySpace): CommunitySpace => ({
+      return ((spaces ?? []) as CommunitySpace[]).map((s): CommunitySpace => ({
         ...s,
         member_count: countMap.get(s.id) ?? 0,
         is_member: myMembershipMap.has(s.id),
@@ -983,7 +981,7 @@ export function useBanMember() {
       const { error } = await sb.rpc("ban_space_member", {
         p_space_id: input.spaceId,
         p_user_id: input.userId,
-        p_reason: input.reason?.trim() || null,
+        p_reason: input.reason?.trim() || undefined,
       });
       if (error) throw error;
     },

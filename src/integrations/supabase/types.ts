@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -307,6 +312,7 @@ export type Database = {
           rules: string[]
           slug: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           avatar_url?: string | null
@@ -320,6 +326,7 @@ export type Database = {
           rules?: string[]
           slug: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           avatar_url?: string | null
@@ -333,6 +340,7 @@ export type Database = {
           rules?: string[]
           slug?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -1545,6 +1553,64 @@ export type Database = {
           },
         ]
       }
+      project_needs: {
+        Row: {
+          created_at: string
+          filled_by: string | null
+          id: string
+          is_filled: boolean
+          note: string | null
+          project_id: string
+          skill_id: string | null
+          title: string
+          urgency: string
+        }
+        Insert: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id: string
+          skill_id?: string | null
+          title: string
+          urgency?: string
+        }
+        Update: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id?: string
+          skill_id?: string | null
+          title?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_needs_filled_by_fkey"
+            columns: ["filled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_open_roles: {
         Row: {
           created_at: string
@@ -2302,123 +2368,6 @@ export type Database = {
           },
         ]
       }
-      user_achievements: {
-        Row: {
-          achievement: Database["public"]["Enums"]["achievement_type"]
-          awarded_at: string
-          id: string
-          profile_id: string
-        }
-        Insert: {
-          achievement: Database["public"]["Enums"]["achievement_type"]
-          awarded_at?: string
-          id?: string
-          profile_id: string
-        }
-        Update: {
-          achievement?: Database["public"]["Enums"]["achievement_type"]
-          awarded_at?: string
-          id?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_achievements_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_github_tokens: {
-        Row: {
-          created_at: string
-          token: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          token: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          token?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_layout_preferences: {
-        Row: {
-          layout: Json
-          page: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          layout?: Json
-          page: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          layout?: Json
-          page?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_layout_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      teams: {
-        Row: {
-          avatar_url: string | null
-          cover_url: string | null
-          created_at: string
-          created_by: string
-          id: string
-          name: string
-          slug: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          cover_url?: string | null
-          created_at?: string
-          created_by: string
-          id?: string
-          name: string
-          slug: string
-        }
-        Update: {
-          avatar_url?: string | null
-          cover_url?: string | null
-          created_at?: string
-          created_by?: string
-          id?: string
-          name?: string
-          slug?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "teams_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_invites: {
         Row: {
           created_at: string
@@ -2534,60 +2483,119 @@ export type Database = {
           },
         ]
       }
-      project_needs: {
+      teams: {
         Row: {
+          avatar_url: string | null
+          cover_url: string | null
           created_at: string
-          filled_by: string | null
+          created_by: string
           id: string
-          is_filled: boolean
-          note: string | null
-          project_id: string
-          skill_id: string | null
-          title: string
-          urgency: string
+          name: string
+          slug: string
         }
         Insert: {
+          avatar_url?: string | null
+          cover_url?: string | null
           created_at?: string
-          filled_by?: string | null
+          created_by: string
           id?: string
-          is_filled?: boolean
-          note?: string | null
-          project_id: string
-          skill_id?: string | null
-          title: string
-          urgency?: string
+          name: string
+          slug: string
         }
         Update: {
+          avatar_url?: string | null
+          cover_url?: string | null
           created_at?: string
-          filled_by?: string | null
+          created_by?: string
           id?: string
-          is_filled?: boolean
-          note?: string | null
-          project_id?: string
-          skill_id?: string | null
-          title?: string
-          urgency?: string
+          name?: string
+          slug?: string
         }
         Relationships: [
           {
-            foreignKeyName: "project_needs_filled_by_fkey"
-            columns: ["filled_by"]
+            foreignKeyName: "teams_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement: Database["public"]["Enums"]["achievement_type"]
+          awarded_at: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          achievement: Database["public"]["Enums"]["achievement_type"]
+          awarded_at?: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          achievement?: Database["public"]["Enums"]["achievement_type"]
+          awarded_at?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "project_needs_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "user_achievements_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      user_github_tokens: {
+        Row: {
+          created_at: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_layout_preferences: {
+        Row: {
+          layout: Json
+          page: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          layout?: Json
+          page: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          layout?: Json
+          page?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "project_needs_skill_id_fkey"
-            columns: ["skill_id"]
+            foreignKeyName: "user_layout_preferences_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "skills"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2697,6 +2705,10 @@ export type Database = {
       }
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      vote_on_poll: {
+        Args: { p_option_index: number; p_post_id: string }
         Returns: undefined
       }
     }
@@ -2983,4 +2995,3 @@ export const Constants = {
     },
   },
 } as const
-

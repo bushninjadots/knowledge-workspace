@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
-// Until Supabase types are regenerated after migration, cast new tables
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 // ============================================================
 // Types
@@ -143,14 +142,14 @@ export type CreatePostInput = {
   skills?: string[];
   focus?: string;
   images?: string[];
-  question_data?: Record<string, unknown> | null;
-  resource_data?: Record<string, unknown> | null;
-  achievement_data?: Record<string, unknown> | null;
-  help_data?: Record<string, unknown> | null;
-  collaboration_data?: Record<string, unknown> | null;
-  progress_data?: Record<string, unknown> | null;
-  project_data?: Record<string, unknown> | null;
-  poll_data?: Record<string, unknown> | null;
+  question_data?: Json | null;
+  resource_data?: Json | null;
+  achievement_data?: Json | null;
+  help_data?: Json | null;
+  collaboration_data?: Json | null;
+  progress_data?: Json | null;
+  project_data?: Json | null;
+  poll_data?: Json | null;
   project_id?: string | null;
   project_snapshot?: ProjectSnapshot | null;
   feedback_tags?: string[];
@@ -200,7 +199,7 @@ export function usePosts() {
         }
         throw error;
       }
-      const posts = rawPosts as PostRow[];
+      const posts = rawPosts as unknown as PostRow[];
 
       // Fetch author profiles in parallel
       const authorIds = [...new Set(posts.map((p: PostRow) => p.author_id))];

@@ -5,8 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ProjectSnapshot } from "@/hooks/use-community";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 const STAGE_LABEL: Record<string, string> = {
   planning: "Planning",

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 export type ChallengeType = "skill" | "project" | "learning";
 export type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
@@ -102,7 +102,7 @@ export function useChallenges(statusFilter: string = "active") {
         )
         .in("challenge_id", challengeIds);
 
-      const participants = (rawParticipants ?? []) as ChallengeParticipantRow[];
+      const participants = (rawParticipants ?? []) as unknown as ChallengeParticipantRow[];
 
       // Fetch creators
       const creatorIds = [...new Set(challenges.map((c) => c.created_by))];
@@ -166,7 +166,7 @@ export function useChallenge(id: string) {
         .eq("challenge_id", id)
         .order("joined_at", { ascending: true });
 
-      const participants = (rawParticipants ?? []) as ChallengeParticipantRow[];
+      const participants = (rawParticipants ?? []) as unknown as ChallengeParticipantRow[];
       const userIds = [...new Set(participants.map((p) => p.user_id))];
 
       let profileMap = new Map<string, Record<string, unknown>>();
@@ -313,7 +313,7 @@ export function useUpdateChallengeProgress() {
         .from("challenge_participants")
         .update({
           status: input.status,
-          progress: input.progress ?? {},
+          progress: (input.progress ?? {}) as Json,
         })
         .eq("challenge_id", input.challengeId)
         .eq("user_id", user.id)

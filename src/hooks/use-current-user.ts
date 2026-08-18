@@ -101,8 +101,7 @@ async function fetchProfile(userId: string) {
   return { id: userId } as Profile;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function safeQuery<T>(fn: () => any, fallback: T): Promise<T> {
+async function safeQuery<T>(fn: () => PromiseLike<unknown>, fallback: T): Promise<T> {
   try {
     return (await fn()) as T;
   } catch {

@@ -39,8 +39,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const sb = supabase as any;
+const sb = supabase;
 
 const STEPS = [
   { label: "Participants", icon: Users },

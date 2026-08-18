@@ -4,8 +4,7 @@ import { MessageCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { timeAgo } from "@/lib/time";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 const POST_TYPE_LABEL: Record<string, string> = {
   showcase: "Showcase",

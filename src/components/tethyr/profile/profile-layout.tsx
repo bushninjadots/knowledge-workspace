@@ -567,8 +567,7 @@ function EditIdentityDialog({
 
   async function save() {
     setSaving(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("profiles")
       .update({
         display_name: form.display_name || null,

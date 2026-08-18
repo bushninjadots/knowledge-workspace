@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import type { useSessionAvailability } from "@/hooks/use-sessions";
 import { useSetSessionAvailability } from "@/hooks/use-sessions";
 
-type Availability = Awaited<ReturnType<typeof useSessionAvailability>>["data"][number];
+type Availability = NonNullable<Awaited<ReturnType<typeof useSessionAvailability>>["data"]>[number];
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 

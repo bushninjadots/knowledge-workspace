@@ -9,8 +9,7 @@ import { useMyProjects } from "@/hooks/use-projects";
 import type { ProjectSnapshot } from "@/hooks/use-community";
 import { FEEDBACK_TAG_OPTIONS } from "@/lib/community-data";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
+const sb = supabase;
 
 type Props = {
   onAttach: (projectId: string | null, snapshot: ProjectSnapshot) => void;
