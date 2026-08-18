@@ -22,7 +22,7 @@ import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
 
@@ -938,18 +938,10 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: trendingSkills } = useQuery({
-    queryKey: ["discover-trending-skills"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("skills")
-        .select("id, name, slug, category")
-        .order("created_at", { ascending: false })
-        .limit(8);
-      return (data ?? []) as { id: string; name: string; slug: string; category: string }[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Ranked by real usage (teach/learn/project references), not catalog insert
+  // order — the old query surfaced the most-recently-added catalog batch
+  // (a wall of wellness skills) instead of what the community actually uses.
+  const { data: trendingSkills = [] } = useTrendingSkills();
 
   return (
     <div className="sticky top-24 space-y-5">
@@ -991,7 +983,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
             Trending skills
           </h3>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {trendingSkills.map((s) => (
+            {trendingSkills.slice(0, 8).map((s) => (
               <Link
                 key={s.id}
                 to="/skills/$slug"

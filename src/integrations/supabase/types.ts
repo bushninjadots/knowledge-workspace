@@ -2637,6 +2637,13 @@ export type Database = {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string }
         Returns: undefined
       }
+      community_space_member_counts: {
+        Args: never
+        Returns: {
+          member_count: number
+          space_id: string
+        }[]
+      }
       decline_project_role_application: {
         Args: {
           p_application_id: string

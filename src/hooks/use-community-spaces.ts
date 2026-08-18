@@ -98,14 +98,17 @@ export function useCommunitySpaces() {
       const { data: me } = await supabase.auth.getUser();
 
       const spaceIds = ((spaces ?? []) as CommunitySpace[]).map((s) => s.id);
-      const { data: memberCounts } = await sb
-        .from("community_space_members")
-        .select("space_id")
-        .in("space_id", spaceIds);
+      // Member counts come from a SECURITY DEFINER aggregate — the raw table's
+      // SELECT RLS only shows members of spaces you've joined, which made the
+      // count on unjoined spaces read 0.
+      const { data: memberCounts, error: countError } = await sb.rpc(
+        "community_space_member_counts",
+      );
+      if (countError) throw countError;
 
       const countMap = new Map<string, number>();
       for (const row of memberCounts ?? []) {
-        countMap.set(row.space_id, (countMap.get(row.space_id) ?? 0) + 1);
+        countMap.set(row.space_id, row.member_count);
       }
 
       const myMembershipMap = new Map<string, SpaceMemberRole>();
@@ -158,10 +161,11 @@ export function useCommunitySpace(slug: string) {
 
       const { data: me } = await supabase.auth.getUser();
 
-      const { count } = await sb
-        .from("community_space_members")
-        .select("space_id", { count: "exact", head: true })
-        .eq("space_id", space.id);
+      const { data: counts } = await sb.rpc("community_space_member_counts");
+      const count =
+        ((counts ?? []) as { space_id: string; member_count: number }[]).find(
+          (c) => c.space_id === space.id,
+        )?.member_count ?? 0;
 
       let myRole: SpaceMemberRole | null = null;
       let hasPendingRequest = false;
