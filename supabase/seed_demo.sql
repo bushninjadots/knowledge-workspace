@@ -90,6 +90,10 @@ ON CONFLICT (id) DO NOTHING;
 -- Convert literal \n in README markdown to real newlines for rendering
 UPDATE public.projects SET readme = replace(readme, '\n', E'\n') WHERE readme IS NOT NULL;
 
+-- Deterministic ordering: backfill created_at from each project's real start
+-- date so Explore's "newest first" shelf isn't a tie-break lottery.
+UPDATE public.projects SET created_at = started_at WHERE id::text LIKE '20000000-%' AND started_at IS NOT NULL;
+
 -- ---------------------------------------------------------------------------
 -- Project skills
 -- ---------------------------------------------------------------------------
@@ -244,7 +248,8 @@ VALUES
   ('30000000-0000-0000-0000-000000000001','Design Guild','design-guild','Critique, portfolio teardowns, and design questions for makers.','10000000-0000-0000-0000-000000000001','auto',ARRAY['Be kind, be specific','No self-promo outside the showcase thread'],'public',3),
   ('30000000-0000-0000-0000-000000000002','Ship It Saturdays','ship-it-saturdays','A weekly accountability thread for shipping something every Saturday.','10000000-0000-0000-0000-000000000002','auto',ARRAY['Post what you shipped','Encourage, don''t dunk'],'public',3),
   ('30000000-0000-0000-0000-000000000003','Indie Hackers Tethyr','indie-hackers','Building in public, revenue experiments, and honest numbers.','10000000-0000-0000-0000-000000000005','review',ARRAY['Real numbers only','No get-rich-quick spam'],'public',2),
-  ('30000000-0000-0000-0000-000000000004','Music Makers','music-makers','Producers and songwriters sharing work and feedback.','10000000-0000-0000-0000-000000000006','auto',ARRAY['Credit your collaborators','Constructive feedback only'],'public',3)
+  ('30000000-0000-0000-0000-000000000004','Music Makers','music-makers','Producers and songwriters sharing work and feedback.','10000000-0000-0000-0000-000000000006','auto',ARRAY['Credit your collaborators','Constructive feedback only'],'public',3),
+  ('30000000-0000-0000-0000-000000000005','Studio Core','studio-core','Private working group for the Studio Starter core crew — invite only.','a1d676d3-1a76-401f-bc30-0e4195569e26','review',ARRAY['Keep it focused on Studio Starter'],'private',3)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.community_space_members (space_id, user_id, role)
@@ -261,7 +266,9 @@ VALUES
   ('30000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','member'),
   ('30000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000007','member'),
   ('30000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000006','owner'),
-  ('30000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000004','member')
+  ('30000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000004','member'),
+  ('30000000-0000-0000-0000-000000000005','a1d676d3-1a76-401f-bc30-0e4195569e26','owner'),
+  ('30000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000002','member')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -314,8 +321,12 @@ INSERT INTO public.challenges (id, title, description, type, skills, difficulty,
 VALUES
   ('40000000-0000-0000-0000-000000000001','Design a landing page in 48 hours','Design and build a one-page landing site for a fictional product. Submit a live URL.','skill',ARRAY['ui-design','figma'],'intermediate','active','10000000-0000-0000-0000-000000000001', now() - interval '2 days', now() + interval '5 days', 20, 'A live URL with a clear hero, one call-to-action, and a responsive layout.'),
   ('40000000-0000-0000-0000-000000000002','Build a rate-limited REST API','Build a small REST API with rate limiting and tests. Any language.','project',ARRAY['api-development','backend-development'],'intermediate','active','10000000-0000-0000-0000-000000000007', now() - interval '4 days', now() + interval '10 days', 15, 'Working endpoints, a rate limiter, and a passing test suite in a public repo.'),
-  ('40000000-0000-0000-0000-000000000003','Ship your first tutorial','Write and publish a short tutorial teaching something you just learned.','learning',ARRAY['technical-writing'],'beginner','active','10000000-0000-0000-0000-000000000008', now() - interval '1 day', now() + interval '7 days', 30, 'A published post (blog, Notion, or Tethyr post) with code or screenshots.')
+  ('40000000-0000-0000-0000-000000000003','Ship your first tutorial','Write and publish a short tutorial teaching something you just learned.','learning',ARRAY['technical-writing'],'beginner','active','10000000-0000-0000-0000-000000000008', now() - interval '1 day', now() + interval '7 days', 30, 'A published post (blog, Notion, or Tethyr post) with code or screenshots.'),
+  ('40000000-0000-0000-0000-000000000004','Build a portfolio homepage in a weekend','Design and ship a personal portfolio homepage you would be proud to share. Submit a live URL.','skill',ARRAY['ui-design','html-css'],'beginner','active','a1d676d3-1a76-401f-bc30-0e4195569e26', now() - interval '2 days', now() + interval '5 days', 25, 'A live homepage with your name, three projects, and a clear way to contact you.')
 ON CONFLICT (id) DO NOTHING;
+
+-- Deterministic challenge ordering (challenges list sorts by created_at desc).
+UPDATE public.challenges SET created_at = start_date WHERE id::text LIKE '40000000-%' AND start_date IS NOT NULL;
 
 -- The review-transition triggers require auth.uid() = creator, which is NULL in a
 -- seed context. Temporarily disable them so we can seed reviewed states directly.
@@ -329,7 +340,8 @@ VALUES
   ('41000000-0000-0000-0000-000000000003','40000000-0000-0000-0000-000000000001','a1d676d3-1a76-401f-bc30-0e4195569e26','in_progress', NULL, now() - interval '1 day', NULL, NULL, NULL, 'none', NULL, NULL),
   ('41000000-0000-0000-0000-000000000004','40000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','completed', NULL, now() - interval '3 days', 'https://github.com/devon/ratelimit-api','Go + tests, rate limiter with a sliding window.', now() - interval '1 day', 'submitted', NULL, NULL),
   ('41000000-0000-0000-0000-000000000005','40000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000006','completed', NULL, now() - interval '1 day', 'https://example.com/nia-tutorial','How to sidechain compress like you mean it.', now() - interval '1 day', 'passed', 'Practical and well-paced. Pass.', now() - interval '12 hours'),
-  ('41000000-0000-0000-0000-000000000006','40000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000005','joined', NULL, now() - interval '6 hours', NULL, NULL, NULL, 'none', NULL, NULL)
+  ('41000000-0000-0000-0000-000000000006','40000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000005','joined', NULL, now() - interval '6 hours', NULL, NULL, NULL, 'none', NULL, NULL),
+  ('41000000-0000-0000-0000-000000000007','40000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000003','completed', NULL, now() - interval '1 day', 'https://example.com/priya-portfolio','Shipped a clean single-page portfolio with my three best projects.', now() - interval '12 hours', 'submitted', NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 ALTER TABLE public.challenge_participants ENABLE TRIGGER enforce_challenge_review_insert;
