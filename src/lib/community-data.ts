@@ -75,8 +75,6 @@ export const DISCOVERY_FILTERS = [
 ] as const;
 export type DiscoveryFocus = (typeof DISCOVERY_FILTERS)[number];
 
-export const ACTIVE_LEARNING_GOALS: string[] = [];
-
 export const FEEDBACK_TAG_OPTIONS = [
   "UI Design",
   "Code Review",

@@ -233,10 +233,9 @@ export function useCreateTeam() {
         .single();
       if (error) throw error;
 
-      const { error: memberErr } = await sb
-        .from("team_members")
-        .insert({ team_id: team.id, profile_id: user.id, role: "lead" });
-      if (memberErr) throw memberErr;
+      // The creator is added as the lead by trg_team_creator_lead (SECURITY
+      // DEFINER), so no manual team_members insert is needed here — a manual
+      // insert would be rejected by RLS (joining requires a pending invite).
 
       return team as TeamRow;
     },

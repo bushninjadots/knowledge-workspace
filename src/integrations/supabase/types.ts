@@ -2736,6 +2736,12 @@ export type Database = {
         | "helped_ten_people"
         | "learner_journey"
         | "challenge_winner"
+        | "crew_founder"
+        | "team_player"
+        | "milestone_master"
+        | "helping_hand"
+        | "conversation_starter"
+        | "role_filler"
       availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
@@ -2937,6 +2943,12 @@ export const Constants = {
         "helped_ten_people",
         "learner_journey",
         "challenge_winner",
+        "crew_founder",
+        "team_player",
+        "milestone_master",
+        "helping_hand",
+        "conversation_starter",
+        "role_filler",
       ],
       availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [

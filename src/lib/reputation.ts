@@ -35,7 +35,14 @@ export type AchievementType =
   | "community_builder"
   | "reliable_collaborator"
   | "helped_ten_people"
-  | "learner_journey";
+  | "learner_journey"
+  | "challenge_winner"
+  | "crew_founder"
+  | "team_player"
+  | "milestone_master"
+  | "helping_hand"
+  | "conversation_starter"
+  | "role_filler";
 
 export type AchievementDef = {
   type: AchievementType;
@@ -132,7 +139,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     type: "helped_ten_people",
-    label: "Helped 10 People",
+    label: "Multi-Project Collaborator",
     description: "Contributed to 3+ projects",
     icon: "Heart",
     color: "text-teaching",
@@ -140,9 +147,58 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     type: "learner_journey",
     label: "Growth Journey",
-    description: "Growing in 5+ skills",
+    description: "Growing in 3+ skills",
     icon: "Compass",
     color: "text-primary",
+  },
+  {
+    type: "challenge_winner",
+    label: "Challenge Winner",
+    description: "Passed a challenge review",
+    icon: "Trophy",
+    color: "text-brand-purple",
+  },
+  {
+    type: "crew_founder",
+    label: "Crew Founder",
+    description: "Formed a crew",
+    icon: "Users",
+    color: "text-primary",
+  },
+  {
+    type: "team_player",
+    label: "Team Player",
+    description: "Joined a crew",
+    icon: "Users",
+    color: "text-brand-green",
+  },
+  {
+    type: "milestone_master",
+    label: "Milestone Master",
+    description: "Completed 3 milestones",
+    icon: "Target",
+    color: "text-brand-purple",
+  },
+  {
+    type: "helping_hand",
+    label: "Helping Hand",
+    description: "Offered help on a request",
+    icon: "HeartHandshake",
+    color: "text-teaching",
+  },
+  {
+    type: "conversation_starter",
+    label: "Conversation Starter",
+    description: "Posted your first comment",
+    icon: "MessageSquare",
+    color: "text-primary",
+  },
+  {
+    type: "role_filler",
+    label: "Role Filler",
+    description: "Accepted into an open role",
+    icon: "BadgeCheck",
+    color: "text-brand-green",
   },
 ];
 

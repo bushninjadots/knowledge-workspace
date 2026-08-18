@@ -15,6 +15,11 @@ import {
   Clock,
   Heart,
   Compass,
+  Trophy,
+  Target,
+  HeartHandshake,
+  MessageSquare,
+  BadgeCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ACHIEVEMENTS, type AchievementType, type AchievementDef } from "@/lib/reputation";
@@ -34,6 +39,11 @@ const ICONS: Record<string, typeof Award> = {
   Clock,
   Heart,
   Compass,
+  Trophy,
+  Target,
+  HeartHandshake,
+  MessageSquare,
+  BadgeCheck,
   Award,
 };
 

@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getConfiguredSiteUrl } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
@@ -75,6 +76,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+// Social-preview image lives in /public so it resolves against the public
+// origin (configurable via VITE_PUBLIC_SITE_URL, falling back to a relative
+// path in dev).
+const ogImageUrl = `${getConfiguredSiteUrl() ?? ""}/og-image.png`;
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -103,13 +109,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png",
+        content: ogImageUrl,
       },
       {
         name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b31df6b3-763a-4f85-bb13-49ade49b3223/id-preview-50d21cce--c9589b2b-6ecb-4333-b573-caf2857ca727.lovable.app-1784806163192.png",
+        content: ogImageUrl,
       },
     ],
     links: [

@@ -117,13 +117,12 @@ describe("slugify", () => {
 // --- useCreateTeam -------------------------------------------------------
 
 describe("useCreateTeam", () => {
-  it("inserts the team and seats the creator as lead", async () => {
+  it("inserts the team; the DB trigger seats the creator as lead", async () => {
     resetHandlers();
     fake.handlers["teams:insert"] = () => ({
       data: { id: "team-1", name: "My Crew", slug: "my-crew-abc1" },
       error: null,
     });
-    fake.handlers["team_members:insert"] = () => ({ data: null, error: null });
 
     const { result } = renderHookWithClient(() => useCreateTeam());
     await act(async () => {
@@ -137,10 +136,12 @@ describe("useCreateTeam", () => {
       slug: expect.stringMatching(/^my-crew-[a-z0-9]{4}$/),
     });
 
+    // The creator is seated as lead by trg_team_creator_lead in the database,
+    // not by a client-side team_members insert (RLS blocks that anyway).
     const memberInsert = fake.calls.find(
       (c) => c.table === "team_members" && c.action === "insert",
     );
-    expect(memberInsert?.value).toEqual({ team_id: "team-1", profile_id: "user-1", role: "lead" });
+    expect(memberInsert).toBeUndefined();
   });
 });
 

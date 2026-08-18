@@ -39,14 +39,13 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Button } from "@/components/ui/button";
 import {
   POST_TYPE_LABEL,
-  ACTIVE_LEARNING_GOALS,
   flairClasses,
   type PostType,
   type CommentRow,
   type PostWithAuthor,
 } from "@/lib/community-data";
 import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import {
   useAddComment,
   useUpdateComment,
@@ -186,6 +185,7 @@ export function PostCard({
   dimThreshold?: number;
 }) {
   const { data: me } = useCurrentUser();
+  const { data: skillCatalog = [] } = useSkillsCatalog();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -214,9 +214,14 @@ export function PostCard({
   const pollData = post.poll_data as PollData | null;
   const feedbackTags = post.feedback_tags ?? [];
 
-  const matchedSkills = post.skills.filter((s) =>
-    ACTIVE_LEARNING_GOALS.some((g) => g.toLowerCase() === s.toLowerCase()),
+  // Skills in this post that the viewer is actively growing ("skills I'm
+  // growing") — surfaces a "match" chip instead of the old empty constant.
+  const learningSkillNames = new Set(
+    skillCatalog
+      .filter((s) => (me?.learnIds ?? []).includes(s.id))
+      .map((s) => s.name.toLowerCase()),
   );
+  const matchedSkills = post.skills.filter((s) => learningSkillNames.has(s.toLowerCase()));
 
   return (
     <article
