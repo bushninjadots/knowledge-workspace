@@ -453,3 +453,18 @@ UNION ALL SELECT '10000000-0000-0000-0000-000000000004'::uuid, id FROM skills WH
 UNION ALL SELECT '10000000-0000-0000-0000-000000000005'::uuid, id FROM skills WHERE slug='product-management'
 UNION ALL SELECT '10000000-0000-0000-0000-000000000006'::uuid, id FROM skills WHERE slug='backend-development'
 ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Backfill achievements for every seeded profile so profiles look lived-in.
+-- award_earned_achievements() is SECURITY DEFINER and reads auth.uid() from
+-- the request.jwt.claim.sub setting, so we set it per profile and call it.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT id FROM public.profiles LOOP
+    PERFORM set_config('request.jwt.claim.sub', r.id::text, true);
+    PERFORM public.award_earned_achievements();
+  END LOOP;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+END $$;

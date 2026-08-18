@@ -25,6 +25,7 @@ Exits 0 when every check passes, 1 otherwise.
 
 import os
 import sys
+import time
 
 from playwright.sync_api import sync_playwright
 
@@ -84,6 +85,28 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001
                 failures.append((name, str(exc)[:120]))
 
+        # Crew creation (interactive): form a crew on the studio and confirm it
+        # lands on the new team page with the creator seated as lead.
+        crew_name = f"Crew {int(time.time() * 1000) % 1000000}"
+        try:
+            page.goto(f"{BASE_URL}/profile", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(4000)
+            page.get_by_role("button", name="Form a crew").first.click()
+            page.wait_for_timeout(600)
+            page.get_by_placeholder("Crew name").fill(crew_name)
+            page.get_by_role("button", name="Create", exact=True).click()
+            page.wait_for_timeout(4000)
+            if "/teams/" not in page.url:
+                failures.append(("crew-create", f"expected /teams/..., got {page.url}"))
+            else:
+                body = page.inner_text("body")
+                if crew_name not in body:
+                    failures.append(("crew-create", f"missing crew name {crew_name!r}"))
+                if "Manage crew" not in body:
+                    failures.append(("crew-create", "missing 'Manage crew' (lead-only section)"))
+        except Exception as exc:  # noqa: BLE001
+            failures.append(("crew-create", str(exc)[:120]))
+
         browser.close()
 
     print(f"Seeded content smoke test — {BASE_URL}")
@@ -93,7 +116,7 @@ def main() -> int:
         print(f"{len(failures)} check(s) failed")
         return 1
 
-    print(f"  PASS  all {len(CHECKS) + 1} checks")
+    print(f"  PASS  all {len(CHECKS) + 2} checks")
     return 0
 
 
