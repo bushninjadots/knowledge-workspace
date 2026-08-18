@@ -13,6 +13,7 @@ import {
   FileText,
   Award,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,14 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
+              {challenge.is_starter && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 border-brand-purple/30 bg-brand-purple/10 text-brand-purple text-xs font-medium"
+                >
+                  <Sparkles className="h-3 w-3" /> Starter
+                </Badge>
+              )}
               <Badge
                 variant="outline"
                 className={`text-xs capitalize font-medium ${TYPE_COLORS[challenge.type] ?? ""}`}
@@ -146,6 +155,8 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
         <div className="flex items-center gap-2">
           {challenge.is_joined ? (
             <ReviewStatusBadge status={challenge.my_participation?.review_status} />
+          ) : challenge.is_starter ? (
+            <span className="text-xs text-muted-foreground">Curated by Tethyr</span>
           ) : (
             <span className="text-xs text-muted-foreground">
               Created by {challenge.creator?.display_name || "Community Member"}

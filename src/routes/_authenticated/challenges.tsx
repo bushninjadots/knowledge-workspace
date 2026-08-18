@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Swords, Search, Filter } from "lucide-react";
+import { Swords, Search, Filter, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   useChallenges,
   type ChallengeType,
@@ -100,6 +101,18 @@ function ChallengesContent() {
   }, [challenges, filteredChallenges, typeFilter, difficultyFilter, statusFilter, search]);
 
   const loading = isLoading || filteredLoading;
+
+  // Curated cold-start content gets its own clearly-labeled section so a new
+  // user always has real, joinable ways to make a first contribution. When
+  // searching/filtering, everything (starters included) flows through the
+  // main grid so search still finds them.
+  const isDefaultView =
+    !search.trim() &&
+    typeFilter === "all" &&
+    difficultyFilter === "all" &&
+    statusFilter === "active";
+  const starters = displayed.filter((c) => c.is_starter);
+  const community = displayed.filter((c) => !c.is_starter);
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
@@ -223,6 +236,61 @@ function ChallengesContent() {
               : { actionLabel: "Create a challenge", onAction: () => setCreateOpen(true) })}
             variant="default"
           />
+        ) : isDefaultView && starters.length > 0 ? (
+          <>
+            {/* Start here — curated cold-start content, clearly labeled */}
+            <section aria-labelledby="start-here-heading" className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <h2
+                  id="start-here-heading"
+                  className="font-title text-lg font-semibold tracking-tight flex items-center gap-2"
+                >
+                  Start here
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-brand-purple/30 bg-brand-purple/10 text-brand-purple text-xs font-medium"
+                  >
+                    <Sparkles className="h-3 w-3" /> Curated by Tethyr
+                  </Badge>
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Real, small challenges to make your first contribution — each one is reviewed and
+                  graded.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {starters.map((challenge) => (
+                  <ChallengeCard key={challenge.id} challenge={challenge} />
+                ))}
+              </div>
+            </section>
+
+            {/* From the community */}
+            <section aria-labelledby="community-heading" className="space-y-4">
+              <h2
+                id="community-heading"
+                className="font-title text-lg font-semibold tracking-tight"
+              >
+                From the community
+              </h2>
+              {community.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {community.map((challenge) => (
+                    <ChallengeCard key={challenge.id} challenge={challenge} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={<Swords className="h-5 w-5" />}
+                  title="No community challenges yet"
+                  description="Kick one off — a challenge gives people a shared goal to learn and build together."
+                  actionLabel="Create a challenge"
+                  onAction={() => setCreateOpen(true)}
+                  variant="default"
+                />
+              )}
+            </section>
+          </>
         ) : (
           <>
             <p className="text-xs text-muted-foreground">

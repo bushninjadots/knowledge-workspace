@@ -75,9 +75,9 @@ reachable *through* work.
 
 Goal: an empty network shouldn't feel abandoned.
 
-- [ ] Add curated, clearly-labeled starter projects and challenges (real,
+- [x] Add curated, clearly-labeled starter projects and challenges (real,
       useful, low-scope) — not fake engagement.
-- [ ] Label them as starters so discovery has something honest to show on day
+- [x] Label them as starters so discovery has something honest to show on day
       one.
 
 **Exit condition:** a brand-new signed-in user sees several real, joinable
@@ -173,6 +173,35 @@ ways to make their first contribution without dead ends.
   strangers and anonymous visitors, so meeting URLs stay inside the team).
 - Added pgTAP assertions 57–58; suite now 58/58. `tsc` clean, 112 Vitest tests,
   core-loop + smoke browser tests green.
+
+### 2026-08-18 — Phase 4 (cold-start): curated starter challenges
+
+- Migration `20260818100000_curated_starter_challenges.sql`:
+  - `is_starter` column on `challenges` so curated content is labeled honestly
+    instead of pretending a community member created it.
+  - Created the **Tethyr Team curator account** (auth + profile). Starter
+    challenges need a real creator who can review submissions (review requires
+    `auth.uid() = created_by`), otherwise the loop dead-ends. The curator's
+    password is randomized in the migration (no known credential ships to
+    production); `seed_demo.sql` resets it to `password123` locally for dev/test.
+  - Seeded **five curated starter challenges** (real, useful, low-scope, each
+    with pass criteria the curator can grade): one-page personal site,
+    first technical tutorial, fix one accessibility issue, build a tiny CLI
+    tool, two-minute project update.
+  - Guard trigger `enforce_curated_starter`: only the curator can mark a
+    challenge as a starter (insert *or* relabel), so users can't spoof the
+    curated label.
+- UI:
+  - **Start here** section on the Challenges page — clearly labeled
+    "Curated by Tethyr", separate from the community grid. Searching or
+    filtering collapses to a single grid so search still finds starters.
+  - Starter badge on `ChallengeCard` + detail page; attribution shows
+    "Curated by Tethyr" instead of "Created by …".
+- Validation: 64/64 pgTAP RLS tests (4 new: world-readable starters, no
+  spoofing on insert, no relabeling, curator can create), `tsc` clean,
+  112 Vitest tests, core-loop browser test (now includes a cold-start loop:
+  see Start-here, join a starter) + smoke test 9/9 green. Desktop + mobile
+  checked.
 
 ### 2026-08-18 — Phase 3 (Stage 5): challenges wired back to projects
 

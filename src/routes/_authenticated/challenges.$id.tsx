@@ -215,6 +215,14 @@ function ChallengeDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="space-y-3 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
+                {challenge.is_starter && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1 bg-brand-purple/10 text-brand-purple border-brand-purple/30"
+                  >
+                    <Sparkles className="h-3 w-3" /> Starter · Curated by Tethyr
+                  </Badge>
+                )}
                 <Badge variant="outline" className="capitalize bg-ai text-ai border-ai/40">
                   {challenge.type} Challenge
                 </Badge>
@@ -242,7 +250,11 @@ function ChallengeDetailPage() {
                     className="h-5 w-5"
                     fallbackClassName="text-[11px]"
                   />
-                  <span>Created by {challenge.creator?.display_name || "Community Member"}</span>
+                  <span>
+                    {challenge.is_starter
+                      ? "Curated by Tethyr"
+                      : `Created by ${challenge.creator?.display_name || "Community Member"}`}
+                  </span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1">

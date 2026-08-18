@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(60);
+SELECT plan(64);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -756,6 +756,42 @@ SELECT lives_ok(
       VALUES ('Bob Challenge', 'x', '22222222-2222-2222-2222-222222222222',
               'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')$$,
   '60. a project contributor can link a challenge to the project'
+);
+
+-- ---------------------------------------------------------------------------
+-- 19. Curated starter challenges: labeled by the Tethyr team only
+-- ---------------------------------------------------------------------------
+-- Anyone can read starter challenges (they are public like all challenges).
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT is(
+  (SELECT count(*) FROM public.challenges WHERE is_starter)::bigint,
+  5::bigint,
+  '61. starter challenges are world-readable'
+);
+
+-- A regular user cannot spoof the curated label.
+SELECT throws_ok(
+  $$INSERT INTO public.challenges(title, description, created_by, is_starter)
+      VALUES ('Fake Starter', 'x', '33333333-3333-3333-3333-333333333333', true)$$,
+  NULL, '62. a non-curator cannot create a starter challenge'
+);
+
+-- Updating an existing challenge to is_starter = true is also blocked.
+-- (Bob created 'Bob Challenge', so he can update it — but not relabel it.)
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT throws_ok(
+  $$UPDATE public.challenges
+     SET is_starter = true
+    WHERE title = 'Bob Challenge'$$,
+  NULL, '63. a non-curator cannot relabel a challenge as a starter'
+);
+
+-- The curator (Tethyr Team account) can insert a starter challenge.
+SELECT pg_temp.as_user('a1d676d3-1a76-401f-bc30-0e4195569e27');
+SELECT lives_ok(
+  $$INSERT INTO public.challenges(title, description, created_by, is_starter)
+      VALUES ('Curated Starter', 'x', 'a1d676d3-1a76-401f-bc30-0e4195569e27', true)$$,
+  '64. the curator can create a starter challenge'
 );
 
 SELECT * FROM finish();

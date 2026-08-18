@@ -480,6 +480,15 @@ UNION ALL SELECT '10000000-0000-0000-0000-000000000006'::uuid, id FROM skills WH
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
+-- The curated-starter migration creates the Tethyr Team curator with a random
+-- password (no known credential ships to production). Reset it here so local
+-- dev/test can log in as the curator to review starter submissions.
+-- ---------------------------------------------------------------------------
+UPDATE auth.users
+SET encrypted_password = crypt('password123', gen_salt('bf', 10))
+WHERE id = 'a1d676d3-1a76-401f-bc30-0e4195569e27';
+
+-- ---------------------------------------------------------------------------
 -- Backfill achievements for every seeded profile so profiles look lived-in.
 -- award_earned_achievements() is SECURITY DEFINER and reads auth.uid() from
 -- the request.jwt.claim.sub setting, so we set it per profile and call it.

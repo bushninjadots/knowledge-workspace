@@ -127,6 +127,7 @@ export type Database = {
           difficulty: string
           end_date: string | null
           id: string
+          is_starter: boolean
           max_participants: number | null
           pass_criteria: string | null
           project_id: string | null
@@ -144,6 +145,7 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
           pass_criteria?: string | null
           project_id?: string | null
@@ -161,6 +163,7 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
           pass_criteria?: string | null
           project_id?: string | null

@@ -26,6 +26,8 @@ export type ChallengeRow = {
   updated_at: string;
   /** Optional project this challenge is tied to. */
   project_id: string | null;
+  /** True when Tethyr curated this challenge as cold-start content. */
+  is_starter: boolean;
   // Joined stats & creator info
   creator?: {
     display_name: string | null;

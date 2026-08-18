@@ -231,6 +231,33 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             failures.append(("private-project", str(exc)[:160]))
 
+        # ---------------------------------------------------------------
+        # Loop 4 — cold-start: a new user sees curated, labeled starters.
+        # ---------------------------------------------------------------
+        try:
+            applicant.goto(
+                f"{BASE_URL}/challenges",
+                wait_until="domcontentloaded",
+                timeout=30000,
+            )
+            applicant.wait_for_timeout(4000)
+            body = applicant.inner_text("body")
+            if "Start here" not in body:
+                failures.append(("cold-start", "no 'Start here' section on the challenges page"))
+            elif "Curated by Tethyr" not in body:
+                failures.append(("cold-start", "starters are not labeled as curated by Tethyr"))
+            else:
+                # Join one starter challenge — the curated path must be real.
+                starter_card = applicant.get_by_text("Ship a one-page personal site").first
+                starter_card.click(timeout=30000)
+                applicant.wait_for_timeout(3000)
+                applicant.get_by_role("button", name="Join Challenge").click(timeout=30000)
+                applicant.wait_for_timeout(3000)
+                if "Joined" not in applicant.inner_text("body"):
+                    failures.append(("cold-start", "could not join a starter challenge"))
+        except Exception as exc:  # noqa: BLE001
+            failures.append(("cold-start", str(exc)[:160]))
+
         browser.close()
 
     return _report(failures)
