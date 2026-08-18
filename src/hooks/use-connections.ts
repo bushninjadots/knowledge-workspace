@@ -1,4 +1,4 @@
-// Central hook for the current user's connections (tethrs / friend requests).
+// Central hook for the current user's connections (connections / friend requests).
 // Includes optimistic updates and realtime sync so the dashboard reflects
 // changes the instant they happen — for the current user and the other side.
 // Uses a module-level singleton channel (same pattern as useNotificationRealtime)

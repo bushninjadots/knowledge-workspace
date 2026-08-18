@@ -1,5 +1,5 @@
 // Renders the correct connection action for viewing another creator's profile.
-//"Tethyr"= the verb for connecting on the platform.
+// Uses plain "Connect" / "Connected" wording for the connection feature.
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link2, Clock, Check, X, Link2Off, MessageSquare } from "lucide-react";
@@ -47,12 +47,12 @@ export function ConnectButton({
       (c.addressee_id === meId && c.requester_id === targetId),
   );
 
-  function submitTethyr() {
+  function submitConnection() {
     send.mutate(
       { addresseeId: targetId, meId: meId as string, introMessage: intro },
       {
         onSuccess: () => {
-          toast.success(`Tethyr request sent${targetName ? `to ${targetName}` : ""}`);
+          toast.success(`Connection request sent${targetName ? ` to ${targetName}` : ""}`);
           setInviteOpen(false);
           setIntro("");
         },
@@ -73,7 +73,7 @@ export function ConnectButton({
           className="gap-1.5"
         >
           <Link2 className="h-4 w-4" />
-          {isResend ? "Request again" : "Tethyr"}
+          {isResend ? "Request again" : "Connect"}
         </Button>
         <InviteDialog
           open={inviteOpen}
@@ -81,7 +81,7 @@ export function ConnectButton({
           targetName={targetName}
           intro={intro}
           setIntro={setIntro}
-          submit={submitTethyr}
+          submit={submitConnection}
           sending={send.isPending}
         />
       </>
@@ -100,7 +100,7 @@ export function ConnectButton({
           size="sm"
           variant="ghost"
           onClick={() => {
-            if (!confirm("Untethyr this person?")) return;
+            if (!confirm("Remove this connection?")) return;
             remove.mutate(existing.id, {
               onSuccess: () => toast.success("Connection removed"),
               onError: (e: Error) => toast.error(e.message),
@@ -158,7 +158,7 @@ export function ConnectButton({
         size="sm"
         variant="outline"
         onClick={() => {
-          if (!confirm("Withdraw your tethyr request?")) return;
+          if (!confirm("Withdraw your connection request?")) return;
           remove.mutate(existing.id, {
             onSuccess: () => toast.success("Request withdrawn"),
             onError: (e: Error) => toast.error(e.message),
@@ -202,7 +202,7 @@ function InviteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tethyr with {targetName ?? "this person"}</DialogTitle>
+          <DialogTitle>Connect with {targetName ?? "this person"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">

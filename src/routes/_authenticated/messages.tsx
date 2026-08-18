@@ -1,4 +1,4 @@
-// Direct messages surface — list of accepted tethrs + active thread.
+// Direct messages surface — list of accepted connections + active thread.
 // Includes pagination, typing indicators, read receipts, unread badges.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -64,7 +64,7 @@ function MessagesPage() {
         <header className="flex h-16 items-center justify-between border-b border-border/60 px-4">
           <div className="leading-tight">
             <h1 className="font-display text-lg font-semibold">Messages</h1>
-            <p className="text-[11px] text-muted-foreground">Where tethrs actually talk</p>
+            <p className="text-[11px] text-muted-foreground">Where connections actually talk</p>
           </div>
           {unread && unread.total > 0 && (
             <span className="animate-in zoom-in rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">

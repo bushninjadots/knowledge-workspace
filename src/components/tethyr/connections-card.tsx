@@ -1,4 +1,4 @@
-// Dashboard card: incoming requests + accepted tethrs (connections).
+// Dashboard card: incoming requests + accepted connections.
 import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -33,13 +33,13 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="flex items-baseline justify-between">
         <div>
-          <h2 className="font-display text-lg font-semibold">Tethrs</h2>
+          <h2 className="font-display text-lg font-semibold">Connections</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             People you're connected with and pending requests.
           </p>
         </div>
         {accepted.length > 0 && (
-          <span className="text-xs text-muted-foreground">{accepted.length} Tethrs</span>
+          <span className="text-xs text-muted-foreground">{accepted.length} connected</span>
         )}
       </div>
 
@@ -78,7 +78,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
                   className="truncate text-xs text-muted-foreground"
                   title={c.other?.creator_title || c.other?.category || undefined}
                 >
-                  {c.other?.creator_title || c.other?.category || "wants to tethyr"}
+                  {c.other?.creator_title || c.other?.category || "wants to connect"}
                 </p>
                 {c.intro_message && (
                   <p className="mt-1.5 rounded-xl bg-background/60 p-2 text-xs italic text-foreground/90">
@@ -176,7 +176,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
         {accepted.length === 0 && incoming.length === 0 && outgoing.length === 0 ? (
           <EmptyState
             icon={<Link2 className="h-5 w-5" />}
-            title="No tethrs yet"
+            title="No connections yet"
             description="Search for people and send your first connection request."
           />
         ) : accepted.length > 0 ? (
