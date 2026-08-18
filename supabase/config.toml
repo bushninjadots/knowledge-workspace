@@ -1,1 +1,8 @@
 project_id = "vmakywgauqrnsrrlzthk"
+
+[db.seed]
+# Loads both seed files during `supabase db reset` — the default test user
+# (seed.sql) plus the temporary demo community (seed_demo.sql). To drop the
+# demo data, remove "./seed_demo.sql" from this list and run `db reset`.
+enabled = true
+sql_paths = ["./seed.sql", "./seed_demo.sql"]
