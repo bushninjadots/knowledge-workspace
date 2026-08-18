@@ -147,3 +147,14 @@ ways to make their first contribution without dead ends.
 - Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
   9/9, core-loop browser test green, changed-file ESLint clean, and browser
   checks confirm ordering, deep-link scrolling, and clean credit text.
+
+### 2026-08-18 — Phase 3 started (dashboard prominence)
+
+- Retired the redundant **"This week"** dashboard module: it duplicated the
+  welcome header's reputation badge and overlapped with the Recent activity
+  (evidence) module — a pure stat surface that didn't earn its place in the
+  default workspace. This is the first cut at Stage 4's "reduce default
+  prominence / consolidate Stats-Reputation surfaces".
+- Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
+  9/9, changed-file ESLint clean, and a browser check confirms the module is
+  gone while Projects/Activity/Challenges/Applications remain.

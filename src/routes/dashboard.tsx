@@ -213,12 +213,6 @@ function DashboardContent({
     staleTime: 30_000,
   });
 
-  const weeklyRep = useMemo(() => {
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const thisWeek = (data?.activity ?? []).filter((e) => new Date(e.created_at) >= weekAgo);
-    return thisWeek.length;
-  }, [data?.activity]);
-
   const { data: todayOpps = [], isLoading: opportunitiesLoading } = useQuery({
     queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
@@ -484,29 +478,6 @@ function DashboardContent({
             </SectionCard>
           );
 
-        case "week":
-          if (weeklyRep === 0) return null;
-          return (
-            <SectionCard
-              icon={<Award className="h-4 w-4" />}
-              title="This week"
-              subtitle={`${weeklyRep} activity event${weeklyRep !== 1 ? "s" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-display text-xl font-semibold tabular-nums text-[var(--user-accent,var(--trust))]">
-                  {data?.profile?.reputation_score ?? 0}
-                </span>
-                <span className="text-[11px] text-muted-foreground">reputation</span>
-                <Link
-                  to="/profile"
-                  className="ml-auto text-[11px] font-medium text-primary hover:underline"
-                >
-                  Achievements →
-                </Link>
-              </div>
-            </SectionCard>
-          );
-
         case "welcome":
           return (
             <div className="relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 sm:p-8">
@@ -750,7 +721,6 @@ function DashboardContent({
       activeProjects,
       joinedChallenges,
       myApplications,
-      weeklyRep,
       pct,
       remaining,
       doneSteps,

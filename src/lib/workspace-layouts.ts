@@ -1,5 +1,4 @@
 import {
-  Award as IconAward,
   BarChart as IconBarChart,
   Calendar as IconCalendar,
   Clock as IconClock,
@@ -46,7 +45,10 @@ export const GRID_MARGIN: [number, number] = [14, 14];
 
 // Priority surfaces stay in the page flow so the dashboard answers "what's next?"
 // before the user enters the customizable workspace below.
-export const RETIRED_DASHBOARD_MODULE_IDS = ["welcome", "today", "next-steps"] as const;
+// "week" is retired because it duplicated the welcome header's reputation
+// badge and overlapped with the Recent activity (evidence) module — a
+// pure-stat surface that didn't earn its place in the default workspace.
+export const RETIRED_DASHBOARD_MODULE_IDS = ["welcome", "today", "next-steps", "week"] as const;
 
 export const DASHBOARD_MODULES: WorkspaceModule[] = [
   {
@@ -125,17 +127,6 @@ export const DASHBOARD_MODULES: WorkspaceModule[] = [
     maxW: 12,
     minH: 3,
     maxH: 12,
-  },
-  {
-    id: "week",
-    title: "This week",
-    icon: IconAward,
-    defaultW: 4,
-    defaultH: 6,
-    minW: 3,
-    maxW: 12,
-    minH: 3,
-    maxH: 10,
   },
   {
     id: "activity",
