@@ -35,6 +35,7 @@ import { ProjectNeeds } from "@/components/tethyr/project/project-needs";
 import { ProjectCredits } from "@/components/tethyr/project/project-credits";
 import { ProjectFilesExplorer } from "@/components/tethyr/project/project-files-explorer";
 import { ProjectActivityTab } from "@/components/tethyr/project/project-activity";
+import { MilestonesTimeline } from "@/components/tethyr/project/project-milestones";
 import { ProjectPeopleTab } from "@/components/tethyr/project/project-people";
 import { ProjectDiscussions } from "@/components/tethyr/project/project-discussions";
 import {
@@ -374,6 +375,29 @@ function ProjectPage() {
               projectFiles={projectFiles}
               isOwner={isOwner}
             />
+          </section>
+
+          {/* Current work — the README's natural follow-up: what's done, in
+              progress, and up next. (Milestones previously had no home on the
+              page; they only surfaced as completed events in Activity.) */}
+          <section
+            aria-labelledby="project-current-work-heading"
+            className="mt-10 border-t border-border/60 pt-8"
+          >
+            <div>
+              <h2
+                id="project-current-work-heading"
+                className="font-display text-lg font-semibold tracking-tight"
+              >
+                Current work
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Milestones the team is moving through — what's done, in progress, and up next.
+              </p>
+            </div>
+            <div className="mt-4">
+              <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
+            </div>
           </section>
 
           <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />

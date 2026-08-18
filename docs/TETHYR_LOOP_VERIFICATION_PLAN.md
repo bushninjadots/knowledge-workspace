@@ -111,3 +111,18 @@ ways to make their first contribution without dead ends.
 - Validation: core-loop test + `seed_browser_smoke.py` green against a clean
   reset; `tsc --noEmit` clean; 112 Vitest tests pass. No migration (the demo
   seed is local-only), so nothing to `supabase db push`.
+
+### 2026-08-18 — Phase 2 started (project page hierarchy)
+
+- Surfaced the missing "current work" on the project homepage: wired the
+  already-built `MilestonesTimeline` into `projects.$id.tsx` as a top-level
+  **Current work** section between the README and **Need help now**. Before
+  this, in-progress/pending milestones had no home (only completed milestones
+  surfaced as events in the Activity tab).
+- New first-view order: README/identity → **Current work** (milestones) →
+  **Need help now** → Files/Activity/People/Discussions → Credits.
+- Remaining Stage 3 items (promote people/roles and conversation inline,
+  reposition evidence) are queued for the next iteration.
+- Validation: `tsc --noEmit` clean, 112 Vitest tests pass, `seed_browser_smoke.py`
+  9/9, changed-file ESLint clean, and a browser check confirms the section and
+  its ordering.
