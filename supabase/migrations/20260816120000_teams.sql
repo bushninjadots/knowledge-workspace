@@ -5,10 +5,14 @@
 -- via team_projects ("Built by <Crew>"). It is NOT a chat/feed (Community owns
 -- conversation) and not an organization page. Membership is lead-invited via
 -- team_invites so reputation stays evidence-backed rather than self-served.
+--
+-- Tables are created before any policy that references another table (e.g. the
+-- teams UPDATE policy references team_members; the team_members join policy
+-- references team_invites), so no forward reference is ever parsed.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- Teams
+-- Tables
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.teams (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -20,10 +24,50 @@ CREATE TABLE IF NOT EXISTS public.teams (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.team_members (
+  team_id    uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role       text NOT NULL DEFAULT 'contributor'
+             CHECK (role IN ('lead', 'core', 'contributor')),
+  joined_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (team_id, profile_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.team_projects (
+  team_id    uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  PRIMARY KEY (team_id, project_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.team_invites (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id     uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  profile_id  uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  invited_by  uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (team_id, profile_id, status)
+);
+
+-- ---------------------------------------------------------------------------
+-- Indexes
+-- ---------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS teams_slug_idx ON public.teams (slug);
+CREATE INDEX IF NOT EXISTS team_members_profile_idx ON public.team_members (profile_id);
+CREATE INDEX IF NOT EXISTS team_projects_project_idx ON public.team_projects (project_id);
+CREATE INDEX IF NOT EXISTS team_invites_profile_idx ON public.team_invites (profile_id, status);
 
+-- ---------------------------------------------------------------------------
+-- RLS
+-- ---------------------------------------------------------------------------
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_invites ENABLE ROW LEVEL SECURITY;
 
+-- ---------------------------------------------------------------------------
+-- Policies — teams
+-- ---------------------------------------------------------------------------
 DO $$ BEGIN
   CREATE POLICY "Teams viewable by everyone"
     ON public.teams FOR SELECT USING (true);
@@ -46,25 +90,9 @@ DO $$ BEGIN
     );
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-DO $$ BEGIN GRANT SELECT ON public.teams TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN GRANT SELECT, INSERT, UPDATE ON public.teams TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
-
 -- ---------------------------------------------------------------------------
--- Team members (roster)
+-- Policies — team members
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.team_members (
-  team_id    uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
-  profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  role       text NOT NULL DEFAULT 'contributor'
-             CHECK (role IN ('lead', 'core', 'contributor')),
-  joined_at  timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (team_id, profile_id)
-);
-
-CREATE INDEX IF NOT EXISTS team_members_profile_idx ON public.team_members (profile_id);
-
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY "Team members viewable by everyone"
     ON public.team_members FOR SELECT USING (true);
@@ -119,22 +147,9 @@ DO $$ BEGIN
     );
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-DO $$ BEGIN GRANT SELECT ON public.team_members TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN GRANT SELECT, INSERT, UPDATE, DELETE ON public.team_members TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
-
 -- ---------------------------------------------------------------------------
--- Team projects (shipped work)
+-- Policies — team projects
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.team_projects (
-  team_id    uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
-  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-  PRIMARY KEY (team_id, project_id)
-);
-
-CREATE INDEX IF NOT EXISTS team_projects_project_idx ON public.team_projects (project_id);
-
-ALTER TABLE public.team_projects ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY "Team projects viewable by everyone"
     ON public.team_projects FOR SELECT USING (true);
@@ -166,26 +181,9 @@ DO $$ BEGIN
     );
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
-DO $$ BEGIN GRANT SELECT ON public.team_projects TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN GRANT SELECT, INSERT, DELETE ON public.team_projects TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
-
 -- ---------------------------------------------------------------------------
--- Team invites (lead-invited membership)
+-- Policies — team invites
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.team_invites (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id     uuid NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
-  profile_id  uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  invited_by  uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (team_id, profile_id, status)
-);
-
-CREATE INDEX IF NOT EXISTS team_invites_profile_idx ON public.team_invites (profile_id, status);
-
-ALTER TABLE public.team_invites ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY "Invitees and leads can see team invites"
     ON public.team_invites FOR SELECT TO authenticated
@@ -226,6 +224,15 @@ DO $$ BEGIN
     USING (profile_id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+-- ---------------------------------------------------------------------------
+-- Grants
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN GRANT SELECT ON public.teams TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN GRANT SELECT, INSERT, UPDATE ON public.teams TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN GRANT SELECT ON public.team_members TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN GRANT SELECT, INSERT, UPDATE, DELETE ON public.team_members TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN GRANT SELECT ON public.team_projects TO anon; EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN GRANT SELECT, INSERT, DELETE ON public.team_projects TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN GRANT SELECT, INSERT, UPDATE, DELETE ON public.team_invites TO authenticated; EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- ---------------------------------------------------------------------------

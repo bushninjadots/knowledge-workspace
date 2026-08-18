@@ -2,7 +2,12 @@
 
 > Created 2026-08-16. A design proposal, sequenced **after** Teams & crews and
 > the reputation evidence trail (see `TETHYR_COLLABORATION_DEPTH_2026-08-16.md`
-> and `TETHYR_MASTER_PLAN.md`). Not an implementation mandate.
+> and `TETHYR_MASTER_PLAN.md`).
+> **Status (2026-08-18): implemented** — project, Studio, and team Credits rolls
+> shipped (`lib/credits.ts`, `use-credits.ts`, `project-credits.tsx`,
+> `profile-credits.tsx`). The evidence trail is compiled from `project_activity`
+> + `project_contributors` rather than a `reputation_events` view, which is still
+> a future enhancement.
 
 ---
 

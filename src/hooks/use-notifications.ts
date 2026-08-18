@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 // ---------- Types ----------
@@ -55,6 +55,16 @@ export interface NotificationFilters {
   archived?: boolean;
 }
 
+type NotificationsRow = Database["public"]["Tables"]["notifications"]["Row"];
+
+function toNotification(row: NotificationsRow): Notification {
+  return {
+    ...row,
+    type: row.type as NotificationType,
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+  };
+}
+
 // ---------- Query keys ----------
 
 export const NOTIFICATIONS_KEY = ["notifications"] as const;
@@ -71,7 +81,7 @@ export function useNotifications(filters?: NotificationFilters, limit = 50) {
     queryKey: [...NOTIFICATIONS_KEY, meId ?? "anon", filters ?? {}, limit],
     enabled: !!meId,
     queryFn: async () => {
-      let q = (supabase as any)
+      let q = supabase
         .from("notifications")
         .select("*")
         .eq("user_id", meId as string)
@@ -92,7 +102,7 @@ export function useNotifications(filters?: NotificationFilters, limit = 50) {
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as Notification[];
+      return (data ?? []).map(toNotification);
     },
     staleTime: 10_000,
   });
@@ -108,7 +118,7 @@ export function useUnreadNotificationCount() {
     queryKey: [...UNREAD_COUNT_KEY, meId ?? "anon"],
     enabled: !!meId,
     queryFn: async () => {
-      const { count, error } = await (supabase as any)
+      const { count, error } = await supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
         .eq("user_id", meId as string)
@@ -130,7 +140,7 @@ export function useNotificationsByCategory() {
     queryKey: [...BY_CATEGORY_KEY, meId ?? "anon"],
     enabled: !!meId,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("notifications")
         .select("type")
         .eq("user_id", meId as string)
@@ -152,7 +162,7 @@ export function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("notifications")
         .update({ read_at: new Date().toISOString() })
         .in("id", ids);
@@ -176,7 +186,7 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: async () => {
       if (!meId) throw new Error("Not authenticated");
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("notifications")
         .update({ read_at: new Date().toISOString() })
         .eq("user_id", meId)
@@ -197,7 +207,7 @@ export function useArchiveNotification() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("notifications")
         .update({ archived_at: new Date().toISOString() })
         .eq("id", id);
@@ -217,7 +227,7 @@ export function useDeleteNotification() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("notifications").delete().eq("id", id);
+      const { error } = await supabase.from("notifications").delete().eq("id", id);
       if (error) throw error;
     },
     onSettled: () => {

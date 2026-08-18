@@ -190,8 +190,7 @@ function SignupPage() {
           {loading ? "Creating..." : "Create my profile"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          By joining you agree to build with respect and keep the network a place where creators
-          thrive.
+          Let's build with respect and keep Tethyr a place where creators thrive.
         </p>
       </form>
     </AuthShell>

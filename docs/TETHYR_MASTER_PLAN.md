@@ -124,14 +124,14 @@ middle — collaborate and become known.** Proposed shared spine:
 
 | Phase | Work | Status |
 |---|---|---|
-| A1 | Apply pending migrations (incl. `project_needs`) | in progress |
+| A1 | Apply pending migrations (incl. `project_needs`, `teams`) | done — 8 migrations pushed 2026-08-18 |
 | A2 | Fix audit P0/P1 findings (see §7) | done this session |
 | A3 | Replace `supabase as any` (Stage 6) | queued |
 | B | Project page re-composition (Stage 3) | queued |
 | C | Dashboard/studio simplification (Stage 4) | queued |
 | D | Stage 5 connectors (Library/Messages → project) | queued |
-| E | Teams & crews + recurring sessions + evidence trail | queued |
-| E+ | Credits roll rendering layer | spec written |
+| E | Teams & crews + recurring sessions + evidence trail | teams & crews done; recurring sessions + evidence trail pending |
+| E+ | Credits roll rendering layer | done |
 | F | Opportunity/Knowledge layer polish | deferred |
 | G | Video/audio sessions, calendar sync, push/email, API, native | deferred until evidence |
 
@@ -190,14 +190,18 @@ Already resolved in the working tree (verified, no action needed):
 
 Deferred (out of P0/P1 scope):
 - Landing TBT 940ms (needs profiling; framer-motion/animation sequences).
-- Generic titles on challenge/session detail pages.
-- Bare-text loading states on `/projects/:id`, `/u/:handle`.
+- Stable OG image for `__root.tsx` (still a dated Lovable R2 preview URL; needs a brand asset).
+
+Since resolved in the working tree (verified, no action needed):
+- Generic titles on `challenges/:id` / `sessions/:id` (client-side `document.title` effects now swap in the entity name).
+- Bare-text loading states on `/projects/:id`, `/u/:handle` (both now render `animate-pulse` skeletons).
+- Signup "By joining you agree…" placeholder (reworded to a community-norms statement; no Terms/Privacy pages exist yet).
 
 ---
 
 ## 8. Next Sessions (suggested)
 
 1. Re-compose the project workspace (Stage 3) around `project_needs`.
-2. Implement Teams & crews (spec ready).
-3. Implement the Credits roll rendering layer (spec ready).
-4. Finish Stage 6 (`as any` removal + a11y/keyboard coverage).
+2. Implement recurring sessions with outcomes + expose the `reputation_events`
+   evidence trail (the remaining half of Layer C item 5/E).
+3. Finish Stage 6 (`as any` removal + a11y/keyboard coverage).

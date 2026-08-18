@@ -2,7 +2,9 @@
 
 > Created 2026-08-16. A design proposal sequenced **after** Stage 4
 > (Studio/dashboard simplification) per `TETHYR_COLLABORATION_DEPTH_2026-08-16.md`.
-> Not an implementation mandate.
+> **Status (2026-08-18): implemented** — `teams`/`team_members`/`team_projects`/
+> `team_invites` tables, `/teams/:slug` route, and the team page shipped ahead of
+> the Stage 4 sequencing (see `TETHYR_MASTER_PLAN.md` §5).
 
 ---
 

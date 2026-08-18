@@ -14,7 +14,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [x] Preserve the public landing header as Logo + Log in + Join Tethyr.
 - [x] Record the forensic audit and its evidence limitations.
 - [x] Capture the current test/build/typecheck/smoke baseline.
-- [ ] Verify remote migration state before shipping database-dependent changes.
+- [x] Verify remote migration state before shipping database-dependent changes. (2026-08-18: 8 pending migrations pushed — GitHub tokens, role-app notifications, poll vote RPC, challenge-review hardening, project needs, milestone attribution, teams, milestone reputation.)
 - [ ] Establish authenticated browser coverage for dashboard, Studio customization, Explore, project People, and project creation.
 
 ## Stage 1 — Trust and state clarity (current)

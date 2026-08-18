@@ -5,6 +5,10 @@
 > (the operating rule: no new top-level features while a higher-priority stage is
 > incomplete). The only piece prototyped immediately is the smallest, lowest-risk
 > one: **project "need help now"**.
+>
+> **Status (2026-08-18):** `project_needs`, Teams & crews, and the Credits roll
+> have shipped ahead of sequence. Still pending: recurring sessions with
+> outcomes, exposing `reputation_events`, and the Stage 5 connectors.
 
 ## The problem
 
