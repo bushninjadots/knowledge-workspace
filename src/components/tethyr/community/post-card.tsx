@@ -148,8 +148,6 @@ function HighlightText({ text, query }: { text: string; query?: string }) {
 
 export function PostCard({
   post,
-  saved,
-  onToggleSave,
   searchQuery,
   comments,
   showComments,
@@ -165,15 +163,13 @@ export function PostCard({
   dimThreshold,
 }: {
   post: PostWithAuthor;
-  saved: boolean;
-  onToggleSave: () => void;
   searchQuery?: string;
   comments: CommentRow[];
   showComments: boolean;
   onToggleComments: () => void;
   onDelete?: () => void;
   onEdit?: () => void;
-  onToggleAction?: (action: "like" | "helpful" | "offer") => void;
+  onToggleAction?: (action: "like" | "helpful" | "save" | "offer") => void;
   highlighted?: boolean;
   shared_from_space?: string | null;
   skillOverlap?: number;
@@ -189,6 +185,7 @@ export function PostCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
 
   const isOwner = me?.userId === post.author_id;
   const canModerateThis = canModerate && !isOwner;
@@ -600,9 +597,9 @@ export function PostCard({
           icon={Bookmark}
           label="Save"
           count={post.stats.saves}
-          active={saved}
+          active={post.myActions.includes("save")}
           activeClass="text-brand-purple"
-          onClick={onToggleSave}
+          onClick={() => onToggleAction?.("save")}
         />
         <ActionButton
           icon={Share2}
@@ -620,7 +617,7 @@ export function PostCard({
           />
         )}
         <button
-          onClick={() => onToggleAction?.("offer")}
+          onClick={() => setOfferOpen(true)}
           disabled={offered}
           className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-all active:scale-95 ${
             isRequestType
@@ -649,6 +646,13 @@ export function PostCard({
         currentSpaceId={post.space_id}
       />
 
+      <OfferHelpDialog
+        post={post}
+        open={offerOpen}
+        onOpenChange={setOfferOpen}
+        onOffered={() => onToggleAction?.("offer")}
+      />
+
       <ReportPostDialog
         open={reportOpen}
         onOpenChange={setReportOpen}
@@ -656,6 +660,67 @@ export function PostCard({
         postTitle={post.title}
       />
     </article>
+  );
+}
+
+function OfferHelpDialog({
+  post,
+  open,
+  onOpenChange,
+  onOffered,
+}: {
+  post: PostWithAuthor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onOffered: () => void;
+}) {
+  const addComment = useAddComment();
+  const [message, setMessage] = useState("");
+  const authorName = post.author.display_name || post.author.handle || "the author";
+
+  async function submit() {
+    try {
+      // Record the offer (bumps the count + marks the post "Offered").
+      onOffered();
+      // Post the note as a comment so the author is notified and can respond.
+      await addComment.mutateAsync({ postId: post.id, body: message.trim() });
+      toast.success(`Offer sent to ${authorName}`);
+      setMessage("");
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't send your offer");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Offer to help {authorName}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Tell {authorName} how you can help. Your note is posted as a comment so they can reach
+          back out.
+        </p>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value.slice(0, 500))}
+          placeholder="e.g. I can take a look at the onboarding flow and suggest fixes…"
+          rows={4}
+          maxLength={500}
+          className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
+        />
+        <div className="text-right text-[11px] text-muted-foreground">{message.length}/500</div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={!message.trim() || addComment.isPending}>
+            {addComment.isPending ? "Sending…" : "Send offer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

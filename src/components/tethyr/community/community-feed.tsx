@@ -104,7 +104,7 @@ export function CommunityFeed({
     (savedFilters.sortMode as SortMode) ?? "latest",
   );
   const [mySkillsOnly, setMySkillsOnly] = useState((savedFilters.mySkillsOnly as boolean) ?? false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
   const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
@@ -153,15 +153,6 @@ export function CommunityFeed({
   // Handlers are referentially stable so the memoized feed list only
   // re-renders when a card's own data changes (save/comment/offer toggles,
   // highlights) instead of on every keystroke or filter click.
-  const toggleSave = useCallback((id: string) => {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
   const deletePostHandler = useCallback(
     (id: string) => {
       deletePost.mutate(id, {
@@ -189,7 +180,7 @@ export function CommunityFeed({
   }, []);
 
   const handleToggleAction = useCallback(
-    (postId: string, action: "like" | "helpful" | "offer") => {
+    (postId: string, action: "like" | "helpful" | "save" | "offer") => {
       if (!me?.userId) return;
       const post = posts.find((p) => p.id === postId);
       if (!post) return;
@@ -214,7 +205,7 @@ export function CommunityFeed({
     if (activeSpace) {
       list = spacePosts;
     } else if (nav === "saved") {
-      list = list.filter((p) => savedIds.has(p.id));
+      list = list.filter((p) => p.myActions.includes("save"));
     } else if (nav === "following") {
       list = followingFeed;
     } else {
@@ -275,7 +266,6 @@ export function CommunityFeed({
     nav,
     effectiveTypeFilter,
     focusFilter,
-    savedIds,
     searchQuery,
     sortMode,
     followingFeed,
@@ -341,14 +331,12 @@ export function CommunityFeed({
             nav={nav}
             isSearching={isSearching}
             searchQuery={nav === "following" ? undefined : isSearching ? searchQuery : undefined}
-            savedIds={savedIds}
             openComments={openComments}
             highlightedPostId={highlightedPostId}
             sortMode={sortMode}
             mySkillNames={mySkillNames}
             activeSpace={activeSpace}
             reportedPostCounts={reportedPostCounts}
-            onToggleSave={toggleSave}
             onToggleComments={toggleComments}
             onDelete={deletePostHandler}
             onEdit={editPost}

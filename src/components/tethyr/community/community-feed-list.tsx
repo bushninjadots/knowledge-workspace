@@ -15,8 +15,6 @@ import type { SortMode } from "@/components/tethyr/community/community-header";
  */
 const PostCardWithComments = memo(function PostCardWithComments({
   post,
-  saved,
-  onToggleSave,
   searchQuery,
   showComments,
   onToggleComments,
@@ -32,14 +30,12 @@ const PostCardWithComments = memo(function PostCardWithComments({
   dimThreshold,
 }: {
   post: PostWithAuthor;
-  saved: boolean;
-  onToggleSave: (id: string) => void;
   searchQuery?: string;
   showComments: boolean;
   onToggleComments: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (post: PostWithAuthor) => void;
-  onToggleAction: (id: string, action: "like" | "helpful" | "offer") => void;
+  onToggleAction: (id: string, action: "like" | "helpful" | "save" | "offer") => void;
   className?: string;
   /** Feed position — drives the entrance stagger delay. */
   index: number;
@@ -62,8 +58,6 @@ const PostCardWithComments = memo(function PostCardWithComments({
     >
       <PostCard
         post={post}
-        saved={saved}
-        onToggleSave={() => onToggleSave(post.id)}
         searchQuery={searchQuery}
         comments={comments}
         showComments={showComments}
@@ -115,14 +109,12 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   nav,
   isSearching,
   searchQuery,
-  savedIds,
   openComments,
   highlightedPostId,
   sortMode,
   mySkillNames,
   activeSpace,
   reportedPostCounts,
-  onToggleSave,
   onToggleComments,
   onDelete,
   onEdit,
@@ -138,7 +130,6 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   isSearching: boolean;
   /** Undefined when the following feed is shown (it is never highlighted). */
   searchQuery?: string;
-  savedIds: Set<string>;
   openComments: Set<string>;
   highlightedPostId: string | null;
   sortMode: SortMode;
@@ -146,11 +137,10 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   activeSpace?: CommunitySpace;
   /** Post id → open report count — badges and dims reported posts for moderators. */
   reportedPostCounts?: Map<string, number>;
-  onToggleSave: (id: string) => void;
   onToggleComments: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (post: PostWithAuthor) => void;
-  onToggleAction: (id: string, action: "like" | "helpful" | "offer") => void;
+  onToggleAction: (id: string, action: "like" | "helpful" | "save" | "offer") => void;
   onClearSearch: () => void;
   onGoHome: () => void;
   focusComposer: (presetType?: string) => void;
@@ -279,8 +269,6 @@ export const CommunityFeedList = memo(function CommunityFeedList({
           <PostCardWithComments
             key={post.id}
             post={post}
-            saved={savedIds.has(post.id)}
-            onToggleSave={onToggleSave}
             searchQuery={searchQuery}
             showComments={openComments.has(post.id)}
             onToggleComments={onToggleComments}

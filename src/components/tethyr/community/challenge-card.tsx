@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Trophy,
   Users,
@@ -36,6 +36,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
   const joinMutation = useJoinChallenge();
   const leaveMutation = useLeaveChallenge();
+  const navigate = useNavigate();
 
   const isPending = joinMutation.isPending || leaveMutation.isPending;
 
@@ -56,7 +57,10 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
   };
 
   return (
-    <Card className="group relative rounded-xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300">
+    <Card
+      onClick={() => navigate({ to: "/challenges/$id", params: { id: challenge.id } })}
+      className="group relative cursor-pointer rounded-xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300"
+    >
       <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
@@ -75,7 +79,11 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
               </Badge>
             </div>
             <h3 className="text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors">
-              <Link to="/challenges/$id" params={{ id: challenge.id }}>
+              <Link
+                to="/challenges/$id"
+                params={{ id: challenge.id }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {challenge.title}
               </Link>
             </h3>
@@ -172,7 +180,11 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
           </Button>
 
           <Button size="sm" variant="ghost" asChild className="text-xs h-8 px-3 min-h-[36px]">
-            <Link to="/challenges/$id" params={{ id: challenge.id }}>
+            <Link
+              to="/challenges/$id"
+              params={{ id: challenge.id }}
+              onClick={(e) => e.stopPropagation()}
+            >
               View Details <ArrowRight className="h-3.5 w-3.5 ml-1" />
             </Link>
           </Button>
