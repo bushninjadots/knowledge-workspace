@@ -1272,6 +1272,18 @@ const KIND_META: Record<
     icon: Rocket,
     tone: "green",
   },
+  project_joined: { label: () => "Joined a project", icon: Layers, tone: "green" },
+  connection_requested: {
+    label: () => "Sent a connection request",
+    icon: UserPlus,
+    tone: "muted",
+  },
+  connection_received: {
+    label: () => "Received a connection request",
+    icon: UserPlus,
+    tone: "purple",
+  },
+  message_received: { label: () => "Received a message", icon: MessageCircle, tone: "muted" },
 };
 
 function relTime(iso: string) {

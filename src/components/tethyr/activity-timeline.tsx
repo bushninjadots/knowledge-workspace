@@ -16,6 +16,7 @@ import {
   Users,
   Plus,
   Zap,
+  UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "./empty-state";
@@ -57,6 +58,9 @@ const ICONS: Record<string, typeof Sparkles> = {
   project_update_posted: Plus,
   discussion_started: MessageCircle,
   discussion_reply: MessageCircle,
+  connection_requested: UserPlus,
+  connection_received: UserPlus,
+  message_received: MessageCircle,
 };
 
 const LABELS: Record<string, (m: Record<string, unknown>) => string> = {
@@ -75,6 +79,9 @@ const LABELS: Record<string, (m: Record<string, unknown>) => string> = {
   project_update_posted: () => "Posted a project update",
   discussion_started: () => "Started a discussion",
   discussion_reply: () => "Replied to a discussion",
+  connection_requested: () => "Sent a connection request",
+  connection_received: () => "Received a connection request",
+  message_received: () => "Received a message",
 };
 
 function relative(iso: string): string {

@@ -67,7 +67,11 @@ SET display_name = 'Test User',
     timezone = 'Europe/London',
     favourite_tools = ARRAY['VS Code','Figma'],
     software_stack = ARRAY['React','TypeScript'],
-    languages = ARRAY['English']
+    languages = ARRAY['English'],
+    teaching_style = 'Pair programming and async code reviews',
+    learning_goals = 'Ship a real side project and find two collaborators this quarter.',
+    portfolio_links = '[{"label":"My site","url":"https://example.com"}]'::jsonb,
+    social_links = '{"github":"https://github.com/testuser"}'::jsonb
 WHERE id = 'a1d676d3-1a76-401f-bc30-0e4195569e26';
 
 -- ---------------------------------------------------------------------------
@@ -419,6 +423,8 @@ UNION ALL SELECT '10000000-0000-0000-0000-000000000006'::uuid, id, 'community_re
 UNION ALL SELECT '10000000-0000-0000-0000-000000000007'::uuid, id, 'proof_certified'::skill_verification_level, 'expert'::skill_experience_level FROM skills WHERE slug='observability'
 UNION ALL SELECT '10000000-0000-0000-0000-000000000008'::uuid, id, 'proof_certified'::skill_verification_level, 'advanced'::skill_experience_level FROM skills WHERE slug='technical-writing'
 UNION ALL SELECT '10000000-0000-0000-0000-000000000005'::uuid, id, 'self_declared'::skill_verification_level, 'advanced'::skill_experience_level FROM skills WHERE slug='growth-marketing'
+UNION ALL SELECT 'a1d676d3-1a76-401f-bc30-0e4195569e26'::uuid, id, 'self_declared'::skill_verification_level, 'intermediate'::skill_experience_level FROM skills WHERE slug='typescript'
+UNION ALL SELECT 'a1d676d3-1a76-401f-bc30-0e4195569e26'::uuid, id, 'self_declared'::skill_verification_level, 'intermediate'::skill_experience_level FROM skills WHERE slug='nodejs'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.profile_skills_learn (profile_id, skill_id)
