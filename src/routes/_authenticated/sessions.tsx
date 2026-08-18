@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { SessionsLayout } from "@/components/tethyr/sessions/sessions-layout";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
@@ -22,5 +22,14 @@ export const Route = createFileRoute("/_authenticated/sessions")({
 });
 
 function SessionsPage() {
+  const { location } = useRouterState();
+  const isChildRoute = location.pathname.startsWith("/sessions/");
+
+  // `/sessions/$id` is a nested child route — render its detail page here
+  // instead of the list (same pattern as /library).
+  if (isChildRoute) {
+    return <Outlet />;
+  }
+
   return <SessionsLayout />;
 }

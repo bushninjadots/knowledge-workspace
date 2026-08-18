@@ -138,7 +138,7 @@ function SessionDetailPage() {
                 onStatusChange={async (status: SessionStatus) => {
                   try {
                     await updateStatus.mutateAsync({ sessionId: id, status });
-                    toast.success(`Session ${status.replace("_", "")}`);
+                    toast.success(`Session ${status.replace(/_/g, " ")}`);
                   } catch {
                     toast.error("Failed to update status");
                   }

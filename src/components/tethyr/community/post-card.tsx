@@ -675,8 +675,13 @@ function OfferHelpDialog({
   onOffered: () => void;
 }) {
   const addComment = useAddComment();
-  const [message, setMessage] = useState("");
+  const isRequestType = post.type === "help_request" || post.type === "collaboration_request";
   const authorName = post.author.display_name || post.author.handle || "the author";
+  // Help/collab posts already asked for a hand, so pre-fill a ready-to-send
+  // offer the author can send immediately or edit. Other posts start empty.
+  const [message, setMessage] = useState(() =>
+    isRequestType ? "I can help with this — happy to jump in." : "",
+  );
 
   async function submit() {
     try {

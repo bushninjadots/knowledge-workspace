@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { Swords, Search, Filter } from "lucide-react";
 import {
@@ -46,6 +46,19 @@ export const Route = createFileRoute("/_authenticated/challenges")({
 });
 
 function ChallengesPage() {
+  const { location } = useRouterState();
+  const isChildRoute = location.pathname.startsWith("/challenges/");
+
+  // `/challenges/$id` is a nested child route — render its detail page here
+  // instead of the list (same pattern as /library).
+  if (isChildRoute) {
+    return <Outlet />;
+  }
+
+  return <ChallengesContent />;
+}
+
+function ChallengesContent() {
   const { data: challenges = [], isLoading } = useChallenges("active");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ChallengeType | "all">("all");

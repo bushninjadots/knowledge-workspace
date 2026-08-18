@@ -322,7 +322,7 @@ function ChallengeDetailPage() {
                 <h2 className="text-lg font-semibold">Your Challenge Status</h2>
               </div>
               <Badge variant="outline" className="capitalize bg-background">
-                {challenge.my_participation.status || "joined"}
+                {(challenge.my_participation.status || "joined").replace(/_/g, " ")}
               </Badge>
             </div>
 
@@ -377,7 +377,7 @@ function ChallengeDetailPage() {
                           <span
                             className={`text-sm capitalize ${isDone ? "text-muted-foreground line-through" : isCurrent ? "font-medium" : "text-muted-foreground"}`}
                           >
-                            {step.replace("_", "")}
+                            {step.replace(/_/g, " ")}
                           </span>
                         </div>
                       );
@@ -583,7 +583,7 @@ function ChallengeDetailPage() {
                         ? "Under review"
                         : part.review_status === "rejected"
                           ? "Needs revision"
-                          : part.status}
+                          : part.status.replace(/_/g, " ")}
                   </Badge>
                 </div>
               ))}

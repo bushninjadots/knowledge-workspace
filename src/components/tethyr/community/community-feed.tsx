@@ -188,6 +188,11 @@ export function CommunityFeed({
       toggleAction.mutate(
         { postId, action, currentUserId: me.userId, isActive },
         {
+          onSuccess: () => {
+            if (action === "save") {
+              toast.success(isActive ? "Removed from saved" : "Saved");
+            }
+          },
           onError: () => toast.error("Failed"),
         },
       );
