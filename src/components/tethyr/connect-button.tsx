@@ -108,7 +108,7 @@ export function ConnectButton({
           }}
           className="gap-1.5"
         >
-          <Link2Off className="h-4 w-4" /> Tethryd
+          <Link2Off className="h-4 w-4" /> Connected
         </Button>
       </div>
     );
@@ -123,7 +123,7 @@ export function ConnectButton({
             respond.mutate(
               { id: existing.id, status: "accepted" },
               {
-                onSuccess: () => toast.success("You're now tethryd 🎉"),
+                onSuccess: () => toast.success("You're now connected 🎉"),
                 onError: (e: Error) => toast.error(e.message),
               },
             )

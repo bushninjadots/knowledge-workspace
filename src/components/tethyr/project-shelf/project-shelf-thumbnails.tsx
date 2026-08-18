@@ -49,7 +49,7 @@ export function ProjectShelfThumbnails({
             title={project.title}
             aria-label={`Go to project ${i + 1}: ${project.title}`}
             className={cn(
-              "relative h-12 w-20 shrink-0 cursor-pointer overflow-hidden rounded-md border bg-surface text-left outline-none transition-all duration-150",
+              "relative h-14 w-24 shrink-0 cursor-pointer overflow-hidden rounded-md border bg-surface text-left outline-none transition-all duration-150",
               isActive
                 ? "border-transparent"
                 : "border-border/60 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm",
@@ -61,6 +61,12 @@ export function ProjectShelfThumbnails({
               progress={project.progress_percent}
               animated={false}
             />
+            {/* Title overlay so the strip is scannable without clicking */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-1.5 pb-0.5 pt-4">
+              <p className="truncate text-[9px] font-medium leading-tight text-white drop-shadow-sm">
+                {project.title}
+              </p>
+            </div>
             {/* Progress tick */}
             <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 bg-black/30">
               <div

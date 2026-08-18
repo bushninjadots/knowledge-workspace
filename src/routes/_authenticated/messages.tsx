@@ -81,7 +81,7 @@ function MessagesPage() {
                 variant="messages"
                 icon={<span className="text-xl">&#128075;</span>}
                 title="The table is empty"
-                description="Once you're tethryd with someone, this is where focused conversations happen. Pull up a chair."
+                description="Once you're connected with someone, this is where focused conversations happen. Pull up a chair."
               />
             </div>
           ) : (

@@ -625,7 +625,7 @@ export function PostCard({
         >
           <HandHeart className={`h-3.5 w-3.5 ${offered ? "fill-current" : ""}`} />
           {offered ? "Offered" : "Offer Help"}
-          <span className="tabular-nums">{post.stats.offers}</span>
+          {post.stats.offers > 0 && <span className="tabular-nums">{post.stats.offers}</span>}
         </button>
       </div>
 
@@ -1110,7 +1110,7 @@ function ActionButton({
     >
       <Icon className={`h-3.5 w-3.5 ${active ? "fill-current" : ""}`} />
       {label}
-      <span className="tabular-nums">{count}</span>
+      {count > 0 && <span className="tabular-nums">{count}</span>}
     </button>
   );
 }

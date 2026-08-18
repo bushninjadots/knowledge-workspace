@@ -39,7 +39,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
           </p>
         </div>
         {accepted.length > 0 && (
-          <span className="text-xs text-muted-foreground">{accepted.length} tethryd</span>
+          <span className="text-xs text-muted-foreground">{accepted.length} Tethrs</span>
         )}
       </div>
 
@@ -93,7 +93,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
                     respond.mutate(
                       { id: c.id, status: "accepted" },
                       {
-                        onSuccess: () => toast.success("You're now tethryd 🎉"),
+                        onSuccess: () => toast.success("You're now connected 🎉"),
                         onError: (e: Error) => toast.error(e.message),
                       },
                     )
