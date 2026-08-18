@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(39);
+SELECT plan(48);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -476,6 +476,108 @@ SELECT is(
     WHERE organizer_id = '11111111-1111-1111-1111-111111111111')::bigint,
   0::bigint,
   '33. non-member session read filtered (no permission-denied error)'
+);
+
+-- ---------------------------------------------------------------------------
+-- 12. Community space privacy: private spaces + their posts are hidden
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.community_spaces(id, name, slug, description, created_by, visibility)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000001', 'Alice Private Space', 'alice-private-space',
+          'secret', '11111111-1111-1111-1111-111111111111', 'private')
+  ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.community_space_members(space_id, user_id, role)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000001',
+          '11111111-1111-1111-1111-111111111111', 'owner')
+  ON CONFLICT DO NOTHING;
+INSERT INTO public.posts(id, author_id, type, title, space_id)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000002',
+          '11111111-1111-1111-1111-111111111111', 'discussion',
+          'Private space post', 'f0f0f0f0-0000-4000-8000-000000000001')
+  ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.community_spaces(id, name, slug, description, created_by, visibility)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000003', 'Alice Public Space', 'alice-public-space',
+          'open', '11111111-1111-1111-1111-111111111111', 'public')
+  ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.posts(id, author_id, type, title, space_id)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000004',
+          '11111111-1111-1111-1111-111111111111', 'discussion',
+          'Public space post', 'f0f0f0f0-0000-4000-8000-000000000003')
+  ON CONFLICT (id) DO NOTHING;
+
+-- Non-member cannot see the private space or its posts.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT is(
+  (SELECT count(*) FROM public.community_spaces
+    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  0::bigint,
+  '40. non-member cannot see a private space'
+);
+SELECT is(
+  (SELECT count(*) FROM public.posts
+    WHERE space_id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  0::bigint,
+  '41. non-member cannot see posts in a private space'
+);
+
+-- Anonymous cannot see it either.
+SELECT set_config('role', 'anon', true);
+SELECT set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
+SELECT is(
+  (SELECT count(*) FROM public.community_spaces
+    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  0::bigint,
+  '42. anonymous cannot see a private space'
+);
+SELECT is(
+  (SELECT count(*) FROM public.posts
+    WHERE space_id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  0::bigint,
+  '43. anonymous cannot see posts in a private space'
+);
+
+-- Creator can still see her own private space + its posts.
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+SELECT is(
+  (SELECT count(*) FROM public.community_spaces
+    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  1::bigint,
+  '44. creator can see her private space'
+);
+SELECT is(
+  (SELECT count(*) FROM public.posts
+    WHERE space_id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  1::bigint,
+  '45. creator can see posts in her private space'
+);
+
+-- Public spaces stay world-readable.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT is(
+  (SELECT count(*) FROM public.community_spaces
+    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000003')::bigint,
+  1::bigint,
+  '46. non-member can see a public space'
+);
+SELECT is(
+  (SELECT count(*) FROM public.posts
+    WHERE space_id = 'f0f0f0f0-0000-4000-8000-000000000003')::bigint,
+  1::bigint,
+  '47. non-member can see posts in a public space'
+);
+
+-- A member who joins the private space can then see it.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+INSERT INTO public.community_space_members(space_id, user_id, role)
+  VALUES ('f0f0f0f0-0000-4000-8000-000000000001',
+          '22222222-2222-2222-2222-222222222222', 'member')
+  ON CONFLICT DO NOTHING;
+SELECT is(
+  (SELECT count(*) FROM public.community_spaces
+    WHERE id = 'f0f0f0f0-0000-4000-8000-000000000001')::bigint,
+  1::bigint,
+  '48. a member can see a private space after joining'
 );
 
 SELECT * FROM finish();
