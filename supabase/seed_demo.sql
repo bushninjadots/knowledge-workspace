@@ -16,17 +16,42 @@ DECLARE
   pw_hash text := crypt('password123', gen_salt('bf', 10));
 BEGIN
   INSERT INTO auth.users
-    (id, email, encrypted_password, email_confirmed_at, aud, role,
-     raw_app_meta_data, raw_user_meta_data, is_super_admin, is_anonymous, is_sso_user, created_at, updated_at)
+    (instance_id, id, aud, role, email, encrypted_password,
+     email_confirmed_at, invited_at,
+     confirmation_token, confirmation_sent_at,
+     recovery_token, recovery_sent_at,
+     email_change_token_new, email_change, email_change_sent_at,
+     email_change_token_current, email_change_confirm_status,
+     phone, phone_confirmed_at, phone_change, phone_change_token, phone_change_sent_at,
+     last_sign_in_at,
+     raw_app_meta_data, raw_user_meta_data,
+     is_super_admin, is_anonymous, is_sso_user,
+     created_at, updated_at)
   VALUES
-    ('10000000-0000-0000-0000-000000000001','maya@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Maya Chen","handle":"maya","craft":"Design"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000002','devon@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Devon Okafor","handle":"devon","craft":"Development"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000003','priya@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Priya Nair","handle":"priya","craft":"Development"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000004','alex@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Alex Ruiz","handle":"alexr","craft":"Design"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000005','sam@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Sam Lee","handle":"samlee","craft":"Marketing"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000006','nia@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Nia Thompson","handle":"nia","craft":"Music"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000007','omar@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Omar Haddad","handle":"omar","craft":"Development"}',false,false,false,now(),now()),
-    ('10000000-0000-0000-0000-000000000008','lena@tethyr.dev',pw_hash,now(),'authenticated','authenticated','{"provider":"email","providers":["email"]}','{"display_name":"Lena Fischer","handle":"lena","craft":"Writing"}',false,false,false,now(),now())
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000001','authenticated','authenticated','maya@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Maya Chen","handle":"maya","craft":"Design"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000002','authenticated','authenticated','devon@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Devon Okafor","handle":"devon","craft":"Development"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000003','authenticated','authenticated','priya@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Priya Nair","handle":"priya","craft":"Development"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000004','authenticated','authenticated','alex@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Alex Ruiz","handle":"alexr","craft":"Design"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000005','authenticated','authenticated','sam@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Sam Lee","handle":"samlee","craft":"Marketing"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000006','authenticated','authenticated','nia@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Nia Thompson","handle":"nia","craft":"Music"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000007','authenticated','authenticated','omar@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Omar Haddad","handle":"omar","craft":"Development"}',false,false,false,now(),now()),
+    ('00000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000008','authenticated','authenticated','lena@tethyr.dev',pw_hash,now(),NULL,'',NULL,'',NULL,'','',NULL,'',0,NULL,NULL,'','',NULL,now(),'{"provider":"email","providers":["email"]}','{"display_name":"Lena Fischer","handle":"lena","craft":"Writing"}',false,false,false,now(),now())
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Auth identities are required for GoTrue password login. seed.sql creates
+  -- one for the test user; these mock users need the same treatment or their
+  -- password grant returns 400 and nobody can sign in as them.
+  INSERT INTO auth.identities
+    (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  VALUES
+    ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','maya@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000001','email','maya@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','devon@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000002','email','devon@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000003','priya@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000003','email','priya@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000004','alex@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000004','email','alex@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000005','sam@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000005','email','sam@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000006','nia@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000006','email','nia@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000007','10000000-0000-0000-0000-000000000007','omar@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000007','email','omar@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now()),
+    ('10000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000008','lena@tethyr.dev',jsonb_build_object('sub','10000000-0000-0000-0000-000000000008','email','lena@tethyr.dev','email_verified',true,'phone_verified',false),'email',now(),now(),now())
   ON CONFLICT (id) DO NOTHING;
 END $$;
 
