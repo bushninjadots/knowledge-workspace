@@ -186,8 +186,8 @@ export const CommunityFeedList = memo(function CommunityFeedList({
       <EmptyState
         icon={<Users className="h-5 w-5" />}
         title="This space is quiet"
-        description={`Be the first to post in ${activeSpace.name}. Share an update, ask a question, or start a conversation.`}
-        actionLabel="Start the conversation"
+        description={`Say hi in ${activeSpace.name} — everyone who's joined can chat here. No post types, no titles, just hit Enter.`}
+        actionLabel="Start chatting"
         onAction={focusComposer}
       />
     );

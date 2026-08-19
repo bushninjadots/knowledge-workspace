@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
+import { SpaceChatComposer } from "@/components/tethyr/community/space-chat-composer";
 import { CommunityHeader, type SortMode } from "@/components/tethyr/community/community-header";
 import { CommunityFeedList } from "@/components/tethyr/community/community-feed-list";
 import { SpaceHeader } from "@/components/tethyr/community/space-header";
@@ -284,10 +285,24 @@ export function CommunityFeed({
 
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
+  // Inside a space the composer is a lightweight chat box — just type and hit
+  // Enter. The full composer is still used when editing an existing post.
+  const showChatComposer = showComposer && !!activeSpace && !editingPost;
   // The following view renders the raw following feed (no search/sort), so it
   // needs its own loading flag and post list.
   const loading = nav === "following" ? isLoadingFollowing : isLoading;
   const visiblePosts = nav === "following" ? followingFeed : feed;
+  const composer =
+    activeSpace && showChatComposer ? (
+      <SpaceChatComposer space={activeSpace} />
+    ) : showComposer ? (
+      <ComposerBar
+        editingPost={editingPost}
+        onCancelEdit={cancelEdit}
+        spaceId={activeSpace?.id}
+        presetType={composerPresetType}
+      />
+    ) : null;
 
   return (
     <div className="min-w-0 flex-1">
@@ -321,16 +336,7 @@ export function CommunityFeed({
             />
           )}
 
-          {showComposer && (
-            <div className="mb-6">
-              <ComposerBar
-                editingPost={editingPost}
-                onCancelEdit={cancelEdit}
-                spaceId={activeSpace?.id}
-                presetType={composerPresetType}
-              />
-            </div>
-          )}
+          {composer && <div className="mb-6">{composer}</div>}
 
           <CommunityFeedList
             posts={visiblePosts}

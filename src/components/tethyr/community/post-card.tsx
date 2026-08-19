@@ -439,10 +439,13 @@ export function PostCard({
         </div>
       )}
 
-      {/* Body */}
-      <h3 className="font-title mt-3 text-base font-semibold leading-snug">
-        <HighlightText text={post.title} query={searchQuery} />
-      </h3>
+      {/* Body — chat posts (space quick messages) have no title, so the
+          message itself is the headline. */}
+      {post.title && (
+        <h3 className="font-title mt-3 text-base font-semibold leading-snug">
+          <HighlightText text={post.title} query={searchQuery} />
+        </h3>
+      )}
       {post.link_url && (
         <a
           href={post.link_url}
