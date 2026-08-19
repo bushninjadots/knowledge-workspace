@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GitHubConnect } from "./github-connect";
+import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
 
@@ -20,7 +21,6 @@ const fake = vi.hoisted(() => ({
     saveGithubToken: vi.fn(),
     removeGithubToken: vi.fn(),
   },
-  calls: [] as { kind: "select" | "upsert"; table: string; value?: unknown }[],
   tokenStatus: false,
 }));
 
@@ -40,52 +40,7 @@ vi.mock("@/lib/github-server", () => ({
 
 type Account = { id: string; provider: string; username: string | null; created_at: string };
 
-function createFakeSupabase({ accounts = [] }: { accounts?: Account[] } = {}) {
-  fake.calls.length = 0;
-  const from = vi.fn((table: string) => {
-    const builder = {
-      _kind: "select" as "select" | "upsert",
-      _value: null as unknown,
-      select() {
-        return builder;
-      },
-      eq() {
-        return builder;
-      },
-      order() {
-        return builder;
-      },
-      limit() {
-        return builder;
-      },
-      upsert(v: unknown) {
-        builder._kind = "upsert";
-        builder._value = v;
-        return builder;
-      },
-      single() {
-        return builder;
-      },
-      then(onFulfilled: (v: { data: unknown; error: unknown }) => unknown) {
-        const isUpsert = builder._kind === "upsert";
-        fake.calls.push({
-          kind: isUpsert ? "upsert" : "select",
-          table,
-          value: isUpsert ? builder._value : undefined,
-        });
-        const result = isUpsert
-          ? { data: builder._value, error: null }
-          : { data: accounts, error: null };
-        return Promise.resolve(result).then(onFulfilled);
-      },
-    };
-    return builder;
-  });
-  const auth = {
-    getUser: vi.fn(async () => ({ data: { user: { id: "test-user" } }, error: null })),
-  };
-  return { from, auth };
-}
+const handle = createFakeSupabase();
 
 function renderCard() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -103,23 +58,27 @@ const githubAccount: Account = {
   created_at: "2026-01-01",
 };
 
+function useFake({ accounts = [] }: { accounts?: Account[] } = {}) {
+  handle.reset();
+  fake.supabase.from = handle.client.from;
+  fake.supabase.auth = handle.client.auth;
+  handle.on("connected_accounts:select", () => ({ data: accounts, error: null }));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   fake.tokenStatus = false;
   fake.serverFns.hasGithubToken.mockImplementation(() => Promise.resolve(fake.tokenStatus));
   fake.serverFns.saveGithubToken.mockResolvedValue({ ok: true, username: "octocat" });
   fake.serverFns.removeGithubToken.mockResolvedValue({ ok: true });
-  const built = createFakeSupabase();
-  fake.supabase.from = built.from;
-  fake.supabase.auth = built.auth;
+  useFake();
 });
 
 // --- Tests ---------------------------------------------------------------
 
 describe("GitHubConnect token sync", () => {
   it("shows the shared token row when GitHub is connected", async () => {
-    createFakeSupabase({ accounts: [githubAccount] });
-    fake.supabase.from = createFakeSupabase({ accounts: [githubAccount] }).from;
+    useFake({ accounts: [githubAccount] });
 
     renderCard();
 
@@ -130,7 +89,7 @@ describe("GitHubConnect token sync", () => {
   });
 
   it("saves a token through the server function and confirms the GitHub username", async () => {
-    fake.supabase.from = createFakeSupabase({ accounts: [githubAccount] }).from;
+    useFake({ accounts: [githubAccount] });
     renderCard();
 
     await userEvent.click(await screen.findByRole("button", { name: "Add token" }));
@@ -158,7 +117,7 @@ describe("GitHubConnect token sync", () => {
       ok: false,
       reason: "unauthorized",
     } as never);
-    fake.supabase.from = createFakeSupabase({ accounts: [githubAccount] }).from;
+    useFake({ accounts: [githubAccount] });
     renderCard();
 
     await userEvent.click(await screen.findByRole("button", { name: "Add token" }));
@@ -178,7 +137,7 @@ describe("GitHubConnect token sync", () => {
 
   it("removes the stored token via the server function", async () => {
     fake.tokenStatus = true;
-    fake.supabase.from = createFakeSupabase({ accounts: [githubAccount] }).from;
+    useFake({ accounts: [githubAccount] });
     renderCard();
 
     await userEvent.click(await screen.findByRole("button", { name: "Remove" }));
@@ -191,7 +150,7 @@ describe("GitHubConnect token sync", () => {
   });
 
   it("validates the token before connecting the account", async () => {
-    fake.supabase.from = createFakeSupabase().from;
+    useFake();
     renderCard();
 
     await userEvent.click(await screen.findByRole("button", { name: "Connect" }));
@@ -206,9 +165,9 @@ describe("GitHubConnect token sync", () => {
     });
     // Token validated first, then the account row is upserted.
     await waitFor(() => {
-      expect(fake.calls.some((c) => c.kind === "upsert" && c.table === "connected_accounts")).toBe(
-        true,
-      );
+      expect(
+        handle.calls.some((c) => c.action === "upsert" && c.table === "connected_accounts"),
+      ).toBe(true);
     });
   });
 
@@ -217,7 +176,7 @@ describe("GitHubConnect token sync", () => {
       ok: false,
       reason: "unauthorized",
     } as never);
-    fake.supabase.from = createFakeSupabase().from;
+    useFake();
     renderCard();
 
     await userEvent.click(await screen.findByRole("button", { name: "Connect" }));
@@ -232,6 +191,6 @@ describe("GitHubConnect token sync", () => {
     });
     const { toast } = await import("sonner");
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("rejected"));
-    expect(fake.calls.some((c) => c.kind === "upsert")).toBe(false);
+    expect(handle.calls.some((c) => c.action === "upsert")).toBe(false);
   });
 });

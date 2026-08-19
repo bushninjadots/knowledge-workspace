@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApplyToRoleButton } from "./project-role-applications";
+import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
 
@@ -26,87 +27,18 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-type Call = {
-  kind: "select" | "insert" | "update";
-  table: string;
-  insert?: unknown;
-  update?: unknown;
-};
-
-// Shared mutable state referenced by the hoisted vi.mock factory below.
 const fake = vi.hoisted(() => ({
   supabase: {} as {
     from: ReturnType<typeof vi.fn>;
     auth: { getUser: ReturnType<typeof vi.fn> };
   },
-  calls: [] as Call[],
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: fake.supabase,
 }));
 
-function createFakeSupabase({
-  apps = [],
-  user = "user-1",
-}: { apps?: { id: string; status: string }[]; user?: string | null } = {}) {
-  fake.calls.length = 0;
-  const from = vi.fn((table: string) => {
-    const builder = {
-      _select: null as string | null,
-      _insert: null as unknown,
-      _update: null as unknown,
-      select(cols: string) {
-        builder._select = cols;
-        return builder;
-      },
-      eq() {
-        return builder;
-      },
-      order() {
-        return builder;
-      },
-      limit() {
-        return builder;
-      },
-      in() {
-        return builder;
-      },
-      insert(v: unknown) {
-        builder._insert = v;
-        return builder;
-      },
-      update(v: unknown) {
-        builder._update = v;
-        return builder;
-      },
-      then(onFulfilled: (v: { data: unknown; error: unknown }) => unknown) {
-        const kind = builder._update ? "update" : builder._insert ? "insert" : "select";
-        fake.calls.push({
-          kind,
-          table,
-          insert: builder._insert ?? undefined,
-          update: builder._update ?? undefined,
-        });
-        const result =
-          kind === "update"
-            ? { data: null, error: null }
-            : kind === "insert"
-              ? { data: [builder._insert], error: null }
-              : { data: apps, error: null };
-        return Promise.resolve(result).then(onFulfilled);
-      },
-    };
-    return builder;
-  });
-  const auth = {
-    getUser: vi.fn(async () => ({
-      data: { user: user ? { id: user } : null },
-      error: null,
-    })),
-  };
-  return { from, auth };
-}
+const handle = createFakeSupabase();
 
 function renderButton(props: Partial<Parameters<typeof ApplyToRoleButton>[0]> = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -128,16 +60,19 @@ function useFake({
   apps = [],
   user = "user-1",
 }: { apps?: { id: string; status: string }[]; user?: string | null } = {}) {
-  const built = createFakeSupabase({ apps, user });
-  fake.supabase.from = built.from;
-  fake.supabase.auth = built.auth;
+  handle.reset();
+  fake.supabase.from = handle.client.from;
+  fake.supabase.auth = handle.client.auth;
+  handle.on("project_role_applications:select", () => ({ data: apps, error: null }));
+  if (user === null) {
+    handle.client.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
+  } else {
+    handle.client.auth.getUser.mockResolvedValue({ data: { user: { id: user } }, error: null });
+  }
 }
 
 beforeEach(() => {
-  fake.calls.length = 0;
-  const built = createFakeSupabase();
-  fake.supabase.from = built.from;
-  fake.supabase.auth = built.auth;
+  useFake();
 });
 
 // --- Tests ---------------------------------------------------------------
@@ -167,18 +102,18 @@ describe("ApplyToRoleButton", () => {
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() => {
-      const updates = fake.calls.filter(
-        (c) => c.kind === "update" && c.table === "project_role_applications",
+      const updates = handle.calls.filter(
+        (c) => c.action === "update" && c.table === "project_role_applications",
       );
       expect(updates.length).toBe(1);
     });
-    const update = fake.calls.find((c) => c.kind === "update")!;
-    expect(update.update).toMatchObject({
+    const update = handle.calls.find((c) => c.action === "update")!;
+    expect(update.value).toMatchObject({
       status: "pending",
       message: "I have the skills for this",
     });
     // No new row created.
-    expect(fake.calls.some((c) => c.kind === "insert")).toBe(false);
+    expect(handle.calls.some((c) => c.action === "insert")).toBe(false);
 
     // Optimistic flip so the UI reads as pending.
     expect(await screen.findByText(/application pending/i)).toBeInTheDocument();
@@ -191,7 +126,9 @@ describe("ApplyToRoleButton", () => {
     // Accepted state is terminal — no Apply / Apply again button at all.
     expect(await screen.findByText("Accepted")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /apply/i })).not.toBeInTheDocument();
-    expect(fake.calls.filter((c) => c.kind === "insert" || c.kind === "update")).toHaveLength(0);
+    expect(handle.calls.filter((c) => c.action === "insert" || c.action === "update")).toHaveLength(
+      0,
+    );
   });
 
   it("keeps the Apply button while a pending application is in flight (no dupes)", async () => {
@@ -212,10 +149,10 @@ describe("ApplyToRoleButton", () => {
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() => {
-      expect(fake.calls.some((c) => c.kind === "insert")).toBe(true);
+      expect(handle.calls.some((c) => c.action === "insert")).toBe(true);
     });
-    const insert = fake.calls.find((c) => c.kind === "insert")!;
-    expect(insert.insert).toMatchObject({
+    const insert = handle.calls.find((c) => c.action === "insert")!;
+    expect(insert.value).toMatchObject({
       role_id: "role-1",
       profile_id: "user-1",
       message: "Let's build",

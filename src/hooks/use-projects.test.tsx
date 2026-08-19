@@ -3,6 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PROJECT_KEY, useUpdateProjectContent } from "./use-projects";
 import type { ProjectDetail } from "./use-projects";
+import { createFakeSupabase } from "../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
 
@@ -15,51 +16,13 @@ const fake = vi.hoisted(() => ({
     from: ReturnType<typeof vi.fn>;
     auth: { getUser: ReturnType<typeof vi.fn> };
   },
-  calls: [] as {
-    kind: "select" | "update";
-    table: string;
-    update?: unknown;
-  }[],
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: fake.supabase,
 }));
 
-function createFakeSupabase({ failUpdate = false }: { failUpdate?: boolean } = {}) {
-  fake.calls.length = 0;
-  const from = vi.fn((table: string) => {
-    const builder = {
-      _update: undefined as unknown,
-      update(v: unknown) {
-        builder._update = v;
-        return builder;
-      },
-      eq() {
-        return builder;
-      },
-      select() {
-        return builder;
-      },
-      then(onFulfilled: (v: { data: unknown; error: unknown }) => unknown) {
-        const kind = builder._update !== undefined ? "update" : "select";
-        fake.calls.push({ kind, table, update: builder._update ?? undefined });
-        const result =
-          kind === "update"
-            ? failUpdate
-              ? { data: null, error: { message: "boom" } }
-              : { data: null, error: null }
-            : { data: [], error: null };
-        return Promise.resolve(result).then(onFulfilled);
-      },
-    };
-    return builder;
-  });
-  const auth = {
-    getUser: vi.fn(async () => ({ data: { user: { id: "user-1" } }, error: null })),
-  };
-  return { from, auth };
-}
+const handle = createFakeSupabase();
 
 function seedProject(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
   return {
@@ -100,9 +63,13 @@ function renderMutation({ failUpdate = false }: { failUpdate?: boolean } = {}) {
     avatarSigned: {},
   });
 
-  const built = createFakeSupabase({ failUpdate });
-  fake.supabase.from = built.from;
-  fake.supabase.auth = built.auth;
+  handle.reset();
+  fake.supabase.from = handle.client.from;
+  fake.supabase.auth = handle.client.auth;
+
+  if (failUpdate) {
+    handle.on("projects:update", () => ({ data: null, error: { message: "boom" } }));
+  }
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
@@ -125,10 +92,10 @@ describe("useUpdateProjectContent", () => {
       await result.current.mutateAsync({ projectId: "project-1", gallery: nextGallery });
     });
 
-    const update = fake.calls.find((c) => c.kind === "update");
+    const update = handle.calls.find((c) => c.action === "update");
     expect(update).toBeDefined();
     expect(update!.table).toBe("projects");
-    expect(update!.update).toEqual({ gallery: nextGallery });
+    expect(update!.value).toEqual({ gallery: nextGallery });
   });
 
   it("persists resources via the projects table", async () => {
@@ -139,8 +106,8 @@ describe("useUpdateProjectContent", () => {
       await result.current.mutateAsync({ projectId: "project-1", resources: nextResources });
     });
 
-    const update = fake.calls.find((c) => c.kind === "update");
-    expect(update!.update).toEqual({ resources: nextResources });
+    const update = handle.calls.find((c) => c.action === "update");
+    expect(update!.value).toEqual({ resources: nextResources });
   });
 
   it("optimistically updates the cached project without a refetch", async () => {
@@ -181,7 +148,7 @@ describe("useUpdateProjectContent", () => {
     await act(async () => {
       await result.current.mutateAsync({ projectId: "project-1" });
     });
-    expect(fake.calls.some((c) => c.kind === "update")).toBe(false);
+    expect(handle.calls.some((c) => c.action === "update")).toBe(false);
   });
 
   it("invalidates the project-detail query after a successful write", async () => {
