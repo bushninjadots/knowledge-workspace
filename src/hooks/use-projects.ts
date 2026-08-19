@@ -139,7 +139,8 @@ export function useMilestones(projectId: string) {
         .from("project_milestones")
         .select("*")
         .eq("project_id", projectId)
-        .order("position", { ascending: true });
+        .order("position", { ascending: true })
+        .limit(100);
 
       if (error) throw error;
       return (data ?? []) as MilestoneRow[];
@@ -372,7 +373,8 @@ export function useDiscussions(projectId: string) {
         .select("*, author:profiles!author_id(display_name, handle, avatar_url)")
         .eq("project_id", projectId)
         .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (error) throw error;
       const discussions = (raw ?? []) as (Omit<DiscussionRow, "author" | "reply_count"> & {
@@ -547,7 +549,8 @@ export function useOpenRoles(projectId: string) {
         .from("project_open_roles")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(20);
 
       if (error) throw error;
       return (data ?? []) as OpenRoleRow[];
@@ -630,7 +633,8 @@ export function useProjectNeeds(projectId: string) {
         .from("project_needs")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(30);
 
       if (error) {
         // Table may not exist yet before the migration lands — return empty.
@@ -738,7 +742,8 @@ export function useProjectActivity(projectId: string) {
         .from("project_activity")
         .select("*")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       const rows = (raw ?? []) as Omit<ProjectActivityRow, "actor">[];
