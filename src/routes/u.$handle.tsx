@@ -114,16 +114,25 @@ function PublicProfileRoute() {
       if (error) throw error;
       if (!profile) throw notFound();
 
+      type TeachSkillRow = {
+        skill_id: string;
+        verification_level: SkillVerificationLevel;
+        experience_level: SkillExperienceLevel;
+        proof_url: string | null;
+        skills: SkillLite | null;
+      };
+      type LearnSkillRow = { skill_id: string; skills: SkillLite | null };
+      const TEACH_SELECT =
+        "skill_id, verification_level, experience_level, proof_url, skills(id, slug, name, category)" as const;
+      const LEARN_SELECT = "skill_id, skills(id, slug, name, category)" as const;
       const [teach, learn] = await Promise.all([
         supabase
           .from("profile_skills_teach")
-          .select(
-            "skill_id, verification_level, experience_level, proof_url, skills(id, slug, name, category)",
-          )
+          .select<typeof TEACH_SELECT, TeachSkillRow>(TEACH_SELECT)
           .eq("profile_id", profile.id),
         supabase
           .from("profile_skills_learn")
-          .select("skill_id, skills(id, slug, name, category)")
+          .select<typeof LEARN_SELECT, LearnSkillRow>(LEARN_SELECT)
           .eq("profile_id", profile.id),
       ]);
 
@@ -155,7 +164,7 @@ function PublicProfileRoute() {
 
       const teachSkills = (teach.data ?? [])
         .map((row) => {
-          const skill = row.skills as unknown as SkillLite | null;
+          const skill = row.skills;
           if (!skill) return null;
           const rowsForSkill = endorsementRows.filter(
             (endorsement) => endorsement.skill_id === row.skill_id,
@@ -171,7 +180,7 @@ function PublicProfileRoute() {
         })
         .filter((skill): skill is TeachSkillLite => !!skill);
       const learnSkills = (learn.data ?? [])
-        .map((row) => row.skills as unknown as SkillLite | null)
+        .map((row) => row.skills)
         .filter((skill): skill is SkillLite => !!skill);
 
       let contributedProjects: ProjectLite[] = [];
@@ -305,6 +314,7 @@ function PublicProfileRoute() {
               <img
                 src={bannerSigned}
                 alt={`${profile.display_name ?? "Member"} banner`}
+                decoding="async"
                 className="h-full w-full object-cover object-center"
               />
             ) : (
@@ -324,6 +334,8 @@ function PublicProfileRoute() {
                   <img
                     src={avatarSigned}
                     alt={`${profile.display_name ?? "Member"} avatar`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : (

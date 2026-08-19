@@ -381,6 +381,8 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
           <img
             src={project.cover_url}
             alt=""
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain opacity-70 group-hover:opacity-90 transition-opacity"
             draggable={false}
           />

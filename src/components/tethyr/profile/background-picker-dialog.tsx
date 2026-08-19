@@ -402,6 +402,8 @@ export function BackgroundPickerDialog({
                       <img
                         src={draftImageUrl}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="h-16 w-24 rounded-lg border border-border/60 object-cover"
                       />
                       <div className="min-w-0 flex-1">

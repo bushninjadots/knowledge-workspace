@@ -54,6 +54,8 @@ function SignedImageView({
       contentEditable={false}
       draggable
       data-drag-handle
+      loading="lazy"
+      decoding="async"
       className="my-2 max-w-full rounded-xl"
     />
   );

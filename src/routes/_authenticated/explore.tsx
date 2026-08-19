@@ -255,15 +255,15 @@ function ExplorePage() {
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ["explore-projects"],
     queryFn: async (): Promise<ProjectRow[]> => {
+      const PROJECTS_SELECT =
+        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url)" as const;
       const { data, error } = await supabase
         .from("projects")
-        .select(
-          "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url)",
-        )
+        .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)
         .order("created_at", { ascending: false })
         .limit(40);
       if (error) throw error;
-      const rows = (data ?? []) as unknown as ProjectRow[];
+      const rows = data ?? [];
       await Promise.all(
         rows.map(async (p) => {
           if (!p.cover_url) return;
@@ -299,17 +299,17 @@ function ExplorePage() {
   const { data: opportunities = [], isLoading: opportunitiesLoading } = useQuery({
     queryKey: ["explore-opportunities"],
     queryFn: async (): Promise<Opportunity[]> => {
+      const OPPORTUNITIES_SELECT =
+        "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles(handle, display_name, creator_title))" as const;
       const { data, error } = await supabase
         .from("project_open_roles")
-        .select(
-          "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles(handle, display_name, creator_title))",
-        )
+        .select<typeof OPPORTUNITIES_SELECT, OpportunityQueryRow>(OPPORTUNITIES_SELECT)
         .eq("is_filled", false)
         .order("created_at", { ascending: false })
         .limit(80);
       if (error) throw error;
 
-      return ((data ?? []) as unknown as OpportunityQueryRow[]).flatMap((row) => {
+      return (data ?? []).flatMap((row) => {
         const project = row.projects;
         if (!project || !["planning", "active"].includes(project.status)) return [];
         return [

@@ -94,6 +94,8 @@ export function ProjectPeopleTab({
                         <img
                           src={avatarSigned[c.profile_id]}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       ) : (

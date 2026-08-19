@@ -369,8 +369,8 @@ export function useCommunitySpacePosts(spaceId: string) {
         .select("id, display_name, handle, creator_title, category, avatar_url")
         .in("id", authorIds);
 
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      const profileMap = new Map<string, NonNullable<PostRow["author"]>>(
+        (profiles ?? []).map((p) => [p.id, p]),
       );
 
       const postIds = allPosts.map((p) => p.id);
@@ -416,7 +416,7 @@ export function useCommunitySpacePosts(spaceId: string) {
 
       return allPosts.map((p): PostWithAuthor & { is_shared?: boolean } => ({
         ...p,
-        author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+        author: profileMap.get(p.author_id) ?? {
           display_name: "Unknown",
           handle: "unknown",
           creator_title: "Member",

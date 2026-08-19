@@ -757,15 +757,13 @@ export function useProjectActivity(projectId: string) {
               .in("id", actorIds)
           : { data: [] };
 
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      const profileMap = new Map<string, NonNullable<ProjectActivityRow["actor"]>>(
+        (profiles ?? []).map((p) => [p.id, p]),
       );
 
       return rows.map((r): ProjectActivityRow => ({
         ...r,
-        actor: r.actor_id
-          ? ((profileMap.get(r.actor_id) as unknown as ProjectActivityRow["actor"]) ?? null)
-          : null,
+        actor: r.actor_id ? (profileMap.get(r.actor_id) ?? null) : null,
       }));
     },
     enabled: !!projectId,

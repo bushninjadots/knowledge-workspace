@@ -39,32 +39,35 @@ export function AnimatedStat({ value }: { value: number }) {
   );
 }
 
+// The fetchers are exported separately so the landing route loader can
+// prefetch them server-side (content streams with the HTML instead of
+// flashing skeletons, and the client skips the refetch on hydration).
+export async function fetchLandingStats() {
+  const count = async (table: LandingCountTable) => {
+    try {
+      const { count: c, error } = await sb.from(table).select("id", { count: "exact", head: true });
+      if (error) return 0;
+      return c ?? 0;
+    } catch {
+      return 0;
+    }
+  };
+  const [members, projects, spaces, skills, posts, comments, challenges] = await Promise.all([
+    count("profiles"),
+    count("projects"),
+    count("community_spaces"),
+    count("skills"),
+    count("posts"),
+    count("comments"),
+    count("challenges"),
+  ]);
+  return { members, projects, spaces, skills, posts, comments, challenges };
+}
+
 export function useLandingStats() {
   return useQuery({
     queryKey: ["landing-stats"],
-    queryFn: async () => {
-      const count = async (table: LandingCountTable) => {
-        try {
-          const { count: c, error } = await sb
-            .from(table)
-            .select("id", { count: "exact", head: true });
-          if (error) return 0;
-          return c ?? 0;
-        } catch {
-          return 0;
-        }
-      };
-      const [members, projects, spaces, skills, posts, comments, challenges] = await Promise.all([
-        count("profiles"),
-        count("projects"),
-        count("community_spaces"),
-        count("skills"),
-        count("posts"),
-        count("comments"),
-        count("challenges"),
-      ]);
-      return { members, projects, spaces, skills, posts, comments, challenges };
-    },
+    queryFn: fetchLandingStats,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -84,31 +87,27 @@ export type LandingProject = {
   } | null;
 };
 
+const FEATURED_PROJECTS_SELECT =
+  "id, title, description, status, tags, progress_percent, is_featured, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)" as const;
+
+export async function fetchFeaturedProjects(): Promise<LandingProject[]> {
+  const { data, error } = await supabase
+    .from("projects")
+    .select<typeof FEATURED_PROJECTS_SELECT, LandingProject>(FEATURED_PROJECTS_SELECT)
+    .order("is_featured", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(6);
+  if (error) throw error;
+  // cover_url stays a raw storage path; signed URLs are resolved client-side
+  // via useSignedStorageUrl so the server HTML and the hydrated client always
+  // match (storage sign tokens differ on every generation).
+  return (data ?? []) as LandingProject[];
+}
+
 export function useFeaturedProjects() {
   return useQuery({
     queryKey: ["landing-featured-projects"],
-    queryFn: async (): Promise<LandingProject[]> => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select(
-          "id, title, description, status, tags, progress_percent, is_featured, cover_url, profiles!projects_profile_id_fkey(id, handle, display_name)",
-        )
-        .order("is_featured", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (error) throw error;
-      const rows = (data ?? []) as unknown as LandingProject[];
-      await Promise.all(
-        rows.map(async (p) => {
-          if (!p.cover_url) return;
-          const { data: s } = await supabase.storage
-            .from("project-media")
-            .createSignedUrl(p.cover_url, 60 * 60);
-          if (s?.signedUrl) p.cover_url = s.signedUrl;
-        }),
-      );
-      return rows;
-    },
+    queryFn: fetchFeaturedProjects,
     staleTime: 60_000,
   });
 }
@@ -147,74 +146,76 @@ export type LandingActivityPost = {
 };
 const ACTIVITY_FEED_SIZE = 6;
 
+export async function fetchRecentActivity(): Promise<LandingActivityPost[]> {
+  const { data: rawPosts, error } = await sb
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(ACTIVITY_FEED_SIZE);
+
+  if (error) {
+    // Table may not exist yet in fresh databases — return empty instead of crashing
+    if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+      return [];
+    }
+    throw error;
+  }
+  const posts = rawPosts as PostRow[];
+  if (posts.length === 0) return [];
+
+  // Authors
+  const authorIds = [...new Set(posts.map((p) => p.author_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name, handle, avatar_url")
+    .in("id", authorIds);
+  const profileMap = new Map<string, LandingActivityPost["author"]>(
+    (profiles ?? []).map((p) => [
+      p.id,
+      {
+        display_name: p.display_name,
+        handle: p.handle,
+        avatar_url: p.avatar_url,
+      },
+    ]),
+  );
+
+  // Counts (posts, comments, post_actions are all viewable by everyone)
+  const postIds = posts.map((p) => p.id);
+  const [{ data: rawLikes }, { data: rawComments }] = await Promise.all([
+    sb.from("post_actions").select("post_id").eq("action", "like").in("post_id", postIds),
+    sb.from("comments").select("post_id").in("post_id", postIds),
+  ]);
+
+  const likeCount = new Map<string, number>();
+  for (const a of (rawLikes ?? []) as { post_id: string }[]) {
+    likeCount.set(a.post_id, (likeCount.get(a.post_id) ?? 0) + 1);
+  }
+  const commentCount = new Map<string, number>();
+  for (const c of (rawComments ?? []) as { post_id: string }[]) {
+    commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
+  }
+
+  return posts.map((p): LandingActivityPost => ({
+    id: p.id,
+    type: p.type,
+    title: p.title,
+    body: p.body,
+    created_at: p.created_at,
+    author: profileMap.get(p.author_id) ?? {
+      display_name: null,
+      handle: null,
+      avatar_url: null,
+    },
+    likes: likeCount.get(p.id) ?? 0,
+    comments: commentCount.get(p.id) ?? 0,
+  }));
+}
+
 export function useRecentActivity() {
   return useQuery({
     queryKey: ["landing-activity"],
-    queryFn: async (): Promise<LandingActivityPost[]> => {
-      const { data: rawPosts, error } = await sb
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(ACTIVITY_FEED_SIZE);
-
-      if (error) {
-        // Table may not exist yet in fresh databases — return empty instead of crashing
-        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
-          return [];
-        }
-        throw error;
-      }
-      const posts = rawPosts as PostRow[];
-      if (posts.length === 0) return [];
-
-      // Authors
-      const authorIds = [...new Set(posts.map((p) => p.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, avatar_url")
-        .in("id", authorIds);
-      const profileMap = new Map<string, LandingActivityPost["author"]>(
-        (profiles ?? []).map((p) => [
-          p.id,
-          {
-            display_name: p.display_name,
-            handle: p.handle,
-            avatar_url: p.avatar_url,
-          },
-        ]),
-      );
-
-      // Counts (posts, comments, post_actions are all viewable by everyone)
-      const postIds = posts.map((p) => p.id);
-      const [{ data: rawLikes }, { data: rawComments }] = await Promise.all([
-        sb.from("post_actions").select("post_id").eq("action", "like").in("post_id", postIds),
-        sb.from("comments").select("post_id").in("post_id", postIds),
-      ]);
-
-      const likeCount = new Map<string, number>();
-      for (const a of (rawLikes ?? []) as { post_id: string }[]) {
-        likeCount.set(a.post_id, (likeCount.get(a.post_id) ?? 0) + 1);
-      }
-      const commentCount = new Map<string, number>();
-      for (const c of (rawComments ?? []) as { post_id: string }[]) {
-        commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
-      }
-
-      return posts.map((p): LandingActivityPost => ({
-        id: p.id,
-        type: p.type,
-        title: p.title,
-        body: p.body,
-        created_at: p.created_at,
-        author: profileMap.get(p.author_id) ?? {
-          display_name: null,
-          handle: null,
-          avatar_url: null,
-        },
-        likes: likeCount.get(p.id) ?? 0,
-        comments: commentCount.get(p.id) ?? 0,
-      }));
-    },
+    queryFn: fetchRecentActivity,
     staleTime: 60_000,
   });
 }

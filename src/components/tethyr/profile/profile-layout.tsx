@@ -134,6 +134,7 @@ export function ProfileLayout({
                 <img
                   src={bannerSigned}
                   alt=""
+                  decoding="async"
                   className="h-full w-full object-cover object-center"
                 />
               ) : (
@@ -382,6 +383,8 @@ function AvatarContent({
     <img
       src={avatarSigned}
       alt={`${name ?? "User"} avatar`}
+      loading="lazy"
+      decoding="async"
       className="h-full w-full object-cover"
     />
   ) : (

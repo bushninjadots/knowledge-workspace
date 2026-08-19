@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Clock, FolderKanban, Star, Users } from "lucide-react";
 import { STATUS_STYLES } from "../project-shelf/project-shelf-cover";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useContributorCount, useFeaturedProjects } from "./data";
 
 export function FeaturedHeroCard() {
@@ -12,6 +13,8 @@ export function FeaturedHeroCard() {
   const project = featuredProject ?? latestProject;
   const isFeatured = featuredProject != null;
   const { data: contributorCount } = useContributorCount(project?.id);
+  // Signed client-side (raw path in query data) so SSR and hydration match.
+  const { data: coverUrl } = useSignedStorageUrl("project-media", project?.cover_url);
 
   if (isLoading) {
     return (
@@ -38,10 +41,11 @@ export function FeaturedHeroCard() {
       className="group overflow-hidden rounded-xl bg-surface-elevated/30 backdrop-blur-sm transition-lift hover:bg-surface-elevated/50"
     >
       <div className="relative h-36 overflow-hidden bg-surface-sunken">
-        {project.cover_url ? (
+        {coverUrl ? (
           <img
-            src={project.cover_url}
+            src={coverUrl}
             alt=""
+            decoding="async"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         ) : (

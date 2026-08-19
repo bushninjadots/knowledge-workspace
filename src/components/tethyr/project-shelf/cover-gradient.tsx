@@ -28,6 +28,8 @@ export function CoverGradient({
           src={coverUrl}
           alt=""
           draggable={false}
+          loading="lazy"
+          decoding="async"
           className={`pointer-events-none h-full w-full select-none ${fit === "cover" ? "object-cover" : "object-contain"}`}
         />
         {/* Gentle bottom fade so the progress bar is visible */}

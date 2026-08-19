@@ -2,6 +2,11 @@ import { lazy, Suspense } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useAuthUser } from "@/hooks/use-current-user";
+import {
+  fetchFeaturedProjects,
+  fetchLandingStats,
+  fetchRecentActivity,
+} from "@/components/tethyr/landing/data";
 import { Navbar } from "@/components/tethyr/navbar";
 import { Footer } from "@/components/tethyr/footer";
 import { HeroShowcase } from "@/components/tethyr/landing/hero-showcase";
@@ -66,6 +71,29 @@ function scrollToContent() {
 }
 
 export const Route = createFileRoute("/")({
+  loader: async ({ context: { queryClient } }) => {
+    // Prefetch the landing sections so their content streams with the SSR
+    // HTML — no skeleton flash, no client refetch, and no hydration
+    // mismatch when the client cache is warm on repeat visits.
+    await Promise.allSettled([
+      queryClient.prefetchQuery({
+        queryKey: ["landing-stats"],
+        queryFn: fetchLandingStats,
+        staleTime: 5 * 60 * 1000,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["landing-featured-projects"],
+        queryFn: fetchFeaturedProjects,
+        staleTime: 60_000,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["landing-activity"],
+        queryFn: fetchRecentActivity,
+        staleTime: 60_000,
+      }),
+    ]);
+    return {};
+  },
   head: () => ({
     meta: [
       { title: "Tethyr — Build together, get known for what you make" },

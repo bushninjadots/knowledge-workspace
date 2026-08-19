@@ -41,13 +41,13 @@ export function useRoleApplications(roleId: string) {
         .select("id, display_name, handle, avatar_url")
         .in("id", profileIds);
 
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      const profileMap = new Map<string, NonNullable<RoleApplication["applicant"]>>(
+        (profiles ?? []).map((p) => [p.id, p]),
       );
 
       return apps.map((a): RoleApplication => ({
         ...a,
-        applicant: (profileMap.get(a.profile_id) as unknown as RoleApplication["applicant"]) ?? {
+        applicant: profileMap.get(a.profile_id) ?? {
           display_name: "Unknown",
           handle: "unknown",
           avatar_url: null,

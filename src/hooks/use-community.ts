@@ -254,7 +254,7 @@ async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
 
   return rawPosts.map((p): PostWithAuthor => ({
     ...p,
-    author: (p.author as unknown as NonNullable<PostRow["author"]>) ?? {
+    author: p.author ?? {
       display_name: "Unknown",
       handle: "unknown",
       creator_title: "Member",
@@ -281,11 +281,11 @@ export function useInfinitePosts() {
     queryFn: async ({ pageParam }): Promise<PostsPage> => {
       const from = pageParam * POSTS_PAGE_SIZE;
       const to = from + POSTS_PAGE_SIZE - 1;
+      const POSTS_SELECT =
+        "*, author:profiles!author_id(display_name, handle, creator_title, category, avatar_url)" as const;
       const { data: rawPosts, error } = await sb
         .from("posts")
-        .select(
-          "*, author:profiles!author_id(display_name, handle, creator_title, category, avatar_url)",
-        )
+        .select<typeof POSTS_SELECT, PostRow>(POSTS_SELECT)
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -296,7 +296,7 @@ export function useInfinitePosts() {
         }
         throw error;
       }
-      const posts = await hydratePosts(rawPosts as unknown as PostRow[]);
+      const posts = await hydratePosts(rawPosts ?? []);
       return {
         posts,
         nextPage: posts.length === POSTS_PAGE_SIZE ? pageParam + 1 : null,

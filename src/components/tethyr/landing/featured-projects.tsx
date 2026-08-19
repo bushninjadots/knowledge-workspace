@@ -1,7 +1,30 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, FolderKanban } from "lucide-react";
 import { STATUS_STYLES } from "../project-shelf/project-shelf-cover";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useFeaturedProjects } from "./data";
+
+export function ProjectCardCover({ path }: { path: string | null }) {
+  // Resolve the raw storage path to a signed URL client-side — keeps the
+  // query data deterministic so SSR and hydration always match.
+  const { data: url } = useSignedStorageUrl("project-media", path);
+  if (!url) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <FolderKanban className="h-8 w-8 text-muted-foreground/40" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+    />
+  );
+}
 
 export function FeaturedProjects() {
   const { data: projects = [], isLoading } = useFeaturedProjects();
@@ -49,17 +72,7 @@ export function FeaturedProjects() {
                 className="group flex flex-col overflow-hidden rounded-xl bg-surface-elevated/30 transition hover:bg-surface-elevated/50"
               >
                 <div className="relative h-36 overflow-hidden bg-surface-sunken">
-                  {p.cover_url ? (
-                    <img
-                      src={p.cover_url}
-                      alt=""
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <FolderKanban className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                  )}
+                  <ProjectCardCover path={p.cover_url} />
                   <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm">
                     <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
                     {status.label}

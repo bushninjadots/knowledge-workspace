@@ -101,14 +101,14 @@ export function useChallenges(statusFilter: string = "active") {
 
       // Fetch participants for counts and current user status
       const challengeIds = challenges.map((c) => c.id);
+      const PARTICIPANTS_SELECT =
+        "id, challenge_id, user_id, status, progress, joined_at, review_status, submission_url, submission_note, submitted_at, reviewed_at, reviewer_note" as const;
       const { data: rawParticipants } = await sb
         .from("challenge_participants")
-        .select(
-          "challenge_id, user_id, status, progress, joined_at, review_status, submission_url, submission_note, submitted_at, reviewed_at, reviewer_note",
-        )
+        .select<typeof PARTICIPANTS_SELECT, ChallengeParticipantRow>(PARTICIPANTS_SELECT)
         .in("challenge_id", challengeIds);
 
-      const participants = (rawParticipants ?? []) as unknown as ChallengeParticipantRow[];
+      const participants = rawParticipants ?? [];
 
       // Fetch creators
       const creatorIds = [...new Set(challenges.map((c) => c.created_by))];
@@ -117,8 +117,8 @@ export function useChallenges(statusFilter: string = "active") {
         .select("id, display_name, handle, avatar_url")
         .in("id", creatorIds);
 
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+      const profileMap = new Map<string, NonNullable<ChallengeRow["creator"]>>(
+        (profiles ?? []).map((p) => [p.id, p]),
       );
 
       const {
@@ -130,7 +130,7 @@ export function useChallenges(statusFilter: string = "active") {
         const myPart = user ? cParticipants.find((p) => p.user_id === user.id) : null;
         return {
           ...c,
-          creator: (profileMap.get(c.created_by) as unknown as ChallengeRow["creator"]) ?? {
+          creator: profileMap.get(c.created_by) ?? {
             display_name: "Community Member",
             handle: "creator",
             avatar_url: null,
@@ -168,27 +168,27 @@ export function useChallenge(id: string) {
       // Fetch participants with profile info
       const { data: rawParticipants } = await sb
         .from("challenge_participants")
-        .select("*")
+        .select<"*", ChallengeParticipantRow>("*")
         .eq("challenge_id", id)
         .order("joined_at", { ascending: true });
 
-      const participants = (rawParticipants ?? []) as unknown as ChallengeParticipantRow[];
+      const participants = rawParticipants ?? [];
       const userIds = [...new Set(participants.map((p) => p.user_id))];
 
-      let profileMap = new Map<string, Record<string, unknown>>();
+      let profileMap = new Map<string, NonNullable<ChallengeParticipantRow["profile"]>>();
       if (userIds.length > 0) {
         const { data: partProfiles } = await supabase
           .from("profiles")
           .select("id, display_name, handle, avatar_url")
           .in("id", userIds);
-        profileMap = new Map<string, Record<string, unknown>>(
-          (partProfiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+        profileMap = new Map<string, NonNullable<ChallengeParticipantRow["profile"]>>(
+          (partProfiles ?? []).map((p) => [p.id, p]),
         );
       }
 
       const participantsWithProfiles = participants.map((p) => ({
         ...p,
-        profile: profileMap.get(p.user_id) as unknown as ChallengeParticipantRow["profile"],
+        profile: profileMap.get(p.user_id),
       }));
 
       const {
