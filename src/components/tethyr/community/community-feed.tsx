@@ -17,6 +17,8 @@ import {
 } from "@/hooks/use-community";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { useFollowingFeed } from "@/hooks/use-follow";
+import { useSpaceReadState } from "@/hooks/use-space-read-state";
+import { useSpaceTyping } from "@/hooks/use-space-typing";
 import type { DiscoveryFocus } from "@/lib/community-data";
 import { useSpaceReportedPostCounts, type CommunitySpace } from "@/hooks/use-community-spaces";
 
@@ -78,6 +80,12 @@ export function CommunityFeed({
   const deletePost = useDeletePost();
   const toggleAction = useTogglePostAction();
   const { data: skillCatalog = [] } = useSkillsCatalog();
+  // Read receipts: the member's last-read cursor for the open space, used to
+  // draw an "Unread" divider, plus the live typing presence for its chat.
+  // The typing channel subscription is owned here (single subscription per
+  // space) and its announce function is passed down to the chat composer.
+  const { lastReadAt, markRead } = useSpaceReadState(activeSpace?.id ?? null);
+  const { typers, announceTyping } = useSpaceTyping(activeSpace?.id ?? null);
 
   const FILTER_STORE_KEY = "tethyr-community-filters";
 
@@ -283,6 +291,31 @@ export function CommunityFeed({
     mySkillNames,
   ]);
 
+  // Advance the read cursor shortly after the space opens (and only when there
+  // are actually messages newer than it), so the divider shows briefly, then
+  // clears on the next visit.
+  useEffect(() => {
+    if (!activeSpace || spacePosts.length === 0) return;
+    const newest = spacePosts.reduce((a, b) =>
+      new Date(a.created_at).getTime() > new Date(b.created_at).getTime() ? a : b,
+    );
+    if (lastReadAt && new Date(newest.created_at).getTime() <= new Date(lastReadAt).getTime()) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      markRead(newest.created_at);
+    }, 2_500);
+    return () => window.clearTimeout(timer);
+  }, [activeSpace, spacePosts, lastReadAt, markRead]);
+
+  const typingNames = useMemo(
+    () =>
+      [...typers.values()]
+        .map((u) => u.name)
+        .filter((n) => n && n !== (me?.profile?.display_name || me?.profile?.handle)),
+    [typers, me],
+  );
+
   const isSearching = searchQuery.trim().length > 0;
   const showComposer = (nav === "home" && !isSearching) || !!editingPost;
   // Inside a space the composer is a lightweight chat box — just type and hit
@@ -294,7 +327,7 @@ export function CommunityFeed({
   const visiblePosts = nav === "following" ? followingFeed : feed;
   const composer =
     activeSpace && showChatComposer ? (
-      <SpaceChatComposer space={activeSpace} />
+      <SpaceChatComposer space={activeSpace} announceTyping={announceTyping} />
     ) : showComposer ? (
       <ComposerBar
         editingPost={editingPost}
@@ -338,7 +371,25 @@ export function CommunityFeed({
 
           {composer && <div className="mb-6">{composer}</div>}
 
+          {activeSpace && typingNames.length > 0 && (
+            <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground">
+              <span className="flex gap-0.5">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:0ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:150ms]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:300ms]" />
+              </span>
+              <span>
+                {typingNames.length === 1
+                  ? `${typingNames[0]} is typing…`
+                  : typingNames.length === 2
+                    ? `${typingNames[0]} and ${typingNames[1]} are typing…`
+                    : "Several people are typing…"}
+              </span>
+            </div>
+          )}
+
           <CommunityFeedList
+            lastReadAt={activeSpace ? lastReadAt : null}
             posts={visiblePosts}
             loading={loading}
             nav={nav}

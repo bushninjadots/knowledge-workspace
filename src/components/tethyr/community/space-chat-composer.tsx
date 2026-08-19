@@ -5,13 +5,21 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreatePost } from "@/hooks/use-community";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
 import { useQueryClient } from "@tanstack/react-query";
+import type { SpaceTypingUser } from "@/hooks/use-space-typing";
 
 /**
  * Lightweight chat composer for a community space. Members who have joined can
  * just type and hit Enter — no post type, title, or toolbar — and the message
  * appears in the space feed as a conversation post others can reply to.
  */
-export function SpaceChatComposer({ space }: { space: CommunitySpace }) {
+export function SpaceChatComposer({
+  space,
+  announceTyping,
+}: {
+  space: CommunitySpace;
+  /** Broadcast "this member is typing" — owned by the feed so only one channel subscription exists per space. */
+  announceTyping?: (user: SpaceTypingUser) => void;
+}) {
   const { data: me } = useCurrentUser();
   const createPost = useCreatePost();
   const qc = useQueryClient();
@@ -21,6 +29,12 @@ export function SpaceChatComposer({ space }: { space: CommunitySpace }) {
 
   const name = me?.profile?.display_name || me?.profile?.handle || "You";
   const initial = name.charAt(0).toUpperCase();
+
+  function announceIfTyping(value: string) {
+    if (value.trim() && me?.userId && announceTyping) {
+      announceTyping({ id: me.userId, name, lastTypedAt: Date.now() });
+    }
+  }
 
   async function send() {
     const body = message.trim();
@@ -58,7 +72,11 @@ export function SpaceChatComposer({ space }: { space: CommunitySpace }) {
             ref={textareaRef}
             id="community-composer-textarea"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setMessage(value);
+              announceIfTyping(value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

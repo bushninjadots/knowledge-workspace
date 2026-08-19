@@ -77,6 +77,19 @@ const PostCardWithComments = memo(function PostCardWithComments({
   );
 });
 
+/** Divider marking where a member's unread messages begin in a space. */
+function UnreadDivider() {
+  return (
+    <div className="relative flex items-center gap-3" aria-label="Unread messages">
+      <div className="h-px flex-1 border-t border-dashed border-[var(--user-accent-border,var(--border-strong))]/60" />
+      <span className="rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 px-2.5 py-0.5 text-[11px] font-medium text-[var(--user-accent-foreground,var(--foreground))]">
+        Unread
+      </span>
+      <div className="h-px flex-1 border-t border-dashed border-[var(--user-accent-border,var(--border-strong))]/60" />
+    </div>
+  );
+}
+
 function FeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-5">
@@ -127,6 +140,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   onClearSearch,
   onGoHome,
   focusComposer,
+  lastReadAt,
 }: {
   /** Posts to render — pre-filtered and sorted by the feed owner. */
   posts: PostWithAuthor[];
@@ -155,6 +169,8 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   onClearSearch: () => void;
   onGoHome: () => void;
   focusComposer: (presetType?: string) => void;
+  /** Member's read cursor for the active space — messages newer than this get an "Unread" divider. */
+  lastReadAt?: string | null;
 }) {
   if (loading) return <FeedSkeleton />;
 
@@ -262,9 +278,16 @@ export const CommunityFeedList = memo(function CommunityFeedList({
     );
   }
 
+  // Index of the first message newer than the member's read cursor — the
+  // "Unread" divider sits just above it (only inside a space with a cursor).
+  const firstUnreadIndex = lastReadAt
+    ? posts.findIndex((p) => new Date(p.created_at).getTime() > new Date(lastReadAt).getTime())
+    : -1;
+
   return (
     <div className="flex flex-col gap-5">
       {posts.map((post, index) => {
+        const isFirstUnread = firstUnreadIndex >= 0 && index === firstUnreadIndex;
         const overlap =
           sortMode === "recommended"
             ? post.skills.filter((s) => mySkillNames.has(s.toLowerCase())).length
@@ -280,31 +303,32 @@ export const CommunityFeedList = memo(function CommunityFeedList({
         // lightweight chat rows; structured posts keep the full card.
         if (activeSpace && !post.title.trim()) {
           return (
-            <SpaceChatMessage
-              key={post.id}
-              post={post}
-              defaultOpenComments={openComments.has(post.id)}
-            />
+            <div key={post.id} className="flex flex-col gap-5">
+              {isFirstUnread && <UnreadDivider />}
+              <SpaceChatMessage post={post} defaultOpenComments={openComments.has(post.id)} />
+            </div>
           );
         }
         return (
-          <PostCardWithComments
-            key={post.id}
-            post={post}
-            searchQuery={searchQuery}
-            showComments={openComments.has(post.id)}
-            onToggleComments={onToggleComments}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onToggleAction={onToggleAction}
-            className="transition-lift animate-stagger"
-            index={index}
-            highlighted={post.id === highlightedPostId}
-            skillOverlap={overlap}
-            canModerate={canModerate}
-            reportCount={canModerate ? (reportedPostCounts?.get(post.id) ?? 0) : undefined}
-            dimThreshold={activeSpace?.report_auto_dim_threshold ?? 3}
-          />
+          <div key={post.id} className="flex flex-col gap-5">
+            {isFirstUnread && <UnreadDivider />}
+            <PostCardWithComments
+              post={post}
+              searchQuery={searchQuery}
+              showComments={openComments.has(post.id)}
+              onToggleComments={onToggleComments}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onToggleAction={onToggleAction}
+              className="transition-lift animate-stagger"
+              index={index}
+              highlighted={post.id === highlightedPostId}
+              skillOverlap={overlap}
+              canModerate={canModerate}
+              reportCount={canModerate ? (reportedPostCounts?.get(post.id) ?? 0) : undefined}
+              dimThreshold={activeSpace?.report_auto_dim_threshold ?? 3}
+            />
+          </div>
         );
       })}
 

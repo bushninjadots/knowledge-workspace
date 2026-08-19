@@ -275,18 +275,21 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string
+          last_read_at: string | null
           role: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Insert: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Update: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id?: string
           user_id?: string
@@ -1313,13 +1316,13 @@ export type Database = {
           display_name: string | null
           favorite_achievement: string | null
           favourite_tools: string[]
-          public_background: Json | null
-          public_studio_layout: Json | null
           handle: string | null
           id: string
           languages: string[]
           learning_goals: string | null
           portfolio_links: Json
+          public_background: Json | null
+          public_studio_layout: Json | null
           reputation_score: number
           social_links: Json
           software_stack: string[]
@@ -1346,13 +1349,13 @@ export type Database = {
           display_name?: string | null
           favorite_achievement?: string | null
           favourite_tools?: string[]
-          public_background?: Json | null
-          public_studio_layout?: Json | null
           handle?: string | null
           id: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          public_background?: Json | null
+          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1379,13 +1382,13 @@ export type Database = {
           display_name?: string | null
           favorite_achievement?: string | null
           favourite_tools?: string[]
-          public_background?: Json | null
-          public_studio_layout?: Json | null
           handle?: string | null
           id?: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          public_background?: Json | null
+          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -2754,6 +2757,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined

@@ -1,8 +1,9 @@
 // Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
+import { useEffect } from "react";
 import { createFileRoute, notFound, useNavigate, useParams, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
@@ -98,6 +99,7 @@ export const Route = createFileRoute("/u/$handle")({
 
 function PublicProfileRoute() {
   const { handle } = useParams({ from: "/u/$handle" });
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-profile", handle],
@@ -228,6 +230,32 @@ function PublicProfileRoute() {
   const meId = me?.userId ?? null;
   const endorse = useEndorseSkill();
   const publicLayout = usePublicStudioLayout(data?.profile.id ?? null);
+
+  // Live updates: when the member changes their backdrop, banner, or name,
+  // viewers of the public Studio see it appear without refreshing. The channel
+  // is keyed by the profile id so it refetches only this page's data.
+  useEffect(() => {
+    const profileId = data?.profile?.id;
+    if (!profileId) return;
+    const channel = supabase
+      .channel(`public-profile-${profileId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${profileId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["public-profile", handle] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [data?.profile?.id, handle, queryClient]);
 
   if (isLoading) {
     return (
