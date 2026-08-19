@@ -23,6 +23,9 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Fail CI if any built chunk exceeds the bundle budget (e.g. a large
+      # editor/dependency leaking back into a route's initial chunk).
+      - run: npm run check:bundle
       # Route smoke test boots the dev server and asserts public routes + the
       # client-auth boundary respond correctly. Uses bun (matches local dev).
       - run: npm run smoke

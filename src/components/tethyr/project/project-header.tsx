@@ -129,6 +129,7 @@ export function ProjectHeader({
             src={coverSigned}
             alt={`${project.title} cover`}
             className="h-full w-full object-cover"
+            decoding="async"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />

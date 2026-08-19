@@ -250,7 +250,7 @@ export function GalleryThumb({
   if (!src) {
     return <div className={className ?? ""} aria-hidden />;
   }
-  return <img src={src} alt={alt ?? ""} className={className} />;
+  return <img src={src} alt={alt ?? ""} className={className} loading="lazy" decoding="async" />;
 }
 
 export function GallerySection({

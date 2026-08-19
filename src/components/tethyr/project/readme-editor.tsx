@@ -243,6 +243,10 @@ export function ReadmeEditor({
   onChange: (markdown: string) => void;
 }) {
   const editor = useEditor({
+    // Create the editor in an effect rather than during render so lazy/Suspense
+    // mounting doesn't race Tiptap's destroy timer (which can leave `editor`
+    // null and crash `editor.commands`). This is also the SSR-safe path.
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ codeBlock: false }),
       Link.configure({

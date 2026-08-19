@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,8 +26,18 @@ import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
 import { GallerySection, ProjectLibrarySection, ResourcesSection } from "./project-resources";
-import { ReadmeEditor } from "./readme-editor";
 import type { ProjectFile } from "./project-files";
+
+// The Tiptap README editor drags in the editor core, syntax-highlighting, and
+// table/link extensions (~1 MB before gzip) that a read-only visitor never
+// needs. Code-split it so the project page's initial JS stays lean; it loads
+// only when an owner opens "Edit README". The editor sets
+// `immediatelyRender: false` so it is created in an effect rather than during
+// render — that avoids a mount-timing race with Suspense that otherwise leaves
+// a null editor behind.
+const ReadmeEditor = lazy(() =>
+  import("./readme-editor").then((m) => ({ default: m.ReadmeEditor })),
+);
 
 type EditorView = "write" | "preview" | "changes";
 
@@ -276,7 +286,11 @@ export function ProjectReadmeTab({
               ))}
             </div>
 
-            {editorView === "write" && <ReadmeEditor content={draft} onChange={setDraft} />}
+            {editorView === "write" && (
+              <Suspense fallback={<EditorSkeleton />}>
+                <ReadmeEditor content={draft} onChange={setDraft} />
+              </Suspense>
+            )}
 
             {editorView === "preview" && (
               <div className="prose-custom min-h-[24rem] overflow-auto rounded-xl border border-border/40 bg-background/40 px-5 py-5">
@@ -602,6 +616,27 @@ function makeHeadingComponents(sections: { id: string; text: string; level: numb
       <HeadingWithId level={6} sections={sections} {...props} />
     ),
   };
+}
+
+function EditorSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex min-h-[24rem] flex-col gap-3 overflow-hidden rounded-xl border border-border/60 bg-background/60"
+    >
+      <div className="flex items-center gap-1.5 border-b border-border/40 px-4 py-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-7 w-7 animate-pulse rounded-lg bg-surface-elevated" />
+        ))}
+      </div>
+      <div className="space-y-3 px-6 py-5">
+        <div className="h-3 w-2/3 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-full animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-5/6 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-surface-elevated" />
+      </div>
+    </div>
+  );
 }
 
 function ChangesView({ before, after }: { before: string; after: string }) {
