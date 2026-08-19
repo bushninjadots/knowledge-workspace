@@ -14,7 +14,7 @@ import { LandingStats } from "@/components/tethyr/landing/landing-stats";
 import { HeroActions } from "@/components/tethyr/hero-actions";
 import { SectionReveal } from "@/components/tethyr/section-reveal";
 import { Button } from "@/components/ui/button";
-import { canonicalLinks } from "@/lib/seo";
+import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
 
 // Below-the-fold landing sections are code-split so their JS stays off the
 // initial critical path — the landing bundle's size was the dominant driver of
@@ -94,17 +94,33 @@ export const Route = createFileRoute("/")({
     ]);
     return {};
   },
-  head: () => ({
-    meta: [
-      { title: "Tethyr — Build together, get known for what you make" },
-      {
-        name: "description",
-        content:
-          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
-      },
-    ],
-    links: canonicalLinks("/"),
-  }),
+  head: () => {
+    const base = seoMeta({ path: "/", title: SITE.tagline, description: SITE.description });
+    const siteUrl = absoluteUrl("/");
+    return {
+      ...base,
+      meta: [
+        ...base.meta,
+        ...jsonLd(
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: SITE.name,
+            description: SITE.description,
+            ...(siteUrl ? { url: siteUrl } : {}),
+            ...(siteUrl ? { logo: `${siteUrl}og-image.png` } : {}),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: SITE.name,
+            description: SITE.description,
+            ...(siteUrl ? { url: siteUrl } : {}),
+          },
+        ),
+      ],
+    };
+  },
   component: HomePage,
 });
 

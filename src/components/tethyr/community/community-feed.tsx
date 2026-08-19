@@ -1,7 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
-import { SpaceChatComposer } from "@/components/tethyr/community/space-chat-composer";
+// Space chat mounts only when a member is inside a space — lazy so its chunk
+// (and the post-creation hooks it pulls in) isn't part of the feed's initial
+// render.
+const SpaceChatComposer = lazy(() =>
+  import("@/components/tethyr/community/space-chat-composer").then((m) => ({
+    default: m.SpaceChatComposer,
+  })),
+);
 import { CommunityHeader, type SortMode } from "@/components/tethyr/community/community-header";
 import { CommunityFeedList } from "@/components/tethyr/community/community-feed-list";
 import { SpaceHeader } from "@/components/tethyr/community/space-header";
@@ -327,7 +334,9 @@ export function CommunityFeed({
   const visiblePosts = nav === "following" ? followingFeed : feed;
   const composer =
     activeSpace && showChatComposer ? (
-      <SpaceChatComposer space={activeSpace} announceTyping={announceTyping} />
+      <Suspense fallback={null}>
+        <SpaceChatComposer space={activeSpace} announceTyping={announceTyping} />
+      </Suspense>
     ) : showComposer ? (
       <ComposerBar
         editingPost={editingPost}

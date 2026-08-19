@@ -40,17 +40,17 @@ import { useUnreadCounts } from "@/hooks/use-messages";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import { useChallenges } from "@/hooks/use-challenges";
 import { supabase } from "@/integrations/supabase/client";
-import { canonicalLinks, robotsMeta } from "@/lib/seo";
+import { seoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({
-    meta: [
-      { title: "Dashboard — Tethyr" },
-      { name: "description", content: "Your Tethyr dashboard." },
-      ...robotsMeta(),
-    ],
-    links: canonicalLinks("/dashboard"),
-  }),
+  head: () =>
+    seoMeta({
+      path: "/dashboard",
+      title: "Dashboard",
+      description:
+        "Your Tethyr dashboard — projects, applications, connections, and next steps in one workspace.",
+      noindex: true,
+    }),
   component: DashboardPage,
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

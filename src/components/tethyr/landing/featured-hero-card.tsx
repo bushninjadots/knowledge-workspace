@@ -45,6 +45,8 @@ export function FeaturedHeroCard() {
           <img
             src={coverUrl}
             alt=""
+            width="640"
+            height="144"
             decoding="async"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />

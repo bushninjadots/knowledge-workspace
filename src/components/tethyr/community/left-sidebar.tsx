@@ -1,90 +1,12 @@
 import { memo } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Home,
-  Users,
-  FolderKanban,
-  Library,
-  Trophy,
-  Bookmark,
-  TrendingUp,
-  HandHeart,
-  Handshake,
-  UserRound,
-  Sparkles,
-  HelpCircle,
-  Lightbulb,
-  MessageSquare,
-  type LucideIcon,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
+import { COMMUNITY_NAV_GROUPS, type CommunityNavId } from "@/data/mocks/community-nav";
 
-/**
- * Single consolidated destination set, grouped by purpose. The union below
- * keeps older ids (questions, following) valid so deep links and the mobile
- * nav never break — the sidebar just doesn't surface them as top-level items.
- */
-export type CommunityNavId =
-  | "home"
-  | "communities"
-  | "help"
-  | "collab"
-  | "projects"
-  | "questions"
-  | "resources"
-  | "challenges"
-  | "following"
-  | "saved"
-  | "trending"
-  | "showcase"
-  | "tip"
-  | "discussion";
-
-type NavItem = {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  /** External destination (rendered as a Link, e.g. the profile page). */
-  href?: string;
-};
-
-const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  {
-    label: "Feed",
-    items: [
-      { id: "home", label: "Home feed", icon: Home },
-      { id: "help", label: "Help requests", icon: HandHeart },
-      { id: "collab", label: "Collaborations", icon: Handshake },
-    ],
-  },
-  {
-    label: "Post types",
-    items: [
-      { id: "showcase", label: "Showcases", icon: Sparkles },
-      { id: "questions", label: "Questions", icon: HelpCircle },
-      { id: "tip", label: "Tips", icon: Lightbulb },
-      { id: "discussion", label: "Discussions", icon: MessageSquare },
-    ],
-  },
-  {
-    label: "Discover",
-    items: [
-      { id: "communities", label: "Communities", icon: Users },
-      { id: "challenges", label: "Challenges", icon: Trophy },
-      { id: "trending", label: "Trending", icon: TrendingUp },
-      { id: "resources", label: "Resources", icon: Library },
-    ],
-  },
-  {
-    label: "You",
-    items: [
-      { id: "projects", label: "Projects", icon: FolderKanban },
-      { id: "saved", label: "Saved", icon: Bookmark },
-      { id: "profile", label: "Profile", icon: UserRound, href: "/profile" },
-    ],
-  },
-];
+// Re-exported so existing imports of CommunityNavId (community page, mobile
+// nav, deep links) keep working from this module.
+export type { CommunityNavId } from "@/data/mocks/community-nav";
 
 /**
  * Memoized nav rail. Counts are derived from the shared posts query cache —
@@ -115,7 +37,7 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
   return (
     <aside className={cn("w-64 shrink-0", className)}>
       <nav className="flex flex-col gap-5 rounded-xl bg-surface-elevated/30 p-3">
-        {NAV_GROUPS.map((group) => (
+        {COMMUNITY_NAV_GROUPS.map((group) => (
           <div key={group.label}>
             <p className="section-label mb-1.5 px-3">{group.label}</p>
             <div className="space-y-0.5">

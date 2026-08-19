@@ -26,36 +26,18 @@ import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-appl
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
+import {
+  NEED_BADGE,
+  NEED_LABEL,
+  OPPORTUNITY_NEED_CHIPS,
+  PROJECT_CATEGORIES,
+  STAGE_RANK,
+} from "@/data/mocks/catalog";
+import { jsonLd, seoMeta } from "@/lib/seo";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
 
 type OppSortMode = "latest" | "match" | "popular";
-
-const STAGE_RANK: Record<string, number> = {
-  growing: 5,
-  building: 4,
-  launch: 3,
-  testing: 2,
-  planning: 1,
-};
-
-const NEED_CHIPS = [
-  { label: "Designer", skills: ["design", "ui/ux", "graphic design", "illustration", "figma"] },
-  { label: "Developer", skills: ["react", "typescript", "python", "rust", "javascript", "go"] },
-  { label: "Musician", skills: ["music", "audio", "sound design", "composition"] },
-  { label: "Photographer", skills: ["photography", "photo editing", "lightroom"] },
-  { label: "Writer", skills: ["writing", "copywriting", "content", "editing"] },
-  { label: "Video Editor", skills: ["video", "video editing", "motion", "after effects"] },
-  { label: "Marketer", skills: ["marketing", "seo", "social media", "growth"] },
-  { label: "Mentor", skills: ["mentoring", "teaching", "coaching"] },
-];
-
-const NEED_LABEL: Record<string, string> = { high: "High", normal: "Soon", low: "Whenever" };
-const NEED_BADGE: Record<string, string> = {
-  high: "border-destructive/30 bg-destructive/5 text-destructive",
-  normal: "border-brand-green/30 bg-brand-green/5 text-brand-green",
-  low: "border-border/60 bg-surface text-muted-foreground",
-};
 
 export type ProjectRow = {
   id: string;
@@ -88,18 +70,6 @@ type Creator = {
   category: string | null;
   country: string | null;
 };
-
-const CATEGORIES = [
-  "All",
-  "Projects",
-  "Design",
-  "Development",
-  "Video",
-  "Photography",
-  "Music",
-  "Writing",
-  "Marketing",
-] as const;
 
 type Tab = "projects" | "creators" | "opportunities";
 type ExploreIntent = "build" | "contribute" | "learn" | "feedback" | null;
@@ -164,16 +134,33 @@ type NeedRow = {
 };
 
 export const Route = createFileRoute("/_authenticated/explore")({
-  head: () => ({
-    meta: [
-      { title: "Explore — Tethyr" },
-      {
-        name: "description",
-        content:
-          "Discover projects, builders, and open opportunities on Tethyr — the collaboration network where you get known for what you make.",
-      },
-    ],
-  }),
+  head: () => {
+    const base = seoMeta({
+      path: "/explore",
+      title: "Explore",
+      description:
+        "Discover projects, builders, and open opportunities on Tethyr — the collaboration network where you get known for what you make.",
+      noindex: true,
+    });
+    return {
+      ...base,
+      meta: [
+        ...base.meta,
+        ...jsonLd({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Skill discovery on Tethyr",
+          description:
+            "Browse creative disciplines and skills to find projects, people, and open opportunities.",
+          itemListElement: PROJECT_CATEGORIES.map((category, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: category,
+          })),
+        }),
+      ],
+    };
+  },
   component: ExplorePage,
 });
 
@@ -300,7 +287,10 @@ function ExplorePage() {
     queryKey: ["explore-opportunities"],
     queryFn: async (): Promise<Opportunity[]> => {
       const OPPORTUNITIES_SELECT =
-        "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles(handle, display_name, creator_title))" as const;
+        // profiles is disambiguated via the direct FK — without it, PostgREST
+        // 300s (PGRST201) because projects↔profiles also has a many-to-many
+        // path through project_contributors.
+        "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles!projects_profile_id_fkey(handle, display_name, creator_title))" as const;
       const { data, error } = await supabase
         .from("project_open_roles")
         .select<typeof OPPORTUNITIES_SELECT, OpportunityQueryRow>(OPPORTUNITIES_SELECT)
@@ -363,7 +353,9 @@ function ExplorePage() {
       const { data, error } = await supabase
         .from("project_needs")
         .select(
-          "id, title, note, urgency, created_at, skills(name), projects(id, title, status, profile_id, profiles(handle, display_name))",
+          // profiles!projects_profile_id_fkey: disambiguate from the
+          // project_contributors m2m path (PGRST201 otherwise).
+          "id, title, note, urgency, created_at, skills(name), projects(id, title, status, profile_id, profiles!projects_profile_id_fkey(handle, display_name))",
         )
         .eq("is_filled", false)
         .order("created_at", { ascending: false })
@@ -457,7 +449,7 @@ function ExplorePage() {
 
     // Need-based filter
     if (activeNeed) {
-      const needChip = NEED_CHIPS.find((n) => n.label === activeNeed);
+      const needChip = OPPORTUNITY_NEED_CHIPS.find((n) => n.label === activeNeed);
       if (needChip) {
         list = list.filter((opp) =>
           opp.skills.some((s) => needChip.skills.includes(s.toLowerCase())),
@@ -709,9 +701,11 @@ function ExplorePage() {
                       Browse by need
                     </p>
                     <div className="flex flex-wrap gap-1.5">
-                      {NEED_CHIPS.map((need) => (
+                      {OPPORTUNITY_NEED_CHIPS.map((need) => (
                         <button
                           key={need.label}
+                          type="button"
+                          aria-pressed={activeNeed === need.label}
                           onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
                           className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                             activeNeed === need.label
@@ -738,6 +732,8 @@ function ExplorePage() {
                     </div>
                     <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
                       <button
+                        type="button"
+                        aria-pressed={oppSort === "latest"}
                         onClick={() => setOppSort("latest")}
                         className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                           oppSort === "latest"
@@ -748,6 +744,8 @@ function ExplorePage() {
                         Latest
                       </button>
                       <button
+                        type="button"
+                        aria-pressed={oppSort === "popular"}
                         onClick={() => setOppSort("popular")}
                         className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                           oppSort === "popular"
@@ -759,6 +757,8 @@ function ExplorePage() {
                         Popular
                       </button>
                       <button
+                        type="button"
+                        aria-pressed={oppSort === "match"}
                         onClick={() => setOppSort("match")}
                         className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
                           oppSort === "match"
@@ -778,7 +778,12 @@ function ExplorePage() {
                       {activeNeed && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
                           Need {activeNeed}
-                          <button onClick={() => setActiveNeed("")} className="ml-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveNeed("")}
+                            aria-label={`Remove ${activeNeed} filter`}
+                            className="ml-0.5"
+                          >
                             ×
                           </button>
                         </span>
@@ -798,9 +803,11 @@ function ExplorePage() {
                   )}
 
                   <div className="mb-4 flex flex-wrap gap-2">
-                    {CATEGORIES.map((c) => (
+                    {PROJECT_CATEGORIES.map((c) => (
                       <button
                         key={c}
+                        type="button"
+                        aria-pressed={category === c}
                         onClick={() => setCategory(c)}
                         className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
                           category === c
@@ -950,9 +957,11 @@ function ExplorePage() {
               </div>
               {/* People tab filter chips */}
               <div className="mb-6 flex flex-wrap gap-2">
-                {CATEGORIES.map((c) => (
+                {PROJECT_CATEGORIES.map((c) => (
                   <button
                     key={c}
+                    type="button"
+                    aria-pressed={category === c}
                     onClick={() => setCategory(c)}
                     className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
                       category === c

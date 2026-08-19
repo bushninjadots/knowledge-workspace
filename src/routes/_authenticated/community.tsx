@@ -13,17 +13,37 @@ import {
   useCommunitySpacePosts,
   type CommunitySpace,
 } from "@/hooks/use-community-spaces";
+import { jsonLd, seoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated/community")({
-  head: () => ({
-    meta: [
-      { title: "Community — Tethyr" },
-      {
-        name: "description",
-        content: "A space where people share ideas, ask for help, and collaborate on projects.",
-      },
-    ],
-  }),
+  head: () => {
+    const base = seoMeta({
+      path: "/community",
+      title: "Community",
+      description: "A space where people share ideas, ask for help, and collaborate on projects.",
+      noindex: true,
+    });
+    return {
+      ...base,
+      meta: [
+        ...base.meta,
+        ...jsonLd({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Tethyr Community",
+          description:
+            "Community feeds and spaces where builders share ideas, ask for help, and collaborate on projects.",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home feed" },
+            { "@type": "ListItem", position: 2, name: "Help requests" },
+            { "@type": "ListItem", position: 3, name: "Collaborations" },
+            { "@type": "ListItem", position: 4, name: "Showcases" },
+            { "@type": "ListItem", position: 5, name: "Community spaces" },
+          ],
+        }),
+      ],
+    };
+  },
   component: CommunityPage,
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

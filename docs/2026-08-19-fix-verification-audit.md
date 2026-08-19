@@ -159,4 +159,26 @@ Performance 75–77 driven entirely by Total Blocking Time (score 18–25); LCP 
 ### 6.4 Browser-verified dialogs (logged in as seed user)
 - Dashboard `connections-card` withdraw dialog, page `connections.tsx` withdraw dialog, `connect-button` "Remove connection?", and the nested "Delete this project?" dialog in `profile-sections.tsx` all open correctly. Messages page (unread-count RPC) renders with 0 console errors.
 
-*Updated August 19, 2026 after the follow-up pass.*
+## 7. Production-readiness pass — SEO engine, mock data, perf & a11y
+
+### 7.1 SEO engine
+- **Standardized metadata API** (`src/lib/seo.ts`): `SITE` config, `seoMeta({ path, title, description, type, noindex, image })` producing the title template (auto "— Tethyr" suffix), description, canonical, full OpenGraph + Twitter card set, and `jsonLd(...)` for structured data. Applied to `/`, `/community`, `/explore`, `/dashboard`, and `/skills/$slug`.
+- **JSON-LD** via the router's native `"script:ld+json"` head meta (verified in SSR HTML): `Organization` + `WebSite` on the root page, `ItemList` on Community and Explore, `Course` on each `/skills/$slug` page.
+- **`sitemap.ts` / `robots.ts`**: kept DB-driven (dynamic profiles/projects/skills), added `lastmod` to the root entry, and derived robots.txt disallows from a single shared `NO_INDEX_PATHS` constant that also drives the `X-Robots-Tag` header in `server.ts` (one list to keep in sync).
+
+### 7.2 Mock data & state architecture
+- New `src/data/mocks/` with strictly-typed catalogs: `availability.ts` (status options incl. labels/icons/badge classes), `catalog.ts` (`PROJECT_CATEGORIES` — deduped the copy that existed in both `explore.tsx` and `project-shelf-header.tsx` — plus `OPPORTUNITY_NEED_CHIPS`, `NEED_LABEL`, `NEED_BADGE`, `STAGE_RANK`), and `community-nav.ts` (`COMMUNITY_NAV_GROUPS` + `CommunityNavId`, re-exported from the sidebar for compat).
+- Spaces, chats, and skill lists were already DB-driven (no inline mock arrays in components) — the extracted catalogs are the display/config constants that did live in components.
+
+### 7.3 Performance & a11y
+- **Code splitting**: `GlobalSearch` (six-source search UI) and `NotificationDropdown` are now `React.lazy` in `authenticated-shell.tsx` + `dashboard-sidebar.tsx`, and `SpaceChatComposer` in `community-feed.tsx` — all with lightweight fallbacks so the shell doesn't shift.
+- **CLS polish**: added explicit `width`/`height` to 18 `<img>` tags (avatars, covers, banners, post images, previews) that lacked them. Editor content images (Tiptap) left untouched — their boxes are content-defined.
+- **a11y**: `global-search.tsx` gained combobox/listbox semantics (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete`, `aria-activedescendant`, `role="option"` rows, `role="presentation"` group headers) plus a visually-hidden `DialogTitle` (Radix was warning). Availability selector: `aria-haspopup="listbox"` + `aria-expanded` + `aria-selected` options. Filter chips (explore categories/needs/sort, shelf categories, skill filters) now carry `aria-pressed`; the "×" remove-filter button got an `aria-label`.
+
+### 7.4 Bug found & fixed live: Explore Opportunities/Needs silently empty
+- Both `project_open_roles` and `project_needs` queries on `/explore` were 300ing with **PGRST201 (ambiguous embedding)**: `projects.profiles` resolves to both the direct FK and the `project_contributors` m2m path. Every Opportunities-tab load failed silently and rendered the empty state. Fixed by disambiguating to `profiles!projects_profile_id_fkey` in both selects — the tab now shows needs and roles. (Pre-existing; the default Projects tab masked it.)
+
+### 7.5 Validation
+- typecheck ✅, lint ✅, 160/160 tests ✅. Browser-verified: landing JSON-LD/OG/robots/sitemap in SSR HTML, per-route titles/descriptions/robots after hydration, search combobox + keyboard nav, notifications dropdown, Explore Opportunities tab with needs + chips. Lighthouse: A11y 98, Best Practices 96, SEO 92, CLS 0.001, LCP 0.2 s (dev-mode TBT ~680 ms caps Performance).
+
+*Updated August 19, 2026 after the production-readiness pass.*

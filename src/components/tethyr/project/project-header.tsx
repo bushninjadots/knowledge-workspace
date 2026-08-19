@@ -141,6 +141,8 @@ export function ProjectHeader({
           <img
             src={coverSigned}
             alt={`${project.title} cover`}
+            width="1600"
+            height="208"
             className="h-full w-full object-cover"
             decoding="async"
           />

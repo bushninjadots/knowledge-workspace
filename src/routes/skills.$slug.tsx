@@ -23,21 +23,37 @@ import { VerificationBadge, ExperienceBadge } from "@/components/tethyr/profile-
 import { AvailabilityBadge } from "@/components/tethyr/availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
-import { canonicalLinks } from "@/lib/seo";
+import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
 
 const sb = supabase;
 
 export const Route = createFileRoute("/skills/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.slug} — Tethyr` },
-      {
-        name: "description",
-        content: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
-      },
-    ],
-    links: canonicalLinks(`/skills/${encodeURIComponent(params.slug)}`),
-  }),
+  head: ({ params }) => {
+    const base = seoMeta({
+      path: `/skills/${encodeURIComponent(params.slug)}`,
+      title: `${params.slug} skill hub`,
+      description: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects built with it.`,
+    });
+    const skillUrl = absoluteUrl(`/skills/${encodeURIComponent(params.slug)}`);
+    return {
+      ...base,
+      meta: [
+        ...base.meta,
+        ...jsonLd({
+          "@context": "https://schema.org",
+          "@type": "Course",
+          name: `${params.slug} — Tethyr skill hub`,
+          description: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
+          ...(skillUrl ? { url: skillUrl } : {}),
+          provider: {
+            "@type": "Organization",
+            name: SITE.name,
+            ...(absoluteUrl("/") ? { url: absoluteUrl("/") } : {}),
+          },
+        }),
+      ],
+    };
+  },
   component: SkillPage,
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -411,6 +427,8 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
     <div className="space-y-4">
       <div className="flex gap-2">
         <button
+          type="button"
+          aria-pressed={filter === "teachers"}
           onClick={() => setFilter("teachers")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
             filter === "teachers"
@@ -422,6 +440,8 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           Sharing
         </button>
         <button
+          type="button"
+          aria-pressed={filter === "learners"}
           onClick={() => setFilter("learners")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
             filter === "learners"

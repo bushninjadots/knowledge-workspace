@@ -19,6 +19,8 @@ export function ProjectCardCover({ path }: { path: string | null }) {
     <img
       src={url}
       alt=""
+      width="640"
+      height="360"
       loading="lazy"
       decoding="async"
       className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"

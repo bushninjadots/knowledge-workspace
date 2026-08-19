@@ -314,6 +314,8 @@ function PublicProfileRoute() {
               <img
                 src={bannerSigned}
                 alt={`${profile.display_name ?? "Member"} banner`}
+                width="1280"
+                height="288"
                 decoding="async"
                 className="h-full w-full object-cover object-center"
               />
@@ -334,6 +336,8 @@ function PublicProfileRoute() {
                   <img
                     src={avatarSigned}
                     alt={`${profile.display_name ?? "Member"} avatar`}
+                    width="128"
+                    height="128"
                     loading="lazy"
                     decoding="async"
                     className="h-full w-full object-cover"

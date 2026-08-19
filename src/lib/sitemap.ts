@@ -1,3 +1,5 @@
+import { NO_INDEX_PATHS } from "./seo";
+
 type SitemapEntry = {
   path: string;
   lastModified?: string | null;
@@ -38,7 +40,11 @@ function entryXml(origin: string, entry: SitemapEntry) {
 
 export async function renderSitemap(requestOrigin: string) {
   const origin = publicOrigin(requestOrigin);
-  const entries: SitemapEntry[] = [{ path: "/" }];
+  // Core static indexable routes — everything else in the sitemap is dynamic
+  // (profiles, projects, skills) and resolved below.
+  const entries: SitemapEntry[] = [
+    { path: "/", lastModified: new Date().toISOString().slice(0, 10) },
+  ];
 
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -95,23 +101,10 @@ export async function renderSitemap(requestOrigin: string) {
 
 export function renderRobots(requestOrigin: string) {
   const origin = publicOrigin(requestOrigin);
-  return [
-    "User-agent: *",
-    "Allow: /",
-    "Disallow: /dashboard",
-    "Disallow: /explore",
-    "Disallow: /library",
-    "Disallow: /profile",
-    "Disallow: /messages",
-    "Disallow: /notifications",
-    "Disallow: /sessions",
-    "Disallow: /community",
-    "Disallow: /challenges",
-    "Disallow: /spaces",
-    "Disallow: /login",
-    "Disallow: /signup",
-    "Disallow: /reset-password",
-    `Sitemap: ${origin}/sitemap.xml`,
-    "",
-  ].join("\n");
+  // Disallow rules derive from the same NO_INDEX_PATHS constant that drives
+  // the X-Robots-Tag header — one list to keep in sync.
+  const disallows = NO_INDEX_PATHS.map((path) => `Disallow: ${path}`);
+  return ["User-agent: *", "Allow: /", ...disallows, `Sitemap: ${origin}/sitemap.xml`, ""].join(
+    "\n",
+  );
 }

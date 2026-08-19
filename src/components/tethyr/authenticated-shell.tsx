@@ -1,10 +1,19 @@
-import { useState, useMemo, useEffect } from "react";
+import { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { Menu, Search, X, ArrowUp } from "lucide-react";
+import { Menu, Search, X, ArrowUp, Bell } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
-import { NotificationDropdown } from "./notifications/notification-dropdown";
-import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "./theme-toggle";
+
+// Both panels are only ever interactive on user intent — keep their JS (and
+// the six-source search queries) off the shell's initial render.
+const NotificationDropdown = lazy(() =>
+  import("./notifications/notification-dropdown").then((m) => ({
+    default: m.NotificationDropdown,
+  })),
+);
+const GlobalSearch = lazy(() =>
+  import("./global-search").then((m) => ({ default: m.GlobalSearch })),
+);
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
@@ -73,7 +82,19 @@ export function AuthenticatedShell() {
               <Search className="h-4 w-4" />
             </button>
             <ThemeToggle />
-            <NotificationDropdown />
+            <Suspense
+              fallback={
+                <button
+                  type="button"
+                  aria-label="Notifications"
+                  className="relative rounded-full p-2 hover:bg-surface transition-colors"
+                >
+                  <Bell className="h-4 w-4" />
+                </button>
+              }
+            >
+              <NotificationDropdown />
+            </Suspense>
           </div>
         </header>
 
@@ -94,7 +115,9 @@ export function AuthenticatedShell() {
         )}
       </div>
 
-      <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+      <Suspense fallback={null}>
+        <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+      </Suspense>
     </div>
   );
 }

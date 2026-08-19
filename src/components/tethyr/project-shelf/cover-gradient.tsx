@@ -27,6 +27,8 @@ export function CoverGradient({
         <img
           src={coverUrl}
           alt=""
+          width="400"
+          height="533"
           draggable={false}
           loading="lazy"
           decoding="async"

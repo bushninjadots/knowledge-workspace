@@ -2,18 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-
-const CATEGORIES = [
-  "All",
-  "Projects",
-  "Design",
-  "Development",
-  "Video",
-  "Photography",
-  "Music",
-  "Writing",
-  "Marketing",
-] as const;
+import { PROJECT_CATEGORIES } from "@/data/mocks/catalog";
 
 interface ProjectShelfHeaderProps {
   q: string;
@@ -55,9 +44,11 @@ export function ProjectShelfHeader({
 
       {/* Categories */}
       <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((c) => (
+        {PROJECT_CATEGORIES.map((c) => (
           <button
             key={c}
+            type="button"
+            aria-pressed={category === c}
             onClick={() => setCategory(c)}
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs transition-colors",

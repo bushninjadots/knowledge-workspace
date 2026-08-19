@@ -1,56 +1,13 @@
 import { useState } from "react";
-import { Circle, Clock, BookOpen, Users, GraduationCap, ChevronDown } from "lucide-react";
+import { Circle, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AvailabilityStatus } from "@/lib/skill-match";
-
-const STATUS_OPTIONS: {
-  value: NonNullable<AvailabilityStatus>;
-  label: string;
-  icon: typeof Circle;
-  color: string;
-  bg: string;
-}[] = [
-  {
-    value: "available",
-    label: "Available",
-    icon: Circle,
-    color: "text-[var(--user-accent,var(--trust))]",
-    bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
-  },
-  {
-    value: "busy",
-    label: "Busy",
-    icon: Clock,
-    color: "text-teaching",
-    bg: "bg-teaching/10 border-teaching/30",
-  },
-  {
-    value: "learning",
-    label: "Learning",
-    icon: BookOpen,
-    color: "text-primary",
-    bg: "bg-primary/10 border-primary/30",
-  },
-  {
-    value: "looking_for_team",
-    label: "Looking for Team",
-    icon: Users,
-    color: "text-brand-purple",
-    bg: "bg-brand-purple/10 border-brand-purple/30",
-  },
-  {
-    value: "mentoring",
-    label: "Mentoring",
-    icon: GraduationCap,
-    color: "text-[var(--user-accent,var(--trust))]",
-    bg: "bg-[var(--user-accent,var(--trust))]/10 border-[var(--user-accent,var(--trust))]/30",
-  },
-];
+import { AVAILABILITY_OPTIONS } from "@/data/mocks/availability";
 
 export function getStatusDisplay(status: AvailabilityStatus) {
-  return STATUS_OPTIONS.find((s) => s.value === status) ?? null;
+  return AVAILABILITY_OPTIONS.find((s) => s.value === status) ?? null;
 }
 
 export function AvailabilityBadge({
@@ -93,7 +50,11 @@ export function AvailabilitySelector({
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Set availability status"
         className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:opacity-80 ${
           currentDisplay
             ? `${currentDisplay.bg} ${currentDisplay.color}`
@@ -108,13 +69,20 @@ export function AvailabilitySelector({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl">
-            {STATUS_OPTIONS.map((opt) => {
+          <div
+            role="listbox"
+            aria-label="Availability statuses"
+            className="absolute right-0 z-50 mt-1 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl"
+          >
+            {AVAILABILITY_OPTIONS.map((opt) => {
               const Icon = opt.icon;
               const isActive = current === opt.value;
               return (
                 <button
                   key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
                   onClick={() => {
                     onSave(opt.value);
                     setOpen(false);
@@ -133,6 +101,9 @@ export function AvailabilitySelector({
             })}
             {current && (
               <button
+                type="button"
+                role="option"
+                aria-selected={false}
                 onClick={() => {
                   onSave(null);
                   setOpen(false);

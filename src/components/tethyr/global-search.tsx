@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -11,7 +11,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -56,6 +56,7 @@ export function GlobalSearch({
   const debounced = useDebounced(q.trim(), 200);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultsId = useId();
   const navigate = useNavigate();
   const { data: me } = useCurrentUser();
 
@@ -300,11 +301,22 @@ export function GlobalSearch({
       return (
         <p
           key={`header-${label}`}
+          role="presentation"
           className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
         >
           {label}
         </p>
       );
+    }
+
+    // Shared a11y attrs for each result row — the combobox announces the
+    // highlighted option via aria-activedescendant.
+    function optionProps(type: string, flatIndex: number) {
+      return {
+        role: "option" as const,
+        id: `${resultsId}-opt-${flatIndex}`,
+        "aria-selected": isSelected(type, flatIndex - resultOffset(type)),
+      };
     }
 
     if (profileHits.length > 0) {
@@ -314,8 +326,10 @@ export function GlobalSearch({
         items.push(
           <button
             key={`profile-${p.id}`}
+            type="button"
             disabled={!p.handle}
             onClick={() => activateItem(i)}
+            {...optionProps("profile", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface disabled:opacity-50 ${isSelected("profile", i - resultOffset("profile")) ? "bg-surface" : ""}`}
           >
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -339,7 +353,9 @@ export function GlobalSearch({
         items.push(
           <button
             key={`skill-${s.id}`}
+            type="button"
             onClick={() => activateItem(i)}
+            {...optionProps("skill", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("skill", i - resultOffset("skill")) ? "bg-surface" : ""}`}
           >
             <GraduationCap className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -361,7 +377,9 @@ export function GlobalSearch({
         items.push(
           <button
             key={`project-${p.id}`}
+            type="button"
             onClick={() => activateItem(i)}
+            {...optionProps("project", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("project", i - resultOffset("project")) ? "bg-surface" : ""}`}
           >
             <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -383,7 +401,9 @@ export function GlobalSearch({
         items.push(
           <button
             key={`library-${l.id}`}
+            type="button"
             onClick={() => activateItem(i)}
+            {...optionProps("library", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("library", i - resultOffset("library")) ? "bg-surface" : ""}`}
           >
             <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -405,7 +425,9 @@ export function GlobalSearch({
         items.push(
           <button
             key={`post-${p.id}`}
+            type="button"
             onClick={() => activateItem(i)}
+            {...optionProps("post", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("post", i - resultOffset("post")) ? "bg-surface" : ""}`}
           >
             <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -425,7 +447,9 @@ export function GlobalSearch({
         items.push(
           <button
             key={`session-${s.id}`}
+            type="button"
             onClick={() => activateItem(i)}
+            {...optionProps("session", i)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("session", i - resultOffset("session")) ? "bg-surface" : ""}`}
           >
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -457,6 +481,18 @@ export function GlobalSearch({
     return items;
   }
 
+  const resultsExpanded = open && enabled && totalResults() > 0;
+  const activeDescendant = selectedIndex >= 0 ? `${resultsId}-opt-${selectedIndex}` : undefined;
+  const listboxId = `${resultsId}-listbox`;
+  const comboboxProps = {
+    role: "combobox" as const,
+    "aria-expanded": resultsExpanded,
+    "aria-controls": listboxId,
+    "aria-autocomplete": "list" as const,
+    "aria-activedescendant": activeDescendant,
+    "aria-label": "Search the network",
+  };
+
   if (variant === "inline") {
     return (
       <div ref={rootRef} className={`relative ${className ?? ""}`}>
@@ -473,11 +509,17 @@ export function GlobalSearch({
             onFocus={() => q && setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="Search the network…"
+            {...comboboxProps}
             className="h-9 rounded-xl border-border/40 bg-background/40 pl-9 text-xs placeholder:text-xs"
           />
         </div>
         {open && enabled && (
-          <div className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-xl">
+          <div
+            id={listboxId}
+            role="listbox"
+            aria-label="Search results"
+            className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-xl"
+          >
             {renderResults()}
           </div>
         )}
@@ -488,6 +530,7 @@ export function GlobalSearch({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="gap-0 p-0 sm:max-w-lg">
+        <DialogTitle className="sr-only">Search the network</DialogTitle>
         <div className="flex items-center border-b border-border/60 px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <Input
@@ -500,10 +543,16 @@ export function GlobalSearch({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search the network…"
+            {...comboboxProps}
             className="h-12 border-0 bg-transparent px-3 text-base shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="max-h-[60vh] overflow-y-auto px-1 pb-2">
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="Search results"
+          className="max-h-[60vh] overflow-y-auto px-1 pb-2"
+        >
           {enabled ? (
             renderResults()
           ) : (

@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { getConfiguredSiteUrl } from "@/lib/seo";
+import { getConfiguredSiteUrl, SITE } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
@@ -86,27 +86,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tethyr — Build together, get known for what you make" },
-      {
-        name: "description",
-        content:
-          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
-      },
-      { name: "author", content: "Tethyr" },
-      { property: "og:title", content: "Tethyr — Build together, get known for what you make" },
-      {
-        property: "og:description",
-        content:
-          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
-      },
+      { title: `${SITE.name} — ${SITE.tagline}` },
+      { name: "description", content: SITE.description },
+      { name: "author", content: SITE.name },
+      { property: "og:title", content: `${SITE.name} — ${SITE.tagline}` },
+      { property: "og:description", content: SITE.description },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Tethyr — Build together, get known for what you make" },
-      {
-        name: "twitter:description",
-        content:
-          "Tethyr is the collaboration network where builders create projects together, grow through real contributions, and become known for what they make — not what they claim.",
-      },
+      { name: "twitter:title", content: `${SITE.name} — ${SITE.tagline}` },
+      { name: "twitter:description", content: SITE.description },
       {
         property: "og:image",
         content: ogImageUrl,

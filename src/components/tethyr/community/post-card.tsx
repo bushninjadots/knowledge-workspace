@@ -488,6 +488,8 @@ export function PostCard({
               key={i}
               src={src}
               alt={`Image ${i + 1}`}
+              width="640"
+              height="400"
               loading="lazy"
               decoding="async"
               className="w-full rounded-xl border border-border/60 object-cover"

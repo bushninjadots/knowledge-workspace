@@ -1,4 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import {
   Home,
   FolderOpen,
@@ -19,7 +20,12 @@ import { useUnreadCounts } from "@/hooks/use-messages";
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AvailabilitySelector, useUpdateAvailability } from "./availability-badge";
-import { GlobalSearch } from "./global-search";
+
+// GlobalSearch pulls in six data-source queries and the search UI — keep it
+// off the sidebar's initial render so authed pages hydrate faster.
+const GlobalSearch = lazy(() =>
+  import("./global-search").then((m) => ({ default: m.GlobalSearch })),
+);
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { CreateProjectButton } from "./create-project-button";
 
@@ -88,7 +94,16 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="px-3 py-3">
-        <GlobalSearch variant="inline" />
+        <Suspense
+          fallback={
+            <div
+              aria-hidden="true"
+              className="h-9 animate-pulse rounded-xl border border-border/40 bg-surface-elevated/50"
+            />
+          }
+        >
+          <GlobalSearch variant="inline" />
+        </Suspense>
       </div>
 
       <div className="px-2 pb-2">

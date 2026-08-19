@@ -211,6 +211,8 @@ export function AttachProjectPanel({
                   <img
                     src={fetchedSnapshot.logo}
                     alt=""
+                    width="32"
+                    height="32"
                     loading="lazy"
                     decoding="async"
                     className="h-8 w-8 rounded-lg object-cover"
