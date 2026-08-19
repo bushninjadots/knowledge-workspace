@@ -207,7 +207,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
       <EmptyState
         icon={<Sparkles className="h-5 w-5" />}
         title="No activity yet"
-        description="Your history builds automatically as you edit your profile, add skills, and publish projects."
+        description="Your history builds automatically as you publish projects, complete milestones, and help the community."
       />
     );
   }

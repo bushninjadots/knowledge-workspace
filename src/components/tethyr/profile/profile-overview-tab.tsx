@@ -8,7 +8,7 @@ import { useCreateTeam, useMyTeams } from "@/hooks/use-teams";
 import { AchievementGrid } from "@/components/tethyr/achievements";
 import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
-import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
+import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import type { Skill } from "./profile-layout";
 
 export function ProfileOverviewTab({
@@ -17,7 +17,6 @@ export function ProfileOverviewTab({
   teachIds,
   teachMeta,
   learnIds,
-  activity,
   skills,
   isOwnProfile,
 }: {
@@ -29,7 +28,6 @@ export function ProfileOverviewTab({
   projects: ProjectRow[];
   coverUrls: Record<string, string>;
   projectSkillIds: Record<string, string[]>;
-  activity: ActivityRow[];
   skills: Skill[];
   onChange: () => void;
   isOwnProfile: boolean;
@@ -126,13 +124,11 @@ export function ProfileOverviewTab({
         />
       </div>
 
-      {/* ACTIVITY PREVIEW */}
-      {activity.length > 0 && (
-        <div className="rounded-xl bg-surface-elevated/30 p-5">
-          <h3 className="mb-4 text-sm font-semibold">Recent Activity</h3>
-          <ActivityTimeline profileId={userId} events={activity.slice(0, 5)} />
-        </div>
-      )}
+      {/* CONTRIBUTIONS PREVIEW — reputation-eligible work only, no profile-edit noise */}
+      <div className="rounded-xl bg-surface-elevated/30 p-5">
+        <h3 className="mb-4 text-sm font-semibold">Recent contributions</h3>
+        <ActivityTimeline profileId={userId} limit={5} />
+      </div>
     </div>
   );
 }
