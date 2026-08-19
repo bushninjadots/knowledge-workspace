@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check } from "lucide-react";
+import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import {
@@ -23,6 +23,8 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { validateImageFile } from "@/lib/validators";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
+import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
+import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
   lead: "Leads",
@@ -52,6 +54,7 @@ export function TeamPage({
   const creditsQuery = useTeamCredits(team.id);
 
   const shipped = projects.filter((p) => p.project).map((p) => p.project!);
+  const memberIds = members.map((m) => m.profile_id);
 
   return (
     <div className="animate-room-enter mx-auto max-w-5xl bg-noise px-4 pb-16 pt-6 sm:px-8">
@@ -127,6 +130,27 @@ export function TeamPage({
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Crew activity — the work behind the projects */}
+      <section aria-labelledby="crew-activity" className="mb-10">
+        <h2
+          id="crew-activity"
+          className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground/80"
+        >
+          <Activity className="h-4 w-4 text-muted-foreground" />
+          Crew activity
+        </h2>
+        {memberIds.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No activity yet.</p>
+        ) : (
+          <div className="rounded-xl bg-surface-elevated/30 p-4">
+            <ContributionGraph profileIds={memberIds} />
+            <div className="mt-5">
+              <ActivityTimeline profileIds={memberIds} limit={6} />
+            </div>
+          </div>
         )}
       </section>
 

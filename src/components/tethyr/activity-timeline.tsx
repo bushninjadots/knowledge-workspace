@@ -1,6 +1,6 @@
 // Activity timeline — shows both activity_events and contribution_log entries
 // in a unified, chronologically sorted view.
-import { memo } from "react";
+import { memo, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
@@ -112,22 +112,33 @@ function relative(iso: string): string {
 
 export const ActivityTimeline = memo(function ActivityTimeline({
   profileId,
+  profileIds,
   events: staticEvents,
   limit,
 }: {
   profileId?: string;
+  profileIds?: string[];
   events?: { id: string; kind: string; metadata: Record<string, unknown>; created_at: string }[];
   limit?: number;
 }) {
-  // If no profileId, use static events only (backward compatible)
+  const [showAll, setShowAll] = useState(false);
+
+  // Resolve to a single array of ids: a crew aggregates all its members, a
+  // single profile passes one id, and absent both we fall back to static events.
+  const ids = useMemo(
+    () => (profileIds && profileIds.length > 0 ? profileIds : profileId ? [profileId] : []),
+    [profileId, profileIds],
+  );
+  const idsKey = useMemo(() => ids.join(","), [ids]);
+
   const { data: contributionEvents } = useQuery({
-    queryKey: ["contribution-log", profileId ?? "none"],
+    queryKey: ["contribution-log", idsKey || "none"],
     queryFn: async (): Promise<ActivityEvent[]> => {
-      if (!profileId) return [];
+      if (ids.length === 0) return [];
       const { data } = await supabase
         .from("contribution_log")
         .select("id, action, points, metadata, created_at")
-        .eq("profile_id", profileId)
+        .in("profile_id", ids)
         .order("created_at", { ascending: false })
         .limit(30);
       return (data ?? []).map((row) => ({
@@ -139,7 +150,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
       }));
     },
     staleTime: 30_000,
-    enabled: !!profileId,
+    enabled: ids.length > 0,
   });
 
   // Merge and deduplicate
@@ -200,7 +211,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
     groups.push({ ...event, count: 1, latestCreatedAt: event.created_at });
   }
 
-  const rows = limit ? groups.slice(0, limit) : groups;
+  const rows = limit && !showAll ? groups.slice(0, limit) : groups;
 
   if (rows.length === 0) {
     return (
@@ -213,38 +224,49 @@ export const ActivityTimeline = memo(function ActivityTimeline({
   }
 
   return (
-    <ol className="relative space-y-4 pl-6">
-      <span className="absolute left-[10px] top-2 bottom-2 w-px bg-border/70" aria-hidden />
-      {rows.map((e) => {
-        const Icon = ICONS[e.kind] ?? Sparkles;
-        const label = (LABELS[e.kind] ?? (() => humanizeKind(e.kind)))(e.metadata ?? {});
-        const points = e.metadata?.points as number | undefined;
-        return (
-          <li key={e.id} className="relative">
-            <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border/70">
-              <Icon className="h-3 w-3 text-primary" />
-            </span>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-foreground">
-                {label}
-                {e.count > 1 && (
-                  <span className="ml-1.5 text-xs font-medium text-muted-foreground">
-                    ×{e.count}
-                  </span>
-                )}
-              </p>
-              <div className="flex items-center gap-2">
-                {points != null && points > 0 && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[11px] font-medium text-brand-green">
-                    <Zap className="h-2.5 w-2.5" />+{points}
-                  </span>
-                )}
-                <p className="shrink-0 text-xs text-muted-foreground">{relative(e.created_at)}</p>
+    <>
+      <ol className="relative space-y-4 pl-6">
+        <span className="absolute left-[10px] top-2 bottom-2 w-px bg-border/70" aria-hidden />
+        {rows.map((e) => {
+          const Icon = ICONS[e.kind] ?? Sparkles;
+          const label = (LABELS[e.kind] ?? (() => humanizeKind(e.kind)))(e.metadata ?? {});
+          const points = e.metadata?.points as number | undefined;
+          return (
+            <li key={e.id} className="relative">
+              <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface-elevated ring-1 ring-border/70">
+                <Icon className="h-3 w-3 text-primary" />
+              </span>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-foreground">
+                  {label}
+                  {e.count > 1 && (
+                    <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+                      ×{e.count}
+                    </span>
+                  )}
+                </p>
+                <div className="flex items-center gap-2">
+                  {points != null && points > 0 && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[11px] font-medium text-brand-green">
+                      <Zap className="h-2.5 w-2.5" />+{points}
+                    </span>
+                  )}
+                  <p className="shrink-0 text-xs text-muted-foreground">{relative(e.created_at)}</p>
+                </div>
               </div>
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+            </li>
+          );
+        })}
+      </ol>
+      {limit && !showAll && groups.length > limit && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+        >
+          Show more ({groups.length - limit})
+        </button>
+      )}
+    </>
   );
 });

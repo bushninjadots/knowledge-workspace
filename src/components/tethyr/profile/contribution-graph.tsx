@@ -15,8 +15,22 @@ type ContributionRow = {
 
 type GraphMode = "events" | "points";
 
-export function ContributionGraph({ profileId }: { profileId: string }) {
+export function ContributionGraph({
+  profileId,
+  profileIds,
+}: {
+  profileId?: string;
+  profileIds?: string[];
+}) {
   const [mode, setMode] = useState<GraphMode>("events");
+
+  // Resolve to a single array of ids so the same component can graph one
+  // person (profile) or a whole crew (team page aggregates its members).
+  const ids = useMemo(
+    () => (profileIds && profileIds.length > 0 ? profileIds : profileId ? [profileId] : []),
+    [profileId, profileIds],
+  );
+  const idsKey = useMemo(() => ids.join(","), [ids]);
 
   // Align the window to the start of the current week (Monday) so the grid and
   // the query cover the exact same range.
@@ -32,18 +46,18 @@ export function ContributionGraph({ profileId }: { profileId: string }) {
   // not profile edits / connection requests from activity_events. This is the
   // same source the Activity Timeline uses for its +points rows.
   const { data: contributions = [] } = useQuery({
-    queryKey: ["contribution-graph", profileId],
+    queryKey: ["contribution-graph", idsKey],
     queryFn: async (): Promise<ContributionRow[]> => {
-      if (!profileId) return [];
+      if (ids.length === 0) return [];
       const { data } = await supabase
         .from("contribution_log")
         .select("id, action, points, created_at")
-        .eq("profile_id", profileId)
+        .in("profile_id", ids)
         .gte("created_at", startIso)
         .order("created_at", { ascending: false });
       return (data ?? []) as ContributionRow[];
     },
-    enabled: !!profileId,
+    enabled: ids.length > 0,
     staleTime: 30_000,
   });
 
@@ -163,6 +177,8 @@ export function ContributionGraph({ profileId }: { profileId: string }) {
             width={WEEKS * (CELL_SIZE + GAP)}
             height={7 * (CELL_SIZE + GAP)}
             className="shrink-0"
+            role="img"
+            aria-label={`${totalLabel} in the last ${WEEKS} weeks`}
           >
             {grid.map((week, wi) =>
               week.map((cell, di) => (
