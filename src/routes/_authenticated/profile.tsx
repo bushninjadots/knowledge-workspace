@@ -176,6 +176,7 @@ function ProfilePage() {
       avatarSigned={avatarSigned}
       bannerSigned={bannerSigned}
       background={background}
+      publicBackground={profile?.public_background ?? null}
       userId={userId}
       isOwnProfile={true}
       teachIds={teachIds}

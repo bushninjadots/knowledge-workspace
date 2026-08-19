@@ -16,6 +16,7 @@ import {
   Menu,
   Search,
   X,
+  Palette,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
@@ -53,6 +54,7 @@ import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
 import { MobilePrimaryNav } from "@/components/tethyr/mobile-primary-nav";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
+import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -87,7 +89,7 @@ function DashboardPage() {
       error={error}
       onRetry={() => refresh()}
     >
-      <AuthenticatedDashboardLayout data={data!} />
+      <AuthenticatedDashboardLayout data={data!} onBackgroundSaved={() => refresh()} />
     </DashboardStateBoundary>
   );
 }
@@ -96,11 +98,14 @@ function DashboardPage() {
 
 function AuthenticatedDashboardLayout({
   data,
+  onBackgroundSaved,
 }: {
   data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
+  onBackgroundSaved: () => void;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [bgOpen, setBgOpen] = useState(false);
   const palette = useUserPalette(data?.bannerSigned ?? null);
   const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -158,6 +163,14 @@ function AuthenticatedDashboardLayout({
             >
               <Search className="h-4 w-4" />
             </button>
+            <button
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+              onClick={() => setBgOpen(true)}
+              aria-label="Customize background"
+              title="Customize background"
+            >
+              <Palette className="h-4 w-4" />
+            </button>
             <ThemeToggle />
             <NotificationDropdown />
           </div>
@@ -182,6 +195,15 @@ function AuthenticatedDashboardLayout({
       </div>
 
       <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+
+      <BackgroundPickerDialog
+        open={bgOpen}
+        onOpenChange={setBgOpen}
+        background={data?.background ?? null}
+        publicBackground={data?.profile?.public_background ?? null}
+        userId={data?.userId ?? ""}
+        onSaved={onBackgroundSaved}
+      />
     </div>
   );
 }

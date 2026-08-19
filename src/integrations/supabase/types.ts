@@ -1313,6 +1313,7 @@ export type Database = {
           display_name: string | null
           favorite_achievement: string | null
           favourite_tools: string[]
+          public_background: Json | null
           public_studio_layout: Json | null
           handle: string | null
           id: string
@@ -1345,6 +1346,7 @@ export type Database = {
           display_name?: string | null
           favorite_achievement?: string | null
           favourite_tools?: string[]
+          public_background?: Json | null
           public_studio_layout?: Json | null
           handle?: string | null
           id: string
@@ -1377,6 +1379,7 @@ export type Database = {
           display_name?: string | null
           favorite_achievement?: string | null
           favourite_tools?: string[]
+          public_background?: Json | null
           public_studio_layout?: Json | null
           handle?: string | null
           id?: string

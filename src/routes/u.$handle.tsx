@@ -48,6 +48,7 @@ type PublicProfile = {
   favorite_achievement: string | null;
   availability: string | null;
   background?: ProfileBackground | null;
+  public_background?: ProfileBackground | null;
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
@@ -104,7 +105,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability, background",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability, background, public_background",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -203,17 +204,20 @@ function PublicProfileRoute() {
         // Keep the public Studio useful if contribution data is unavailable.
       }
 
+      const profileRow = profile as PublicProfile;
+      // The public Studio prefers its own backdrop and falls back to the app one.
+      const publicBg = (profileRow.public_background ?? profileRow.background) as
+        ProfileBackground | null | undefined;
       return {
-        profile: profile as PublicProfile,
+        profile: profileRow,
         teachSkills,
         learnSkills,
         contributedProjects,
         avatarSigned,
         bannerSigned,
+        publicBackground: publicBg ?? null,
         backgroundImageUrl: backgroundImagePublicUrl(
-          (profile as PublicProfile).background?.mode === "image"
-            ? ((profile as PublicProfile).background?.image_url ?? null)
-            : null,
+          publicBg?.mode === "image" ? publicBg.image_url : null,
         ),
       };
     },
@@ -253,14 +257,14 @@ function PublicProfileRoute() {
 
   const { profile, teachSkills, learnSkills, contributedProjects, avatarSigned, bannerSigned } =
     data;
+  const publicBackground = data.publicBackground;
   const backgroundImageUrl = data.backgroundImageUrl;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
   const languages = profile.languages ?? [];
-
   return (
     <Shell
       accentColor={bannerAccent}
-      background={profile.background}
+      background={publicBackground}
       backgroundImageUrl={backgroundImageUrl}
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">

@@ -59,16 +59,16 @@ END $$;
 -- Profiles (the test user is a1d676d3-... from seed.sql)
 -- ---------------------------------------------------------------------------
 INSERT INTO public.profiles
-  (id, display_name, handle, category, creator_title, bio, availability, reputation_score, years_experience, country, timezone, favourite_tools, software_stack, languages, teaching_style)
+  (id, display_name, handle, category, creator_title, bio, availability, reputation_score, years_experience, country, timezone, favourite_tools, software_stack, languages, teaching_style, background)
 VALUES
-  ('10000000-0000-0000-0000-000000000001','Maya Chen','maya','Design','Product Designer & Illustrator','Designing calm, useful products and drawing the internet''s friendliest mascots.','available',482,8,'United States','America/New_York',ARRAY['Figma','Procreate'],ARRAY['Figma','Notion'],ARRAY['English','Mandarin'],'Hands-on, project-based, async reviews'),
-  ('10000000-0000-0000-0000-000000000002','Devon Okafor','devon','Development','Full-Stack Engineer','I build fast, accessible web apps and care too much about error messages.','available',515,9,'United Kingdom','Europe/London',ARRAY['VS Code','Postgres'],ARRAY['React','TypeScript','Node'],ARRAY['English'],'Pair programming, code reviews'),
-  ('10000000-0000-0000-0000-000000000003','Priya Nair','priya','Development','Frontend Engineer','Turning messy product ideas into clean interfaces and clean code.','busy',298,5,'India','Asia/Kolkata',ARRAY['VS Code','Figma'],ARRAY['React','TypeScript','Tailwind'],ARRAY['English','Hindi'],'Async, written walkthroughs'),
-  ('10000000-0000-0000-0000-000000000004','Alex Ruiz','alexr','Design','Motion Designer','Making interfaces feel alive one easing curve at a time.','learning',156,4,'Mexico','America/Mexico_City',ARRAY['After Effects','Lottie'],ARRAY['After Effects','Figma'],ARRAY['English','Spanish'],'Show-and-tell, iteration'),
-  ('10000000-0000-0000-0000-000000000005','Sam Lee','samlee','Marketing','Growth & Community','Helping indie builders find their first hundred users without feeling gross.','available',231,7,'Canada','America/Toronto',ARRAY['Notion','Amplitude'],ARRAY['Figma','Webflow'],ARRAY['English'],'Workshops, teardowns'),
-  ('10000000-0000-0000-0000-000000000006','Nia Thompson','nia','Music','Producer & Sound Designer','Producer, synth nerd, and keeper of the good headphones.','available',344,10,'United States','America/Los_Angeles',ARRAY['Ableton Live','Pro Tools'],ARRAY['Ableton Live','Logic Pro'],ARRAY['English'],'By ear, then by theory'),
-  ('10000000-0000-0000-0000-000000000007','Omar Haddad','omar','Development','Backend & Infra','Scaling things until they break, then fixing them so they don''t.','busy',402,11,'Germany','Europe/Berlin',ARRAY['Docker','Grafana'],ARRAY['Go','Rust','Postgres'],ARRAY['English','Arabic','German'],'Whiteboarding, system design'),
-  ('10000000-0000-0000-0000-000000000008','Lena Fischer','lena','Writing','Writer & Researcher','Long-form writer and researcher who believes footnotes are a love language.','available',187,6,'Germany','Europe/Berlin',ARRAY['Obsidian','Zotero'],ARRAY['Obsidian','Notion'],ARRAY['English','German'],'Editing passes, structured feedback')
+  ('10000000-0000-0000-0000-000000000001','Maya Chen','maya','Design','Product Designer & Illustrator','Designing calm, useful products and drawing the internet''s friendliest mascots.','available',482,8,'United States','America/New_York',ARRAY['Figma','Procreate'],ARRAY['Figma','Notion'],ARRAY['English','Mandarin'],'Hands-on, project-based, async reviews','{"mode":"pattern","pattern":"dots","color":"#a78bfa","image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000002','Devon Okafor','devon','Development','Full-Stack Engineer','I build fast, accessible web apps and care too much about error messages.','available',515,9,'United Kingdom','Europe/London',ARRAY['VS Code','Postgres'],ARRAY['React','TypeScript','Node'],ARRAY['English'],'Pair programming, code reviews','{"mode":"color","color":"#2dd4bf","pattern":null,"image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000003','Priya Nair','priya','Development','Frontend Engineer','Turning messy product ideas into clean interfaces and clean code.','busy',298,5,'India','Asia/Kolkata',ARRAY['VS Code','Figma'],ARRAY['React','TypeScript','Tailwind'],ARRAY['English','Hindi'],'Async, written walkthroughs','{"mode":"pattern","pattern":"grid","color":"#38bdf8","image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000004','Alex Ruiz','alexr','Design','Motion Designer','Making interfaces feel alive one easing curve at a time.','learning',156,4,'Mexico','America/Mexico_City',ARRAY['After Effects','Lottie'],ARRAY['After Effects','Figma'],ARRAY['English','Spanish'],'Show-and-tell, iteration',NULL),
+  ('10000000-0000-0000-0000-000000000005','Sam Lee','samlee','Marketing','Growth & Community','Helping indie builders find their first hundred users without feeling gross.','available',231,7,'Canada','America/Toronto',ARRAY['Notion','Amplitude'],ARRAY['Figma','Webflow'],ARRAY['English'],'Workshops, teardowns','{"mode":"pattern","pattern":"diagonal","color":"#fb7185","image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000006','Nia Thompson','nia','Music','Producer & Sound Designer','Producer, synth nerd, and keeper of the good headphones.','available',344,10,'United States','America/Los_Angeles',ARRAY['Ableton Live','Pro Tools'],ARRAY['Ableton Live','Logic Pro'],ARRAY['English'],'By ear, then by theory','{"mode":"color","color":"#fbbf24","pattern":null,"image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000007','Omar Haddad','omar','Development','Backend & Infra','Scaling things until they break, then fixing them so they don''t.','busy',402,11,'Germany','Europe/Berlin',ARRAY['Docker','Grafana'],ARRAY['Go','Rust','Postgres'],ARRAY['English','Arabic','German'],'Whiteboarding, system design','{"mode":"pattern","pattern":"crosshatch","color":"#94a3b8","image_url":null}'::jsonb),
+  ('10000000-0000-0000-0000-000000000008','Lena Fischer','lena','Writing','Writer & Researcher','Long-form writer and researcher who believes footnotes are a love language.','available',187,6,'Germany','Europe/Berlin',ARRAY['Obsidian','Zotero'],ARRAY['Obsidian','Notion'],ARRAY['English','German'],'Editing passes, structured feedback',NULL)
 ON CONFLICT (id) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   handle = EXCLUDED.handle,
@@ -76,7 +76,8 @@ ON CONFLICT (id) DO UPDATE SET
   creator_title = EXCLUDED.creator_title,
   bio = EXCLUDED.bio,
   availability = EXCLUDED.availability,
-  reputation_score = EXCLUDED.reputation_score;
+  reputation_score = EXCLUDED.reputation_score,
+  background = EXCLUDED.background;
 
 -- Enrich the test user's own profile
 UPDATE public.profiles

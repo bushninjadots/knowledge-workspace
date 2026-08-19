@@ -65,6 +65,7 @@ export function ProfileLayout({
   avatarSigned,
   bannerSigned,
   background,
+  publicBackground,
   userId,
   isOwnProfile,
   teachIds,
@@ -77,6 +78,7 @@ export function ProfileLayout({
   avatarSigned: string | null;
   bannerSigned: string | null;
   background: ProfileBackground | null;
+  publicBackground: ProfileBackground | null;
   userId: string;
   isOwnProfile: boolean;
   teachIds: string[];
@@ -359,6 +361,7 @@ export function ProfileLayout({
             open={bgOpen}
             onOpenChange={setBgOpen}
             background={background}
+            publicBackground={publicBackground}
             userId={userId}
             onSaved={onChange}
           />
