@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useId, useEffect, useMemo, useState } from "react";
+import { useCallback, useId, useEffect, useMemo } from "react";
 import {
   ArrowRight,
-  ArrowUp,
   Sparkles,
   Clock,
   Folder,
@@ -13,10 +12,6 @@ import {
   Swords,
   Ticket,
   Plus,
-  Menu,
-  Search,
-  X,
-  Palette,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
@@ -45,18 +40,9 @@ import { useUnreadCounts } from "@/hooks/use-messages";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import { useChallenges } from "@/hooks/use-challenges";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardStateBoundary } from "@/components/tethyr/dashboard-state-boundary";
-import { DashboardSidebar } from "@/components/tethyr/dashboard-sidebar";
-import { NotificationDropdown } from "@/components/tethyr/notifications/notification-dropdown";
-import { GlobalSearch } from "@/components/tethyr/global-search";
-import { ThemeToggle } from "@/components/tethyr/theme-toggle";
-import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
-import { MobilePrimaryNav } from "@/components/tethyr/mobile-primary-nav";
-import { BackgroundLayer } from "@/components/tethyr/background-layer";
-import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Tethyr" },
@@ -95,133 +81,8 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-  const { data, isLoading, isError, error, refresh } = useCurrentUser();
-
-  return (
-    <DashboardStateBoundary
-      data={data}
-      isLoading={isLoading}
-      isError={isError}
-      error={error}
-      onRetry={() => refresh()}
-    >
-      <AuthenticatedDashboardLayout data={data!} onBackgroundSaved={() => refresh()} />
-    </DashboardStateBoundary>
-  );
-}
-
-/* ── Sidebar layout (matches AuthenticatedShell) ─────────────────────────── */
-
-function AuthenticatedDashboardLayout({
-  data,
-  onBackgroundSaved,
-}: {
-  data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
-  onBackgroundSaved: () => void;
-}) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [bgOpen, setBgOpen] = useState(false);
-  const palette = useUserPalette(data?.bannerSigned ?? null);
-  const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  return (
-    <div className="relative isolate flex min-h-screen" style={themeStyle}>
-      <BackgroundLayer background={data?.background} imageUrl={data?.backgroundImageUrl} />
-      {/* Desktop sidebar */}
-      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
-        <DashboardSidebar />
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/20"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="absolute inset-y-0 left-0">
-            <DashboardSidebar onNavigate={() => setSidebarOpen(false)} />
-          </div>
-          <button
-            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close menu"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top header bar */}
-        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
-          <button
-            className="rounded-md p-1.5 hover:bg-surface-sunken md:hidden"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
-          <span className="text-[13px] font-semibold tracking-tight md:hidden">Tethyr</span>
-          <div className="ml-auto flex items-center gap-1">
-            <button
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground md:hidden"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-            <button
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
-              onClick={() => setBgOpen(true)}
-              aria-label="Customize background"
-              title="Customize background"
-            >
-              <Palette className="h-4 w-4" />
-            </button>
-            <ThemeToggle />
-            <NotificationDropdown />
-          </div>
-        </header>
-
-        {/* Dashboard content */}
-        <main className="flex-1 pb-16 md:pb-0">
-          <DashboardContent data={data} />
-        </main>
-        <MobilePrimaryNav onOpenMore={() => setSidebarOpen(true)} />
-
-        {/* Scroll-to-top */}
-        {showScrollTop && (
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-sm transition hover:scale-105 hover:bg-surface-elevated"
-            aria-label="Scroll to top"
-          >
-            <ArrowUp className="h-4 w-4 text-muted-foreground" />
-          </button>
-        )}
-      </div>
-
-      <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
-
-      <BackgroundPickerDialog
-        open={bgOpen}
-        onOpenChange={setBgOpen}
-        background={data?.background ?? null}
-        publicBackground={data?.profile?.public_background ?? null}
-        userId={data?.userId ?? ""}
-        onSaved={onBackgroundSaved}
-      />
-    </div>
-  );
+  const { data } = useCurrentUser();
+  return <DashboardContent data={data!} />;
 }
 
 /* ── Dashboard content (the workspace grid) ──────────────────────────────── */
