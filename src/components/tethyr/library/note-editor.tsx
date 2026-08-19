@@ -12,7 +12,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
 import { SignedImage } from "./signed-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
-import { common, createLowlight } from "lowlight";
+import lowlight from "@/lib/lowlight";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,8 +40,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { validateImageFile } from "@/lib/validators";
-
-const lowlight = createLowlight(common);
 
 // External image URLs use the stock Image extension; storage paths go through
 // SignedImage (which signs at render). Keep them from fighting over the same

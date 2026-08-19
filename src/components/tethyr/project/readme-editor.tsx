@@ -16,7 +16,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { Markdown } from "@tiptap/markdown";
-import { common, createLowlight } from "lowlight";
+import lowlight from "@/lib/lowlight";
 import {
   Bold,
   Italic,
@@ -40,8 +40,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-const lowlight = createLowlight(common);
 
 const ExternalImage = Image.extend({
   parseHTML() {
