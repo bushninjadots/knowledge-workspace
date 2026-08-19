@@ -17,24 +17,21 @@ import { validateImageFile } from "@/lib/validators";
 import {
   BACKGROUND_COLORS,
   BACKGROUND_DEFAULT_STRENGTH,
+  BACKGROUND_GRADIENTS,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
   backgroundImagePublicUrl,
   backgroundStyle,
   clampStrength,
+  emptyBackground,
+  gradientBackgroundImage,
   imageOpacityFor,
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { cn } from "@/lib/utils";
 
-const EMPTY_BACKGROUND: ProfileBackground = {
-  mode: null,
-  color: null,
-  pattern: null,
-  image_url: null,
-  strength: BACKGROUND_DEFAULT_STRENGTH,
-};
+const EMPTY_BACKGROUND = emptyBackground();
 
 type BgTab = "app" | "public";
 
@@ -114,7 +111,7 @@ export function BackgroundPickerDialog({
   function removeImage() {
     setActiveDraft((d) => ({
       ...d,
-      mode: d.color ? "color" : d.pattern ? "pattern" : null,
+      mode: d.color ? "color" : d.pattern ? "pattern" : d.gradient ? "gradient" : null,
       image_url: null,
     }));
   }
@@ -265,6 +262,53 @@ export function BackgroundPickerDialog({
                   </div>
                 </section>
               )}
+
+              {/* GRADIENTS */}
+              <section aria-labelledby="bg-gradients-heading">
+                <h3
+                  id="bg-gradients-heading"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Gradient
+                </h3>
+                <div
+                  className="mt-2 flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Background gradients"
+                >
+                  {BACKGROUND_GRADIENTS.map((g) => {
+                    const selected =
+                      activeDraft.mode === "gradient" && activeDraft.gradient === g.id;
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        title={g.label}
+                        aria-pressed={selected}
+                        onClick={() =>
+                          setActiveDraft((d) => ({
+                            ...d,
+                            mode: "gradient",
+                            gradient: g.id,
+                          }))
+                        }
+                        className={cn(
+                          "h-10 w-14 rounded-md border transition",
+                          selected
+                            ? "border-[var(--user-accent,var(--primary))] ring-2 ring-[var(--user-accent,var(--primary))]/40"
+                            : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
+                        )}
+                        style={{
+                          backgroundColor: "var(--background)",
+                          backgroundImage:
+                            gradientBackgroundImage(g, clampStrength(activeDraft.strength)) ??
+                            undefined,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
 
               {/* COLOURS */}
               <section aria-labelledby="bg-colors-heading">

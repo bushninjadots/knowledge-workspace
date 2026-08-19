@@ -9,11 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
  * are always kept in the row so switching modes never loses a previous choice.
  */
 export type ProfileBackground = {
-  mode: "color" | "pattern" | "image" | null;
+  mode: "color" | "pattern" | "image" | "gradient" | null;
   /** Base tint color (CSS color string) used by color and pattern modes. */
   color: string | null;
   /** Pattern id from BACKGROUND_PATTERNS. */
   pattern: string | null;
+  /** Gradient id from BACKGROUND_GRADIENTS (gradient mode). */
+  gradient?: string | null;
   /** Storage path in the `backgrounds` bucket (image mode). */
   image_url: string | null;
   /**
@@ -100,6 +102,43 @@ export const BACKGROUND_PATTERNS: BackgroundPattern[] = [
 
 export const BACKGROUND_PATTERN_IDS = BACKGROUND_PATTERNS.map((p) => p.id);
 
+export type BackgroundGradient = {
+  id: string;
+  label: string;
+  from: string;
+  to: string;
+};
+
+/**
+ * Curated two-colour gradients. Each end is mixed into the theme's own
+ * background at the member's strength, so gradients tint rather than
+ * overwhelm and text keeps its contrast in both light and dark mode.
+ */
+export const BACKGROUND_GRADIENTS: BackgroundGradient[] = [
+  { id: "tethyr", label: "Tethyr", from: "#8250df", to: "#1a7f37" },
+  { id: "dusk", label: "Dusk", from: "#a78bfa", to: "#f472b6" },
+  { id: "ocean", label: "Ocean", from: "#38bdf8", to: "#2dd4bf" },
+  { id: "sunset", label: "Sunset", from: "#fbbf24", to: "#fb7185" },
+  { id: "forest", label: "Forest", from: "#4ade80", to: "#2dd4bf" },
+  { id: "ember", label: "Ember", from: "#f97316", to: "#e11d48" },
+  { id: "skyline", label: "Skyline", from: "#38bdf8", to: "#a78bfa" },
+];
+
+export const BACKGROUND_GRADIENT_IDS = BACKGROUND_GRADIENTS.map((g) => g.id);
+
+/**
+ * The CSS for a gradient backdrop at a given strength. Both ends are
+ * color-mixed to transparent so the theme background shows through, which
+ * keeps the result quiet at low strengths and bold at high ones.
+ */
+export function gradientBackgroundImage(
+  gradient: BackgroundGradient | undefined,
+  strength: number,
+): string | null {
+  if (!gradient) return null;
+  return `linear-gradient(135deg, color-mix(in oklab, ${gradient.from} ${strength}%, transparent), color-mix(in oklab, ${gradient.to} ${strength}%, transparent))`;
+}
+
 /**
  * How strongly an uploaded image is dimmed behind content at the default
  * strength. Strong enough to read as a personal wallpaper, faint enough that
@@ -124,6 +163,18 @@ export function imageOpacityFor(strength: number | null | undefined): number {
 
 export function isBackgroundActive(bg: ProfileBackground | null | undefined): boolean {
   return !!bg && bg.mode != null;
+}
+
+/** Reset a background to the empty state (keeping the default strength). */
+export function emptyBackground(): ProfileBackground {
+  return {
+    mode: null,
+    color: null,
+    pattern: null,
+    gradient: null,
+    image_url: null,
+    strength: BACKGROUND_DEFAULT_STRENGTH,
+  };
 }
 
 /**
@@ -154,6 +205,16 @@ export function backgroundStyle(
   switch (background.mode) {
     case "color":
       return { backgroundColor: base };
+    case "gradient": {
+      const gradient = BACKGROUND_GRADIENTS.find((g) => g.id === background.gradient);
+      const image = gradientBackgroundImage(gradient, strength);
+      if (!image) return { backgroundColor: base };
+      return {
+        backgroundColor: "var(--background)",
+        backgroundImage: image,
+        backgroundSize: "cover",
+      };
+    }
     case "pattern": {
       const pattern = BACKGROUND_PATTERNS.find((p) => p.id === background.pattern);
       if (!pattern) return { backgroundColor: base };

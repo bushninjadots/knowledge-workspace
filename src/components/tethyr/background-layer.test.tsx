@@ -30,6 +30,25 @@ describe("BackgroundLayer", () => {
     expect(layer.style.backgroundImage).toContain("repeating-linear-gradient");
   });
 
+  it("renders the gradient for a gradient choice", () => {
+    const { container } = render(
+      <BackgroundLayer
+        background={{
+          mode: "gradient",
+          color: null,
+          pattern: null,
+          gradient: "ocean",
+          image_url: null,
+        }}
+      />,
+    );
+    const layer = container.querySelector("[aria-hidden=true]") as HTMLElement;
+    expect(layer.style.backgroundImage).toContain("linear-gradient(135deg");
+    // jsdom normalises the color-mix ends to rgb.
+    expect(layer.style.backgroundImage).toContain("rgb(56, 189, 248)");
+    expect(layer.style.backgroundColor).toBe("var(--background)");
+  });
+
   it("dims uploaded images to wallpaper level", () => {
     const { container } = render(
       <BackgroundLayer

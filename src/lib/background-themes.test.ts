@@ -25,6 +25,15 @@ describe("isBackgroundActive", () => {
     expect(
       isBackgroundActive({ mode: "image", color: null, pattern: null, image_url: "u/bg.jpg" }),
     ).toBe(true);
+    expect(
+      isBackgroundActive({
+        mode: "gradient",
+        color: null,
+        pattern: null,
+        gradient: "ocean",
+        image_url: null,
+      }),
+    ).toBe(true);
   });
 });
 
@@ -114,6 +123,46 @@ describe("backgroundStyle", () => {
       mode: "pattern",
       color: "#38bdf8",
       pattern: "not-a-pattern",
+      image_url: null,
+    });
+    expect(style.backgroundColor).toContain("color-mix");
+    expect(style.backgroundImage).toBeUndefined();
+  });
+
+  it("renders a gradient over the theme background at the chosen strength", () => {
+    const style = backgroundStyle({
+      mode: "gradient",
+      color: null,
+      pattern: null,
+      gradient: "ocean",
+      image_url: null,
+    });
+    expect(style.backgroundColor).toBe("var(--background)");
+    expect(style.backgroundImage).toContain("linear-gradient(135deg");
+    expect(style.backgroundImage).toContain("#38bdf8");
+    expect(style.backgroundImage).toContain("#2dd4bf");
+    expect(style.backgroundImage).toContain(`${BACKGROUND_DEFAULT_STRENGTH}%`);
+  });
+
+  it("scales a gradient with the chosen strength", () => {
+    const bold = backgroundStyle({
+      mode: "gradient",
+      color: null,
+      pattern: null,
+      gradient: "tethyr",
+      image_url: null,
+      strength: BACKGROUND_MAX_STRENGTH,
+    });
+    expect(bold.backgroundImage).toContain("#8250df");
+    expect(bold.backgroundImage).toContain(`${BACKGROUND_MAX_STRENGTH}%`);
+  });
+
+  it("falls back to the tinted base when a gradient id is unknown", () => {
+    const style = backgroundStyle({
+      mode: "gradient",
+      color: "#38bdf8",
+      pattern: null,
+      gradient: "not-a-gradient",
       image_url: null,
     });
     expect(style.backgroundColor).toContain("color-mix");
