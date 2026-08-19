@@ -59,7 +59,7 @@ export function MobileBottomNav({
           title="Write a post"
           className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transition-transform active:scale-95"
         >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--user-accent,var(--primary))] text-[var(--primary-foreground)] shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--user-accent,var(--primary))] text-[var(--user-accent-foreground,var(--primary-foreground))] shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
             <Plus className="h-5 w-5" />
           </span>
         </button>

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 export type ExtractedPalette = {
   /** The dominant colour as `rgb(r, g, b)`. */
   dominant: string;
+  /** A readable text colour to sit on top of `dominant` when it's used as a background. */
+  foreground: string;
   /** Same colour at ~10% opacity — card/hover backgrounds. */
   subtle: string;
   /** Same colour at ~30% opacity — borders. */
@@ -175,6 +177,7 @@ export async function extractPalette(url: string): Promise<ExtractedPalette | nu
   if (!dominant) return null;
   return {
     dominant,
+    foreground: contrastingForeground(dominant) ?? "rgb(31, 35, 40)",
     subtle: withAlpha(dominant, 0.1) ?? "transparent",
     border: withAlpha(dominant, 0.3) ?? "transparent",
     glow: withAlpha(dominant, 0.06) ?? "transparent",
@@ -236,6 +239,24 @@ export function withAlpha(rgb: string | null, alpha: number): string | null {
 }
 
 /**
+ * Picks a readable foreground (near-black vs near-white) for text placed on
+ * top of an `rgb(r, g, b)` colour. Uses WCAG relative luminance and returns
+ * whichever text colour yields the higher contrast ratio, so banner-derived
+ * accents never produce unreadable text when used as a background.
+ */
+export function contrastingForeground(rgb: string | null): string | null {
+  if (!rgb) return null;
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!match) return null;
+  const [, r, g, b] = match.map(Number);
+  // Relative luminance (0–1).
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const contrastWithWhite = 1.05 / (lum + 0.05);
+  const contrastWithBlack = (lum + 0.05) / 0.05;
+  return contrastWithWhite > contrastWithBlack ? "rgb(255, 255, 255)" : "rgb(31, 35, 40)";
+}
+
+/**
  * Converts an ExtractedPalette into CSS custom property assignments.
  * Returns a style object and a separate CSS string for use in JS or inline.
  */
@@ -243,6 +264,7 @@ export function paletteToStyle(palette: ExtractedPalette | null): React.CSSPrope
   if (!palette) return {};
   return {
     "--user-accent": palette.dominant,
+    "--user-accent-foreground": palette.foreground,
     "--user-accent-subtle": palette.subtle,
     "--user-accent-border": palette.border,
     "--user-accent-glow": palette.glow,

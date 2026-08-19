@@ -288,7 +288,7 @@ export function ProjectHeader({
             {onJoin ? (
               <button
                 onClick={onJoin}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
               >
                 <UserPlus className="h-4 w-4" />
                 Join Project
@@ -296,7 +296,7 @@ export function ProjectHeader({
             ) : onPostUpdate ? (
               <button
                 onClick={onPostUpdate}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
               >
                 <PenSquare className="h-4 w-4" />
                 Post update
@@ -304,7 +304,7 @@ export function ProjectHeader({
             ) : onSignIn ? (
               <button
                 onClick={onSignIn}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
               >
                 <UserPlus className="h-4 w-4" />
                 Sign in to join

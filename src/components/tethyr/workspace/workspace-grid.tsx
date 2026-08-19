@@ -434,10 +434,20 @@ function ModuleShell({
           {onMove && (
             <button
               type="button"
-              tabIndex={0}
-              aria-label="Move module with arrow keys"
+              aria-label="Move module"
+              title="Move with arrow keys"
               className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
               onKeyDown={(e) => {
+                // Arrow keys normally scroll the page — prevent that so the
+                // module moves cleanly without the viewport jumping.
+                if (
+                  e.key === "ArrowLeft" ||
+                  e.key === "ArrowRight" ||
+                  e.key === "ArrowUp" ||
+                  e.key === "ArrowDown"
+                ) {
+                  e.preventDefault();
+                }
                 if (e.key === "ArrowLeft") onMove(-1, 0);
                 else if (e.key === "ArrowRight") onMove(1, 0);
                 else if (e.key === "ArrowUp") onMove(0, -1);

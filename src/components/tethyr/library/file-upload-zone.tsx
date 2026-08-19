@@ -268,7 +268,7 @@ export function FileUploadZone({
 
       <Button
         className={cn(
-          "w-full gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90",
+          "w-full gap-2 bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90",
           compact && "h-8 text-xs",
         )}
         onClick={handleUpload}

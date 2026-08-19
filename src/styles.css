@@ -168,6 +168,7 @@
 
   /* User-theme dynamic overrides (set via style prop from banner) */
   --user-accent: var(--learning);
+  --user-accent-foreground: var(--background);
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
@@ -238,6 +239,7 @@
 
   /* User-theme dynamic overrides (set via style prop from banner; fallbacks use color-mix for correct opacity from learning token) */
   --user-accent: var(--learning);
+  --user-accent-foreground: var(--background);
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);

@@ -291,7 +291,7 @@ function MonthView({
               <p
                 className={`mb-1 text-right text-xs font-medium ${
                   isToday
-                    ? "flex h-5 w-5 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))] text-[10px] font-bold text-background ml-auto"
+                    ? "flex h-5 w-5 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))] text-[10px] font-bold text-[var(--user-accent-foreground,var(--background))] ml-auto"
                     : "text-muted-foreground"
                 }`}
               >
@@ -361,7 +361,7 @@ function AgendaView({
               <div
                 className={`flex h-10 w-10 flex-col items-center justify-center rounded-xl ${
                   isToday
-                    ? "bg-[var(--user-accent,var(--trust))] text-background"
+                    ? "bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))]"
                     : "bg-surface-elevated"
                 }`}
               >
@@ -492,7 +492,7 @@ export function SessionsCalendar({
           {onScheduleClick && (
             <button
               onClick={onScheduleClick}
-              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-semibold text-background transition-all hover:bg-[var(--user-accent,var(--trust))]/90 hover:shadow-soft active:scale-[0.98]"
+              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-all hover:bg-[var(--user-accent,var(--trust))]/90 hover:shadow-soft active:scale-[0.98]"
             >
               <Plus className="mr-1 inline-block h-3 w-3" />
               Schedule

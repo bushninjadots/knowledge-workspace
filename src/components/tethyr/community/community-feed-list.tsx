@@ -1,6 +1,7 @@
 import { memo, type CSSProperties } from "react";
-import { Heart, Search, Users } from "lucide-react";
+import { Heart, Search, Users, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/tethyr/empty-state";
+import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/tethyr/community/post-card";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
 import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
@@ -115,6 +116,9 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   mySkillNames,
   activeSpace,
   reportedPostCounts,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   onToggleComments,
   onDelete,
   onEdit,
@@ -137,6 +141,12 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   activeSpace?: CommunitySpace;
   /** Post id → open report count — badges and dims reported posts for moderators. */
   reportedPostCounts?: Map<string, number>;
+  /** Whether more posts are available beyond the current page. */
+  hasMore: boolean;
+  /** A subsequent page is currently loading. */
+  isLoadingMore: boolean;
+  /** Fetch the next page of posts. */
+  onLoadMore: () => void;
   onToggleComments: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (post: PostWithAuthor) => void;
@@ -285,6 +295,27 @@ export const CommunityFeedList = memo(function CommunityFeedList({
           />
         );
       })}
+
+      {hasMore && (
+        <div className="flex justify-center pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="rounded-full text-muted-foreground"
+          >
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                Loading…
+              </>
+            ) : (
+              "Load more"
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 });

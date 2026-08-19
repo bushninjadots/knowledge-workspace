@@ -393,7 +393,7 @@ function StatusActions({
               className={
                 isCancel
                   ? ""
-                  : "bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+                  : "bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
               }
             >
               {isUpdating ? (
@@ -561,7 +561,7 @@ function NotesSection({
           size="icon"
           onClick={onAddNote}
           disabled={!noteText.trim() || isAdding}
-          className="shrink-0 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+          className="shrink-0 bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
           aria-label="Add note"
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

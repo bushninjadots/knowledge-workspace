@@ -76,7 +76,7 @@ describe("WorkspaceGrid module chrome ownership", () => {
     expect(screen.getByText("Project body")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Projects" })).toBeInTheDocument();
     expect(screen.getAllByText("Projects")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Move module with arrow keys" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Move module" })).toBeInTheDocument();
   });
 
   it("renders one module title when the grid owns module chrome", () => {

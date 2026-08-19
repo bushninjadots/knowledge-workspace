@@ -8,7 +8,8 @@ import { ChallengesSection } from "@/components/tethyr/community/challenges-sect
 import { CommunitiesSection } from "@/components/tethyr/community/communities-section";
 import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
 import {
-  usePosts,
+  useInfinitePosts,
+  flattenPosts,
   useDeletePost,
   useTogglePostAction,
   type PostWithAuthor,
@@ -63,7 +64,8 @@ export function CommunityFeed({
   onOpenSpace: (space: CommunitySpace) => void;
 }) {
   const { data: me } = useCurrentUser();
-  const { data: posts = [], isLoading } = usePosts();
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfinitePosts();
+  const posts = useMemo(() => flattenPosts(data?.pages), [data]);
   const { data: followingFeed = [], isLoading: isLoadingFollowing } = useFollowingFeed();
   // Moderators see a red “Reported” badge on posts with open reports, and
   // posts with several reports are dimmed until reviewed. RLS scopes the
@@ -342,6 +344,9 @@ export function CommunityFeed({
             mySkillNames={mySkillNames}
             activeSpace={activeSpace}
             reportedPostCounts={reportedPostCounts}
+            hasMore={nav !== "following" && !activeSpace && hasNextPage}
+            isLoadingMore={isFetchingNextPage}
+            onLoadMore={() => fetchNextPage()}
             onToggleComments={toggleComments}
             onDelete={deletePostHandler}
             onEdit={editPost}

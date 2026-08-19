@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { TrendingUp, HandHeart, Handshake, Trophy, Target, ArrowRight } from "lucide-react";
 import { useChallenges } from "@/hooks/use-challenges";
 import { useTrendingSkills, useCurrentUser } from "@/hooks/use-current-user";
-import { usePosts } from "@/hooks/use-community";
+import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
 import type { DiscoverableSkill } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +81,8 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
 }) {
   const { data: challenges = [] } = useChallenges("active");
   const { data: trendingSkills = [], isLoading: isLoadingSkills } = useTrendingSkills();
-  const { data: posts = [] } = usePosts();
+  const { data } = useInfinitePosts();
+  const posts = flattenPosts(data?.pages);
   const { data: me } = useCurrentUser();
 
   const helpCount = posts.filter((p) => p.type === "help_request").length;

@@ -228,7 +228,7 @@ export function ScheduleSessionWizard({
                   <div
                     className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold transition-colors ${
                       active
-                        ? "bg-[var(--user-accent,var(--trust))] text-background"
+                        ? "bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))]"
                         : done
                           ? "bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
                           : "bg-muted text-muted-foreground"
@@ -313,7 +313,7 @@ export function ScheduleSessionWizard({
                 size="sm"
                 onClick={next}
                 disabled={!canNext}
-                className="bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+                className="bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
               >
                 Next
                 <ChevronRight className="ml-1 h-4 w-4" />
@@ -323,7 +323,7 @@ export function ScheduleSessionWizard({
                 size="sm"
                 onClick={handleSubmit}
                 disabled={createSession.isPending}
-                className="bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+                className="bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
               >
                 {createSession.isPending ? "Creating..." : "Create Session"}
               </Button>

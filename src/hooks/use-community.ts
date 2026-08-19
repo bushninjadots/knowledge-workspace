@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -188,94 +188,131 @@ export const POST_ACTIONS_KEY = (postId: string) => ["post-actions", postId] as 
 // Hooks
 // ============================================================
 
-export function usePosts() {
-  return useQuery({
+/** Number of posts fetched per page. Kept small so the per-page joins
+ * (profiles, actions, comment counts) stay bounded as the feed grows. */
+export const POSTS_PAGE_SIZE = 20;
+
+export type PostsPage = {
+  posts: PostWithAuthor[];
+  nextPage: number | null;
+};
+
+/** Flatten an infinite posts query's pages into a single ordered list. */
+export function flattenPosts(pages: PostsPage[] | undefined): PostWithAuthor[] {
+  return pages?.flatMap((p) => p.posts) ?? [];
+}
+
+/**
+ * Hydrates a raw posts page with author profiles, action stats, the current
+ * user's own actions, and comment counts. Shared by the paginated feed so a
+ * single page's joins stay scoped to that page's post ids.
+ */
+async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
+  if (rawPosts.length === 0) return [];
+
+  // Fetch author profiles in parallel
+  const authorIds = [...new Set(rawPosts.map((p) => p.author_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name, handle, creator_title, category, avatar_url")
+    .in("id", authorIds);
+
+  const profileMap = new Map<string, Record<string, unknown>>(
+    (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+  );
+
+  // Fetch action counts for all posts
+  const postIds = rawPosts.map((p) => p.id);
+  const { data: rawActions } = await sb
+    .from("post_actions")
+    .select("post_id, action, user_id")
+    .in("post_id", postIds);
+  const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
+
+  // Get current user's actions
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const myActions = actions.filter((a) => a.user_id === user?.id);
+
+  // Aggregate stats
+  const statsMap = new Map<
+    string,
+    { likes: number; helpful: number; saves: number; offers: number }
+  >();
+  for (const a of actions) {
+    if (!statsMap.has(a.post_id)) {
+      statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
+    }
+    const s = statsMap.get(a.post_id)!;
+    if (a.action === "like") s.likes++;
+    if (a.action === "helpful") s.helpful++;
+    if (a.action === "save") s.saves++;
+    if (a.action === "offer") s.offers++;
+  }
+
+  // Comment counts so the card can show them without opening the thread.
+  const commentCountMap = new Map<string, number>();
+  if (postIds.length > 0) {
+    const { data: rawCommentRows } = await sb
+      .from("comments")
+      .select("post_id")
+      .in("post_id", postIds);
+    for (const c of (rawCommentRows ?? []) as { post_id: string }[]) {
+      commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) ?? 0) + 1);
+    }
+  }
+
+  return rawPosts.map((p): PostWithAuthor => ({
+    ...p,
+    author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+      display_name: "Unknown",
+      handle: "unknown",
+      creator_title: "Member",
+      category: "General",
+      avatar_url: null,
+    },
+    stats: {
+      ...(statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 }),
+      comment_count: commentCountMap.get(p.id) ?? 0,
+    },
+    myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+  }));
+}
+
+/**
+ * Paginated feed. Offset-based "load more" on top of the existing
+ * `created_at DESC` ordering; each page hydrates only its own posts so the
+ * action/comment joins never balloon with feed size. The sidebars read the
+ * same cache key and flatten the already-loaded pages.
+ */
+export function useInfinitePosts() {
+  return useInfiniteQuery({
     queryKey: POSTS_KEY,
-    queryFn: async () => {
+    queryFn: async ({ pageParam }): Promise<PostsPage> => {
+      const from = pageParam * POSTS_PAGE_SIZE;
+      const to = from + POSTS_PAGE_SIZE - 1;
       const { data: rawPosts, error } = await sb
         .from("posts")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(from, to);
 
       if (error) {
         // Table may not exist yet — return empty list instead of crashing
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {
-          return [] as PostWithAuthor[];
+          return { posts: [], nextPage: null };
         }
         throw error;
       }
-      const posts = rawPosts as unknown as PostRow[];
-
-      // Fetch author profiles in parallel
-      const authorIds = [...new Set(posts.map((p: PostRow) => p.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, creator_title, category, avatar_url")
-        .in("id", authorIds);
-
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-      );
-
-      // Fetch action counts for all posts
-      const postIds = posts.map((p: PostRow) => p.id);
-      const { data: rawActions } = await sb
-        .from("post_actions")
-        .select("post_id, action, user_id")
-        .in("post_id", postIds);
-      const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
-
-      // Get current user's actions
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const myActions = actions.filter((a) => a.user_id === user?.id);
-
-      // Aggregate stats
-      const statsMap = new Map<
-        string,
-        { likes: number; helpful: number; saves: number; offers: number }
-      >();
-      for (const a of actions) {
-        if (!statsMap.has(a.post_id)) {
-          statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
-        }
-        const s = statsMap.get(a.post_id)!;
-        if (a.action === "like") s.likes++;
-        if (a.action === "helpful") s.helpful++;
-        if (a.action === "save") s.saves++;
-        if (a.action === "offer") s.offers++;
-      }
-
-      // Comment counts so the card can show them without opening the thread.
-      const commentCountMap = new Map<string, number>();
-      if (postIds.length > 0) {
-        const { data: rawCommentRows } = await sb
-          .from("comments")
-          .select("post_id")
-          .in("post_id", postIds);
-        for (const c of (rawCommentRows ?? []) as { post_id: string }[]) {
-          commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) ?? 0) + 1);
-        }
-      }
-
-      return posts.map((p: PostRow): PostWithAuthor => ({
-        ...p,
-        author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
-          display_name: "Unknown",
-          handle: "unknown",
-          creator_title: "Member",
-          category: "General",
-          avatar_url: null,
-        },
-        stats: {
-          ...(statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 }),
-          comment_count: commentCountMap.get(p.id) ?? 0,
-        },
-        myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
-      }));
+      const posts = await hydratePosts(rawPosts as unknown as PostRow[]);
+      return {
+        posts,
+        nextPage: posts.length === POSTS_PAGE_SIZE ? pageParam + 1 : null,
+      };
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     staleTime: 30_000,
   });
 }

@@ -181,7 +181,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
             <Button
               size="sm"
-              className="gap-2 bg-[var(--user-accent,var(--trust))] text-background hover:opacity-90"
+              className="gap-2 bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
               onClick={onNewNote}
             >
               <Plus className="h-3.5 w-3.5" />

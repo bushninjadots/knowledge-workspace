@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePosts } from "@/hooks/use-community";
+import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
 
 /**
  * Single consolidated destination set, grouped by purpose. The union below
@@ -105,7 +105,8 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
   /** Layout override — the desktop rail is hidden below lg; a sheet passes w-full. */
   className?: string;
 }) {
-  const { data: posts = [] } = usePosts();
+  const { data } = useInfinitePosts();
+  const posts = flattenPosts(data?.pages);
   const helpCount = posts.filter((p) => p.type === "help_request").length;
   const collabCount = posts.filter((p) => p.type === "collaboration_request").length;
   const countFor = (id: string) =>
