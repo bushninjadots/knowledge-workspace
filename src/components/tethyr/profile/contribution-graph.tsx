@@ -15,6 +15,61 @@ type ContributionRow = {
 
 type GraphMode = "events" | "points";
 
+/**
+ * Build the 20-week × 7-day grid of contribution values for the chosen mode.
+ * Pure and exported so the aggregation rules are unit-testable.
+ */
+export function buildContributionGrid(
+  contributions: ContributionRow[],
+  startIso: string,
+  mode: GraphMode,
+): { grid: { date: string; value: number }[][]; maxValue: number } {
+  const dateCounts: Record<string, number> = {};
+  const datePoints: Record<string, number> = {};
+  for (const c of contributions) {
+    const d = c.created_at?.slice(0, 10);
+    if (!d) continue;
+    dateCounts[d] = (dateCounts[d] ?? 0) + 1;
+    datePoints[d] = (datePoints[d] ?? 0) + (c.points ?? 0);
+  }
+
+  const startDate = new Date(startIso);
+  const grid: { date: string; value: number }[][] = [];
+  let maxValue = 0;
+  const current = new Date(startDate);
+
+  for (let week = 0; week < WEEKS; week++) {
+    const weekCells: { date: string; value: number }[] = [];
+    for (let day = 0; day < 7; day++) {
+      const key = current.toISOString().slice(0, 10);
+      const value = mode === "points" ? (datePoints[key] ?? 0) : (dateCounts[key] ?? 0);
+      if (value > maxValue) maxValue = value;
+      weekCells.push({ date: key, value });
+      current.setDate(current.getDate() + 1);
+    }
+    grid.push(weekCells);
+  }
+
+  return { grid, maxValue };
+}
+
+/** Compute the month labels for the top axis. Pure and exported for tests. */
+export function buildMonthLabels(startIso: string): { x: number; label: string }[] {
+  const labels: { x: number; label: string }[] = [];
+  const start = new Date(startIso);
+  let lastMonth = "";
+  for (let week = 0; week < WEEKS; week++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + week * 7);
+    const month = d.toLocaleDateString(undefined, { month: "short" });
+    if (month !== lastMonth) {
+      labels.push({ x: week * (CELL_SIZE + GAP), label: month });
+      lastMonth = month;
+    }
+  }
+  return labels;
+}
+
 export function ContributionGraph({
   profileId,
   profileIds,
@@ -61,51 +116,12 @@ export function ContributionGraph({
     staleTime: 30_000,
   });
 
-  const { grid, maxValue } = useMemo(() => {
-    const dateCounts: Record<string, number> = {};
-    const datePoints: Record<string, number> = {};
-    for (const c of contributions) {
-      const d = c.created_at?.slice(0, 10);
-      if (!d) continue;
-      dateCounts[d] = (dateCounts[d] ?? 0) + 1;
-      datePoints[d] = (datePoints[d] ?? 0) + (c.points ?? 0);
-    }
+  const { grid, maxValue } = useMemo(
+    () => buildContributionGrid(contributions, startIso, mode),
+    [contributions, startIso, mode],
+  );
 
-    const startDate = new Date(startIso);
-    const grid: { date: string; value: number }[][] = [];
-    let maxValue = 0;
-    const current = new Date(startDate);
-
-    for (let week = 0; week < WEEKS; week++) {
-      const weekCells: { date: string; value: number }[] = [];
-      for (let day = 0; day < 7; day++) {
-        const key = current.toISOString().slice(0, 10);
-        const value = mode === "points" ? (datePoints[key] ?? 0) : (dateCounts[key] ?? 0);
-        if (value > maxValue) maxValue = value;
-        weekCells.push({ date: key, value });
-        current.setDate(current.getDate() + 1);
-      }
-      grid.push(weekCells);
-    }
-
-    return { grid, maxValue };
-  }, [contributions, startIso, mode]);
-
-  const monthLabels = useMemo(() => {
-    const labels: { x: number; label: string }[] = [];
-    const start = new Date(startIso);
-    let lastMonth = "";
-    for (let week = 0; week < WEEKS; week++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + week * 7);
-      const month = d.toLocaleDateString(undefined, { month: "short" });
-      if (month !== lastMonth) {
-        labels.push({ x: week * (CELL_SIZE + GAP), label: month });
-        lastMonth = month;
-      }
-    }
-    return labels;
-  }, [startIso]);
+  const monthLabels = useMemo(() => buildMonthLabels(startIso), [startIso]);
 
   function getColor(value: number) {
     if (value === 0) return "bg-muted/40";

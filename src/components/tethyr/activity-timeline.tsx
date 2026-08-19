@@ -42,6 +42,69 @@ function activityIdentity(event: ActivityEvent): string {
   return `${event.kind}|${String(entityId)}`;
 }
 
+/**
+ * Merge mirrored activity/contribution rows (same identity within a short
+ * window — a banner iteration or similar burst should read as one update),
+ * then group repeated actions in a rolling window so bursts don't flood the
+ * timeline. Pure and exported so the grouping rules are unit-testable.
+ */
+export function buildTimelineGroups(
+  events: ActivityEvent[],
+  opts?: { mirrorWindowMs?: number; groupWindowMs?: number },
+): ActivityGroup[] {
+  const mirrorWindowMs = opts?.mirrorWindowMs ?? 5 * 1000;
+  const groupWindowMs = opts?.groupWindowMs ?? 10 * 60 * 1000;
+
+  const sorted = [...events].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+
+  const merged: ActivityEvent[] = [];
+  for (const event of sorted) {
+    const existing = merged.find(
+      (candidate) =>
+        activityIdentity(candidate) === activityIdentity(event) &&
+        Math.abs(new Date(candidate.created_at).getTime() - new Date(event.created_at).getTime()) <=
+          mirrorWindowMs,
+    );
+    if (!existing) {
+      merged.push(event);
+      continue;
+    }
+    const existingPoints = Number(existing.metadata.points ?? 0);
+    const eventPoints = Number(event.metadata.points ?? 0);
+    existing.metadata = {
+      ...existing.metadata,
+      ...event.metadata,
+      ...(existingPoints || eventPoints ? { points: Math.max(existingPoints, eventPoints) } : {}),
+    };
+  }
+
+  const groups: ActivityGroup[] = [];
+  for (const event of merged) {
+    const previous = groups.find(
+      (group) =>
+        activityIdentity(group) === activityIdentity(event) &&
+        new Date(group.latestCreatedAt).getTime() - new Date(event.created_at).getTime() <=
+          groupWindowMs,
+    );
+    if (previous) {
+      previous.count += 1;
+      const previousPoints = Number(previous.metadata.points ?? 0);
+      const eventPoints = Number(event.metadata.points ?? 0);
+      previous.metadata = {
+        ...previous.metadata,
+        ...event.metadata,
+        ...(previousPoints || eventPoints ? { points: previousPoints + eventPoints } : {}),
+      };
+      continue;
+    }
+    groups.push({ ...event, count: 1, latestCreatedAt: event.created_at });
+  }
+
+  return groups;
+}
+
 const ICONS: Record<string, typeof Sparkles> = {
   joined_tethyr: Sparkles,
   avatar_updated: User,
@@ -159,57 +222,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
     ...(contributionEvents ?? []),
   ];
 
-  // Merge mirrored activity/contribution rows, then group repeated actions in a
-  // rolling window. A banner iteration (or similar burst) should read as one
-  // meaningful update rather than flooding the timeline.
-  const sortedEvents = [...allEvents].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-  const MIRROR_WINDOW_MS = 5 * 1000;
-  const merged: ActivityEvent[] = [];
-  for (const event of sortedEvents) {
-    const existing = merged.find(
-      (candidate) =>
-        activityIdentity(candidate) === activityIdentity(event) &&
-        Math.abs(new Date(candidate.created_at).getTime() - new Date(event.created_at).getTime()) <=
-          MIRROR_WINDOW_MS,
-    );
-    if (!existing) {
-      merged.push(event);
-      continue;
-    }
-    const existingPoints = Number(existing.metadata.points ?? 0);
-    const eventPoints = Number(event.metadata.points ?? 0);
-    existing.metadata = {
-      ...existing.metadata,
-      ...event.metadata,
-      ...(existingPoints || eventPoints ? { points: Math.max(existingPoints, eventPoints) } : {}),
-    };
-  }
-
-  const sorted = merged;
-  const GROUP_WINDOW_MS = 10 * 60 * 1000;
-  const groups: ActivityGroup[] = [];
-  for (const event of sorted) {
-    const previous = groups.find(
-      (group) =>
-        activityIdentity(group) === activityIdentity(event) &&
-        new Date(group.latestCreatedAt).getTime() - new Date(event.created_at).getTime() <=
-          GROUP_WINDOW_MS,
-    );
-    if (previous) {
-      previous.count += 1;
-      const previousPoints = Number(previous.metadata.points ?? 0);
-      const eventPoints = Number(event.metadata.points ?? 0);
-      previous.metadata = {
-        ...previous.metadata,
-        ...event.metadata,
-        ...(previousPoints || eventPoints ? { points: previousPoints + eventPoints } : {}),
-      };
-      continue;
-    }
-    groups.push({ ...event, count: 1, latestCreatedAt: event.created_at });
-  }
+  const groups = buildTimelineGroups(allEvents);
 
   const rows = limit && !showAll ? groups.slice(0, limit) : groups;
 

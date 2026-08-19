@@ -502,3 +502,23 @@ BEGIN
   END LOOP;
   PERFORM set_config('request.jwt.claim.sub', '', true);
 END $$;
+
+-- ---------------------------------------------------------------------------
+-- Teams & crews (so the crew page has a lived-in roster + activity to show)
+-- ---------------------------------------------------------------------------
+INSERT INTO public.teams (id, name, slug, description, created_by)
+VALUES
+  ('40000000-0000-0000-0000-000000000001','Atlas Core','atlas-core','The crew building Atlas — offline-first travel, maps, and day planning.','10000000-0000-0000-0000-000000000002')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.team_members (team_id, profile_id, role)
+VALUES
+  ('40000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002','lead'),
+  ('40000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000003','core'),
+  ('40000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','contributor')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.team_projects (team_id, project_id)
+VALUES
+  ('40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001')
+ON CONFLICT DO NOTHING;

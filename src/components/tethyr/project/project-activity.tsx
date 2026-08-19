@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity as ActivityIcon,
   PenSquare,
@@ -11,11 +12,13 @@ import {
   GitBranch,
   UserPlus,
   Briefcase,
+  Rocket,
   Plus,
   X,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import type { MilestoneRow, ProjectUpdateRow, DiscussionRow } from "@/hooks/use-projects";
 import {
   useCreateProjectUpdate,
@@ -28,7 +31,8 @@ import type { ProjectFile } from "./project-files";
 
 type ActivityItem = {
   id: string;
-  kind: "update" | "milestone" | "discussion" | "file" | "repo" | "contributor" | "role";
+  kind:
+    "update" | "milestone" | "discussion" | "file" | "repo" | "contributor" | "role" | "founded";
   title: string;
   body?: string;
   authorName?: string;
@@ -44,6 +48,7 @@ const KIND_ICON: Record<ActivityItem["kind"], typeof PenSquare> = {
   repo: GitBranch,
   contributor: UserPlus,
   role: Briefcase,
+  founded: Rocket,
 };
 
 const KIND_TINT: Record<ActivityItem["kind"], string> = {
@@ -54,6 +59,7 @@ const KIND_TINT: Record<ActivityItem["kind"], string> = {
   repo: "bg-surface-elevated text-muted-foreground",
   contributor: "bg-teaching/10 text-teaching",
   role: "bg-brand-purple/10 text-brand-purple",
+  founded: "bg-brand-green/10 text-brand-green",
 };
 
 const KIND_LABEL: Record<ActivityItem["kind"], string> = {
@@ -64,6 +70,7 @@ const KIND_LABEL: Record<ActivityItem["kind"], string> = {
   repo: "Repository",
   contributor: "Contributor",
   role: "Role",
+  founded: "Founded",
 };
 
 // Map trigger-recorded kinds (project_activity) onto the display kinds.
@@ -90,6 +97,64 @@ function fromActivityRow(row: ProjectActivityRow): ActivityItem {
   };
 }
 
+/** Fallback client-side aggregation used when project_activity is empty. */
+function buildFallbackItems(
+  updates: ProjectUpdateRow[],
+  milestones: MilestoneRow[],
+  discussions: DiscussionRow[],
+  projectFiles: ProjectFile[],
+  repos: ProjectRepo[],
+): ActivityItem[] {
+  const all: ActivityItem[] = [];
+  for (const u of updates) {
+    all.push({
+      id: `u-${u.id}`,
+      kind: "update",
+      title: u.title,
+      body: u.body,
+      authorName: u.author?.display_name || u.author?.handle || "Unknown",
+      authorHandle: u.author?.handle ?? null,
+      at: u.created_at,
+    });
+  }
+  for (const m of milestones) {
+    if (m.status !== "done") continue;
+    all.push({
+      id: `m-${m.id}`,
+      kind: "milestone",
+      title: `Completed milestone: ${m.title}`,
+      at: m.updated_at ?? m.created_at,
+    });
+  }
+  for (const d of discussions) {
+    all.push({
+      id: `d-${d.id}`,
+      kind: "discussion",
+      title: `Started discussion: ${d.title}`,
+      authorName: d.author?.display_name || d.author?.handle || "Unknown",
+      authorHandle: d.author?.handle ?? null,
+      at: d.created_at,
+    });
+  }
+  for (const f of projectFiles) {
+    all.push({
+      id: `f-${f.path ?? f.name}`,
+      kind: "file",
+      title: `Added ${f.dir ? `${f.dir}/` : ""}${f.name}`,
+      at: f.uploaded_at,
+    });
+  }
+  for (const r of repos) {
+    all.push({
+      id: `r-${r.id}`,
+      kind: "repo",
+      title: `Linked repository ${r.metadata?.full_name ?? r.url}`,
+      at: r.created_at,
+    });
+  }
+  return all.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+}
+
 export function ProjectActivityTab({
   projectId,
   milestones,
@@ -109,6 +174,27 @@ export function ProjectActivityTab({
 }) {
   const createUpdate = useCreateProjectUpdate();
   const { data: activityRows } = useProjectActivity(projectId);
+
+  // The project's founding moment lives in contribution_log (project_published),
+  // which project_activity doesn't record. Surface it so the feed shows the
+  // actual contribution history, not just the trigger-recorded delta.
+  const { data: founding } = useQuery({
+    queryKey: ["project-founding", projectId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("contribution_log")
+        .select("id, created_at")
+        .eq("action", "project_published")
+        .filter("metadata->>project_id", "eq", projectId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return (data as { id: string; created_at: string } | null) ?? null;
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [showPost, setShowPost] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -118,61 +204,24 @@ export function ProjectActivityTab({
   // empty (e.g. DB hasn't run the triggers migration yet), fall back to the
   // client-side aggregation across the source tables.
   const items = useMemo<ActivityItem[]>(() => {
-    if (activityRows && activityRows.length > 0) {
-      return activityRows
-        .map(fromActivityRow)
-        .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-    }
+    const foundingItem: ActivityItem | null = founding
+      ? {
+          id: `f-${founding.id}`,
+          kind: "founded",
+          title: "Project published",
+          at: founding.created_at,
+        }
+      : null;
 
-    const all: ActivityItem[] = [];
-    for (const u of updates) {
-      all.push({
-        id: `u-${u.id}`,
-        kind: "update",
-        title: u.title,
-        body: u.body,
-        authorName: u.author?.display_name || u.author?.handle || "Unknown",
-        authorHandle: u.author?.handle ?? null,
-        at: u.created_at,
-      });
-    }
-    for (const m of milestones) {
-      if (m.status !== "done") continue;
-      all.push({
-        id: `m-${m.id}`,
-        kind: "milestone",
-        title: `Completed milestone: ${m.title}`,
-        at: m.updated_at ?? m.created_at,
-      });
-    }
-    for (const d of discussions) {
-      all.push({
-        id: `d-${d.id}`,
-        kind: "discussion",
-        title: `Started discussion: ${d.title}`,
-        authorName: d.author?.display_name || d.author?.handle || "Unknown",
-        authorHandle: d.author?.handle ?? null,
-        at: d.created_at,
-      });
-    }
-    for (const f of projectFiles) {
-      all.push({
-        id: `f-${f.path ?? f.name}`,
-        kind: "file",
-        title: `Added ${f.dir ? `${f.dir}/` : ""}${f.name}`,
-        at: f.uploaded_at,
-      });
-    }
-    for (const r of repos) {
-      all.push({
-        id: `r-${r.id}`,
-        kind: "repo",
-        title: `Linked repository ${r.metadata?.full_name ?? r.url}`,
-        at: r.created_at,
-      });
-    }
-    return all.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  }, [activityRows, updates, milestones, discussions, projectFiles, repos]);
+    const sourceItems: ActivityItem[] =
+      activityRows && activityRows.length > 0
+        ? activityRows.map(fromActivityRow)
+        : buildFallbackItems(updates, milestones, discussions, projectFiles, repos);
+
+    return [...(foundingItem ? [foundingItem] : []), ...sourceItems].sort(
+      (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+    );
+  }, [activityRows, updates, milestones, discussions, projectFiles, repos, founding]);
 
   const handlePost = async () => {
     if (!title.trim() || !body.trim()) return;
