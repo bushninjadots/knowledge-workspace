@@ -6,7 +6,19 @@ import {
   type LayoutItem,
 } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
-import { Check, EyeOff, GripVertical, MoreHorizontal, Pin, Plus, RotateCcw } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  EyeOff,
+  GripVertical,
+  MoreHorizontal,
+  Pin,
+  Plus,
+  RotateCcw,
+  Undo2,
+  LoaderCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +28,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLayoutPreferences, type PersistedLayout } from "@/hooks/use-layout-preferences";
+import {
+  useLayoutPreferences,
+  type LayoutStorage,
+  type PersistedLayout,
+} from "@/hooks/use-layout-preferences";
 import {
   GRID_COLS,
   ROW_HEIGHT,
@@ -24,6 +40,7 @@ import {
   mergeLayout,
   stackDefault,
   type WorkspaceModule,
+  type WorkspaceLayoutPreset,
 } from "@/lib/workspace-layouts";
 
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -49,6 +66,10 @@ type Props = {
   showCustomizeBar?: boolean;
   /** Apply dashboard-only migrations for modules intentionally moved out of the grid. */
   migrateRetiredModules?: boolean;
+  /** Optional public/profile-owned storage adapter instead of private layout prefs. */
+  layoutStorage?: LayoutStorage;
+  /** Optional starting arrangements for owners who want a guided setup. */
+  layoutPresets?: WorkspaceLayoutPreset[];
 };
 
 /**
@@ -68,9 +89,13 @@ export function WorkspaceGrid({
   showModuleTitles = true,
   showCustomizeBar = true,
   migrateRetiredModules = false,
+  layoutStorage,
+  layoutPresets = [],
 }: Props) {
   const isMobile = useIsMobile();
-  const { data: saved, isLoading, save } = useLayoutPreferences(page, userId);
+  const privateStorage = useLayoutPreferences(page, userId, !layoutStorage);
+  const storage = layoutStorage ?? privateStorage;
+  const { data: saved, isLoading, save } = storage;
   const { width, containerRef } = useContainerWidth({ initialWidth: 1024 });
 
   const defaultItems = useMemo(() => stackDefault(modules), [modules]);
@@ -89,6 +114,9 @@ export function WorkspaceGrid({
   const [hidden, setHidden] = useState<string[]>([]);
   const [pinned, setPinned] = useState<string[]>([]);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const undoStackRef = useRef<{ items: LayoutItem[]; hidden: string[]; pinned: string[] }[]>([]);
+  const [, setUndoVersion] = useState(0);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,7 +170,10 @@ export function WorkspaceGrid({
         hidden: hiddenRef.current,
         pinned: pinnedRef.current,
       };
-      save(payload).catch(() => {});
+      setSaveState("saving");
+      save(payload)
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
     }, 600);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -216,21 +247,57 @@ export function WorkspaceGrid({
     });
   }, []);
 
+  const remember = () => {
+    undoStackRef.current = [
+      ...undoStackRef.current.slice(-19),
+      { items: itemsRef.current, hidden: hiddenRef.current, pinned: pinnedRef.current },
+    ];
+    setUndoVersion((v) => v + 1);
+  };
+
+  const undo = () => {
+    const previous = undoStackRef.current.pop();
+    if (!previous) return;
+    setItems(previous.items);
+    setHidden(previous.hidden);
+    setPinned(previous.pinned);
+    setUndoVersion((v) => v + 1);
+  };
+
+  const applyPreset = (preset: WorkspaceLayoutPreset) => {
+    remember();
+    const merged = mergeLayout(
+      modules,
+      preset.items,
+      preset.hidden,
+      preset.pinned,
+      defaultItems,
+      migrateRetiredModules,
+    );
+    setItems(packForPins(merged.items, merged.pinned));
+    setHidden(merged.hidden);
+    setPinned(merged.pinned);
+  };
+
   const togglePin = (id: string) => {
+    remember();
     const nextPinned = pinned.includes(id) ? pinned.filter((p) => p !== id) : [...pinned, id];
     setPinned(nextPinned);
     setItems((prev) => packForPins(prev, nextPinned));
   };
 
   const hideModule = (id: string) => {
+    remember();
     setHidden((prev) => [...prev, id]);
   };
 
   const restoreModule = (id: string) => {
+    remember();
     setHidden((prev) => prev.filter((h) => h !== id));
   };
 
   const resetSize = (id: string) => {
+    remember();
     const def = modules.find((m) => m.id === id);
     if (!def) return;
     setItems((prev) =>
@@ -250,6 +317,7 @@ export function WorkspaceGrid({
       return;
     }
     setConfirmReset(false);
+    remember();
     const merged = mergeLayout(modules, null, [], [], defaultItems);
     setItems(merged.items);
     setHidden(merged.hidden);
@@ -259,6 +327,7 @@ export function WorkspaceGrid({
 
   // Keyboard moving: focus a drag handle and use arrow keys.
   const moveItem = (id: string, dx: number, dy: number) => {
+    remember();
     setItems((prev) =>
       prev.map((it) => {
         if (it.i !== id) return it;
@@ -271,6 +340,23 @@ export function WorkspaceGrid({
 
   const dragEnabled = customizing && canCustomize && !isMobile;
 
+  const renderGridItem = (it: LayoutItem) => (
+    <div key={it.i} className={`h-full ${customizing ? "ws-editing" : ""}`}>
+      <ModuleShell
+        module={modules.find((m) => m.id === it.i)}
+        customizing={customizing}
+        pinned={pinned.includes(it.i)}
+        onPin={canCustomize ? () => togglePin(it.i) : undefined}
+        onHide={canCustomize ? () => hideModule(it.i) : undefined}
+        onResetSize={canCustomize ? () => resetSize(it.i) : undefined}
+        onMove={(dx, dy) => moveItem(it.i, dx, dy)}
+        showTitle={showModuleTitles}
+      >
+        {contents[it.i]}
+      </ModuleShell>
+    </div>
+  );
+
   return (
     <div className={className}>
       {/* ── Customize bar ── */}
@@ -278,11 +364,66 @@ export function WorkspaceGrid({
         <div className="mb-4 flex items-center justify-between gap-3">
           {customizing ? (
             <>
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Customize layout</span>
-                {" · "}Drag to rearrange · Resize modules
-              </p>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>
+                  <span className="font-medium text-foreground">Customize layout</span>
+                  {" · "}Drag to rearrange · Resize modules · Use move controls on mobile
+                </span>
+                {layoutPresets.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded-md border border-border/60 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        Start from a preset
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-64">
+                      {layoutPresets.map((preset) => (
+                        <DropdownMenuItem key={preset.id} onClick={() => applyPreset(preset)}>
+                          <div>
+                            <p className="text-xs font-medium">{preset.label}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {preset.description}
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                {saveState === "saving" && (
+                  <span
+                    className="inline-flex items-center gap-1 text-muted-foreground"
+                    role="status"
+                  >
+                    <LoaderCircle className="h-3 w-3 animate-spin" /> Saving
+                  </span>
+                )}
+                {saveState === "saved" && (
+                  <span className="text-primary" role="status">
+                    Saved
+                  </span>
+                )}
+                {saveState === "error" && (
+                  <span className="text-destructive" role="status">
+                    Couldn't save
+                  </span>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={undo}
+                  disabled={undoStackRef.current.length === 0}
+                  aria-label="Undo layout change"
+                >
+                  <Undo2 className="mr-1.5 h-3.5 w-3.5" />
+                  Undo
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -316,44 +457,33 @@ export function WorkspaceGrid({
 
       {/* ── Grid ── */}
       <div ref={containerRef}>
-        {width > 0 && (
-          <ResponsiveGridLayout
-            className="ws-grid"
-            width={width}
-            layouts={layouts}
-            breakpoints={BREAKPOINTS}
-            cols={COLS}
-            rowHeight={ROW_HEIGHT}
-            margin={GRID_MARGIN}
-            containerPadding={[0, 0]}
-            dragConfig={{
-              enabled: dragEnabled,
-              bounded: true,
-              handle: ".ws-drag-handle",
-            }}
-            resizeConfig={{
-              enabled: dragEnabled,
-              handles: ["se", "e", "s"],
-            }}
-            onLayoutChange={handleLayoutChange}
-          >
-            {visibleItems.map((it) => (
-              <div key={it.i} className={`h-full ${customizing ? "ws-editing" : ""}`}>
-                <ModuleShell
-                  module={modules.find((m) => m.id === it.i)}
-                  customizing={customizing}
-                  pinned={pinned.includes(it.i)}
-                  onPin={canCustomize ? () => togglePin(it.i) : undefined}
-                  onHide={canCustomize ? () => hideModule(it.i) : undefined}
-                  onResetSize={canCustomize ? () => resetSize(it.i) : undefined}
-                  onMove={(dx, dy) => moveItem(it.i, dx, dy)}
-                  showTitle={showModuleTitles}
-                >
-                  {contents[it.i]}
-                </ModuleShell>
-              </div>
-            ))}
-          </ResponsiveGridLayout>
+        {isMobile ? (
+          <div className="space-y-4">{visibleItems.map(renderGridItem)}</div>
+        ) : (
+          width > 0 && (
+            <ResponsiveGridLayout
+              className="ws-grid"
+              width={width}
+              layouts={layouts}
+              breakpoints={BREAKPOINTS}
+              cols={COLS}
+              rowHeight={ROW_HEIGHT}
+              margin={GRID_MARGIN}
+              containerPadding={[0, 0]}
+              dragConfig={{
+                enabled: dragEnabled,
+                bounded: true,
+                handle: ".ws-drag-handle",
+              }}
+              resizeConfig={{
+                enabled: dragEnabled,
+                handles: ["se", "e", "s"],
+              }}
+              onLayoutChange={handleLayoutChange}
+            >
+              {visibleItems.map(renderGridItem)}
+            </ResponsiveGridLayout>
+          )
         )}
       </div>
 
@@ -432,30 +562,50 @@ function ModuleShell({
         {showTitle && pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
         <div className="ml-auto flex items-center gap-0.5">
           {onMove && (
-            <button
-              type="button"
-              aria-label="Move module"
-              title="Move with arrow keys"
-              className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
-              onKeyDown={(e) => {
-                // Arrow keys normally scroll the page — prevent that so the
-                // module moves cleanly without the viewport jumping.
-                if (
-                  e.key === "ArrowLeft" ||
-                  e.key === "ArrowRight" ||
-                  e.key === "ArrowUp" ||
-                  e.key === "ArrowDown"
-                ) {
-                  e.preventDefault();
-                }
-                if (e.key === "ArrowLeft") onMove(-1, 0);
-                else if (e.key === "ArrowRight") onMove(1, 0);
-                else if (e.key === "ArrowUp") onMove(0, -1);
-                else if (e.key === "ArrowDown") onMove(0, 1);
-              }}
-            >
-              <GripVertical className="h-3.5 w-3.5" />
-            </button>
+            <>
+              <button
+                type="button"
+                aria-label={`Move ${module?.title ?? "module"} up`}
+                title="Move up"
+                className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                onClick={() => onMove(0, -1)}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label={`Move ${module?.title ?? "module"} down`}
+                title="Move down"
+                className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                onClick={() => onMove(0, 1)}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Move module"
+                title={`Move ${module?.title ?? "module"} with arrow keys`}
+                className="ws-drag-handle rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                onKeyDown={(e) => {
+                  // Arrow keys normally scroll the page — prevent that so the
+                  // module moves cleanly without the viewport jumping.
+                  if (
+                    e.key === "ArrowLeft" ||
+                    e.key === "ArrowRight" ||
+                    e.key === "ArrowUp" ||
+                    e.key === "ArrowDown"
+                  ) {
+                    e.preventDefault();
+                  }
+                  if (e.key === "ArrowLeft") onMove(-1, 0);
+                  else if (e.key === "ArrowRight") onMove(1, 0);
+                  else if (e.key === "ArrowUp") onMove(0, -1);
+                  else if (e.key === "ArrowDown") onMove(0, 1);
+                }}
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </button>
+            </>
           )}
           {onPin && onHide && onResetSize && (
             <DropdownMenu>

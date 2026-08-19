@@ -33,6 +33,16 @@ export const Route = createFileRoute("/_authenticated/notifications")({
 
 const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   all: null,
+  action: [
+    "connection_request",
+    "session_invite",
+    "project_invite",
+    "team_invite",
+    "role_application_accepted",
+    "role_application_declined",
+    "challenge_submitted",
+    "challenge_resubmitted",
+  ],
   message: ["message"],
   session: ["session_invite", "session_update"],
   community: [
@@ -62,6 +72,7 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
 
 const TABS = [
   { key: "all", label: "All" },
+  { key: "action", label: "Needs action" },
   { key: "message", label: "Messages" },
   { key: "session", label: "Sessions" },
   { key: "community", label: "Community" },
@@ -101,6 +112,10 @@ function NotificationsPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <NotificationHeader />
         <main className="mt-6 min-w-0">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Start with <span className="font-medium text-foreground">Needs action</span> when you
+            want to focus on decisions and replies; everything else can wait.
+          </p>
           <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
             <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
               {TABS.map((tab) => (

@@ -7,6 +7,7 @@ import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
+import { MobilePrimaryNav } from "./mobile-primary-nav";
 
 /**
  * Shared layout for all authenticated routes.
@@ -74,9 +75,10 @@ export function AuthenticatedShell() {
           </div>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 pb-16 md:pb-0">
           <Outlet />
         </main>
+        <MobilePrimaryNav onOpenMore={() => setOpen(true)} />
 
         {/* Scroll-to-top */}
         {showScrollTop && (

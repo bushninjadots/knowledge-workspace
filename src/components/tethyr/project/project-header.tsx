@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Link as LinkIcon,
   Lock,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -86,10 +87,12 @@ export function ProjectHeader({
   links,
   repoStats,
   communityPostCount,
+  openNeedCount,
   onJoin,
   onSignIn,
   onPostUpdate,
   onOpenDiscussions,
+  onOpenNeeds,
 }: {
   project: ProjectDetail;
   coverSigned: string | null;
@@ -100,10 +103,12 @@ export function ProjectHeader({
   /** Cached GitHub stats from the first linked repository. */
   repoStats?: { language?: string | null; stars?: number; forks?: number };
   communityPostCount: number;
+  openNeedCount: number;
   onJoin?: () => void;
   onSignIn?: () => void;
   onPostUpdate?: () => void;
   onOpenDiscussions?: () => void;
+  onOpenNeeds?: () => void;
 }) {
   const others = contributors.filter((c) => c.role !== "creator");
   const timeSinceStart = project.started_at
@@ -269,6 +274,15 @@ export function ProjectHeader({
 
           {/* Actions */}
           <div className="flex shrink-0 items-center gap-2">
+            {openNeedCount > 0 && (
+              <button
+                onClick={onOpenNeeds}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive transition hover:bg-destructive/10"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                {openNeedCount} need{openNeedCount !== 1 ? "s" : ""}
+              </button>
+            )}
             {communityPostCount > 0 && (
               <button
                 onClick={onOpenDiscussions}

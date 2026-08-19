@@ -1,38 +1,24 @@
-// Public-facing profile at /u/:handle. Anyone can view — even signed-out —
-// because the profiles table has a public SELECT policy. Signed-in visitors
-// see a Connect button.
-import { createFileRoute, notFound, useParams, Link, useNavigate } from "@tanstack/react-router";
+// Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
+// because profiles and contribution surfaces are public. The owner can edit
+// the public Studio arrangement when viewing their own handle.
+import { createFileRoute, notFound, useNavigate, useParams, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  MapPin,
-  Clock,
-  Languages,
-  GraduationCap,
-  Sparkles,
-  Link as LinkIcon,
-  ThumbsUp,
-  MessageCircle,
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { safeHref } from "@/lib/validators";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
-import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
-import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
+import { PublicStudioWorkspace } from "@/components/tethyr/profile/public-studio-workspace";
+import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
-  VerificationBadge,
-  ExperienceBadge,
-  PROJECT_STATUS_LABEL,
-  PROJECT_STATUS_STYLE,
-  type SkillVerificationLevel,
   type SkillExperienceLevel,
+  type SkillVerificationLevel,
 } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
+import { usePublicStudioLayout } from "@/hooks/use-public-studio-layout";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 
@@ -58,6 +44,7 @@ type PublicProfile = {
   learning_goals: string | null;
   reputation_score: number | null;
   favorite_achievement: string | null;
+  availability: string | null;
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
@@ -114,7 +101,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -134,7 +121,7 @@ function PublicProfileRoute() {
           .eq("profile_id", profile.id),
       ]);
 
-      const teachSkillIds = (teach.data ?? []).map((r) => r.skill_id);
+      const teachSkillIds = (teach.data ?? []).map((row) => row.skill_id);
       let endorsementRows: { skill_id: string; endorsed_by: string }[] = [];
       if (teachSkillIds.length > 0) {
         const { data } = await supabase
@@ -148,68 +135,69 @@ function PublicProfileRoute() {
       let avatarSigned: string | null = null;
       let bannerSigned: string | null = null;
       if (profile.avatar_url) {
-        const { data: s } = await supabase.storage
+        const { data: signed } = await supabase.storage
           .from("avatars")
           .createSignedUrl(profile.avatar_url, 60 * 60);
-        avatarSigned = s?.signedUrl ?? null;
+        avatarSigned = signed?.signedUrl ?? null;
       }
       if (profile.banner_url) {
-        const { data: s } = await supabase.storage
+        const { data: signed } = await supabase.storage
           .from("banners")
           .createSignedUrl(profile.banner_url, 60 * 60);
-        bannerSigned = s?.signedUrl ?? null;
+        bannerSigned = signed?.signedUrl ?? null;
       }
 
       const teachSkills = (teach.data ?? [])
-        .map((r) => {
-          const s = r.skills as unknown as SkillLite | null;
-          if (!s) return null;
-          const rowsForSkill = endorsementRows.filter((e) => e.skill_id === r.skill_id);
+        .map((row) => {
+          const skill = row.skills as unknown as SkillLite | null;
+          if (!skill) return null;
+          const rowsForSkill = endorsementRows.filter(
+            (endorsement) => endorsement.skill_id === row.skill_id,
+          );
           return {
-            ...s,
-            verification_level: r.verification_level as SkillVerificationLevel,
-            experience_level: r.experience_level as SkillExperienceLevel,
-            proof_url: r.proof_url as string | null,
+            ...skill,
+            verification_level: row.verification_level as SkillVerificationLevel,
+            experience_level: row.experience_level as SkillExperienceLevel,
+            proof_url: row.proof_url as string | null,
             endorsementCount: rowsForSkill.length,
-            endorsedByIds: rowsForSkill.map((e) => e.endorsed_by),
+            endorsedByIds: rowsForSkill.map((endorsement) => endorsement.endorsed_by),
           };
         })
-        .filter((s): s is TeachSkillLite => !!s);
+        .filter((skill): skill is TeachSkillLite => !!skill);
       const learnSkills = (learn.data ?? [])
-        .map((r) => r.skills as unknown as SkillLite | null)
-        .filter((s): s is SkillLite => !!s);
+        .map((row) => row.skills as unknown as SkillLite | null)
+        .filter((skill): skill is SkillLite => !!skill);
 
-      // Fetch projects this user has contributed to
       let contributedProjects: ProjectLite[] = [];
       try {
-        const { data: contribRows } = await supabase
+        const { data: contributorRows } = await supabase
           .from("project_contributors")
           .select(
             "project_id, role, projects(id, title, description, status, stage, progress_percent, cover_url, tags)",
           )
           .eq("profile_id", profile.id)
           .limit(6);
-        if (contribRows) {
-          contributedProjects = contribRows
-            .map((r): ProjectLite | null => {
-              const p = r.projects;
-              if (!p) return null;
+        if (contributorRows) {
+          contributedProjects = contributorRows
+            .map((row): ProjectLite | null => {
+              const project = row.projects;
+              if (!project) return null;
               return {
-                id: p.id,
-                title: p.title,
-                description: p.description,
-                status: p.status,
-                stage: p.stage ?? null,
-                progress_percent: p.progress_percent ?? null,
-                cover_url: p.cover_url ?? null,
-                tags: p.tags ?? [],
-                role: r.role,
+                id: project.id,
+                title: project.title,
+                description: project.description,
+                status: project.status,
+                stage: project.stage ?? null,
+                progress_percent: project.progress_percent ?? null,
+                cover_url: project.cover_url ?? null,
+                tags: project.tags ?? [],
+                role: row.role,
               };
             })
-            .filter((p: ProjectLite | null): p is ProjectLite => !!p);
+            .filter((project): project is ProjectLite => !!project);
         }
       } catch {
-        // project_contributors may not exist yet — safe to ignore
+        // Keep the public Studio useful if contribution data is unavailable.
       }
 
       return {
@@ -223,12 +211,11 @@ function PublicProfileRoute() {
     },
   });
 
-  // Called unconditionally (before the loading/error early-returns below) to
-  // satisfy the Rules of Hooks — falls back to null until data resolves.
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
   const endorse = useEndorseSkill();
+  const publicLayout = usePublicStudioLayout(data?.profile.id ?? null);
 
   if (isLoading) {
     return (
@@ -247,6 +234,7 @@ function PublicProfileRoute() {
       </Shell>
     );
   }
+
   if (error || !data) {
     return (
       <Shell>
@@ -259,18 +247,10 @@ function PublicProfileRoute() {
     data;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
   const languages = profile.languages ?? [];
-  const portfolioLinks = profile.portfolio_links ?? [];
-  const favouriteTools = profile.favourite_tools ?? [];
-  const softwareStack = profile.software_stack ?? [];
-
-  // Split contributions: projects they created vs projects they contributed to
-  const builtProjects = contributedProjects.filter((p) => p.role === "creator");
-  const joinedProjects = contributedProjects.filter((p) => p.role !== "creator");
 
   return (
     <Shell accentColor={bannerAccent}>
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
-        {/* ── Hero: Studio Backdrop ── */}
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           <div
             className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
@@ -293,7 +273,6 @@ function PublicProfileRoute() {
           </div>
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            {/* Avatar — Creator Portrait */}
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
               <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
                 {avatarSigned ? (
@@ -310,18 +289,19 @@ function PublicProfileRoute() {
               </div>
             </div>
 
-            {/* Name, Title, Meta — Secondary to Work */}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
+                    <h1 className="break-words font-display text-2xl font-semibold sm:text-3xl">
                       {profile.display_name || "Untitled member"}
                     </h1>
                     <FavoriteBadge type={profile.favorite_achievement} />
                   </div>
                   {profile.creator_title && (
-                    <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
+                    <p className="mt-0.5 break-words text-sm text-foreground/80">
+                      {profile.creator_title}
+                    </p>
                   )}
                   <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
                 </div>
@@ -352,7 +332,7 @@ function PublicProfileRoute() {
                 )}
                 {languages.length > 0 && (
                   <span className="inline-flex items-center gap-1">
-                    <Languages className="h-3.5 w-3.5" /> {languages.join(",")}
+                    <Languages className="h-3.5 w-3.5" /> {languages.join(", ")}
                   </span>
                 )}
                 {profile.reputation_score != null && profile.reputation_score > 0 && (
@@ -362,7 +342,6 @@ function PublicProfileRoute() {
                 )}
               </div>
 
-              {/* Start a Conversation CTA */}
               {meId && meId !== profile.id && (
                 <Link
                   to="/messages"
@@ -375,329 +354,40 @@ function PublicProfileRoute() {
             </div>
           </div>
         </div>
-        {/* ── Section 1: Skills They Teach (with endorsements) ── */}
-        <SectionCard
-          title="Skills they share"
-          subtitle="What they can help you with"
-          icon={<GraduationCap className="h-4 w-4" />}
-        >
-          {teachSkills.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Not sharing any skills yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {teachSkills.map((s) => {
-                const alreadyEndorsed = !!meId && s.endorsedByIds.includes(meId);
-                const canEndorse = !!meId && meId !== profile.id && !alreadyEndorsed;
-                return (
-                  <div
-                    key={s.id}
-                    className="transition-lift group flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Link
-                        to="/skills/$slug"
-                        params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        {s.name}
-                      </Link>
-                      <div className="flex items-center gap-1.5">
-                        <VerificationBadge level={s.verification_level} proofUrl={s.proof_url} />
-                        <ExperienceBadge level={s.experience_level} />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {s.endorsementCount > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                          <ThumbsUp className="h-3 w-3" />
-                          {s.endorsementCount}
-                        </span>
-                      )}
-                      {canEndorse && (
-                        <button
-                          type="button"
-                          disabled={endorse.isPending}
-                          onClick={() =>
-                            endorse.mutate(
-                              {
-                                profileId: profile.id,
-                                skillId: s.id,
-                                endorsedBy: meId as string,
-                              },
-                              {
-                                onSuccess: () => toast.success(`Endorsed ${s.name}`),
-                                onError: (e: Error) => toast.error(friendlyError(e)),
-                              },
-                            )
-                          }
-                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                        >
-                          <ThumbsUp className="h-3 w-3" /> Endorse
-                        </button>
-                      )}
-                      {alreadyEndorsed && (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-primary">
-                          <ThumbsUp className="h-3 w-3" /> Endorsed
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </SectionCard>
-        {/* ── Section 2: Project Contributions — Built vs Contributed To ── */}
-        <SectionCard
-          title="Contributions"
-          subtitle={
-            contributedProjects.length > 0
-              ? `${contributedProjects.length} project${contributedProjects.length !== 1 ? "s" : ""} · ${builtProjects.length} built, ${joinedProjects.length} joined`
-              : "Projects this person has worked on"
-          }
-          icon={
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-            </svg>
-          }
-        >
-          {contributedProjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No project contributions visible yet.</p>
-          ) : (
-            <div className="space-y-5">
-              {builtProjects.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                    Built
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {builtProjects.map((p) => (
-                      <ProjectCard key={p.id} project={p} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {joinedProjects.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                    Contributing to
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {joinedProjects.map((p) => (
-                      <ProjectCard key={p.id} project={p} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </SectionCard>
-        {/* ── Section 2b: Contribution activity — work, not claims ── */}
-        <SectionCard
-          title="Contribution activity"
-          subtitle="What they've shipped and completed recently"
-          icon={
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="3" y="4" width="18" height="17" rx="2" />
-              <path d="M8 2v4M16 2v4M3 10h18" />
-            </svg>
-          }
-        >
-          <ContributionGraph profileId={profile.id} />
-          <div className="mt-5">
-            <ActivityTimeline profileId={profile.id} limit={6} />
-          </div>
-        </SectionCard>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* ── Section 3: Currently Learning ── */}
-          <SectionCard title="Skills they're growing" icon={<Sparkles className="h-4 w-4" />}>
-            {learnSkills.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {learnSkills.map((s) => (
-                  <Link
-                    key={s.id}
-                    to="/skills/$slug"
-                    params={{ slug: s.slug ?? s.name.toLowerCase().replace(/\s+/g, "-") }}
-                    className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1 text-xs text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-primary"
-                  >
-                    {s.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </SectionCard>
 
-          {/* ── Section 4: Links and Social ── */}
-          {(portfolioLinks.length > 0 || Object.keys(profile.social_links ?? {}).length > 0) && (
-            <SectionCard title="Links" icon={<LinkIcon className="h-4 w-4" />}>
-              <div className="space-y-2">
-                {portfolioLinks.map((p, i) => (
-                  <a
-                    key={i}
-                    href={safeHref(p.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="transition-lift flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-foreground hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:text-primary"
-                  >
-                    <LinkIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{p.label || p.url}</span>
-                  </a>
-                ))}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {Object.entries(profile.social_links ?? {}).map(([k, url]) => (
-                    <a
-                      key={k}
-                      href={safeHref(url)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="transition-lift rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                    >
-                      {k}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </SectionCard>
-          )}
-        </div>
-        {/* ── Section 5: About (bio is secondary) ── */}
-        {profile.bio && (
-          <SectionCard
-            title="About"
-            icon={
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4" />
-                <path d="M12 8h.01" />
-              </svg>
-            }
-          >
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/80">
-              {profile.bio}
-            </p>
-            {(favouriteTools.length > 0 || softwareStack.length > 0) && (
-              <div className="mt-4 space-y-2">
-                {favouriteTools.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Tools
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {favouriteTools.map((t) => (
-                        <span
-                          key={t}
-                          className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {softwareStack.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Stack
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {softwareStack.map((s) => (
-                        <span
-                          key={s}
-                          className="rounded-full bg-secondary/50 px-2.5 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </SectionCard>
-        )}
+        <StudioDirection
+          projects={contributedProjects.map((project) => ({
+            id: project.id,
+            title: project.title,
+            status: project.status,
+          }))}
+          learningGoals={profile.learning_goals}
+          availability={profile.availability}
+        />
+
+        <PublicStudioWorkspace
+          profile={profile}
+          profileId={profile.id}
+          meId={meId}
+          teachSkills={teachSkills}
+          learnSkills={learnSkills}
+          contributedProjects={contributedProjects}
+          layoutStorage={publicLayout}
+          canCustomize={meId === profile.id}
+          endorsePending={endorse.isPending}
+          onEndorse={(skill) => {
+            if (!meId) return;
+            endorse.mutate(
+              { profileId: profile.id, skillId: skill.id, endorsedBy: meId },
+              {
+                onSuccess: () => toast.success(`Endorsed ${skill.name}`),
+                onError: (e: Error) => toast.error(friendlyError(e)),
+              },
+            );
+          }}
+        />
       </div>
     </Shell>
-  );
-}
-
-function ProjectCard({ project }: { project: ProjectLite }) {
-  return (
-    <Link
-      to="/projects/$id"
-      params={{ id: project.id }}
-      className="transition-lift group rounded-xl border border-border/60 bg-background/40 p-4 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-medium text-foreground group-hover:text-primary">
-          {project.title}
-        </h3>
-        {project.status && (
-          <span
-            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${PROJECT_STATUS_STYLE[project.status as keyof typeof PROJECT_STATUS_STYLE] ?? "border-border/60 text-muted-foreground"}`}
-          >
-            {PROJECT_STATUS_LABEL[project.status as keyof typeof PROJECT_STATUS_LABEL] ??
-              project.status}
-          </span>
-        )}
-      </div>
-      {project.description && (
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
-      )}
-      <div className="mt-2 flex items-center gap-2">
-        <span className="rounded-full bg-secondary/50 px-2 py-0.5 text-[11px] text-muted-foreground">
-          {project.role}
-        </span>
-        {project.progress_percent != null && (
-          <span className="text-[11px] text-muted-foreground">{project.progress_percent}%</span>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function SectionCard({
-  title,
-  subtitle,
-  icon,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-xl bg-surface-elevated/30 p-4 sm:p-5">
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground/80">
-          {icon}
-          {title}
-        </div>
-        {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
-      {children}
-    </div>
   );
 }
 
@@ -712,10 +402,12 @@ function Shell({
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
     : undefined;
+
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
         <button
+          type="button"
           onClick={() =>
             window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
           }
@@ -730,7 +422,7 @@ function Shell({
           Tethyr
         </Link>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm text-muted-foreground">Profile</span>
+        <span className="text-sm text-muted-foreground">Studio</span>
       </header>
       <main className="flex-1">{children}</main>
     </div>

@@ -30,7 +30,7 @@ import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { DASHBOARD_MODULES } from "@/lib/workspace-layouts";
+import { DASHBOARD_LAYOUT_PRESETS, DASHBOARD_MODULES } from "@/lib/workspace-layouts";
 
 import {
   AvailabilitySelector,
@@ -51,6 +51,7 @@ import { GlobalSearch } from "@/components/tethyr/global-search";
 import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
+import { MobilePrimaryNav } from "@/components/tethyr/mobile-primary-nav";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -161,9 +162,10 @@ function AuthenticatedDashboardLayout({
         </header>
 
         {/* Dashboard content */}
-        <main className="flex-1">
+        <main className="flex-1 pb-16 md:pb-0">
           <DashboardContent data={data} />
         </main>
+        <MobilePrimaryNav onOpenMore={() => setSidebarOpen(true)} />
 
         {/* Scroll-to-top */}
         {showScrollTop && (
@@ -518,7 +520,31 @@ function DashboardContent({
                   </h1>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <CreateProjectButton size="sm" variant="default" className="rounded-full" />
+                  {pendingSessionCount > 0 ? (
+                    <Link
+                      to="/sessions"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+                    >
+                      Review requests <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  ) : activeProjects.length > 0 ? (
+                    <Link
+                      to="/projects/$id"
+                      params={{ id: activeProjects[0].id }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+                    >
+                      Continue building <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  ) : todayOpps.length > 0 ? (
+                    <Link
+                      to="/explore"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+                    >
+                      Find a role <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  ) : (
+                    <CreateProjectButton size="sm" variant="default" className="rounded-full" />
+                  )}
                   {pct < 100 && (
                     <Link
                       to="/profile"
@@ -743,7 +769,10 @@ function DashboardContent({
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-        <section aria-label="Dashboard priorities" className="space-y-6">
+        <section aria-labelledby="dashboard-next-move-heading" className="space-y-6">
+          <h2 id="dashboard-next-move-heading" className="sr-only">
+            Your next move
+          </h2>
           {renderModule("welcome")}
           <FirstSessionOnboarding data={data} />
           {renderModule("next-steps")}
@@ -763,6 +792,7 @@ function DashboardContent({
             page="dashboard"
             userId={data?.userId}
             modules={DASHBOARD_MODULES}
+            layoutPresets={DASHBOARD_LAYOUT_PRESETS}
             canCustomize={true}
             showModuleTitles={false}
             renderModule={renderModule}

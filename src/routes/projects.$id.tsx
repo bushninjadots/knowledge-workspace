@@ -394,6 +394,7 @@ function ProjectPage() {
         links={links}
         repoStats={repoStats}
         communityPostCount={communityPostCount}
+        openNeedCount={needs.filter((need) => !need.is_filled).length}
         onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
         onSignIn={isSignedOut ? signInToJoin : undefined}
         onPostUpdate={
@@ -405,6 +406,7 @@ function ProjectPage() {
             : undefined
         }
         onOpenDiscussions={() => scrollToSection("project-discussions")}
+        onOpenNeeds={() => scrollToSection("project-needs")}
       />
 
       <div className="animate-room-enter min-h-screen bg-noise">

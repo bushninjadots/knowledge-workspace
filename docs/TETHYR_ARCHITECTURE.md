@@ -83,6 +83,18 @@ Prefer one canonical owner for each piece of page chrome:
 
 If duplicate controls or headings appear, fix ownership before adjusting spacing.
 
+## Studio Experience Ownership
+
+A person has a private Studio and a public Studio; they share concepts but not storage or rendering ownership:
+
+- `src/routes/_authenticated/profile.tsx` owns private identity, skills, project, community, and activity management.
+- `src/routes/u.$handle.tsx` owns the public Studio route and fixed identity header.
+- `src/components/tethyr/profile/public-studio-workspace.tsx` owns the public work/contribution section composition.
+- `src/hooks/use-public-studio-layout.ts` owns public Studio layout persistence.
+- `profiles.public_studio_layout` stores the owner-controlled public arrangement and is distinct from private `user_layout_preferences`.
+
+The public identity header remains fixed. Public work sections may be reordered, resized, pinned, or hidden by the owner. The profile table is already public-readable and owner-updatable, so the public layout can be rendered anonymously while writes remain protected by the existing profile RLS policy.
+
 ## Server and Security Ownership
 
 - `src/server.ts` owns server response wrapping, security headers, special document endpoints, and catastrophic SSR response normalization.

@@ -53,10 +53,11 @@ Implement the smallest change that improves coherence, trust, or the core collab
 **Goal:** make personal surfaces answer the next meaningful question.
 
 - [ ] Reduce dashboard default prominence to Today, active projects, collaboration actions, discovery, and evidence.
-- [ ] Make project work and contribution evidence dominate Studio.
+- [x] Make public Studio work and contribution evidence lead the public presentation; add owner-controlled freeform public layout.
 - [ ] Consolidate overlapping Stats/Reputation surfaces without losing useful evidence.
-- [ ] Share shell primitives between dashboard and authenticated routes where behavior is truly equivalent.
-- [ ] Keep customization optional, reversible, and quiet.
+- [x] Share the existing workspace primitives between private and public Studio layout behavior where the interaction contract is equivalent.
+- [x] Keep public customization optional, reversible, and quiet; the identity header remains fixed.
+- [ ] Decide whether the dashboard priority flow should expose controlled user focus preferences.
 
 ## Stage 5 — Connect supporting systems to work
 
@@ -87,6 +88,14 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [ ] Evaluate API, analytics, leaderboards, and native mobile only with a concrete product case.
 
 ## Execution log
+
+### 2026-08-19 — Public Studio layout
+
+- Added an owner-controlled public Studio layout stored on `profiles.public_studio_layout`, separate from private `user_layout_preferences` so anonymous visitors can read the public arrangement without exposing private workspace preferences.
+- Recomposed `/u/:handle` around Featured work, Contributions, Contribution activity, shared/growing skills, links, and about content through the existing `WorkspaceGrid` interaction model.
+- Added mobile move-up/move-down controls and a contextual link from private Studio to the public Studio view.
+- Validation: TypeScript, Vitest, production build, bundle budget, and Chromium desktop/mobile smoke all passed.
+
 
 ### 2026-08-09 — Audit P0 challenge trust hardening
 

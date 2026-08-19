@@ -15,6 +15,9 @@ import {
   TrendingUp,
   Hash,
   Zap,
+  Hammer,
+  GraduationCap,
+  MessageCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -99,6 +102,7 @@ const CATEGORIES = [
 ] as const;
 
 type Tab = "projects" | "creators" | "opportunities";
+type ExploreIntent = "build" | "contribute" | "learn" | "feedback" | null;
 
 type OpportunityQueryRow = {
   id: string;
@@ -173,6 +177,34 @@ export const Route = createFileRoute("/_authenticated/explore")({
   component: ExplorePage,
 });
 
+function IntentButton({
+  icon,
+  label,
+  pressed,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  pressed: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+        pressed
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border/60 bg-surface/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
 function ExplorePage() {
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
@@ -195,6 +227,7 @@ function ExplorePage() {
 
   const savedOpp = loadOppFilters();
   const [tab, setTab] = useState<Tab>("projects");
+  const [intent, setIntent] = useState<ExploreIntent>(null);
   const [q, setQ] = useState((savedOpp.q as string) ?? "");
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
   const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "match");
@@ -377,6 +410,7 @@ function ExplorePage() {
   const filteredProjects = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (projects ?? []).filter((p) => {
+      if (intent === "feedback" && !p.looking_for_feedback) return false;
       if (category !== "All" && category !== "Projects") {
         if (!p.tags.some((t) => t.toLowerCase() === category.toLowerCase())) return false;
       }
@@ -389,7 +423,7 @@ function ExplorePage() {
         p.profiles?.handle?.toLowerCase().includes(needle)
       );
     });
-  }, [projects, q, category]);
+  }, [projects, q, category, intent]);
 
   const filteredOpportunities = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -477,6 +511,77 @@ function ExplorePage() {
       <div className="mx-auto flex max-w-[90rem] gap-6 px-4 py-6 sm:px-6 sm:py-8">
         {/* Main content */}
         <div className="min-w-0 flex-1">
+          <section
+            aria-labelledby="explore-intent-heading"
+            className="mb-6 border-b border-border/60 pb-5"
+          >
+            <p className="section-label">Choose a direction</p>
+            <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1
+                  id="explore-intent-heading"
+                  className="font-display text-2xl font-semibold tracking-tight"
+                >
+                  What are you here to do?
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Start with an intention, then find the work or people that make it possible.
+                </p>
+              </div>
+              {intent && (
+                <button
+                  type="button"
+                  onClick={() => setIntent(null)}
+                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  Clear direction
+                </button>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Explore intentions">
+              <IntentButton
+                icon={<Hammer className="h-3.5 w-3.5" />}
+                label="Build something"
+                pressed={intent === "build"}
+                onClick={() => {
+                  setIntent("build");
+                  setTab("projects");
+                  setCategory("Projects");
+                }}
+              />
+              <IntentButton
+                icon={<Users className="h-3.5 w-3.5" />}
+                label="Contribute"
+                pressed={intent === "contribute"}
+                onClick={() => {
+                  setIntent("contribute");
+                  setTab("opportunities");
+                  setCategory("All");
+                }}
+              />
+              <IntentButton
+                icon={<GraduationCap className="h-3.5 w-3.5" />}
+                label="Learn with people"
+                pressed={intent === "learn"}
+                onClick={() => {
+                  setIntent("learn");
+                  setTab("creators");
+                  setCategory("All");
+                }}
+              />
+              <IntentButton
+                icon={<MessageCircle className="h-3.5 w-3.5" />}
+                label="Get feedback"
+                pressed={intent === "feedback"}
+                onClick={() => {
+                  setIntent("feedback");
+                  setTab("projects");
+                  setCategory("Projects");
+                }}
+              />
+            </div>
+          </section>
+
           {/* Tab bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div

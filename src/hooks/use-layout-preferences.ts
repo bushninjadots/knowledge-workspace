@@ -21,9 +21,19 @@ export type PersistedLayout = {
   pinned: string[];
 };
 
+export type LayoutStorage = {
+  data: PersistedLayout | null;
+  isLoading: boolean;
+  save: (layout: PersistedLayout) => Promise<void>;
+};
+
 const EMPTY: PersistedLayout = { v: 1, items: [], hidden: [], pinned: [] };
 
-export function useLayoutPreferences(page: "dashboard" | "profile", userId?: string | null) {
+export function useLayoutPreferences(
+  page: "dashboard" | "profile",
+  userId?: string | null,
+  enabled = true,
+) {
   const queryClient = useQueryClient();
   const queryKey = useMemo(() => ["layout-preferences", page, userId] as const, [page, userId]);
 
@@ -42,7 +52,7 @@ export function useLayoutPreferences(page: "dashboard" | "profile", userId?: str
       const parsed = data.layout as PersistedLayout;
       return { ...EMPTY, ...parsed };
     },
-    enabled: !!userId,
+    enabled: enabled && !!userId,
     staleTime: 60_000,
   });
 

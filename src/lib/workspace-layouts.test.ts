@@ -1,7 +1,14 @@
 import { Folder, Clock } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
-import { mergeLayout, type WorkspaceModule } from "./workspace-layouts";
+import {
+  mergeLayout,
+  DASHBOARD_LAYOUT_PRESETS,
+  PROFILE_LAYOUT_PRESETS,
+  PUBLIC_STUDIO_MODULES,
+  PUBLIC_STUDIO_PRESETS,
+  type WorkspaceModule,
+} from "./workspace-layouts";
 
 const modules: WorkspaceModule[] = [
   {
@@ -19,6 +26,42 @@ const modules: WorkspaceModule[] = [
     defaultH: 10,
   },
 ];
+
+describe("public Studio layout", () => {
+  it("exposes a stable work-first set of public sections", () => {
+    expect(PUBLIC_STUDIO_MODULES.map(({ id }) => id)).toEqual([
+      "featured-work",
+      "contributions",
+      "activity",
+      "skills-share",
+      "skills-growing",
+      "links",
+      "about",
+    ]);
+    expect(PUBLIC_STUDIO_MODULES[0].defaultW).toBe(8);
+    expect(PUBLIC_STUDIO_MODULES[1].defaultW).toBe(4);
+  });
+
+  it("offers guided presets without changing the freeform module registry", () => {
+    expect(PUBLIC_STUDIO_PRESETS.map(({ id }) => id)).toEqual([
+      "work-first",
+      "collaboration-first",
+      "learning-first",
+    ]);
+    expect(
+      PUBLIC_STUDIO_PRESETS.every((preset) => preset.items.length === PUBLIC_STUDIO_MODULES.length),
+    ).toBe(true);
+    expect(PUBLIC_STUDIO_PRESETS[0].pinned).toContain("featured-work");
+    expect(DASHBOARD_LAYOUT_PRESETS.map(({ id }) => id)).toEqual([
+      "build-center",
+      "network-center",
+    ]);
+    expect(PROFILE_LAYOUT_PRESETS.map(({ id }) => id)).toEqual([
+      "studio-work-first",
+      "studio-community",
+    ]);
+  });
+});
 
 describe("mergeLayout", () => {
   it("removes retired modules and shifts surviving dashboard modules upward", () => {

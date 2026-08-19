@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Camera,
   MapPin,
@@ -26,8 +27,9 @@ import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { PROFILE_MODULES } from "@/lib/workspace-layouts";
+import { PROFILE_LAYOUT_PRESETS, PROFILE_MODULES } from "@/lib/workspace-layouts";
 import { GripVertical } from "lucide-react";
+import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
   Dialog,
   DialogContent,
@@ -279,31 +281,61 @@ export function ProfileLayout({
           </div>
         </div>
 
+        <StudioDirection
+          projects={projects.map((project) => ({
+            id: project.id,
+            title: project.title,
+            status: project.status,
+          }))}
+          learningGoals={profile?.learning_goals}
+          availability={profile?.availability}
+          canEdit={isOwnProfile}
+        />
+
         {/* TABS + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* MAIN CONTENT */}
           <div className="min-w-0 flex-1">
             {customizing && isOwnProfile ? (
-              <WorkspaceGrid
-                page="profile"
-                userId={userId}
-                modules={PROFILE_MODULES}
-                canCustomize={isOwnProfile}
-                defaultCustomizing
-                showModuleTitles={false}
-                onCustomizingChange={setCustomizing}
-                renderModule={(id) => tabContent[id as Tab] ?? null}
-              />
+              <>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-3">
+                  <div>
+                    <p className="section-label">Private Studio layout</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      This arrangement is only for your workspace. Your public Studio has its own
+                      layout and preview.
+                    </p>
+                  </div>
+                  {profile?.handle && (
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                        Preview public Studio
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+                <WorkspaceGrid
+                  page="profile"
+                  userId={userId}
+                  modules={PROFILE_MODULES}
+                  layoutPresets={PROFILE_LAYOUT_PRESETS}
+                  canCustomize={isOwnProfile}
+                  defaultCustomizing
+                  showModuleTitles={false}
+                  onCustomizingChange={setCustomizing}
+                  renderModule={(id) => tabContent[id as Tab] ?? null}
+                />
+              </>
             ) : (
               <>
                 {/* Tab bar + customize button */}
                 <div className="mb-4 flex items-center gap-2">
-                  <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit">
+                  <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border card-border bg-surface p-1 w-fit">
                     {TABS.map((tab) => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                        className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                           activeTab === tab.id
                             ? "bg-surface-elevated text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -314,6 +346,13 @@ export function ProfileLayout({
                       </button>
                     ))}
                   </div>
+                  {isOwnProfile && profile?.handle && (
+                    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+                      <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                        View public Studio
+                      </Link>
+                    </Button>
+                  )}
                   {isOwnProfile && (
                     <Button
                       variant="outline"
@@ -322,7 +361,7 @@ export function ProfileLayout({
                       onClick={() => setCustomizing(true)}
                     >
                       <GripVertical className="mr-1.5 h-3.5 w-3.5" />
-                      Customize
+                      Customize private layout
                     </Button>
                   )}
                 </div>

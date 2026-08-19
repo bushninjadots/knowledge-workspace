@@ -98,8 +98,9 @@ export function ProjectNeeds({
 
   return (
     <section
+      id="project-needs"
       aria-labelledby="project-needs-heading"
-      className="mt-10 border-t border-border/60 pt-8"
+      className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
