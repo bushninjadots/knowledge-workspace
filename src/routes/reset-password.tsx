@@ -32,6 +32,7 @@ function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const authStateResolved = useRef(false);
@@ -78,14 +79,15 @@ function ResetPasswordPage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    const errors: Record<string, string> = {};
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
+      errors.password = "Password must be at least 8 characters";
     }
     if (password !== confirmation) {
-      toast.error("Passwords do not match");
-      return;
+      errors.confirmPassword = "Passwords do not match";
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     setLoading(true);
     try {
@@ -145,8 +147,18 @@ function ResetPasswordPage() {
               minLength={8}
               required
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: "" }));
+              }}
+              aria-describedby={fieldErrors.password ? "new-password-error" : undefined}
+              aria-invalid={!!fieldErrors.password}
             />
+            {fieldErrors.password && (
+              <p id="new-password-error" className="text-sm text-destructive mt-1">
+                {fieldErrors.password}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm password</Label>
@@ -158,8 +170,19 @@ function ResetPasswordPage() {
               minLength={8}
               required
               value={confirmation}
-              onChange={(event) => setConfirmation(event.target.value)}
+              onChange={(event) => {
+                setConfirmation(event.target.value);
+                if (fieldErrors.confirmPassword)
+                  setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+              }}
+              aria-describedby={fieldErrors.confirmPassword ? "confirm-password-error" : undefined}
+              aria-invalid={!!fieldErrors.confirmPassword}
             />
+            {fieldErrors.confirmPassword && (
+              <p id="confirm-password-error" className="text-sm text-destructive mt-1">
+                {fieldErrors.confirmPassword}
+              </p>
+            )}
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Updating…" : "Update password"}

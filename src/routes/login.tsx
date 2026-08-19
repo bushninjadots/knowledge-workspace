@@ -57,6 +57,7 @@ function LoginPage() {
   const [resetting, setResetting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
   // Optional ?redirect=/path — send the user back after a successful login.
@@ -86,7 +87,7 @@ function LoginPage() {
 
   async function requestPasswordReset() {
     if (!email.trim()) {
-      toast.error("Enter your email first");
+      setFieldErrors({ email: "Enter your email first" });
       return;
     }
     setResetting(true);
@@ -133,8 +134,18 @@ function LoginPage() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            aria-describedby={fieldErrors.email ? "email-error" : undefined}
+            aria-invalid={!!fieldErrors.email}
           />
+          {fieldErrors.email && (
+            <p id="email-error" className="text-sm text-destructive mt-1">
+              {fieldErrors.email}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">

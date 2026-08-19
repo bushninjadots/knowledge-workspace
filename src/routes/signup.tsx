@@ -68,20 +68,27 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function validate(): boolean {
+    const errors: Record<string, string> = {};
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
+      errors.password = "Password must be at least 8 characters";
     }
     const cleanHandle = handle.replace(/^@/, "").trim();
     if (!/^[a-zA-Z0-9_-]{1,30}$/.test(cleanHandle)) {
-      toast.error("Handle must be 1–30 characters: letters, numbers, _ or -");
-      return;
+      errors.handle = "Handle must be 1–30 characters: letters, numbers, _ or -";
     }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
+    const cleanHandle = handle.replace(/^@/, "").trim();
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -148,8 +155,18 @@ function SignupPage() {
               placeholder="@alex"
               required
               value={handle}
-              onChange={(e) => setHandle(e.target.value)}
+              onChange={(e) => {
+                setHandle(e.target.value);
+                if (fieldErrors.handle) setFieldErrors((prev) => ({ ...prev, handle: "" }));
+              }}
+              aria-describedby={fieldErrors.handle ? "handle-error" : undefined}
+              aria-invalid={!!fieldErrors.handle}
             />
+            {fieldErrors.handle && (
+              <p id="handle-error" className="text-sm text-destructive mt-1">
+                {fieldErrors.handle}
+              </p>
+            )}
           </div>
         </div>
         <div className="space-y-2">
@@ -172,8 +189,18 @@ function SignupPage() {
             autoComplete="new-password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: "" }));
+            }}
+            aria-describedby={fieldErrors.password ? "password-error" : undefined}
+            aria-invalid={!!fieldErrors.password}
           />
+          {fieldErrors.password && (
+            <p id="password-error" className="text-sm text-destructive mt-1">
+              {fieldErrors.password}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Your main craft</Label>
