@@ -70,6 +70,10 @@ type Props = {
   layoutStorage?: LayoutStorage;
   /** Optional starting arrangements for owners who want a guided setup. */
   layoutPresets?: WorkspaceLayoutPreset[];
+  /** Human-readable name used by the customization guidance. */
+  workspaceLabel?: string;
+  /** Show direct links to the visible sections above the workspace. */
+  showSectionNav?: boolean;
 };
 
 /**
@@ -91,6 +95,8 @@ export function WorkspaceGrid({
   migrateRetiredModules = false,
   layoutStorage,
   layoutPresets = [],
+  workspaceLabel = "workspace",
+  showSectionNav = false,
 }: Props) {
   const isMobile = useIsMobile();
   const privateStorage = useLayoutPreferences(page, userId, !layoutStorage);
@@ -221,10 +227,20 @@ export function WorkspaceGrid({
     // data-empty dashboard leaves tall, blank rows between the live modules.
     const hasMissingModules =
       visible.length !== items.filter((it) => !hidden.includes(it.i)).length;
-    return hasMissingModules ? packForPins(visible, pinned) : visible;
-  }, [items, hidden, contents, pinned]);
+    const next = hasMissingModules ? packForPins(visible, pinned) : visible;
+    // Mobile renders a simple vertical list, so reflect the saved grid order
+    // explicitly instead of relying on react-grid-layout's desktop packing.
+    return isMobile ? [...next].sort((a, b) => a.y - b.y || a.x - b.x) : next;
+  }, [items, hidden, contents, pinned, isMobile]);
 
   const layouts = useMemo(() => ({ lg: visibleItems }), [visibleItems]);
+  const sectionModules = useMemo(
+    () =>
+      visibleItems
+        .map((item) => modules.find((module) => module.id === item.i))
+        .filter((module): module is WorkspaceModule => !!module),
+    [modules, visibleItems],
+  );
 
   const handleLayoutChange = useCallback((layout: Layout, all: Partial<Record<string, Layout>>) => {
     // Keep the lg (12-col) layout as canonical — RGL derives smaller
@@ -327,6 +343,24 @@ export function WorkspaceGrid({
 
   // Keyboard moving: focus a drag handle and use arrow keys.
   const moveItem = (id: string, dx: number, dy: number) => {
+    if (isMobile && dx === 0 && Math.abs(dy) === 1) {
+      const currentIndex = visibleItems.findIndex((item) => item.i === id);
+      const targetIndex = currentIndex + dy;
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= visibleItems.length) return;
+
+      const current = visibleItems[currentIndex];
+      const target = visibleItems[targetIndex];
+      remember();
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.i === current.i) return { ...item, x: target.x, y: target.y };
+          if (item.i === target.i) return { ...item, x: current.x, y: current.y };
+          return item;
+        }),
+      );
+      return;
+    }
+
     remember();
     setItems((prev) =>
       prev.map((it) => {
@@ -341,7 +375,11 @@ export function WorkspaceGrid({
   const dragEnabled = customizing && canCustomize && !isMobile;
 
   const renderGridItem = (it: LayoutItem) => (
-    <div key={it.i} className={`h-full ${customizing ? "ws-editing" : ""}`}>
+    <div
+      id={showSectionNav ? `workspace-section-${it.i}` : undefined}
+      key={it.i}
+      className={`h-full ${showSectionNav ? "scroll-mt-20" : ""} ${customizing ? "ws-editing" : ""}`}
+    >
       <ModuleShell
         module={modules.find((m) => m.id === it.i)}
         customizing={customizing}
@@ -361,90 +399,95 @@ export function WorkspaceGrid({
     <div className={className}>
       {/* ── Customize bar ── */}
       {canCustomize && showCustomizeBar && (
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-5 border-y border-border/60 py-3">
           {customizing ? (
-            <>
-              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  <span className="font-medium text-foreground">Customize layout</span>
-                  {" · "}Drag to rearrange · Resize modules · Use move controls on mobile
-                </span>
-                {layoutPresets.length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="rounded-md border border-border/60 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
-                      >
-                        Start from a preset
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-64">
-                      {layoutPresets.map((preset) => (
-                        <DropdownMenuItem key={preset.id} onClick={() => applyPreset(preset)}>
-                          <div>
-                            <p className="text-xs font-medium">{preset.label}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {preset.description}
-                            </p>
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-                {saveState === "saving" && (
-                  <span
-                    className="inline-flex items-center gap-1 text-muted-foreground"
-                    role="status"
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="section-label">Customize layout</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    Arrange your {workspaceLabel}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Choose a starting arrangement, then move, resize, pin, or hide sections.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {saveState === "saving" && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                      role="status"
+                    >
+                      <LoaderCircle className="h-3 w-3 animate-spin" /> Saving
+                    </span>
+                  )}
+                  {saveState === "saved" && (
+                    <span className="text-xs text-primary" role="status">
+                      Saved
+                    </span>
+                  )}
+                  {saveState === "error" && (
+                    <span className="text-xs text-destructive" role="status">
+                      Couldn’t save
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={undo}
+                    disabled={undoStackRef.current.length === 0}
+                    aria-label="Undo layout change"
                   >
-                    <LoaderCircle className="h-3 w-3 animate-spin" /> Saving
-                  </span>
-                )}
-                {saveState === "saved" && (
-                  <span className="text-primary" role="status">
-                    Saved
-                  </span>
-                )}
-                {saveState === "error" && (
-                  <span className="text-destructive" role="status">
-                    Couldn't save
-                  </span>
-                )}
+                    <Undo2 className="mr-1.5 h-3.5 w-3.5" />
+                    Undo
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={confirmReset ? "text-destructive" : "text-muted-foreground"}
+                    onClick={resetLayout}
+                  >
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    {confirmReset ? "Confirm reset?" : "Reset"}
+                  </Button>
+                  <Button size="sm" onClick={() => setCustomizing(false)}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Done
+                  </Button>
+                </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={undo}
-                  disabled={undoStackRef.current.length === 0}
-                  aria-label="Undo layout change"
-                >
-                  <Undo2 className="mr-1.5 h-3.5 w-3.5" />
-                  Undo
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={confirmReset ? "text-destructive" : "text-muted-foreground"}
-                  onClick={resetLayout}
-                >
-                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                  {confirmReset ? "Confirm reset?" : "Reset layout"}
-                </Button>
-                <Button size="sm" onClick={() => setCustomizing(false)}>
-                  <Check className="mr-1.5 h-3.5 w-3.5" />
-                  Done
-                </Button>
-              </div>
-            </>
+              {layoutPresets.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">Start with</span>
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Layout presets">
+                    {layoutPresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        title={preset.description}
+                        onClick={() => applyPreset(preset)}
+                        className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="ml-auto">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="section-label">Make it yours</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Choose which {workspaceLabel} sections people see first.
+                </p>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="text-muted-foreground"
+                className="shrink-0 text-muted-foreground"
                 onClick={() => setCustomizing(true)}
               >
                 <GripVertical className="mr-1.5 h-3.5 w-3.5" />
@@ -453,6 +496,26 @@ export function WorkspaceGrid({
             </div>
           )}
         </div>
+      )}
+
+      {showSectionNav && sectionModules.length > 1 && (
+        <nav
+          aria-label={`${workspaceLabel} sections`}
+          className="mb-5 border-b border-border/60 pb-3"
+        >
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="section-label">Jump to</span>
+            {sectionModules.map((module) => (
+              <a
+                key={module.id}
+                href={`#workspace-section-${module.id}`}
+                className="text-xs text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
+              >
+                {module.title}
+              </a>
+            ))}
+          </div>
+        </nav>
       )}
 
       {/* ── Grid ── */}

@@ -160,6 +160,17 @@ export const DASHBOARD_MODULES: WorkspaceModule[] = [
 
 export const PROFILE_MODULES: WorkspaceModule[] = [
   {
+    id: "projects",
+    title: "Projects",
+    icon: IconSparkles,
+    defaultW: 12,
+    defaultH: 14,
+    minW: 6,
+    maxW: 12,
+    minH: 6,
+    maxH: 22,
+  },
+  {
     id: "overview",
     title: "Overview",
     icon: IconBarChart,
@@ -174,17 +185,6 @@ export const PROFILE_MODULES: WorkspaceModule[] = [
     id: "skills",
     title: "Skills",
     icon: IconGraduationCap,
-    defaultW: 12,
-    defaultH: 14,
-    minW: 6,
-    maxW: 12,
-    minH: 6,
-    maxH: 22,
-  },
-  {
-    id: "projects",
-    title: "Projects",
-    icon: IconSparkles,
     defaultW: 12,
     defaultH: 14,
     minW: 6,

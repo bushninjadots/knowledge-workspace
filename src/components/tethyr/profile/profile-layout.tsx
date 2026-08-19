@@ -4,7 +4,6 @@ import {
   Camera,
   MapPin,
   Clock,
-  GraduationCap,
   BookOpen,
   Sparkles,
   Users,
@@ -15,9 +14,6 @@ import {
   Twitter,
   Instagram,
   Twitch,
-  LayoutGrid,
-  Briefcase,
-  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -28,7 +24,6 @@ import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { PROFILE_LAYOUT_PRESETS, PROFILE_MODULES } from "@/lib/workspace-layouts";
-import { GripVertical } from "lucide-react";
 import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
   Dialog,
@@ -51,14 +46,6 @@ import type { ProjectRow } from "@/components/tethyr/profile-sections";
 export type Skill = { id: string; slug: string; name: string; category: string };
 
 export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
-
-const TABS: { id: Tab; label: string; icon: typeof LayoutGrid }[] = [
-  { id: "overview", label: "Overview", icon: LayoutGrid },
-  { id: "skills", label: "Skills", icon: GraduationCap },
-  { id: "projects", label: "Projects", icon: Briefcase },
-  { id: "communities", label: "Communities", icon: Users },
-  { id: "activity", label: "Activity", icon: Activity },
-];
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {
   website: Globe,
@@ -98,7 +85,6 @@ export function ProfileLayout({
   tabContent: Record<Tab, React.ReactNode>;
 }) {
   const [editOpen, setEditOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [customizing, setCustomizing] = useState(false);
   const palette = useUserPalette(bannerSigned);
 
@@ -292,88 +278,53 @@ export function ProfileLayout({
           canEdit={isOwnProfile}
         />
 
-        {/* TABS + SIDEBAR */}
+        {/* STUDIO WORKSPACE + SIDEBAR */}
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* MAIN CONTENT */}
           <div className="min-w-0 flex-1">
-            {customizing && isOwnProfile ? (
-              <>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-3">
-                  <div>
-                    <p className="section-label">Private Studio layout</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      This arrangement is only for your workspace. Your public Studio has its own
-                      layout and preview.
-                    </p>
-                  </div>
-                  {profile?.handle && (
-                    <Button asChild variant="outline" size="sm">
-                      <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                        Preview public Studio
-                      </Link>
-                    </Button>
-                  )}
+            {customizing && isOwnProfile && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-3">
+                <div>
+                  <p className="section-label">Private Studio layout</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    This changes your private view only. Your public Studio has its own arrangement.
+                  </p>
                 </div>
-                <WorkspaceGrid
-                  page="profile"
-                  userId={userId}
-                  modules={PROFILE_MODULES}
-                  layoutPresets={PROFILE_LAYOUT_PRESETS}
-                  canCustomize={isOwnProfile}
-                  defaultCustomizing
-                  showModuleTitles={false}
-                  onCustomizingChange={setCustomizing}
-                  renderModule={(id) => tabContent[id as Tab] ?? null}
-                />
-              </>
-            ) : (
-              <>
-                {/* Tab bar + customize button */}
-                <div className="mb-4 flex items-center gap-2">
-                  <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border card-border bg-surface p-1 w-fit">
-                    {TABS.map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                          activeTab === tab.id
-                            ? "bg-surface-elevated text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <tab.icon className="h-3.5 w-3.5" />
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  {isOwnProfile && profile?.handle && (
-                    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-                      <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                        View public Studio
-                      </Link>
-                    </Button>
-                  )}
-                  {isOwnProfile && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-muted-foreground"
-                      onClick={() => setCustomizing(true)}
-                    >
-                      <GripVertical className="mr-1.5 h-3.5 w-3.5" />
-                      Customize private layout
-                    </Button>
-                  )}
-                </div>
-
-                {/* Tab content */}
-                <div className="space-y-6">{tabContent[activeTab]}</div>
-              </>
+                {profile?.handle && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                      Preview public Studio
+                    </Link>
+                  </Button>
+                )}
+              </div>
             )}
+
+            <div className="mb-4 flex justify-end">
+              {isOwnProfile && profile?.handle && (
+                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+                  <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                    View public Studio
+                  </Link>
+                </Button>
+              )}
+            </div>
+
+            <WorkspaceGrid
+              page="profile"
+              userId={userId}
+              modules={PROFILE_MODULES}
+              layoutPresets={PROFILE_LAYOUT_PRESETS}
+              canCustomize={isOwnProfile}
+              defaultCustomizing={customizing}
+              showModuleTitles={false}
+              showSectionNav
+              workspaceLabel="Studio"
+              onCustomizingChange={setCustomizing}
+              renderModule={(id) => tabContent[id as Tab] ?? null}
+            />
           </div>
 
-          {/* SIDEBAR */}
-          <ProfileSidebar profile={profile} userId={userId} projects={projects} />
+          <ProfileSidebar profile={profile} />
         </div>
       </div>
 
@@ -459,53 +410,14 @@ function CompletenessRing({ value }: { value: number }) {
 
 /* -------- SIDEBAR -------- */
 
-function ProfileSidebar({
-  profile,
-  userId: _userId,
-  projects,
-}: {
-  profile: Profile | null;
-  userId: string;
-  projects: ProjectRow[];
-}) {
+function ProfileSidebar({ profile }: { profile: Profile | null }) {
   const socialLinks = profile?.social_links ?? {};
   const hasSocialLinks = Object.values(socialLinks).some((v) => v);
-  const activeProjects = projects.filter((p) => p.status === "active");
+
+  if (!hasSocialLinks) return null;
 
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">
-      {/* Active projects highlight */}
-      {activeProjects.length > 0 && (
-        <div className="rounded-xl bg-surface-elevated/30 p-5">
-          <h3 className="mb-3 text-sm font-semibold">
-            Active projects
-            <span className="ml-1 font-normal text-muted-foreground">
-              ({activeProjects.length})
-            </span>
-          </h3>
-          <div className="space-y-2">
-            {activeProjects.slice(0, 3).map((p) => (
-              <a
-                key={p.id}
-                href={`/projects/${p.id}`}
-                className="block rounded-xl border card-border bg-background/40 px-3 py-2 text-xs transition hover:border-[var(--user-accent-border,var(--border-strong))]"
-              >
-                <span className="truncate block font-medium" title={p.title}>
-                  {p.title}
-                </span>
-                <span className="mt-0.5 block text-[11px] text-muted-foreground capitalize">
-                  {p.status}
-                  {p.progress_percent != null && ` · ${p.progress_percent}%`}
-                </span>
-              </a>
-            ))}
-            {activeProjects.length > 3 && (
-              <p className="text-[11px] text-muted-foreground">+{activeProjects.length - 3} more</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* SOCIAL LINKS */}
       {hasSocialLinks && (
         <div className="rounded-xl bg-surface-elevated/30 p-5">

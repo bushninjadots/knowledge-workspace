@@ -187,19 +187,7 @@ function ProfilePage() {
       tabContent={{
         overview: (
           <div className="space-y-6">
-            <ProfileOverviewTab
-              profile={profile}
-              userId={userId}
-              teachIds={teachIds}
-              teachMeta={teachMeta}
-              learnIds={learnIds}
-              projects={projects}
-              coverUrls={coverUrls}
-              projectSkillIds={projectSkillIds}
-              skills={skills}
-              onChange={refresh}
-              isOwnProfile={true}
-            />
+            <ProfileOverviewTab profile={profile} userId={userId} isOwnProfile={true} />
             <AboutCard profile={profile} onChange={refresh} />
             <TextCard
               title="Sharing style"

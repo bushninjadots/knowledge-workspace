@@ -35,6 +35,14 @@ const moduleDefinition: WorkspaceModule = {
   defaultH: 4,
 };
 
+const activityDefinition: WorkspaceModule = {
+  id: "activity",
+  title: "Activity",
+  icon: Sparkles,
+  defaultW: 12,
+  defaultH: 4,
+};
+
 function renderGrid(
   overrides: Partial<Parameters<typeof WorkspaceGrid>[0]> = {},
   { childOwnsTitle = true }: { childOwnsTitle?: boolean } = {},
@@ -91,5 +99,27 @@ describe("WorkspaceGrid module chrome ownership", () => {
 
     expect(screen.getByText("Project body")).toBeInTheDocument();
     expect(screen.getAllByText("Projects")).toHaveLength(1);
+  });
+
+  it("provides direct navigation to visible workspace sections", () => {
+    renderGrid({
+      modules: [moduleDefinition, activityDefinition],
+      showSectionNav: true,
+      renderModule: (id) => (
+        <section>
+          <h2>{id}</h2>
+        </section>
+      ),
+    });
+
+    expect(screen.getByRole("navigation", { name: "workspace sections" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Projects" })).toHaveAttribute(
+      "href",
+      "#workspace-section-projects",
+    );
+    expect(screen.getByRole("link", { name: "Activity" })).toHaveAttribute(
+      "href",
+      "#workspace-section-activity",
+    );
   });
 });

@@ -1,47 +1,21 @@
 import { useState } from "react";
-import { GraduationCap, BookOpen, Star, Users, Plus } from "lucide-react";
+import { Star, Users, Plus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { VerificationBadge } from "@/components/tethyr/profile-sections";
 import { ReputationCard } from "@/components/tethyr/reputation-display";
 import { ProfileCredits } from "@/components/tethyr/profile/profile-credits";
 import { useCreateTeam, useMyTeams } from "@/hooks/use-teams";
 import { AchievementGrid } from "@/components/tethyr/achievements";
-import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
-import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
-import type { ProjectRow } from "@/components/tethyr/profile-sections";
-import type { Skill } from "./profile-layout";
+import type { Profile } from "@/hooks/use-current-user";
 
 export function ProfileOverviewTab({
   profile,
   userId,
-  teachIds,
-  teachMeta,
-  learnIds,
-  skills,
   isOwnProfile,
 }: {
   profile: Profile | null;
   userId: string;
-  teachIds: string[];
-  teachMeta: Record<string, TeachSkillMeta>;
-  learnIds: string[];
-  projects: ProjectRow[];
-  coverUrls: Record<string, string>;
-  projectSkillIds: Record<string, string[]>;
-  skills: Skill[];
-  onChange: () => void;
   isOwnProfile: boolean;
 }) {
-  const skillById = new Map(skills.map((s) => [s.id, s]));
-  const teachSkills = teachIds
-    .map((id) => {
-      const s = skillById.get(id);
-      if (!s) return null;
-      return { ...s, meta: teachMeta[id] };
-    })
-    .filter(Boolean) as (Skill & { meta?: TeachSkillMeta })[];
-  const learnSkills = learnIds.map((id) => skillById.get(id)).filter(Boolean) as Skill[];
-
   return (
     <div className="space-y-6">
       {/* CREDITED ON */}
@@ -55,62 +29,6 @@ export function ProfileOverviewTab({
         <ReputationCard profileId={userId} score={profile.reputation_score} />
       )}
 
-      {/* SKILLS SUMMARY */}
-      {(teachSkills.length > 0 || learnSkills.length > 0) && (
-        <div className="rounded-xl bg-surface-elevated/30 p-5">
-          <h3 className="mb-4 text-sm font-semibold">Skills</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {teachSkills.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  Skills I share
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {teachSkills.slice(0, 6).map((s) => (
-                    <span
-                      key={s.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs text-primary"
-                    >
-                      {s.name}
-                      {s.meta && <VerificationBadge level={s.meta.verification_level} />}
-                    </span>
-                  ))}
-                  {teachSkills.length > 6 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{teachSkills.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            {learnSkills.length > 0 && (
-              <div>
-                <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  Skills I’m growing
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {learnSkills.slice(0, 6).map((s) => (
-                    <span
-                      key={s.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-purple)]/30 bg-[var(--brand-purple)]/10 px-2.5 py-1 text-xs text-[var(--brand-purple)]"
-                    >
-                      {s.name}
-                    </span>
-                  ))}
-                  {learnSkills.length > 6 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{learnSkills.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ACHIEVEMENTS */}
       <div className="rounded-xl bg-surface-elevated/30 p-5">
         <div className="mb-4 flex items-center gap-2">
@@ -122,12 +40,6 @@ export function ProfileOverviewTab({
           isOwnProfile={isOwnProfile}
           favoriteAchievement={profile?.favorite_achievement}
         />
-      </div>
-
-      {/* CONTRIBUTIONS PREVIEW — reputation-eligible work only, no profile-edit noise */}
-      <div className="rounded-xl bg-surface-elevated/30 p-5">
-        <h3 className="mb-4 text-sm font-semibold">Recent contributions</h3>
-        <ActivityTimeline profileId={userId} limit={5} />
       </div>
     </div>
   );
