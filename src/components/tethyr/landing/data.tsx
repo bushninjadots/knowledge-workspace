@@ -118,9 +118,10 @@ export function useContributorCount(projectId: string | null | undefined) {
     queryKey: ["landing-project-contributors", projectId],
     queryFn: async () => {
       if (!projectId) return 0;
+      // project_contributors is a composite-key join table (no `id` column)
       const { count, error } = await sb
         .from("project_contributors")
-        .select("id", { count: "exact", head: true })
+        .select("profile_id", { count: "exact", head: true })
         .eq("project_id", projectId);
       if (error) return 0;
       return count ?? 0;

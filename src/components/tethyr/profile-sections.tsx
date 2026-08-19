@@ -53,6 +53,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -907,6 +908,7 @@ export function ProjectDialog({
   >(project?.resources ?? []);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const filteredSkills = useMemo(
@@ -1054,10 +1056,10 @@ export function ProjectDialog({
 
   async function del() {
     if (!project) return;
-    if (!confirm("Delete this project?")) return;
     const { error } = await supabase.from("projects").delete().eq("id", project.id);
     if (error) return toast.error(friendlyError(error));
     toast.success("Deleted");
+    setConfirmDeleteOpen(false);
     onSaved();
     onOpenChange(false);
   }
@@ -1363,7 +1365,11 @@ export function ProjectDialog({
         </div>
         <DialogFooter>
           {project && (
-            <Button variant="ghost" className="mr-auto text-destructive" onClick={del}>
+            <Button
+              variant="ghost"
+              className="mr-auto text-destructive"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
               Delete
             </Button>
           )}
@@ -1375,6 +1381,24 @@ export function ProjectDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this project?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes the project. You can always start a new one.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={del}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

@@ -169,17 +169,16 @@ export function useUnreadCounts() {
     queryKey: [...UNREAD_KEY, meId ?? "anon"],
     enabled: !!meId,
     queryFn: async (): Promise<{ byConnection: Record<string, number>; total: number }> => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("connection_id")
-        .is("read_at", null)
-        .neq("sender_id", meId as string);
+      // Aggregate in the database (GROUP BY) via an RLS-respecting RPC
+      // instead of fetching every unread row and counting in JS.
+      const { data, error } = await supabase.rpc("unread_message_counts");
       if (error) throw error;
       const byConnection: Record<string, number> = {};
-      for (const m of data ?? []) {
-        byConnection[m.connection_id] = (byConnection[m.connection_id] ?? 0) + 1;
+      let total = 0;
+      for (const row of data ?? []) {
+        byConnection[row.connection_id] = row.unread_count;
+        total += row.unread_count;
       }
-      const total = Object.values(byConnection).reduce((a, b) => a + b, 0);
       return { byConnection, total };
     },
     staleTime: 15_000,

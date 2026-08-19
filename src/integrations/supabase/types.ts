@@ -2766,6 +2766,10 @@ export type Database = {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
+      unread_message_counts: {
+        Args: never
+        Returns: { connection_id: string; unread_count: number }[]
+      }
       vote_on_poll: {
         Args: { p_option_index: number; p_post_id: string }
         Returns: undefined

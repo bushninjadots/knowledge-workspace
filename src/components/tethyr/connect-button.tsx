@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -38,6 +39,7 @@ export function ConnectButton({
   const remove = useDeleteConnection();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [intro, setIntro] = useState("");
+  const [confirmAction, setConfirmAction] = useState<"remove" | "withdraw" | null>(null);
 
   const meId = me?.userId ?? null;
   if (!meId || meId === targetId) return null;
@@ -91,27 +93,28 @@ export function ConnectButton({
 
   if (existing.status === "accepted") {
     return (
-      <div className="flex gap-2">
-        <Button size="sm" variant="outline" asChild className="gap-1.5">
-          <Link to="/messages" search={{ c: existing.id }}>
-            <MessageSquare className="h-4 w-4" /> Message
-          </Link>
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            if (!confirm("Remove this connection?")) return;
-            remove.mutate(existing.id, {
-              onSuccess: () => toast.success("Connection removed"),
-              onError: (e: Error) => toast.error(friendlyError(e)),
-            });
-          }}
-          className="gap-1.5"
-        >
-          <Link2Off className="h-4 w-4" /> Connected
-        </Button>
-      </div>
+      <>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" asChild className="gap-1.5">
+            <Link to="/messages" search={{ c: existing.id }}>
+              <MessageSquare className="h-4 w-4" /> Message
+            </Link>
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setConfirmAction("remove")}
+            className="gap-1.5"
+          >
+            <Link2Off className="h-4 w-4" /> Connected
+          </Button>
+        </div>
+        <ConfirmActionDialog
+          action={confirmAction}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={confirmActionSubmit}
+        />
+      </>
     );
   }
 
@@ -155,20 +158,21 @@ export function ConnectButton({
 
   if (existing.status === "pending") {
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => {
-          if (!confirm("Withdraw your connection request?")) return;
-          remove.mutate(existing.id, {
-            onSuccess: () => toast.success("Request withdrawn"),
-            onError: (e: Error) => toast.error(friendlyError(e)),
-          });
-        }}
-        className="gap-1.5"
-      >
-        <Clock className="h-4 w-4" /> Requested
-      </Button>
+      <>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setConfirmAction("withdraw")}
+          className="gap-1.5"
+        >
+          <Clock className="h-4 w-4" /> Requested
+        </Button>
+        <ConfirmActionDialog
+          action={confirmAction}
+          onClose={() => setConfirmAction(null)}
+          onConfirm={confirmActionSubmit}
+        />
+      </>
     );
   }
 
@@ -179,6 +183,51 @@ export function ConnectButton({
       <X className="h-3.5 w-3.5" />
       Declined
     </span>
+  );
+
+  function confirmActionSubmit() {
+    if (!confirmAction || !existing) return;
+    remove.mutate(existing.id, {
+      onSuccess: () => {
+        toast.success(confirmAction === "remove" ? "Connection removed" : "Request withdrawn");
+        setConfirmAction(null);
+      },
+      onError: (e: Error) => toast.error(friendlyError(e)),
+    });
+  }
+}
+
+function ConfirmActionDialog({
+  action,
+  onClose,
+  onConfirm,
+}: {
+  action: "remove" | "withdraw" | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const isRemove = action === "remove";
+  return (
+    <Dialog open={action !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{isRemove ? "Remove connection?" : "Withdraw request?"}</DialogTitle>
+          <DialogDescription>
+            {isRemove
+              ? "This will remove this connection from your network. You can send a new request later."
+              : "This will cancel your pending connection request. You can send a new one later."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            {isRemove ? "Remove" : "Withdraw"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

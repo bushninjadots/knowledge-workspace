@@ -1,10 +1,18 @@
 // Dashboard card: incoming requests + accepted connections.
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Link2, Check, X, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "./empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections, useRespondConnection, useDeleteConnection } from "@/hooks/use-connections";
@@ -16,6 +24,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
   const remove = useDeleteConnection();
 
   const meId = me?.userId ?? null;
+  const [withdrawId, setWithdrawId] = useState<string | null>(null);
   const incoming =
     connections?.filter((c) => c.status === "pending" && c.addressee_id === meId) ?? [];
   const outgoing =
@@ -157,14 +166,10 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  if (!confirm("Withdraw request?")) return;
-                  remove.mutate(c.id, {
-                    onSuccess: () => toast.success("Request withdrawn"),
-                    onError: (e: Error) => toast.error(friendlyError(e)),
-                  });
-                }}
+                onClick={() => setWithdrawId(c.id)}
                 className="text-muted-foreground hover:text-destructive"
+                aria-label={`Withdraw request from ${c.other?.display_name ?? c.other?.handle ?? "member"}`}
+                title="Withdraw request"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -225,6 +230,37 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
           </div>
         ) : null}
       </div>
+
+      <Dialog open={withdrawId !== null} onOpenChange={(open) => !open && setWithdrawId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdraw request?</DialogTitle>
+            <DialogDescription>
+              This will cancel your pending connection request. You can always send a new one later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWithdrawId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!withdrawId) return;
+                remove.mutate(withdrawId, {
+                  onSuccess: () => {
+                    toast.success("Request withdrawn");
+                    setWithdrawId(null);
+                  },
+                  onError: (e: Error) => toast.error(friendlyError(e)),
+                });
+              }}
+            >
+              Withdraw
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
