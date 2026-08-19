@@ -41,22 +41,38 @@ export const CONNECTIONS_KEY = ["connections"] as const;
 async function fetchConnections(meId: string): Promise<ConnectionWithProfile[]> {
   const { data, error } = await supabase
     .from("connections")
-    .select("*")
+    .select(
+      `*, requester:profiles!requester_id(id, display_name, handle, creator_title, category, avatar_url), addressee:profiles!addressee_id(id, display_name, handle, creator_title, category, avatar_url)`,
+    )
     .order("created_at", { ascending: false });
   if (error) throw error;
-  const rows = (data ?? []) as ConnectionRow[];
-  const otherIds = Array.from(
-    new Set(rows.map((r) => (r.requester_id === meId ? r.addressee_id : r.requester_id))),
-  );
-  if (otherIds.length === 0) return rows.map((r) => ({ ...r, other: null }));
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name, creator_title, category, avatar_url")
-    .in("id", otherIds);
-  const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const rows = (data ?? []) as (ConnectionRow & {
+    requester: {
+      id: string;
+      display_name: string | null;
+      handle: string | null;
+      creator_title: string | null;
+      category: string | null;
+      avatar_url: string | null;
+    } | null;
+    addressee: {
+      id: string;
+      display_name: string | null;
+      handle: string | null;
+      creator_title: string | null;
+      category: string | null;
+      avatar_url: string | null;
+    } | null;
+  })[];
   return rows.map((r) => ({
-    ...r,
-    other: map.get(r.requester_id === meId ? r.addressee_id : r.requester_id) ?? null,
+    id: r.id,
+    requester_id: r.requester_id,
+    addressee_id: r.addressee_id,
+    status: r.status,
+    intro_message: r.intro_message,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    other: r.requester_id === meId ? (r.addressee ?? null) : (r.requester ?? null),
   }));
 }
 

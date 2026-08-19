@@ -252,26 +252,28 @@ export function useProjectUpdates(projectId: string) {
     queryFn: async () => {
       const { data: raw, error } = await sb
         .from("project_updates")
-        .select("*")
+        .select("*, author:profiles!author_id(display_name, handle, avatar_url)")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const updates = (raw ?? []) as Omit<ProjectUpdateRow, "author">[];
-
-      const authorIds = [...new Set(updates.map((u) => u.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, avatar_url")
-        .in("id", authorIds);
-
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-      );
+      const updates = (raw ?? []) as (Omit<ProjectUpdateRow, "author"> & {
+        author: {
+          display_name: string | null;
+          handle: string | null;
+          avatar_url: string | null;
+        } | null;
+      })[];
 
       return updates.map((u): ProjectUpdateRow => ({
-        ...u,
-        author: (profileMap.get(u.author_id) as unknown as ProjectUpdateRow["author"]) ?? {
+        id: u.id,
+        project_id: u.project_id,
+        author_id: u.author_id,
+        title: u.title,
+        body: u.body,
+        week_number: u.week_number,
+        created_at: u.created_at,
+        author: u.author ?? {
           display_name: "Unknown",
           handle: "unknown",
           avatar_url: null,
@@ -367,25 +369,21 @@ export function useDiscussions(projectId: string) {
     queryFn: async () => {
       const { data: raw, error } = await sb
         .from("project_discussions")
-        .select("*")
+        .select("*, author:profiles!author_id(display_name, handle, avatar_url)")
         .eq("project_id", projectId)
         .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const discussions = (raw ?? []) as Omit<DiscussionRow, "author" | "reply_count">[];
+      const discussions = (raw ?? []) as (Omit<DiscussionRow, "author" | "reply_count"> & {
+        author: {
+          display_name: string | null;
+          handle: string | null;
+          avatar_url: string | null;
+        } | null;
+      })[];
 
-      const authorIds = [...new Set(discussions.map((d) => d.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, avatar_url")
-        .in("id", authorIds);
-
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-      );
-
-      // Fetch reply counts
+      // Fetch reply counts (can't be joined via PostgREST — requires aggregation)
       const discussionIds = discussions.map((d) => d.id);
       const { data: replyCounts } = await sb
         .from("discussion_replies")
@@ -398,8 +396,17 @@ export function useDiscussions(projectId: string) {
       }
 
       return discussions.map((d): DiscussionRow => ({
-        ...d,
-        author: (profileMap.get(d.author_id) as unknown as DiscussionRow["author"]) ?? {
+        id: d.id,
+        project_id: d.project_id,
+        author_id: d.author_id,
+        title: d.title,
+        body: d.body,
+        category: d.category,
+        is_pinned: d.is_pinned,
+        community_post_id: d.community_post_id,
+        created_at: d.created_at,
+        updated_at: d.updated_at,
+        author: d.author ?? {
           display_name: "Unknown",
           handle: "unknown",
           avatar_url: null,
@@ -470,26 +477,26 @@ export function useDiscussionReplies(discussionId: string) {
     queryFn: async () => {
       const { data: raw, error } = await sb
         .from("discussion_replies")
-        .select("*")
+        .select("*, author:profiles!author_id(display_name, handle, avatar_url)")
         .eq("discussion_id", discussionId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      const replies = (raw ?? []) as Omit<DiscussionReplyRow, "author">[];
-
-      const authorIds = [...new Set(replies.map((r) => r.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, avatar_url")
-        .in("id", authorIds);
-
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-      );
+      const replies = (raw ?? []) as (Omit<DiscussionReplyRow, "author"> & {
+        author: {
+          display_name: string | null;
+          handle: string | null;
+          avatar_url: string | null;
+        } | null;
+      })[];
 
       return replies.map((r): DiscussionReplyRow => ({
-        ...r,
-        author: (profileMap.get(r.author_id) as unknown as DiscussionReplyRow["author"]) ?? {
+        id: r.id,
+        discussion_id: r.discussion_id,
+        author_id: r.author_id,
+        body: r.body,
+        created_at: r.created_at,
+        author: r.author ?? {
           display_name: "Unknown",
           handle: "unknown",
           avatar_url: null,
@@ -737,8 +744,6 @@ export function useProjectActivity(projectId: string) {
       const rows = (raw ?? []) as Omit<ProjectActivityRow, "actor">[];
 
       const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((a): a is string => !!a))];
-      // PostgREST rejects an empty .in() list — skip the join entirely when
-      // no rows carry an actor.
       const { data: profiles } =
         actorIds.length > 0
           ? await supabase

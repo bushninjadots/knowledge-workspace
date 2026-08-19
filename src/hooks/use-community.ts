@@ -210,17 +210,6 @@ export function flattenPosts(pages: PostsPage[] | undefined): PostWithAuthor[] {
 async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
   if (rawPosts.length === 0) return [];
 
-  // Fetch author profiles in parallel
-  const authorIds = [...new Set(rawPosts.map((p) => p.author_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, handle, creator_title, category, avatar_url")
-    .in("id", authorIds);
-
-  const profileMap = new Map<string, Record<string, unknown>>(
-    (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-  );
-
   // Fetch action counts for all posts
   const postIds = rawPosts.map((p) => p.id);
   const { data: rawActions } = await sb
@@ -265,7 +254,7 @@ async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
 
   return rawPosts.map((p): PostWithAuthor => ({
     ...p,
-    author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
+    author: (p.author as unknown as NonNullable<PostRow["author"]>) ?? {
       display_name: "Unknown",
       handle: "unknown",
       creator_title: "Member",
@@ -294,7 +283,9 @@ export function useInfinitePosts() {
       const to = from + POSTS_PAGE_SIZE - 1;
       const { data: rawPosts, error } = await sb
         .from("posts")
-        .select("*")
+        .select(
+          "*, author:profiles!author_id(display_name, handle, creator_title, category, avatar_url)",
+        )
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -414,7 +405,7 @@ export function useComments(postId: string) {
     queryFn: async () => {
       const { data: rawComments, error } = await sb
         .from("comments")
-        .select("*")
+        .select("*, author:profiles!author_id(display_name, handle, creator_title, avatar_url)")
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
@@ -424,29 +415,24 @@ export function useComments(postId: string) {
         }
         throw error;
       }
-      const comments = rawComments as {
-        id: string;
-        post_id: string;
-        author_id: string;
-        body: string;
-        is_best_answer: boolean;
-        parent_id: string | null;
-        created_at: string;
-      }[];
-
-      const authorIds = [...new Set(comments.map((c) => c.author_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, handle, creator_title, avatar_url")
-        .in("id", authorIds);
-
-      const profileMap = new Map<string, Record<string, unknown>>(
-        (profiles ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
-      );
+      const comments = (rawComments ?? []) as (Omit<CommentRow, "author"> & {
+        author: {
+          display_name: string | null;
+          handle: string | null;
+          creator_title: string | null;
+          avatar_url: string | null;
+        } | null;
+      })[];
 
       return comments.map((c): CommentRow => ({
-        ...c,
-        author: (profileMap.get(c.author_id) as unknown as CommentRow["author"]) ?? {
+        id: c.id,
+        post_id: c.post_id,
+        author_id: c.author_id,
+        body: c.body,
+        is_best_answer: c.is_best_answer,
+        parent_id: c.parent_id,
+        created_at: c.created_at,
+        author: c.author ?? {
           display_name: "Unknown",
           handle: "unknown",
           creator_title: "Member",
