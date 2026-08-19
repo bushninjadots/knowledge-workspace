@@ -161,6 +161,7 @@ function ProfilePage() {
     learnIds,
     avatarSigned,
     bannerSigned,
+    background,
     userId,
     projects,
     coverUrls,
@@ -174,6 +175,7 @@ function ProfilePage() {
       profile={profile}
       avatarSigned={avatarSigned}
       bannerSigned={bannerSigned}
+      background={background}
       userId={userId}
       isOwnProfile={true}
       teachIds={teachIds}

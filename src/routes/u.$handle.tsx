@@ -7,6 +7,8 @@ import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
+import { backgroundImagePublicUrl, type ProfileBackground } from "@/lib/background-themes";
+import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
@@ -45,6 +47,7 @@ type PublicProfile = {
   reputation_score: number | null;
   favorite_achievement: string | null;
   availability: string | null;
+  background?: ProfileBackground | null;
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
@@ -101,7 +104,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability, background",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -207,6 +210,11 @@ function PublicProfileRoute() {
         contributedProjects,
         avatarSigned,
         bannerSigned,
+        backgroundImageUrl: backgroundImagePublicUrl(
+          (profile as PublicProfile).background?.mode === "image"
+            ? ((profile as PublicProfile).background?.image_url ?? null)
+            : null,
+        ),
       };
     },
   });
@@ -245,11 +253,16 @@ function PublicProfileRoute() {
 
   const { profile, teachSkills, learnSkills, contributedProjects, avatarSigned, bannerSigned } =
     data;
+  const backgroundImageUrl = data.backgroundImageUrl;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
   const languages = profile.languages ?? [];
 
   return (
-    <Shell accentColor={bannerAccent}>
+    <Shell
+      accentColor={bannerAccent}
+      background={profile.background}
+      backgroundImageUrl={backgroundImageUrl}
+    >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           <div
@@ -394,9 +407,13 @@ function PublicProfileRoute() {
 function Shell({
   children,
   accentColor,
+  background,
+  backgroundImageUrl,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
+  background?: ProfileBackground | null;
+  backgroundImageUrl?: string | null;
 }) {
   const navigate = useNavigate();
   const accentStyle = accentColor
@@ -404,7 +421,8 @@ function Shell({
     : undefined;
 
   return (
-    <div className="min-h-screen bg-background" style={accentStyle}>
+    <div className="relative min-h-screen" style={accentStyle}>
+      <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
         <button
           type="button"

@@ -52,6 +52,7 @@ import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
 import { MobilePrimaryNav } from "@/components/tethyr/mobile-primary-nav";
+import { BackgroundLayer } from "@/components/tethyr/background-layer";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -111,7 +112,8 @@ function AuthenticatedDashboardLayout({
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background" style={themeStyle}>
+    <div className="relative flex min-h-screen" style={themeStyle}>
+      <BackgroundLayer background={data?.background} imageUrl={data?.backgroundImageUrl} />
       {/* Desktop sidebar */}
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />

@@ -3,6 +3,7 @@
 // this key and the whole app re-syncs automatically.
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { backgroundImagePublicUrl, type ProfileBackground } from "@/lib/background-themes";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
 export type { ProjectRow, ActivityRow };
@@ -32,6 +33,7 @@ export type Profile = {
   favourite_tools: string[];
   software_stack: string[];
   favorite_achievement: string | null;
+  background?: ProfileBackground | null;
 };
 
 // ProjectRow and ActivityRow re-exported above from profile-sections.
@@ -61,6 +63,8 @@ export type CurrentUserData = {
   profile: Profile | null;
   avatarSigned: string | null;
   bannerSigned: string | null;
+  background: ProfileBackground | null;
+  backgroundImageUrl: string | null;
   teachIds: string[];
   teachMeta: Record<string, TeachSkillMeta>;
   learnIds: string[];
@@ -79,7 +83,7 @@ const PROFILE_COLS_BASIC =
 
 // Columns added in Phase 3+4 — may not exist yet if migrations haven't run.
 const PROFILE_COLS_EXTENDED =
-  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack, favorite_achievement";
+  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack, favorite_achievement, background";
 
 async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
@@ -166,6 +170,10 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
 
   const avatarSigned = avatarRes.data?.signedUrl ?? null;
   const bannerSigned = bannerRes.data?.signedUrl ?? null;
+  const background = (profile?.background ?? null) as ProfileBackground | null;
+  const backgroundImageUrl = backgroundImagePublicUrl(
+    background?.mode === "image" ? background.image_url : null,
+  );
 
   const projects = (projectsRes.data ?? []) as unknown as ProjectRow[];
 
@@ -221,6 +229,8 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
     profile: (profile ?? null) as Profile | null,
     avatarSigned,
     bannerSigned,
+    background,
+    backgroundImageUrl,
     teachIds: teachRows.map((r) => r.skill_id),
     teachMeta,
     learnIds: (learn.data ?? []).map((r: { skill_id: string }) => r.skill_id),

@@ -1302,6 +1302,7 @@ export type Database = {
           available_days: string[]
           available_times: string[]
           avatar_url: string | null
+          background: Json | null
           banner_caption: string | null
           banner_url: string | null
           bio: string | null
@@ -1333,6 +1334,7 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1364,6 +1366,7 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
           bio?: string | null

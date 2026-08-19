@@ -8,6 +8,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
+import { BackgroundLayer } from "./background-layer";
 
 /**
  * Shared layout for all authenticated routes.
@@ -29,7 +30,8 @@ export function AuthenticatedShell() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background" style={themeStyle}>
+    <div className="relative flex min-h-screen" style={themeStyle}>
+      <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />
       </div>
