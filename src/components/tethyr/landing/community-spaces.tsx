@@ -58,7 +58,15 @@ function SpaceCard({ space }: { space: CommunitySpace }) {
     >
       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-surface-elevated text-base font-semibold">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-full w-full rounded-xl object-cover" />
+          <img
+            src={avatarUrl}
+            alt=""
+            width="44"
+            height="44"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full rounded-xl object-cover"
+          />
         ) : (
           initial
         )}

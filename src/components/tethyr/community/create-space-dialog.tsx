@@ -157,6 +157,7 @@ export function CreateSpaceDialog({
                 variant="outline"
                 onClick={addRule}
                 disabled={!ruleInput.trim()}
+                aria-label="Add rule"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -175,6 +176,7 @@ export function CreateSpaceDialog({
                     <button
                       type="button"
                       onClick={() => setRules(rules.filter((_, j) => j !== i))}
+                      aria-label="Remove rule"
                       className="ml-auto rounded p-0.5 text-muted-foreground hover:text-destructive"
                     >
                       <X className="h-3 w-3" />

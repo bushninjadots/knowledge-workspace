@@ -568,6 +568,7 @@ export function ComposerBar({
             onChange={(e) => setTitle(e.target.value.slice(0, 200))}
             onFocus={() => setFocused(true)}
             placeholder="Title (optional)"
+            aria-label="Post title"
             className="mb-2 w-full rounded-xl border-none bg-transparent text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <Textarea
@@ -598,9 +599,18 @@ export function ComposerBar({
         <div className="mt-3 flex gap-2">
           {images.map((src, i) => (
             <div key={i} className="relative">
-              <img src={src} alt="" className="h-16 w-16 rounded-xl object-cover" />
+              <img
+                src={src}
+                alt=""
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                className="h-16 w-16 rounded-xl object-cover"
+              />
               <button
                 onClick={() => removeImage(i)}
+                aria-label="Remove image"
                 className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface text-foreground shadow-md"
               >
                 <X className="h-3 w-3" />
@@ -660,6 +670,7 @@ export function ComposerBar({
             value={pollQuestion}
             onChange={(e) => setPollQuestion(e.target.value.slice(0, 200))}
             placeholder="Ask a question…"
+            aria-label="Poll question"
             className="mb-3 w-full rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
           />
           <div className="space-y-2">
@@ -676,11 +687,13 @@ export function ComposerBar({
                     setPollOptions(next);
                   }}
                   placeholder={`Option ${i + 1}…`}
+                  aria-label={`Poll option ${i + 1}`}
                   className="flex-1 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
                 />
                 {pollOptions.length > 2 && (
                   <button
                     onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}
+                    aria-label="Remove poll option"
                     className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -695,11 +708,13 @@ export function ComposerBar({
               type="datetime-local"
               value={pollEndsAt}
               onChange={(e) => setPollEndsAt(e.target.value)}
+              aria-label="Poll end date"
               className="rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs text-foreground focus:border-primary/50 focus:outline-none"
             />
             {pollEndsAt && (
               <button
                 onClick={() => setPollEndsAt("")}
+                aria-label="Clear end date"
                 className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -789,6 +804,7 @@ export function ComposerBar({
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value.slice(0, 500))}
                 placeholder="https://…  (optional URL this post links to)"
+                aria-label="Link URL"
                 className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background/60 px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none"
               />
             )}

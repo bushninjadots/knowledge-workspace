@@ -49,7 +49,10 @@ export function NotificationDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative rounded-full p-2 hover:bg-surface transition-colors">
+        <button
+          aria-label="Notifications"
+          className="relative rounded-full p-2 hover:bg-surface transition-colors"
+        >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground animate-gentle-pulse">

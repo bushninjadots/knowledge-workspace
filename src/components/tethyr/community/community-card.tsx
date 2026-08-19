@@ -80,7 +80,15 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full rounded-xl object-cover" />
+            <img
+              src={avatarUrl}
+              alt=""
+              width="48"
+              height="48"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full rounded-xl object-cover"
+            />
           ) : (
             initial
           )}

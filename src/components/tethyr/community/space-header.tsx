@@ -94,7 +94,15 @@ export function SpaceHeader({
         <div className="flex min-w-0 items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              <img
+                src={avatarUrl}
+                alt=""
+                width="56"
+                height="56"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
             ) : (
               initial
             )}

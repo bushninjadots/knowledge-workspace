@@ -269,7 +269,15 @@ export function BannerStrip({
         style={{ borderColor: accentColor ?? "transparent" }}
       >
         {bannerSigned ? (
-          <img src={bannerSigned} alt="" className="h-full w-full object-cover object-center" />
+          <img
+            src={bannerSigned}
+            alt=""
+            width="1200"
+            height="400"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover object-center"
+          />
         ) : (
           <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
         )}
@@ -1068,7 +1076,15 @@ export function ProjectDialog({
             className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
           >
             {coverPreview ? (
-              <img src={coverPreview} alt="" className="h-full w-full object-cover" />
+              <img
+                src={coverPreview}
+                alt=""
+                width="1200"
+                height="675"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="flex flex-col items-center gap-2 text-xs">
                 <Camera className="h-6 w-6" />

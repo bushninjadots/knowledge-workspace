@@ -250,7 +250,15 @@ function Avatar({ conn, size = "md" }: { conn: ConnectionWithProfile; size?: "md
       className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-purple font-semibold text-background ${dims}`}
     >
       {signedUrl ? (
-        <img src={signedUrl} alt="" className="h-full w-full object-cover" />
+        <img
+          src={signedUrl}
+          alt=""
+          width="40"
+          height="40"
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       ) : (
         name.charAt(0).toUpperCase()
       )}

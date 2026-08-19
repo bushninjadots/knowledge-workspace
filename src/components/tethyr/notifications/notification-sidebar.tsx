@@ -66,7 +66,7 @@ export function NotificationSidebar({
   }
 
   return (
-    <nav className="flex flex-col gap-0.5">
+    <nav aria-label="Notification filters" className="flex flex-col gap-0.5">
       {NOTIFICATION_CATEGORIES.map((cat) => {
         const Icon = cat.icon;
         const count = getCount(cat);
