@@ -7,7 +7,6 @@ import {
   BookOpen,
   Sparkles,
   Users,
-  Calendar,
   MessageCircle,
   ExternalLink,
   Globe,
@@ -44,7 +43,7 @@ import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
-import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
+import type { ProjectRow } from "@/components/tethyr/profile-sections";
 
 export type Skill = { id: string; slug: string; name: string; category: string };
 
@@ -77,7 +76,6 @@ export function ProfileLayout({
   teachIds,
   learnIds,
   projects,
-  activity,
   onChange,
   tabContent,
 }: {
@@ -92,7 +90,6 @@ export function ProfileLayout({
   projects: ProjectRow[];
   coverUrls: Record<string, string>;
   projectSkillIds: Record<string, string[]>;
-  activity: ActivityRow[];
   skills: Skill[];
   onChange: () => void;
   tabContent: Record<Tab, React.ReactNode>;
@@ -336,14 +333,7 @@ export function ProfileLayout({
           </div>
 
           {/* SIDEBAR */}
-          <ProfileSidebar
-            profile={profile}
-            userId={userId}
-            teachIds={teachIds}
-            learnIds={learnIds}
-            projects={projects}
-            activity={activity}
-          />
+          <ProfileSidebar profile={profile} userId={userId} projects={projects} />
         </div>
       </div>
 
@@ -432,17 +422,11 @@ function CompletenessRing({ value }: { value: number }) {
 function ProfileSidebar({
   profile,
   userId: _userId,
-  teachIds,
-  learnIds,
   projects,
-  activity,
 }: {
   profile: Profile | null;
   userId: string;
-  teachIds: string[];
-  learnIds: string[];
   projects: ProjectRow[];
-  activity: ActivityRow[];
 }) {
   const socialLinks = profile?.social_links ?? {};
   const hasSocialLinks = Object.values(socialLinks).some((v) => v);
@@ -450,17 +434,6 @@ function ProfileSidebar({
 
   return (
     <div className="w-full shrink-0 space-y-3 lg:w-72">
-      {/* STATS */}
-      <div className="rounded-xl bg-surface-elevated/30 p-5">
-        <h3 className="mb-3 text-sm font-semibold">Stats</h3>
-        <div className="space-y-3">
-          <StatRow icon={GraduationCap} label="Skills I share" value={teachIds.length} />
-          <StatRow icon={BookOpen} label="Skills I’m growing" value={learnIds.length} />
-          <StatRow icon={Sparkles} label="Projects" value={projects.length} />
-          <StatRow icon={Calendar} label="Activity events" value={activity.length} />
-        </div>
-      </div>
-
       {/* Active projects highlight */}
       {activeProjects.length > 0 && (
         <div className="rounded-xl bg-surface-elevated/30 p-5">
@@ -518,26 +491,6 @@ function ProfileSidebar({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function StatRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Users;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
-      </div>
-      <span className="font-medium">{value}</span>
     </div>
   );
 }

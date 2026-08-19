@@ -11,10 +11,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref, validateLibraryFile } from "@/lib/validators";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { useProjectLibraryItems } from "@/hooks/use-library";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
 
 const sb = supabase;
@@ -173,6 +175,54 @@ export function ResourcesSection({
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Library resources explicitly linked to this project. Visible to the project
+ * team (the library items are readable by the owner + project members via RLS),
+ * and each item opens in the authenticated library.
+ */
+export function ProjectLibrarySection({
+  projectId,
+  isOwner,
+}: {
+  projectId: string;
+  isOwner: boolean;
+}) {
+  const { data: items } = useProjectLibraryItems(projectId);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-foreground/80">Library</h3>
+        {isOwner && (
+          <Link to="/library" className="text-xs font-medium text-primary hover:underline">
+            Open library →
+          </Link>
+        )}
+      </div>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            to="/library/$id"
+            params={{ id: item.id }}
+            className="flex items-center gap-3 rounded-xl bg-background/40 p-3 transition hover:bg-surface-elevated/50"
+          >
+            <BookOpen className="h-4 w-4 shrink-0 text-brand-green" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium" title={item.title}>
+                {item.title}
+              </p>
+              <p className="text-[11px] capitalize text-muted-foreground">{item.type}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

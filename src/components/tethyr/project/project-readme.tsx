@@ -25,7 +25,7 @@ import { getRepoFullName } from "@/lib/github";
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
-import { GallerySection, ResourcesSection } from "./project-resources";
+import { GallerySection, ProjectLibrarySection, ResourcesSection } from "./project-resources";
 import { ReadmeEditor } from "./readme-editor";
 import type { ProjectFile } from "./project-files";
 
@@ -525,6 +525,7 @@ export function ProjectReadmeTab({
           onUpdate={async (items) => saveContent({ resources: items })}
           isOwner={isOwner}
         />
+        <ProjectLibrarySection projectId={project.id} isOwner={isOwner} />
       </div>
     </div>
   );

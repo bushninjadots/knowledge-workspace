@@ -18,6 +18,19 @@ type ConnectedAccount = {
   created_at: string;
 };
 
+/**
+ * Normalize whatever the member pasted (a bare handle, `@handle`,
+ * `https://github.com/handle`, or `owner/repo`) down to just the handle, so
+ * the stored value and the rendered link never double-prefix `github.com/`.
+ */
+export function githubHandleFrom(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const withoutProtocol = trimmed.replace(/^https?:\/\/github\.com\//i, "");
+  const firstSegment = withoutProtocol.split("/")[0];
+  return firstSegment.replace(/^@/, "").replace(/[\s]+/g, "");
+}
+
 export function useConnectedAccounts() {
   const { data: user } = useAuthUser();
   return useQuery({
@@ -45,7 +58,8 @@ export function useConnectGitHub() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const handle = username.trim();
+      const handle = githubHandleFrom(username);
+      if (!handle) throw new Error("Enter a GitHub username");
       // Store the GitHub username as a connected account
       const { data, error } = await sb
         .from("connected_accounts")
@@ -234,12 +248,12 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
               <h3 className="text-sm font-semibold">GitHub connected</h3>
               <p className="text-xs text-muted-foreground">
                 <a
-                  href={`https://github.com/${githubAccount.username}`}
+                  href={`https://github.com/${githubHandleFrom(githubAccount.username ?? "")}`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 hover:text-primary hover:underline"
                 >
-                  @{githubAccount.username}
+                  @{githubHandleFrom(githubAccount.username ?? "")}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </p>

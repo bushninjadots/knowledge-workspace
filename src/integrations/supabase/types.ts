@@ -644,6 +644,7 @@ export type Database = {
           id: string
           is_favorite: boolean
           is_pinned: boolean
+          project_id: string | null
           reading_progress: number
           thumbnail_url: string | null
           title: string
@@ -662,6 +663,7 @@ export type Database = {
           id?: string
           is_favorite?: boolean
           is_pinned?: boolean
+          project_id?: string | null
           reading_progress?: number
           thumbnail_url?: string | null
           title?: string
@@ -680,6 +682,7 @@ export type Database = {
           id?: string
           is_favorite?: boolean
           is_pinned?: boolean
+          project_id?: string | null
           reading_progress?: number
           thumbnail_url?: string | null
           title?: string
@@ -694,6 +697,13 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "library_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {

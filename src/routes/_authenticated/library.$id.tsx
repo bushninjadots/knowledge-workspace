@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Star, Pin, Trash2, Save, Loader2, Globe, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  Pin,
+  Trash2,
+  Save,
+  Loader2,
+  Globe,
+  Upload,
+  FolderOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -12,6 +22,7 @@ import {
 } from "@/hooks/use-library";
 import { NoteEditor } from "@/components/tethyr/library/note-editor";
 import { LibraryContentLayout } from "@/components/tethyr/library/library-layout";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,13 +40,16 @@ function LibraryItemPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: item, isLoading } = useLibraryItem(id);
+  const { data: me } = useCurrentUser();
   const updateItem = useUpdateItem();
   const deleteItem = useDeleteItem();
   const toggleFav = useToggleFavorite();
   const togglePin = useTogglePin();
 
+  const projects = me?.projects ?? [];
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
@@ -44,6 +58,7 @@ function LibraryItemPage() {
     if (item) {
       setTitle(item.title);
       setContent(item.content);
+      setProjectId(item.project_id ?? null);
       setHasChanges(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,7 +100,7 @@ function LibraryItemPage() {
   function handleSave() {
     if (!item) return;
     updateItem.mutate(
-      { id: item.id, title, content },
+      { id: item.id, title, content, project_id: projectId },
       {
         onSuccess: () => {
           setHasChanges(false);
@@ -272,6 +287,32 @@ function LibraryItemPage() {
                 {tag.name}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Link to project */}
+        {projects.length > 0 && (
+          <div className="mt-4 flex items-center gap-2 text-xs">
+            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <label htmlFor="library-project" className="shrink-0 text-muted-foreground">
+              Link to project
+            </label>
+            <select
+              id="library-project"
+              value={projectId ?? ""}
+              onChange={(e) => {
+                setProjectId(e.target.value || null);
+                setHasChanges(true);
+              }}
+              className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
+            >
+              <option value="">None</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 

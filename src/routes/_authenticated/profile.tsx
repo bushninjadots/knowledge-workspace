@@ -181,7 +181,6 @@ function ProfilePage() {
       projects={projects}
       coverUrls={coverUrls}
       projectSkillIds={projectSkillIds}
-      activity={activity}
       skills={skills}
       onChange={refresh}
       tabContent={{

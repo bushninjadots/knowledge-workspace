@@ -19,6 +19,7 @@ export type LibraryItem = {
   thumbnail_url: string | null;
   is_pinned: boolean;
   is_favorite: boolean;
+  project_id: string | null;
   reading_progress: number;
   created_at: string;
   updated_at: string;
@@ -112,6 +113,31 @@ export function useLibraryItems(filters?: LibraryFilter) {
   });
 }
 
+/**
+ * Library items linked to a project — visible to the project's team. Used on
+ * the project page to surface a project's notes, docs, links, and uploads.
+ */
+export function useProjectLibraryItems(projectId: string | null) {
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  return useQuery({
+    queryKey: [...libraryKeys.items(), "project", projectId ?? "none"],
+    enabled: !!userId && !!projectId,
+    queryFn: async (): Promise<LibraryItem[]> => {
+      if (!userId || !projectId) return [];
+      const { data, error } = await supabase
+        .from("library_items")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("is_pinned", { ascending: false })
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as LibraryItem[];
+    },
+  });
+}
+
 export function useLibraryItem(id: string | null) {
   const { data: me } = useCurrentUser();
   const userId = me?.userId;
@@ -168,6 +194,7 @@ export function useCreateItem() {
       content?: string;
       type?: LibraryItem["type"];
       collection_id?: string;
+      project_id?: string | null;
       url?: string;
     }) => {
       if (!me?.userId) throw new Error("Not authenticated");
@@ -179,6 +206,7 @@ export function useCreateItem() {
           content: input.content ?? "",
           type: input.type ?? "note",
           collection_id: input.collection_id ?? null,
+          project_id: input.project_id ?? null,
           url: input.url ?? null,
         })
         .select()
@@ -201,6 +229,7 @@ export function useUpdateItem() {
       title?: string;
       content?: string;
       collection_id?: string | null;
+      project_id?: string | null;
       is_pinned?: boolean;
       is_favorite?: boolean;
       reading_progress?: number;
