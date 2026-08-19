@@ -144,7 +144,8 @@ export function useNotificationsByCategory() {
         .from("notifications")
         .select("type")
         .eq("user_id", meId as string)
-        .is("read_at", null);
+        .is("read_at", null)
+        .limit(100);
       if (error) throw error;
       const counts: Record<string, number> = {};
       for (const row of data ?? []) {
