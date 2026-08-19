@@ -429,11 +429,13 @@ function DashboardContent({
                         </p>
                       </div>
                       <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {c.my_participation?.status === "in_progress"
-                          ? "In progress"
-                          : c.my_participation?.status === "completed"
-                            ? "Completed"
-                            : "Joined"}
+                        {c.my_participation?.review_status === "passed"
+                          ? "Verified"
+                          : c.my_participation?.status === "in_progress"
+                            ? "In progress"
+                            : c.my_participation?.status === "completed"
+                              ? "Pending verification"
+                              : "Joined"}
                       </span>
                     </Link>
                   ))}

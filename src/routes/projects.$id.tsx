@@ -12,7 +12,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { CalendarPlus } from "lucide-react";
+import { ArrowLeft, CalendarPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -407,6 +407,40 @@ function ProjectPage() {
             />
           </section>
 
+          {/* Files + activity live right under the README so the workspace tools
+              (upload files, see what changed) are reachable without scrolling
+              past the whole story. */}
+          <div role="group" aria-label="Project files and activity" className="mt-10">
+            <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
+          </div>
+
+          <div className="pt-6">
+            {tab === "files" && (
+              <section aria-label="Project files">
+                <ProjectFilesExplorer
+                  projectId={id}
+                  projectFiles={projectFiles}
+                  isOwner={isOwner}
+                  preselectPath={preselectPath}
+                  preselectNonce={preselectNonce}
+                />
+              </section>
+            )}
+            {tab === "activity" && (
+              <section id="project-activity" aria-label="Project activity">
+                <ProjectActivityTab
+                  projectId={id}
+                  milestones={milestones}
+                  updates={updates}
+                  discussions={discussions}
+                  projectFiles={projectFiles}
+                  repos={repos}
+                  isContributor={isContributor}
+                />
+              </section>
+            )}
+          </div>
+
           {/* Current work — the README's natural follow-up: what's done, in
               progress, and up next. (Milestones previously had no home on the
               page; they only surfaced as completed events in Activity.) */}
@@ -607,38 +641,6 @@ function ProjectPage() {
 
           {/* Evidence */}
           <ProjectCredits projectId={id} />
-
-          {/* Secondary tools: files and activity stay tabbed, below the story. */}
-          <div role="group" aria-label="Project files and activity" className="mt-10">
-            <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
-          </div>
-
-          <div className="pt-6">
-            {tab === "files" && (
-              <section aria-label="Project files">
-                <ProjectFilesExplorer
-                  projectId={id}
-                  projectFiles={projectFiles}
-                  isOwner={isOwner}
-                  preselectPath={preselectPath}
-                  preselectNonce={preselectNonce}
-                />
-              </section>
-            )}
-            {tab === "activity" && (
-              <section id="project-activity" aria-label="Project activity">
-                <ProjectActivityTab
-                  projectId={id}
-                  milestones={milestones}
-                  updates={updates}
-                  discussions={discussions}
-                  projectFiles={projectFiles}
-                  repos={repos}
-                  isContributor={isContributor}
-                />
-              </section>
-            )}
-          </div>
         </div>
       </div>
 
@@ -673,12 +675,24 @@ function Shell({
   children: React.ReactNode;
   accentColor?: string | null;
 }) {
+  const navigate = useNavigate();
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
     : undefined;
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <button
+          onClick={() =>
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          aria-label="Go back"
+          title="Back"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
         <Link to="/" className="font-display text-lg font-semibold text-foreground">
           Tethyr
         </Link>

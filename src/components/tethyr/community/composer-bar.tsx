@@ -9,7 +9,6 @@ import {
   Handshake,
   Sparkles,
   ImagePlus,
-  Code2,
   Bold,
   Italic,
   Strikethrough,
@@ -55,7 +54,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InlineDropZone } from "@/components/tethyr/drag-drop-file-input";
 import { AttachProjectPanel } from "@/components/tethyr/community/attach-project-panel";
 import { supabase } from "@/integrations/supabase/client";
 import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-validation";
@@ -91,16 +89,6 @@ const MORE_ACTIONS = QUICK_ACTIONS.filter((a) => !PRIMARY_ACTIONS.some((p) => p.
 
 const MAX_CHARS = 2000;
 const DRAFT_KEY = "tethyr-community-draft";
-const CODE_LANGUAGES = [
-  "JavaScript",
-  "TypeScript",
-  "Python",
-  "Rust",
-  "Go",
-  "SQL",
-  "HTML/CSS",
-  "Other",
-];
 
 function CharCount({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? current / max : 0;
@@ -176,8 +164,6 @@ export function ComposerBar({
   const [title, setTitle] = useState(editingPost?.title ?? "");
   const [draft, setDraft] = useState(editingPost?.body ?? "");
   const [images, setImages] = useState<string[]>(editingPost?.images ?? []);
-  const [showCodeInsert, setShowCodeInsert] = useState(false);
-  const [codeLang, setCodeLang] = useState("JavaScript");
   const [focused, setFocused] = useState(false);
   const [showAttachPanel, setShowAttachPanel] = useState(false);
   const [attachedProject, setAttachedProject] = useState<{
@@ -384,23 +370,6 @@ export function ComposerBar({
     e.target.value = "";
   }
 
-  function handleDroppedImage(file: File) {
-    if (images.length >= 4) {
-      toast.info("Maximum 4 images per post");
-      return;
-    }
-    const check = validateImageFile(file);
-    if (!check.ok) {
-      toast.error(check.error);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImages((prev) => [...prev, reader.result as string]);
-    };
-    reader.readAsDataURL(file);
-  }
-
   function removeImage(index: number) {
     setImages((prev) => prev.filter((_, i) => i !== index));
   }
@@ -459,20 +428,6 @@ export function ComposerBar({
     const label = window.prompt("Link text:") || url;
     const result = insertMarkdown(textareaRef.current, "[", `](${url})`, label);
     setDraft(result.text.slice(0, MAX_CHARS));
-  }
-
-  function handleCode() {
-    setShowCodeInsert((v) => !v);
-  }
-
-  function insertCodeBlock() {
-    if (!textareaRef.current) return;
-    const lang = codeLang.toLowerCase().replace("/", "");
-    const block = `\n\`\`\`${lang}\n// code here\n\`\`\`\n`;
-    const pos = textareaRef.current.selectionStart;
-    const newText = draft.slice(0, pos) + block + draft.slice(pos);
-    setDraft(newText.slice(0, MAX_CHARS));
-    setShowCodeInsert(false);
   }
 
   async function submit() {
@@ -621,9 +576,9 @@ export function ComposerBar({
             onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="What are you building or learning today? Supports **bold**, _italic_, and ```code```."
+            placeholder="What are you building or learning today?"
             rows={focused || draft.length > 80 ? 5 : 2}
-            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-all font-mono text-sm"
+            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-all text-sm"
           />
           {focused && (
             <div className="mt-1.5 flex items-center justify-end gap-1.5">
@@ -896,37 +851,6 @@ export function ComposerBar({
         </div>
       )}
 
-      {showCodeInsert && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl border card-border bg-background/40 p-2">
-          <Code2 className="h-4 w-4 shrink-0 text-brand-purple" />
-          <select
-            value={codeLang}
-            onChange={(e) => setCodeLang(e.target.value)}
-            className="rounded-lg border border-border/60 bg-surface px-2 py-1 text-xs text-foreground"
-          >
-            {CODE_LANGUAGES.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={insertCodeBlock}
-            className="ml-auto h-7 text-xs"
-          >
-            Insert
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowCodeInsert(false)}
-            className="h-7 text-xs"
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
-
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           ref={fileInputRef}
@@ -944,11 +868,6 @@ export function ComposerBar({
           <ImagePlus className="h-3.5 w-3.5" />
           Image
         </button>
-        <InlineDropZone
-          accept="image/*"
-          onFile={handleDroppedImage}
-          className="hidden sm:flex h-8 w-32"
-        />
         <button
           type="button"
           onClick={handleH1}
@@ -1033,16 +952,6 @@ export function ComposerBar({
           <Link2 className="h-3.5 w-3.5" />
         </button>
         <div className="mx-0.5 h-4 w-px bg-border/60" />
-        <button
-          type="button"
-          aria-label="Insert code block"
-          onClick={handleCode}
-          title="Code block"
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${showCodeInsert ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"}`}
-        >
-          <Code2 className="h-3.5 w-3.5" />
-          Code
-        </button>
         <button
           onClick={() => setShowAttachPanel((v) => !v)}
           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${

@@ -24,6 +24,7 @@ import { FollowButton } from "@/components/tethyr/follow-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
+import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { PROFILE_MODULES } from "@/lib/workspace-layouts";
@@ -183,9 +184,12 @@ export function ProfileLayout({
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-3">
                 <div className="min-w-0">
-                  <h1 className="font-display text-2xl font-semibold break-words sm:text-3xl">
-                    {profile?.display_name || "Untitled member"}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="font-display text-2xl font-semibold break-words sm:text-3xl">
+                      {profile?.display_name || "Untitled member"}
+                    </h1>
+                    <FavoriteBadge type={profile?.favorite_achievement} />
+                  </div>
                   {profile?.creator_title && (
                     <p className="mt-0.5 text-sm text-foreground/80 break-words">
                       {profile.creator_title}

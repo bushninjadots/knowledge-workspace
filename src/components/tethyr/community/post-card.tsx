@@ -588,7 +588,7 @@ export function PostCard({
         <ActionButton
           icon={MessageCircle}
           label="Discuss"
-          count={comments.length}
+          count={post.stats.comment_count}
           active={showComments}
           activeClass="text-primary"
           onClick={onToggleComments}

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { UserPlus, Link2, X, Loader2 } from "lucide-react";
+import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAttachProjectToTeam,
@@ -9,6 +9,7 @@ import {
   useRemoveMember,
   useRespondToTeamInvite,
   useSetMemberRole,
+  useUpdateTeam,
   type TeamMemberRow,
   type TeamProjectRow,
   type TeamRole,
@@ -17,6 +18,9 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useMyProjects } from "@/hooks/use-projects";
 import { useTeamCredits } from "@/hooks/use-credits";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { validateImageFile } from "@/lib/validators";
+import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -76,11 +80,25 @@ export function TeamPage({
 
       {/* Identity */}
       <header className="mb-10">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Crew</p>
-        <h1 className="mt-1 font-display text-3xl font-semibold text-foreground sm:text-4xl">
-          {team.name}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">/{team.slug}</p>
+        <div className="flex items-start gap-5">
+          <TeamAvatar team={team} isLead={isLead} onChanged={() => {}} />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Crew</p>
+            <h1 className="mt-1 font-display text-3xl font-semibold text-foreground sm:text-4xl">
+              {team.name}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">/{team.slug}</p>
+            {team.description ? (
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+                {team.description}
+              </p>
+            ) : isLead ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Add a short description so people know what this crew builds and who it&apos;s for.
+              </p>
+            ) : null}
+          </div>
+        </div>
       </header>
 
       {/* Shipped work — the flagship */}
@@ -195,12 +213,91 @@ export function TeamPage({
   );
 }
 
+function TeamAvatar({
+  team,
+  isLead,
+  onChanged,
+}: {
+  team: TeamRow;
+  isLead: boolean;
+  onChanged: () => void;
+}) {
+  const { data: signedUrl } = useSignedStorageUrl("team-avatars", team.avatar_url);
+  const updateTeam = useUpdateTeam(team.id);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const initial = (team.name ?? "C").charAt(0).toUpperCase();
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
+    setUploading(true);
+    try {
+      const path = `${team.id}/avatar.${check.ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("team-avatars")
+        .upload(path, file, { upsert: true, contentType: check.contentType });
+      if (upErr) throw upErr;
+      await updateTeam.mutateAsync({ avatar_url: path });
+      toast.success("Crew picture updated");
+      onChanged();
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="relative shrink-0">
+      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border card-border bg-surface text-2xl font-semibold text-foreground">
+        {signedUrl ? (
+          <img src={signedUrl} alt={`${team.name} avatar`} className="h-full w-full object-cover" />
+        ) : (
+          initial
+        )}
+      </div>
+      {isLead && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFile}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105 disabled:opacity-50"
+            aria-label="Change crew picture"
+            title="Change crew picture"
+          >
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Camera className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Management({ team }: { team: TeamRow }) {
   const [handle, setHandle] = useState("");
   const [inviting, setInviting] = useState(false);
   const [attaching, setAttaching] = useState<string | null>(null);
+  const [descDraft, setDescDraft] = useState(team.description ?? "");
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [savingDesc, setSavingDesc] = useState(false);
   const invite = useInviteToTeam(team.id);
   const attach = useAttachProjectToTeam(team.id);
+  const updateTeam = useUpdateTeam(team.id);
   const { data: myProjects = [] } = useMyProjects();
 
   async function handleInvite() {
@@ -229,11 +326,79 @@ function Management({ team }: { team: TeamRow }) {
     }
   }
 
+  async function saveDesc() {
+    setSavingDesc(true);
+    try {
+      await updateTeam.mutateAsync({ description: descDraft.trim() || null });
+      toast.success("Description saved");
+      setEditingDesc(false);
+    } catch {
+      toast.error("Couldn't save description");
+    } finally {
+      setSavingDesc(false);
+    }
+  }
+
   return (
     <section aria-labelledby="manage-crew" className="rounded-xl bg-surface-elevated/30 p-5">
       <h2 id="manage-crew" className="mb-4 text-sm font-semibold text-foreground/80">
         Manage crew
       </h2>
+
+      <div className="mb-5">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+          <Pencil className="h-3.5 w-3.5" />
+          Description
+        </label>
+        {editingDesc ? (
+          <div className="space-y-2">
+            <textarea
+              value={descDraft}
+              onChange={(e) => setDescDraft(e.target.value.slice(0, 300))}
+              rows={3}
+              placeholder="What this crew builds and who it's for…"
+              className="w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={saveDesc}
+                disabled={savingDesc}
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+              >
+                {savingDesc ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
+                )}
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditingDesc(false);
+                  setDescDraft(team.description ?? "");
+                }}
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setDescDraft(team.description ?? "");
+              setEditingDesc(true);
+            }}
+            className="block w-full rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+          >
+            {team.description ? (
+              <span className="whitespace-pre-wrap text-foreground/80">{team.description}</span>
+            ) : (
+              <span className="text-muted-foreground">Add a description…</span>
+            )}
+          </button>
+        )}
+      </div>
 
       <div className="mb-5">
         <label className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">

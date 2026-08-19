@@ -1,7 +1,7 @@
 // Central source of truth for the signed-in creator.
 // Every page reads from the ["current-user"] query — mutations invalidate
 // this key and the whole app re-syncs automatically.
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
@@ -31,6 +31,7 @@ export type Profile = {
   learning_goals: string | null;
   favourite_tools: string[];
   software_stack: string[];
+  favorite_achievement: string | null;
 };
 
 // ProjectRow and ActivityRow re-exported above from profile-sections.
@@ -78,7 +79,7 @@ const PROFILE_COLS_BASIC =
 
 // Columns added in Phase 3+4 — may not exist yet if migrations haven't run.
 const PROFILE_COLS_EXTENDED =
-  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack";
+  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack, favorite_achievement";
 
 async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
@@ -308,5 +309,29 @@ export function useTrendingSkills() {
         );
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Pin (or unpin) the badge shown next to the member's name. The value is an
+ * achievement_type label stored on the profile row.
+ */
+export function useSetFavoriteAchievement() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const meId = me?.userId ?? null;
+
+  return useMutation({
+    mutationFn: async (achievement: string | null) => {
+      if (!meId) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ favorite_achievement: achievement })
+        .eq("id", meId);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+    },
   });
 }

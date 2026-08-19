@@ -1290,6 +1290,7 @@ export type Database = {
           created_at: string
           creator_title: string | null
           display_name: string | null
+          favorite_achievement: string | null
           favourite_tools: string[]
           handle: string | null
           id: string
@@ -1319,6 +1320,7 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
           id: string
@@ -1348,6 +1350,7 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
           id?: string
@@ -2498,6 +2501,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           created_by: string
+          description: string | null
           id: string
           name: string
           slug: string
@@ -2507,6 +2511,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
           name: string
           slug: string
@@ -2516,6 +2521,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
           name?: string
           slug?: string

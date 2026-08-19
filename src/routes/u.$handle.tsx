@@ -1,7 +1,7 @@
 // Public-facing profile at /u/:handle. Anyone can view — even signed-out —
 // because the profiles table has a public SELECT policy. Signed-in visitors
 // see a Connect button.
-import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   MapPin,
@@ -12,6 +12,7 @@ import {
   Link as LinkIcon,
   ThumbsUp,
   MessageCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref } from "@/lib/validators";
@@ -19,6 +20,7 @@ import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
+import { FavoriteBadge } from "@/components/tethyr/achievements";
 import {
   VerificationBadge,
   ExperienceBadge,
@@ -52,6 +54,7 @@ type PublicProfile = {
   teaching_style: string | null;
   learning_goals: string | null;
   reputation_score: number | null;
+  favorite_achievement: string | null;
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
@@ -108,7 +111,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -308,9 +311,12 @@ function PublicProfileRoute() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
-                    {profile.display_name || "Untitled member"}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="truncate font-display text-2xl font-semibold sm:text-3xl">
+                      {profile.display_name || "Untitled member"}
+                    </h1>
+                    <FavoriteBadge type={profile.favorite_achievement} />
+                  </div>
                   {profile.creator_title && (
                     <p className="mt-0.5 text-sm text-foreground/80">{profile.creator_title}</p>
                   )}
@@ -681,12 +687,24 @@ function Shell({
   children: React.ReactNode;
   accentColor?: string | null;
 }) {
+  const navigate = useNavigate();
   const accentStyle = accentColor
     ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
     : undefined;
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <button
+          onClick={() =>
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          aria-label="Go back"
+          title="Back"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
         <Link to="/" className="font-display text-lg font-semibold text-foreground">
           Tethyr
         </Link>

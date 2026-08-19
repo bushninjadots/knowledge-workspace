@@ -1,6 +1,7 @@
 // Public-facing team (crew) page at /teams/:slug. Anyone can view; the roster
 // and shipped-work list are the flagship, mirroring "work before metadata".
-import { createFileRoute, notFound, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound, useParams, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useTeam } from "@/hooks/use-teams";
 import { TeamPage } from "@/components/tethyr/team/team-page";
 import { canonicalLinks } from "@/lib/seo";
@@ -55,9 +56,21 @@ function TeamRoute() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <button
+          onClick={() =>
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          aria-label="Go back"
+          title="Back"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
         <Link to="/" className="font-display text-lg font-semibold text-foreground">
           Tethyr
         </Link>

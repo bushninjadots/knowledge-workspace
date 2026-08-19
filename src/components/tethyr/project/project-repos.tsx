@@ -11,8 +11,9 @@ import {
   Code2,
   RefreshCw,
   KeyRound,
+  ChevronDown,
 } from "lucide-react";
-import { hasGithubToken } from "@/lib/github-server";
+import { hasGithubToken, listGithubRepos } from "@/lib/github-server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -152,10 +153,18 @@ export function ProjectReposSection({
   const removeRepo = useRemoveProjectRepo();
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
 
   const { data: hasToken = false } = useQuery({
     queryKey: ["github-token-status"],
     queryFn: () => hasGithubToken(),
+    staleTime: 60_000,
+  });
+
+  const { data: githubRepos = [], isLoading: loadingRepos } = useQuery({
+    queryKey: ["github-repos"],
+    queryFn: () => listGithubRepos(),
+    enabled: showPicker,
     staleTime: 60_000,
   });
 
@@ -203,9 +212,60 @@ export function ProjectReposSection({
               <Plus className="h-3 w-3" />
               Link repo
             </button>
+            <button
+              onClick={() => setShowPicker((v) => !v)}
+              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            >
+              <Github className="h-3 w-3" />
+              From GitHub
+              <ChevronDown className={`h-3 w-3 transition ${showPicker ? "rotate-180" : ""}`} />
+            </button>
           </div>
         )}
       </div>
+      {showPicker && (
+        <div className="mb-4 rounded-xl border border-border/60 bg-background/40 p-3">
+          <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+            Your GitHub repositories
+          </p>
+          {loadingRepos ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-9 animate-pulse rounded-lg bg-surface/60" />
+              ))}
+            </div>
+          ) : githubRepos.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Connect GitHub in your profile to see your repos here — or paste a URL above. Public
+              repos work without a token; a token adds private repos.
+            </p>
+          ) : (
+            <ul className="max-h-64 space-y-1.5 overflow-y-auto">
+              {githubRepos.map((r) => (
+                <li key={r.full_name}>
+                  <button
+                    onClick={() =>
+                      addRepo.mutate(
+                        { project_id: projectId, url: r.html_url },
+                        { onSuccess: () => setShowPicker(false) },
+                      )
+                    }
+                    disabled={addRepo.isPending}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                  >
+                    <span className="min-w-0 flex-1 truncate">{r.full_name}</span>
+                    {r.language && (
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                        {r.language}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       {showAdd && (
         <div className="mb-4 flex gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <Input

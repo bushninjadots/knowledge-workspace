@@ -26,6 +26,7 @@ import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
 import { GallerySection, ResourcesSection } from "./project-resources";
+import { ReadmeEditor } from "./readme-editor";
 import type { ProjectFile } from "./project-files";
 
 type EditorView = "write" | "preview" | "changes";
@@ -275,17 +276,7 @@ export function ProjectReadmeTab({
               ))}
             </div>
 
-            {editorView === "write" && (
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="# Project title
-
-Write your project's story here. Markdown supported — headings, images, GIFs, videos, code blocks, tables, links…"
-                aria-label="README markdown"
-                className="w-full resize-y rounded-xl border border-border/60 bg-background/60 p-4 font-mono text-[13px] leading-relaxed text-foreground outline-none transition focus:border-primary/50 min-h-[24rem]"
-              />
-            )}
+            {editorView === "write" && <ReadmeEditor content={draft} onChange={setDraft} />}
 
             {editorView === "preview" && (
               <div className="prose-custom min-h-[24rem] overflow-auto rounded-xl border border-border/40 bg-background/40 px-5 py-5">

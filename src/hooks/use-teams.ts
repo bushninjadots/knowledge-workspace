@@ -9,6 +9,7 @@ export type TeamRow = {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   avatar_url: string | null;
   cover_url: string | null;
   created_by: string;
@@ -333,6 +334,30 @@ export function useAttachProjectToTeam(teamId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TEAM_KEY(teamId) });
+    },
+  });
+}
+
+export function useUpdateTeam(teamId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      name?: string;
+      description?: string | null;
+      avatar_url?: string | null;
+    }) => {
+      const { data, error } = await sb
+        .from("teams")
+        .update(input)
+        .eq("id", teamId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as TeamRow;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team"] });
+      qc.invalidateQueries({ queryKey: MY_TEAMS_KEY });
     },
   });
 }

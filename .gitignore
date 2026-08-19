@@ -43,3 +43,4 @@ supabase/.temp/
 supabase/.branches/
 .aider.chat.history.md
 .aider.input.history
+.playwright-mcp/

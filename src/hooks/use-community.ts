@@ -130,7 +130,13 @@ export type PostActionRow = {
 
 export type PostWithAuthor = PostRow & {
   author: NonNullable<PostRow["author"]>;
-  stats: { likes: number; helpful: number; saves: number; offers: number };
+  stats: {
+    likes: number;
+    helpful: number;
+    saves: number;
+    offers: number;
+    comment_count: number;
+  };
   myActions: string[]; // actions the current user has taken
 };
 
@@ -242,6 +248,18 @@ export function usePosts() {
         if (a.action === "offer") s.offers++;
       }
 
+      // Comment counts so the card can show them without opening the thread.
+      const commentCountMap = new Map<string, number>();
+      if (postIds.length > 0) {
+        const { data: rawCommentRows } = await sb
+          .from("comments")
+          .select("post_id")
+          .in("post_id", postIds);
+        for (const c of (rawCommentRows ?? []) as { post_id: string }[]) {
+          commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) ?? 0) + 1);
+        }
+      }
+
       return posts.map((p: PostRow): PostWithAuthor => ({
         ...p,
         author: (profileMap.get(p.author_id) as unknown as NonNullable<PostRow["author"]>) ?? {
@@ -251,7 +269,10 @@ export function usePosts() {
           category: "General",
           avatar_url: null,
         },
-        stats: statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 },
+        stats: {
+          ...(statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 }),
+          comment_count: commentCountMap.get(p.id) ?? 0,
+        },
         myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
       }));
     },

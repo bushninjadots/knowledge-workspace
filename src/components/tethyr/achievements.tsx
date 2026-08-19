@@ -1,4 +1,5 @@
 // Achievements — auto-awarded badges displayed on profiles.
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Award,
@@ -21,8 +22,11 @@ import {
   MessageSquare,
   BadgeCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ACHIEVEMENTS, type AchievementType, type AchievementDef } from "@/lib/reputation";
+import { useSetFavoriteAchievement } from "@/hooks/use-current-user";
+import { burstConfetti } from "@/lib/confetti";
 import { EmptyState } from "./empty-state";
 
 const ICONS: Record<string, typeof Award> = {
@@ -71,7 +75,31 @@ export function AchievementBadge({ type }: { type: AchievementType }) {
   );
 }
 
-export function AchievementGrid({ profileId }: { profileId: string }) {
+/** Compact icon-only badge shown next to a member's name. */
+export function FavoriteBadge({ type }: { type: string | null | undefined }) {
+  const def = ACHIEVEMENTS.find((a) => a.type === type);
+  if (!def) return null;
+  return (
+    <span
+      title={`Favourite badge: ${def.label}`}
+      className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+    >
+      <AchievementIcon def={def} size="sm" />
+    </span>
+  );
+}
+
+export function AchievementGrid({
+  profileId,
+  isOwnProfile = false,
+  favoriteAchievement,
+}: {
+  profileId: string;
+  isOwnProfile?: boolean;
+  favoriteAchievement?: string | null;
+}) {
+  const setFavorite = useSetFavoriteAchievement();
+
   const {
     data: earned,
     isLoading,
@@ -89,6 +117,31 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
     },
     staleTime: 60_000,
   });
+
+  // Celebrate newly-awarded badges with a confetti burst. Only for the signed-in
+  // member viewing their own studio — never on someone else's profile.
+  useEffect(() => {
+    if (!isOwnProfile || !earned || earned.length === 0) return;
+    const storageKey = `tethyr:seen-achievements:${profileId}`;
+    let seen: Set<string>;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      seen = raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    } catch {
+      seen = new Set();
+    }
+
+    const fresh = earned.some((e) => !seen.has(e.achievement));
+    if (fresh) {
+      burstConfetti();
+      for (const e of earned) seen.add(e.achievement);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify([...seen]));
+      } catch {
+        /* ignore quota errors */
+      }
+    }
+  }, [isOwnProfile, earned, profileId]);
 
   if (isLoading) {
     return (
@@ -129,23 +182,45 @@ export function AchievementGrid({ profileId }: { profileId: string }) {
     );
   }
 
+  function toggleFavorite(type: AchievementType) {
+    const next = favoriteAchievement === type ? null : type;
+    setFavorite.mutate(next, {
+      onSuccess: () => toast.success(next ? "Badge pinned next to your name" : "Badge unpinned"),
+      onError: (e: Error) => toast.error(e.message),
+    });
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
+      {isOwnProfile && (
+        <p className="w-full text-[11px] text-muted-foreground">
+          Tap an earned badge to pin it next to your name.
+        </p>
+      )}
       {sorted.map((def) => {
         const isEarned = earnedSet.has(def.type);
+        const isFavorite = favoriteAchievement === def.type;
         return (
-          <span
+          <button
             key={def.type}
-            title={`${def.label}: ${def.description}${isEarned ? "(Earned)" : ""}`}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
-              isEarned
-                ? "border-border/60 bg-surface text-foreground"
-                : "border-border/30 bg-surface/40 text-muted-foreground"
+            type="button"
+            disabled={!isOwnProfile || !isEarned}
+            onClick={() => toggleFavorite(def.type)}
+            title={`${def.label}: ${def.description}${
+              isEarned ? (isFavorite ? " (Pinned)" : " (Earned)") : ""
             }`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+              isFavorite
+                ? "border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-foreground"
+                : isEarned
+                  ? "border-border/60 bg-surface text-foreground"
+                  : "border-border/30 bg-surface/40 text-muted-foreground"
+            } ${isOwnProfile && isEarned ? "cursor-pointer hover:border-[var(--user-accent-border,var(--border-strong))]" : ""}`}
           >
             <AchievementIcon def={def} size="sm" />
             {def.label}
-          </span>
+            {isFavorite && <Star className="h-3 w-3 fill-current" />}
+          </button>
         );
       })}
     </div>

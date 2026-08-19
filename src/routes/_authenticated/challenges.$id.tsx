@@ -198,7 +198,10 @@ function ChallengeDetailPage() {
     );
   }
 
-  const isCompleted = challenge.my_participation?.status === "completed";
+  const myReview = challenge.my_participation?.review_status;
+  const isVerified = myReview === "passed";
+  const isPendingVerification =
+    challenge.my_participation?.status === "completed" && myReview !== "passed";
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
@@ -232,9 +235,33 @@ function ChallengeDetailPage() {
                 >
                   {challenge.difficulty}
                 </Badge>
-                {isCompleted && (
+                {isVerified && (
                   <Badge variant="outline" className="bg-trust text-trust border-trust/40 gap-1">
                     <CheckCircle2 className="h-3 w-3" /> Challenge Completed!
+                  </Badge>
+                )}
+                {isPendingVerification && myReview === "submitted" && (
+                  <Badge
+                    variant="outline"
+                    className="bg-teaching text-teaching border-teaching/40 gap-1"
+                  >
+                    <Clock className="h-3 w-3" /> Under review
+                  </Badge>
+                )}
+                {isPendingVerification && myReview === "rejected" && (
+                  <Badge
+                    variant="outline"
+                    className="bg-destructive/10 text-destructive border-destructive/30 gap-1"
+                  >
+                    <XCircle className="h-3 w-3" /> Needs revision
+                  </Badge>
+                )}
+                {isPendingVerification && !myReview && (
+                  <Badge
+                    variant="outline"
+                    className="bg-teaching text-teaching border-teaching/40 gap-1"
+                  >
+                    <Clock className="h-3 w-3" /> Marked complete — pending verification
                   </Badge>
                 )}
               </div>
@@ -396,8 +423,20 @@ function ChallengeDetailPage() {
                     })}
                   </div>
 
-                  {myParticipation.status === "in_progress" && (
+                  {(myParticipation.status === "in_progress" ||
+                    (myParticipation.status === "completed" &&
+                      myParticipation.review_status === "none")) && (
                     <div className="space-y-3 pt-2">
+                      {myParticipation.status === "completed" && (
+                        <p className="flex items-start gap-1.5 rounded-lg border border-teaching/30 bg-teaching/5 px-3 py-2 text-xs text-teaching">
+                          <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            You marked this complete, but it isn&apos;t verified yet. Submit your
+                            work below — you&apos;ll earn the badge and reputation once the creator
+                            passes it.
+                          </span>
+                        </p>
+                      )}
                       {challenge.pass_criteria && (
                         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
                           <ListChecks className="mt-0.5 h-3.5 w-3.5 shrink-0" />

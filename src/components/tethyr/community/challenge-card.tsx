@@ -154,7 +154,10 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
       <CardFooter className="p-5 pt-0 flex items-center justify-between gap-3 border-t border-border/30 mt-2">
         <div className="flex items-center gap-2">
           {challenge.is_joined ? (
-            <ReviewStatusBadge status={challenge.my_participation?.review_status} />
+            <ReviewStatusBadge
+              status={challenge.my_participation?.review_status}
+              participantStatus={challenge.my_participation?.status}
+            />
           ) : challenge.is_starter ? (
             <span className="text-xs text-muted-foreground">Curated by Tethyr</span>
           ) : (
@@ -233,7 +236,13 @@ function PassedSubmissionLink({ url, reviewedAt }: { url: string; reviewedAt?: s
   );
 }
 
-function ReviewStatusBadge({ status }: { status?: string | null }) {
+function ReviewStatusBadge({
+  status,
+  participantStatus,
+}: {
+  status?: string | null;
+  participantStatus?: string | null;
+}) {
   if (status === "passed") {
     return (
       <Badge
@@ -261,6 +270,16 @@ function ReviewStatusBadge({ status }: { status?: string | null }) {
         className="gap-1 border-destructive/30 text-destructive bg-destructive/10 text-xs"
       >
         <XCircle className="h-3.5 w-3.5" /> Needs revision
+      </Badge>
+    );
+  }
+  if (participantStatus === "completed") {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1 border-teaching/30 text-teaching bg-teaching/10 text-xs"
+      >
+        <Hourglass className="h-3.5 w-3.5" /> Pending verification
       </Badge>
     );
   }

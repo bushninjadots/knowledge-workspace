@@ -10,6 +10,7 @@ import {
   LogOut,
   Bell,
   Swords,
+  Link2,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +43,7 @@ const groups = [
     label: "Network",
     items: [
       { to: "/community", label: "Community", icon: Users },
+      { to: "/connections", label: "Connections", icon: Link2 },
       { to: "/messages", label: "Messages", icon: MessageSquare },
       { to: "/notifications", label: "Notifications", icon: Bell },
     ],

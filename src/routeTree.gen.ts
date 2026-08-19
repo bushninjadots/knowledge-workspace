@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedChallengesRouteImport } from './routes/_authenticated/challenges'
 import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
+import { Route as AuthenticatedConnectionsRouteImport } from './routes/_authenticated/connections'
 import { Route as AuthenticatedExploreRouteImport } from './routes/_authenticated/explore'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -72,6 +73,12 @@ const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
   path: '/community',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConnectionsRoute =
+  AuthenticatedConnectionsRouteImport.update({
+    id: '/connections',
+    path: '/connections',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedExploreRoute = AuthenticatedExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/challenges': typeof AuthenticatedChallengesRouteWithChildren
   '/community': typeof AuthenticatedCommunityRoute
+  '/connections': typeof AuthenticatedConnectionsRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/challenges': typeof AuthenticatedChallengesRouteWithChildren
   '/community': typeof AuthenticatedCommunityRoute
+  '/connections': typeof AuthenticatedConnectionsRoute
   '/explore': typeof AuthenticatedExploreRoute
   '/library': typeof AuthenticatedLibraryRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
@@ -210,6 +219,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/challenges': typeof AuthenticatedChallengesRouteWithChildren
   '/_authenticated/community': typeof AuthenticatedCommunityRoute
+  '/_authenticated/connections': typeof AuthenticatedConnectionsRoute
   '/_authenticated/explore': typeof AuthenticatedExploreRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/challenges'
     | '/community'
+    | '/connections'
     | '/explore'
     | '/library'
     | '/messages'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/challenges'
     | '/community'
+    | '/connections'
     | '/explore'
     | '/library'
     | '/messages'
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/challenges'
     | '/_authenticated/community'
+    | '/_authenticated/connections'
     | '/_authenticated/explore'
     | '/_authenticated/library'
     | '/_authenticated/messages'
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/community'
       fullPath: '/community'
       preLoaderRoute: typeof AuthenticatedCommunityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/connections': {
+      id: '/_authenticated/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof AuthenticatedConnectionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/explore': {
@@ -522,6 +542,7 @@ const AuthenticatedSessionsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRouteWithChildren
   AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRoute
+  AuthenticatedConnectionsRoute: typeof AuthenticatedConnectionsRoute
   AuthenticatedExploreRoute: typeof AuthenticatedExploreRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
@@ -535,6 +556,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChallengesRoute: AuthenticatedChallengesRouteWithChildren,
   AuthenticatedCommunityRoute: AuthenticatedCommunityRoute,
+  AuthenticatedConnectionsRoute: AuthenticatedConnectionsRoute,
   AuthenticatedExploreRoute: AuthenticatedExploreRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,

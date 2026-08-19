@@ -45,6 +45,7 @@ export function useConnectGitHub() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      const handle = username.trim();
       // Store the GitHub username as a connected account
       const { data, error } = await sb
         .from("connected_accounts")
@@ -52,18 +53,31 @@ export function useConnectGitHub() {
           {
             user_id: user.id,
             provider: "github",
-            username: username.trim(),
-            provider_id: username.trim(),
+            username: handle,
+            provider_id: handle,
           },
           { onConflict: "user_id,provider" },
         )
         .select()
         .single();
       if (error) throw error;
+
+      // Mirror the GitHub link into the profile's social links so the "Links"
+      // card and the public profile show it without a separate edit.
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("social_links")
+        .eq("id", user.id)
+        .maybeSingle();
+      const social = (profile?.social_links as Record<string, string> | null) ?? {};
+      social.github = `https://github.com/${handle}`;
+      await sb.from("profiles").update({ social_links: social }).eq("id", user.id);
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
       toast.success("GitHub account connected");
     },
     onError: (error: Error) => {
@@ -77,11 +91,28 @@ export function useDisconnectGitHub() {
 
   return useMutation({
     mutationFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const { error } = await sb.from("connected_accounts").delete().eq("provider", "github");
       if (error) throw error;
+      if (user) {
+        // Remove the mirrored GitHub link from the profile's social links.
+        const { data: profile } = await sb
+          .from("profiles")
+          .select("social_links")
+          .eq("id", user.id)
+          .maybeSingle();
+        const social = (profile?.social_links as Record<string, string> | null) ?? {};
+        if (social.github) {
+          delete social.github;
+          await sb.from("profiles").update({ social_links: social }).eq("id", user.id);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["connected-accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
       toast.success("GitHub account disconnected");
     },
   });
@@ -120,6 +151,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
   const [editing, setEditing] = useState(false);
   const [tokenDraft, setTokenDraft] = useState("");
   const [tokenEditing, setTokenEditing] = useState(autoOpenToken);
+  const [savingToken, setSavingToken] = useState(false);
 
   const { data: tokenSet = false } = useQuery({
     queryKey: ["github-token-status"],
@@ -129,8 +161,14 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
 
   const githubAccount = accounts.find((a) => a.provider === "github");
 
-  const saveToken = () => {
-    saveGithubToken({ data: { token: tokenDraft } }).then((res) => {
+  const saveToken = async () => {
+    if (!tokenDraft.trim()) {
+      toast.error("Enter a GitHub token to save it");
+      return;
+    }
+    setSavingToken(true);
+    try {
+      const res = await saveGithubToken({ data: { token: tokenDraft } });
       if (res.ok) {
         setTokenDraft("");
         setTokenEditing(false);
@@ -139,7 +177,11 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
       } else {
         toast.error(githubTokenErrorMessage(res.reason));
       }
-    });
+    } catch (err) {
+      toast.error((err as Error)?.message ?? "Couldn't save the token — try again");
+    } finally {
+      setSavingToken(false);
+    }
   };
 
   const removeToken = () => {
@@ -277,8 +319,18 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
                   autoComplete="off"
                   className="h-8 flex-1 border-border/60 text-xs"
                 />
-                <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={saveToken}>
-                  <Check className="mr-1 h-3 w-3" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs"
+                  onClick={saveToken}
+                  disabled={savingToken}
+                >
+                  {savingToken ? (
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="mr-1 h-3 w-3" />
+                  )}
                   Save
                 </Button>
                 <button

@@ -118,6 +118,51 @@ export async function fetchRepoMeta(
   }
 }
 
+export type GithubRepoLite = {
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  private: boolean;
+};
+
+/**
+ * List a user's public (and, with a token, private) repositories.
+ * Without a token this uses the unauthenticated /users/:username/repos
+ * endpoint (subject to the usual 60 req/hr rate limit); with a token it uses
+ * the authenticated /user/repos endpoint which includes private repos.
+ */
+export async function fetchUserRepos(username: string, token?: string): Promise<GithubRepoLite[]> {
+  const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  // With a token, /user/repos returns the authenticated user's own repos
+  // (including private ones) regardless of the username argument.
+  const url = token
+    ? "https://api.github.com/user/repos?per_page=30&sort=updated"
+    : `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=30&sort=updated`;
+
+  const res = await fetchWithTimeout(url, { headers });
+  if (!res?.ok) return [];
+  const json = (await res.json()) as {
+    full_name: string;
+    html_url: string;
+    description: string | null;
+    language: string | null;
+    stargazers_count: number;
+    private: boolean;
+  }[];
+  return json.map((r) => ({
+    full_name: r.full_name,
+    html_url: r.html_url,
+    description: r.description,
+    language: r.language,
+    stargazers_count: r.stargazers_count ?? 0,
+    private: r.private ?? false,
+  }));
+}
+
 export type TokenValidation =
   | { ok: true; username: string }
   | { ok: false; reason: "unauthorized" | "network" | "empty" | "storage" };

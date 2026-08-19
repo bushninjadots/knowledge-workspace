@@ -19,6 +19,7 @@ export function ProfileOverviewTab({
   learnIds,
   activity,
   skills,
+  isOwnProfile,
 }: {
   profile: Profile | null;
   userId: string;
@@ -118,7 +119,11 @@ export function ProfileOverviewTab({
           <Star className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Achievements</h3>
         </div>
-        <AchievementGrid profileId={userId} />
+        <AchievementGrid
+          profileId={userId}
+          isOwnProfile={isOwnProfile}
+          favoriteAchievement={profile?.favorite_achievement}
+        />
       </div>
 
       {/* ACTIVITY PREVIEW */}

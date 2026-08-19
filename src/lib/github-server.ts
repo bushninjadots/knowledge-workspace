@@ -9,7 +9,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   fetchRepoMeta,
   fetchRepoReadme,
+  fetchUserRepos,
   validateGitHubToken,
+  type GithubRepoLite,
   type RepoMeta,
   type RepoReadmeResult,
 } from "./github";
@@ -67,6 +69,43 @@ export const hasGithubToken = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .maybeSingle();
     return !!data;
+  });
+
+/**
+ * The signed-in user's connected GitHub username, if any.
+ */
+export const getConnectedGithubUsername = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("connected_accounts")
+      .select("username")
+      .eq("user_id", context.userId)
+      .eq("provider", "github")
+      .maybeSingle();
+    return (data?.username as string) ?? null;
+  });
+
+/**
+ * List repos the signed-in user can link to a project. Uses the stored token
+ * when present (includes private repos); otherwise falls back to the public
+ * repo list for their connected username.
+ */
+export const listGithubRepos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<GithubRepoLite[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const token = await getStoredToken(context.userId);
+    if (token) return fetchUserRepos("", token);
+    const { data } = await supabaseAdmin
+      .from("connected_accounts")
+      .select("username")
+      .eq("user_id", context.userId)
+      .eq("provider", "github")
+      .maybeSingle();
+    if (!data?.username) return [];
+    return fetchUserRepos(data.username);
   });
 
 /** Fetch a repo README on the server, using the stored token when present. */
