@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -1131,7 +1132,8 @@ export function useUnsharePost() {
 // ============================================================
 
 export function useCommunitySpacePosts(spaceId: string) {
-  return useQuery({
+  const qc = useQueryClient();
+  const query = useQuery({
     queryKey: SPACE_POSTS_KEY(spaceId),
     queryFn: async () => {
       // Fetch native posts for this space
@@ -1260,4 +1262,31 @@ export function useCommunitySpacePosts(spaceId: string) {
     staleTime: 30_000,
     enabled: !!spaceId,
   });
+
+  // Stream new chat messages (and post edits/removals) into the space feed in
+  // real time. The channel is scoped to this space via the postgres_changes
+  // filter, so members see each other's messages without refreshing.
+  useEffect(() => {
+    if (!spaceId) return;
+    const channel = sb
+      .channel(`space-posts-${spaceId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "posts",
+          filter: `space_id=eq.${spaceId}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(spaceId) });
+        },
+      )
+      .subscribe();
+    return () => {
+      sb.removeChannel(channel);
+    };
+  }, [spaceId, qc]);
+
+  return query;
 }

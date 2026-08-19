@@ -3,6 +3,7 @@ import { Heart, Search, Users, Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/tethyr/community/post-card";
+import { SpaceChatMessage } from "@/components/tethyr/community/space-chat-message";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
 import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
@@ -275,6 +276,17 @@ export const CommunityFeedList = memo(function CommunityFeedList({
           !!activeSpace &&
           !isShared &&
           (activeSpace.my_role === "owner" || activeSpace.my_role === "moderator");
+        // Quick chat messages (no title) from the space chat composer render as
+        // lightweight chat rows; structured posts keep the full card.
+        if (activeSpace && !post.title.trim()) {
+          return (
+            <SpaceChatMessage
+              key={post.id}
+              post={post}
+              defaultOpenComments={openComments.has(post.id)}
+            />
+          );
+        }
         return (
           <PostCardWithComments
             key={post.id}

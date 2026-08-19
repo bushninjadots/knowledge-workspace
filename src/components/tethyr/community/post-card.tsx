@@ -835,7 +835,7 @@ function ReportPostDialog({
   );
 }
 
-function CommentThreadInline({
+export function CommentThreadInline({
   postId,
   comments,
   isQuestion,
