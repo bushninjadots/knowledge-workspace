@@ -21,6 +21,8 @@ import { canonicalLinks } from "@/lib/seo";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
+import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
+import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
 import {
   VerificationBadge,
   ExperienceBadge,
@@ -373,7 +375,6 @@ function PublicProfileRoute() {
             </div>
           </div>
         </div>
-
         {/* ── Section 1: Skills They Teach (with endorsements) ── */}
         <SectionCard
           title="Skills they share"
@@ -446,7 +447,6 @@ function PublicProfileRoute() {
             </div>
           )}
         </SectionCard>
-
         {/* ── Section 2: Project Contributions — Built vs Contributed To ── */}
         <SectionCard
           title="Contributions"
@@ -499,7 +499,28 @@ function PublicProfileRoute() {
             </div>
           )}
         </SectionCard>
-
+        {/* ── Section 2b: Contribution activity — work, not claims ── */}
+        <SectionCard
+          title="Contribution activity"
+          subtitle="What they've shipped and completed recently"
+          icon={
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="18" height="17" rx="2" />
+              <path d="M8 2v4M16 2v4M3 10h18" />
+            </svg>
+          }
+        >
+          <ContributionGraph profileId={profile.id} />
+          <div className="mt-5">
+            <ActivityTimeline profileId={profile.id} limit={6} />
+          </div>
+        </SectionCard>
         <div className="grid gap-6 md:grid-cols-2">
           {/* ── Section 3: Currently Learning ── */}
           <SectionCard title="Skills they're growing" icon={<Sparkles className="h-4 w-4" />}>
@@ -554,7 +575,6 @@ function PublicProfileRoute() {
             </SectionCard>
           )}
         </div>
-
         {/* ── Section 5: About (bio is secondary) ── */}
         {profile.bio && (
           <SectionCard
