@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
+  absolutizeRelativeLinks,
   getRepoFullName,
   fetchRepoReadme,
   fetchRepoMeta,
@@ -47,7 +48,11 @@ describe("fetchRepoReadme", () => {
       return new Response("not found", { status: 404 });
     });
     const result = await fetchRepoReadme("owner/repo");
-    expect(result).toEqual({ text: "# Hello", rateLimited: false, unauthorized: false });
+    expect(result).toEqual({
+      text: "# Hello",
+      rateLimited: false,
+      unauthorized: false,
+    });
     expect(String(fetch.mock.calls[0][0])).toContain("raw.githubusercontent.com");
   });
 
@@ -84,7 +89,11 @@ describe("fetchRepoReadme", () => {
         : new Response("nf", { status: 404 }),
     );
     const result = await fetchRepoReadme("owner/repo", "ghp_bad");
-    expect(result).toEqual({ text: null, rateLimited: false, unauthorized: true });
+    expect(result).toEqual({
+      text: null,
+      rateLimited: false,
+      unauthorized: true,
+    });
   });
 
   it("flags 403/429 as rate-limited", async () => {
@@ -94,13 +103,21 @@ describe("fetchRepoReadme", () => {
         : new Response("nf", { status: 404 }),
     );
     const result = await fetchRepoReadme("owner/repo", "ghp_ok");
-    expect(result).toEqual({ text: null, rateLimited: true, unauthorized: false });
+    expect(result).toEqual({
+      text: null,
+      rateLimited: true,
+      unauthorized: false,
+    });
   });
 
   it("returns not-found when everything misses", async () => {
     mockFetch(async () => new Response("nf", { status: 404 }));
     const result = await fetchRepoReadme("owner/repo");
-    expect(result).toEqual({ text: null, rateLimited: false, unauthorized: false });
+    expect(result).toEqual({
+      text: null,
+      rateLimited: false,
+      unauthorized: false,
+    });
   });
 
   it("surfaces a network failure as a generic miss", async () => {
@@ -108,7 +125,64 @@ describe("fetchRepoReadme", () => {
       throw new TypeError("down");
     });
     const result = await fetchRepoReadme("owner/repo");
-    expect(result).toEqual({ text: null, rateLimited: false, unauthorized: false });
+    expect(result).toEqual({
+      text: null,
+      rateLimited: false,
+      unauthorized: false,
+    });
+  });
+});
+
+describe("absolutizeRelativeLinks", () => {
+  it("points relative images at raw.githubusercontent.com", () => {
+    const out = absolutizeRelativeLinks(
+      "![Dashboard](docs/screenshots/dashboard.png)",
+      "owner/repo",
+      "main",
+    );
+    expect(out).toBe(
+      "![Dashboard](https://raw.githubusercontent.com/owner/repo/main/docs/screenshots/dashboard.png)",
+    );
+  });
+
+  it("points relative links at the file on github.com", () => {
+    const out = absolutizeRelativeLinks(
+      "See [DEPLOYMENT.md](DEPLOYMENT.md) and [LICENSE](LICENSE).",
+      "owner/repo",
+      "main",
+    );
+    expect(out).toBe(
+      "See [DEPLOYMENT.md](https://github.com/owner/repo/blob/main/DEPLOYMENT.md) and [LICENSE](https://github.com/owner/repo/blob/main/LICENSE).",
+    );
+  });
+
+  it("falls back to HEAD when no branch is given", () => {
+    const out = absolutizeRelativeLinks("[X](docs/x.md)", "owner/repo");
+    expect(out).toBe("[X](https://github.com/owner/repo/blob/HEAD/docs/x.md)");
+  });
+
+  it("resolves root-relative paths and keeps alt text and titles", () => {
+    const out = absolutizeRelativeLinks('![Logo](/assets/logo.png "Logo")', "owner/repo", "main");
+    expect(out).toBe(
+      '![Logo](https://raw.githubusercontent.com/owner/repo/main/assets/logo.png "Logo")',
+    );
+  });
+
+  it("leaves absolute URLs, anchors, data URIs, and mailto links untouched", () => {
+    const md =
+      "![Badge](https://img.shields.io/badge/x-y) ![Anchor](#features) ![Pixel](data:image/png;base64,abc) [mail](mailto:a@b.c)";
+    expect(absolutizeRelativeLinks(md, "owner/repo", "main")).toBe(md);
+  });
+
+  it("rewrites both links and images in the same document", () => {
+    const out = absolutizeRelativeLinks(
+      "[DEPLOYMENT.md](DEPLOYMENT.md) and ![shot](shot.png)",
+      "owner/repo",
+      "main",
+    );
+    expect(out).toBe(
+      "[DEPLOYMENT.md](https://github.com/owner/repo/blob/main/DEPLOYMENT.md) and ![shot](https://raw.githubusercontent.com/owner/repo/main/shot.png)",
+    );
   });
 });
 
@@ -125,6 +199,7 @@ describe("fetchRepoMeta", () => {
           updated_at: "2026-01-01",
           topics: ["a", "b"],
           private: false,
+          default_branch: "main",
         });
       }
       return new Response("nf", { status: 404 });
@@ -136,6 +211,7 @@ describe("fetchRepoMeta", () => {
       stargazers_count: 42,
       topics: ["a", "b"],
       private: false,
+      default_branch: "main",
     });
   });
 

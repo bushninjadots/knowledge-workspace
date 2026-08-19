@@ -40,6 +40,7 @@ export type RepoMeta = {
   updated_at?: string | null;
   topics?: string[] | null;
   private?: boolean | null;
+  default_branch?: string | null;
 };
 
 /** Extract "owner/repo" from a linked repo's stored metadata or URL. */
@@ -53,6 +54,38 @@ export function getRepoFullName(repo: {
       .replace(/^https?:\/\/(www\.)?github\.com\//, "")
       .replace(/\/$/, "")
       .replace(/\.git$/, "")
+  );
+}
+
+/**
+ * Point relative URLs in an imported README at the source repo so they resolve
+ * on Tethyr instead of 404ing against local routes. Images go to
+ * raw.githubusercontent.com; links go to the file on github.com. Absolute
+ * URLs, fragment anchors, data URIs, and mailto: links are left untouched.
+ * `branch` should be the repo's default branch when known (else "HEAD").
+ */
+export function absolutizeRelativeLinks(
+  markdown: string,
+  fullName: string,
+  branch = "HEAD",
+): string {
+  return markdown.replace(
+    /(!?)\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g,
+    (match, bang, text, url, title) => {
+      if (
+        /^(?:https?:)?\/\//i.test(url) ||
+        url.startsWith("#") ||
+        url.startsWith("data:") ||
+        url.startsWith("mailto:")
+      ) {
+        return match;
+      }
+      const path = url.startsWith("/") ? url : `/${url}`;
+      if (bang === "!") {
+        return `![${text}](https://raw.githubusercontent.com/${fullName}/${branch}${path}${title})`;
+      }
+      return `[${text}](https://github.com/${fullName}/blob/${branch}${path}${title})`;
+    },
   );
 }
 
@@ -112,6 +145,7 @@ export async function fetchRepoMeta(
       updated_at: json.updated_at,
       topics: json.topics,
       private: json.private,
+      default_branch: json.default_branch,
     };
   } catch {
     return null;

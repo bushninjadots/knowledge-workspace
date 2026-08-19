@@ -2,6 +2,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
+import { extractBearerToken } from "@/lib/auth-token";
 import type { Database } from "./types";
 
 function isNewSupabaseApiKey(value: string): boolean {
@@ -62,7 +63,10 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
       throw new Error("Unauthorized: Only Bearer tokens are supported");
     }
 
-    const token = authHeader.replace("Bearer", "");
+    // Strip the scheme plus the separating whitespace — a naive
+    // `replace("Bearer", "")` left a leading space that failed base64url JWT
+    // decoding downstream (see src/lib/auth-token.test.ts).
+    const token = extractBearerToken(authHeader);
     if (!token) {
       throw new Error("Unauthorized: No token provided");
     }
@@ -87,7 +91,10 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
 
     const { data, error } = await supabase.auth.getClaims(token);
     if (error || !data?.claims) {
-      throw new Error("Unauthorized: Invalid token");
+      // Surface the underlying reason (e.g. expired token) instead of hiding it.
+      throw new Error(
+        error ? `Unauthorized: Invalid token — ${error.message}` : "Unauthorized: Invalid token",
+      );
     }
 
     if (!data.claims.sub) {

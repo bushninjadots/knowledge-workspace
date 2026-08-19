@@ -21,7 +21,7 @@ import type { ProjectDetail, GalleryItem, ResourceItem } from "@/hooks/use-proje
 import { useUpdateProjectReadme, useUpdateProjectContent } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
 import { fetchRepoReadmeServer } from "@/lib/github-server";
-import { getRepoFullName } from "@/lib/github";
+import { absolutizeRelativeLinks, getRepoFullName } from "@/lib/github";
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
@@ -97,8 +97,9 @@ export function ProjectReadmeTab({
       toast.error("Link a repository first — the README is imported from there");
       return null;
     }
+    const fullName = getRepoFullName(repo);
     const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
-      data: { fullName: getRepoFullName(repo) },
+      data: { fullName },
     });
     if (unauthorized) {
       toast.error("GitHub rejected the saved token — check it and try again");
@@ -112,7 +113,11 @@ export function ProjectReadmeTab({
       toast.error("No README found in the linked repository");
       return null;
     }
-    return text;
+    // Relative links and screenshots (docs/screenshots/*.png, DEPLOYMENT.md)
+    // would 404 against Tethyr's routes — point them at the source repo. Use
+    // the linked repo's default branch when we know it, else HEAD.
+    const branch = repo.metadata?.default_branch ?? "HEAD";
+    return absolutizeRelativeLinks(text, fullName, branch);
   };
 
   const pullFromGitHub = async () => {
