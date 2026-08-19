@@ -1,5 +1,6 @@
 // Connections — your accepted friends and pending requests, in one place.
 // Accepted connections link straight to a profile and a message thread.
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,6 +8,14 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { Link2, MessageSquare, Check, X, UserPlus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -40,6 +49,21 @@ function ConnectionsPage() {
   const outgoing = (connections ?? []).filter(
     (c) => c.status === "pending" && c.requester_id === meId,
   );
+
+  const [withdrawDialog, setWithdrawDialog] = useState<{
+    open: boolean;
+    connectionId: string | null;
+  }>({ open: false, connectionId: null });
+
+  const handleWithdrawConfirm = () => {
+    if (!withdrawDialog.connectionId) return;
+    const id = withdrawDialog.connectionId;
+    setWithdrawDialog({ open: false, connectionId: null });
+    remove.mutate(id, {
+      onSuccess: () => toast.success("Request withdrawn"),
+      onError: (e: Error) => toast.error(friendlyError(e)),
+    });
+  };
 
   return (
     <div className="animate-room-enter mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
@@ -138,13 +162,7 @@ function ConnectionsPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => {
-                    if (!confirm("Withdraw request?")) return;
-                    remove.mutate(c.id, {
-                      onSuccess: () => toast.success("Request withdrawn"),
-                      onError: (e: Error) => toast.error(friendlyError(e)),
-                    });
-                  }}
+                  onClick={() => setWithdrawDialog({ open: true, connectionId: c.id })}
                   className="text-muted-foreground hover:text-destructive"
                   aria-label={`Withdraw request from ${c.other?.display_name ?? c.other?.handle ?? "member"}`}
                   title="Withdraw request"
@@ -156,6 +174,31 @@ function ConnectionsPage() {
           </div>
         </section>
       )}
+
+      <Dialog
+        open={withdrawDialog.open}
+        onOpenChange={(open) => setWithdrawDialog((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdraw request?</DialogTitle>
+            <DialogDescription>
+              This will cancel your pending connection request. You can always send a new one later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setWithdrawDialog({ open: false, connectionId: null })}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleWithdrawConfirm}>
+              Withdraw
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
