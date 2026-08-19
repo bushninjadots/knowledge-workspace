@@ -43,6 +43,23 @@ describe("BackgroundLayer", () => {
     expect(layer.style.opacity).toBe("0.55");
   });
 
+  it("scales image dimming with the chosen strength", () => {
+    const { container } = render(
+      <BackgroundLayer
+        background={{
+          mode: "image",
+          color: null,
+          pattern: null,
+          image_url: "u/bg.jpg",
+          strength: 60,
+        }}
+        imageUrl="https://cdn.example/bg.jpg"
+      />,
+    );
+    const layer = container.querySelector("[aria-hidden=true]") as HTMLElement;
+    expect(layer.style.opacity).toBe("0.75");
+  });
+
   it("renders nothing when an image has no resolved URL", () => {
     const { container } = render(
       <BackgroundLayer

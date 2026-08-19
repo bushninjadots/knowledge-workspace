@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
   backgroundStyle,
+  imageOpacityFor,
   isBackgroundActive,
-  BACKGROUND_IMAGE_OPACITY,
   type ProfileBackground,
 } from "@/lib/background-themes";
 
@@ -28,7 +28,9 @@ export function BackgroundLayer({
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10"
       style={
-        isImage ? { ...style, opacity: BACKGROUND_IMAGE_OPACITY, filter: "saturate(0.9)" } : style
+        isImage
+          ? { ...style, opacity: imageOpacityFor(background.strength), filter: "saturate(0.9)" }
+          : style
       }
     />
   );

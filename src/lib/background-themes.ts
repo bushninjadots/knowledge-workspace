@@ -16,7 +16,21 @@ export type ProfileBackground = {
   pattern: string | null;
   /** Storage path in the `backgrounds` bucket (image mode). */
   image_url: string | null;
+  /**
+   * How strongly the choice is applied, 1–100 (percent of the colour mixed
+   * into the theme background; pattern + image intensity scale with it).
+   * Omitted/older rows fall back to the default.
+   */
+  strength?: number | null;
 };
+
+/** Default tint strength when a row predates the strength slider. */
+export const BACKGROUND_DEFAULT_STRENGTH = 34;
+
+/** Lower bound so a barely-visible choice can't be mistaken for "not saved". */
+export const BACKGROUND_MIN_STRENGTH = 18;
+
+export const BACKGROUND_MAX_STRENGTH = 60;
 
 export type BackgroundColor = { id: string; label: string; color: string };
 
@@ -87,10 +101,26 @@ export const BACKGROUND_PATTERNS: BackgroundPattern[] = [
 export const BACKGROUND_PATTERN_IDS = BACKGROUND_PATTERNS.map((p) => p.id);
 
 /**
- * How strongly an uploaded image is dimmed behind content. Strong enough to
- * read as a personal wallpaper, faint enough that text stays legible.
+ * How strongly an uploaded image is dimmed behind content at the default
+ * strength. Strong enough to read as a personal wallpaper, faint enough that
+ * text stays legible. Scales with the member's chosen strength.
  */
 export const BACKGROUND_IMAGE_OPACITY = 0.55;
+
+export function imageOpacityFor(strength: number | null | undefined): number {
+  const s = clampStrength(strength);
+  // Two-segment band so the default strength keeps the original 0.55 dim:
+  // min → 0.35, default → 0.55, max → 0.75 (never fully opaque, so text
+  // keeps its contrast).
+  if (s <= BACKGROUND_DEFAULT_STRENGTH) {
+    const t =
+      (s - BACKGROUND_MIN_STRENGTH) / (BACKGROUND_DEFAULT_STRENGTH - BACKGROUND_MIN_STRENGTH);
+    return Math.round((0.35 + t * 0.2) * 100) / 100;
+  }
+  const t =
+    (s - BACKGROUND_DEFAULT_STRENGTH) / (BACKGROUND_MAX_STRENGTH - BACKGROUND_DEFAULT_STRENGTH);
+  return Math.round((0.55 + t * 0.2) * 100) / 100;
+}
 
 export function isBackgroundActive(bg: ProfileBackground | null | undefined): boolean {
   return !!bg && bg.mode != null;
@@ -101,6 +131,12 @@ export function isBackgroundActive(bg: ProfileBackground | null | undefined): bo
  * color-mix of the choice into `var(--background)`, which guarantees the
  * wallpaper can never overpower the surface hierarchy in either theme.
  */
+/** Clamp a saved strength into the allowed range. */
+export function clampStrength(strength: number | null | undefined): number {
+  if (!strength || Number.isNaN(strength)) return BACKGROUND_DEFAULT_STRENGTH;
+  return Math.min(BACKGROUND_MAX_STRENGTH, Math.max(BACKGROUND_MIN_STRENGTH, strength));
+}
+
 export function backgroundStyle(
   background: ProfileBackground | null | undefined,
   imageUrl: string | null = null,
@@ -109,8 +145,10 @@ export function backgroundStyle(
   // Strong enough to be clearly visible as a personal backdrop, but still a
   // tint: mixed into the theme's own background so text keeps its contrast
   // in both light and dark mode.
+  const strength = clampStrength(background.strength);
+  const patternPct = Math.round(strength * 0.4);
   const base = background.color
-    ? `color-mix(in oklab, ${background.color} 34%, var(--background))`
+    ? `color-mix(in oklab, ${background.color} ${strength}%, var(--background))`
     : "var(--background)";
 
   switch (background.mode) {
@@ -124,7 +162,7 @@ export function backgroundStyle(
         backgroundImage: pattern.backgroundImage,
         backgroundSize: pattern.backgroundSize,
         backgroundRepeat: "repeat",
-        "--bg-pattern-color": "color-mix(in oklab, var(--foreground) 14%, transparent)",
+        "--bg-pattern-color": `color-mix(in oklab, var(--foreground) ${patternPct}%, transparent)`,
       } as CSSProperties;
     }
     case "image":

@@ -16,10 +16,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import {
   BACKGROUND_COLORS,
-  BACKGROUND_IMAGE_OPACITY,
+  BACKGROUND_DEFAULT_STRENGTH,
+  BACKGROUND_MAX_STRENGTH,
+  BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
   backgroundImagePublicUrl,
   backgroundStyle,
+  clampStrength,
+  imageOpacityFor,
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { cn } from "@/lib/utils";
@@ -29,6 +33,7 @@ const EMPTY_BACKGROUND: ProfileBackground = {
   color: null,
   pattern: null,
   image_url: null,
+  strength: BACKGROUND_DEFAULT_STRENGTH,
 };
 
 type BgTab = "app" | "public";
@@ -87,7 +92,7 @@ export function BackgroundPickerDialog({
     const style = backgroundStyle(activeDraft, draftImageUrl);
     // Mirror the real layer's dimming so the preview shows exactly what ships.
     return activeDraft.mode === "image"
-      ? { ...style, opacity: BACKGROUND_IMAGE_OPACITY, filter: "saturate(0.9)" }
+      ? { ...style, opacity: imageOpacityFor(activeDraft.strength), filter: "saturate(0.9)" }
       : style;
   }, [activeDraft, draftImageUrl]);
 
@@ -223,6 +228,44 @@ export function BackgroundPickerDialog({
                 )}
               </div>
 
+              {/* STRENGTH — how bold the backdrop is. Applies to colours,
+                  patterns, and images alike. */}
+              {activeDraft.mode && (
+                <section aria-labelledby="bg-strength-heading">
+                  <div className="flex items-center justify-between">
+                    <h3
+                      id="bg-strength-heading"
+                      className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Strength
+                    </h3>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {clampStrength(activeDraft.strength)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={BACKGROUND_MIN_STRENGTH}
+                    max={BACKGROUND_MAX_STRENGTH}
+                    step={2}
+                    value={clampStrength(activeDraft.strength)}
+                    onChange={(e) =>
+                      setActiveDraft((d) => ({
+                        ...d,
+                        strength: Number(e.target.value),
+                      }))
+                    }
+                    aria-label="Background strength"
+                    className="mt-2 w-full accent-[var(--user-accent,var(--primary))]"
+                  />
+                  <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                    <span>Subtle</span>
+                    <span>Default ({BACKGROUND_DEFAULT_STRENGTH}%)</span>
+                    <span>Bold</span>
+                  </div>
+                </section>
+              )}
+
               {/* COLOURS */}
               <section aria-labelledby="bg-colors-heading">
                 <h3
@@ -251,7 +294,7 @@ export function BackgroundPickerDialog({
                         title={c.label}
                         selected={selected}
                         style={{
-                          backgroundColor: `color-mix(in oklab, ${c.color} 34%, var(--background))`,
+                          backgroundColor: `color-mix(in oklab, ${c.color} ${clampStrength(activeDraft.strength)}%, var(--background))`,
                         }}
                         onClick={() =>
                           setActiveDraft((d) => ({ ...d, mode: "color", color: c.color }))

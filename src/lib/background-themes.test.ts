@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { backgroundStyle, isBackgroundActive } from "./background-themes";
+import {
+  backgroundStyle,
+  clampStrength,
+  imageOpacityFor,
+  isBackgroundActive,
+  BACKGROUND_DEFAULT_STRENGTH,
+  BACKGROUND_MAX_STRENGTH,
+  BACKGROUND_MIN_STRENGTH,
+} from "./background-themes";
 
 describe("isBackgroundActive", () => {
   it("returns false for null, undefined, or a cleared background", () => {
@@ -28,14 +36,55 @@ describe("backgroundStyle", () => {
     );
   });
 
-  it("mixes a colour choice into the theme background", () => {
+  it("mixes a colour choice into the theme background at the default strength", () => {
     const style = backgroundStyle({
       mode: "color",
       color: "#38bdf8",
       pattern: null,
       image_url: null,
     });
-    expect(style.backgroundColor).toContain("color-mix(in oklab, #38bdf8 34%, var(--background))");
+    expect(style.backgroundColor).toContain(
+      `color-mix(in oklab, #38bdf8 ${BACKGROUND_DEFAULT_STRENGTH}%, var(--background))`,
+    );
+  });
+
+  it("scales the tint with the chosen strength", () => {
+    const subtle = backgroundStyle({
+      mode: "color",
+      color: "#38bdf8",
+      pattern: null,
+      image_url: null,
+      strength: BACKGROUND_MIN_STRENGTH,
+    });
+    const bold = backgroundStyle({
+      mode: "color",
+      color: "#38bdf8",
+      pattern: null,
+      image_url: null,
+      strength: BACKGROUND_MAX_STRENGTH,
+    });
+    expect(subtle.backgroundColor).toContain(
+      `color-mix(in oklab, #38bdf8 ${BACKGROUND_MIN_STRENGTH}%, var(--background))`,
+    );
+    expect(bold.backgroundColor).toContain(
+      `color-mix(in oklab, #38bdf8 ${BACKGROUND_MAX_STRENGTH}%, var(--background))`,
+    );
+  });
+
+  it("clamps out-of-range strengths into the allowed band", () => {
+    expect(clampStrength(5)).toBe(BACKGROUND_MIN_STRENGTH);
+    expect(clampStrength(200)).toBe(BACKGROUND_MAX_STRENGTH);
+    expect(clampStrength(undefined)).toBe(BACKGROUND_DEFAULT_STRENGTH);
+    expect(clampStrength(null)).toBe(BACKGROUND_DEFAULT_STRENGTH);
+  });
+
+  it("scales image dimming with strength while never going fully opaque", () => {
+    expect(imageOpacityFor(undefined)).toBe(0.55);
+    expect(imageOpacityFor(BACKGROUND_MAX_STRENGTH)).toBe(0.75);
+    expect(imageOpacityFor(BACKGROUND_MIN_STRENGTH)).toBe(0.35);
+    const mid = imageOpacityFor((BACKGROUND_MIN_STRENGTH + BACKGROUND_MAX_STRENGTH) / 2);
+    expect(mid).toBeGreaterThan(0.35);
+    expect(mid).toBeLessThan(0.75);
   });
 
   it("renders a pattern over the tinted base", () => {
