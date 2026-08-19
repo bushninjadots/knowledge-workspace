@@ -2,6 +2,7 @@ import { Users, Settings, Lock, Check, UserPlus, Hourglass, ShieldAlert } from "
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   useJoinSpace,
   useLeaveSpace,
@@ -43,13 +44,13 @@ export function SpaceHeader({
         { spaceId: space.id },
         {
           onSuccess: () => toast.success("Join request sent — an owner will review it"),
-          onError: (err) => toast.error(`Failed to request: ${(err as Error).message}`),
+          onError: (err) => toast.error(friendlyError(err, "Failed to request")),
         },
       );
     } else {
       joinSpace.mutate(space.id, {
         onSuccess: () => toast.success(`Joined ${space.name}!`),
-        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
+        onError: (err) => toast.error(friendlyError(err, "Failed to join")),
       });
     }
   }

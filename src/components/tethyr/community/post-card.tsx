@@ -45,6 +45,7 @@ import {
   type PostWithAuthor,
 } from "@/lib/community-data";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import {
   useAddComment,
@@ -693,7 +694,7 @@ function OfferHelpDialog({
       setMessage("");
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't send your offer");
+      toast.error(friendlyError(err, "Couldn't send your offer"));
     }
   }
 
@@ -1097,7 +1098,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
     votePoll.mutate(
       { postId, optionIndex, userId: me.userId },
       {
-        onError: (err) => toast.error((err as Error).message || "Failed to vote"),
+        onError: (err) => toast.error(friendlyError(err, "Failed to vote")),
       },
     );
   }

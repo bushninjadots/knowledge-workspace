@@ -1,6 +1,7 @@
 import { Users, UserPlus, Hourglass, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   useJoinSpace,
   useLeaveSpace,
@@ -36,13 +37,13 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         { spaceId: space.id },
         {
           onSuccess: () => toast.success("Join request sent"),
-          onError: (err) => toast.error(`Failed to request: ${(err as Error).message}`),
+          onError: (err) => toast.error(friendlyError(err, "Failed to request")),
         },
       );
     } else {
       joinSpace.mutate(space.id, {
         onSuccess: () => toast.success(`Joined ${space.name}!`),
-        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
+        onError: (err) => toast.error(friendlyError(err, "Failed to join")),
       });
     }
   }

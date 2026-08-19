@@ -3,6 +3,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { Link2, MessageSquare, Check, X, UserPlus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ function ConnectionsPage() {
                     { id: c.id, status: "accepted" },
                     {
                       onSuccess: () => toast.success("You're now connected 🎉"),
-                      onError: (e: Error) => toast.error(e.message),
+                      onError: (e: Error) => toast.error(friendlyError(e)),
                     },
                   )
                 }
@@ -83,7 +84,7 @@ function ConnectionsPage() {
                     { id: c.id, status: "declined" },
                     {
                       onSuccess: () => toast.success("Request declined"),
-                      onError: (e: Error) => toast.error(e.message),
+                      onError: (e: Error) => toast.error(friendlyError(e)),
                     },
                   )
                 }
@@ -141,10 +142,12 @@ function ConnectionsPage() {
                     if (!confirm("Withdraw request?")) return;
                     remove.mutate(c.id, {
                       onSuccess: () => toast.success("Request withdrawn"),
-                      onError: (e: Error) => toast.error(e.message),
+                      onError: (e: Error) => toast.error(friendlyError(e)),
                     });
                   }}
                   className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Withdraw request from ${c.other?.display_name ?? c.other?.handle ?? "member"}`}
+                  title="Withdraw request"
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   Dialog,
   DialogContent,
@@ -89,7 +90,7 @@ export function CollectionDialog({
           onCreated?.(col);
         },
         onError: (err) => {
-          toast.error(err.message ?? "Failed to create collection");
+          toast.error(friendlyError(err, "Failed to create collection"));
         },
       },
     );

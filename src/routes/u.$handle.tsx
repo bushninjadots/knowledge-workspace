@@ -32,6 +32,7 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 
 type PublicProfile = {
   id: string;
@@ -424,7 +425,7 @@ function PublicProfileRoute() {
                               },
                               {
                                 onSuccess: () => toast.success(`Endorsed ${s.name}`),
-                                onError: (e: Error) => toast.error(e.message),
+                                onError: (e: Error) => toast.error(friendlyError(e)),
                               },
                             )
                           }

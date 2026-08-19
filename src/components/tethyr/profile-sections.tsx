@@ -26,6 +26,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -212,11 +213,11 @@ export function BannerStrip({
       .upload(path, file, { upsert: true, contentType: check.contentType });
     if (upErr) {
       setUploading(false);
-      return toast.error(upErr.message);
+      return toast.error(friendlyError(upErr));
     }
     const { error } = await supabase.from("profiles").update({ banner_url: path }).eq("id", userId);
     setUploading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Banner updated");
     onChange();
   }
@@ -239,7 +240,7 @@ export function BannerStrip({
       .update({ banner_caption: trimmed.length > 0 ? trimmed : null })
       .eq("id", userId);
     setSavingCaption(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     setEditingCaption(false);
     toast.success(trimmed ? "Caption updated" : "Caption cleared");
     onChange();
@@ -409,7 +410,7 @@ export function ChipListCard({
       .update({ [field]: items } as never)
       .eq("id", userId);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     onChange();
     setOpen(false);
@@ -766,7 +767,7 @@ export function ProjectDialog({
       .upload(path, file, { contentType: check.contentType });
     if (error) {
       setUploading(false);
-      return toast.error(error.message);
+      return toast.error(friendlyError(error));
     }
     const { data } = await supabase.storage.from("project-media").createSignedUrl(path, 60 * 60);
     setCoverPath(path);
@@ -841,7 +842,7 @@ export function ProjectDialog({
     }
     if (saveResult.error) {
       setSaving(false);
-      return toast.error(saveResult.error.message);
+      return toast.error(friendlyError(saveResult.error));
     }
     if (!project && saveResult.data) {
       projectId = saveResult.data.id;
@@ -861,7 +862,7 @@ export function ProjectDialog({
         .in("skill_id", toRemove);
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
     if (projectId && toAdd.length) {
@@ -870,7 +871,7 @@ export function ProjectDialog({
         .insert(toAdd.map((skill_id) => ({ project_id: projectId, skill_id })));
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
 
@@ -884,7 +885,7 @@ export function ProjectDialog({
     if (!project) return;
     if (!confirm("Delete this project?")) return;
     const { error } = await supabase.from("projects").delete().eq("id", project.id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Deleted");
     onSaved();
     onOpenChange(false);

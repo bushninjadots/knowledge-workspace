@@ -30,6 +30,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -531,7 +532,7 @@ export function ComposerBar({
       onCancelEdit?.();
     } catch (err: unknown) {
       const e = err as { message?: string; error?: { message?: string } };
-      toast.error(e?.message ?? e?.error?.message ?? "Something went wrong");
+      toast.error(friendlyError(e));
     }
   }
 

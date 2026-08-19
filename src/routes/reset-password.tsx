@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { AuthShell } from "@/components/tethyr/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,7 @@ function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        toast.error(error.message);
+        toast.error(friendlyError(error));
         return;
       }
       toast.success("Password updated");

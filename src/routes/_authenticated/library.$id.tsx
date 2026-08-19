@@ -24,6 +24,7 @@ import { NoteEditor } from "@/components/tethyr/library/note-editor";
 import { LibraryContentLayout } from "@/components/tethyr/library/library-layout";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/library/$id")({
@@ -107,7 +108,7 @@ function LibraryItemPage() {
           toast.success("Saved");
         },
         onError: (err) => {
-          toast.error(`Save failed: ${err.message}`);
+          toast.error(friendlyError(err, "Save failed"));
         },
       },
     );

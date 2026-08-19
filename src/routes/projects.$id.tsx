@@ -53,12 +53,27 @@ import type { Contributor } from "@/components/tethyr/project/project-main-conte
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 export const Route = createFileRoute("/projects/$id")({
-  head: ({ params }) => ({
+  // Lightweight title fetch so the SSR/meta <title> carries the real project
+  // name (the component's useQuery still drives the full detail). Best-effort:
+  // on any error we fall back to the generic title rather than failing the page.
+  loader: async ({ params }) => {
+    try {
+      const { data } = await sb.from("projects").select("title").eq("id", params.id).maybeSingle();
+      return { title: (data?.title ?? null) as string | null };
+    } catch {
+      return { title: null };
+    }
+  },
+  head: ({ loaderData, params }) => ({
     meta: [
-      { title: "Project — Tethyr" },
+      {
+        title: loaderData?.title ? `${loaderData.title} — Tethyr` : "Project — Tethyr",
+      },
       {
         name: "description",
-        content: "Explore this project and the work being built with Tethyr.",
+        content: loaderData?.title
+          ? `Explore ${loaderData.title} and the work being built with Tethyr.`
+          : "Explore this project and the work being built with Tethyr.",
       },
     ],
     links: canonicalLinks(`/projects/${encodeURIComponent(params.id)}`),

@@ -14,6 +14,7 @@ import {
   Search as SearchIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateLibraryFile } from "@/lib/validators";
 import { useQueryClient } from "@tanstack/react-query";
@@ -267,7 +268,7 @@ export function ProjectFilesExplorer({
           });
           success++;
         } catch (err: unknown) {
-          toast.error(`${file.name}: ${(err as Error).message || "Upload failed"}`);
+          toast.error(`${file.name}: ${friendlyError(err, "Upload failed")}`);
         }
       }
 

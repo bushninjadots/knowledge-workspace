@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Globe, ShieldCheck, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +51,7 @@ export function CreateSpaceDialog({
       onOpenChange(false);
       onCreated?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to create space";
-      toast.error(msg);
+      toast.error(friendlyError(err, "Failed to create space"));
     }
   }
 

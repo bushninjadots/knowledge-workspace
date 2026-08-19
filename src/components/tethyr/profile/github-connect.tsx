@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { hasGithubToken, saveGithubToken, removeGithubToken } from "@/lib/github-server";
 import { githubTokenErrorMessage } from "@/lib/github";
 
@@ -95,7 +96,7 @@ export function useConnectGitHub() {
       toast.success("GitHub account connected");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
     },
   });
 }
@@ -192,7 +193,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
         toast.error(githubTokenErrorMessage(res.reason));
       }
     } catch (err) {
-      toast.error((err as Error)?.message ?? "Couldn't save the token — try again");
+      toast.error(friendlyError(err, "Couldn't save the token — try again"));
     } finally {
       setSavingToken(false);
     }

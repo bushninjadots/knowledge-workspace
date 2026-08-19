@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -70,7 +71,7 @@ export function LibrarySidebar({
           onViewChange({ type: "tag", tagId: tag.id });
         },
         onError: (err) => {
-          toast.error(`Failed to create tag: ${err.message}`);
+          toast.error(friendlyError(err, "Failed to create tag"));
         },
       },
     );

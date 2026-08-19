@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   Pencil,
   Globe,
@@ -313,7 +314,7 @@ function AboutCard({ profile, onChange }: { profile: Profile | null; onChange: (
       .update({ bio: bio || null, languages })
       .eq("id", profile!.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     onChange();
     setEditing(false);
@@ -520,7 +521,7 @@ function SkillsCard({
         .in("skill_id", toRemove);
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
     if (toAdd.length) {
@@ -529,7 +530,7 @@ function SkillsCard({
         .insert(toAdd.map((skill_id) => ({ profile_id: userId, skill_id })));
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
     setSaving(false);
@@ -687,7 +688,7 @@ function TeachSkillsCard({
         .in("skill_id", toRemove);
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
     if (toAdd.length) {
@@ -696,7 +697,7 @@ function TeachSkillsCard({
         .insert(toAdd.map((skill_id) => ({ profile_id: userId, skill_id })));
       if (error) {
         setSaving(false);
-        return toast.error(error.message);
+        return toast.error(friendlyError(error));
       }
     }
     setSaving(false);
@@ -853,7 +854,7 @@ function ProofDialog({
       .from("skill-proofs")
       .upload(path, file, { contentType: check.contentType });
     setUploading(false);
-    if (upErr) return toast.error(upErr.message);
+    if (upErr) return toast.error(friendlyError(upErr));
     const { data } = supabase.storage.from("skill-proofs").getPublicUrl(path);
     setUrl(data.publicUrl);
     toast.success("File uploaded");
@@ -880,7 +881,7 @@ function ProofDialog({
       .eq("profile_id", userId)
       .eq("skill_id", skill.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Skill updated");
     onSaved();
     onOpenChange(false);
@@ -1008,7 +1009,7 @@ function TextCard({
       >)
       .eq("id", userId);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     onChange();
     setOpen(false);
@@ -1082,7 +1083,7 @@ function ChipListInline({
       .update({ [field]: draft } as Partial<Pick<Profile, "favourite_tools" | "software_stack">>)
       .eq("id", userId);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     onChange();
     setOpen(false);
@@ -1214,7 +1215,7 @@ function LinksCard({ profile, onChange }: { profile: Profile | null; onChange: (
       .update({ social_links: cleanedSocial, portfolio_links: cleanedPortfolio })
       .eq("id", profile!.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     onChange();
     setOpen(false);

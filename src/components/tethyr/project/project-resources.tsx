@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHref, validateLibraryFile } from "@/lib/validators";
@@ -294,7 +295,7 @@ export function GallerySection({
         setShowAdd(false);
         toast.success("Image uploaded");
       } catch (err: unknown) {
-        toast.error((err as Error).message || "Upload failed");
+        toast.error(friendlyError(err, "Upload failed"));
       } finally {
         setUploading(false);
       }

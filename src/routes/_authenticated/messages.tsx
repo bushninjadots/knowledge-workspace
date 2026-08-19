@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -217,7 +218,7 @@ function Thread({
     setDraft("");
     send.mutate(body, {
       onSuccess: () => toast.success("Message sent"),
-      onError: (e: Error) => toast.error(e.message),
+      onError: (e: Error) => toast.error(friendlyError(e)),
     });
   }
 

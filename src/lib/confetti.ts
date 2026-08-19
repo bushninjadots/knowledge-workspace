@@ -26,6 +26,10 @@ const COLORS = [
 
 export function burstConfetti(opts?: { count?: number; origin?: { x: number; y: number } }) {
   if (typeof window === "undefined") return;
+  // Respect reduced-motion: a full-screen particle burst is motion that
+  // some users can't tolerate, and this canvas loop bypasses the global
+  // CSS reduced-motion rule.
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
   const count = opts?.count ?? 120;
   const origin = opts?.origin ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 

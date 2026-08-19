@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -52,7 +53,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
     } else {
       joinMutation.mutate(challenge.id, {
         onSuccess: () => toast.success("Joined challenge"),
-        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
+        onError: (err) => toast.error(friendlyError(err, "Failed to join")),
       });
     }
   };

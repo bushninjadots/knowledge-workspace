@@ -14,6 +14,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -295,7 +296,7 @@ function SpaceReportsPage() {
                       setBanTarget(null);
                       setBanReason("");
                     },
-                    onError: (err) => toast.error(`Failed to ban: ${(err as Error).message}`),
+                    onError: (err) => toast.error(friendlyError(err, "Failed to ban")),
                   },
                 );
               }}

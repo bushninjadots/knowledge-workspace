@@ -23,6 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +243,7 @@ function SpaceSettingsPage() {
       });
       toast.success("Community settings saved");
     } catch (err) {
-      toast.error(`Failed to save: ${(err as Error).message}`);
+      toast.error(friendlyError(err, "Failed to save"));
     }
   }
 
@@ -667,7 +668,7 @@ function SpaceSettingsPage() {
                       setBanTarget(null);
                       setBanReason("");
                     },
-                    onError: (err) => toast.error(`Failed to ban: ${(err as Error).message}`),
+                    onError: (err) => toast.error(friendlyError(err, "Failed to ban")),
                   },
                 );
               }}

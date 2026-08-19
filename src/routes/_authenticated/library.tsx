@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus, LayoutGrid, List, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { LibraryLayout } from "@/components/tethyr/library/library-layout";
 import { ItemCard } from "@/components/tethyr/library/item-card";
@@ -41,7 +42,7 @@ function LibraryPage() {
           navigate({ to: "/library/$id", params: { id: item.id } });
         },
         onError: (err) => {
-          toast.error(`Failed to create note: ${err.message}`);
+          toast.error(friendlyError(err, "Failed to create note"));
         },
       },
     );

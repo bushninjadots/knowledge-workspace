@@ -14,6 +14,7 @@ import { SignedImage } from "./signed-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { common, createLowlight } from "lowlight";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Bold,
@@ -309,7 +310,7 @@ export function NoteEditor({
       // render time so pasted images never expire.
       return path;
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Image upload failed");
+      toast.error(friendlyError(err, "Image upload failed"));
       return null;
     }
   }, []);

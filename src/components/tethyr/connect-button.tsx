@@ -2,6 +2,7 @@
 // Uses plain "Connect" / "Connected" wording for the connection feature.
 import { useState } from "react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Link2, Clock, Check, X, Link2Off, MessageSquare } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,7 @@ export function ConnectButton({
           setInviteOpen(false);
           setIntro("");
         },
-        onError: (e: Error) => toast.error(e.message),
+        onError: (e: Error) => toast.error(friendlyError(e)),
       },
     );
   }
@@ -103,7 +104,7 @@ export function ConnectButton({
             if (!confirm("Remove this connection?")) return;
             remove.mutate(existing.id, {
               onSuccess: () => toast.success("Connection removed"),
-              onError: (e: Error) => toast.error(e.message),
+              onError: (e: Error) => toast.error(friendlyError(e)),
             });
           }}
           className="gap-1.5"
@@ -124,7 +125,7 @@ export function ConnectButton({
               { id: existing.id, status: "accepted" },
               {
                 onSuccess: () => toast.success("You're now connected 🎉"),
-                onError: (e: Error) => toast.error(e.message),
+                onError: (e: Error) => toast.error(friendlyError(e)),
               },
             )
           }
@@ -140,7 +141,7 @@ export function ConnectButton({
               { id: existing.id, status: "declined" },
               {
                 onSuccess: () => toast.success("Request declined"),
-                onError: (e: Error) => toast.error(e.message),
+                onError: (e: Error) => toast.error(friendlyError(e)),
               },
             )
           }
@@ -161,7 +162,7 @@ export function ConnectButton({
           if (!confirm("Withdraw your connection request?")) return;
           remove.mutate(existing.id, {
             onSuccess: () => toast.success("Request withdrawn"),
-            onError: (e: Error) => toast.error(e.message),
+            onError: (e: Error) => toast.error(friendlyError(e)),
           });
         }}
         className="gap-1.5"

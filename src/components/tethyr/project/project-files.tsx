@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateLibraryFile } from "@/lib/validators";
@@ -118,7 +119,7 @@ export function ProjectFilesSection({
           existingFiles.push(newFile); // update local ref
           success++;
         } catch (err: unknown) {
-          toast.error(`${file.name}: ${(err as Error).message || "Upload failed"}`);
+          toast.error(`${file.name}: ${friendlyError(err, "Upload failed")}`);
         }
       }
 
@@ -143,7 +144,7 @@ export function ProjectFilesSection({
       queryClient.invalidateQueries({ queryKey: ["project-detail", projectId] });
       onFilesChanged();
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Failed to remove file");
+      toast.error(friendlyError(err, "Failed to remove file"));
     }
   };
 

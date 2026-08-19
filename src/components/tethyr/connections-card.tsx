@@ -2,6 +2,7 @@
 import { memo } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Link2, Check, X, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "./empty-state";
@@ -94,7 +95,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
                       { id: c.id, status: "accepted" },
                       {
                         onSuccess: () => toast.success("You're now connected 🎉"),
-                        onError: (e: Error) => toast.error(e.message),
+                        onError: (e: Error) => toast.error(friendlyError(e)),
                       },
                     )
                   }
@@ -110,7 +111,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
                       { id: c.id, status: "declined" },
                       {
                         onSuccess: () => toast.success("Request declined"),
-                        onError: (e: Error) => toast.error(e.message),
+                        onError: (e: Error) => toast.error(friendlyError(e)),
                       },
                     )
                   }
@@ -160,7 +161,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
                   if (!confirm("Withdraw request?")) return;
                   remove.mutate(c.id, {
                     onSuccess: () => toast.success("Request withdrawn"),
-                    onError: (e: Error) => toast.error(e.message),
+                    onError: (e: Error) => toast.error(friendlyError(e)),
                   });
                 }}
                 className="text-muted-foreground hover:text-destructive"

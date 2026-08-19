@@ -23,6 +23,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { ACHIEVEMENTS, type AchievementType, type AchievementDef } from "@/lib/reputation";
 import { useSetFavoriteAchievement } from "@/hooks/use-current-user";
@@ -81,6 +82,8 @@ export function FavoriteBadge({ type }: { type: string | null | undefined }) {
   if (!def) return null;
   return (
     <span
+      role="img"
+      aria-label={`Favourite badge: ${def.label}`}
       title={`Favourite badge: ${def.label}`}
       className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
     >
@@ -186,7 +189,7 @@ export function AchievementGrid({
     const next = favoriteAchievement === type ? null : type;
     setFavorite.mutate(next, {
       onSuccess: () => toast.success(next ? "Badge pinned next to your name" : "Badge unpinned"),
-      onError: (e: Error) => toast.error(e.message),
+      onError: (e: Error) => toast.error(friendlyError(e)),
     });
   }
 

@@ -38,6 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
@@ -538,7 +539,7 @@ function EditIdentityDialog({
       })
       .eq("id", userId);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Profile updated");
     onOpenChange(false);
     onSaved();
@@ -651,9 +652,9 @@ async function handleAvatarUpload(
   const { error: upErr } = await supabase.storage
     .from("avatars")
     .upload(path, file, { upsert: true, contentType: check.contentType });
-  if (upErr) return toast.error(upErr.message);
+  if (upErr) return toast.error(friendlyError(upErr));
   const { error } = await supabase.from("profiles").update({ avatar_url: path }).eq("id", userId);
-  if (error) return toast.error(error.message);
+  if (error) return toast.error(friendlyError(error));
   toast.success("Avatar updated");
   onChange();
 }

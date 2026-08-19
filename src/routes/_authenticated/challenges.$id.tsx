@@ -20,6 +20,7 @@ import {
   ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -113,7 +114,7 @@ function ChallengeDetailPage() {
     } else {
       joinMutation.mutate(challenge.id, {
         onSuccess: () => toast.success("Joined challenge"),
-        onError: (err) => toast.error(`Failed to join: ${(err as Error).message}`),
+        onError: (err) => toast.error(friendlyError(err, "Failed to join")),
       });
     }
   };
@@ -139,7 +140,7 @@ function ChallengeDetailPage() {
       setSubmitUrl(path);
       toast.success("File uploaded — attach a note and submit");
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Upload failed");
+      toast.error(friendlyError(err, "Upload failed"));
     } finally {
       setUploading(false);
     }

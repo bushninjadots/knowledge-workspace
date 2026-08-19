@@ -20,6 +20,7 @@ import {
   Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
@@ -197,7 +198,7 @@ export function ScheduleSessionWizard({
       toast.success("Session created!");
       handleClose();
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Failed to create session");
+      toast.error(friendlyError(err, "Failed to create session"));
     }
   }
 

@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   useCreateChallenge,
   type ChallengeType,
@@ -91,7 +92,7 @@ export function CreateChallengeDialog({
           setMaxParticipants("");
           setPassCriteria("");
         },
-        onError: (err) => toast.error(err.message || "Failed to create challenge"),
+        onError: (err) => toast.error(friendlyError(err, "Failed to create challenge")),
       },
     );
   };

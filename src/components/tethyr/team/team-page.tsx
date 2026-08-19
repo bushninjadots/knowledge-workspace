@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import {
   useAttachProjectToTeam,
   useInviteToTeam,
@@ -245,7 +246,7 @@ function TeamAvatar({
       toast.success("Crew picture updated");
       onChanged();
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Upload failed");
+      toast.error(friendlyError(err, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -308,7 +309,7 @@ function Management({ team }: { team: TeamRow }) {
       setHandle("");
       toast.success("Invite sent");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Invite failed");
+      toast.error(friendlyError(err, "Invite failed"));
     } finally {
       setInviting(false);
     }

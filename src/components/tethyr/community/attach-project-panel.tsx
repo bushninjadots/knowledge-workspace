@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FolderOpen, Link2, Plus, ExternalLink, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ export function AttachProjectPanel({
       if (error) throw error;
       setFetchedSnapshot(data as ProjectSnapshot);
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Failed to fetch preview");
+      toast.error(friendlyError(err, "Failed to fetch preview"));
     } finally {
       setFetching(false);
     }
@@ -97,7 +98,7 @@ export function AttachProjectPanel({
       setNewDesc("");
       toast.success("Project created and attached");
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? "Failed to create project");
+      toast.error(friendlyError(err, "Failed to create project"));
     } finally {
       setCreating(false);
     }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { fetchRepoMetaServer } from "@/lib/github-server";
 import type { RepoMeta } from "@/lib/github";
 
@@ -78,7 +79,7 @@ export function useAddProjectRepo() {
       toast.success("Repository linked");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
     },
   });
 }
@@ -96,7 +97,7 @@ export function useRemoveProjectRepo() {
       toast.success("Repository removed");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
     },
   });
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { HandHeart, CheckCircle2, Clock, Send, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -154,7 +155,7 @@ export function ApplyToRoleButton({
       toast.success("Application submitted");
     },
     onError: (err: Error) => {
-      toast.error(err.message || "Failed to apply");
+      toast.error(friendlyError(err, "Failed to apply"));
     },
   });
 

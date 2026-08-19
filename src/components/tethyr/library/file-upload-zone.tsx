@@ -15,6 +15,7 @@ import {
   Palette,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -188,8 +189,7 @@ export function FileUploadZone({
         onUploaded?.(item);
         successCount++;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Upload failed";
-        toast.error(`${pf.file.name}: ${msg}`);
+        toast.error(`${pf.file.name}: ${friendlyError(err, "Upload failed")}`);
       }
     }
 
