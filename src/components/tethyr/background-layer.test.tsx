@@ -40,7 +40,7 @@ describe("BackgroundLayer", () => {
     const layer = container.querySelector("[aria-hidden=true]") as HTMLElement;
     expect(layer.style.backgroundImage).toContain("https://cdn.example/bg.jpg");
     expect(layer.style.backgroundSize).toBe("cover");
-    expect(layer.style.opacity).toBe("0.25");
+    expect(layer.style.opacity).toBe("0.55");
   });
 
   it("renders nothing when an image has no resolved URL", () => {

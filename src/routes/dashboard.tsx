@@ -117,7 +117,7 @@ function AuthenticatedDashboardLayout({
   }, []);
 
   return (
-    <div className="relative flex min-h-screen" style={themeStyle}>
+    <div className="relative isolate flex min-h-screen" style={themeStyle}>
       <BackgroundLayer background={data?.background} imageUrl={data?.backgroundImageUrl} />
       {/* Desktop sidebar */}
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">

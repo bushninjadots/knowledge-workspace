@@ -35,7 +35,7 @@ describe("backgroundStyle", () => {
       pattern: null,
       image_url: null,
     });
-    expect(style.backgroundColor).toContain("color-mix(in oklab, #38bdf8 14%, var(--background))");
+    expect(style.backgroundColor).toContain("color-mix(in oklab, #38bdf8 34%, var(--background))");
   });
 
   it("renders a pattern over the tinted base", () => {

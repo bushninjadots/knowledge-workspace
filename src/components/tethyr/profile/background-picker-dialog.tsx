@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import {
   BACKGROUND_COLORS,
+  BACKGROUND_IMAGE_OPACITY,
   BACKGROUND_PATTERNS,
   backgroundImagePublicUrl,
   backgroundStyle,
@@ -86,7 +87,7 @@ export function BackgroundPickerDialog({
     const style = backgroundStyle(activeDraft, draftImageUrl);
     // Mirror the real layer's dimming so the preview shows exactly what ships.
     return activeDraft.mode === "image"
-      ? { ...style, opacity: 0.25, filter: "saturate(0.9)" }
+      ? { ...style, opacity: BACKGROUND_IMAGE_OPACITY, filter: "saturate(0.9)" }
       : style;
   }, [activeDraft, draftImageUrl]);
 
@@ -250,7 +251,7 @@ export function BackgroundPickerDialog({
                         title={c.label}
                         selected={selected}
                         style={{
-                          backgroundColor: `color-mix(in oklab, ${c.color} 14%, var(--background))`,
+                          backgroundColor: `color-mix(in oklab, ${c.color} 34%, var(--background))`,
                         }}
                         onClick={() =>
                           setActiveDraft((d) => ({ ...d, mode: "color", color: c.color }))

@@ -30,7 +30,7 @@ export function AuthenticatedShell() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen" style={themeStyle}>
+    <div className="relative isolate flex min-h-screen" style={themeStyle}>
       <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />

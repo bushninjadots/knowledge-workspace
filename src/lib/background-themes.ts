@@ -86,6 +86,12 @@ export const BACKGROUND_PATTERNS: BackgroundPattern[] = [
 
 export const BACKGROUND_PATTERN_IDS = BACKGROUND_PATTERNS.map((p) => p.id);
 
+/**
+ * How strongly an uploaded image is dimmed behind content. Strong enough to
+ * read as a personal wallpaper, faint enough that text stays legible.
+ */
+export const BACKGROUND_IMAGE_OPACITY = 0.55;
+
 export function isBackgroundActive(bg: ProfileBackground | null | undefined): boolean {
   return !!bg && bg.mode != null;
 }
@@ -100,8 +106,11 @@ export function backgroundStyle(
   imageUrl: string | null = null,
 ): CSSProperties {
   if (!background?.mode) return {};
+  // Strong enough to be clearly visible as a personal backdrop, but still a
+  // tint: mixed into the theme's own background so text keeps its contrast
+  // in both light and dark mode.
   const base = background.color
-    ? `color-mix(in oklab, ${background.color} 14%, var(--background))`
+    ? `color-mix(in oklab, ${background.color} 34%, var(--background))`
     : "var(--background)";
 
   switch (background.mode) {
@@ -115,7 +124,7 @@ export function backgroundStyle(
         backgroundImage: pattern.backgroundImage,
         backgroundSize: pattern.backgroundSize,
         backgroundRepeat: "repeat",
-        "--bg-pattern-color": "color-mix(in oklab, var(--foreground) 6%, transparent)",
+        "--bg-pattern-color": "color-mix(in oklab, var(--foreground) 14%, transparent)",
       } as CSSProperties;
     }
     case "image":
