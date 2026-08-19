@@ -73,7 +73,7 @@ export function SessionsSidebar({
   pendingCount: number;
 }) {
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label="Sessions navigation" className="flex flex-col gap-1">
       <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
         Sessions
       </p>

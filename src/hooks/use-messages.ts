@@ -171,7 +171,7 @@ export function useUnreadCounts() {
     queryFn: async (): Promise<{ byConnection: Record<string, number>; total: number }> => {
       const { data, error } = await supabase
         .from("messages")
-        .select("connection_id, sender_id, read_at")
+        .select("connection_id")
         .is("read_at", null)
         .neq("sender_id", meId as string);
       if (error) throw error;

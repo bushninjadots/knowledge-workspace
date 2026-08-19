@@ -61,7 +61,15 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
   const content = (
     <div className="flex items-center gap-3">
       {logo ? (
-        <img src={logo} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+        <img
+          src={logo}
+          alt=""
+          width="40"
+          height="40"
+          loading="lazy"
+          decoding="async"
+          className="h-10 w-10 shrink-0 rounded-xl object-cover"
+        />
       ) : (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
           <FolderOpen className="h-4 w-4" />

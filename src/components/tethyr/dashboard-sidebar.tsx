@@ -100,7 +100,10 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="mx-2 mb-2 h-px bg-border" />
 
-      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4">
+      <nav
+        aria-label="Dashboard navigation"
+        className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4"
+      >
         {groups.map((group) => (
           <div key={group.label}>
             <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -126,6 +129,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     key={item.label}
                     to={item.to}
                     onClick={onNavigate}
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
                       isActive
                         ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
@@ -162,7 +166,15 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
           >
             {me?.avatarSigned ? (
-              <img src={me.avatarSigned} alt="" className="h-full w-full object-cover" />
+              <img
+                src={me.avatarSigned}
+                alt=""
+                width="24"
+                height="24"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
             ) : (
               initial
             )}

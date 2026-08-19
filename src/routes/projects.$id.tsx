@@ -3,7 +3,7 @@
 // milestones, updates, discussions and open roles all carry public SELECT
 // policies. Repository-workspace layout: compact header → sticky tab bar
 // (README as homepage, with Files / Activity / People / Discussions) below.
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -34,23 +34,70 @@ import { useProjectChallenges } from "@/hooks/use-challenges";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
-import { ProjectNeeds } from "@/components/tethyr/project/project-needs";
-import { ProjectCredits } from "@/components/tethyr/project/project-credits";
-import { ProjectFilesExplorer } from "@/components/tethyr/project/project-files-explorer";
-import { ProjectActivityTab } from "@/components/tethyr/project/project-activity";
-import { MilestonesTimeline } from "@/components/tethyr/project/project-milestones";
-import { ProjectPeopleTab } from "@/components/tethyr/project/project-people";
-import { ProjectDiscussions } from "@/components/tethyr/project/project-discussions";
-import {
-  ProjectCommunityPosts,
-  useProjectCommunityPostCount,
-} from "@/components/tethyr/project/project-community-posts";
-import { ProjectJoinModal } from "@/components/tethyr/project/project-join-modal";
-import { CreateChallengeDialog } from "@/components/tethyr/community/create-challenge-dialog";
-import { ScheduleSessionWizard } from "@/components/tethyr/sessions/schedule-session-wizard";
-import { ProjectSearchDialog } from "@/components/tethyr/project/project-search";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
+
+const ProjectNeeds = lazy(() =>
+  import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
+);
+const ProjectCredits = lazy(() =>
+  import("@/components/tethyr/project/project-credits").then((m) => ({
+    default: m.ProjectCredits,
+  })),
+);
+const ProjectFilesExplorer = lazy(() =>
+  import("@/components/tethyr/project/project-files-explorer").then((m) => ({
+    default: m.ProjectFilesExplorer,
+  })),
+);
+const ProjectActivityTab = lazy(() =>
+  import("@/components/tethyr/project/project-activity").then((m) => ({
+    default: m.ProjectActivityTab,
+  })),
+);
+const MilestonesTimeline = lazy(() =>
+  import("@/components/tethyr/project/project-milestones").then((m) => ({
+    default: m.MilestonesTimeline,
+  })),
+);
+const ProjectPeopleTab = lazy(() =>
+  import("@/components/tethyr/project/project-people").then((m) => ({
+    default: m.ProjectPeopleTab,
+  })),
+);
+const ProjectDiscussions = lazy(() =>
+  import("@/components/tethyr/project/project-discussions").then((m) => ({
+    default: m.ProjectDiscussions,
+  })),
+);
+import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
+
+const ProjectCommunityPosts = lazy(() =>
+  import("@/components/tethyr/project/project-community-posts").then((m) => ({
+    default: m.ProjectCommunityPosts,
+  })),
+);
+const ProjectJoinModal = lazy(() =>
+  import("@/components/tethyr/project/project-join-modal").then((m) => ({
+    default: m.ProjectJoinModal,
+  })),
+);
+const CreateChallengeDialog = lazy(() =>
+  import("@/components/tethyr/community/create-challenge-dialog").then((m) => ({
+    default: m.CreateChallengeDialog,
+  })),
+);
+const ScheduleSessionWizard = lazy(() =>
+  import("@/components/tethyr/sessions/schedule-session-wizard").then((m) => ({
+    default: m.ScheduleSessionWizard,
+  })),
+);
+const ProjectSearchDialog = lazy(() =>
+  import("@/components/tethyr/project/project-search").then((m) => ({
+    default: m.ProjectSearchDialog,
+  })),
+);
 
 export const Route = createFileRoute("/projects/$id")({
   // Lightweight title fetch so the SSR/meta <title> carries the real project
@@ -434,26 +481,30 @@ function ProjectPage() {
           <div className="pt-6">
             {tab === "files" && (
               <section aria-label="Project files">
-                <ProjectFilesExplorer
-                  projectId={id}
-                  projectFiles={projectFiles}
-                  isOwner={isOwner}
-                  preselectPath={preselectPath}
-                  preselectNonce={preselectNonce}
-                />
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <ProjectFilesExplorer
+                    projectId={id}
+                    projectFiles={projectFiles}
+                    isOwner={isOwner}
+                    preselectPath={preselectPath}
+                    preselectNonce={preselectNonce}
+                  />
+                </Suspense>
               </section>
             )}
             {tab === "activity" && (
               <section id="project-activity" aria-label="Project activity">
-                <ProjectActivityTab
-                  projectId={id}
-                  milestones={milestones}
-                  updates={updates}
-                  discussions={discussions}
-                  projectFiles={projectFiles}
-                  repos={repos}
-                  isContributor={isContributor}
-                />
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <ProjectActivityTab
+                    projectId={id}
+                    milestones={milestones}
+                    updates={updates}
+                    discussions={discussions}
+                    projectFiles={projectFiles}
+                    repos={repos}
+                    isContributor={isContributor}
+                  />
+                </Suspense>
               </section>
             )}
           </div>
@@ -477,11 +528,15 @@ function ProjectPage() {
               </p>
             </div>
             <div className="mt-4">
-              <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
+              <Suspense fallback={<Skeleton className="h-32" />}>
+                <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
+              </Suspense>
             </div>
           </section>
 
-          <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
+          <Suspense fallback={<Skeleton className="h-24" />}>
+            <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
+          </Suspense>
 
           {/* People & roles */}
           <section
@@ -499,15 +554,17 @@ function ProjectPage() {
               Who's building this, and the roles they're looking to fill.
             </p>
             <div className="mt-4">
-              <ProjectPeopleTab
-                projectId={id}
-                projectTitle={project.title}
-                contributors={contributors}
-                avatarSigned={avatarSigned}
-                openRoles={openRoles}
-                isOwner={isOwner}
-                isContributor={isContributor}
-              />
+              <Suspense fallback={<Skeleton className="h-48" />}>
+                <ProjectPeopleTab
+                  projectId={id}
+                  projectTitle={project.title}
+                  contributors={contributors}
+                  avatarSigned={avatarSigned}
+                  openRoles={openRoles}
+                  isOwner={isOwner}
+                  isContributor={isContributor}
+                />
+              </Suspense>
             </div>
           </section>
 
@@ -598,7 +655,11 @@ function ProjectPage() {
                   Structured builds tied to this project — join one to level up and earn evidence.
                 </p>
               </div>
-              {isContributor && <CreateChallengeDialog projectId={id} />}
+              {isContributor && (
+                <Suspense fallback={null}>
+                  <CreateChallengeDialog projectId={id} />
+                </Suspense>
+              )}
             </div>
 
             {projectChallenges.length === 0 ? (
@@ -647,41 +708,63 @@ function ProjectPage() {
               Questions, feedback, and updates from the team.
             </p>
             <div className="mt-4 space-y-6">
-              <ProjectDiscussions
-                discussions={discussions}
-                projectId={id}
-                isContributor={isContributor}
-                isOwner={isOwner}
-              />
-              <ProjectCommunityPosts projectId={id} />
+              <Suspense fallback={<Skeleton className="h-32" />}>
+                <ProjectDiscussions
+                  discussions={discussions}
+                  projectId={id}
+                  isContributor={isContributor}
+                  isOwner={isOwner}
+                />
+              </Suspense>
+              <Suspense fallback={<Skeleton className="h-24" />}>
+                <ProjectCommunityPosts projectId={id} />
+              </Suspense>
             </div>
           </section>
 
           {/* Evidence */}
-          <ProjectCredits projectId={id} />
+          <Suspense fallback={<Skeleton className="h-24" />}>
+            <ProjectCredits projectId={id} />
+          </Suspense>
         </div>
       </div>
 
-      <ProjectJoinModal
-        open={joinModalOpen}
-        projectId={id}
-        openRoles={openRoles}
-        meId={me?.userId ?? null}
-        onClose={() => setJoinModalOpen(false)}
-      />
+      {joinModalOpen && (
+        <Suspense fallback={null}>
+          <ProjectJoinModal
+            open={joinModalOpen}
+            projectId={id}
+            openRoles={openRoles}
+            meId={me?.userId ?? null}
+            onClose={() => setJoinModalOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <ScheduleSessionWizard open={scheduleOpen} onOpenChange={setScheduleOpen} projectId={id} />
+      {scheduleOpen && (
+        <Suspense fallback={null}>
+          <ScheduleSessionWizard
+            open={scheduleOpen}
+            onOpenChange={setScheduleOpen}
+            projectId={id}
+          />
+        </Suspense>
+      )}
 
-      <ProjectSearchDialog
-        open={projectSearchOpen}
-        onOpenChange={setProjectSearchOpen}
-        projectFiles={projectFiles}
-        discussions={discussions}
-        readme={project.readme}
-        onJumpFile={jumpToFile}
-        onJumpDiscussion={jumpToDiscussion}
-        onJumpSection={jumpToSection}
-      />
+      {projectSearchOpen && (
+        <Suspense fallback={null}>
+          <ProjectSearchDialog
+            open={projectSearchOpen}
+            onOpenChange={setProjectSearchOpen}
+            projectFiles={projectFiles}
+            discussions={discussions}
+            readme={project.readme}
+            onJumpFile={jumpToFile}
+            onJumpDiscussion={jumpToDiscussion}
+            onJumpSection={jumpToSection}
+          />
+        </Suspense>
+      )}
     </Shell>
   );
 }

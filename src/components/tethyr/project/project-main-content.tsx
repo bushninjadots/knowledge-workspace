@@ -285,7 +285,15 @@ function Avatar({ name, src }: { name?: string | null; src?: string }) {
   return (
     <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-brand">
       {src ? (
-        <img src={src} alt="" className="h-full w-full object-cover" />
+        <img
+          src={src}
+          alt=""
+          width="32"
+          height="32"
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-background">
           {initial}

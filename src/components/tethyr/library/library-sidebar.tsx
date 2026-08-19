@@ -114,7 +114,7 @@ export function LibrarySidebar({
           <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             Browse
           </p>
-          <nav className="flex flex-col gap-0.5">
+          <nav aria-label="Library navigation" className="flex flex-col gap-0.5">
             {filterItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.type);
@@ -168,7 +168,7 @@ export function LibrarySidebar({
           </div>
 
           {collectionsOpen && (
-            <nav className="flex flex-col gap-0.5">
+            <nav aria-label="Library collections" className="flex flex-col gap-0.5">
               {collections.length === 0 && (
                 <p className="px-2.5 py-2 text-xs text-muted-foreground">No collections yet</p>
               )}
@@ -223,7 +223,7 @@ export function LibrarySidebar({
           </div>
 
           {tagsOpen && (
-            <nav className="flex flex-col gap-0.5">
+            <nav aria-label="Library tags" className="flex flex-col gap-0.5">
               {tags.length === 0 && !showNewTag && (
                 <p className="px-2.5 py-2 text-xs text-muted-foreground">No tags yet</p>
               )}
