@@ -554,6 +554,7 @@ export function useUploadLibraryFile() {
     mutationFn: async (input: {
       file: File;
       collection_id?: string;
+      project_id?: string | null;
       title?: string;
       description?: string;
     }) => {
@@ -661,6 +662,7 @@ export function useUploadLibraryFile() {
           content,
           type,
           collection_id: input.collection_id ?? null,
+          project_id: input.project_id ?? null,
           // Despite its legacy name, file_url stores a private storage object path.
           file_url: path,
           file_type: input.file.type,
