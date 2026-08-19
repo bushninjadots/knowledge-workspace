@@ -704,6 +704,24 @@ function TeachSkillsCard({
     toast.success("Saved");
     onChange();
     setOpen(false);
+
+    // Immediately guide the user into the level/proof step for the first skill
+    // they just added, so "set experience & proof" is impossible to miss.
+    const firstNew = toAdd[0];
+    if (firstNew) {
+      const skill = allSkills.find((s) => s.id === firstNew);
+      if (skill) {
+        setProofEditing({
+          ...skill,
+          meta: {
+            verification_level: "self_declared" as SkillVerificationLevel,
+            experience_level: "intermediate" as SkillExperienceLevel,
+            proof_url: null,
+            proof_note: null,
+          },
+        });
+      }
+    }
   }
 
   return (
@@ -725,13 +743,13 @@ function TeachSkillsCard({
           {selected.map((s) => (
             <div
               key={s.id}
-              className="group flex flex-col items-start gap-1 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 transition hover:border-[var(--user-accent-border,var(--primary))]/70"
+              className="group flex flex-col items-start gap-1.5 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 transition hover:border-[var(--user-accent-border,var(--primary))]/70"
             >
               <button
                 type="button"
                 onClick={() => setProofEditing(s)}
                 className="flex flex-col items-start gap-1 text-left"
-                title={`Edit proof for ${s.name}`}
+                title={`Set level & proof for ${s.name}`}
               >
                 <span className="text-xs font-medium text-primary group-hover:underline">
                   {s.name}
@@ -744,13 +762,23 @@ function TeachSkillsCard({
                   <ExperienceBadge level={s.meta.experience_level} />
                 </span>
               </button>
-              <Link
-                to="/skills/$slug"
-                params={{ slug: s.slug }}
-                className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
-              >
-                View skill
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setProofEditing(s)}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Set level &amp; proof
+                </button>
+                <Link
+                  to="/skills/$slug"
+                  params={{ slug: s.slug }}
+                  className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  View skill
+                </Link>
+              </div>
             </div>
           ))}
         </div>
@@ -760,7 +788,11 @@ function TeachSkillsCard({
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Choose skills</DialogTitle>
+              <DialogTitle>Add skills to share</DialogTitle>
+              <p className="text-xs text-muted-foreground">
+                Pick what you can teach. After adding, set your experience level and share proof for
+                each one.
+              </p>
             </DialogHeader>
             <div className="relative">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -891,7 +923,7 @@ function ProofDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>"{skill.name}"— how experienced are you?</DialogTitle>
+          <DialogTitle>Set level & proof — {skill.name}</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
           Tell people where you're at, and back it up with a certificate, screenshot, or portfolio
