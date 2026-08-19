@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(64);
+SELECT plan(71);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -792,6 +792,90 @@ SELECT lives_ok(
   $$INSERT INTO public.challenges(title, description, created_by, is_starter)
       VALUES ('Curated Starter', 'x', 'a1d676d3-1a76-401f-bc30-0e4195569e27', true)$$,
   '64. the curator can create a starter challenge'
+);
+
+-- ---------------------------------------------------------------------------
+-- 20. Role application races + auto-decline
+-- ---------------------------------------------------------------------------
+-- Alice creates a project + one open role; Bob and Eve both apply.
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.projects(id, profile_id, title)
+  VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          '11111111-1111-1111-1111-111111111111',
+          'Race Project')
+  ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.project_open_roles(id, project_id, title)
+  VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc',
+          'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+          'Designer')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+INSERT INTO public.project_role_applications(id, role_id, profile_id)
+  VALUES ('dddddddd-dddd-dddd-dddd-ddddddddddd1',
+          'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          '22222222-2222-2222-2222-222222222222')
+  ON CONFLICT DO NOTHING;
+
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+INSERT INTO public.project_role_applications(id, role_id, profile_id)
+  VALUES ('dddddddd-dddd-dddd-dddd-ddddddddddd2',
+          'cccccccc-cccc-cccc-cccc-cccccccccccc',
+          '33333333-3333-3333-3333-333333333333')
+  ON CONFLICT DO NOTHING;
+
+-- A non-owner cannot accept (or decline) someone's application.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT throws_ok(
+  $$SELECT public.accept_project_role_application(
+      'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+      '22222222-2222-2222-2222-222222222222',
+      'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
+  NULL, '65. non-owner cannot accept a role application'
+);
+
+-- Owner accepts Bob: accepted, role filled, Eve auto-declined.
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+SELECT lives_ok(
+  $$SELECT public.accept_project_role_application(
+      'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+      '22222222-2222-2222-2222-222222222222',
+      'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
+  '66. owner accepts the application'
+);
+SELECT is(
+  (SELECT status FROM public.project_role_applications
+    WHERE id = 'dddddddd-dddd-dddd-dddd-ddddddddddd1'),
+  'accepted', '67. accepted application is marked accepted'
+);
+SELECT is(
+  (SELECT status FROM public.project_role_applications
+    WHERE id = 'dddddddd-dddd-dddd-dddd-ddddddddddd2'),
+  'declined', '68. rival application is auto-declined when the role fills'
+);
+SELECT is(
+  (SELECT is_filled FROM public.project_open_roles
+    WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'),
+  true, '69. open role is marked filled after accept'
+);
+
+-- Accepting the now-filled role (or an already-decided app) is rejected.
+SELECT throws_ok(
+  $$SELECT public.accept_project_role_application(
+      'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+      '33333333-3333-3333-3333-333333333333',
+      'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
+  NULL, '70. accepting after the role is filled is rejected'
+);
+SELECT throws_ok(
+  $$SELECT public.decline_project_role_application(
+      'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+      'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
+  NULL, '71. declining an already-decided application is rejected'
 );
 
 SELECT * FROM finish();

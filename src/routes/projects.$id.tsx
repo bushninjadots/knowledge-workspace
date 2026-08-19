@@ -484,6 +484,7 @@ function ProjectPage() {
             <div className="mt-4">
               <ProjectPeopleTab
                 projectId={id}
+                projectTitle={project.title}
                 contributors={contributors}
                 avatarSigned={avatarSigned}
                 openRoles={openRoles}

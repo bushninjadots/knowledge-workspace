@@ -1,7 +1,7 @@
 // Direct messages surface — list of accepted connections + active thread.
 // Includes pagination, typing indicators, read receipts, unread badges.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
@@ -12,7 +12,11 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections, type ConnectionWithProfile } from "@/hooks/use-connections";
 import { useMessages, useSendMessage, useUnreadCounts, useTyping } from "@/hooks/use-messages";
 
-const searchSchema = z.object({ c: z.string().optional() });
+const searchSchema = z.object({
+  c: z.string().optional(),
+  project: z.string().optional(),
+  projectName: z.string().optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/messages")({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -36,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/messages")({
 });
 
 function MessagesPage() {
-  const { c: activeId } = Route.useSearch();
+  const { c: activeId, project: projectId, projectName } = Route.useSearch();
   const navigate = useNavigate({ from: "/messages" });
   const { data: me } = useCurrentUser();
   const { data: connections, isLoading } = useConnections();
@@ -104,7 +108,13 @@ function MessagesPage() {
       {/* Thread — focused conversation */}
       <section className={`flex-1 flex-col ${active ? "flex" : "hidden sm:flex"}`}>
         {active ? (
-          <Thread conn={active} meId={meId} onBack={() => select(null)} />
+          <Thread
+            conn={active}
+            meId={meId}
+            projectId={projectId}
+            projectName={projectName}
+            onBack={() => select(null)}
+          />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <EmptyState
@@ -173,16 +183,20 @@ function ConversationRow({
 function Thread({
   conn,
   meId,
+  projectId,
+  projectName,
   onBack,
 }: {
   conn: ConnectionWithProfile;
   meId: string | null;
+  projectId?: string;
+  projectName?: string;
   onBack: () => void;
 }) {
   const { messages, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useMessages(
     conn.id,
   );
-  const send = useSendMessage(conn.id);
+  const send = useSendMessage(conn.id, projectId);
   const { otherTyping, notifyTyping } = useTyping(conn.id);
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -258,6 +272,18 @@ function Thread({
               {isFetchingNextPage ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
               Load older messages
             </Button>
+          </div>
+        )}
+        {projectName && projectId && (
+          <div className="mx-auto max-w-md rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-surface-elevated/60 px-4 py-2 text-center text-xs text-muted-foreground">
+            About{" "}
+            <Link
+              to="/projects/$id"
+              params={{ id: projectId }}
+              className="font-medium text-foreground hover:underline"
+            >
+              {projectName}
+            </Link>
           </div>
         )}
         {conn.intro_message && (

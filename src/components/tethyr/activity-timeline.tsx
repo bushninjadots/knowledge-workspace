@@ -60,6 +60,8 @@ const ICONS: Record<string, typeof Sparkles> = {
   discussion_reply: MessageCircle,
   connection_requested: UserPlus,
   connection_received: UserPlus,
+  connection_accepted: UserPlus,
+  connection_declined: UserPlus,
   message_received: MessageCircle,
 };
 
@@ -81,8 +83,19 @@ const LABELS: Record<string, (m: Record<string, unknown>) => string> = {
   discussion_reply: () => "Replied to a discussion",
   connection_requested: () => "Sent a connection request",
   connection_received: () => "Received a connection request",
+  connection_accepted: () => "Connection accepted",
+  connection_declined: () => "Connection declined",
   message_received: () => "Received a message",
 };
+
+/** Fallback label for kinds we haven't mapped yet — never render raw keys. */
+function humanizeKind(kind: string): string {
+  return kind
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 function relative(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -204,7 +217,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
       <span className="absolute left-[10px] top-2 bottom-2 w-px bg-border/70" aria-hidden />
       {rows.map((e) => {
         const Icon = ICONS[e.kind] ?? Sparkles;
-        const label = (LABELS[e.kind] ?? (() => e.kind.replaceAll("_", "")))(e.metadata ?? {});
+        const label = (LABELS[e.kind] ?? (() => humanizeKind(e.kind)))(e.metadata ?? {});
         const points = e.metadata?.points as number | undefined;
         return (
           <li key={e.id} className="relative">

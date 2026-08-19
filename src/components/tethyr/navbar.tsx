@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,17 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
+
+  // Close the mobile menu on Escape — a menu that can't be dismissed by
+  // keyboard is a focus trap.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   async function handleSignOut() {
     setOpen(false);
@@ -86,6 +97,8 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
               onClick={() => setOpen((v) => !v)}
               className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
               aria-label="Toggle menu"
+              aria-expanded={open}
+              aria-controls="mobile-menu"
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -93,7 +106,10 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
         )}
       </div>
       {open && !publicOnly && (
-        <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden">
+        <div
+          id="mobile-menu"
+          className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden"
+        >
           <div className="flex flex-col gap-1 px-4 py-4">
             <Link
               to="/"

@@ -795,6 +795,7 @@ export type Database = {
           connection_id: string
           created_at: string
           id: string
+          project_id: string | null
           read_at: string | null
           sender_id: string
         }
@@ -803,6 +804,7 @@ export type Database = {
           connection_id: string
           created_at?: string
           id?: string
+          project_id?: string | null
           read_at?: string | null
           sender_id: string
         }
@@ -811,6 +813,7 @@ export type Database = {
           connection_id?: string
           created_at?: string
           id?: string
+          project_id?: string | null
           read_at?: string | null
           sender_id?: string
         }
@@ -820,6 +823,13 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

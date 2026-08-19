@@ -10,6 +10,7 @@ export type MessageRow = {
   connection_id: string;
   sender_id: string;
   body: string;
+  project_id: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -117,7 +118,7 @@ export function useMessages(connectionId: string | null) {
 }
 
 // ---------- Send ----------
-export function useSendMessage(connectionId: string | null) {
+export function useSendMessage(connectionId: string | null, projectId?: string | null) {
   const qc = useQueryClient();
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
@@ -128,9 +129,12 @@ export function useSendMessage(connectionId: string | null) {
       if (!connectionId || !meId) throw new Error("Not ready");
       const trimmed = body.trim();
       if (!trimmed) throw new Error("Message can't be empty");
-      const { error } = await supabase
-        .from("messages")
-        .insert({ connection_id: connectionId, sender_id: meId, body: trimmed });
+      const { error } = await supabase.from("messages").insert({
+        connection_id: connectionId,
+        sender_id: meId,
+        body: trimmed,
+        project_id: projectId ?? null,
+      });
       if (error) throw error;
     },
     onMutate: async (body) => {
@@ -141,6 +145,7 @@ export function useSendMessage(connectionId: string | null) {
         connection_id: connectionId,
         sender_id: meId,
         body: body.trim(),
+        project_id: projectId ?? null,
         read_at: null,
         created_at: new Date().toISOString(),
       };
