@@ -1,25 +1,56 @@
 import { useMemo } from "react";
-import type { ActivityRow } from "@/components/tethyr/profile-sections";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const CELL_SIZE = 12;
 const GAP = 2;
 const WEEKS = 20;
 
-export function ContributionGraph({ activity }: { activity: ActivityRow[] }) {
+type ContributionRow = {
+  id: string;
+  action: string;
+  points: number;
+  created_at: string;
+};
+
+export function ContributionGraph({ profileId }: { profileId: string }) {
+  // Align the window to the start of the current week (Monday) so the grid and
+  // the query cover the exact same range.
+  const startIso = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - WEEKS * 7 + 1);
+    const dayOfWeek = d.getDay();
+    d.setDate(d.getDate() - ((dayOfWeek + 6) % 7));
+    return d.toISOString();
+  }, []);
+
+  // Contribution graph counts reputation-eligible events (contribution_log),
+  // not profile edits / connection requests from activity_events. This is the
+  // same source the Activity Timeline uses for its +points rows.
+  const { data: contributions = [] } = useQuery({
+    queryKey: ["contribution-graph", profileId],
+    queryFn: async (): Promise<ContributionRow[]> => {
+      if (!profileId) return [];
+      const { data } = await supabase
+        .from("contribution_log")
+        .select("id, action, points, created_at")
+        .eq("profile_id", profileId)
+        .gte("created_at", startIso)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as ContributionRow[];
+    },
+    enabled: !!profileId,
+    staleTime: 30_000,
+  });
+
   const { grid, maxCount } = useMemo(() => {
     const dateCounts: Record<string, number> = {};
-    for (const a of activity) {
-      const d = a.created_at?.slice(0, 10);
+    for (const c of contributions) {
+      const d = c.created_at?.slice(0, 10);
       if (d) dateCounts[d] = (dateCounts[d] ?? 0) + 1;
     }
 
-    const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - WEEKS * 7 + 1);
-    // Align to start of week (Monday)
-    const dayOfWeek = startDate.getDay();
-    startDate.setDate(startDate.getDate() - ((dayOfWeek + 6) % 7));
-
+    const startDate = new Date(startIso);
     const grid: { date: string; count: number }[][] = [];
     let maxCount = 0;
     const current = new Date(startDate);
@@ -37,7 +68,7 @@ export function ContributionGraph({ activity }: { activity: ActivityRow[] }) {
     }
 
     return { grid, maxCount };
-  }, [activity]);
+  }, [contributions, startIso]);
 
   function getColor(count: number) {
     if (count === 0) return "bg-muted/40";
@@ -49,7 +80,7 @@ export function ContributionGraph({ activity }: { activity: ActivityRow[] }) {
     return "bg-primary/90";
   }
 
-  const total = activity.length;
+  const total = contributions.length;
 
   return (
     <div>

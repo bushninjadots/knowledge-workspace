@@ -18,7 +18,7 @@ export function ProfileActivityTab({
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">Contribution Graph</h3>
         </div>
-        <ContributionGraph activity={activity} />
+        <ContributionGraph profileId={userId} />
       </div>
 
       {/* ACTIVITY TIMELINE */}
