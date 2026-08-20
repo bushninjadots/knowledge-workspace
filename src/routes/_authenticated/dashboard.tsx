@@ -137,10 +137,6 @@ function DashboardContent({
     () => (data ? totalSteps - sections(input).filter((s) => !s.done).length : 0),
     [data, input, totalSteps],
   );
-  const firstName = useMemo(
-    () => data?.profile?.display_name?.split(/\s+/)[0] ?? data?.profile?.handle ?? "member",
-    [data?.profile],
-  );
   const pendingSessionCount = useMemo(
     () =>
       sessionRequests.filter((r) => r.status === "pending" && r.to_user_id === data?.userId).length,
@@ -360,59 +356,6 @@ function DashboardContent({
             </SectionCard>
           );
 
-        case "welcome":
-          return (
-            <div className="rounded-xl bg-surface-elevated/30 p-6 sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Welcome back
-                    </p>
-                  </div>
-                  <h2 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
-                    Hey {firstName},{" "}
-                    <span className="text-[var(--user-accent,var(--trust))]">what's next?</span>
-                  </h2>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {pendingSessionCount > 0 ? (
-                    <Link
-                      to="/sessions"
-                      search={{ tab: "requests" }}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
-                    >
-                      Review requests <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  ) : activeProjects.length > 0 ? (
-                    <Link
-                      to="/projects/$id"
-                      params={{ id: activeProjects[0].id }}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
-                    >
-                      Continue building <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  ) : todayOpps.length > 0 ? (
-                    <Link
-                      to="/explore"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
-                    >
-                      Find a role <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  ) : (
-                    <CreateProjectButton size="sm" variant="default" className="rounded-full" />
-                  )}
-                  {data?.profile?.reputation_score != null && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
-                      <Award className="h-3.5 w-3.5" />
-                      {data?.profile?.reputation_score} rep
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-
         case "today":
           return (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -606,7 +549,6 @@ function DashboardContent({
       remaining,
       doneSteps,
       totalSteps,
-      firstName,
       pendingSessionCount,
       pendingConnectionCount,
       pendingInviteCount,
@@ -626,7 +568,6 @@ function DashboardContent({
             Your next move
           </h2>
           <WelcomeModal />
-          {renderModule("welcome")}
           {renderModule("today")}
           <ProjectReturnShelf />
           <WeeklyShowYourWorkPrompt projectId={activeProjects[0]?.id ?? null} />
