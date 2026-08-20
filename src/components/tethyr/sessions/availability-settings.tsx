@@ -254,7 +254,7 @@ export function AvailabilitySettings({
             return (
               <div
                 key={day}
-                className={`flex flex-col items-center gap-2 rounded-xl border p-3 transition-all ${
+                className={`flex flex-col items-center gap-2 rounded-xl border p-3 transition-lift ${
                   statusStyle
                     ? `${statusStyle.border} ${statusStyle.bg}`
                     : "border-border/40 bg-surface/30"

@@ -123,7 +123,7 @@ export function LibrarySidebar({
                   key={item.type}
                   onClick={() => onViewChange({ type: item.type })}
                   className={cn(
-                    "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all duration-200",
+                    "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors duration-200",
                     active
                       ? "bg-surface-elevated text-foreground"
                       : "text-muted-foreground hover:bg-surface/60 hover:text-foreground",
@@ -179,7 +179,7 @@ export function LibrarySidebar({
                     key={col.id}
                     onClick={() => onViewChange({ type: "collection", collectionId: col.id })}
                     className={cn(
-                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all duration-200",
+                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors duration-200",
                       active
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:bg-surface/60 hover:text-foreground",
@@ -234,7 +234,7 @@ export function LibrarySidebar({
                     key={tag.id}
                     onClick={() => onViewChange({ type: "tag", tagId: tag.id })}
                     className={cn(
-                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all duration-200",
+                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors duration-200",
                       active
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:bg-surface/60 hover:text-foreground",

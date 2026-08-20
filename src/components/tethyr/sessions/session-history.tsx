@@ -14,7 +14,7 @@ function HistoryCard({ session }: { session: SessionWithParticipants }) {
   const participantCount = session.participants?.length ?? 0;
 
   return (
-    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
+    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
       {/* Date badge */}
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
         <span className="text-[11px] font-semibold uppercase text-muted-foreground">

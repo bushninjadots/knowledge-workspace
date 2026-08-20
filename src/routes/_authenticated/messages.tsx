@@ -141,7 +141,7 @@ function ConversationRow({
   return (
     <button
       onClick={onSelect}
-      className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-all duration-200 ease-out ${
+      className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-lift duration-200 ease-out ${
         active
           ? "border-l-2 border-l-primary bg-surface"
           : "border-l-2 border-l-transparent hover:border-l-primary/50 hover:bg-surface/50"

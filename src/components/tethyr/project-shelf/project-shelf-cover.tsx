@@ -34,7 +34,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
   return (
     <button
       onClick={onClick}
-      className="group relative w-full cursor-pointer overflow-hidden rounded-xl border card-border bg-surface text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[var(--user-accent-border,var(--border-strong))]"
+      className="group relative w-full cursor-pointer overflow-hidden rounded-xl border card-border bg-surface text-left shadow-sm transition-spatial transition-shadow duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[var(--user-accent-border,var(--border-strong))]"
       aria-label={`View ${project.title}`}
     >
       {/* Cover image — 16:9, object-contain to show the whole image */}

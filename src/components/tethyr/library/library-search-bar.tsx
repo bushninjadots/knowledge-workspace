@@ -101,7 +101,7 @@ export function LibrarySearchBar({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full border bg-surface/60 px-3 transition-all duration-200",
+          "flex items-center gap-2 rounded-full border bg-surface/60 px-3 transition-lift transition-shadow duration-200",
           focused
             ? "border-brand-green/40 shadow-[0_0_0_1px_oklch(0.92_0.23_142/15%)]"
             : "border-border/60",

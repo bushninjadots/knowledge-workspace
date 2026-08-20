@@ -22,7 +22,7 @@ export function CollectionCard({
   return (
     <button
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-xl border card-border bg-surface px-4 py-3 text-left transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50 hover:shadow-soft"
+      className="group flex w-full items-center gap-3 rounded-xl border card-border bg-surface px-4 py-3 text-left transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50 hover:shadow-soft"
     >
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"

@@ -71,7 +71,7 @@ export function ItemCard({
 
   if (layout === "list") {
     return (
-      <div className="group relative flex items-center gap-4 rounded-xl border card-border bg-surface px-4 py-3 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
+      <div className="group relative flex items-center gap-4 rounded-xl border card-border bg-surface px-4 py-3 transition-lift duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
           <Icon className={cn("h-4 w-4", iconColor)} />
         </div>
@@ -135,7 +135,7 @@ export function ItemCard({
   }
 
   return (
-    <div className="group relative flex flex-col rounded-xl border card-border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50 hover:shadow-soft">
+    <div className="group relative flex flex-col rounded-xl border card-border bg-surface p-4 transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50 hover:shadow-soft">
       {/* Top row: type icon + actions */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-elevated">

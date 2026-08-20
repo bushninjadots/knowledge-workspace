@@ -135,7 +135,7 @@ export function CollectionDialog({
                     key={item.name}
                     onClick={() => setSelectedIcon(item.name)}
                     className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-lg border transition-all",
+                      "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
                       active
                         ? "border-[var(--user-accent,var(--trust))]/50 bg-[var(--user-accent-subtle,var(--trust-subtle))] text-[var(--user-accent,var(--trust))]"
                         : "border-border/40 bg-surface/40 text-muted-foreground hover:bg-surface/60 hover:text-foreground",

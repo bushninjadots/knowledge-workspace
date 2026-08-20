@@ -61,7 +61,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
   return (
     <Card
       onClick={() => navigate({ to: "/challenges/$id", params: { id: challenge.id } })}
-      className="group relative cursor-pointer rounded-xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-all duration-300"
+      className="group relative cursor-pointer rounded-xl border card-border bg-surface hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-spatial transition-shadow duration-300"
     >
       <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3">

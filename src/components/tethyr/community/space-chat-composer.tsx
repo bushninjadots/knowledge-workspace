@@ -96,7 +96,7 @@ export function SpaceChatComposer({
               onClick={send}
               disabled={!message.trim() || sending}
               aria-label="Send message"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated active:scale-95 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated active:scale-95 disabled:opacity-40"
             >
               <Send className="h-3.5 w-3.5" />
               Send

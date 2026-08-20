@@ -749,7 +749,7 @@ export function ComposerBar({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                       targetSpaceId
                         ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
                         : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
@@ -790,7 +790,7 @@ export function ComposerBar({
             <button
               type="button"
               onClick={() => setShowLinkInput((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                 showLinkInput
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
@@ -816,7 +816,7 @@ export function ComposerBar({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-all active:scale-95 ${
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                     flair
                       ? `border-transparent ${flairClasses(flair)}`
                       : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
@@ -880,7 +880,7 @@ export function ComposerBar({
         <button
           onClick={handleImageUpload}
           disabled={images.length >= 4}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95 disabled:opacity-40"
         >
           <ImagePlus className="h-3.5 w-3.5" />
           Image
@@ -890,7 +890,7 @@ export function ComposerBar({
           onClick={handleH1}
           aria-label="Heading 1"
           title="Heading 1"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Heading1 className="h-3.5 w-3.5" />
         </button>
@@ -899,7 +899,7 @@ export function ComposerBar({
           onClick={handleH2}
           aria-label="Heading 2"
           title="Heading 2"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Heading2 className="h-3.5 w-3.5" />
         </button>
@@ -909,7 +909,7 @@ export function ComposerBar({
           onClick={handleBold}
           aria-label="Bold"
           title="Bold"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Bold className="h-3.5 w-3.5" />
         </button>
@@ -918,7 +918,7 @@ export function ComposerBar({
           onClick={handleItalic}
           aria-label="Italic"
           title="Italic"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Italic className="h-3.5 w-3.5" />
         </button>
@@ -927,7 +927,7 @@ export function ComposerBar({
           onClick={handleStrikethrough}
           aria-label="Strikethrough"
           title="Strikethrough"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Strikethrough className="h-3.5 w-3.5" />
         </button>
@@ -937,7 +937,7 @@ export function ComposerBar({
           onClick={handleBulletList}
           aria-label="Bullet list"
           title="Bullet list"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <List className="h-3.5 w-3.5" />
         </button>
@@ -946,7 +946,7 @@ export function ComposerBar({
           onClick={handleNumberedList}
           aria-label="Numbered list"
           title="Numbered list"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <ListOrdered className="h-3.5 w-3.5" />
         </button>
@@ -955,7 +955,7 @@ export function ComposerBar({
           onClick={handleBlockquote}
           aria-label="Blockquote"
           title="Blockquote"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Quote className="h-3.5 w-3.5" />
         </button>
@@ -964,14 +964,14 @@ export function ComposerBar({
           onClick={handleLink}
           aria-label="Insert link"
           title="Insert link"
-          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
+          className="inline-flex items-center rounded-full border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground active:scale-95"
         >
           <Link2 className="h-3.5 w-3.5" />
         </button>
         <div className="mx-0.5 h-4 w-px bg-border/60" />
         <button
           onClick={() => setShowAttachPanel((v) => !v)}
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
             showAttachPanel || attachedProject
               ? "border-primary bg-primary/10 text-primary"
               : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -988,7 +988,7 @@ export function ComposerBar({
             <button
               key={a.type}
               onClick={() => setType(active ? null : a.type)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all active:scale-95 ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors active:scale-95 ${
                 active
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -1005,7 +1005,7 @@ export function ComposerBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-all active:scale-95 ${
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs transition-colors active:scale-95 ${
                 type && MORE_ACTIONS.some((a) => a.type === type)
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"

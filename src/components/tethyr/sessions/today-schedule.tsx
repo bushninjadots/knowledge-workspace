@@ -31,7 +31,7 @@ function SessionCard({
   return (
     <div
       onClick={onClick}
-      className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
+      className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
     >
       {/* Time column */}
       <div className="w-16 shrink-0 text-center">

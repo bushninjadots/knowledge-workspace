@@ -76,7 +76,7 @@ export function NotificationSidebar({
           <button
             key={cat.id}
             onClick={() => onCategoryChange(cat.id)}
-            className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
+            className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${
               isActive
                 ? "bg-surface-elevated text-foreground shadow-soft"
                 : "text-muted-foreground hover:bg-surface/60 hover:text-foreground"

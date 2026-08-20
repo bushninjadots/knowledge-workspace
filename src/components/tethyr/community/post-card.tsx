@@ -223,7 +223,7 @@ export function PostCard({
 
   return (
     <article
-      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
+      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-200 ${TYPE_BORDER[post.type]} ${
         autoDimmed
           ? "opacity-70 saturate-50"
           : highlighted
@@ -628,7 +628,7 @@ export function PostCard({
         <button
           onClick={() => setOfferOpen(true)}
           disabled={offered}
-          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-all active:scale-95 ${
+          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-colors active:scale-95 ${
             isRequestType
               ? "border border-primary bg-primary/10 text-primary hover:bg-primary/20"
               : "hover:bg-surface-elevated hover:text-foreground"
@@ -1188,7 +1188,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-all active:scale-95 hover:bg-surface-elevated hover:text-foreground ${
+      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-colors active:scale-95 hover:bg-surface-elevated hover:text-foreground ${
         active ? activeClass : ""
       }`}
     >

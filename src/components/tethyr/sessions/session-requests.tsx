@@ -21,7 +21,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
   }
 
   return (
-    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-all hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
+    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-background">
         {otherUser?.display_name?.charAt(0) ?? otherUser?.handle?.charAt(0) ?? "?"}

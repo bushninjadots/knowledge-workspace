@@ -79,7 +79,7 @@ function CalendarEventCard({
     return (
       <button
         onClick={onClick}
-        className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-all hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
+        className={`group flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-shadow hover:shadow-soft ${status.bg} border ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
       >
         <span className="truncate text-[11px] font-medium text-foreground" title={session.title}>
           {session.title}
@@ -91,7 +91,7 @@ function CalendarEventCard({
   return (
     <button
       onClick={onClick}
-      className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all hover:shadow-soft ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
+      className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-shadow hover:shadow-soft ${status.bg.includes("blue") ? "border-learning/40" : status.bg.includes("green") ? "border-trust/40" : status.bg.includes("amber") ? "border-teaching/40" : status.bg.includes("purple") ? "border-ai/40" : "border-border/40"}`}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
@@ -611,7 +611,7 @@ export function SessionsCalendar({
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                   view === v
                     ? "bg-surface-elevated text-foreground shadow-soft"
                     : "text-muted-foreground hover:text-foreground"
@@ -625,7 +625,7 @@ export function SessionsCalendar({
           {onScheduleClick && (
             <button
               onClick={onScheduleClick}
-              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-all hover:bg-[var(--user-accent,var(--trust))]/90 hover:shadow-soft active:scale-[0.98]"
+              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-colors hover:bg-[var(--user-accent,var(--trust))]/90 hover:shadow-soft active:scale-[0.98]"
             >
               <Plus className="mr-1 inline-block h-3 w-3" />
               Schedule

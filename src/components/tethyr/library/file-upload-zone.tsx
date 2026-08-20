@@ -289,7 +289,7 @@ export function FileUploadZone({
       onDrop={handleDrop}
       onClick={() => fileInputRef.current?.click()}
       className={cn(
-        "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed text-center transition-all duration-200",
+        "flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed text-center transition-colors duration-200",
         compact ? "px-4 py-5" : "px-6 py-10",
         isDragOver
           ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--trust-subtle))]"

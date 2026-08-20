@@ -41,7 +41,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           <nav aria-label="Main navigation" className="hidden items-center gap-1 md:flex">
             <Link
               to="/"
-              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-surface hover:text-foreground"
+              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
               activeProps={{ className: "text-foreground bg-surface" }}
               activeOptions={{ exact: true }}
             >

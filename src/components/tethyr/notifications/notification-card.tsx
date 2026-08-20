@@ -161,7 +161,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
       tabIndex={isConnectionRequest ? -1 : 0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-all duration-200 ${
+      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-lift transition-shadow transition-transform duration-200 ${
         isUnread
           ? "border-l-2 border-l-primary border-border/40 bg-surface-elevated/50"
           : "border-border/40 bg-surface/40 opacity-75 hover:opacity-100"

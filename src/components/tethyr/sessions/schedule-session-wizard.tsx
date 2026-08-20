@@ -484,7 +484,7 @@ function StepType({ value, onChange }: { value: SessionType; onChange: (v: Sessi
             <button
               key={t.value}
               onClick={() => onChange(t.value)}
-              className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+              className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-lift ${
                 selected
                   ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--trust-subtle))] shadow-sm"
                   : "border-border/60 bg-surface/50 hover:border-border hover:bg-muted/30"

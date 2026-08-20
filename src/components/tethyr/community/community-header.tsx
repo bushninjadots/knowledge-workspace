@@ -182,7 +182,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
-              className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
+              className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
                 mySkillsOnly
                   ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -195,7 +195,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               <button
                 key={opt.value}
                 onClick={() => onSortModeChange(opt.value)}
-                className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ${
+                className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
                   sortMode === opt.value
                     ? "bg-surface-elevated text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -210,7 +210,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               onClick={() => onFocusFilterChange("all")}
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
+              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
                 focusFilter === "all"
                   ? "bg-surface-elevated text-foreground shadow-sm font-medium"
                   : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
@@ -222,7 +222,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               <button
                 key={f}
                 onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-all duration-200 ${
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
                   focusFilter === f
                     ? "bg-surface-elevated text-foreground shadow-sm font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"

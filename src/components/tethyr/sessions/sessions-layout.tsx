@@ -103,7 +103,7 @@ export function SessionsLayout() {
             </div>
             <button
               onClick={() => setWizardOpen(true)}
-              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-all hover:opacity-90 hover:shadow-soft active:scale-[0.98]"
+              className="rounded-xl bg-[var(--user-accent,var(--trust))] px-4 py-2.5 text-sm font-semibold text-[var(--user-accent-foreground,var(--background))] transition-opacity transition-shadow transition-transform hover:opacity-90 hover:shadow-soft active:scale-[0.98]"
             >
               + Schedule Session
             </button>

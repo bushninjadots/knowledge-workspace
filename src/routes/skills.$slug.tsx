@@ -498,7 +498,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
           <ProfileLink
             key={row.profile_id}
             handle={p.handle}
-            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             title={p.display_name || p.handle || undefined}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
@@ -572,7 +572,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
           <ProfileLink
             key={row.profile_id}
             handle={p.handle}
-            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             title={p.display_name || p.handle || undefined}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
@@ -662,7 +662,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
             key={row.project_id}
             to="/projects/$id"
             params={{ id: proj.id }}
-            className="card-border rounded-xl border bg-surface p-4 transition-all duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="card-border rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-2">

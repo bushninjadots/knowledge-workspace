@@ -49,7 +49,7 @@ export function ProjectShelfThumbnails({
             title={project.title}
             aria-label={`Go to project ${i + 1}: ${project.title}`}
             className={cn(
-              "relative h-14 w-24 shrink-0 cursor-pointer overflow-hidden rounded-md border bg-surface text-left outline-none transition-all duration-150",
+              "relative h-14 w-24 shrink-0 cursor-pointer overflow-hidden rounded-md border bg-surface text-left outline-none transition-colors duration-150",
               isActive
                 ? "border-transparent"
                 : "border-border/60 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm",
