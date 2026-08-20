@@ -104,12 +104,19 @@ export function BackgroundPickerDialog({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const path = `${userId}/background.${check.ext}`;
+    // Use a unique path so the browser doesn't serve a stale cached copy
+    // when the user re-uploads with the same file extension.
+    const previousPath = activeDraft.image_url;
+    const path = `${userId}/background-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("backgrounds")
-      .upload(path, file, { upsert: true, contentType: check.contentType });
+      .upload(path, file, { contentType: check.contentType });
     setUploading(false);
     if (upErr) return toast.error(friendlyError(upErr));
+    // Clean up the previous file — best-effort, don't block the UI.
+    if (previousPath) {
+      supabase.storage.from("backgrounds").remove([previousPath]);
+    }
     setActiveDraft((d) => ({ ...d, mode: "image", image_url: path }));
   }
 
