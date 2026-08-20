@@ -1,7 +1,14 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { z } from "zod";
 import { SessionsLayout } from "@/components/tethyr/sessions/sessions-layout";
+import type { SessionsTab } from "@/components/tethyr/sessions/sessions-sidebar";
+
+const SESSION_TABS: SessionsTab[] = ["upcoming", "calendar", "history", "requests", "availability"];
 
 export const Route = createFileRoute("/_authenticated/sessions")({
+  validateSearch: z.object({
+    tab: z.enum(SESSION_TABS).optional(),
+  }).parse,
   head: () => ({
     meta: [
       { title: "Sessions — Tethyr" },

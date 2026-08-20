@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ProfileLink } from "@/components/tethyr/profile-link";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Target } from "lucide-react";
@@ -197,10 +198,10 @@ export function ProjectMainContent({
           <div className="space-y-3">
             {contributors.map((c) => (
               <div key={c.profile_id} className="rounded-xl bg-background/40 p-3">
-                <Link
-                  to="/u/$handle"
-                  params={{ handle: c.profile?.handle ?? "" }}
+                <ProfileLink
+                  handle={c.profile?.handle}
                   className="flex items-center gap-3 transition hover:opacity-80"
+                  title={c.profile?.display_name || c.profile?.handle || undefined}
                 >
                   <Avatar
                     name={c.profile?.display_name ?? c.profile?.handle}
@@ -212,7 +213,7 @@ export function ProjectMainContent({
                     </p>
                     <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role]}</p>
                   </div>
-                </Link>
+                </ProfileLink>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {c.contribution_score > 0 && (
                     <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">

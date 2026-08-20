@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useNotifications, useNotificationRealtime } from "@/hooks/use-notifications";
+import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { NotificationType, Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
 import { getNotificationDestination } from "@/lib/notification-destinations";
+import {
+  TYPE_CATEGORY,
+  CATEGORY_LABELS,
+  type NotificationCategory,
+} from "@/lib/notification-categories";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
@@ -31,8 +37,13 @@ export const Route = createFileRoute("/_authenticated/notifications")({
   ),
 });
 
+// Every notification type has exactly one canonical home (see
+// `lib/notification-categories.ts`), so tabs never show the same item twice
+// and muting a category maps 1:1 to the tab that would show it.
 const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
   all: null,
+  // Cross-cutting “decisions and replies” queue — intentionally overlaps the
+  // category tabs below.
   action: [
     "connection_request",
     "session_invite",
@@ -43,32 +54,16 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
     "challenge_submitted",
     "challenge_resubmitted",
   ],
-  message: ["message"],
-  session: ["session_invite", "session_update"],
-  community: [
-    "comment",
-    "mention",
-    "follow",
-    "challenge_join",
-    "challenge_complete",
-    "challenge_submitted",
-    "challenge_resubmitted",
-    "challenge_passed",
-    "challenge_rejected",
-    "join_approved",
-    "join_rejected",
-  ],
-  project: [
-    "project_invite",
-    "project_join",
-    "project_post",
-    "project_recognition",
-    "role_application_accepted",
-    "role_application_declined",
-  ],
-  reputation: ["endorsement", "connection_request", "connection_accepted"],
-  achievement: ["achievement"],
-  moderation: ["post_report", "report_resolved"],
+  // The remaining tabs are derived from the shared type→category map so the
+  // page can never drift from the preferences in /settings.
+  ...Object.fromEntries(
+    (Object.keys(CATEGORY_LABELS) as NotificationCategory[]).map((category) => [
+      category,
+      (Object.entries(TYPE_CATEGORY) as [NotificationType, NotificationCategory][])
+        .filter(([, c]) => c === category)
+        .map(([type]) => type),
+    ]),
+  ),
 };
 
 const TABS = [
@@ -95,6 +90,8 @@ function NotificationsPage() {
   useNotificationRealtime();
   const [activeCategory, setActiveCategory] = useState("all");
   const navigateToNotification = useNotificationNavigator();
+  const { mutedCategories } = useNotificationPreferences();
+  const muted = new Set(mutedCategories);
 
   const types = CATEGORY_TYPE_MAP[activeCategory];
   const filterType = types && types.length === 1 ? types[0] : undefined;
@@ -103,10 +100,11 @@ function NotificationsPage() {
     filterType ? { type: filterType } : undefined,
   );
 
-  const notifications =
+  const notifications = (
     types && types.length > 1
       ? allNotifications.filter((n) => types.includes(n.type))
-      : allNotifications;
+      : allNotifications
+  ).filter((n) => !muted.has(TYPE_CATEGORY[n.type]));
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">

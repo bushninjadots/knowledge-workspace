@@ -70,7 +70,7 @@ function TeamsIBuildWith() {
     <div className="rounded-xl bg-surface-elevated/30 p-5">
       <div className="mb-4 flex items-center gap-2">
         <Users className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-semibold">Teams I build with</h3>
+        <h3 className="text-sm font-semibold">Crews I build with</h3>
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}

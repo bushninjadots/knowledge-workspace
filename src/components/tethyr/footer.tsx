@@ -20,12 +20,12 @@ export function Footer() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-8 md:gap-12">
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
-              Platform
-            </h3>
-            <ul className="space-y-2.5 text-sm">
-              {isAuthed && (
+          {isAuthed && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+                Platform
+              </h3>
+              <ul className="space-y-2.5 text-sm">
                 <li>
                   <Link
                     to="/dashboard"
@@ -34,46 +34,78 @@ export function Footer() {
                     Dashboard
                   </Link>
                 </li>
-              )}
-              <li>
-                <Link
-                  to="/explore"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Projects
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/community"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Community
-                </Link>
-              </li>
-            </ul>
-          </div>
+                <li>
+                  <Link
+                    to="/explore"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Projects
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/community"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Community
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/settings"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Settings
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
-              Connect
+              {isAuthed ? "Connect" : "Get started"}
             </h3>
             <ul className="space-y-2.5 text-sm">
-              <li>
-                <Link
-                  to="/signup"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Join Tethyr
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/login"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Log In
-                </Link>
-              </li>
+              {!isAuthed && (
+                <>
+                  <li>
+                    <Link
+                      to="/signup"
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Join Tethyr
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/login"
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Log In
+                    </Link>
+                  </li>
+                </>
+              )}
+              {isAuthed && (
+                <>
+                  <li>
+                    <Link
+                      to="/profile"
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Your Studio
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/explore"
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Discover people
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>

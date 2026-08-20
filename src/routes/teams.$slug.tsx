@@ -62,7 +62,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
         <button
           onClick={() =>
-            window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
           }
           className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
           aria-label="Go back"

@@ -237,7 +237,9 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{session.title}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            {session.title}
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge className={`${statusCfg.bg} ${statusCfg.color} border-0 font-medium`}>
               {statusCfg.icon} {statusCfg.label}

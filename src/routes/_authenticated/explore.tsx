@@ -24,6 +24,8 @@ import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
+import { ProfileLink } from "@/components/tethyr/profile-link";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
 import {
@@ -576,51 +578,17 @@ function ExplorePage() {
 
           {/* Tab bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div
-              role="group"
-              aria-label="Explore views"
-              className="flex items-center gap-1 rounded-xl border card-border bg-surface p-1 w-fit"
-            >
-              <button
-                type="button"
-                aria-pressed={tab === "projects"}
-                onClick={() => setTab("projects")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  tab === "projects"
-                    ? "bg-surface-elevated text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Folder className="h-3.5 w-3.5" />
-                Projects
-              </button>
-              <button
-                type="button"
-                aria-pressed={tab === "creators"}
-                onClick={() => setTab("creators")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  tab === "creators"
-                    ? "bg-surface-elevated text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Users className="h-3.5 w-3.5" />
-                People
-              </button>
-              <button
-                type="button"
-                aria-pressed={tab === "opportunities"}
-                onClick={() => setTab("opportunities")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                  tab === "opportunities"
-                    ? "bg-surface-elevated text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Briefcase className="h-3.5 w-3.5" />
-                Opportunities
-              </button>
-            </div>
+            <SegmentedControl
+              value={tab}
+              onChange={setTab}
+              ariaLabel="Explore views"
+              className="w-fit"
+              options={[
+                { value: "projects", label: "Projects", icon: Folder },
+                { value: "creators", label: "People", icon: Users },
+                { value: "opportunities", label: "Opportunities", icon: Briefcase },
+              ]}
+            />
             <CreateProjectButton label="Create project" className="rounded-full" />
           </div>
 
@@ -978,11 +946,11 @@ function ExplorePage() {
                 {filteredCreators.map((c, i) => {
                   const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
                   return (
-                    <Link
+                    <ProfileLink
                       key={c.id}
-                      to="/u/$handle"
-                      params={{ handle: c.handle ?? "" }}
+                      handle={c.handle}
                       className="animate-room-enter rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                      title={c.display_name || c.handle || undefined}
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <div className="flex items-center gap-3">
@@ -1005,7 +973,7 @@ function ExplorePage() {
                         {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
                         {c.country && <span>{c.country}</span>}
                       </div>
-                    </Link>
+                    </ProfileLink>
                   );
                 })}
               </div>

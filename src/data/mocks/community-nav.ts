@@ -15,8 +15,6 @@ import {
   MessageSquare,
   Sparkles,
   TrendingUp,
-  Trophy,
-  UserRound,
   Users,
 } from "lucide-react";
 
@@ -71,7 +69,8 @@ export const COMMUNITY_NAV_GROUPS: CommunityNavGroup[] = [
     label: "Discover",
     items: [
       { id: "communities", label: "Communities", icon: Users },
-      { id: "challenges", label: "Challenges", icon: Trophy },
+      // Challenges is app-level (sidebar owns the destination); the feed's
+      // `challenges` nav id stays valid for deep links but isn't surfaced here.
       { id: "trending", label: "Trending", icon: TrendingUp },
       { id: "resources", label: "Resources", icon: Library },
     ],
@@ -79,9 +78,8 @@ export const COMMUNITY_NAV_GROUPS: CommunityNavGroup[] = [
   {
     label: "You",
     items: [
-      { id: "projects", label: "Projects", icon: FolderKanban },
+      { id: "projects", label: "Project updates", icon: FolderKanban },
       { id: "saved", label: "Saved", icon: Bookmark },
-      { id: "profile", label: "Profile", icon: UserRound, href: "/profile" },
     ],
   },
 ];

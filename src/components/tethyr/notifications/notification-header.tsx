@@ -9,7 +9,7 @@ export function NotificationHeader() {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <h1 className="font-display text-2xl font-bold">Notifications</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Notifications</h1>
         {unreadCount > 0 && (
           <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
             {unreadCount} unread

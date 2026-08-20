@@ -20,7 +20,6 @@ import {
   ShieldAlert,
   ScrollText,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -29,13 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -48,18 +40,14 @@ import {
   useSpaceJoinRequests,
   useApproveJoinRequest,
   useRejectJoinRequest,
-  useSpacePostReports,
-  useUpdateReportStatus,
   useModerationLog,
   useSpaceBans,
-  useBanMember,
   useUnbanMember,
   type SpaceMember,
   type SpaceMemberRole,
   type SpaceVisibility,
   type SpaceJoinType,
   type JoinRequestRow,
-  type PostReportRow,
   type ModerationLogRow,
   type SpaceBan,
 } from "@/hooks/use-community-spaces";
@@ -115,7 +103,6 @@ function SpaceSettingsPage() {
   const { data: me } = useCurrentUser();
   const { data: members = [] } = useSpaceMembers(space?.id ?? "");
   const { data: joinRequests = [] } = useSpaceJoinRequests(space?.id ?? "");
-  const { data: spaceReports = [] } = useSpacePostReports(space?.id ?? "");
   const { data: modLog = [] } = useModerationLog(space?.id ?? "");
   const { data: spaceBans = [] } = useSpaceBans(space?.id ?? "");
 
@@ -125,8 +112,6 @@ function SpaceSettingsPage() {
   const removeMember = useRemoveMember();
   const approveRequest = useApproveJoinRequest();
   const rejectRequest = useRejectJoinRequest();
-  const updateReport = useUpdateReportStatus();
-  const banMember = useBanMember();
   const unbanMember = useUnbanMember();
 
   const [name, setName] = useState("");
@@ -139,10 +124,6 @@ function SpaceSettingsPage() {
   const [memberQuery, setMemberQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | SpaceMemberRole>("all");
   const [page, setPage] = useState(1);
-  const [dismissTarget, setDismissTarget] = useState<PostReportRow | null>(null);
-  const [dismissNote, setDismissNote] = useState("");
-  const [banTarget, setBanTarget] = useState<{ user_id: string } | null>(null);
-  const [banReason, setBanReason] = useState("");
 
   const counts = useMemo(() => {
     const c = { owner: 0, moderator: 0, member: 0 };
@@ -546,193 +527,27 @@ function SpaceSettingsPage() {
         )}
       </form>
 
-      {/* Reports queue — members flagged posts in this space */}
+      {/* Reports inbox — moderation queue lives on its own route so it stays
+          reachable from the space header and isn't duplicated inside settings. */}
       <section className="mt-10 rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4" />
-          Reported posts ({spaceReports.length})
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Members flagged these posts for breaking the community rules.
-        </p>
-
-        <div className="mt-4 space-y-2">
-          {spaceReports.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No open reports right now.
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4" />
+              Reports inbox
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Review member reports, resolve or dismiss them, and see moderation history.
             </p>
-          ) : (
-            spaceReports.map((rep: PostReportRow) => (
-              <div
-                key={rep.id}
-                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/60 bg-surface-elevated/40 px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">
-                    {rep.post?.title || "Post"}{" "}
-                    <span className="font-normal text-muted-foreground">— {rep.reason}</span>
-                  </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Reported by {rep.reporter?.display_name || "Member"} ·{" "}
-                    {new Date(rep.created_at).toLocaleDateString()}
-                    {rep.details ? ` — “${rep.details}”` : ""}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs text-destructive"
-                    disabled={updateReport.isPending || banMember.isPending}
-                    onClick={() => {
-                      setBanTarget({ user_id: rep.reporter_id });
-                      setBanReason("");
-                    }}
-                    title="Ban the reporter from this community"
-                  >
-                    <ShieldAlert className="mr-1 h-3.5 w-3.5" /> Ban
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs"
-                    disabled={updateReport.isPending}
-                    onClick={() => {
-                      setDismissTarget(rep);
-                      setDismissNote("");
-                    }}
-                  >
-                    <XCircle className="mr-1 h-3.5 w-3.5" /> Dismiss
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 text-xs"
-                    disabled={updateReport.isPending}
-                    onClick={() =>
-                      updateReport.mutate(
-                        { reportId: rep.id, status: "resolved" },
-                        {
-                          onSuccess: () => toast.success("Report resolved"),
-                          onError: () => toast.error("Failed to resolve"),
-                        },
-                      )
-                    }
-                  >
-                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Resolve
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
+          </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
+              <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+              Open reports
+            </Link>
+          </Button>
         </div>
       </section>
-
-      {/* Ban dialog — moderators can ban a reporter/member with a reason */}
-      <Dialog open={!!banTarget} onOpenChange={(open) => !open && setBanTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ban member</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-muted-foreground">
-            Banned members are removed from {space.name} and blocked from joining or posting until
-            the ban is lifted. You can lift it anytime.
-          </p>
-          <div className="pt-2">
-            <Label htmlFor="ban-reason">Reason (optional)</Label>
-            <Textarea
-              id="ban-reason"
-              value={banReason}
-              onChange={(e) => setBanReason(e.target.value.slice(0, 200))}
-              rows={3}
-              placeholder="e.g. Repeated harassment after a warning"
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setBanTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={banMember.isPending}
-              onClick={() => {
-                if (!banTarget) return;
-                banMember.mutate(
-                  { spaceId: space.id, userId: banTarget.user_id, reason: banReason },
-                  {
-                    onSuccess: () => {
-                      toast.success("Member banned");
-                      setBanTarget(null);
-                      setBanReason("");
-                    },
-                    onError: (err) => toast.error(friendlyError(err, "Failed to ban")),
-                  },
-                );
-              }}
-            >
-              <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
-              Ban member
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dismiss with optional note — notifies the reporter when a note is left */}
-      <Dialog open={!!dismissTarget} onOpenChange={(open) => !open && setDismissTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Dismiss report</DialogTitle>
-          </DialogHeader>
-          <p className="text-xs text-muted-foreground">
-            {dismissTarget?.post?.title || "This post"} — leave a note for the reporter and they'll
-            be notified with it. Leave it empty to dismiss silently.
-          </p>
-          <div className="pt-2">
-            <Label htmlFor="dismiss-note">Note to the reporter (optional)</Label>
-            <Textarea
-              id="dismiss-note"
-              value={dismissNote}
-              onChange={(e) => setDismissNote(e.target.value.slice(0, 500))}
-              rows={3}
-              placeholder="e.g. Thanks for flagging this — we reviewed it and it doesn't break the rules."
-              className="mt-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDismissTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={updateReport.isPending}
-              onClick={() => {
-                if (!dismissTarget) return;
-                updateReport.mutate(
-                  { reportId: dismissTarget.id, status: "dismissed", note: dismissNote },
-                  {
-                    onSuccess: () => {
-                      toast.success(
-                        dismissNote.trim()
-                          ? "Report dismissed — the reporter was notified"
-                          : "Report dismissed",
-                      );
-                      setDismissTarget(null);
-                      setDismissNote("");
-                    },
-                    onError: () => toast.error("Failed to dismiss"),
-                  },
-                );
-              }}
-            >
-              <XCircle className="mr-1.5 h-3.5 w-3.5" />
-              Dismiss report
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Banned members */}
       <section className="mt-10 rounded-lg border border-border bg-card p-5">

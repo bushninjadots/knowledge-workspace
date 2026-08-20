@@ -9,6 +9,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { computeMatchScore, type SkillMeta, type AvailabilityStatus } from "@/lib/skill-match";
 import { AvailabilityBadge } from "./availability-badge";
 import { EmptyState } from "./empty-state";
+import { ProfileLink } from "./profile-link";
 
 type CandidateSkills = {
   profile_id: string;
@@ -157,10 +158,9 @@ export const SuggestedCreators = memo(function SuggestedCreators({
       {data.map((c) => {
         const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
         return (
-          <Link
+          <ProfileLink
             key={c.id}
-            to="/u/$handle"
-            params={{ handle: c.handle ?? "" }}
+            handle={c.handle}
             className="card-border rounded-xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
           >
             <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ export const SuggestedCreators = memo(function SuggestedCreators({
                 ))}
               </div>
             )}
-          </Link>
+          </ProfileLink>
         );
       })}
     </div>

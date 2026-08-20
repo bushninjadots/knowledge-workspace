@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useCallback, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
 import { OverviewCards, NextSessionCountdown } from "./overview-cards";
@@ -23,9 +23,23 @@ import {
 
 export function SessionsLayout() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<SessionsTab>("upcoming");
+  // The active tab is URL-driven (?tab=requests) so the dashboard's "Review
+  // requests" CTA and the pending-count badge can deep-link to the queue.
+  const { tab } = useSearch({ from: "/_authenticated/sessions" });
+  const activeTab: SessionsTab = tab ?? "upcoming";
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
+
+  const setActiveTab = useCallback(
+    (next: SessionsTab) => {
+      navigate({
+        to: "/sessions",
+        search: next === "upcoming" ? {} : { tab: next },
+        replace: true,
+      });
+    },
+    [navigate],
+  );
 
   const filterSessions = useCallback(
     (sessions: SessionWithParticipants[] | undefined) => {
@@ -82,7 +96,7 @@ export function SessionsLayout() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Sessions</h1>
+              <h1 className="font-display text-2xl font-semibold tracking-tight">Sessions</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Manage your collaborations, mentoring, and meetings.
               </p>

@@ -6,7 +6,7 @@ const tabs = [
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "history", label: "History", icon: History },
   { id: "requests", label: "Requests", icon: Bell },
-  { id: "availability", label: "Availability", icon: Clock },
+  { id: "availability", label: "Weekly schedule", icon: Clock },
 ] as const;
 
 export type SessionsTab = (typeof tabs)[number]["id"];

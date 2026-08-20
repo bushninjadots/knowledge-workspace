@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Users as UsersIcon, Briefcase, HandHeart, MessageSquare } from "lucide-react";
+import { ProfileLink } from "@/components/tethyr/profile-link";
 import type { Contributor } from "./project-main-content";
 import type { OpenRoleRow } from "@/hooks/use-projects";
 import { OpenRolesSection } from "./project-open-roles";
@@ -84,10 +85,10 @@ export function ProjectPeopleTab({
                 className="rounded-xl border border-border/40 bg-background/40 p-3 transition hover:border-border/60"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <Link
-                    to="/u/$handle"
-                    params={{ handle: c.profile?.handle ?? "" }}
+                  <ProfileLink
+                    handle={c.profile?.handle}
                     className="flex min-w-0 items-center gap-3 transition hover:opacity-80"
+                    title={c.profile?.display_name || c.profile?.handle || undefined}
                   >
                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gradient-brand">
                       {avatarSigned[c.profile_id] ? (
@@ -112,7 +113,7 @@ export function ProjectPeopleTab({
                       </p>
                       <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role]}</p>
                     </div>
-                  </Link>
+                  </ProfileLink>
                   {(() => {
                     const connectionId = connectionByProfile.get(c.profile_id);
                     if (!connectionId || c.profile_id === me?.userId) return null;

@@ -1,10 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Compass, Home, MessageSquare, MoreHorizontal, UserRound } from "lucide-react";
 
+// Labels match the app sidebar (Dashboard / Your Studio) so the same
+// destination isn't called two different names on desktop vs mobile.
 const ITEMS = [
-  { to: "/dashboard", label: "Home", icon: Home },
+  { to: "/dashboard", label: "Dashboard", icon: Home },
   { to: "/explore", label: "Explore", icon: Compass },
-  { to: "/profile", label: "Studio", icon: UserRound },
+  { to: "/profile", label: "Your Studio", icon: UserRound },
   { to: "/messages", label: "Messages", icon: MessageSquare },
 ] as const;
 

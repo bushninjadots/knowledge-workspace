@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import {
   Share2,
   UserPlus,
@@ -21,6 +20,7 @@ import {
   PROJECT_LINK_KEYS,
 } from "@/components/tethyr/profile-sections";
 import { safeHref } from "@/lib/validators";
+import { ProfileLink } from "@/components/tethyr/profile-link";
 import type { Contributor } from "./project-main-content";
 
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -182,10 +182,10 @@ export function ProjectHeader({
             {/* Owner + collaborators */}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
               {creator?.profile && (
-                <Link
-                  to={creator.profile.handle ? "/u/$handle" : "/"}
-                  params={{ handle: creator.profile.handle ?? "" }}
+                <ProfileLink
+                  handle={creator.profile.handle}
                   className="inline-flex items-center gap-2 text-muted-foreground transition hover:text-foreground"
+                  title={creator.profile.display_name || creator.profile.handle || undefined}
                 >
                   <Avatar
                     name={creator.profile.display_name ?? creator.profile.handle}
@@ -195,7 +195,7 @@ export function ProjectHeader({
                   <span className="font-medium">
                     {creator.profile.display_name || creator.profile.handle}
                   </span>
-                </Link>
+                </ProfileLink>
               )}
               {others.length > 0 && (
                 <>

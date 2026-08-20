@@ -35,6 +35,7 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`UI_UX_FULL_AUDIT.md`](./UI_UX_FULL_AUDIT.md) — detailed dated UI/UX audit
 - [`UX_AUDIT.md`](./UX_AUDIT.md) — route-level UX findings and priorities
 - [`PROJECT_AUDIT.md`](./PROJECT_AUDIT.md) — broader project audit
+- [`UX_FULL_REVIEW_2026-08-20.md`](./UX_FULL_REVIEW_2026-08-20.md) — full user-flow review (2026-08-20); findings with same-day resolution status
 - [`UI_UX_AUDIT_AND_FIXES.md`](./UI_UX_AUDIT_AND_FIXES.md) — remediation history
 - [`superpowers/specs/`](./superpowers/specs/) — feature design specifications
 - [`superpowers/plans/`](./superpowers/plans/) — feature execution plans

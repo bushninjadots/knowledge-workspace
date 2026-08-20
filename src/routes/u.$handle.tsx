@@ -1,7 +1,7 @@
 // Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { createFileRoute, notFound, useNavigate, useParams, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
@@ -24,6 +24,7 @@ import {
   type SkillVerificationLevel,
 } from "@/components/tethyr/profile-sections";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useConnections } from "@/hooks/use-connections";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
 import { usePublicStudioLayout } from "@/hooks/use-public-studio-layout";
 import { toast } from "sonner";
@@ -250,7 +251,23 @@ function PublicProfileRoute() {
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
+  const { data: connections = [] } = useConnections();
   const endorse = useEndorseSkill();
+
+  // Only people I'm already connected with can start a conversation — Messages
+  // lists accepted connections, so a bare "Start a conversation" link would be
+  // a dead end for everyone else (they'd land on an empty thread list).
+  const connectionId = useMemo(() => {
+    if (!meId || !data?.profile?.id) return null;
+    return (
+      connections.find(
+        (c) =>
+          c.status === "accepted" &&
+          (c.requester_id === meId || c.addressee_id === meId) &&
+          (c.requester_id === data.profile.id || c.addressee_id === data.profile.id),
+      )?.id ?? null
+    );
+  }, [connections, meId, data?.profile?.id]);
   const publicLayout = usePublicStudioLayout(data?.profile.id ?? null);
 
   // Live updates: when the member changes their backdrop, banner, or name,
@@ -416,9 +433,10 @@ function PublicProfileRoute() {
                 )}
               </div>
 
-              {meId && meId !== profile.id && (
+              {meId && meId !== profile.id && connectionId && (
                 <Link
                   to="/messages"
+                  search={{ c: connectionId }}
                   className="transition-lift mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                 >
                   <MessageCircle className="h-4 w-4" />
@@ -494,7 +512,7 @@ function Shell({
         <button
           type="button"
           onClick={() =>
-            window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
           }
           className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
           aria-label="Go back"

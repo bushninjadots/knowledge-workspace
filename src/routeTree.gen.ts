@@ -24,6 +24,7 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
 import { Route as TeamsSlugRouteImport } from './routes/teams.$slug'
@@ -110,6 +111,11 @@ const AuthenticatedSessionsRoute = AuthenticatedSessionsRouteImport.update({
   path: '/sessions',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/projects/$id',
   path: '/projects/$id',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/settings': typeof AuthenticatedSettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/settings': typeof AuthenticatedSettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/sessions'
+    | '/settings'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/sessions'
+    | '/settings'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/sessions'
+    | '/_authenticated/settings'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -434,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSessionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/projects/$id': {
       id: '/projects/$id'
       path: '/projects/$id'
@@ -549,6 +568,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSpacesSlugReportsRoute: typeof AuthenticatedSpacesSlugReportsRoute
   AuthenticatedSpacesSlugSettingsRoute: typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -564,6 +584,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSpacesSlugReportsRoute: AuthenticatedSpacesSlugReportsRoute,
   AuthenticatedSpacesSlugSettingsRoute: AuthenticatedSpacesSlugSettingsRoute,
 }

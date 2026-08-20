@@ -4,10 +4,7 @@ import {
   Camera,
   MapPin,
   Clock,
-  BookOpen,
   Sparkles,
-  Users,
-  MessageCircle,
   ExternalLink,
   Globe,
   Github,
@@ -18,9 +15,6 @@ import {
   Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FollowButton } from "@/components/tethyr/follow-button";
-import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
-import { useSessionRequests } from "@/hooks/use-sessions";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
@@ -102,11 +96,6 @@ export function ProfileLayout({
   const [bgOpen, setBgOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const palette = useUserPalette(bannerSigned);
-
-  const { data: requestsData } = useSessionRequests();
-  const hasPendingRequest = (requestsData ?? []).some(
-    (r) => r.to_user_id === userId && r.status === "pending",
-  );
 
   const accentStyle = {
     ...paletteToStyle(palette),
@@ -251,29 +240,6 @@ export function ProfileLayout({
                 )}
               </div>
 
-              {/* ACTION BUTTONS (public profile) */}
-              {!isOwnProfile && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <FollowButton targetUserId={userId} />
-                  <RequestSessionDialog
-                    toUserId={userId}
-                    toUserName={profile?.display_name ?? "User"}
-                    hasPendingRequest={hasPendingRequest}
-                  />
-                  <Button size="sm" className="rounded-full">
-                    <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                    Message
-                  </Button>
-                  <Button size="sm" variant="outline" className="rounded-full">
-                    <Users className="mr-1.5 h-3.5 w-3.5" />
-                    Connect
-                  </Button>
-                  <Button size="sm" variant="outline" className="rounded-full">
-                    <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-                    Collaborate
-                  </Button>
-                </div>
-              )}
             </div>
 
             {/* COMPLETENESS (own) or REPUTATION (public) */}

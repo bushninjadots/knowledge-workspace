@@ -177,14 +177,44 @@ export function GlobalSearch({
     enabled: enabled && !!me?.profile?.id,
     queryFn: async (): Promise<SessionHit[]> => {
       if (!me?.profile?.id) return [];
-      const { data, error } = await supabase
-        .from("sessions")
-        .select("id, title, description, session_type")
-        .eq("organizer_id", me.profile.id)
-        .or(`title.ilike.${like},description.ilike.${like}`)
-        .limit(4);
-      if (error) throw error;
-      return (data ?? []) as SessionHit[];
+      // Sessions I organize AND sessions I'm invited to/participating in — a
+      // session is "mine" if I'm involved, not just if I own it.
+      const [organized, participated] = await Promise.all([
+        supabase
+          .from("sessions")
+          .select("id, title, description, session_type")
+          .eq("organizer_id", me.profile.id)
+          .or(`title.ilike.${like},description.ilike.${like}`)
+          .limit(4),
+        supabase
+          .from("session_participants")
+          .select("sessions(id, title, description, session_type)")
+          .eq("profile_id", me.profile.id)
+          .limit(4),
+      ]);
+      if (organized.error) throw organized.error;
+      if (participated.error) throw participated.error;
+      const own = (organized.data ?? []) as SessionHit[];
+      const joined = ((participated.data ?? []) as { sessions: SessionHit | null }[])
+        .map((r) => r.sessions)
+        .filter((s): s is SessionHit => !!s);
+      // De-dupe by id — an organized session may also appear as a participant row.
+      const seen = new Set<string>();
+      const merged = [...own, ...joined].filter((s) => {
+        if (seen.has(s.id)) return false;
+        seen.add(s.id);
+        return true;
+      });
+      // Apply the search filter after merge (participant rows carry full rows,
+      // so filtering on the merged list is equivalent to the SQL .or() above).
+      const needle = debounced.toLowerCase();
+      return merged
+        .filter(
+          (s) =>
+            s.title.toLowerCase().includes(needle) ||
+            (s.description ?? "").toLowerCase().includes(needle),
+        )
+        .slice(0, 4);
     },
   });
 
@@ -516,6 +546,7 @@ export function GlobalSearch({
             onFocus={() => q && setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="Search the network…"
+            title="Search (press /)"
             {...comboboxProps}
             className="h-9 rounded-xl border-border/40 bg-background/40 pl-9 text-xs placeholder:text-xs"
           />

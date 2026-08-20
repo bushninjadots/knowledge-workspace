@@ -1321,6 +1321,7 @@ export type Database = {
           id: string
           languages: string[]
           learning_goals: string | null
+          notification_preferences: Json
           portfolio_links: Json
           public_background: Json | null
           public_studio_layout: Json | null
@@ -1355,6 +1356,7 @@ export type Database = {
           id: string
           languages?: string[]
           learning_goals?: string | null
+          notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
           public_studio_layout?: Json | null
@@ -1389,6 +1391,7 @@ export type Database = {
           id?: string
           languages?: string[]
           learning_goals?: string | null
+          notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
           public_studio_layout?: Json | null

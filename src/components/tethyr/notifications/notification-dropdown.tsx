@@ -15,9 +15,11 @@ import {
   useUnreadNotificationCount,
   useNotificationRealtime,
 } from "@/hooks/use-notifications";
+import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { toast } from "sonner";
 import type { Notification } from "@/hooks/use-notifications";
 import { getNotificationDestination } from "@/lib/notification-destinations";
+import { TYPE_CATEGORY } from "@/lib/notification-categories";
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -32,7 +34,10 @@ function timeAgo(dateStr: string): string {
 export function NotificationDropdown() {
   useNotificationRealtime();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
-  const { data: notifications = [], isLoading } = useNotifications({ unreadOnly: true }, 10);
+  const { data: allNotifications = [], isLoading } = useNotifications({ unreadOnly: true }, 10);
+  const { mutedCategories } = useNotificationPreferences();
+  const muted = new Set(mutedCategories);
+  const notifications = allNotifications.filter((n) => !muted.has(TYPE_CATEGORY[n.type]));
   const markAllAsRead = useMarkAllAsRead();
   const markAsRead = useMarkAsRead();
   const navigate = useNavigate();

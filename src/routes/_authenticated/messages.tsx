@@ -103,6 +103,8 @@ function MessagesPage() {
                 icon={<span className="text-xl">&#128075;</span>}
                 title="The table is empty"
                 description="Once you're connected with someone, this is where focused conversations happen. Pull up a chair."
+                actionLabel="Find people to connect with"
+                actionHref="/explore"
               />
             </div>
           ) : (
@@ -138,6 +140,8 @@ function MessagesPage() {
               variant="messages"
               title="Pick a seat at the table"
               description="Every great tether starts with a conversation. Choose someone from the seating chart to begin."
+              actionLabel="Find people to connect with"
+              actionHref="/explore"
             />
           </div>
         )}

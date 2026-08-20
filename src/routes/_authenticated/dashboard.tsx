@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useId, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   ArrowRight,
   Sparkles,
@@ -28,11 +28,6 @@ import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboar
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { DASHBOARD_LAYOUT_PRESETS, DASHBOARD_MODULES } from "@/lib/workspace-layouts";
 
-import {
-  AvailabilitySelector,
-  useUpdateAvailability,
-} from "@/components/tethyr/availability-badge";
-import type { AvailabilityStatus } from "@/lib/skill-match";
 import { checkAndAwardAchievements } from "@/lib/reputation";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
@@ -93,7 +88,6 @@ function DashboardContent({
 }: {
   data: NonNullable<ReturnType<typeof useCurrentUser>["data"]>;
 }) {
-  const updateAvail = useUpdateAvailability();
   const { data: sessionRequests = [] } = useSessionRequests();
   const { data: connections = [] } = useConnections();
   const { data: unreadData } = useUnreadCounts();
@@ -199,7 +193,7 @@ function DashboardContent({
               title="Your projects"
               action={
                 <Link
-                  to="/explore"
+                  to="/profile"
                   className="text-[11px] font-medium text-primary hover:underline"
                 >
                   View all
@@ -393,10 +387,6 @@ function DashboardContent({
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       Welcome back
                     </p>
-                    <AvailabilitySelector
-                      current={data?.profile?.availability as AvailabilityStatus}
-                      onSave={(s) => updateAvail.mutate(s)}
-                    />
                   </div>
                   <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
                     Hey {firstName},{" "}
@@ -407,6 +397,7 @@ function DashboardContent({
                   {pendingSessionCount > 0 ? (
                     <Link
                       to="/sessions"
+                      search={{ tab: "requests" }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
                     >
                       Review requests <ArrowRight className="h-3 w-3" />
@@ -428,15 +419,6 @@ function DashboardContent({
                     </Link>
                   ) : (
                     <CreateProjectButton size="sm" variant="default" className="rounded-full" />
-                  )}
-                  {pct < 100 && (
-                    <Link
-                      to="/profile"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-surface-elevated/80 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:text-foreground"
-                    >
-                      <CompletenessMini percent={pct} size={18} />
-                      {pct}% complete
-                    </Link>
                   )}
                   {data?.profile?.reputation_score != null && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
@@ -504,9 +486,10 @@ function DashboardContent({
                   pendingSessionCount > 0
                     ? "/sessions"
                     : pendingConnectionCount > 0
-                      ? "/profile"
+                      ? "/connections"
                       : "/messages"
                 }
+                search={pendingSessionCount > 0 ? { tab: "requests" } : undefined}
                 highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
               >
                 <div className="mt-3 space-y-1.5">
@@ -646,7 +629,6 @@ function DashboardContent({
       opportunitiesLoading,
       applicationsLoading,
       challengesLoading,
-      updateAvail,
     ],
   );
 
@@ -798,6 +780,7 @@ function TodayCard({
   accent,
   title,
   href,
+  search,
   action,
   children,
   highlight,
@@ -806,6 +789,7 @@ function TodayCard({
   accent: string;
   title: string;
   href?: string;
+  search?: Record<string, string>;
   action?: React.ReactNode;
   children: React.ReactNode;
   highlight?: boolean;
@@ -835,7 +819,7 @@ function TodayCard({
   );
 
   return href ? (
-    <Link to={href} className={className}>
+    <Link to={href} search={search} className={className}>
       {content}
     </Link>
   ) : (
@@ -874,38 +858,5 @@ function SectionCard({
       </div>
       {children}
     </div>
-  );
-}
-
-/* ── Profile completeness mini ring ── */
-
-function CompletenessMini({ percent, size = 18 }: { percent: number; size?: number }) {
-  const gradientId = useId();
-  const r = (size - 3) / 2;
-  const c = 2 * Math.PI * r;
-  const offset = c - (percent / 100) * c;
-  const center = size / 2;
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="h-[18px] w-[18px] shrink-0 -rotate-90">
-      <circle cx={center} cy={center} r={r} stroke="var(--border)" strokeWidth="2" fill="none" />
-      <circle
-        cx={center}
-        cy={center}
-        r={r}
-        stroke={`url(#${gradientId})`}
-        strokeWidth="2"
-        fill="none"
-        strokeDasharray={c}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-      />
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--user-accent, var(--trust))" />
-          <stop offset="1" stopColor="var(--ai)" />
-        </linearGradient>
-      </defs>
-    </svg>
   );
 }
