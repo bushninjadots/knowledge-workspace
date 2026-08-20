@@ -342,14 +342,14 @@ export function ProjectReadmeTab({
                 <p
                   className={cn(
                     "text-xs",
-                    stats.warning ? "text-amber-500" : "text-muted-foreground",
+                    stats.warning ? "text-caution" : "text-muted-foreground",
                   )}
                 >
                   {stats.words} words · {stats.chars.toLocaleString()} chars
                   {stats.warning && " · README is getting long — consider trimming"}
                 </p>
                 {stats.warning && (
-                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-500">
+                  <span className="rounded-full border border-caution/30 bg-caution/10 px-2 py-0.5 text-[10px] font-medium text-caution">
                     Long
                   </span>
                 )}

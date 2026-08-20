@@ -88,19 +88,19 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
     return (
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {" "}
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6">
+        <div className="rounded-xl border border-caution/30 bg-caution/5 p-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-caution" />
             <div>
               {" "}
-              <h2 className="font-display text-lg font-semibold text-amber-600">
+              <h2 className="font-display text-lg font-semibold text-caution-foreground">
                 Database tables not found
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 The library tables haven't been created in your Supabase project yet. Run the
                 migration SQL in your Supabase Dashboard → SQL Editor.
               </p>
-              <div className="mt-3 rounded-lg bg-background/60 p-3 font-mono text-xs text-amber-600/80">
+              <div className="mt-3 rounded-lg bg-background/60 p-3 font-mono text-xs text-caution-foreground/80">
                 {dbError.message}
               </div>
               <div className="mt-4 space-y-1 text-xs text-muted-foreground">

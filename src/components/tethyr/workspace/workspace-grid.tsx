@@ -698,7 +698,7 @@ function ModuleShell({
 }) {
   if (!customizing) {
     return (
-      <div className="content-safe h-full min-w-0 overflow-x-hidden overflow-y-auto scrollbar-none">
+      <div className="content-safe min-w-0 overflow-x-hidden">
         {children}
       </div>
     );
@@ -795,7 +795,7 @@ function ModuleShell({
           )}
         </div>
       </div>
-      <div className="content-safe min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-none">
+      <div className="content-safe min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
         {children}
       </div>
     </div>

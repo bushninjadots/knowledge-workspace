@@ -14,7 +14,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="content-safe min-w-0 max-w-full overflow-hidden rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="content-safe min-w-0 max-w-full rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         <div className="flex items-center gap-2">
