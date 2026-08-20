@@ -1,6 +1,13 @@
 import { useState, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Video, MapPin, Plus } from "lucide-react";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
+
+type AvailabilitySlot = {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  status: string;
+};
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 import { getUserTimezone, formatTimezone } from "@/lib/timezones";
 
@@ -141,14 +148,20 @@ function CalendarEventCard({
 function DayView({
   date,
   sessions,
+  availability,
   onSessionClick,
 }: {
   date: Date;
   sessions: SessionWithParticipants[];
+  availability?: AvailabilitySlot[];
   onSessionClick: (s: SessionWithParticipants) => void;
 }) {
   const daySessions = sessions.filter((s) => s.starts_at && isSameDay(new Date(s.starts_at), date));
   const totalHeight = HOURS.length * DAY_ROW_PX;
+  const dayOfWeek = date.getDay();
+  const daySlots = availability?.filter(
+    (slot) => slot.day_of_week === dayOfWeek && slot.status === "available",
+  );
 
   return (
     <div className="relative">
@@ -161,6 +174,24 @@ function DayView({
           <div className="min-h-[3rem] flex-1 border-l border-border/20" />
         </div>
       ))}
+
+      {/* Availability overlay — behind sessions */}
+      <div className="absolute top-0 left-16 right-0" style={{ height: `${totalHeight}px` }}>
+        {daySlots?.map((slot, i) => {
+          const [startH, startM] = slot.start_time.split(":").map(Number);
+          const [endH, endM] = slot.end_time.split(":").map(Number);
+          const topPx = ((startH - GRID_START_HOUR) * 60 + startM) * (DAY_ROW_PX / 60);
+          const heightPx = ((endH - startH) * 60 + (endM - startM)) * (DAY_ROW_PX / 60);
+
+          return (
+            <div
+              key={`avail-${i}`}
+              className="absolute left-0 right-0 rounded bg-muted/30"
+              style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+            />
+          );
+        })}
+      </div>
 
       {/* Session overlay — absolute positioned by time */}
       <div className="absolute top-0 left-16 right-0" style={{ height: `${totalHeight}px` }}>
@@ -192,10 +223,12 @@ function DayView({
 function WeekView({
   date,
   sessions,
+  availability,
   onSessionClick,
 }: {
   date: Date;
   sessions: SessionWithParticipants[];
+  availability?: AvailabilitySlot[];
   onSessionClick: (s: SessionWithParticipants) => void;
 }) {
   const weekDates = useMemo(() => getWeekDates(date), [date]);
@@ -259,6 +292,31 @@ function WeekView({
                   }`}
                 />
               ))}
+
+              {/* Availability overlay — behind sessions */}
+              {(() => {
+                const daySlots = availability?.filter(
+                  (slot) => slot.day_of_week === d.getDay() && slot.status === "available",
+                );
+                return daySlots && daySlots.length > 0 ? (
+                  <div className="absolute top-0 left-0 right-0" style={{ height: `${totalHeight}px` }}>
+                    {daySlots.map((slot, i) => {
+                      const [startH, startM] = slot.start_time.split(":").map(Number);
+                      const [endH, endM] = slot.end_time.split(":").map(Number);
+                      const topPx = ((startH - GRID_START_HOUR) * 60 + startM) * (WEEK_ROW_PX / 60);
+                      const heightPx = ((endH - startH) * 60 + (endM - startM)) * (WEEK_ROW_PX / 60);
+
+                      return (
+                        <div
+                          key={`avail-${di}-${i}`}
+                          className="absolute left-0 right-0 rounded bg-muted/30"
+                          style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : null;
+              })()}
 
               {/* Session overlay */}
               <div className="absolute top-0 left-0 right-0" style={{ height: `${totalHeight}px` }}>
@@ -460,11 +518,13 @@ function AgendaView({
 
 export function SessionsCalendar({
   sessions,
+  availability,
   timezone: tzProp,
   onSessionClick,
   onScheduleClick,
 }: {
   sessions: SessionWithParticipants[];
+  availability?: AvailabilitySlot[];
   timezone?: string;
   onSessionClick: (s: SessionWithParticipants) => void;
   onScheduleClick?: () => void;
@@ -571,10 +631,10 @@ export function SessionsCalendar({
       {/* Calendar body */}
       <div className="rounded-xl border card-border bg-surface/20 p-4">
         {view === "day" && (
-          <DayView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />
+          <DayView date={currentDate} sessions={sessions} availability={availability} onSessionClick={onSessionClick} />
         )}
         {view === "week" && (
-          <WeekView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />
+          <WeekView date={currentDate} sessions={sessions} availability={availability} onSessionClick={onSessionClick} />
         )}
         {view === "month" && (
           <MonthView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />
