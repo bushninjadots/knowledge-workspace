@@ -21,6 +21,9 @@ import {
   HeartHandshake,
   MessageSquare,
   BadgeCheck,
+  Calendar,
+  Presentation,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -49,6 +52,9 @@ const ICONS: Record<string, typeof Award> = {
   HeartHandshake,
   MessageSquare,
   BadgeCheck,
+  Calendar,
+  Presentation,
+  Flame,
   Award,
 };
 
