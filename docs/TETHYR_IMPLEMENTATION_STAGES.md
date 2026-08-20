@@ -57,7 +57,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [x] Consolidate overlapping Stats/Reputation surfaces without losing useful evidence. (2026-08-20: audit found reputation is already consolidated — compact badges plus one full card; the separate "week" stat module was already retired.)
 - [x] Share the existing workspace primitives between private and public Studio layout behavior where the interaction contract is equivalent.
 - [x] Keep public customization optional, reversible, and quiet; the identity header remains fixed.
-- [ ] Decide whether the dashboard priority flow should expose controlled user focus preferences. (Open — needs a product decision; presets already cover the mechanical part.)
+- [x] Decide whether the dashboard priority flow should expose controlled user focus preferences. (2026-08-20: decided — the dashboard already exposes focus through the existing preset + customization system; instead of adding a duplicate control, the quick-arrangement picker is now labeled **"Focus"** on the dashboard (with helper copy: "Pick what your dashboard leads with"), so the preset buttons read as a focus choice. Profile keeps "Creative arrangement" since it is about presentation. The presets themselves (Build center / Network center) already move the right modules to the top.)
 
 ## Stage 5 — Connect supporting systems to work
 
@@ -74,7 +74,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 - [x] Replace high-risk Supabase `as any` boundaries with typed query/mutation adapters. (2026-08-18: all hand-written `as any` sites removed; the only remaining ones are auto-generated in `routeTree.gen.ts`.)
 - [x] Add tests for permissions, loading/error/empty states, and notification destinations. (2026-08-20: notification-destination tests cover every outcome; settings tests cover loading/error paths + delete-account gating; mobile-primary-nav tests cover labels + `aria-current`; RLS suite covers permissions.)
-- [x] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation. (2026-08-20: the shared `SegmentedControl` (ARIA tabs: roving tabindex + arrow keys) and `ProfileLink` (link vs. non-interactive fallback) have keyboard/focus tests; `MobilePrimaryNav` is covered for labels + `aria-current`. WorkspaceGrid, ProjectShelf, dialogs, and drawers still lack dedicated focus tests.)
+- [x] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation. (2026-08-20: fully closed — `SegmentedControl` (ARIA tabs), `ProfileLink`, `MobilePrimaryNav`, `WorkspaceGrid` (Escape exits customize, arrow-key + button module moves), `ProjectShelf` (arrow-key browsing, prev/next + thumbnail navigation, overlay auto-focus + Escape close), the Radix `Dialog` (focus-in, Escape close, focus return to trigger), and the vaul `Drawer` (open, Escape close) all have dedicated keyboard/focus tests.)
 - [x] Audit meaningful image alt text and dynamic-accent contrast. (2026-08-20: audit — all `<img>`s are decorative with `alt=""` plus adjacent text or use `SignedImage` with editor-provided alt; accent colors always pair with designed foreground/subtle tokens.)
 - [x] Measure query/list performance, then add pagination or lazy loading where evidence requires it. (2026-08-20: audit of list queries found one genuinely unbounded query — the platform-wide challenges list; capped with `.limit(100)`. All other list hooks bound with limit/range or `maybeSingle`.)
 
@@ -130,6 +130,12 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - **Stage 6**: alt-text + dynamic-accent contrast audit clean; list-query audit found one unbounded query (challenges) → capped with `.limit(100)`; added `MobilePrimaryNav` tests (labels + `aria-current`) and `SettingsPage` tests (sections render, invalid-email validation, short-password validation, delete-account email gating, delete + sign-out flow). WorkspaceGrid/ProjectShelf/dialog/drawer focus tests remain as follow-up work.
 - **Stage 7**: by design, deferred until there's usage evidence — no action taken.
 - **Validation**: typecheck, 229 Vitest tests, production build all passed.
+
+#### 2026-08-20 (fifth pass) — focus decision + remaining keyboard/focus coverage
+
+- **Stage 4 decision**: the dashboard's focus preference is the existing preset + customization system, now labeled explicitly — the quick-arrangement picker reads **"Focus — Pick what your dashboard leads with"** on the dashboard (profile keeps "Creative arrangement"). No duplicate control added.
+- **Stage 6 keyboard/focus closed out**: new tests for `WorkspaceGrid` (Escape exits customize mode; arrow-key handle and up/down buttons move modules), `ProjectShelf` (arrow-key browsing with clamping, prev/next + thumbnail navigation, overlay auto-focuses its close button, Escape closes, pointer-capture stub for jsdom), the Radix `Dialog` primitive (focus moves into the dialog, Escape closes, focus returns to the trigger), and the vaul `Drawer` primitive (opens from trigger, Escape closes; matchMedia stubbed for jsdom).
+- **Validation**: typecheck, 244 Vitest tests, production build all passed.
 
 ### 2026-08-19 — Public Studio layout
 

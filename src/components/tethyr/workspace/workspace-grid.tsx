@@ -78,6 +78,10 @@ type Props = {
   workspaceLabel?: string;
   /** Show direct links to the visible sections above the workspace. */
   showSectionNav?: boolean;
+  /** Label for the quick-arrangement picker. Dashboard uses “Focus” so the
+   *  preset buttons read as a focus choice; profile keeps “Creative
+   *  arrangement” since it is about presentation. */
+  presetPickerLabel?: string;
 };
 
 /**
@@ -103,6 +107,7 @@ export function WorkspaceGrid({
   layoutPresets = [],
   workspaceLabel = "workspace",
   showSectionNav = false,
+  presetPickerLabel = "Creative arrangement",
 }: Props) {
   const isMobile = useIsMobile();
   const privateStorage = useLayoutPreferences(page, userId, !layoutStorage);
@@ -503,7 +508,16 @@ export function WorkspaceGrid({
                 </Button>
               </div>
               {showPresetPicker && layoutPresets.length > 0 && (
-                <PresetPicker layoutPresets={layoutPresets} onSelect={applyPreset} />
+                <PresetPicker
+                  layoutPresets={layoutPresets}
+                  onSelect={applyPreset}
+                  label={presetPickerLabel}
+                  helper={
+                    presetPickerLabel === "Focus"
+                      ? "Pick what your dashboard leads with — you can still rearrange anytime."
+                      : undefined
+                  }
+                />
               )}
             </div>
           )}
@@ -520,6 +534,12 @@ export function WorkspaceGrid({
               layoutPresets={layoutPresets}
               onSelect={applyPreset}
               onArrange={() => setCustomizing(true)}
+              label={presetPickerLabel}
+              helper={
+                presetPickerLabel === "Focus"
+                  ? "Pick what your dashboard leads with — you can still rearrange anytime."
+                  : undefined
+              }
             />
           </div>
         )}
@@ -614,16 +634,21 @@ function PresetPicker({
   layoutPresets,
   onSelect,
   onArrange,
+  label = "Creative arrangement",
+  helper,
 }: {
   layoutPresets: WorkspaceLayoutPreset[];
   onSelect: (preset: WorkspaceLayoutPreset) => void;
   onArrange?: () => void;
+  label?: string;
+  helper?: string;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-label="Creative arrangements">
+    <div className="flex flex-wrap items-center gap-2" aria-label={label}>
       <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        Creative arrangement
+        {label}
       </span>
+      {helper && <span className="text-xs text-muted-foreground">{helper}</span>}
       {layoutPresets.map((preset) => (
         <button
           key={preset.id}

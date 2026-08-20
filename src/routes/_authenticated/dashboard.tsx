@@ -664,6 +664,7 @@ function DashboardContent({
             canCustomize={true}
             showModuleTitles={false}
             showPresetPicker
+            presetPickerLabel="Focus"
             renderModule={renderModule}
             migrateRetiredModules
           />
