@@ -132,7 +132,11 @@ export function SessionsLayout() {
           )}
 
           {activeTab === "calendar" && (
-            <SessionsCalendar sessions={upcomingSessions} availability={availability} onSessionClick={goToSession} />
+            <SessionsCalendar
+              sessions={upcomingSessions}
+              availability={availability}
+              onSessionClick={goToSession}
+            />
           )}
 
           {activeTab === "history" && (

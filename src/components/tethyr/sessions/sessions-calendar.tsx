@@ -268,7 +268,10 @@ function WeekView({
         {/* Hour labels column */}
         <div>
           {HOURS.map((hour) => (
-            <div key={hour} className="border-b border-border/30 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
+            <div
+              key={hour}
+              className="border-b border-border/30 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground"
+            >
               {formatHour(hour)}
             </div>
           ))}
@@ -299,12 +302,16 @@ function WeekView({
                   (slot) => slot.day_of_week === d.getDay() && slot.status === "available",
                 );
                 return daySlots && daySlots.length > 0 ? (
-                  <div className="absolute top-0 left-0 right-0" style={{ height: `${totalHeight}px` }}>
+                  <div
+                    className="absolute top-0 left-0 right-0"
+                    style={{ height: `${totalHeight}px` }}
+                  >
                     {daySlots.map((slot, i) => {
                       const [startH, startM] = slot.start_time.split(":").map(Number);
                       const [endH, endM] = slot.end_time.split(":").map(Number);
                       const topPx = ((startH - GRID_START_HOUR) * 60 + startM) * (WEEK_ROW_PX / 60);
-                      const heightPx = ((endH - startH) * 60 + (endM - startM)) * (WEEK_ROW_PX / 60);
+                      const heightPx =
+                        ((endH - startH) * 60 + (endM - startM)) * (WEEK_ROW_PX / 60);
 
                       return (
                         <div
@@ -325,7 +332,8 @@ function WeekView({
                   const durationMin = getSessionDurationMinutes(session);
                   const startHour = startsAt.getHours();
                   const startMinute = startsAt.getMinutes();
-                  const topPx = ((startHour - GRID_START_HOUR) * 60 + startMinute) * (WEEK_ROW_PX / 60);
+                  const topPx =
+                    ((startHour - GRID_START_HOUR) * 60 + startMinute) * (WEEK_ROW_PX / 60);
                   const heightPx = Math.max(durationMin * (WEEK_ROW_PX / 60), WEEK_ROW_PX / 2);
 
                   return (
@@ -573,9 +581,7 @@ export function SessionsCalendar({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-bold text-foreground">{titleText}</h2>
-          <span className="text-xs text-muted-foreground">
-            {formatTimezone(timezone)}
-          </span>
+          <span className="text-xs text-muted-foreground">{formatTimezone(timezone)}</span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigate(-1)}
@@ -631,10 +637,20 @@ export function SessionsCalendar({
       {/* Calendar body */}
       <div className="rounded-xl border card-border bg-surface/20 p-4">
         {view === "day" && (
-          <DayView date={currentDate} sessions={sessions} availability={availability} onSessionClick={onSessionClick} />
+          <DayView
+            date={currentDate}
+            sessions={sessions}
+            availability={availability}
+            onSessionClick={onSessionClick}
+          />
         )}
         {view === "week" && (
-          <WeekView date={currentDate} sessions={sessions} availability={availability} onSessionClick={onSessionClick} />
+          <WeekView
+            date={currentDate}
+            sessions={sessions}
+            availability={availability}
+            onSessionClick={onSessionClick}
+          />
         )}
         {view === "month" && (
           <MonthView date={currentDate} sessions={sessions} onSessionClick={onSessionClick} />

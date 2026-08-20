@@ -84,14 +84,17 @@ function AvailabilityEditorDialog({
       toast.error("Fix overlapping slots before saving");
       return;
     }
-    setAvailability.mutate({ slots, timezone }, {
-      onSuccess: () => {
-        toast.success("Availability saved");
-        setOpen(false);
-        onSaved();
+    setAvailability.mutate(
+      { slots, timezone },
+      {
+        onSuccess: () => {
+          toast.success("Availability saved");
+          setOpen(false);
+          onSaved();
+        },
+        onError: () => toast.error("Failed to save availability"),
       },
-      onError: () => toast.error("Failed to save availability"),
-    });
+    );
   };
 
   return (
