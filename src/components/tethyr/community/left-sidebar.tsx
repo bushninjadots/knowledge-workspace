@@ -36,7 +36,10 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
 
   return (
     <aside className={cn("w-64 shrink-0", className)}>
-      <nav className="flex flex-col gap-5 rounded-xl bg-surface-elevated/30 p-3">
+      <nav
+        aria-label="Community navigation"
+        className="flex flex-col gap-5 rounded-xl bg-surface-elevated/30 p-3"
+      >
         {COMMUNITY_NAV_GROUPS.map((group) => (
           <div key={group.label}>
             <p className="section-label mb-1.5 px-3">{group.label}</p>

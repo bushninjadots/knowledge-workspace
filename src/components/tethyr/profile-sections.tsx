@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
+import { timeAgo } from "@/lib/time";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateItem, useUploadLibraryFile } from "@/hooks/use-library";
@@ -44,6 +45,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 const sb = supabase;
 type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
+import { type SkillVerificationLevel, type SkillExperienceLevel } from "@/hooks/use-current-user";
 import { validateImageFile, isSafeUrl, safeHref } from "@/lib/validators";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
@@ -81,8 +83,6 @@ export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
 
-export type SkillVerificationLevel = "self_declared" | "proof_certified" | "community_recognized";
-
 export const VERIFICATION_LABEL: Record<SkillVerificationLevel, string> = {
   self_declared: "Self-declared",
   proof_certified: "Proof certified",
@@ -96,8 +96,6 @@ export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
   community_recognized:
     "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
 };
-
-export type SkillExperienceLevel = "beginner" | "intermediate" | "advanced" | "expert";
 
 export const EXPERIENCE_LABEL: Record<SkillExperienceLevel, string> = {
   beginner: "Beginner",
@@ -292,7 +290,7 @@ export function BannerStrip({
               openCaptionEditor();
             }}
             disabled={uploading}
-            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground hover:bg-background disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" />
             {bannerCaption ? "Edit caption" : "Add caption"}
@@ -303,7 +301,7 @@ export function BannerStrip({
               ref.current?.click();
             }}
             disabled={uploading}
-            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur hover:bg-background disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground hover:bg-background disabled:opacity-50"
           >
             <Camera className="h-3.5 w-3.5" />
             {uploading ? "Uploading…" : bannerSigned ? "Change banner" : "Add banner"}
@@ -313,7 +311,7 @@ export function BannerStrip({
 
         {editingCaption ? (
           <div
-            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-xl bg-background/85 p-3 backdrop-blur"
+            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-xl bg-background/85 p-3"
             onClick={(e) => e.stopPropagation()}
           >
             <Input
@@ -371,7 +369,7 @@ export function BannerStrip({
           bannerCaption && (
             <button
               onClick={openCaptionEditor}
-              className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur transition hover:bg-background/80 sm:max-w-xs"
+              className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-xs"
               title="Click to edit caption"
             >
               {bannerCaption}
@@ -678,7 +676,11 @@ export function ProjectsCard({
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2">
-                    <Progress value={p.progress_percent} className="h-1.5" />
+                    <Progress
+                      value={p.progress_percent}
+                      className="h-1.5"
+                      aria-label={`Progress: ${p.progress_percent}%`}
+                    />
                     <span className="shrink-0 text-[11px] text-muted-foreground">
                       {p.progress_percent}%
                     </span>
@@ -710,7 +712,7 @@ export function ProjectsCard({
                     <button
                       type="button"
                       aria-label="Project options"
-                      className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 backdrop-blur transition hover:text-foreground group-hover:opacity-100"
+                      className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground opacity-0 transition hover:text-foreground group-hover:opacity-100"
                     >
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </button>
@@ -1494,7 +1496,7 @@ export function ProjectDialog({
             </div>
           </div>
         </div>
-        <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-border/60 bg-surface/95 px-6 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+        <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-border/60 bg-surface/95 px-6 py-3 sm:-mx-8 sm:px-8">
           {!project && creationStep > 0 && (
             <Button variant="ghost" onClick={() => setCreationStep((step) => step - 1)}>
               Back
@@ -1633,16 +1635,6 @@ const KIND_META: Record<
   message_received: { label: () => "Received a message", icon: MessageCircle, tone: "muted" },
 };
 
-function relTime(iso: string) {
-  const d = new Date(iso).getTime();
-  const diff = (Date.now() - d) / 1000;
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 30 * 86400) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
-
 export function TimelineCard({ events }: { events: ActivityRow[] }) {
   return (
     <SectionCard
@@ -1679,7 +1671,7 @@ export function TimelineCard({ events }: { events: ActivityRow[] }) {
                 </span>
                 <div className="flex items-center gap-2">
                   <p className="text-sm">{meta.label(e.metadata)}</p>
-                  <span className="text-xs text-muted-foreground">· {relTime(e.created_at)}</span>
+                  <span className="text-xs text-muted-foreground">· {timeAgo(e.created_at)}</span>
                 </div>
               </li>
             );

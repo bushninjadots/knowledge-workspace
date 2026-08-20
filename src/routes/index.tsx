@@ -12,7 +12,9 @@ import { Footer } from "@/components/tethyr/footer";
 import { HeroShowcase } from "@/components/tethyr/landing/hero-showcase";
 import { LandingStats } from "@/components/tethyr/landing/landing-stats";
 import { HeroActions } from "@/components/tethyr/hero-actions";
-import { SectionReveal } from "@/components/tethyr/section-reveal";
+const SectionReveal = lazy(() =>
+  import("@/components/tethyr/section-reveal").then((m) => ({ default: m.SectionReveal })),
+);
 import { Button } from "@/components/ui/button";
 import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
 
@@ -145,7 +147,7 @@ function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-44 sm:px-6 sm:pt-32">
           <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="text-center lg:text-left">
-              <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm animate-stagger">
+              <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground animate-stagger">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-glow-green" />
                 Early access — now open
               </span>
@@ -245,66 +247,68 @@ function HomePage() {
         </SectionReveal>
       </main>
 
-      <SectionReveal>
-        <section className="px-4 py-24 sm:px-6">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-border/60 bg-surface p-12 text-center sm:p-20">
-            <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
-            <div
-              className="pointer-events-none absolute inset-0 opacity-50"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 30% 0%, oklch(0.92 0.23 142 / 0.2), transparent 50%), radial-gradient(ellipse at 70% 100%, oklch(0.65 0.26 305 / 0.2), transparent 50%)",
-              }}
-            />
-            <div className="relative">
-              <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
-                Ready to build something <span className="text-gradient-brand">together</span>?
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-                Claim your handle, start a project, and join builders creating work that speaks for
-                itself. You're known by what you make — not what you claim.
-              </p>
-              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                {!ctaReady ? (
-                  <div className="h-12 w-48 animate-pulse rounded-full bg-surface-elevated" />
-                ) : isAuthed ? (
-                  <>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="default"
-                      className="shadow-glow-green transition-lift"
-                    >
-                      <Link to="/dashboard">
-                        Back to your workspace <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/explore">Explore projects</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="default"
-                      className="shadow-glow-green transition-lift"
-                    >
-                      <Link to="/signup">
-                        Create your profile <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button asChild size="lg" variant="outline" className="transition-lift">
-                      <Link to="/login">I already have an account</Link>
-                    </Button>
-                  </>
-                )}
+      <Suspense fallback={<SectionSkeleton />}>
+        <SectionReveal>
+          <section className="px-4 py-24 sm:px-6">
+            <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-border/60 bg-surface p-12 text-center sm:p-20">
+              <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
+              <div
+                className="pointer-events-none absolute inset-0 opacity-50"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 0%, oklch(0.92 0.23 142 / 0.2), transparent 50%), radial-gradient(ellipse at 70% 100%, oklch(0.65 0.26 305 / 0.2), transparent 50%)",
+                }}
+              />
+              <div className="relative">
+                <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
+                  Ready to build something <span className="text-gradient-brand">together</span>?
+                </h2>
+                <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
+                  Claim your handle, start a project, and join builders creating work that speaks
+                  for itself. You're known by what you make — not what you claim.
+                </p>
+                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                  {!ctaReady ? (
+                    <div className="h-12 w-48 animate-pulse rounded-full bg-surface-elevated" />
+                  ) : isAuthed ? (
+                    <>
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="default"
+                        className="shadow-glow-green transition-lift"
+                      >
+                        <Link to="/dashboard">
+                          Back to your workspace <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline" className="transition-lift">
+                        <Link to="/explore">Explore projects</Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="default"
+                        className="shadow-glow-green transition-lift"
+                      >
+                        <Link to="/signup">
+                          Create your profile <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild size="lg" variant="outline" className="transition-lift">
+                        <Link to="/login">I already have an account</Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      </SectionReveal>
+          </section>
+        </SectionReveal>
+      </Suspense>
 
       <Footer />
     </div>

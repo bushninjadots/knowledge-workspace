@@ -239,7 +239,6 @@ export function ProfileLayout({
                   </Chip>
                 )}
               </div>
-
             </div>
 
             {/* COMPLETENESS (own) or REPUTATION (public) */}

@@ -19,10 +19,7 @@ import { FollowButton } from "@/components/tethyr/follow-button";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { PublicStudioWorkspace } from "@/components/tethyr/profile/public-studio-workspace";
 import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
-import {
-  type SkillExperienceLevel,
-  type SkillVerificationLevel,
-} from "@/components/tethyr/profile-sections";
+import { type SkillExperienceLevel, type SkillVerificationLevel } from "@/hooks/use-current-user";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections } from "@/hooks/use-connections";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
@@ -353,7 +350,7 @@ function PublicProfileRoute() {
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
             {profile.banner_caption && (
-              <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground backdrop-blur sm:max-w-xs">
+              <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs">
                 {profile.banner_caption}
               </span>
             )}
@@ -508,7 +505,7 @@ function Shell({
       style={accentStyle}
     >
       <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
         <button
           type="button"
           onClick={() =>

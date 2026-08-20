@@ -874,7 +874,8 @@ export function useMyProjects() {
         .from("projects")
         .select("id, title, description, status, stage, cover_url")
         .eq("profile_id", user.id)
-        .order("updated_at", { ascending: false });
+        .order("updated_at", { ascending: false })
+        .limit(50);
 
       if (error) {
         if (error.code === "42P01") return [];

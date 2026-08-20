@@ -6,8 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { backgroundImagePublicUrl, type ProfileBackground } from "@/lib/background-themes";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
-export type { ProjectRow, ActivityRow };
-
 export type Profile = {
   id: string;
   handle: string | null;
@@ -101,7 +99,7 @@ async function fetchProfile(userId: string) {
       .select(cols)
       .eq("id", userId)
       .maybeSingle();
-    if (!error) return (data ?? null) as unknown as Profile | null;
+    if (!error) return (data as Profile | null) ?? null;
     // Retry on any schema/column error (missing column, schema cache, etc.)
     if (
       !error.message?.includes("column") &&
@@ -152,10 +150,13 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
         () =>
           supabase
             .from("projects")
-            .select("*")
+            .select(
+              "id, title, description, status, stage, cover_url, is_featured, created_at, updated_at, profile_id, goal, vision, progress_percent, looking_for_feedback, looking_for_collaborators, gallery, resources, links, tags, visibility, presentation_preset",
+            )
             .eq("profile_id", userId)
             .order("is_featured", { ascending: false })
-            .order("created_at", { ascending: false }),
+            .order("created_at", { ascending: false })
+            .limit(50),
         { data: [], error: null },
       ),
       safeQuery(

@@ -26,9 +26,7 @@ describe("OAuthButtons", () => {
   it("renders all social providers as buttons", () => {
     render(<OAuthButtons />);
     for (const provider of ["Google", "GitHub", "Apple", "GitLab", "Discord"]) {
-      expect(
-        screen.getByRole("button", { name: `Continue with ${provider}` }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: `Continue with ${provider}` })).toBeInTheDocument();
     }
   });
 

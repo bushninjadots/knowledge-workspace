@@ -16,7 +16,7 @@ export const ChallengesSection = memo(function ChallengesSection() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-title text-lg font-semibold tracking-tight">Challenges</h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">Challenges</h2>
         <CreateChallengeDialog open={open} onOpenChange={setOpen} />
       </div>
       {isLoading ? (

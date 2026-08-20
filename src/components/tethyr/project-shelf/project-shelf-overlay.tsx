@@ -128,10 +128,7 @@ export function ProjectShelfOverlay({
           transition={{ duration: 0.2 }}
         >
           {/* Backdrop */}
-          <motion.div
-            className="absolute inset-0 bg-background/60 backdrop-blur-2xl"
-            onClick={onClose}
-          />
+          <motion.div className="absolute inset-0 bg-background/60" onClick={onClose} />
 
           {/* Panel */}
           <motion.div
@@ -139,7 +136,7 @@ export function ProjectShelfOverlay({
             role="dialog"
             aria-modal="true"
             aria-label={project.title}
-            className="relative mx-4 w-full max-w-[832px] overflow-hidden rounded-xl border card-border bg-surface shadow-2xl"
+            className="relative mx-4 w-full max-w-[832px] overflow-hidden rounded-xl border card-border bg-surface shadow-lg"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
@@ -176,7 +173,7 @@ export function ProjectShelfOverlay({
                   <button
                     ref={closeButtonRef}
                     onClick={onClose}
-                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-sm transition hover:bg-background/80"
+                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-background/60 text-foreground transition hover:bg-background/80"
                     aria-label="Close overlay"
                   >
                     <X className="h-4 w-4" />
@@ -186,7 +183,7 @@ export function ProjectShelfOverlay({
                   <div className="absolute left-4 top-4 flex items-center gap-2">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider backdrop-blur-sm",
+                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider",
                         STATUS_STYLES[project.status]?.badge ?? STATUS_STYLES.active.badge,
                       )}
                     >
@@ -199,7 +196,7 @@ export function ProjectShelfOverlay({
                       {STATUS_STYLES[project.status]?.label ?? "Active"}
                     </span>
                     {project.looking_for_collaborators && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-purple/20 px-2 py-0.5 text-[11px] font-medium text-brand-purple backdrop-blur-sm">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-purple/20 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
                         <Users className="h-2.5 w-2.5" />
                         Open
                       </span>

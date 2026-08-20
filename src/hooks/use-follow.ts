@@ -43,7 +43,8 @@ export function useFollowers(userId: string) {
         .from("follows")
         .select("follower_id, created_at")
         .eq("following_id", userId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       if (error) {
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {
@@ -66,7 +67,8 @@ export function useFollowing(userId: string) {
         .from("follows")
         .select("following_id, created_at")
         .eq("follower_id", userId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       if (error) {
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {

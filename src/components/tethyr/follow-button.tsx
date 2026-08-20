@@ -43,6 +43,7 @@ export function FollowButton({
         variant="default"
         className="rounded-full"
         disabled={isLoading}
+        aria-pressed={true}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={handleClick}
@@ -58,6 +59,7 @@ export function FollowButton({
       variant="outline"
       className="rounded-full"
       disabled={isLoading}
+      aria-pressed={false}
       onClick={handleClick}
     >
       Follow

@@ -36,7 +36,7 @@ const ACTIONS = [
 
 export function HeroActions() {
   return (
-    <div className="relative mt-12 rounded-xl bg-surface-elevated/30 p-5 backdrop-blur-sm sm:p-6">
+    <div className="relative mt-12 rounded-xl bg-surface-elevated/30 p-5 sm:p-6">
       <div className="flex items-center gap-2">
         <FolderKanban className="h-4 w-4 text-primary" />
         <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">

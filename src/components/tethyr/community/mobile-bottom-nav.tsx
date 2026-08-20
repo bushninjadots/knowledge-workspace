@@ -29,7 +29,7 @@ export function MobileBottomNav({
         position === "bottom"
           ? "fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)]"
           : "relative mb-4 border-b"
-      } border-border/60 bg-surface/95 backdrop-blur-xl lg:hidden`}
+      } border-border/60 bg-surface/95 lg:hidden`}
     >
       <div className="relative">
         <div className="flex items-stretch px-2">

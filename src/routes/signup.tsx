@@ -211,8 +211,8 @@ function SignupPage() {
             </p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label>Your main craft</Label>
+        <fieldset>
+          <legend className="text-sm font-medium text-foreground">Your main craft</legend>
           <p className="text-xs text-muted-foreground">
             Choose the closest match. You can add more skills after joining.
           </p>
@@ -237,7 +237,7 @@ function SignupPage() {
               </span>
             )}
           </div>
-        </div>
+        </fieldset>
         <Button type="submit" variant="default" className="w-full" disabled={loading}>
           {loading ? "Creating..." : "Create my profile"}
         </Button>

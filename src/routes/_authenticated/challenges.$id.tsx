@@ -377,7 +377,11 @@ function ChallengeDetailPage() {
 
               return (
                 <>
-                  <Progress value={progressPercent} className="mb-4" />
+                  <Progress
+                    value={progressPercent}
+                    className="mb-4"
+                    aria-label={`Challenge progress: ${progressPercent}%`}
+                  />
 
                   <div className="space-y-2">
                     {STATUS_STEPS.map((step, i) => {

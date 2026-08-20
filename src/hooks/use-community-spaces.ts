@@ -70,7 +70,8 @@ export function useCommunitySpaces() {
       const { data: spaces, error } = await sb
         .from("community_spaces")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (error) {
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {

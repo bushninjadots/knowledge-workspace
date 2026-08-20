@@ -503,7 +503,7 @@ export function GallerySection({
                 className="aspect-video w-full max-w-full object-cover"
               />
               {g.caption && (
-                <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-[11px] backdrop-blur">
+                <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-[11px]">
                   {g.caption}
                 </div>
               )}

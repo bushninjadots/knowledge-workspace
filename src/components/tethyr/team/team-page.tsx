@@ -278,7 +278,7 @@ function TeamAvatar({
 
   return (
     <div className="relative shrink-0">
-      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border card-border bg-surface text-2xl font-semibold text-foreground">
+      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border card-border bg-surface text-2xl font-semibold text-foreground">
         {signedUrl ? (
           <img
             src={signedUrl}

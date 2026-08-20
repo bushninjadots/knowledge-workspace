@@ -18,9 +18,8 @@ import {
   PROJECT_STATUS_LABEL,
   PROJECT_STATUS_STYLE,
   VerificationBadge,
-  type SkillExperienceLevel,
-  type SkillVerificationLevel,
 } from "@/components/tethyr/profile-sections";
+import type { SkillExperienceLevel, SkillVerificationLevel } from "@/hooks/use-current-user";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { Button } from "@/components/ui/button";
 import { useUpdateEvidenceShelf, type EvidenceShelfItem } from "@/hooks/use-project-loop";

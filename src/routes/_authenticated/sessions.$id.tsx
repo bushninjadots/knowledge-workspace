@@ -112,7 +112,7 @@ function SessionDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-md">
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80">
         <div className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             onClick={() => navigate({ to: "/sessions" })}

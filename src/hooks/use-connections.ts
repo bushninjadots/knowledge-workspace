@@ -44,7 +44,8 @@ async function fetchConnections(meId: string): Promise<ConnectionWithProfile[]> 
     .select(
       `*, requester:profiles!requester_id(id, display_name, handle, creator_title, category, avatar_url), addressee:profiles!addressee_id(id, display_name, handle, creator_title, category, avatar_url)`,
     )
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(200);
   if (error) throw error;
   const rows = (data ?? []) as (ConnectionRow & {
     requester: {

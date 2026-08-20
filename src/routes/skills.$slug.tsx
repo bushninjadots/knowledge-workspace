@@ -712,7 +712,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background bg-noise">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
         <Link to="/" className="font-display text-lg font-semibold text-foreground">
           Tethyr
         </Link>

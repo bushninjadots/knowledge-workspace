@@ -102,7 +102,7 @@ export const CommunityHeader = memo(function CommunityHeader({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
-          <h1 className="font-title text-2xl font-semibold tracking-tight">{navTitle(nav)}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">{navTitle(nav)}</h1>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">
             Share project updates, ask for help, request collaboration, or drop a resource. Every
             post has purpose.
@@ -177,7 +177,7 @@ export const CommunityHeader = memo(function CommunityHeader({
       )}
 
       {showFeedControls && (
-        <div className="sticky top-0 z-20 -mx-2 space-y-1.5 border-b border-border/40 bg-background/85 px-2 py-2 backdrop-blur-md mb-4">
+        <div className="sticky top-0 z-20 -mx-2 space-y-1.5 border-b border-border/40 bg-background/85 px-2 py-2 mb-4">
           {/* Row 1: sort + my-skills (post types now live in the sidebar nav) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button

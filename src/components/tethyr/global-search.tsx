@@ -556,7 +556,7 @@ export function GlobalSearch({
             id={listboxId}
             role="listbox"
             aria-label="Search results"
-            className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-xl"
+            className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-lg"
           >
             {renderResults()}
           </div>

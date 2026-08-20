@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import {
   ArrowRight,
   Sparkles,
@@ -25,7 +25,11 @@ import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
-import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+const WorkspaceGrid = lazy(() =>
+  import("@/components/tethyr/workspace/workspace-grid").then((m) => ({
+    default: m.WorkspaceGrid,
+  })),
+);
 import { DASHBOARD_LAYOUT_PRESETS, DASHBOARD_MODULES } from "@/lib/workspace-layouts";
 
 import { checkAndAwardAchievements } from "@/lib/reputation";
@@ -48,32 +52,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       noindex: true,
     }),
   component: DashboardPage,
-  errorComponent: () => (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Something went wrong
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/explore"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
-      </div>
-    </div>
-  ),
 });
 
 function DashboardPage() {
@@ -221,7 +199,11 @@ function DashboardContent({
                         <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
                       </div>
                       <div className="mt-1.5 flex items-center gap-2">
-                        <Progress value={p.progress_percent ?? 0} className="h-1" />
+                        <Progress
+                          value={p.progress_percent ?? 0}
+                          className="h-1"
+                          aria-label={`Progress: ${p.progress_percent ?? 0}%`}
+                        />
                         <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
                           {p.progress_percent ?? 0}%
                         </span>
@@ -388,10 +370,10 @@ function DashboardContent({
                       Welcome back
                     </p>
                   </div>
-                  <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+                  <h2 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
                     Hey {firstName},{" "}
                     <span className="text-[var(--user-accent,var(--trust))]">what's next?</span>
-                  </h1>
+                  </h2>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {pendingSessionCount > 0 ? (
@@ -421,7 +403,7 @@ function DashboardContent({
                     <CreateProjectButton size="sm" variant="default" className="rounded-full" />
                   )}
                   {data?.profile?.reputation_score != null && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))] backdrop-blur-sm">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
                       <Award className="h-3.5 w-3.5" />
                       {data?.profile?.reputation_score} rep
                     </span>
@@ -456,7 +438,11 @@ function DashboardContent({
                       {activeProjects[0].title}
                     </p>
                     <div className="flex items-center gap-2">
-                      <Progress value={activeProjects[0].progress_percent ?? 0} className="h-1.5" />
+                      <Progress
+                        value={activeProjects[0].progress_percent ?? 0}
+                        className="h-1.5"
+                        aria-label={`Progress: ${activeProjects[0].progress_percent ?? 0}%`}
+                      />
                       <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
                         {activeProjects[0].progress_percent ?? 0}%
                       </span>
@@ -656,18 +642,20 @@ function DashboardContent({
               Your active work, collaboration signals, discovery, and contribution evidence.
             </p>
           </div>
-          <WorkspaceGrid
-            page="dashboard"
-            userId={data?.userId}
-            modules={DASHBOARD_MODULES}
-            layoutPresets={DASHBOARD_LAYOUT_PRESETS}
-            canCustomize={true}
-            showModuleTitles={false}
-            showPresetPicker
-            presetPickerLabel="Focus"
-            renderModule={renderModule}
-            migrateRetiredModules
-          />
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-surface" />}>
+            <WorkspaceGrid
+              page="dashboard"
+              userId={data?.userId}
+              modules={DASHBOARD_MODULES}
+              layoutPresets={DASHBOARD_LAYOUT_PRESETS}
+              canCustomize={true}
+              showModuleTitles={false}
+              showPresetPicker
+              presetPickerLabel="Focus"
+              renderModule={renderModule}
+              migrateRetiredModules
+            />
+          </Suspense>
         </section>
       </div>
     </div>

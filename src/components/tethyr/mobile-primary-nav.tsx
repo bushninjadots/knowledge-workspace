@@ -16,7 +16,7 @@ export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
   return (
     <nav
       aria-label="Primary mobile navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 md:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {ITEMS.map((item) => {

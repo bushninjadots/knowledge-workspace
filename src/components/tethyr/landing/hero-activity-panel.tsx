@@ -9,7 +9,7 @@ export function HeroActivityPanel() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-xl bg-surface-elevated/30 p-5 backdrop-blur-sm">
+      <div className="animate-pulse rounded-xl bg-surface-elevated/30 p-5">
         <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="mb-4 flex items-center gap-3">
@@ -27,7 +27,7 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-5 backdrop-blur-sm transition hover:bg-surface-elevated/50">
+    <div className="rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50">
       <div className="mb-3 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />

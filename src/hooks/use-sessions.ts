@@ -147,7 +147,8 @@ async function fetchSessionsForUser(userId: string): Promise<SessionWithParticip
     .from("sessions")
     .select(SESSION_SELECT)
     .or(sessionsForUserFilter(userId, participantSessionIds))
-    .order("starts_at", { ascending: true });
+    .order("starts_at", { ascending: true })
+    .limit(100);
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
 }

@@ -945,7 +945,7 @@ function Shell({
     : undefined;
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
         <button
           onClick={() =>
             window.history.length > 1 ? window.history.back() : navigate({ to: "/" })

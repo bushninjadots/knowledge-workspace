@@ -297,7 +297,7 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed card-border bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
       <WorkshopIllustration variant={variant} />
       <div className="space-y-2">
-        <p className="font-title text-base font-medium text-foreground">{title}</p>
+        <p className="font-display text-base font-medium text-foreground">{title}</p>
         {description && (
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
             {description}

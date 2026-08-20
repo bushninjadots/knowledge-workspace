@@ -48,14 +48,14 @@ export function ProjectJoinModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Join project"
     >
       <div
-        className="relative w-full max-w-md rounded-xl border card-border bg-surface p-6 shadow-2xl"
+        className="relative w-full max-w-md rounded-xl border card-border bg-surface p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <button

@@ -75,7 +75,7 @@ export function FeaturedProjects() {
               >
                 <div className="relative h-36 overflow-hidden bg-surface-sunken">
                   <ProjectCardCover path={p.cover_url} />
-                  <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm">
+                  <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-2.5 py-1 text-[11px] font-medium">
                     <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
                     {status.label}
                   </div>

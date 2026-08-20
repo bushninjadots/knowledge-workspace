@@ -1,8 +1,32 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+function isSafeUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== "https:") return false;
+    const hostname = parsed.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.") ||
+      hostname.startsWith("169.254.") ||
+      hostname.endsWith(".internal") ||
+      hostname.endsWith(".local")
+    )
+      return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const ALLOWED_ORIGIN = Deno.env.get("SITE_URL") ?? "https://tethyr.com";
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -110,29 +134,8 @@ serve(async (req) => {
 
     // Open Graph fallback for everything else
     if (!result) {
-      try {
-        const pageRes = await fetch(url, {
-          headers: { "User-Agent": "Tethyr/1.0" },
-          signal: AbortSignal.timeout(10_000),
-        });
-        const html = await pageRes.text();
-
-        const ogTitle = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
-        const ogDesc = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
-        const ogImage = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
-
-        const hostname = new URL(url).hostname.replace("www.", "");
-
-        result = {
-          name: ogTitle?.[1] ?? hostname,
-          description: ogDesc?.[1] ?? null,
-          platform: "website",
-          url,
-          logo: ogImage?.[1] ?? null,
-        };
-      } catch {
-        // If OG scrape fails, return minimal info
-        const hostname = new URL(url).hostname.replace("www.", "");
+      if (!isSafeUrl(url)) {
+        const hostname = (() => { try { return new URL(url).hostname.replace("www.", ""); } catch { return "unknown"; } })();
         result = {
           name: hostname,
           description: null,
@@ -140,6 +143,37 @@ serve(async (req) => {
           url,
           logo: null,
         };
+      } else {
+        try {
+          const pageRes = await fetch(url, {
+            headers: { "User-Agent": "Tethyr/1.0" },
+            signal: AbortSignal.timeout(10_000),
+          });
+          const html = await pageRes.text();
+
+          const ogTitle = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+          const ogDesc = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+          const ogImage = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+
+          const hostname = new URL(url).hostname.replace("www.", "");
+
+          result = {
+            name: ogTitle?.[1] ?? hostname,
+            description: ogDesc?.[1] ?? null,
+            platform: "website",
+            url,
+            logo: ogImage?.[1] ?? null,
+          };
+        } catch {
+          const hostname = new URL(url).hostname.replace("www.", "");
+          result = {
+            name: hostname,
+            description: null,
+            platform: "other",
+            url,
+            logo: null,
+          };
+        }
       }
     }
 
@@ -147,7 +181,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("fetch-project-preview error:", err);
+    return new Response(JSON.stringify({ error: "Failed to fetch preview" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

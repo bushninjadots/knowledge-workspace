@@ -455,7 +455,7 @@ function ProjectListRow({
           fit="cover"
         />
         <div className="absolute left-2 top-2 flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
             <span className={cn("h-1 w-1 rounded-full", status.dot)} />
             {status.label}
           </span>

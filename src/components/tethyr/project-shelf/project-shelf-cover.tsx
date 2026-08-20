@@ -51,17 +51,17 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
 
         {/* Status badge */}
         <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground">
             <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
             {status.label}
           </span>
           {isOwn && (
-            <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[11px] font-medium text-brand-green backdrop-blur-sm">
+            <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[11px] font-medium text-brand-green">
               Your project
             </span>
           )}
           {isContributor && (
-            <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[11px] font-medium text-brand-purple backdrop-blur-sm">
+            <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
               Contributing
             </span>
           )}

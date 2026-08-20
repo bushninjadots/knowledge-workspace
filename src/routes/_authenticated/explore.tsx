@@ -1043,7 +1043,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
   return (
     <div className="sticky top-24 space-y-5">
       {/* Stats card */}
-      <div className="rounded-xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+      <div className="rounded-xl border card-border bg-surface/60 p-4">
         <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
           Quick stats
@@ -1074,7 +1074,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
 
       {/* Trending skills */}
       {trendingSkills && trendingSkills.length > 0 && (
-        <div className="rounded-xl border card-border bg-surface/60 p-4 backdrop-blur-sm">
+        <div className="rounded-xl border card-border bg-surface/60 p-4">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Hash className="h-3.5 w-3.5" />
             Trending skills

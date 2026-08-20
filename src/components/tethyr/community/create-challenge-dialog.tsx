@@ -107,16 +107,22 @@ export function CreateChallengeDialog({
           <DialogTitle>Create a Challenge</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Challenge title"
+          />
           <Textarea
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
+            aria-label="Challenge description"
           />
           <div className="grid grid-cols-2 gap-3">
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Challenge type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -126,7 +132,7 @@ export function CreateChallengeDialog({
               </SelectContent>
             </Select>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Difficulty level">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -140,6 +146,7 @@ export function CreateChallengeDialog({
             placeholder="Skills (comma-separated)"
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
+            aria-label="Skills, comma-separated"
           />
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -157,12 +164,14 @@ export function CreateChallengeDialog({
             min="1"
             value={maxParticipants}
             onChange={(e) => setMaxParticipants(e.target.value)}
+            aria-label="Maximum participants"
           />
           <Textarea
             placeholder="Pass criteria (optional) — what must a submission include to pass? e.g. working demo + 3 commits + short write-up"
             value={passCriteria}
             onChange={(e) => setPassCriteria(e.target.value)}
             rows={2}
+            aria-label="Pass criteria"
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>

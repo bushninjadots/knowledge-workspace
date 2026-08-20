@@ -243,7 +243,7 @@ function ChallengesContent() {
               <div className="flex flex-col gap-1">
                 <h2
                   id="start-here-heading"
-                  className="font-title text-lg font-semibold tracking-tight flex items-center gap-2"
+                  className="font-display text-lg font-semibold tracking-tight flex items-center gap-2"
                 >
                   Start here
                   <Badge
@@ -269,7 +269,7 @@ function ChallengesContent() {
             <section aria-labelledby="community-heading" className="space-y-4">
               <h2
                 id="community-heading"
-                className="font-title text-lg font-semibold tracking-tight"
+                className="font-display text-lg font-semibold tracking-tight"
               >
                 From the community
               </h2>

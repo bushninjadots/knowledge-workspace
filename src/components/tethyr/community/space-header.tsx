@@ -109,7 +109,7 @@ export function SpaceHeader({
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-title truncate text-2xl font-semibold tracking-tight">
+              <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
                 {space.name}
               </h1>
               {space.visibility === "private" && (
