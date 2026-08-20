@@ -42,7 +42,10 @@ export type AchievementType =
   | "milestone_master"
   | "helping_hand"
   | "conversation_starter"
-  | "role_filler";
+  | "role_filler"
+  | "first_session"
+  | "session_teacher"
+  | "streak_4_weeks";
 
 export type AchievementDef = {
   type: AchievementType;
@@ -198,6 +201,27 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Role Filler",
     description: "Accepted into an open role",
     icon: "BadgeCheck",
+    color: "text-brand-green",
+  },
+  {
+    type: "first_session",
+    label: "First Session",
+    description: "Completed your first session",
+    icon: "Calendar",
+    color: "text-primary",
+  },
+  {
+    type: "session_teacher",
+    label: "Session Teacher",
+    description: "Organized 5+ completed sessions",
+    icon: "Presentation",
+    color: "text-brand-purple",
+  },
+  {
+    type: "streak_4_weeks",
+    label: "4-Week Streak",
+    description: "Active for 4 consecutive weeks",
+    icon: "Flame",
     color: "text-brand-green",
   },
 ];
