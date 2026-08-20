@@ -32,9 +32,9 @@ function PrivacyPolicy() {
         <section>
           <h2 className="font-display text-xl font-semibold">3. Information Sharing</h2>
           <p className="mt-2 text-muted-foreground">
-            We do not sell your personal information. We may share information with service providers
-            who assist in operating the platform (e.g., hosting, authentication), and when required
-            by law or to protect the safety of our users.
+            We do not sell your personal information. We may share information with service
+            providers who assist in operating the platform (e.g., hosting, authentication), and when
+            required by law or to protect the safety of our users.
           </p>
         </section>
 
@@ -59,25 +59,24 @@ function PrivacyPolicy() {
         <section>
           <h2 className="font-display text-xl font-semibold">6. Cookies</h2>
           <p className="mt-2 text-muted-foreground">
-            Tethyr uses essential cookies for authentication and session management. We do not
-            use third-party advertising cookies or tracking pixels.
+            Tethyr uses essential cookies for authentication and session management. We do not use
+            third-party advertising cookies or tracking pixels.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">7. Changes to This Policy</h2>
           <p className="mt-2 text-muted-foreground">
-            We may update this privacy policy from time to time. We will notify you of any
-            material changes by posting the new policy on this page and updating the "Last
-            updated" date.
+            We may update this privacy policy from time to time. We will notify you of any material
+            changes by posting the new policy on this page and updating the "Last updated" date.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">8. Contact Us</h2>
           <p className="mt-2 text-muted-foreground">
-            If you have questions about this privacy policy, please contact us through the
-            Tethyr platform or at the email associated with your account.
+            If you have questions about this privacy policy, please contact us through the Tethyr
+            platform or at the email associated with your account.
           </p>
         </section>
       </div>
