@@ -1602,12 +1602,12 @@ const KIND_META: Record<
   avatar_updated: { label: () => "Updated avatar", icon: Camera, tone: "muted" },
   banner_updated: { label: () => "Updated banner", icon: ImageIcon, tone: "muted" },
   skill_teach_added: {
-    label: (m) => `Added ${m.skill_name ?? "a skill"} to teaching`,
+    label: (m) => `Started sharing ${m.skill_name ?? "a skill"}`,
     icon: GraduationCap,
     tone: "green",
   },
   skill_learning_started: {
-    label: (m) => `Started learning ${m.skill_name ?? "a skill"}`,
+    label: (m) => `Started growing ${m.skill_name ?? "a skill"}`,
     icon: Sparkles,
     tone: "purple",
   },

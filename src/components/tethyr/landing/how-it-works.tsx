@@ -6,7 +6,7 @@ export function HowItWorks() {
     {
       n: "01",
       title: "Claim your profile",
-      desc: "Add your handle, your craft, and the skills you can teach or want to learn. Your profile tells the story of what you've built.",
+      desc: "Add your handle, your craft, and the skills you share or want to grow. Your profile tells the story of what you've built.",
       icon: UserPlus,
       href: "/signup",
       cta: "Start building",
