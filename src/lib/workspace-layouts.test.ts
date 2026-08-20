@@ -87,7 +87,7 @@ describe("mergeLayout", () => {
     const result = mergeLayout(
       modules,
       [
-        { i: "welcome", x: 0, y: 0, w: 12, h: 6 },
+        { i: "today", x: 0, y: 0, w: 12, h: 6 },
         { i: "projects", x: 0, y: 12, w: 8, h: 9 },
         { i: "activity", x: 0, y: 23, w: 12, h: 10 },
       ],
