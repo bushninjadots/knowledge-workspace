@@ -44,6 +44,18 @@ function formatHour(hour: number) {
   return `${hour > 12 ? hour - 12 : hour} ${hour < 12 ? "AM" : "PM"}`;
 }
 
+function getSessionDurationMinutes(session: SessionWithParticipants): number {
+  if (session.ends_at && session.starts_at) {
+    const ms = new Date(session.ends_at).getTime() - new Date(session.starts_at).getTime();
+    if (ms > 0) return Math.round(ms / 60000);
+  }
+  return session.duration_minutes ?? 60;
+}
+
+const DAY_ROW_PX = 48; // matches min-h-[3rem]
+const WEEK_ROW_PX = 56; // matches min-h-[3.5rem]
+const GRID_START_HOUR = 6;
+
 function CalendarEventCard({
   session,
   onClick,
@@ -94,10 +106,19 @@ function CalendarEventCard({
               minute: "2-digit",
             })}
             –
-            {new Date(session.ends_at!).toLocaleTimeString(undefined, {
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            {session.ends_at
+              ? new Date(session.ends_at).toLocaleTimeString(undefined, {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })
+              : (() => {
+                  const dur = getSessionDurationMinutes(session);
+                  const end = new Date(new Date(session.starts_at!).getTime() + dur * 60000);
+                  return end.toLocaleTimeString(undefined, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  });
+                })()}
           </span>
           {session.meeting_url && (
             <span className="inline-flex items-center gap-1 text-[var(--user-accent,var(--trust))]">
@@ -127,26 +148,41 @@ function DayView({
   onSessionClick: (s: SessionWithParticipants) => void;
 }) {
   const daySessions = sessions.filter((s) => s.starts_at && isSameDay(new Date(s.starts_at), date));
+  const totalHeight = HOURS.length * DAY_ROW_PX;
 
   return (
     <div className="relative">
+      {/* Hour grid lines */}
       {HOURS.map((hour) => (
         <div key={hour} className="flex border-b border-border/30">
           <div className="w-16 shrink-0 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
             {formatHour(hour)}
           </div>
-          <div className="relative min-h-[3rem] flex-1 border-l border-border/20">
-            {daySessions
-              .filter((s) => {
-                const h = new Date(s.starts_at!).getHours();
-                return h === hour;
-              })
-              .map((s) => (
-                <CalendarEventCard key={s.id} session={s} onClick={() => onSessionClick(s)} />
-              ))}
-          </div>
+          <div className="min-h-[3rem] flex-1 border-l border-border/20" />
         </div>
       ))}
+
+      {/* Session overlay — absolute positioned by time */}
+      <div className="absolute top-0 left-16 right-0" style={{ height: `${totalHeight}px` }}>
+        {daySessions.map((session) => {
+          const startsAt = new Date(session.starts_at!);
+          const durationMin = getSessionDurationMinutes(session);
+          const startHour = startsAt.getHours();
+          const startMinute = startsAt.getMinutes();
+          const topPx = ((startHour - GRID_START_HOUR) * 60 + startMinute) * (DAY_ROW_PX / 60);
+          const heightPx = Math.max(durationMin * (DAY_ROW_PX / 60), DAY_ROW_PX / 2);
+
+          return (
+            <div
+              key={session.id}
+              className="absolute left-0 right-0"
+              style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+            >
+              <CalendarEventCard session={session} onClick={() => onSessionClick(session)} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -165,6 +201,7 @@ function WeekView({
   const weekDates = useMemo(() => getWeekDates(date), [date]);
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const today = new Date();
+  const totalHeight = HOURS.length * WEEK_ROW_PX;
 
   return (
     <div>
@@ -195,39 +232,62 @@ function WeekView({
 
       {/* Time grid */}
       <div className="grid grid-cols-[4rem_repeat(7,1fr)]">
-        {HOURS.map((hour) => (
-          <div key={hour} className="contents">
-            <div className="border-b border-border/30 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
+        {/* Hour labels column */}
+        <div>
+          {HOURS.map((hour) => (
+            <div key={hour} className="border-b border-border/30 py-2 pr-3 text-right text-[11px] font-medium text-muted-foreground">
               {formatHour(hour)}
             </div>
-            {weekDates.map((d, di) => {
-              const cellSessions = sessions.filter(
-                (s) =>
-                  s.starts_at &&
-                  isSameDay(new Date(s.starts_at), d) &&
-                  new Date(s.starts_at).getHours() === hour,
-              );
-              const isToday = isSameDay(d, today);
-              return (
+          ))}
+        </div>
+
+        {/* Day columns — each is a relative container */}
+        {weekDates.map((d, di) => {
+          const isToday = isSameDay(d, today);
+          const daySessions = sessions.filter(
+            (s) => s.starts_at && isSameDay(new Date(s.starts_at), d),
+          );
+
+          return (
+            <div key={di} className="relative border-l border-border/30">
+              {/* Hour grid lines */}
+              {HOURS.map((hour) => (
                 <div
-                  key={di}
-                  className={`min-h-[3.5rem] border-b border-l border-border/30 ${
+                  key={hour}
+                  className={`min-h-[3.5rem] border-b border-border/30 ${
                     isToday ? "bg-[var(--user-accent-subtle,var(--trust-subtle))]" : ""
                   }`}
-                >
-                  {cellSessions.map((s) => (
-                    <CalendarEventCard
-                      key={s.id}
-                      session={s}
-                      compact
-                      onClick={() => onSessionClick(s)}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                />
+              ))}
+
+              {/* Session overlay */}
+              <div className="absolute top-0 left-0 right-0" style={{ height: `${totalHeight}px` }}>
+                {daySessions.map((session) => {
+                  const startsAt = new Date(session.starts_at!);
+                  const durationMin = getSessionDurationMinutes(session);
+                  const startHour = startsAt.getHours();
+                  const startMinute = startsAt.getMinutes();
+                  const topPx = ((startHour - GRID_START_HOUR) * 60 + startMinute) * (WEEK_ROW_PX / 60);
+                  const heightPx = Math.max(durationMin * (WEEK_ROW_PX / 60), WEEK_ROW_PX / 2);
+
+                  return (
+                    <div
+                      key={session.id}
+                      className="absolute left-0 right-0"
+                      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                    >
+                      <CalendarEventCard
+                        session={session}
+                        compact
+                        onClick={() => onSessionClick(session)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
