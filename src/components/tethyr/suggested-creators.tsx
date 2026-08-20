@@ -146,7 +146,7 @@ export const SuggestedCreators = memo(function SuggestedCreators({
       <EmptyState
         icon={<Sparkles className="h-5 w-5" />}
         title="No matches yet"
-        description="Add skills you share or want to learn to unlock better matches."
+        description="Add skills you share or want to grow to unlock better matches."
         actionLabel="Open your studio"
         actionHref="/profile"
       />
