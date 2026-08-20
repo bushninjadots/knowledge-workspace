@@ -1,4 +1,4 @@
-project_id = "vmakywgauqrnsrrlzthk"
+project_id = "mfeinmphbsnjcchkmldi"
 
 [db.seed]
 # Loads both seed files during `supabase db reset` — the default test user
