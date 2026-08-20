@@ -82,7 +82,14 @@ export function useChallenges(statusFilter: string = "active") {
   return useQuery({
     queryKey: [...CHALLENGES_KEY, statusFilter],
     queryFn: async () => {
-      let query = sb.from("challenges").select("*").order("created_at", { ascending: false });
+      let query = sb
+        .from("challenges")
+        .select("*")
+        .order("created_at", { ascending: false })
+        // Platform-wide list with no per-user bound — cap it so the page
+        // doesn't grow unbounded as challenges accumulate. Pagination can
+        // come when usage evidence shows people actually go past this.
+        .limit(100);
 
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);

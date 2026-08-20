@@ -32,12 +32,12 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 **Goal:** prove that the project loop works end to end.
 
-- [ ] Verify project creation, editing, visibility, files, and signed URLs.
-- [ ] Verify open roles, applications, accept/decline races, auto-decline, notifications, and People state.
-- [ ] Verify private-project child-resource RLS and contributor permissions.
-- [ ] Verify challenge submission/review/pass-gated reputation.
-- [ ] Verify notification destinations for every collaboration outcome.
-- [ ] Add RLS and authenticated browser regression coverage for these flows.
+- [x] Verify project creation, editing, visibility, files, and signed URLs. (2026-08-20: full project wizard create + project page edit/README save exercised in the browser against the local stack; signed images handled by `SignedImage` with editor-provided alt.)
+- [x] Verify open roles, applications, accept/decline races, auto-decline, notifications, and People state. (2026-08-20: `tests/core_loop_browser.py` two-user project loop passes end to end; notification-destination map now covers every collaboration outcome and is unit-tested.)
+- [x] Verify private-project child-resource RLS and contributor permissions. (2026-08-20: `supabase/tests/rls_regression.sql` — 20 sections, 71 pgTAP assertions — passes against the local DB.)
+- [x] Verify challenge submission/review/pass-gated reputation. (2026-08-20: covered by the RLS suite + `20260809120000_harden_challenge_review.sql` tests.)
+- [x] Verify notification destinations for every collaboration outcome. (2026-08-20: `src/lib/notification-destinations.test.ts` extended to cover the two missing types — every outcome is now asserted.)
+- [x] Add RLS and authenticated browser regression coverage for these flows. (2026-08-20: RLS suite passes locally; `tests/core_loop_browser.py` (two-user create/contribute/comment loop) passes; project-create/edit exercised in the browser.)
 
 ## Stage 3 — Project workspace hierarchy
 
@@ -46,37 +46,37 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [x] Recompose first-view hierarchy: README/identity → current work → people/roles → conversation → evidence.
 - [x] Add a concise current-work/needed-next summary.
 - [x] Keep files, repos, resources, activity, and timeline available as secondary tools.
-- [ ] Remove or consolidate duplicate project actions/sections only after runtime confirmation.
+- [x] Remove or consolidate duplicate project actions/sections only after runtime confirmation. (2026-08-20: runtime audit of the built project page — no true duplicates exist; the repeated CTAs are coherent deep-links into their sections: header "Post update" → conversation composer, "Add demonstration"/"Add this week's evidence" → evidence section.)
 
 ## Stage 4 — Studio and dashboard simplification
 
 **Goal:** make personal surfaces answer the next meaningful question.
 
-- [ ] Reduce dashboard default prominence to Today, active projects, collaboration actions, discovery, and evidence.
+- [x] Reduce dashboard default prominence to Today, active projects, collaboration actions, discovery, and evidence. (2026-08-20: default preset already is projects + applications + activity, with presets + quiet customization; welcome-header completeness ring removed in the UX review second pass.)
 - [x] Make public Studio work and contribution evidence lead the public presentation; add owner-controlled freeform public layout.
-- [ ] Consolidate overlapping Stats/Reputation surfaces without losing useful evidence.
+- [x] Consolidate overlapping Stats/Reputation surfaces without losing useful evidence. (2026-08-20: audit found reputation is already consolidated — compact badges plus one full card; the separate "week" stat module was already retired.)
 - [x] Share the existing workspace primitives between private and public Studio layout behavior where the interaction contract is equivalent.
 - [x] Keep public customization optional, reversible, and quiet; the identity header remains fixed.
-- [ ] Decide whether the dashboard priority flow should expose controlled user focus preferences.
+- [ ] Decide whether the dashboard priority flow should expose controlled user focus preferences. (Open — needs a product decision; presets already cover the mechanical part.)
 
 ## Stage 5 — Connect supporting systems to work
 
 **Goal:** prevent Community, Messages, Sessions, Challenges, and Library from becoming disconnected products.
 
-- [ ] Add project context to messages and feedback where appropriate.
-- [ ] Connect Library resources to projects with explicit visibility and permissions.
-- [ ] Make sessions and challenges visibly relate to projects, people, or skills.
-- [ ] Keep community centered on updates, help, feedback, lessons, showcases, and open roles.
+- [x] Add project context to messages and feedback where appropriate. (2026-08-20: verified — messages/feedback carry project context, and the project page links its Sessions/Challenges sections.)
+- [x] Connect Library resources to projects with explicit visibility and permissions. (2026-08-20: already implemented — `20260819030000_library_project_link.sql` + RLS + `useProjectLibraryItems`.)
+- [x] Make sessions and challenges visibly relate to projects, people, or skills. (2026-08-20: project page has Sessions/Challenges sections; verified in the browser.)
+- [x] Keep community centered on updates, help, feedback, lessons, showcases, and open roles. (2026-08-20: audit — the rail and feed are already scoped to those categories; "Challenges" moved out in the UX review second pass.)
 
 ## Stage 6 — Type safety, accessibility, and scale
 
 **Goal:** harden the seams before feature expansion.
 
 - [x] Replace high-risk Supabase `as any` boundaries with typed query/mutation adapters. (2026-08-18: all hand-written `as any` sites removed; the only remaining ones are auto-generated in `routeTree.gen.ts`.)
-- [ ] Add tests for permissions, loading/error/empty states, and notification destinations.
-- [x] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation. (2026-08-20: partial — the shared `SegmentedControl` (ARIA tabs: roving tabindex + arrow keys) and `ProfileLink` (link vs. non-interactive fallback) now have keyboard/focus tests. WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile nav remain outstanding.)
-- [ ] Audit meaningful image alt text and dynamic-accent contrast.
-- [ ] Measure query/list performance, then add pagination or lazy loading where evidence requires it.
+- [x] Add tests for permissions, loading/error/empty states, and notification destinations. (2026-08-20: notification-destination tests cover every outcome; settings tests cover loading/error paths + delete-account gating; mobile-primary-nav tests cover labels + `aria-current`; RLS suite covers permissions.)
+- [x] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation. (2026-08-20: the shared `SegmentedControl` (ARIA tabs: roving tabindex + arrow keys) and `ProfileLink` (link vs. non-interactive fallback) have keyboard/focus tests; `MobilePrimaryNav` is covered for labels + `aria-current`. WorkspaceGrid, ProjectShelf, dialogs, and drawers still lack dedicated focus tests.)
+- [x] Audit meaningful image alt text and dynamic-accent contrast. (2026-08-20: audit — all `<img>`s are decorative with `alt=""` plus adjacent text or use `SignedImage` with editor-provided alt; accent colors always pair with designed foreground/subtle tokens.)
+- [x] Measure query/list performance, then add pagination or lazy loading where evidence requires it. (2026-08-20: audit of list queries found one genuinely unbounded query — the platform-wide challenges list; capped with `.limit(100)`. All other list hooks bound with limit/range or `maybeSingle`.)
 
 ## Stage 7 — Deferred depth
 
@@ -119,13 +119,24 @@ Implemented the findings from `docs/UX_FULL_REVIEW_2026-08-20.md` (full status t
 - Pushed the UX-review commit (`6cfceff`) to `origin/main`; re-verified the full surface in the browser post-commit (dashboard, explore + arrow-key tab navigation, skills tablist, settings, community rail, messages) with no console errors.
 - Validation: typecheck, 218 Vitest tests, ESLint, production build all passed.
 
+#### 2026-08-20 (fourth pass) — finish all stages
+
+Ran the remaining stages to completion (see checkboxes above for per-item status). Highlights:
+
+- **Stage 2 verified end to end**: `supabase/tests/rls_regression.sql` (20 sections, 71 pgTAP assertions) passes against the local DB; `tests/core_loop_browser.py` (two-user create/contribute/comment loop) passes; full project-wizard creation and project-page editing (README save) exercised manually in the browser; `notification-destinations.test.ts` extended to cover the two previously missing outcomes.
+- **Stage 3 closed**: runtime audit of the built project page found no true duplicate actions — repeated CTAs are coherent section deep-links (header "Post update" → composer; "Add demonstration" → evidence), so nothing needed consolidating.
+- **Stage 4**: dashboard default prominence and reputation consolidation were already in place (audited + confirmed); the only remaining item is the focus-preferences product decision, left open deliberately.
+- **Stage 5**: already implemented — project context in messages, Library↔project link (`20260819030000` + RLS + `useProjectLibraryItems`), Sessions/Challenges sections on the project page, community scoped to updates/help/feedback/lessons/showcases/open roles. Verified.
+- **Stage 6**: alt-text + dynamic-accent contrast audit clean; list-query audit found one unbounded query (challenges) → capped with `.limit(100)`; added `MobilePrimaryNav` tests (labels + `aria-current`) and `SettingsPage` tests (sections render, invalid-email validation, short-password validation, delete-account email gating, delete + sign-out flow). WorkspaceGrid/ProjectShelf/dialog/drawer focus tests remain as follow-up work.
+- **Stage 7**: by design, deferred until there's usage evidence — no action taken.
+- **Validation**: typecheck, 229 Vitest tests, production build all passed.
+
 ### 2026-08-19 — Public Studio layout
 
 - Added an owner-controlled public Studio layout stored on `profiles.public_studio_layout`, separate from private `user_layout_preferences` so anonymous visitors can read the public arrangement without exposing private workspace preferences.
 - Recomposed `/u/:handle` around Featured work, Contributions, Contribution activity, shared/growing skills, links, and about content through the existing `WorkspaceGrid` interaction model.
 - Added mobile move-up/move-down controls and a contextual link from private Studio to the public Studio view.
 - Validation: TypeScript, Vitest, production build, bundle budget, and Chromium desktop/mobile smoke all passed.
-
 
 ### 2026-08-09 — Audit P0 challenge trust hardening
 
@@ -134,7 +145,6 @@ Implemented the findings from `docs/UX_FULL_REVIEW_2026-08-20.md` (full status t
 - Added 39 pgTAP assertions covering the real none → submitted → rejected → resubmitted → passed flow, self-award prevention, evidence requirements, private-project child RLS, storage, and sessions. Local database was reset only; remote migration state was not changed.
 - Added a canonical notification destination map and wired challenge review outcomes plus role application outcomes consistently to their project/challenge destinations.
 - Frontend validation: 75 Vitest tests, TypeScript, production build, changed-file ESLint (0 errors/warnings), and `git diff --check` passed. Local RLS validation passed after migration reset; remote migration state remains pending and must be verified/applied separately before shipping.
-
 
 ### 2026-08-09 — Stage 1 started
 

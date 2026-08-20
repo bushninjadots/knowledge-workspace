@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
-function SettingsPage() {
+export function SettingsPage() {
   const navigate = useNavigate();
   const { data: authUser } = useAuthUser();
   const prefs = useNotificationPreferences();

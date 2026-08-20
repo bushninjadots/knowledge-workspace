@@ -42,6 +42,20 @@ describe("notification destinations", () => {
     });
   });
 
+  it("routes team invites to the crew when the slug is attached", () => {
+    expect(
+      getNotificationDestination(
+        notification("team_invite", { metadata: { team_slug: "my-crew" } }),
+      ),
+    ).toEqual({ to: "/teams/$slug", params: { slug: "my-crew" } });
+  });
+
+  it("routes project recognition back to the project", () => {
+    expect(
+      getNotificationDestination(notification("project_recognition", { entity_id: "project-1" })),
+    ).toEqual({ to: "/projects/$id", params: { id: "project-1" } });
+  });
+
   it("covers every declared notification type", () => {
     const types: NotificationType[] = [
       "message",
@@ -56,6 +70,8 @@ describe("notification destinations", () => {
       "project_invite",
       "project_join",
       "project_post",
+      "project_recognition",
+      "team_invite",
       "role_application_accepted",
       "role_application_declined",
       "follow",
