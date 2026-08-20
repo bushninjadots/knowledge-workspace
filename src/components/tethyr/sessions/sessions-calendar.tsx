@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Video, MapPin, Plus } from "lucide-react";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
+import { getUserTimezone, formatTimezone } from "@/lib/timezones";
 
 type CalendarView = "day" | "week" | "month" | "agenda";
 
@@ -399,15 +400,18 @@ function AgendaView({
 
 export function SessionsCalendar({
   sessions,
+  timezone: tzProp,
   onSessionClick,
   onScheduleClick,
 }: {
   sessions: SessionWithParticipants[];
+  timezone?: string;
   onSessionClick: (s: SessionWithParticipants) => void;
   onScheduleClick?: () => void;
 }) {
   const [view, setView] = useState<CalendarView>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const timezone = tzProp || getUserTimezone();
 
   const navigate = useCallback(
     (direction: number) => {
@@ -449,6 +453,9 @@ export function SessionsCalendar({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-bold text-foreground">{titleText}</h2>
+          <span className="text-xs text-muted-foreground">
+            {formatTimezone(timezone)}
+          </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigate(-1)}

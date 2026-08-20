@@ -727,14 +727,18 @@ export function useSetSessionAvailability() {
   const userId = me?.userId;
 
   return useMutation({
-    mutationFn: async (
+    mutationFn: async ({
+      slots,
+      timezone,
+    }: {
       slots: {
         day_of_week: number;
         start_time: string;
         end_time: string;
         status: "available" | "unavailable" | "tentative";
-      }[],
-    ) => {
+      }[];
+      timezone: string;
+    }) => {
       if (!userId) throw new Error("Not authenticated");
 
       const { error: delError } = await sb
@@ -749,7 +753,7 @@ export function useSetSessionAvailability() {
           slots.map((s) => ({
             ...s,
             profile_id: userId,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezone,
           })),
         );
 

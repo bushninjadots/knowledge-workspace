@@ -8,9 +8,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import type { useSessionAvailability } from "@/hooks/use-sessions";
 import { useSetSessionAvailability } from "@/hooks/use-sessions";
+import { TIMEZONES, getUserTimezone, formatTimezone } from "@/lib/timezones";
 
 type Availability = NonNullable<Awaited<ReturnType<typeof useSessionAvailability>>["data"]>[number];
 
@@ -45,6 +53,10 @@ function AvailabilityEditorDialog({
       status: a.status as SlotInput["status"],
     })),
   );
+  const [timezone, setTimezone] = useState(() => {
+    const fromDb = availability[0]?.timezone;
+    return (fromDb as string) || getUserTimezone();
+  });
   const setAvailability = useSetSessionAvailability();
 
   const addSlot = (day: number) => {
@@ -72,7 +84,7 @@ function AvailabilityEditorDialog({
       toast.error("Fix overlapping slots before saving");
       return;
     }
-    setAvailability.mutate(slots, {
+    setAvailability.mutate({ slots, timezone }, {
       onSuccess: () => {
         toast.success("Availability saved");
         setOpen(false);
@@ -93,6 +105,21 @@ function AvailabilityEditorDialog({
         <DialogHeader>
           <DialogTitle>Edit Weekly Availability</DialogTitle>
         </DialogHeader>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Timezone:</span>
+          <Select value={timezone} onValueChange={setTimezone}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEZONES.map((tz) => (
+                <SelectItem key={tz} value={tz}>
+                  {formatTimezone(tz)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid grid-cols-7 gap-2">
           {DAYS.map((label, dayIdx) => (
             <div key={dayIdx} className="space-y-1">
