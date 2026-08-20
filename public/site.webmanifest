@@ -1,0 +1,13 @@
+{
+  "name": "Tethyr",
+  "short_name": "Tethyr",
+  "description": "Connected by what you know",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/favicon.ico", "sizes": "any" }
+  ]
+}
