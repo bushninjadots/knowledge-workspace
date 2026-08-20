@@ -2,7 +2,7 @@ import { Home, Users, HandHeart, Bookmark, Menu, Plus } from "lucide-react";
 import type { CommunityNavId } from "./left-sidebar";
 
 const MOBILE_NAV = [
-  { id: "home" as CommunityNavId, label: "Home", icon: Home },
+  { id: "home" as CommunityNavId, label: "Home feed", icon: Home },
   { id: "communities" as CommunityNavId, label: "Communities", icon: Users },
   { id: "help" as CommunityNavId, label: "Help", icon: HandHeart },
   { id: "saved" as CommunityNavId, label: "Saved", icon: Bookmark },

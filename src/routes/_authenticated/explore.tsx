@@ -1,6 +1,7 @@
 // Creative Studios — discover projects, creators, and open opportunities.
-import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import {
   Compass,
@@ -136,6 +137,9 @@ type NeedRow = {
 };
 
 export const Route = createFileRoute("/_authenticated/explore")({
+  validateSearch: z.object({
+    tab: z.enum(["projects", "creators", "opportunities"]).optional(),
+  }).parse,
   head: () => {
     const base = seoMeta({
       path: "/explore",
@@ -195,6 +199,8 @@ function IntentButton({
 }
 
 function ExplorePage() {
+  const navigate = useNavigate();
+  const { tab: urlTab } = useSearch({ from: "/_authenticated/explore" });
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
   function loadOppFilters() {
@@ -215,7 +221,16 @@ function ExplorePage() {
   }
 
   const savedOpp = loadOppFilters();
-  const [tab, setTab] = useState<Tab>("projects");
+  // The active view is URL-driven (?tab=creators) so deep links like the
+  // footer's “Discover people” land on the People view, and the back button
+  // moves between views.
+  const tab: Tab = urlTab ?? "projects";
+  const setTab = useCallback(
+    (next: Tab) => {
+      navigate({ to: "/explore", search: next === "projects" ? {} : { tab: next }, replace: true });
+    },
+    [navigate],
+  );
   const [intent, setIntent] = useState<ExploreIntent>(null);
   const [q, setQ] = useState((savedOpp.q as string) ?? "");
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");

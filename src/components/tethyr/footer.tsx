@@ -99,6 +99,7 @@ export function Footer() {
                   <li>
                     <Link
                       to="/explore"
+                      search={{ tab: "creators" }}
                       className="text-muted-foreground transition-colors hover:text-foreground"
                     >
                       Discover people

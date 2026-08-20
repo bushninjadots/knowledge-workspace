@@ -16,27 +16,27 @@ production build. The notification-preferences migration
 log in [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md)
 for the full change list.
 
-| Finding | Status |
-| --- | --- |
-| H1 — Space reports duplicated | ✅ Resolved — Settings links to the Reports inbox; embedded queue + ban/dismiss dialogs removed |
-| H2 — Activity card routes to wrong page | ✅ Resolved — routes to `/connections`; browser-verified with a real incoming request |
-| H3 — Back fallback hits auth wall | ✅ Resolved — public pages fall back to `/` |
-| H4 — Dead profile action buttons | ✅ Resolved — unreachable `!isOwnProfile` branch removed |
-| H5 — No settings surface | ✅ Resolved — new `/settings` hub: email change, password, delete account, notification prefs |
-| M1 — Availability overlap | ✅ Resolved — one status control (sidebar); dashboard duplicate removed; weekly schedule renamed |
-| M2 — Notification overlap + no prefs | ✅ Resolved — disjoint categories; per-category mute prefs (persisted, browser-verified) |
-| M3 — Duplicate community nav | ✅ Resolved — "Profile" removed; "Projects" relabeled "Project updates"; "Challenges" removed from the rail (app sidebar owns it; deep link stays valid); "Trending" kept — it's a community-feed sort, not a duplicate destination |
-| M4 — Handle-less profile links | ✅ Resolved — `ProfileLink` guard on all 7 sites |
-| M5 — Conversation dead end | ✅ Resolved — link only for accepted connections, deep-links `?c=`; browser-verified |
-| M6 — "Your projects" misdirect | ✅ Resolved — "View all" → `/profile` |
-| M7 — Sessions requests buried | ✅ Resolved — URL-driven tabs (`?tab=requests`) + deep links; browser-verified |
-| M8 — Search misses participant sessions | ✅ Resolved — participant sessions included, de-duped against organized |
-| L1 — Label inconsistency | ✅ Resolved — mobile nav matches the sidebar (Dashboard / Your Studio); "Teams I build with" → "Crews I build with" |
-| L2 — Duplicate completeness nag | ✅ Resolved — welcome-header ring removed; the next-steps module is the single dashboard completeness surface (browser-verified) |
-| L3 — Header style inconsistency | ✅ Resolved — page titles unified; shared `SegmentedControl` extracted and adopted by Explore + skills tabs; challenges filters kept as chips (a different pattern — tags stay `rounded-full` per the radius scale) |
-| L4 — Footer auth awareness | ✅ Resolved — auth-aware links (hidden auth-only links for visitors) |
-| L5 — Empty-state CTAs | 🟡 Partial — Messages CTAs added; Connections divider untouched |
-| L6 — Search shortcut hint | ✅ Resolved — `title="Search (press /)"` tooltip |
+| Finding                                 | Status                                                                                                                                                                                                                              |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| H1 — Space reports duplicated           | ✅ Resolved — Settings links to the Reports inbox; embedded queue + ban/dismiss dialogs removed                                                                                                                                     |
+| H2 — Activity card routes to wrong page | ✅ Resolved — routes to `/connections`; browser-verified with a real incoming request                                                                                                                                               |
+| H3 — Back fallback hits auth wall       | ✅ Resolved — public pages fall back to `/`                                                                                                                                                                                         |
+| H4 — Dead profile action buttons        | ✅ Resolved — unreachable `!isOwnProfile` branch removed                                                                                                                                                                            |
+| H5 — No settings surface                | ✅ Resolved — new `/settings` hub: email change, password, delete account, notification prefs                                                                                                                                       |
+| M1 — Availability overlap               | ✅ Resolved — one status control (sidebar); dashboard duplicate removed; weekly schedule renamed                                                                                                                                    |
+| M2 — Notification overlap + no prefs    | ✅ Resolved — disjoint categories; per-category mute prefs (persisted, browser-verified)                                                                                                                                            |
+| M3 — Duplicate community nav            | ✅ Resolved — "Profile" removed; "Projects" relabeled "Project updates"; "Challenges" removed from the rail (app sidebar owns it; deep link stays valid); "Trending" kept — it's a community-feed sort, not a duplicate destination |
+| M4 — Handle-less profile links          | ✅ Resolved — `ProfileLink` guard on all 7 sites                                                                                                                                                                                    |
+| M5 — Conversation dead end              | ✅ Resolved — link only for accepted connections, deep-links `?c=`; browser-verified                                                                                                                                                |
+| M6 — "Your projects" misdirect          | ✅ Resolved — "View all" → `/profile`                                                                                                                                                                                               |
+| M7 — Sessions requests buried           | ✅ Resolved — URL-driven tabs (`?tab=requests`) + deep links; browser-verified                                                                                                                                                      |
+| M8 — Search misses participant sessions | ✅ Resolved — participant sessions included, de-duped against organized                                                                                                                                                             |
+| L1 — Label inconsistency                | ✅ Resolved — mobile nav matches the sidebar (Dashboard / Your Studio); "Teams I build with" → "Crews I build with"                                                                                                                 |
+| L2 — Duplicate completeness nag         | ✅ Resolved — welcome-header ring removed; the next-steps module is the single dashboard completeness surface (browser-verified)                                                                                                    |
+| L3 — Header style inconsistency         | ✅ Resolved — page titles unified; shared `SegmentedControl` extracted and adopted by Explore + skills tabs; challenges filters kept as chips (a different pattern — tags stay `rounded-full` per the radius scale)                 |
+| L4 — Footer auth awareness              | ✅ Resolved — auth-aware links (hidden auth-only links for visitors)                                                                                                                                                                |
+| L5 — Empty-state CTAs                   | 🟡 Partial — Messages CTAs added; Connections divider untouched                                                                                                                                                                     |
+| L6 — Search shortcut hint               | ✅ Resolved — `title="Search (press /)"` tooltip                                                                                                                                                                                    |
 
 ## Executive summary
 
@@ -117,7 +117,7 @@ in `/connections` ("Requests waiting for you").
 `u.$handle.tsx`, `projects.$id.tsx`, and `teams.$slug.tsx` all use:
 
 ```ts
-window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" })
+window.history.length > 1 ? window.history.back() : navigate({ to: "/explore" });
 ```
 
 `/explore` is under `/_authenticated`, so a signed-out visitor who lands
@@ -218,7 +218,7 @@ page adds its own left rail with its own groups (Feed / Post types / Discover /
 You). That means **Challenges, Trending, Projects, Profile** appear both in the
 app sidebar and inside the community rail, and "You → Profile" inside
 community duplicates "Your Studio" in the sidebar. Mobile users get the app
-bottom nav *and* a community mobile bottom nav on top.
+bottom nav _and_ a community mobile bottom nav on top.
 
 - **Recommendation:** decide one owner for cross-cutting destinations
   (Challenges = app-level, keep in sidebar; community rail = community-only
@@ -260,7 +260,7 @@ connection exists) — the public profile doesn't.
 > ✅ **Resolved 2026-08-20** — "Your projects → View all" now points at `/profile`.
 
 Dashboard "Your projects" module links "View all" to `/explore` — but Explore
-shows the whole network, not *your* projects. Your projects are in `/profile`
+shows the whole network, not _your_ projects. Your projects are in `/profile`
 (Projects tab) and the Library. Similarly the "Applications" module deep-links
 to `/projects/$id?tab=people` which is correct, but "View all" (projects) has no
 "my projects" surface.
@@ -375,3 +375,28 @@ tooltip.
 
 Nothing here requires new top-level features — the loop already exists. The
 work is consolidation, correct routing, and one missing settings surface.
+
+---
+
+## Second audit pass — 2026-08-20 (post-resolution sweep)
+
+Re-audited routing, navigation labels, deep-link targets, and empty/CTA flows
+after all original findings were resolved. Findings:
+
+- **A1 (fixed) — Explore views not URL-driven.** `/explore` held its view in
+  local state, so the footer's "Discover people" link (and any other deep
+  link) always landed on the Projects view, and the back button couldn't
+  move between views. Explore now mirrors the Sessions pattern: `?tab=`
+  (`projects` | `creators` | `opportunities`) is the single source of truth;
+  the footer "Discover people" link deep-links `?tab=creators`. Verified in
+  the browser: direct load, tab clicks, and URL updates in both directions.
+- **A2 (fixed) — Mobile community nav label drift.** The community mobile
+  bottom nav read "Home" while the desktop rail reads "Home feed" for the
+  same destination. Aligned to "Home feed" (fits at 390px; verified).
+- **Checked clean**: notification → destination map covers every type with
+  permission-safe fallbacks; sidebar/footer/mobile-primary-nav label sets
+  agree (Dashboard / Your Studio / Crews); sessions tabs URL-driven with
+  consistent labels; password-reset flow sends a link (no dead page);
+  profile workspace grid carries the projects module the dashboard's
+  "View all" points at; no `href="#"`, placeholder buttons, or console
+  spam in app code; community feed nav ids (saved/following) still wired.
