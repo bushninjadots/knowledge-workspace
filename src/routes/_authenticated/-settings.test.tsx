@@ -42,6 +42,13 @@ vi.mock("@/hooks/use-notification-preferences", () => prefs);
 
 vi.mock("@/hooks/use-current-user", () => ({
   useAuthUser: () => ({ data: { id: "user-1", email: "test@tethyr.com" } }),
+  useCurrentUser: () => ({
+    data: {
+      userId: "user-1",
+      profile: { id: "user-1" },
+    },
+    refresh: vi.fn(),
+  }),
 }));
 
 vi.mock("@tanstack/react-router", () => ({

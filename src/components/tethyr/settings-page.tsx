@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthUser } from "@/hooks/use-current-user";
+import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { CATEGORY_LABELS, ALL_CATEGORIES } from "@/lib/notification-categories";
 import { deleteAccount } from "@/lib/account-server";
@@ -40,15 +40,19 @@ import {
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_DEFAULT_STRENGTH,
+  hasAppearanceSettings,
   type CardBorderPreference,
   type AccentMode,
   type ContentDensity,
+  type ProfileBackground,
 } from "@/lib/background-themes";
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { data: authUser } = useAuthUser();
+  const { data: me, refresh: refreshUser } = useCurrentUser();
   const prefs = useNotificationPreferences();
+  const bg = (me?.profile as Record<string, unknown> | null)?.background as ProfileBackground | null | undefined;
 
   const [newPassword, setNewPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -60,15 +64,19 @@ export function SettingsPage() {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  const [bgMode, setBgMode] = useState<"color" | "pattern" | "gradient">("color");
-  const [selectedTint, setSelectedTint] = useState("sky");
-  const [selectedPattern, setSelectedPattern] = useState("dots");
-  const [selectedGradient, setSelectedGradient] = useState("tethyr");
-  const [strength, setStrength] = useState(BACKGROUND_DEFAULT_STRENGTH);
-  const [cardBorders, setCardBorders] = useState<CardBorderPreference>("neutral");
-  const [accentMode, setAccentMode] = useState<AccentMode>("dynamic");
-  const [customAccent, setCustomAccent] = useState("#38bdf8");
-  const [density, setDensity] = useState<ContentDensity>("comfortable");
+  // Appearance — seeded from the user's current background on mount
+  const [bgMode, setBgMode] = useState<"color" | "pattern" | "gradient">(
+    bg?.mode === "pattern" ? "pattern" : bg?.mode === "gradient" ? "gradient" : "color",
+  );
+  const [selectedTint, setSelectedTint] = useState(bg?.color ?? "sky");
+  const [selectedPattern, setSelectedPattern] = useState(bg?.pattern ?? "dots");
+  const [selectedGradient, setSelectedGradient] = useState(bg?.gradient ?? "tethyr");
+  const [strength, setStrength] = useState(bg?.strength ?? BACKGROUND_DEFAULT_STRENGTH);
+  const [cardBorders, setCardBorders] = useState<CardBorderPreference>(bg?.cardBorders ?? "neutral");
+  const [accentMode, setAccentMode] = useState<AccentMode>(bg?.accentMode ?? "dynamic");
+  const [customAccent, setCustomAccent] = useState(bg?.accentColor ?? "#38bdf8");
+  const [density, setDensity] = useState<ContentDensity>(bg?.density ?? "comfortable");
+  const [savingAppearance, setSavingAppearance] = useState(false);
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -129,6 +137,31 @@ export function SettingsPage() {
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/login" });
+  }
+
+  async function saveAppearance() {
+    if (!me?.userId) return;
+    setSavingAppearance(true);
+    const payload: ProfileBackground = {
+      mode: bgMode,
+      color: selectedTint,
+      pattern: selectedPattern,
+      gradient: selectedGradient,
+      image_url: bg?.image_url ?? null,
+      strength,
+      cardBorders,
+      accentMode,
+      accentColor: accentMode === "custom" ? customAccent : null,
+      density,
+    };
+    const { error } = await supabase
+      .from("profiles")
+      .update({ background: hasAppearanceSettings(payload) ? payload : null })
+      .eq("id", me.userId);
+    setSavingAppearance(false);
+    if (error) return toast.error(friendlyError(error));
+    toast.success("Appearance saved");
+    refreshUser();
   }
 
   return (
@@ -414,6 +447,15 @@ export function SettingsPage() {
                   ))}
                 </div>
               </div>
+
+              <Button onClick={saveAppearance} disabled={savingAppearance} className="w-full">
+                {savingAppearance ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                Save appearance
+              </Button>
             </div>
           </section>
 
