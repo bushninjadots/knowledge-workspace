@@ -16,7 +16,6 @@ import {
   Twitch,
   Palette,
   Pencil,
-  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -222,10 +221,6 @@ export function ProfileLayout({
                         <Palette className="mr-2 h-3.5 w-3.5" />
                         Change appearance
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setCustomizing(true)}>
-                        <GripVertical className="mr-2 h-3.5 w-3.5" />
-                        Arrange Studio
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -298,7 +293,6 @@ export function ProfileLayout({
           }))}
           learningGoals={profile?.learning_goals}
           availability={profile?.availability}
-          canEdit={isOwnProfile}
         />
 
         {/* STUDIO WORKSPACE + SIDEBAR */}

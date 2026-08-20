@@ -223,7 +223,7 @@ export function PostCard({
 
   return (
     <article
-      className={`card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
+      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-all duration-200 ${TYPE_BORDER[post.type]} ${
         autoDimmed
           ? "opacity-70 saturate-50"
           : highlighted
@@ -233,7 +233,7 @@ export function PostCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-green text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -251,7 +251,7 @@ export function PostCard({
               </HoverCardTrigger>
               <HoverCardContent className="w-64" side="top">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-green text-sm font-semibold text-background">
                     {initial}
                   </div>
                   <div className="min-w-0">
@@ -492,8 +492,9 @@ export function PostCard({
               height="400"
               loading="lazy"
               decoding="async"
-              className="w-full rounded-xl border border-border/60 object-cover"
-              style={{ maxHeight: post.images!.length === 1 ? "20rem" : "10rem" }}
+              className={`w-full rounded-lg border border-border/60 object-cover ${
+                post.images!.length === 1 ? "aspect-video" : "aspect-square"
+              }`}
             />
           ))}
         </div>
@@ -918,7 +919,7 @@ function CommentNode({
       }`}
     >
       <div className="flex items-start gap-2.5">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-green/80 text-[11px] font-semibold text-background">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-green/80 text-[11px] font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">

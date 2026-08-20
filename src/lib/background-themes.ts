@@ -183,7 +183,7 @@ export function emptyBackground(): ProfileBackground {
     gradient: null,
     image_url: null,
     strength: BACKGROUND_DEFAULT_STRENGTH,
-    cardBorders: "accent",
+    cardBorders: "neutral",
     accentMode: "dynamic",
     accentColor: null,
     density: "comfortable",
@@ -194,7 +194,7 @@ export function hasAppearanceSettings(background: ProfileBackground | null | und
   return (
     !!background &&
     (background.mode != null ||
-      (background.cardBorders != null && background.cardBorders !== "accent") ||
+      (background.cardBorders != null && background.cardBorders !== "neutral") ||
       (background.accentMode === "custom" && !!background.accentColor) ||
       background.density === "compact")
   );
@@ -204,7 +204,7 @@ export function hasAppearanceSettings(background: ProfileBackground | null | und
 export function appearanceStyle(background: ProfileBackground | null | undefined): CSSProperties {
   if (!background) return {};
   const style = {} as CSSProperties & Record<string, string>;
-  const cardBorders = background.cardBorders ?? "accent";
+  const cardBorders = background.cardBorders ?? "neutral";
   style["--card-border-color"] =
     cardBorders === "none"
       ? "transparent"

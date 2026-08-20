@@ -172,7 +172,7 @@
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
-  --card-border-color: var(--user-accent-border, var(--border));
+  --card-border-color: var(--border);
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
 }
@@ -246,7 +246,7 @@
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
-  --card-border-color: var(--user-accent-border, var(--border));
+  --card-border-color: var(--border);
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
 }
@@ -407,7 +407,7 @@
   background-repeat: repeat;
   background-size: 256px 256px;
   opacity: 0.5;
-  z-index: 0;
+  z-index: -1;
 }
 
 @utility inner-glow {
