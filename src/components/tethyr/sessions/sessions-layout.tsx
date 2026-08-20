@@ -59,7 +59,7 @@ export function SessionsLayout() {
   const { data: upcomingSessions = [] } = useUpcomingSessions();
   const { data: requests = [] } = useSessionRequests();
   const { data: historySessions = [], isLoading: historyLoading } = useSessionHistory();
-  const { data: availability = [] } = useSessionAvailability();
+  const { data: availability = [], refetch: refetchAvailability } = useSessionAvailability();
 
   const pendingCount = requests.filter((r) => r.status === "pending" && r.to_user_id).length;
 
@@ -147,7 +147,9 @@ export function SessionsLayout() {
 
           {activeTab === "requests" && <SessionRequests requests={requests} />}
 
-          {activeTab === "availability" && <AvailabilitySettings availability={availability} />}
+          {activeTab === "availability" && (
+            <AvailabilitySettings availability={availability} onSaved={refetchAvailability} />
+          )}
         </div>
       </ScrollArea>
 

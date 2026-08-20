@@ -161,7 +161,13 @@ function AvailabilityEditorDialog({
   );
 }
 
-export function AvailabilitySettings({ availability }: { availability: Availability[] }) {
+export function AvailabilitySettings({
+  availability,
+  onSaved,
+}: {
+  availability: Availability[];
+  onSaved?: () => void;
+}) {
   if (availability.length === 0) {
     return (
       <div className="space-y-6">
@@ -173,7 +179,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
           <p className="mt-1 text-xs text-muted-foreground">
             Configure your weekly availability so others can schedule sessions with you.
           </p>
-          <AvailabilityEditorDialog availability={availability} onSaved={() => {}} />
+          <AvailabilityEditorDialog availability={availability} onSaved={() => onSaved?.()} />
         </div>
 
         <div className="space-y-3">
@@ -207,7 +213,7 @@ export function AvailabilitySettings({ availability }: { availability: Availabil
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Weekly Schedule</h3>
-          <AvailabilityEditorDialog availability={availability} onSaved={() => {}} />
+          <AvailabilityEditorDialog availability={availability} onSaved={() => onSaved?.()} />
         </div>
         <div className="grid grid-cols-7 gap-2">
           {DAYS.map((day, idx) => {
