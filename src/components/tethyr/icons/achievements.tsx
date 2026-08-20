@@ -182,12 +182,12 @@ export function IconCrewFounder(props: IconProps) {
 export function IconTeamPlayer(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
-      <circle cx="6" cy="8" r="2.5" />
-      <path d="M1 21V18C1 16 2.5 14.5 4 14.5H8C9.5 14.5 11 16 11 18V21" />
-      <circle cx="12" cy="6" r="3" />
-      <path d="M7 21V18C7 15.5 9 13.5 12 13.5C15 13.5 17 15.5 17 18V21" />
-      <circle cx="18" cy="8" r="2.5" />
-      <path d="M16 21V18C16 16 17.5 14.5 19 14.5H22C23.5 14.5 25 16 25 18V21" />
+      <circle cx="5" cy="8" r="2" />
+      <path d="M1 21V18C1 16.5 2 15 3.5 15H6.5C8 15 9 16.5 9 18V21" />
+      <circle cx="12" cy="6" r="2.5" />
+      <path d="M7 21V18C7 16 9 14.5 12 14.5C15 14.5 17 16 17 18V21" />
+      <circle cx="19" cy="8" r="2" />
+      <path d="M15 21V18C15 16.5 16 15 17.5 15H20.5C22 15 23 16.5 23 18V21" />
     </svg>
   );
 }
