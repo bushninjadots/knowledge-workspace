@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { WorkspaceGrid } from "./workspace-grid";
-import type { WorkspaceModule } from "@/lib/workspace-layouts";
+import type { WorkspaceLayoutPreset, WorkspaceModule } from "@/lib/workspace-layouts";
 import { Sparkles } from "lucide-react";
 
 vi.mock("@/hooks/use-mobile", () => ({
@@ -41,6 +41,15 @@ const activityDefinition: WorkspaceModule = {
   icon: Sparkles,
   defaultW: 12,
   defaultH: 4,
+};
+
+const creativePreset: WorkspaceLayoutPreset = {
+  id: "work-first",
+  label: "Work first",
+  description: "Lead with your work.",
+  items: [{ i: "projects", x: 0, y: 0, w: 12, h: 4 }],
+  hidden: [],
+  pinned: ["projects"],
 };
 
 function renderGrid(
@@ -99,6 +108,19 @@ describe("WorkspaceGrid module chrome ownership", () => {
 
     expect(screen.getByText("Project body")).toBeInTheDocument();
     expect(screen.getAllByText("Projects")).toHaveLength(1);
+  });
+
+  it("exposes quick creative arrangements without entering edit mode", () => {
+    renderGrid({
+      canCustomize: true,
+      showCustomizeBar: false,
+      showPresetPicker: true,
+      layoutPresets: [creativePreset],
+    });
+
+    expect(screen.getByLabelText("Creative arrangements")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Work first" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Arrange sections" })).toBeInTheDocument();
   });
 
   it("provides direct navigation to visible workspace sections", () => {

@@ -54,6 +54,8 @@ type Props = {
   renderModule: (id: string) => React.ReactNode;
   /** Whether the current user is allowed to customize (own dashboard/profile). */
   canCustomize: boolean;
+  /** Optional controlled customize state for page-owned edit controls. */
+  customizing?: boolean;
   /** Start in customize mode immediately (for parent-triggered customize). */
   defaultCustomizing?: boolean;
   /** Extra class on the grid wrapper. */
@@ -64,6 +66,8 @@ type Props = {
   showModuleTitles?: boolean;
   /** Hide the built-in toolbar when the page renders its own toolbar. */
   showCustomizeBar?: boolean;
+  /** Show quick, persistent creative arrangement choices in normal mode. */
+  showPresetPicker?: boolean;
   /** Apply dashboard-only migrations for modules intentionally moved out of the grid. */
   migrateRetiredModules?: boolean;
   /** Optional public/profile-owned storage adapter instead of private layout prefs. */
@@ -87,11 +91,13 @@ export function WorkspaceGrid({
   modules,
   renderModule,
   canCustomize,
+  customizing: controlledCustomizing,
   defaultCustomizing,
   className,
   onCustomizingChange,
   showModuleTitles = true,
   showCustomizeBar = true,
+  showPresetPicker = false,
   migrateRetiredModules = false,
   layoutStorage,
   layoutPresets = [],
@@ -106,13 +112,14 @@ export function WorkspaceGrid({
 
   const defaultItems = useMemo(() => stackDefault(modules), [modules]);
 
-  const [customizing, setCustomizingState] = useState(defaultCustomizing ?? false);
+  const [internalCustomizing, setInternalCustomizing] = useState(defaultCustomizing ?? false);
+  const customizing = controlledCustomizing ?? internalCustomizing;
   const setCustomizing = useCallback(
     (value: boolean) => {
-      setCustomizingState(value);
+      if (controlledCustomizing === undefined) setInternalCustomizing(value);
       onCustomizingChange?.(value);
     },
-    [onCustomizingChange],
+    [controlledCustomizing, onCustomizingChange],
   );
   const [items, setItems] = useState<LayoutItem[]>(
     () => mergeLayout(modules, null, [], [], defaultItems, migrateRetiredModules).items,
@@ -477,26 +484,45 @@ export function WorkspaceGrid({
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="section-label">Make it yours</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Choose which {workspaceLabel} sections people see first.
-                </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="section-label">Make it yours</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Choose which {workspaceLabel} sections people see first.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 text-muted-foreground"
+                  onClick={() => setCustomizing(true)}
+                >
+                  <GripVertical className="mr-1.5 h-3.5 w-3.5" />
+                  Customize
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 text-muted-foreground"
-                onClick={() => setCustomizing(true)}
-              >
-                <GripVertical className="mr-1.5 h-3.5 w-3.5" />
-                Customize
-              </Button>
+              {showPresetPicker && layoutPresets.length > 0 && (
+                <PresetPicker layoutPresets={layoutPresets} onSelect={applyPreset} />
+              )}
             </div>
           )}
         </div>
       )}
+
+      {canCustomize &&
+        !showCustomizeBar &&
+        !customizing &&
+        showPresetPicker &&
+        layoutPresets.length > 0 && (
+          <div className="mb-5 border-y border-border/60 py-3">
+            <PresetPicker
+              layoutPresets={layoutPresets}
+              onSelect={applyPreset}
+              onArrange={() => setCustomizing(true)}
+            />
+          </div>
+        )}
 
       {showSectionNav && sectionModules.length > 1 && (
         <nav
@@ -583,6 +609,46 @@ export function WorkspaceGrid({
  * Module shell — chrome shown only in customize mode; body is always the
  * module's own content (which carries its own card styling).
  * ------------------------------------------------------------------------- */
+
+function PresetPicker({
+  layoutPresets,
+  onSelect,
+  onArrange,
+}: {
+  layoutPresets: WorkspaceLayoutPreset[];
+  onSelect: (preset: WorkspaceLayoutPreset) => void;
+  onArrange?: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2" aria-label="Creative arrangements">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        Creative arrangement
+      </span>
+      {layoutPresets.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          title={preset.description}
+          onClick={() => onSelect(preset)}
+          className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+        >
+          {preset.label}
+        </button>
+      ))}
+      {onArrange && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="ml-auto text-xs text-muted-foreground"
+          onClick={onArrange}
+        >
+          Arrange sections
+        </Button>
+      )}
+    </div>
+  );
+}
 
 function ModuleShell({
   module,

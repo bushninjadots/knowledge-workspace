@@ -4,9 +4,11 @@ import { describe, expect, it } from "vitest";
 import {
   mergeLayout,
   DASHBOARD_LAYOUT_PRESETS,
+  DASHBOARD_MODULES,
   PROFILE_LAYOUT_PRESETS,
   PUBLIC_STUDIO_MODULES,
   PUBLIC_STUDIO_PRESETS,
+  stackDefault,
   type WorkspaceModule,
 } from "./workspace-layouts";
 
@@ -26,6 +28,22 @@ const modules: WorkspaceModule[] = [
     defaultH: 10,
   },
 ];
+
+describe("dashboard hierarchy", () => {
+  it("packs work, collaboration, discovery, and evidence into intentional rows", () => {
+    const layout = stackDefault(DASHBOARD_MODULES);
+    expect(layout.slice(0, 2).map(({ i, x, y }) => ({ i, x, y }))).toEqual([
+      { i: "projects", x: 0, y: 0 },
+      { i: "applications", x: 8, y: 0 },
+    ]);
+    expect(layout.slice(2, 4).map(({ i, x, y }) => ({ i, x, y }))).toEqual([
+      { i: "challenges", x: 0, y: 10 },
+      { i: "connections", x: 6, y: 10 },
+    ]);
+    expect(layout.slice(4, 7).every(({ y }) => y === 19)).toBe(true);
+    expect(layout[7]).toMatchObject({ i: "activity", x: 0, y: 29, w: 12 });
+  });
+});
 
 describe("public Studio layout", () => {
   it("exposes a stable work-first set of public sections", () => {

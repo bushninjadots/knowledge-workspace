@@ -471,10 +471,12 @@ function ProjectPage() {
             />
           </section>
 
+          <ProjectSectionNav />
+
           {/* Files + activity live right under the README so the workspace tools
               (upload files, see what changed) are reachable without scrolling
               past the whole story. */}
-          <div role="group" aria-label="Project files and activity" className="mt-10">
+          <div role="group" aria-label="Project files and activity" className="mt-6">
             <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
           </div>
 
@@ -513,8 +515,9 @@ function ProjectPage() {
               progress, and up next. (Milestones previously had no home on the
               page; they only surfaced as completed events in Activity.) */}
           <section
+            id="project-current-work"
             aria-labelledby="project-current-work-heading"
-            className="mt-10 border-t border-border/60 pt-8"
+            className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
           >
             <div>
               <h2
@@ -723,9 +726,11 @@ function ProjectPage() {
           </section>
 
           {/* Evidence */}
-          <Suspense fallback={<Skeleton className="h-24" />}>
-            <ProjectCredits projectId={id} />
-          </Suspense>
+          <section id="project-evidence" className="scroll-mt-24">
+            <Suspense fallback={<Skeleton className="h-24" />}>
+              <ProjectCredits projectId={id} />
+            </Suspense>
+          </section>
         </div>
       </div>
 
@@ -766,6 +771,33 @@ function ProjectPage() {
         </Suspense>
       )}
     </Shell>
+  );
+}
+
+function ProjectSectionNav() {
+  const sections = [
+    { id: "project-homepage-heading", label: "Overview" },
+    { id: "project-current-work", label: "Work" },
+    { id: "project-people", label: "People" },
+    { id: "project-discussions", label: "Conversation" },
+    { id: "project-evidence", label: "Evidence" },
+  ];
+
+  return (
+    <nav aria-label="Project sections" className="mt-6 border-y border-border/60 py-3">
+      <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
+        <span className="section-label shrink-0">Jump to</span>
+        {sections.map((section) => (
+          <a
+            key={section.id}
+            href={`#${section.id}`}
+            className="shrink-0 text-sm text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
+          >
+            {section.label}
+          </a>
+        ))}
+      </div>
+    </nav>
   );
 }
 

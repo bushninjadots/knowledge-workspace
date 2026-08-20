@@ -375,6 +375,7 @@ export function PublicStudioWorkspace({
         layoutStorage={layoutStorage}
         layoutPresets={PUBLIC_STUDIO_PRESETS}
         showModuleTitles={false}
+        showPresetPicker={canCustomize}
         showSectionNav
         workspaceLabel="public Studio"
         renderModule={renderModule}

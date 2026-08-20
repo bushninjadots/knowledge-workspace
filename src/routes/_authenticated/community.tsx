@@ -147,30 +147,32 @@ function CommunityPage() {
       <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
         <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
 
-        <CommunityFeed
-          nav={nav}
-          onNavChange={setNav}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          activeSpace={activeSpace ?? undefined}
-          spacePosts={spacePosts}
-          composerPresetType={composerPresetType}
-          focusComposer={focusComposer}
-          deepLinkedPostId={deepLinkedPostId}
-          onBackSpace={closeSpace}
-          onOpenTrending={openTrending}
-          onOpenSpace={openSpace}
-        />
+        <div className="min-w-0 flex-1">
+          <MobileBottomNav
+            active={nav}
+            onSelect={setNav}
+            onPost={focusComposer}
+            onOpenSidebar={openSidebar}
+            position="top"
+          />
+          <CommunityFeed
+            nav={nav}
+            onNavChange={setNav}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            activeSpace={activeSpace ?? undefined}
+            spacePosts={spacePosts}
+            composerPresetType={composerPresetType}
+            focusComposer={focusComposer}
+            deepLinkedPostId={deepLinkedPostId}
+            onBackSpace={closeSpace}
+            onOpenTrending={openTrending}
+            onOpenSpace={openSpace}
+          />
+        </div>
 
         <CommunityRightSidebar />
       </div>
-
-      <MobileBottomNav
-        active={nav}
-        onSelect={setNav}
-        onPost={focusComposer}
-        onOpenSidebar={openSidebar}
-      />
 
       <Drawer open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <DrawerContent className="max-h-[85vh]">

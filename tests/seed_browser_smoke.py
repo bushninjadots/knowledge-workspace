@@ -85,6 +85,30 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001
                 failures.append((name, str(exc)[:120]))
 
+        # Responsive navigation regression: mobile pages must expose their own
+        # feature navigation without adding a second fixed global bar.
+        mobile = page.context.new_page(viewport={"width": 390, "height": 844})
+        try:
+            mobile.goto(f"{BASE_URL}/community", wait_until="domcontentloaded", timeout=30000)
+            mobile.wait_for_timeout(2500)
+            community_nav = mobile.locator('nav[aria-label="Community navigation"]')
+            if community_nav.count() != 1 or not community_nav.first.is_visible():
+                failures.append(("mobile-community-nav", "expected one visible community-local navigation"))
+
+            mobile.goto(f"{BASE_URL}/sessions", wait_until="domcontentloaded", timeout=30000)
+            mobile.wait_for_timeout(2500)
+            if not mobile.get_by_role("button", name="Calendar", exact=True).is_visible():
+                failures.append(("mobile-sessions-nav", "session tabs are not reachable on mobile"))
+
+            mobile.goto(f"{BASE_URL}/library", wait_until="domcontentloaded", timeout=30000)
+            mobile.wait_for_timeout(2500)
+            if not mobile.get_by_role("button", name="Browse library", exact=True).is_visible():
+                failures.append(("mobile-library-nav", "library browse control is not reachable on mobile"))
+        except Exception as exc:  # noqa: BLE001
+            failures.append(("mobile-navigation", str(exc)[:120]))
+        finally:
+            mobile.close()
+
         # Crew creation (interactive): form a crew on the studio and confirm it
         # lands on the new team page with the creator seated as lead.
         crew_name = f"Crew {int(time.time() * 1000) % 1000000}"

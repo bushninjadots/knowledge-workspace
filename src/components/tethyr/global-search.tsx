@@ -22,7 +22,7 @@ type ProfileHit = {
   category: string | null;
   creator_title: string | null;
 };
-type SkillHit = { id: string; name: string; category: string };
+type SkillHit = { id: string; slug: string; name: string; category: string };
 type ProjectHit = { id: string; title: string; description: string | null; tags: string[] };
 type LibraryHit = { id: string; title: string; content: string; type: string };
 type PostHit = { id: string; title: string; body: string; type: string };
@@ -42,11 +42,13 @@ export function GlobalSearch({
   className,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  enableGlobalShortcut = variant === "dialog",
 }: {
   variant?: "inline" | "dialog";
   className?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  enableGlobalShortcut?: boolean;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -70,17 +72,23 @@ export function GlobalSearch({
   }, [variant, setOpen]);
 
   useEffect(() => {
-    if (variant !== "inline") return;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) {
-        e.preventDefault();
-        inputRef.current?.focus();
-        setOpen(true);
-      }
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target && (["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable);
+      if (typing) return;
+
+      const commandSearch = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      const slashSearch = variant === "inline" && e.key === "/";
+      if (!((enableGlobalShortcut && commandSearch) || slashSearch)) return;
+
+      e.preventDefault();
+      setOpen(true);
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [variant, setOpen]);
+  }, [enableGlobalShortcut, setOpen, variant]);
 
   function escapeForOr(value: string): string {
     return value.replace(/[,%()\\|]/g, (c) => `\\${c}`);
@@ -112,7 +120,7 @@ export function GlobalSearch({
     queryFn: async (): Promise<SkillHit[]> => {
       const { data, error } = await supabase
         .from("skills")
-        .select("id, name, category")
+        .select("id, slug, name, category")
         .ilike("name", like)
         .limit(4);
       if (error) throw error;
@@ -254,9 +262,9 @@ export function GlobalSearch({
   type SearchRoute =
     | { to: "/u/$handle"; params: { handle: string } }
     | { to: "/skills/$slug"; params: { slug: string } }
-    | { to: "/explore" }
+    | { to: "/projects/$id"; params: { id: string } }
     | { to: "/library/$id"; params: { id: string } }
-    | { to: "/community" }
+    | { to: "/community"; search: { post: string } }
     | { to: "/sessions/$id"; params: { id: string } };
 
   function activateItem(index: number) {
@@ -267,19 +275,18 @@ export function GlobalSearch({
       ...skillHits.map((h) => ({
         to: () => ({
           to: "/skills/$slug" as const,
-          params: {
-            slug: h.name
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/(^-|-$)/g, ""),
-          },
+          params: { slug: h.slug ?? h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
         }),
       })),
-      ...projectHits.map(() => ({ to: () => ({ to: "/explore" as const }) })),
+      ...projectHits.map((h) => ({
+        to: () => ({ to: "/projects/$id" as const, params: { id: h.id } }),
+      })),
       ...libraryHits.map((h) => ({
         to: () => ({ to: "/library/$id" as const, params: { id: h.id } }),
       })),
-      ...postHits.map(() => ({ to: () => ({ to: "/community" as const }) })),
+      ...postHits.map((p) => ({
+        to: () => ({ to: "/community" as const, search: { post: p.id } }),
+      })),
       ...sessionHits.map((h) => ({
         to: () => ({ to: "/sessions/$id" as const, params: { id: h.id } }),
       })),
@@ -481,7 +488,7 @@ export function GlobalSearch({
     return items;
   }
 
-  const resultsExpanded = open && enabled && totalResults() > 0;
+  const resultsExpanded = open && enabled;
   const activeDescendant = selectedIndex >= 0 ? `${resultsId}-opt-${selectedIndex}` : undefined;
   const listboxId = `${resultsId}-listbox`;
   const comboboxProps = {

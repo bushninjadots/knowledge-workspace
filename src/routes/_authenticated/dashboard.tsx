@@ -385,24 +385,8 @@ function DashboardContent({
 
         case "welcome":
           return (
-            <div className="relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 sm:p-8">
-              {data?.bannerSigned && (
-                <div className="pointer-events-none absolute inset-0">
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.08] saturate-50"
-                    style={{ backgroundImage: `url(${data?.bannerSigned})` }}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-background/60 via-transparent to-background/80" />
-                </div>
-              )}
-              <div
-                className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl"
-                style={{
-                  background:
-                    "radial-gradient(circle, var(--user-accent-subtle, var(--brand-purple)), transparent 60%)",
-                }}
-              />
-              <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div className="rounded-xl bg-surface-elevated/30 p-6 sm:p-8">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -415,9 +399,7 @@ function DashboardContent({
                   </div>
                   <h1 className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
                     Hey {firstName},{" "}
-                    <span className="bg-gradient-to-r from-[var(--user-accent,var(--trust))] to-[var(--ai)] bg-clip-text text-transparent">
-                      what's next?
-                    </span>
+                    <span className="text-[var(--user-accent,var(--trust))]">what's next?</span>
                   </h1>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -675,18 +657,18 @@ function DashboardContent({
             Your next move
           </h2>
           {renderModule("welcome")}
+          {renderModule("today")}
           <FirstSessionOnboarding data={data} />
           {renderModule("next-steps")}
-          {renderModule("today")}
         </section>
 
         <section aria-labelledby="dashboard-modules-heading" className="space-y-4">
           <div>
             <h2 id="dashboard-modules-heading" className="font-display text-lg font-semibold">
-              Your workspace
+              Build and discover
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Keep the tools and signals you use to build, connect, and contribute close at hand.
+              Your active work, collaboration signals, discovery, and contribution evidence.
             </p>
           </div>
           <WorkspaceGrid
@@ -696,6 +678,7 @@ function DashboardContent({
             layoutPresets={DASHBOARD_LAYOUT_PRESETS}
             canCustomize={true}
             showModuleTitles={false}
+            showPresetPicker
             renderModule={renderModule}
             migrateRetiredModules
           />

@@ -15,6 +15,8 @@ import {
   Instagram,
   Twitch,
   Palette,
+  Pencil,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -42,6 +44,12 @@ import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ProfileBackground } from "@/lib/background-themes";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
@@ -140,7 +148,7 @@ export function ProfileLayout({
                   className="h-full w-full object-cover object-center"
                 />
               ) : (
-                <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
+                <div className="h-full w-full bg-[var(--user-accent-subtle,var(--surface-elevated))]" />
               )}
             </div>
           )}
@@ -163,7 +171,7 @@ export function ProfileLayout({
                     }
                   }}
                 >
-                  <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
+                  <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                     <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                   </div>
                   <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105">
@@ -171,7 +179,7 @@ export function ProfileLayout({
                   </button>
                 </DragDropFileInput>
               ) : (
-                <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
+                <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                   <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                 </div>
               )}
@@ -195,38 +203,28 @@ export function ProfileLayout({
                   <p className="text-sm text-muted-foreground">@{profile?.handle ?? "—"}</p>
                 </div>
                 {isOwnProfile && (
-                  <div className="ml-auto flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground"
-                      onClick={() => setBgOpen(true)}
-                    >
-                      <Palette className="mr-1.5 h-4 w-4" />
-                      Background
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                      onClick={() => setEditOpen(true)}
-                      aria-label="Edit identity"
-                    >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                        />
-                      </svg>
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="shrink-0">
+                        <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                        Edit Studio
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-48">
+                      <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                        <Pencil className="mr-2 h-3.5 w-3.5" />
+                        Edit identity
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setBgOpen(true)}>
+                        <Palette className="mr-2 h-3.5 w-3.5" />
+                        Change appearance
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setCustomizing(true)}>
+                        <GripVertical className="mr-2 h-3.5 w-3.5" />
+                        Arrange Studio
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
 
@@ -301,6 +299,25 @@ export function ProfileLayout({
         />
 
         {/* STUDIO WORKSPACE + SIDEBAR */}
+        <div className="flex items-start justify-between gap-4 border-b border-border/60 pb-4">
+          <div>
+            <p className="section-label">Your Studio</p>
+            <h2 className="mt-1 font-display text-lg font-semibold">
+              Work that makes you recognizable
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Put the projects, skills, and contributions you want people to remember within reach.
+            </p>
+          </div>
+          {isOwnProfile && profile?.handle && (
+            <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
+              <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                View public Studio
+              </Link>
+            </Button>
+          )}
+        </div>
+
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
             {customizing && isOwnProfile && (
@@ -321,16 +338,6 @@ export function ProfileLayout({
               </div>
             )}
 
-            <div className="mb-4 flex justify-end">
-              {isOwnProfile && profile?.handle && (
-                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-                  <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                    View public Studio
-                  </Link>
-                </Button>
-              )}
-            </div>
-
             <WorkspaceGrid
               page="profile"
               userId={userId}
@@ -339,8 +346,11 @@ export function ProfileLayout({
               canCustomize={isOwnProfile}
               defaultCustomizing={customizing}
               showModuleTitles={false}
+              showCustomizeBar={false}
+              showPresetPicker
               showSectionNav
               workspaceLabel="Studio"
+              customizing={customizing}
               onCustomizingChange={setCustomizing}
               renderModule={(id) => tabContent[id as Tab] ?? null}
             />

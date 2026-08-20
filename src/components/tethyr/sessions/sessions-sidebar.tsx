@@ -67,14 +67,25 @@ export function SessionsSidebar({
   activeTab,
   onTabChange,
   pendingCount,
+  orientation = "vertical",
 }: {
   activeTab: SessionsTab;
   onTabChange: (tab: SessionsTab) => void;
   pendingCount: number;
+  orientation?: "vertical" | "horizontal";
 }) {
   return (
-    <nav aria-label="Sessions navigation" className="flex flex-col gap-1">
-      <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+    <nav
+      aria-label="Sessions navigation"
+      className={
+        orientation === "horizontal" ? "flex min-w-max items-center gap-1" : "flex flex-col gap-1"
+      }
+    >
+      <p
+        className={`${
+          orientation === "horizontal" ? "sr-only" : "mb-2 px-3"
+        } text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground`}
+      >
         Sessions
       </p>
       {tabs.map((tab) => {
@@ -84,7 +95,7 @@ export function SessionsSidebar({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
+            className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
               isActive
                 ? "bg-surface-elevated text-foreground shadow-soft"
                 : "text-muted-foreground hover:bg-surface/60 hover:text-foreground"

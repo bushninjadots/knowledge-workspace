@@ -68,6 +68,16 @@ export function SessionsLayout() {
 
       {/* Main Content */}
       <ScrollArea className="flex-1">
+        <div className="border-b border-border/60 bg-surface/30 px-2 py-2 lg:hidden">
+          <div className="overflow-x-auto">
+            <SessionsSidebar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              pendingCount={pendingCount}
+              orientation="horizontal"
+            />
+          </div>
+        </div>
         <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="flex items-center justify-between">
