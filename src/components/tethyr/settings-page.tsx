@@ -11,6 +11,7 @@ import {
   Check,
   AlertTriangle,
   Loader2,
+  Paintbrush,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,25 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ThemeToggle } from "@/components/tethyr/theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser } from "@/hooks/use-current-user";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { CATEGORY_LABELS, ALL_CATEGORIES } from "@/lib/notification-categories";
 import { deleteAccount } from "@/lib/account-server";
 import { friendlyError } from "@/lib/error-message";
+import {
+  BACKGROUND_COLORS,
+  BACKGROUND_PATTERNS,
+  BACKGROUND_GRADIENTS,
+  clampStrength,
+  BACKGROUND_MIN_STRENGTH,
+  BACKGROUND_MAX_STRENGTH,
+  BACKGROUND_DEFAULT_STRENGTH,
+  type CardBorderPreference,
+  type AccentMode,
+  type ContentDensity,
+} from "@/lib/background-themes";
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -45,6 +59,16 @@ export function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  const [bgMode, setBgMode] = useState<"color" | "pattern" | "gradient">("color");
+  const [selectedTint, setSelectedTint] = useState("sky");
+  const [selectedPattern, setSelectedPattern] = useState("dots");
+  const [selectedGradient, setSelectedGradient] = useState("tethyr");
+  const [strength, setStrength] = useState(BACKGROUND_DEFAULT_STRENGTH);
+  const [cardBorders, setCardBorders] = useState<CardBorderPreference>("neutral");
+  const [accentMode, setAccentMode] = useState<AccentMode>("dynamic");
+  const [customAccent, setCustomAccent] = useState("#38bdf8");
+  const [density, setDensity] = useState<ContentDensity>("comfortable");
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -196,6 +220,200 @@ export function SettingsPage() {
                   </Button>
                 </div>
               </form>
+            </div>
+          </section>
+
+          {/* Appearance */}
+          <section className="rounded-lg border border-border bg-card p-5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Paintbrush className="h-4 w-4 text-muted-foreground" />
+              Appearance
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Customize how Tethyr looks and feels.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              {/* Theme */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Theme</p>
+                  <p className="text-sm text-muted-foreground">Light, dark, or system</p>
+                </div>
+                <ThemeToggle variant="icon" />
+              </div>
+
+              {/* Background Mode */}
+              <div className="space-y-2">
+                <p className="font-medium">Background</p>
+                <div className="flex gap-1">
+                  {(["color", "pattern", "gradient"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setBgMode(mode)}
+                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
+                        bgMode === mode
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface text-muted-foreground hover:bg-surface/80"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+
+                {bgMode === "color" && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {BACKGROUND_COLORS.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedTint(c.id)}
+                        aria-label={c.label}
+                        className={`h-7 w-7 rounded-full border-2 transition ${
+                          selectedTint === c.id
+                            ? "border-primary scale-110"
+                            : "border-transparent hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: c.color }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {bgMode === "pattern" && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {BACKGROUND_PATTERNS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPattern(p.id)}
+                        className={`rounded-md px-3 py-1.5 text-sm transition ${
+                          selectedPattern === p.id
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-surface text-muted-foreground hover:bg-surface/80"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {bgMode === "gradient" && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {BACKGROUND_GRADIENTS.map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={() => setSelectedGradient(g.id)}
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition ${
+                          selectedGradient === g.id
+                            ? "border-primary scale-110"
+                            : "border-transparent hover:scale-105"
+                        }`}
+                        style={{
+                          background: `linear-gradient(135deg, ${g.from}, ${g.to})`,
+                        }}
+                        aria-label={g.label}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Strength slider */}
+                <div className="flex items-center gap-3 pt-1">
+                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
+                    Strength
+                  </Label>
+                  <input
+                    type="range"
+                    min={BACKGROUND_MIN_STRENGTH}
+                    max={BACKGROUND_MAX_STRENGTH}
+                    value={strength}
+                    onChange={(e) => setStrength(clampStrength(Number(e.target.value)))}
+                    className="flex-1 accent-primary"
+                  />
+                  <span className="w-8 text-right text-xs text-muted-foreground">{strength}</span>
+                </div>
+              </div>
+
+              {/* Accent Color */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Accent Color</p>
+                  <p className="text-sm text-muted-foreground">
+                    {accentMode === "dynamic" ? "Follows your banner" : "Custom accent"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={customAccent}
+                    onChange={(e) => setCustomAccent(e.target.value)}
+                    disabled={accentMode === "dynamic"}
+                    className="h-7 w-7 cursor-pointer rounded-md border border-border disabled:opacity-40"
+                  />
+                  <div className="flex gap-1">
+                    {(["dynamic", "custom"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setAccentMode(mode)}
+                        className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
+                          accentMode === mode
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-surface text-muted-foreground hover:bg-surface/80"
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Density */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Density</p>
+                  <p className="text-sm text-muted-foreground">Spacing between elements</p>
+                </div>
+                <div className="flex gap-1">
+                  {(["comfortable", "compact"] as const).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDensity(d)}
+                      className={`rounded-md px-3 py-1.5 text-sm transition ${
+                        density === d
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface text-muted-foreground hover:bg-surface/80"
+                      }`}
+                    >
+                      {d === "comfortable" ? "Comfortable" : "Compact"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card Borders */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Card Borders</p>
+                  <p className="text-sm text-muted-foreground">How card edges are styled</p>
+                </div>
+                <div className="flex gap-1">
+                  {(["neutral", "accent", "none"] as const).map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setCardBorders(b)}
+                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
+                        cardBorders === b
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface text-muted-foreground hover:bg-surface/80"
+                      }`}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
