@@ -1,30 +1,8 @@
 // Achievements — auto-awarded badges displayed on profiles.
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Award,
-  Rocket,
-  Flag,
-  ThumbsUp,
-  Star,
-  Shield,
-  GraduationCap,
-  Users,
-  BookOpen,
-  Hammer,
-  MessageCircle,
-  Clock,
-  Heart,
-  Compass,
-  Trophy,
-  Target,
-  HeartHandshake,
-  MessageSquare,
-  BadgeCheck,
-  Calendar,
-  Presentation,
-  Flame,
-} from "lucide-react";
+import { Award, Star } from "lucide-react";
+import { ACHIEVEMENT_ICONS } from "./icons/achievements";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,33 +11,8 @@ import { useSetFavoriteAchievement } from "@/hooks/use-current-user";
 import { burstConfetti } from "@/lib/confetti";
 import { EmptyState } from "./empty-state";
 
-const ICONS: Record<string, typeof Award> = {
-  Rocket,
-  Flag,
-  ThumbsUp,
-  Star,
-  Shield,
-  GraduationCap,
-  Users,
-  BookOpen,
-  Hammer,
-  MessageCircle,
-  Clock,
-  Heart,
-  Compass,
-  Trophy,
-  Target,
-  HeartHandshake,
-  MessageSquare,
-  BadgeCheck,
-  Calendar,
-  Presentation,
-  Flame,
-  Award,
-};
-
 function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm" | "md" }) {
-  const Icon = ICONS[def.icon] ?? Award;
+  const Icon = ACHIEVEMENT_ICONS[def.type] ?? (() => <Award className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />);
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full ${def.color} ${
