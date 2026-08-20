@@ -19,7 +19,7 @@ export function Footer() {
             Active community
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-8 md:gap-12">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-3 md:gap-12">
           {isAuthed && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
@@ -107,6 +107,29 @@ export function Footer() {
                   </li>
                 </>
               )}
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+              Legal
+            </h3>
+            <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link
+                  to="/privacy"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Terms of Service
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

@@ -241,8 +241,15 @@ function SignupPage() {
         <Button type="submit" variant="default" className="w-full" disabled={loading}>
           {loading ? "Creating..." : "Create my profile"}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          Let's build with respect and keep Tethyr a place where creators thrive.
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Let's build with respect and keep Tethyr a place where creators thrive.{" "}
+          <Link to="/terms" className="underline hover:text-foreground">
+            Terms of Service
+          </Link>{" "}
+          ·{" "}
+          <Link to="/privacy" className="underline hover:text-foreground">
+            Privacy Policy
+          </Link>
         </p>
       </form>
     </AuthShell>
