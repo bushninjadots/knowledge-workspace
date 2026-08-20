@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ProjectDetail, GalleryItem, ResourceItem } from "@/hooks/use-projects";
+import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 import { useUpdateProjectReadme, useUpdateProjectContent } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
 import { fetchRepoReadmeServer } from "@/lib/github-server";
@@ -48,11 +49,13 @@ export function ProjectReadmeTab({
   skills,
   projectFiles,
   isOwner,
+  presentationPreset = "story-first",
 }: {
   project: ProjectDetail;
   skills: SkillLite[];
   projectFiles: ProjectFile[];
   isOwner: boolean;
+  presentationPreset?: ProjectPresentationPreset;
 }) {
   const updateReadme = useUpdateProjectReadme();
   const updateContent = useUpdateProjectContent();
@@ -212,10 +215,32 @@ export function ProjectReadmeTab({
     return { words, chars, warning: words > 400 };
   }, [draft]);
 
+  const mediaSection = (
+    <div
+      id="project-demonstrations"
+      className="content-safe min-w-0 max-w-full scroll-mt-32 space-y-8"
+    >
+      <GallerySection
+        gallery={(project.gallery ?? []) as GalleryItem[]}
+        onUpdate={async (items) => saveContent({ gallery: items })}
+        isOwner={isOwner}
+        projectId={project.id}
+      />
+      <ResourcesSection
+        resources={(project.resources ?? []) as ResourceItem[]}
+        onUpdate={async (items) => saveContent({ resources: items })}
+        isOwner={isOwner}
+      />
+      <ProjectLibrarySection projectId={project.id} isOwner={isOwner} />
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="content-safe min-w-0 max-w-full space-y-8">
+      {presentationPreset === "demo-first" && mediaSection}
+
       {/* README document */}
-      <section className="rounded-xl border card-border bg-surface">
+      <section className="content-safe min-w-0 max-w-full rounded-xl border card-border bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -390,7 +415,7 @@ export function ProjectReadmeTab({
 
       {/* Live repo README preview — import-on-demand, never auto-saves */}
       {preview && !editing && (
-        <section className="rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface">
+        <section className="content-safe min-w-0 max-w-full rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
             <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
               <Eye className="h-4 w-4 text-muted-foreground" />
@@ -532,20 +557,7 @@ export function ProjectReadmeTab({
       )}
 
       {/* Media + resources */}
-      <div className="space-y-8">
-        <GallerySection
-          gallery={(project.gallery ?? []) as GalleryItem[]}
-          onUpdate={async (items) => saveContent({ gallery: items })}
-          isOwner={isOwner}
-          projectId={project.id}
-        />
-        <ResourcesSection
-          resources={(project.resources ?? []) as ResourceItem[]}
-          onUpdate={async (items) => saveContent({ resources: items })}
-          isOwner={isOwner}
-        />
-        <ProjectLibrarySection projectId={project.id} isOwner={isOwner} />
-      </div>
+      {presentationPreset !== "demo-first" && mediaSection}
     </div>
   );
 }

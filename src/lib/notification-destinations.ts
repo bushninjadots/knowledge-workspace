@@ -51,6 +51,7 @@ export function getNotificationDestination(
     case "project_invite":
     case "project_join":
     case "project_post":
+    case "project_recognition":
       return entity_id ? { to: "/projects/$id", params: { id: entity_id } } : { to: "/explore" };
     case "team_invite": {
       const slug = typeof metadata.team_slug === "string" ? metadata.team_slug : null;

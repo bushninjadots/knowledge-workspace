@@ -6,6 +6,7 @@ import { ApplyToRoleButton } from "./project-role-applications";
 interface ProjectJoinModalProps {
   open: boolean;
   projectId: string;
+  projectTitle?: string;
   openRoles: OpenRoleRow[];
   meId: string | null;
   /** Role to spotlight + scroll to when the modal opens (from a sidebar Apply). */
@@ -16,6 +17,7 @@ interface ProjectJoinModalProps {
 export function ProjectJoinModal({
   open,
   projectId,
+  projectTitle,
   openRoles,
   meId,
   focusRoleId,
@@ -64,9 +66,12 @@ export function ProjectJoinModal({
           <X className="h-4 w-4" />
         </button>
 
-        <h2 className="font-display text-lg font-semibold">Join this project</h2>
+        <h2 className="font-display text-lg font-semibold">
+          Join {projectTitle || "this project"}
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pick a role below to send an application to the creator.
+          Pick a role below to send an application. Your application will stay connected to this
+          project.
         </p>
 
         {openRoles.length > 0 ? (

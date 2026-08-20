@@ -8,7 +8,11 @@ import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
-import { backgroundImagePublicUrl, type ProfileBackground } from "@/lib/background-themes";
+import {
+  appearanceStyle,
+  backgroundImagePublicUrl,
+  type ProfileBackground,
+} from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -24,6 +28,7 @@ import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
 import { usePublicStudioLayout } from "@/hooks/use-public-studio-layout";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
+import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 
 type PublicProfile = {
   id: string;
@@ -50,6 +55,7 @@ type PublicProfile = {
   availability: string | null;
   background?: ProfileBackground | null;
   public_background?: ProfileBackground | null;
+  evidence_shelf: EvidenceShelfItem[];
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
@@ -107,7 +113,7 @@ function PublicProfileRoute() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability, background, public_background",
+          "id, handle, display_name, creator_title, bio, avatar_url, banner_url, banner_caption, country, timezone, languages, category, years_experience, portfolio_links, social_links, favourite_tools, software_stack, teaching_style, learning_goals, reputation_score, favorite_achievement, availability, background, public_background, evidence_shelf",
         )
         .eq("handle", handle)
         .maybeSingle();
@@ -215,7 +221,14 @@ function PublicProfileRoute() {
         // Keep the public Studio useful if contribution data is unavailable.
       }
 
-      const profileRow = profile as PublicProfile;
+      const profileRow = {
+        ...(profile as PublicProfile),
+        evidence_shelf: Array.isArray((profile as { evidence_shelf?: unknown }).evidence_shelf)
+          ? (
+              (profile as unknown as { evidence_shelf: EvidenceShelfItem[] }).evidence_shelf ?? []
+            ).slice(0, 6)
+          : [],
+      } as PublicProfile;
       // The public Studio prefers its own backdrop and falls back to the app one.
       const publicBg = (profileRow.public_background ?? profileRow.background) as
         ProfileBackground | null | undefined;
@@ -464,12 +477,18 @@ function Shell({
   backgroundImageUrl?: string | null;
 }) {
   const navigate = useNavigate();
-  const accentStyle = accentColor
-    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
-    : undefined;
+  const accentStyle = {
+    ...(accentColor
+      ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+      : {}),
+    ...appearanceStyle(background),
+  };
 
   return (
-    <div className="relative isolate min-h-screen" style={accentStyle}>
+    <div
+      className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
+      style={accentStyle}
+    >
       <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
         <button

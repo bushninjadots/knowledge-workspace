@@ -7,10 +7,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  fetchRepoCommits,
   fetchRepoMeta,
   fetchRepoReadme,
   fetchUserRepos,
   validateGitHubToken,
+  type GithubCommitLite,
   type GithubRepoLite,
   type RepoMeta,
   type RepoReadmeResult,
@@ -115,6 +117,86 @@ export const fetchRepoReadmeServer = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<RepoReadmeResult> => {
     const token = await getStoredToken(context.userId);
     return fetchRepoReadme(data.fullName, token ?? undefined);
+  });
+
+/**
+ * Pull recent GitHub commits into the project's public evidence timeline.
+ * This is owner-authenticated, idempotent by commit SHA, and never exposes
+ * the stored token to the client. A commit is evidence of repository activity,
+ * not a replacement for a human-written project update.
+ */
+export const syncGithubProjectActivity = createServerFn({ method: "POST" })
+  .validator((d: { projectId: string }) => ({ projectId: d.projectId.trim() }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: project } = await supabaseAdmin
+      .from("projects")
+      .select("id, profile_id, title")
+      .eq("id", data.projectId)
+      .maybeSingle();
+    if (!project || project.profile_id !== context.userId) {
+      throw new Error("Only the project owner can sync GitHub activity");
+    }
+
+    const { data: repos } = await supabaseAdmin
+      .from("project_repositories")
+      .select("id, url, provider, metadata")
+      .eq("project_id", data.projectId)
+      .eq("provider", "github")
+      .limit(5);
+    if (!repos?.length) return { added: 0, checked: 0 };
+
+    const token = await getStoredToken(context.userId);
+    let checked = 0;
+    let added = 0;
+    for (const repo of repos) {
+      const fullName =
+        (repo.metadata as { full_name?: string } | null)?.full_name ??
+        repo.url
+          .replace(/^https?:\/\/(www\.)?github\.com\//, "")
+          .replace(/\/$/, "")
+          .replace(/\.git$/, "");
+      const commits: GithubCommitLite[] = await fetchRepoCommits(fullName, token ?? undefined);
+      checked += commits.length;
+      const { data: existing } = await supabaseAdmin
+        .from("project_activity")
+        .select("metadata")
+        .eq("project_id", data.projectId)
+        .eq("kind", "github_commit")
+        .limit(100);
+      const existingShas = new Set(
+        (existing ?? [])
+          .map((row) => (row.metadata as { external_id?: string } | null)?.external_id)
+          .filter((sha): sha is string => !!sha),
+      );
+      const fresh = commits.filter((commit) => !existingShas.has(commit.sha));
+      if (!fresh.length) continue;
+      const { error } = await supabaseAdmin.from("project_activity").insert(
+        fresh.map((commit) => ({
+          project_id: data.projectId,
+          // The commit may belong to a GitHub contributor who has not linked
+          // that identity to Tethyr. Keep the event unattributed locally and
+          // render the external author from metadata instead of crediting the
+          // project owner by accident.
+          actor_id: null,
+          kind: "github_commit",
+          title: commit.message,
+          body: `Commit ${commit.sha.slice(0, 7)} by ${commit.author_login ?? commit.author_name ?? "a repository contributor"}.`,
+          metadata: {
+            external_id: commit.sha,
+            provider: "github",
+            repository: fullName,
+            url: commit.html_url,
+            author_login: commit.author_login,
+            author_name: commit.author_name,
+          },
+          created_at: commit.committed_at,
+        })),
+      );
+      if (!error) added += fresh.length;
+    }
+    return { added, checked };
   });
 
 /** Fetch repo metadata on the server, using the stored token when present. */

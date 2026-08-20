@@ -4,6 +4,7 @@ import {
   getRepoFullName,
   fetchRepoReadme,
   fetchRepoMeta,
+  fetchRepoCommits,
   validateGitHubToken,
   githubTokenErrorMessage,
 } from "./github";
@@ -223,6 +224,40 @@ describe("fetchRepoMeta", () => {
       throw new TypeError("network down");
     });
     expect(await fetchRepoMeta("owner", "repo")).toBeNull();
+  });
+});
+
+describe("fetchRepoCommits", () => {
+  it("maps commit activity into concise evidence records", async () => {
+    const fetch = mockFetch(async () =>
+      Response.json([
+        {
+          sha: "abcdef1234567890",
+          html_url: "https://github.com/owner/repo/commit/abcdef1",
+          commit: {
+            message: "Ship the new flow\\n\\nDetails",
+            author: { name: "A Builder", date: "2026-08-20T10:00:00Z" },
+          },
+          author: { login: "builder" },
+        },
+      ]),
+    );
+    await expect(fetchRepoCommits("owner/repo")).resolves.toEqual([
+      {
+        sha: "abcdef1234567890",
+        message: "Ship the new flow",
+        html_url: "https://github.com/owner/repo/commit/abcdef1",
+        committed_at: "2026-08-20T10:00:00Z",
+        author_login: "builder",
+        author_name: "A Builder",
+      },
+    ]);
+    expect(String(fetch.mock.calls[0][0])).toContain("repos/owner/repo/commits");
+  });
+
+  it("returns an empty list for an unavailable repository", async () => {
+    mockFetch(async () => new Response("nope", { status: 404 }));
+    await expect(fetchRepoCommits("owner/missing")).resolves.toEqual([]);
   });
 });
 

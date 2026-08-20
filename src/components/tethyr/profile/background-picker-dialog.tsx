@@ -21,11 +21,13 @@ import {
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
+  appearanceStyle,
   backgroundImagePublicUrl,
   backgroundStyle,
   clampStrength,
   emptyBackground,
   gradientBackgroundImage,
+  hasAppearanceSettings,
   imageOpacityFor,
   type ProfileBackground,
 } from "@/lib/background-themes";
@@ -86,7 +88,10 @@ export function BackgroundPickerDialog({
   );
 
   const previewStyle = useMemo(() => {
-    const style = backgroundStyle(activeDraft, draftImageUrl);
+    const style = {
+      ...appearanceStyle(activeDraft),
+      ...backgroundStyle(activeDraft, draftImageUrl),
+    };
     // Mirror the real layer's dimming so the preview shows exactly what ships.
     return activeDraft.mode === "image"
       ? { ...style, opacity: imageOpacityFor(activeDraft.strength), filter: "saturate(0.9)" }
@@ -124,8 +129,8 @@ export function BackgroundPickerDialog({
 
   async function save() {
     setSaving(true);
-    const appPayload = appDraft.mode ? appDraft : null;
-    const publicPayload = publicSeparate && publicDraft.mode ? publicDraft : null;
+    const appPayload = hasAppearanceSettings(appDraft) ? appDraft : null;
+    const publicPayload = publicSeparate && hasAppearanceSettings(publicDraft) ? publicDraft : null;
     const { error } = await supabase
       .from("profiles")
       .update({ background: appPayload, public_background: publicPayload })
@@ -137,7 +142,8 @@ export function BackgroundPickerDialog({
     onSaved();
   }
 
-  const hasCustom = appDraft.mode != null || (publicSeparate && publicDraft.mode != null);
+  const hasCustom =
+    hasAppearanceSettings(appDraft) || (publicSeparate && hasAppearanceSettings(publicDraft));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -213,16 +219,131 @@ export function BackgroundPickerDialog({
 
           {(tab === "app" || (tab === "public" && publicSeparate)) && (
             <>
+              {/* APPEARANCE — stays beside the background controls so creators
+                  can decide how their surfaces and accent should behave. */}
+              <section className="space-y-3" aria-labelledby="appearance-heading">
+                <div>
+                  <h3
+                    id="appearance-heading"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Surface style
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Keep cards structured, quiet, or completely borderless.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3" role="group" aria-label="Card borders">
+                  {(
+                    [
+                      {
+                        id: "accent",
+                        label: "Accent borders",
+                        description: "Use your chosen accent",
+                      },
+                      {
+                        id: "neutral",
+                        label: "Neutral borders",
+                        description: "Use the Tethyr rule",
+                      },
+                      {
+                        id: "none",
+                        label: "No card borders",
+                        description: "Let surfaces define shape",
+                      },
+                    ] as const
+                  ).map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={(activeDraft.cardBorders ?? "accent") === option.id}
+                      onClick={() => setActiveDraft((d) => ({ ...d, cardBorders: option.id }))}
+                      className={cn(
+                        "min-w-0 rounded-lg border p-3 text-left transition",
+                        (activeDraft.cardBorders ?? "accent") === option.id
+                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                          : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
+                      )}
+                    >
+                      <span className="block truncate text-xs font-medium">{option.label}</span>
+                      <span className="mt-1 block text-[11px] text-muted-foreground">
+                        {option.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-3" aria-labelledby="accent-heading">
+                <div>
+                  <h3
+                    id="accent-heading"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Accent colour
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Dynamic follows your banner; custom lets you choose the identity colour.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    aria-pressed={(activeDraft.accentMode ?? "dynamic") === "dynamic"}
+                    onClick={() =>
+                      setActiveDraft((d) => ({ ...d, accentMode: "dynamic", accentColor: null }))
+                    }
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-xs transition",
+                      (activeDraft.accentMode ?? "dynamic") === "dynamic"
+                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                        : "border-border/60 text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    Dynamic from banner
+                  </button>
+                  <label
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition",
+                      activeDraft.accentMode === "custom"
+                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                        : "border-border/60 text-muted-foreground",
+                    )}
+                  >
+                    <input
+                      type="color"
+                      value={activeDraft.accentColor ?? "#2563eb"}
+                      onChange={(e) =>
+                        setActiveDraft((d) => ({
+                          ...d,
+                          accentMode: "custom",
+                          accentColor: e.target.value,
+                        }))
+                      }
+                      className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                      aria-label="Choose custom accent colour"
+                    />
+                    <span>Choose a colour</span>
+                  </label>
+                </div>
+              </section>
+
               {/* LIVE PREVIEW */}
               <div
                 className="relative h-28 overflow-hidden rounded-xl border card-border"
                 style={previewStyle}
               >
-                {!activeDraft.mode && (
-                  <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                    Tethyr default
+                <div className="absolute inset-3 flex min-w-0 items-center gap-2">
+                  <div className="content-safe min-w-0 flex-1 rounded-lg border card-border bg-card/90 p-2">
+                    <p className="truncate text-[10px] font-semibold">Your project</p>
+                    <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                      A quiet preview of your surface style
+                    </p>
                   </div>
-                )}
+                  <span className="shrink-0 rounded-md bg-[var(--user-accent,var(--primary))] px-2 py-1 text-[10px] font-semibold text-[var(--user-accent-foreground,var(--background))]">
+                    Accent
+                  </span>
+                </div>
               </div>
 
               {/* STRENGTH — how bold the backdrop is. Applies to colours,

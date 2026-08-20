@@ -84,7 +84,13 @@ export function createFakeSupabase(): FakeSupabaseHandle {
       neq() {
         return builder;
       },
+      ilike() {
+        return builder;
+      },
       in() {
+        return builder;
+      },
+      gt() {
         return builder;
       },
       is() {

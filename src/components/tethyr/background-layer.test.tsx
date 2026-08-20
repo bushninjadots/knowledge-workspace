@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { BackgroundLayer } from "./background-layer";
+import { appearanceStyle, hasAppearanceSettings } from "@/lib/background-themes";
 
 describe("BackgroundLayer", () => {
   it("renders nothing when there is no active background", () => {
@@ -77,6 +78,31 @@ describe("BackgroundLayer", () => {
     );
     const layer = container.querySelector("[aria-hidden=true]") as HTMLElement;
     expect(layer.style.opacity).toBe("0.75");
+  });
+
+  it("persists and applies card border and custom accent preferences", () => {
+    const appearance = {
+      mode: null,
+      color: null,
+      pattern: null,
+      image_url: null,
+      cardBorders: "none" as const,
+      accentMode: "custom" as const,
+      accentColor: "#ff006e",
+    };
+    expect(hasAppearanceSettings(appearance)).toBe(true);
+    const style = appearanceStyle(appearance) as Record<string, string>;
+    expect(style["--card-border-color"]).toBe("transparent");
+    expect(style["--user-accent"]).toBe("#ff006e");
+    expect(style["--user-accent-foreground"]).toBe("#ffffff");
+  });
+
+  it("keeps default appearance quiet for older background rows", () => {
+    const appearance = { mode: null, color: null, pattern: null, image_url: null };
+    expect(hasAppearanceSettings(appearance)).toBe(false);
+    expect(
+      (appearanceStyle(appearance) as Record<string, string>)["--card-border-color"],
+    ).toBeDefined();
   });
 
   it("renders nothing when an image has no resolved URL", () => {

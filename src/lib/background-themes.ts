@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
  * devices and can render on their public Studio too. `color`/`pattern`/mode
  * are always kept in the row so switching modes never loses a previous choice.
  */
+export type CardBorderPreference = "accent" | "neutral" | "none";
+export type AccentMode = "dynamic" | "custom";
+export type ContentDensity = "comfortable" | "compact";
+
 export type ProfileBackground = {
   mode: "color" | "pattern" | "image" | "gradient" | null;
   /** Base tint color (CSS color string) used by color and pattern modes. */
@@ -24,6 +28,11 @@ export type ProfileBackground = {
    * Omitted/older rows fall back to the default.
    */
   strength?: number | null;
+  /** Appearance preferences share this JSON document so they work without a new table. */
+  cardBorders?: CardBorderPreference | null;
+  accentMode?: AccentMode | null;
+  accentColor?: string | null;
+  density?: ContentDensity | null;
 };
 
 /** Default tint strength when a row predates the strength slider. */
@@ -174,7 +183,65 @@ export function emptyBackground(): ProfileBackground {
     gradient: null,
     image_url: null,
     strength: BACKGROUND_DEFAULT_STRENGTH,
+    cardBorders: "accent",
+    accentMode: "dynamic",
+    accentColor: null,
+    density: "comfortable",
   };
+}
+
+export function hasAppearanceSettings(background: ProfileBackground | null | undefined): boolean {
+  return (
+    !!background &&
+    (background.mode != null ||
+      (background.cardBorders != null && background.cardBorders !== "accent") ||
+      (background.accentMode === "custom" && !!background.accentColor) ||
+      background.density === "compact")
+  );
+}
+
+/** Apply creator-selected accent, border, and density preferences as CSS variables. */
+export function appearanceStyle(background: ProfileBackground | null | undefined): CSSProperties {
+  if (!background) return {};
+  const style = {} as CSSProperties & Record<string, string>;
+  const cardBorders = background.cardBorders ?? "accent";
+  style["--card-border-color"] =
+    cardBorders === "none"
+      ? "transparent"
+      : cardBorders === "neutral"
+        ? "var(--border)"
+        : "var(--user-accent-border, var(--border))";
+
+  if (background.accentMode === "custom" && background.accentColor) {
+    const foreground = contrastingHexForeground(background.accentColor);
+    style["--user-accent"] = background.accentColor;
+    style["--user-accent-foreground"] = foreground;
+    style["--user-accent-subtle"] =
+      `color-mix(in oklab, ${background.accentColor} 10%, transparent)`;
+    style["--user-accent-border"] =
+      `color-mix(in oklab, ${background.accentColor} 30%, transparent)`;
+    style["--user-accent-glow"] = `color-mix(in oklab, ${background.accentColor} 6%, transparent)`;
+  }
+
+  if (background.density === "compact") {
+    style["--content-density-gap"] = "0.75rem";
+    style["--content-density-padding"] = "0.75rem";
+  } else {
+    style["--content-density-gap"] = "1rem";
+    style["--content-density-padding"] = "1rem";
+  }
+  return style;
+}
+
+function contrastingHexForeground(hex: string): string {
+  const match = hex.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return "var(--background)";
+  const value = Number.parseInt(match[1], 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.56 ? "#1f2328" : "#ffffff";
 }
 
 /**

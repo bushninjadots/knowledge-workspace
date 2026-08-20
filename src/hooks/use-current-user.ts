@@ -35,6 +35,13 @@ export type Profile = {
   favorite_achievement: string | null;
   background?: ProfileBackground | null;
   public_background?: ProfileBackground | null;
+  evidence_shelf?: {
+    project_id: string;
+    title: string;
+    note?: string | null;
+    url?: string | null;
+    kind?: string;
+  }[];
 };
 
 // ProjectRow and ActivityRow re-exported above from profile-sections.
@@ -84,7 +91,7 @@ const PROFILE_COLS_BASIC =
 
 // Columns added in Phase 3+4 — may not exist yet if migrations haven't run.
 const PROFILE_COLS_EXTENDED =
-  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack, favorite_achievement, background, public_background";
+  "availability, reputation_score, available_days, available_times, teaching_style, learning_goals, favourite_tools, software_stack, favorite_achievement, background, public_background, evidence_shelf";
 
 async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.

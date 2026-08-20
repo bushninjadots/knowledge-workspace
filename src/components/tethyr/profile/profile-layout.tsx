@@ -50,7 +50,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ProfileBackground } from "@/lib/background-themes";
+import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
 import type { Profile, TeachSkillMeta } from "@/hooks/use-current-user";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 
@@ -109,7 +109,10 @@ export function ProfileLayout({
     (r) => r.to_user_id === userId && r.status === "pending",
   );
 
-  const accentStyle = paletteToStyle(palette);
+  const accentStyle = {
+    ...paletteToStyle(palette),
+    ...appearanceStyle(background),
+  };
 
   const completeness = completenessPercent({
     profile,
@@ -120,7 +123,7 @@ export function ProfileLayout({
 
   return (
     <div
-      className="animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8"
+      className={`animate-room-enter mx-auto max-w-7xl bg-noise px-4 py-6 sm:px-6 sm:py-8 ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={accentStyle}
     >
       <div className="space-y-6">

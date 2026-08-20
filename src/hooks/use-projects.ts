@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 
 const sb = supabase;
 
@@ -9,6 +10,18 @@ const sb = supabase;
 // ============================================================
 
 export type ProjectStage = "planning" | "building" | "testing" | "launch" | "growing";
+export type ProjectSeason = "research" | "prototype" | "feedback" | "launch" | "building";
+export type CollaborationBrief = {
+  need?: string | null;
+  why_now?: string | null;
+  contribution_shape?: string | null;
+  time_shape?: string | null;
+};
+export type ProjectLineage = {
+  previous_project_id?: string | null;
+  next_project_id?: string | null;
+  label?: string | null;
+};
 
 export type ProjectDetail = {
   id: string;
@@ -30,6 +43,10 @@ export type ProjectDetail = {
   looking_for_feedback: boolean;
   looking_for_collaborators: boolean;
   is_featured: boolean;
+  presentation_preset?: ProjectPresentationPreset | null;
+  season?: ProjectSeason | null;
+  collaboration_brief?: CollaborationBrief | null;
+  lineage?: ProjectLineage | null;
   uploaded_files?: Record<string, unknown>[];
   readme?: string | null;
   tools?: string[];
@@ -38,6 +55,15 @@ export type ProjectDetail = {
 };
 
 export type GalleryItem = { url: string; caption?: string; type: "image" | "video" };
+export type ProjectRecognition = {
+  id: string;
+  project_activity_id: string;
+  project_id: string;
+  giver_id: string;
+  recipient_id: string;
+  kind: string;
+  created_at: string;
+};
 export type ResourceItem = {
   title: string;
   url: string;
@@ -879,6 +905,42 @@ type ProjectDetailCache = {
   coverSigned: string | null;
   avatarSigned: Record<string, string>;
 };
+
+export function useUpdateProjectPresentation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      projectId: string;
+      presentationPreset: ProjectPresentationPreset;
+    }) => {
+      const { error } = await sb
+        .from("projects")
+        .update({ presentation_preset: input.presentationPreset })
+        .eq("id", input.projectId);
+      if (error) throw error;
+    },
+    onMutate: async (input) => {
+      const key = PROJECT_KEY(input.projectId);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ProjectDetailCache>(key);
+      qc.setQueryData<ProjectDetailCache>(key, (old) =>
+        old
+          ? {
+              ...old,
+              project: { ...old.project, presentation_preset: input.presentationPreset },
+            }
+          : old,
+      );
+      return { previous };
+    },
+    onError: (_error, input, context) => {
+      if (context?.previous) qc.setQueryData(PROJECT_KEY(input.projectId), context.previous);
+    },
+    onSuccess: (_data, input) => {
+      qc.invalidateQueries({ queryKey: PROJECT_KEY(input.projectId) });
+    },
+  });
+}
 
 export function useUpdateProjectContent() {
   const qc = useQueryClient();

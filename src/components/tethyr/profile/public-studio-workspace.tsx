@@ -22,6 +22,8 @@ import {
   type SkillVerificationLevel,
 } from "@/components/tethyr/profile-sections";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { Button } from "@/components/ui/button";
+import { useUpdateEvidenceShelf, type EvidenceShelfItem } from "@/hooks/use-project-loop";
 import { PUBLIC_STUDIO_MODULES, PUBLIC_STUDIO_PRESETS } from "@/lib/workspace-layouts";
 import type { LayoutStorage } from "@/hooks/use-layout-preferences";
 
@@ -35,6 +37,7 @@ export type PublicStudioProfile = {
   social_links: Record<string, string>;
   favourite_tools: string[];
   software_stack: string[];
+  evidence_shelf: EvidenceShelfItem[];
 };
 
 export type PublicStudioSkill = {
@@ -98,6 +101,23 @@ export function PublicStudioWorkspace({
     [contributedProjects],
   );
   const featuredProject = builtProjects[0] ?? contributedProjects[0] ?? null;
+  const updateShelf = useUpdateEvidenceShelf();
+  const shelf = useMemo(() => profile.evidence_shelf ?? [], [profile.evidence_shelf]);
+  const featureLatestProject = useCallback(() => {
+    if (!featuredProject || shelf.some((item) => item.project_id === featuredProject.id)) return;
+    updateShelf.mutate({
+      profileId,
+      items: [
+        ...shelf,
+        {
+          project_id: featuredProject.id,
+          title: featuredProject.title,
+          note: "Featured from my current Studio work.",
+          kind: "project",
+        },
+      ],
+    });
+  }, [featuredProject, profileId, shelf, updateShelf]);
 
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
@@ -168,6 +188,61 @@ export function PublicStudioWorkspace({
                   {joinedProjects.length > 0 && (
                     <ContributionGroup label="Contributing to" projects={joinedProjects} />
                   )}
+                </div>
+              )}
+            </SectionCard>
+          );
+
+        case "evidence-shelf":
+          return (
+            <SectionCard
+              title="Evidence shelf"
+              subtitle="A few pieces of work worth remembering"
+              icon={<Sparkles className="h-4 w-4" />}
+            >
+              {shelf.length === 0 ? (
+                <div className="space-y-2">
+                  <EmptyCopy>Curate a small set of project evidence here.</EmptyCopy>
+                  {canCustomize && featuredProject && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={featureLatestProject}
+                      disabled={updateShelf.isPending}
+                    >
+                      {updateShelf.isPending ? "Featuring…" : "Feature current project"}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {shelf.slice(0, 6).map((item) => (
+                    <Link
+                      key={`${item.project_id}-${item.title}`}
+                      to="/projects/$id"
+                      params={{ id: item.project_id }}
+                      className="block min-w-0 rounded-lg border border-border/60 bg-background/40 px-3 py-2 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                    >
+                      <p className="truncate text-sm font-medium">{item.title}</p>
+                      {item.note && (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.note}</p>
+                      )}
+                    </Link>
+                  ))}
+                  {canCustomize &&
+                    featuredProject &&
+                    !shelf.some((item) => item.project_id === featuredProject.id) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={featureLatestProject}
+                        disabled={updateShelf.isPending}
+                      >
+                        Feature current project
+                      </Button>
+                    )}
                 </div>
               )}
             </SectionCard>
@@ -342,12 +417,16 @@ export function PublicStudioWorkspace({
       contributedProjects,
       endorsePending,
       featuredProject,
+      canCustomize,
+      featureLatestProject,
+      updateShelf.isPending,
       joinedProjects,
       learnSkills,
       meId,
       onEndorse,
       profile,
       profileId,
+      shelf,
       teachSkills,
     ],
   );

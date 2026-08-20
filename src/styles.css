@@ -172,6 +172,9 @@
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
+  --card-border-color: var(--user-accent-border, var(--border));
+  --content-density-gap: 1rem;
+  --content-density-padding: 1rem;
 }
 
 /* ---------------------------------------------------------------------------
@@ -243,6 +246,9 @@
   --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
+  --card-border-color: var(--user-accent-border, var(--border));
+  --content-density-gap: 1rem;
+  --content-density-padding: 1rem;
 }
 
 @layer base {
@@ -303,7 +309,7 @@
    Use for self-contained widgets that need to stand apart. */
 @utility panel {
   background-color: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--card-border-color, var(--border));
   border-radius: var(--radius-lg);
 }
 
@@ -311,7 +317,7 @@
    For feed content, tab sections, and listing layouts. */
 @utility surface-section {
   background-color: var(--surface);
-  border: 1px solid var(--user-accent-border, var(--border));
+  border: 1px solid var(--card-border-color, var(--user-accent-border, var(--border)));
   border-radius: var(--radius-lg);
 }
 
@@ -429,7 +435,28 @@
 }
 
 @utility card-border {
-  border-color: var(--user-accent-border, var(--border));
+  border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
+}
+
+/* Shared containment contract for independent cards and workspace content. */
+@utility content-safe {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.content-safe img,
+.content-safe video,
+.content-safe iframe,
+.content-safe canvas,
+.content-safe svg {
+  max-width: 100%;
+}
+
+.content-safe table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 @utility scrollbar-none {
@@ -746,6 +773,8 @@
  * so the grid reads as Tethyr, not a generic dashboard builder.
  * ------------------------------------------------------------------------- */
 .ws-grid .react-grid-item {
+  min-width: 0;
+  max-width: 100%;
   transition:
     left 150ms ease,
     top 150ms ease,

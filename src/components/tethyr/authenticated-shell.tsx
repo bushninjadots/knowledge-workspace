@@ -18,6 +18,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { BackgroundLayer } from "./background-layer";
+import { appearanceStyle } from "@/lib/background-themes";
 
 /**
  * Shared layout for all authenticated routes.
@@ -29,7 +30,10 @@ export function AuthenticatedShell() {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
-  const themeStyle = useMemo(() => paletteToStyle(palette), [palette]);
+  const themeStyle = useMemo(
+    () => ({ ...paletteToStyle(palette), ...appearanceStyle(me?.background) }),
+    [palette, me?.background],
+  );
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -39,7 +43,10 @@ export function AuthenticatedShell() {
   }, []);
 
   return (
-    <div className="relative isolate flex min-h-screen" style={themeStyle}>
+    <div
+      className={`relative isolate flex min-h-screen ${me?.background?.density === "compact" ? "tethyr-density-compact" : ""}`}
+      style={themeStyle}
+    >
       <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />

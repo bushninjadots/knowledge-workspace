@@ -8,6 +8,7 @@ import {
   BookOpen,
   Link2,
   Upload,
+  ImagePlus,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -232,6 +233,40 @@ export function ProjectLibrarySection({
  * Renders a gallery image. Storage paths (project-media is a private bucket)
  * are signed on demand; full http(s) URLs pass through untouched.
  */
+export function GalleryMedia({
+  url,
+  type,
+  alt,
+  className,
+}: {
+  url: string;
+  type: GalleryItem["type"];
+  alt?: string;
+  className?: string;
+}) {
+  // Storage paths are private and need a signed URL; external URLs are only
+  // accepted when they are safe http(s) links.
+  const isExternal = safeHref(url) !== "#";
+  const { data: signedUrl } = useSignedStorageUrl("project-media", isExternal ? null : url);
+  const src = isExternal ? safeHref(url) : (signedUrl ?? "");
+  if (!src) return <div className={className ?? "bg-surface-sunken"} aria-hidden />;
+
+  if (type === "video") {
+    return (
+      <video
+        src={src}
+        className={className}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={alt || "Project demonstration video"}
+      />
+    );
+  }
+  return <img src={src} alt={alt ?? ""} className={className} loading="lazy" decoding="async" />;
+}
+
+/** Backwards-compatible image renderer for project cards and older callers. */
 export function GalleryThumb({
   url,
   alt,
@@ -241,16 +276,7 @@ export function GalleryThumb({
   alt?: string;
   className?: string;
 }) {
-  // safeHref returns "#" for anything that isn't a safe http(s) URL — so
-  // storage paths (project-media is a private bucket) get signed, external
-  // URLs pass through validated, and anything sketchy falls back to a blank.
-  const isExternal = safeHref(url) !== "#";
-  const { data: signedUrl } = useSignedStorageUrl("project-media", isExternal ? null : url);
-  const src = isExternal ? safeHref(url) : (signedUrl ?? "");
-  if (!src) {
-    return <div className={className ?? ""} aria-hidden />;
-  }
-  return <img src={src} alt={alt ?? ""} className={className} loading="lazy" decoding="async" />;
+  return <GalleryMedia url={url} type="image" alt={alt} className={className} />;
 }
 
 export function GallerySection({
@@ -268,6 +294,7 @@ export function GallerySection({
   const [showAdd, setShowAdd] = useState(false);
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
+  const [mediaType, setMediaType] = useState<GalleryItem["type"]>("image");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -280,20 +307,31 @@ export function GallerySection({
         toast.error(check.error);
         return;
       }
+      const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+      const isVideo = file.type.startsWith("video/") || ["mp4", "webm", "mov", "m4v"].includes(ext);
+      const isImage =
+        file.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif"].includes(ext);
+      if (!isVideo && !isImage) {
+        toast.error("Demonstrations must be an image, GIF, or video.");
+        return;
+      }
       setUploading(true);
       try {
         // project-media is a private bucket, so the gallery stores the storage
-        // *path* — GalleryThumb signs it at render time.
+        // path — GalleryMedia signs it at render time.
+        const uploadedType: GalleryItem["type"] = isVideo ? "video" : "image";
         const path = `${projectId}/gallery-${Date.now()}.${check.ext}`;
-        const { error: upErr } = await sb.storage.from("project-media").upload(path, file);
+        const { error: upErr } = await sb.storage
+          .from("project-media")
+          .upload(path, file, { contentType: file.type || undefined });
         if (upErr) throw upErr;
         await onUpdate([
           ...gallery,
-          { url: path, caption: caption.trim() || undefined, type: "image" },
+          { url: path, caption: caption.trim() || undefined, type: uploadedType },
         ]);
         setCaption("");
         setShowAdd(false);
-        toast.success("Image uploaded");
+        toast.success(uploadedType === "video" ? "Video uploaded" : "Image uploaded");
       } catch (err: unknown) {
         toast.error(friendlyError(err, "Upload failed"));
       } finally {
@@ -309,12 +347,13 @@ export function GallerySection({
     try {
       await onUpdate([
         ...gallery,
-        { url: url.trim(), caption: caption.trim() || undefined, type: "image" },
+        { url: url.trim(), caption: caption.trim() || undefined, type: mediaType },
       ]);
       setUrl("");
       setCaption("");
+      setMediaType("image");
       setShowAdd(false);
-      toast.success("Image added");
+      toast.success(mediaType === "video" ? "Video added" : "Image added");
     } catch {
       // Error toast already shown by the caller.
     } finally {
@@ -326,7 +365,7 @@ export function GallerySection({
     setSaving(true);
     try {
       await onUpdate(gallery.filter((_, i) => i !== idx));
-      toast.success("Image removed");
+      toast.success("Demonstration removed");
     } catch {
       // Error toast already shown by the caller.
     } finally {
@@ -338,8 +377,13 @@ export function GallerySection({
 
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground/80">Gallery</h3>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-medium text-foreground/80">Demonstrations</h3>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            Show the work in motion with images, GIFs, or video.
+          </p>
+        </div>
         {isOwner && (
           <button
             onClick={() => setShowAdd(!showAdd)}
@@ -356,7 +400,7 @@ export function GallerySection({
           <input
             ref={fileRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/*"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -381,12 +425,27 @@ export function GallerySection({
             )}
             <span className="py-2 text-xs text-muted-foreground">or</span>
           </div>
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://... paste image URL"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <select
+              value={mediaType}
+              onChange={(e) => setMediaType(e.target.value as GalleryItem["type"])}
+              className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary sm:w-36"
+              aria-label="Demonstration type"
+            >
+              <option value="image">Image or GIF</option>
+              <option value="video">Video</option>
+            </select>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder={
+                mediaType === "video"
+                  ? "https://… paste video URL"
+                  : "https://… paste image or GIF URL"
+              }
+              className="min-w-0 flex-1 rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
           <input
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -411,17 +470,37 @@ export function GallerySection({
         </div>
       )}
 
+      {gallery.length === 0 && isOwner && !showAdd && (
+        <div className="rounded-lg border border-dashed border-border/70 bg-background/30 px-4 py-6 text-center">
+          <ImagePlus className="mx-auto h-6 w-6 text-muted-foreground/60" />
+          <p className="mt-2 text-sm font-medium">Show the work, not just the description</p>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
+            Add a screenshot, looping GIF, or short video so collaborators can understand the
+            project faster.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Add a demonstration
+          </button>
+        </div>
+      )}
+
       {gallery.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="content-safe grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {gallery.map((g, idx) => (
             <div
               key={idx}
-              className="group relative overflow-hidden rounded-xl border border-border/60"
+              className="content-safe group relative min-w-0 overflow-hidden rounded-xl border card-border bg-background/30"
             >
-              <GalleryThumb
+              <GalleryMedia
                 url={g.url}
+                type={g.type}
                 alt={g.caption ?? ""}
-                className="aspect-square w-full object-cover"
+                className="aspect-video w-full max-w-full object-cover"
               />
               {g.caption && (
                 <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-[11px] backdrop-blur">

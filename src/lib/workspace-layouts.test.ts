@@ -50,6 +50,7 @@ describe("public Studio layout", () => {
     expect(PUBLIC_STUDIO_MODULES.map(({ id }) => id)).toEqual([
       "featured-work",
       "contributions",
+      "evidence-shelf",
       "activity",
       "skills-share",
       "skills-growing",

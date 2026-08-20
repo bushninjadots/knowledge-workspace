@@ -122,6 +122,52 @@ export async function fetchRepoReadme(fullName: string, token?: string): Promise
   return { text: null, rateLimited: false, unauthorized: false };
 }
 
+export type GithubCommitLite = {
+  sha: string;
+  message: string;
+  html_url: string;
+  committed_at: string;
+  author_login: string | null;
+  author_name: string | null;
+};
+
+/** Fetch recent commits for a linked repository, or an empty list on failure. */
+export async function fetchRepoCommits(
+  fullName: string,
+  token?: string,
+  perPage = 20,
+): Promise<GithubCommitLite[]> {
+  const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetchWithTimeout(
+    `https://api.github.com/repos/${fullName}/commits?per_page=${Math.min(Math.max(perPage, 1), 30)}`,
+    { headers },
+  );
+  if (!res?.ok) return [];
+  const json = (await res.json()) as {
+    sha?: string;
+    html_url?: string;
+    commit?: {
+      message?: string;
+      author?: { name?: string | null; date?: string | null } | null;
+    } | null;
+    author?: { login?: string | null } | null;
+  }[];
+  return json.flatMap((row) => {
+    if (!row.sha || !row.html_url || !row.commit?.message) return [];
+    return [
+      {
+        sha: row.sha,
+        message: row.commit.message.split("\\n")[0].trim(),
+        html_url: row.html_url,
+        committed_at: row.commit.author?.date ?? new Date().toISOString(),
+        author_login: row.author?.login ?? null,
+        author_name: row.commit.author?.name ?? null,
+      },
+    ];
+  });
+}
+
 /** Fetch a repo's metadata (stars, language, description, …), or null. */
 export async function fetchRepoMeta(
   owner: string,

@@ -62,6 +62,7 @@ const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
     "project_invite",
     "project_join",
     "project_post",
+    "project_recognition",
     "role_application_accepted",
     "role_application_declined",
   ],

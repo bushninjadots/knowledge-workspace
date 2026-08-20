@@ -39,6 +39,7 @@ import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import type { ProjectRow } from "@/components/tethyr/profile-sections";
 import { useChallenges } from "@/hooks/use-challenges";
+import { useProjectReturnChanges } from "@/hooks/use-project-loop";
 import { supabase } from "@/integrations/supabase/client";
 import { seoMeta } from "@/lib/seo";
 
@@ -658,6 +659,8 @@ function DashboardContent({
           </h2>
           {renderModule("welcome")}
           {renderModule("today")}
+          <ProjectReturnShelf />
+          <WeeklyShowYourWorkPrompt projectId={activeProjects[0]?.id ?? null} />
           <FirstSessionOnboarding data={data} />
           {renderModule("next-steps")}
         </section>
@@ -689,6 +692,86 @@ function DashboardContent({
 }
 
 /* ── Today focus card ── */
+
+function WeeklyShowYourWorkPrompt({ projectId }: { projectId: string | null }) {
+  if (!projectId) return null;
+
+  return (
+    <section
+      aria-labelledby="weekly-show-your-work-heading"
+      className="border-y border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] py-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
+          <div className="min-w-0">
+            <p className="section-label">Weekly ritual</p>
+            <h2 id="weekly-show-your-work-heading" className="mt-1 text-sm font-semibold">
+              What moved your work forward this week?
+            </h2>
+            <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+              One sentence, image, GIF, video, or link is enough. Leave a useful trace for the
+              people following along.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/projects/$id"
+          params={{ id: projectId }}
+          search={{ tab: "activity", focus: "weekly" } as Record<string, string>}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+        >
+          Add this week’s evidence <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function ProjectReturnShelf() {
+  const { data: changes = [], isLoading } = useProjectReturnChanges();
+  if (!isLoading && changes.length === 0) return null;
+
+  return (
+    <section aria-labelledby="return-shelf-heading" className="border-y border-border/60 py-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="section-label">Since your last visit</p>
+          <h2 id="return-shelf-heading" className="mt-1 font-display text-lg font-semibold">
+            Your projects moved
+          </h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          A quiet return path into work you care about.
+        </p>
+      </div>
+      {isLoading ? (
+        <div
+          className="mt-3 h-12 animate-pulse rounded-lg bg-surface"
+          aria-label="Loading project changes"
+        />
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {changes.slice(0, 6).map((change) => (
+            <Link
+              key={change.id}
+              to="/projects/$id"
+              params={{ id: change.projectId }}
+              search={{ tab: "activity" } as Record<string, string>}
+              className="min-w-0 rounded-lg border border-border/60 bg-surface/40 px-3 py-2.5 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
+            >
+              <p className="truncate text-xs font-medium">{change.projectTitle}</p>
+              <p className="mt-0.5 truncate text-sm text-foreground/85">{change.title}</p>
+              <p className="mt-0.5 text-[11px] capitalize text-muted-foreground">
+                {change.kind.replace(/_/g, " ")}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function DashboardModuleEmpty({ copy, action }: { copy: string; action: React.ReactNode }) {
   return (

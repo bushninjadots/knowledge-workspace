@@ -26,6 +26,7 @@ import {
   Search as SearchIcon,
   Megaphone,
   MoreHorizontal,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -60,6 +61,7 @@ import {
 } from "@/components/ui/dialog";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { GalleryThumb } from "@/components/tethyr/project/project-resources";
+import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 
 export type ProjectStatus = "planning" | "active" | "paused" | "completed";
 
@@ -154,8 +156,8 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-      <div className="mb-4 flex items-center justify-between gap-2">
+    <div className="content-safe min-w-0 max-w-full overflow-hidden rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+      <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold">{title}</h2>
         <div className="flex items-center gap-2">
           {action}
@@ -530,6 +532,7 @@ export type ProjectRow = {
   looking_for_feedback: boolean;
   looking_for_collaborators: boolean;
   is_featured: boolean;
+  presentation_preset?: ProjectPresentationPreset | null;
   created_at: string;
   updated_at: string;
 };
@@ -564,6 +567,45 @@ export function ProjectsCard({
   const { data: me } = useCurrentUser();
   const isOwn = me?.userId === userId;
 
+  async function duplicateProject(project: ProjectRow) {
+    const { data: copy, error } = await supabase
+      .from("projects")
+      .insert({
+        profile_id: userId,
+        title: `${project.title} copy`,
+        description: project.description,
+        goal: project.goal,
+        vision: project.vision,
+        status: "planning",
+        visibility: project.visibility,
+        progress_percent: 0,
+        cover_url: null,
+        gallery: [],
+        resources: project.resources,
+        links: project.links,
+        tags: project.tags,
+        looking_for_feedback: project.looking_for_feedback,
+        looking_for_collaborators: project.looking_for_collaborators,
+        is_featured: false,
+        presentation_preset: project.presentation_preset ?? "story-first",
+      })
+      .select("id")
+      .single();
+    if (error || !copy) {
+      toast.error(friendlyError(error, "Couldn’t duplicate project"));
+      return;
+    }
+    const skillIds = projectSkillIds[project.id] ?? [];
+    if (skillIds.length > 0) {
+      await supabase
+        .from("project_skills")
+        .insert(skillIds.map((skill_id) => ({ project_id: copy.id, skill_id })));
+    }
+    toast.success("Project structure duplicated");
+    onChange();
+    navigate({ to: "/projects/$id", params: { id: copy.id } });
+  }
+
   return (
     <SectionCard
       title={
@@ -585,15 +627,22 @@ export function ProjectsCard({
       }
     >
       {projects.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Start a project workspace for something you're building, learning, or working toward.
-        </p>
+        <div className="rounded-lg border border-dashed border-border/70 bg-background/30 p-4">
+          <p className="text-sm font-medium">Give your next idea a place to grow</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Start with a goal, then add a demonstration when there is something real to show.
+          </p>
+          <Button type="button" size="sm" className="mt-3" onClick={() => setCreating(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Start a project
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((p) => (
             <div
               key={p.id}
-              className="card-border group relative overflow-hidden rounded-xl border bg-background/40 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+              className="content-safe card-border group relative min-w-0 max-w-full overflow-hidden rounded-xl border bg-background/40 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
             >
               <Link to="/projects/$id" params={{ id: p.id }} className="block text-left">
                 <div className="aspect-video overflow-hidden bg-background">
@@ -671,9 +720,25 @@ export function ProjectsCard({
                       <Pencil className="mr-2 h-3.5 w-3.5" />
                       Edit
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void duplicateProject(p)}>
+                      <Copy className="mr-2 h-3.5 w-3.5" />
+                      Duplicate structure
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLibraryTarget(p)}>
                       <FileText className="mr-2 h-3.5 w-3.5" />
                       Add note / file
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate({
+                          to: "/projects/$id",
+                          params: { id: p.id },
+                          search: { focus: "demonstrations" },
+                        })
+                      }
+                    >
+                      <ImageIcon className="mr-2 h-3.5 w-3.5" />
+                      Add demonstration
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
@@ -868,6 +933,12 @@ function ProjectLibraryAddDialog({
 
 const PROJECT_STATUSES: ProjectStatus[] = ["planning", "active", "paused", "completed"];
 
+export const PROJECT_CREATION_STEPS = ["Basics", "Direction", "Share"] as const;
+
+export function canContinueProjectCreation(step: number, title: string): boolean {
+  return step !== 0 || title.trim().length > 0;
+}
+
 export function ProjectDialog({
   project,
   userId,
@@ -913,7 +984,14 @@ export function ProjectDialog({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [creationStep, setCreationStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setCreationStep(0);
+  }, [open, project?.id]);
+
+  const panelClass = (step: number) => (project || creationStep === step ? "space-y-3" : "hidden");
 
   const filteredSkills = useMemo(
     () => allSkills.filter((s) => s.name.toLowerCase().includes(skillSearch.toLowerCase())),
@@ -1068,306 +1146,365 @@ export function ProjectDialog({
     onOpenChange(false);
   }
 
+  function continueCreation() {
+    if (!canContinueProjectCreation(creationStep, title)) {
+      toast.error("Add a project title first");
+      return;
+    }
+    setCreationStep((step) => Math.min(2, step + 1));
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{project ? "Edit project" : "New project"}</DialogTitle>
-        </DialogHeader>
-        <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
-          >
-            {coverPreview ? (
-              <img
-                src={coverPreview}
-                alt=""
-                width="1200"
-                height="675"
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-xs">
-                <Camera className="h-6 w-6" />
-                {uploading ? "Uploading…" : "Add cover image"}
-              </div>
-            )}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={uploadCover}
-          />
-
-          <Field label="Title">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-          </Field>
-          <Field label="Description">
-            <Textarea
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </Field>
-
-          <Field label="Goal">
-            <Input
-              placeholder="What does'done'look like? e.g. Launch to first 10 users"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-            />
-          </Field>
-
-          <Field label="Vision">
-            <Textarea
-              rows={3}
-              placeholder="The longer-form why — what problem does this solve, who is it for?"
-              value={vision}
-              onChange={(e) => setVision(e.target.value)}
-            />
-          </Field>
-
-          <Field label="Status">
-            <div className="flex flex-wrap gap-2">
-              {PROJECT_STATUSES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStatus(s)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                    status === s
-                      ? PROJECT_STATUS_STYLE[s]
-                      : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                  }`}
-                >
-                  {PROJECT_STATUS_LABEL[s]}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Visibility">
-            <div className="flex flex-wrap gap-2">
-              {(["public", "private"] as const).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setVisibility(v)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                    visibility === v
-                      ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                      : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                  }`}
-                >
-                  {v === "public" ? "Public" : "Private"}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Public projects appear in Explore and on your profile. Private projects are only
-              visible to you and your contributors.
+          <DialogTitle>{project ? "Edit project" : "Start a project"}</DialogTitle>
+          {!project && (
+            <p className="text-xs text-muted-foreground">
+              Start with the story, then add the details that help people contribute.
             </p>
-          </Field>
-
-          <Field label={`Progress — ${progress}%`}>
+          )}
+        </DialogHeader>
+        {!project && (
+          <div className="flex items-center gap-2" aria-label="Project setup progress">
+            {PROJECT_CREATION_STEPS.map((label, index) => (
+              <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
+                <span
+                  aria-current={creationStep === index ? "step" : undefined}
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                    creationStep >= index
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-surface text-muted-foreground"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <span
+                  className={`truncate text-[11px] ${creationStep === index ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                >
+                  {label}
+                </span>
+                {index < 2 && <span className="h-px flex-1 bg-border/60" />}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="max-h-[min(65vh,38rem)] space-y-3 overflow-y-auto pr-1">
+          <div className={panelClass(0)}>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
+            >
+              {coverPreview ? (
+                <img
+                  src={coverPreview}
+                  alt=""
+                  width="1200"
+                  height="675"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-xs">
+                  <Camera className="h-6 w-6" />
+                  {uploading ? "Uploading…" : "Add cover image"}
+                </div>
+              )}
+            </button>
             <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={progress}
-              onChange={(e) => setProgress(Number(e.target.value))}
-              className="w-full accent-primary"
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={uploadCover}
             />
-          </Field>
 
-          <Field label="Skills involved">
-            <div className="relative mb-2">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Field label="Title">
               <Input
-                placeholder="Search the skill catalog…"
-                value={skillSearch}
-                onChange={(e) => setSkillSearch(e.target.value)}
-                className="h-8 pl-8 text-xs"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                aria-required="true"
+                placeholder="Give the project a clear working name"
               />
-            </div>
-            <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto pr-1">
-              {filteredSkills.map((s) => {
-                const on = skillIds.has(s.id);
-                return (
+            </Field>
+            <Field label="Description">
+              <Textarea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
+
+            <Field label="Goal">
+              <Input
+                placeholder="What does'done'look like? e.g. Launch to first 10 users"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+              />
+            </Field>
+
+            <Field label="Vision">
+              <Textarea
+                rows={3}
+                placeholder="The longer-form why — what problem does this solve, who is it for?"
+                value={vision}
+                onChange={(e) => setVision(e.target.value)}
+              />
+            </Field>
+          </div>
+          <div className={panelClass(1)}>
+            <Field label="Status">
+              <div className="flex flex-wrap gap-2">
+                {PROJECT_STATUSES.map((s) => (
                   <button
-                    key={s.id}
+                    key={s}
                     type="button"
-                    onClick={() => {
-                      const next = new Set(skillIds);
-                      if (on) next.delete(s.id);
-                      else next.add(s.id);
-                      setSkillIds(next);
-                    }}
-                    className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
-                      on
+                    onClick={() => setStatus(s)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      status === s
+                        ? PROJECT_STATUS_STYLE[s]
+                        : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                    }`}
+                  >
+                    {PROJECT_STATUS_LABEL[s]}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Visibility">
+              <div className="flex flex-wrap gap-2">
+                {(["public", "private"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setVisibility(v)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      visibility === v
                         ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
                         : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                     }`}
                   >
-                    {on && <Check className="h-3 w-3" />}
-                    {s.name}
+                    {v === "public" ? "Public" : "Private"}
                   </button>
-                );
-              })}
-              {filteredSkills.length === 0 && (
-                <p className="py-2 text-xs text-muted-foreground">No matches</p>
-              )}
-            </div>
-          </Field>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Public projects appear in Explore and on your profile. Private projects are only
+                visible to you and your contributors.
+              </p>
+            </Field>
 
-          <Field label="Links">
-            <div className="space-y-2">
-              {PROJECT_LINK_KEYS.map(({ key, label, icon: Icon }) => (
-                <div key={key} className="flex items-center gap-2">
-                  <div className="flex w-28 items-center gap-1.5 text-xs text-muted-foreground">
-                    <Icon className="h-3.5 w-3.5" />
-                    {label}
-                  </div>
-                  <Input
-                    placeholder={`https://…`}
-                    value={links[key] ?? ""}
-                    onChange={(e) => setLinks({ ...links, [key]: e.target.value })}
-                  />
-                </div>
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Tags">
-            <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTags(tags.filter((x) => x !== t))}
-                  className="flex items-center gap-1 rounded-full border border-border bg-background/40 px-3 py-1 text-xs"
-                >
-                  {t}
-                  <X className="h-3 w-3" />
-                </button>
-              ))}
-            </div>
-            <div className="mt-2 flex gap-2">
-              <Input
-                value={tagInput}
-                placeholder="brand, motion, saas…"
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const v = tagInput.trim();
-                    if (v && !tags.includes(v)) setTags([...tags, v]);
-                    setTagInput("");
-                  }
-                }}
+            <Field label={`Progress — ${progress}%`}>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={progress}
+                onChange={(e) => setProgress(Number(e.target.value))}
+                className="w-full accent-primary"
               />
-            </div>
-          </Field>
+            </Field>
 
-          <Field label="Gallery images">
-            <div className="space-y-2">
-              {galleryItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs">
-                  <GalleryThumb url={item.url} alt="" className="h-8 w-8 rounded object-cover" />
-                  <span className="min-w-0 flex-1 truncate">{item.caption ?? item.url}</span>
-                  <button
-                    onClick={() => setGalleryItems(galleryItems.filter((_, i) => i !== idx))}
-                    className="shrink-0 text-destructive hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <Input
-                placeholder="Paste an image URL and press Enter"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const v = (e.target as HTMLInputElement).value.trim();
-                    if (v) {
-                      setGalleryItems([...galleryItems, { url: v, type: "image" }]);
-                      (e.target as HTMLInputElement).value = "";
-                    }
-                  }
-                }}
-              />
-            </div>
-          </Field>
-
-          <Field label="Resources">
-            <div className="space-y-2">
-              {resourceItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs">
-                  <span className="min-w-0 flex-1 truncate">
-                    {item.title} — {item.url}
-                  </span>
-                  <button
-                    onClick={() => setResourceItems(resourceItems.filter((_, i) => i !== idx))}
-                    className="shrink-0 text-destructive hover:underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <div className="flex gap-2">
-                <Input placeholder="Title" id="resource-title" className="flex-1" />
+            <Field label="Skills involved">
+              <div className="relative mb-2">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="URL"
-                  id="resource-url"
-                  className="flex-1"
+                  placeholder="Search the skill catalog…"
+                  value={skillSearch}
+                  onChange={(e) => setSkillSearch(e.target.value)}
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+              <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto pr-1">
+                {filteredSkills.map((s) => {
+                  const on = skillIds.has(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        const next = new Set(skillIds);
+                        if (on) next.delete(s.id);
+                        else next.add(s.id);
+                        setSkillIds(next);
+                      }}
+                      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        on
+                          ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                          : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                      }`}
+                    >
+                      {on && <Check className="h-3 w-3" />}
+                      {s.name}
+                    </button>
+                  );
+                })}
+                {filteredSkills.length === 0 && (
+                  <p className="py-2 text-xs text-muted-foreground">No matches</p>
+                )}
+              </div>
+            </Field>
+          </div>
+          <div className={panelClass(2)}>
+            <Field label="Links">
+              <div className="space-y-2">
+                {PROJECT_LINK_KEYS.map(({ key, label, icon: Icon }) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <div className="flex w-28 items-center gap-1.5 text-xs text-muted-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </div>
+                    <Input
+                      placeholder={`https://…`}
+                      value={links[key] ?? ""}
+                      onChange={(e) => setLinks({ ...links, [key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Tags">
+              <div className="flex flex-wrap gap-2">
+                {tags.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTags(tags.filter((x) => x !== t))}
+                    className="flex items-center gap-1 rounded-full border border-border bg-background/40 px-3 py-1 text-xs"
+                  >
+                    {t}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  value={tagInput}
+                  placeholder="brand, motion, saas…"
+                  onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      const titleEl = document.getElementById("resource-title") as HTMLInputElement;
-                      const urlEl = e.target as HTMLInputElement;
-                      const t = titleEl?.value.trim();
-                      const u = urlEl.value.trim();
-                      if (t && u) {
-                        setResourceItems([...resourceItems, { title: t, url: u, type: "other" }]);
-                        if (titleEl) titleEl.value = "";
-                        urlEl.value = "";
+                      const v = tagInput.trim();
+                      if (v && !tags.includes(v)) setTags([...tags, v]);
+                      setTagInput("");
+                    }
+                  }}
+                />
+              </div>
+            </Field>
+
+            <Field label="Gallery images">
+              <div className="space-y-2">
+                {galleryItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs">
+                    <GalleryThumb url={item.url} alt="" className="h-8 w-8 rounded object-cover" />
+                    <span className="min-w-0 flex-1 truncate">{item.caption ?? item.url}</span>
+                    <button
+                      onClick={() => setGalleryItems(galleryItems.filter((_, i) => i !== idx))}
+                      className="shrink-0 text-destructive hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <Input
+                  placeholder="Paste an image URL and press Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = (e.target as HTMLInputElement).value.trim();
+                      if (v) {
+                        setGalleryItems([...galleryItems, { url: v, type: "image" }]);
+                        (e.target as HTMLInputElement).value = "";
                       }
                     }
                   }}
                 />
               </div>
-            </div>
-          </Field>
+            </Field>
 
-          <div className="grid gap-2 rounded-xl border card-border bg-background/40 p-4">
-            <Toggle
-              label="Featured"
-              description="Pin to top of your profile"
-              checked={featured}
-              onChange={setFeatured}
-            />
-            <Toggle
-              label="Looking for feedback"
-              description="Invite reviews from other people"
-              checked={feedback}
-              onChange={setFeedback}
-            />
-            <Toggle
-              label="Looking for collaborators"
-              description="Open to team-ups"
-              checked={collab}
-              onChange={setCollab}
-            />
+            <Field label="Resources">
+              <div className="space-y-2">
+                {resourceItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs">
+                    <span className="min-w-0 flex-1 truncate">
+                      {item.title} — {item.url}
+                    </span>
+                    <button
+                      onClick={() => setResourceItems(resourceItems.filter((_, i) => i !== idx))}
+                      className="shrink-0 text-destructive hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Input placeholder="Title" id="resource-title" className="flex-1" />
+                  <Input
+                    placeholder="URL"
+                    id="resource-url"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const titleEl = document.getElementById(
+                          "resource-title",
+                        ) as HTMLInputElement;
+                        const urlEl = e.target as HTMLInputElement;
+                        const t = titleEl?.value.trim();
+                        const u = urlEl.value.trim();
+                        if (t && u) {
+                          setResourceItems([...resourceItems, { title: t, url: u, type: "other" }]);
+                          if (titleEl) titleEl.value = "";
+                          urlEl.value = "";
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </Field>
+
+            <div className="grid gap-2 rounded-xl border card-border bg-background/40 p-4">
+              <Toggle
+                label="Featured"
+                description="Pin to top of your profile"
+                checked={featured}
+                onChange={setFeatured}
+              />
+              <Toggle
+                label="Looking for feedback"
+                description="Invite reviews from other people"
+                checked={feedback}
+                onChange={setFeedback}
+              />
+              <Toggle
+                label="Looking for collaborators"
+                description="Open to team-ups"
+                checked={collab}
+                onChange={setCollab}
+              />
+            </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 -mx-6 -mb-6 border-t border-border/60 bg-surface/95 px-6 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+          {!project && creationStep > 0 && (
+            <Button variant="ghost" onClick={() => setCreationStep((step) => step - 1)}>
+              Back
+            </Button>
+          )}
+          {!project && creationStep < 2 && (
+            <Button className="ml-auto" onClick={continueCreation}>
+              Continue
+            </Button>
+          )}
           {project && (
             <Button
               variant="ghost"
@@ -1380,9 +1517,11 @@ export function ProjectDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? "Saving…" : project ? "Save" : "Publish"}
-          </Button>
+          {(project || creationStep === 2) && (
+            <Button onClick={save} disabled={saving} className={project ? "" : "ml-auto"}>
+              {saving ? "Saving…" : project ? "Save" : "Publish project"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>

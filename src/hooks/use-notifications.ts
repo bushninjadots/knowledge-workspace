@@ -19,6 +19,7 @@ export type NotificationType =
   | "project_invite"
   | "project_join"
   | "project_post"
+  | "project_recognition"
   | "team_invite"
   | "role_application_accepted"
   | "role_application_declined"

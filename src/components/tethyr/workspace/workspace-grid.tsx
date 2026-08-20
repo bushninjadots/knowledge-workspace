@@ -385,7 +385,7 @@ export function WorkspaceGrid({
     <div
       id={showSectionNav ? `workspace-section-${it.i}` : undefined}
       key={it.i}
-      className={`h-full ${showSectionNav ? "scroll-mt-20" : ""} ${customizing ? "ws-editing" : ""}`}
+      className={`content-safe h-full ${showSectionNav ? "scroll-mt-20" : ""} ${customizing ? "ws-editing" : ""}`}
     >
       <ModuleShell
         module={modules.find((m) => m.id === it.i)}
@@ -672,7 +672,11 @@ function ModuleShell({
   children: React.ReactNode;
 }) {
   if (!customizing) {
-    return <div className="h-full overflow-y-auto scrollbar-none">{children}</div>;
+    return (
+      <div className="content-safe h-full min-w-0 overflow-x-hidden overflow-y-auto scrollbar-none">
+        {children}
+      </div>
+    );
   }
   const Icon = module?.icon;
   return (
@@ -766,7 +770,9 @@ function ModuleShell({
           )}
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-none">{children}</div>
+      <div className="content-safe min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-none">
+        {children}
+      </div>
     </div>
   );
 }
