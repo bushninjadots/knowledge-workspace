@@ -1,5 +1,38 @@
 project_id = "mfeinmphbsnjcchkmldi"
 
+[auth]
+# The site URL is where the local auth service redirects back to after an
+# OAuth handshake. The Vite dev server ports are allow-listed as redirect
+# URLs so the social login buttons work locally.
+site_url = "http://127.0.0.1:54321"
+additional_redirect_urls = [
+  "http://localhost:8080",
+  "http://localhost:8081",
+]
+
+# Social login providers. Each one must also be enabled in the Supabase
+# dashboard (Authentication -> Sign In / Providers) with its OAuth client id
+# and secret before the buttons on /login and /signup will complete a sign-in.
+# Uncomment + fill in a provider to test locally:
+#
+# [auth.external.google]
+# enabled = true
+# client_id = "your-google-client-id.apps.googleusercontent.com"
+# secret = "your-google-client-secret"
+# redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+#
+# [auth.external.github]
+# enabled = true
+# client_id = "your-github-client-id"
+# secret = "your-github-client-secret"
+# redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+#
+# [auth.external.apple]
+# enabled = true
+# client_id = "com.your.bundle.id"
+# secret = ""
+# redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+
 [db.seed]
 # Loads both seed files during `supabase db reset` — the default test user
 # (seed.sql) plus the temporary demo community (seed_demo.sql). To drop the

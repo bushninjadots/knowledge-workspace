@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
+import { OAuthButtons } from "@/components/tethyr/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,7 +125,15 @@ function LoginPage() {
         </>
       }
     >
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <div className="space-y-4">
+        <OAuthButtons redirectTarget={redirectTarget} />
+        <div className="flex items-center gap-3" role="separator" aria-label="or">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      </div>
+      <form className="mt-4 space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input

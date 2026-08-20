@@ -132,6 +132,8 @@ function ConnectionsPage() {
             icon={<Link2 className="h-5 w-5" />}
             title="No connections yet"
             description="Find collaborators on Explore and send your first connection request."
+            actionLabel="Explore people"
+            actionHref="/explore"
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">

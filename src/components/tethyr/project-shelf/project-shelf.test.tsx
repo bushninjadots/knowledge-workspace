@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeAll } from "vitest";
+import { describe, expect, it, vi, beforeAll, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProjectShelf } from "./project-shelf";
@@ -173,6 +173,99 @@ describe("ProjectShelf point-and-click navigation", () => {
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(setQ).toHaveBeenCalledWith("");
     expect(setCategory).toHaveBeenCalledWith("All");
+  });
+});
+
+describe("ProjectShelf view switching", () => {
+  // View choice is persisted to localStorage — keep the shared jsdom storage
+  // clean so the other describes always start from the default shelf view.
+  afterEach(() => localStorage.clear());
+
+  it("defaults to the carousel shelf view", () => {
+    const projects = [makeProject("p1", "First"), makeProject("p2", "Second")];
+    renderShelf(projects);
+
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Shelf view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Grid view" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  it("switches to the grid view and shows every project at once", async () => {
+    const user = userEvent.setup();
+    const projects = [
+      makeProject("p1", "First"),
+      makeProject("p2", "Second"),
+      makeProject("p3", "Third"),
+    ];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: "Grid view" }));
+
+    // Carousel chrome is gone (no counter), and every card renders together.
+    expect(screen.queryByText("1 / 3")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View First/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View Second/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View Third/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Grid view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("switches to the list view with one row per project", async () => {
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First"), makeProject("p2", "Second")];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: "List view" }));
+
+    expect(screen.queryByText("1 / 2")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View First/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View Second/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("keeps the overlay reachable from grid and list views", async () => {
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First")];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: "Grid view" }));
+    await user.click(screen.getByRole("button", { name: /View First/i }));
+    expect(await screen.findByRole("dialog", { name: "First" })).toBeInTheDocument();
+  });
+
+  it("persists the chosen view across re-renders", async () => {
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First")];
+    const first = renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: "List view" }));
+    expect(first.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    first.unmount();
+
+    // A fresh mount (same jsdom localStorage) restores the list view.
+    const second = renderShelf(projects);
+    expect(second.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });
 

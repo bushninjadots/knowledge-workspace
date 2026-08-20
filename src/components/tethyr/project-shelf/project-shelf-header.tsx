@@ -1,8 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, GalleryHorizontal, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { PROJECT_CATEGORIES } from "@/data/mocks/catalog";
+
+export type ProjectView = "shelf" | "grid" | "list";
 
 interface ProjectShelfHeaderProps {
   q: string;
@@ -10,7 +12,15 @@ interface ProjectShelfHeaderProps {
   category: string;
   setCategory: (v: string) => void;
   count: number;
+  view: ProjectView;
+  onViewChange: (v: ProjectView) => void;
 }
+
+const VIEW_OPTIONS: { value: ProjectView; label: string; icon: typeof LayoutGrid }[] = [
+  { value: "shelf", label: "Shelf view", icon: GalleryHorizontal },
+  { value: "grid", label: "Grid view", icon: LayoutGrid },
+  { value: "list", label: "List view", icon: List },
+];
 
 export function ProjectShelfHeader({
   q,
@@ -18,6 +28,8 @@ export function ProjectShelfHeader({
   category,
   setCategory,
   count,
+  view,
+  onViewChange,
 }: ProjectShelfHeaderProps) {
   return (
     <div className="space-y-4">
@@ -62,18 +74,45 @@ export function ProjectShelfHeader({
         ))}
       </div>
 
-      {/* Result count with animation */}
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={count}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          className="text-xs text-muted-foreground"
+      {/* Result count + view switcher */}
+      <div className="flex items-center justify-between gap-3">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={count}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="text-xs text-muted-foreground"
+          >
+            {count} {count === 1 ? "project" : "projects"}
+          </motion.p>
+        </AnimatePresence>
+
+        <div
+          className="flex items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5"
+          role="group"
+          aria-label="Project view"
         >
-          {count} {count === 1 ? "project" : "projects"}
-        </motion.p>
-      </AnimatePresence>
+          {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={view === value}
+              aria-label={label}
+              title={label}
+              onClick={() => onViewChange(value)}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                view === value
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

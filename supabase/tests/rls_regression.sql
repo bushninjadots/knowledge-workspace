@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(71);
+SELECT plan(96);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -285,38 +285,38 @@ SELECT is(
   '22. anonymous can still see alice''s public project'
 );
 
--- Storage: owner can upload into her project's folder.
+-- Storage: owner can upload into her project's folder (valid library ext).
 SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
 SELECT lives_ok(
-  $$INSERT INTO storage.objects (bucket_id, name, owner)
-      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/owner-file.bin',
-              '11111111-1111-1111-1111-111111111111')$$,
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/owner-file.pdf',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
   '23. owner can upload into the project folder'
 );
 
 -- EXPECT: covers still work — owner can upload into her own uid folder.
 SELECT lives_ok(
-  $$INSERT INTO storage.objects (bucket_id, name, owner)
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
       VALUES ('project-media', '11111111-1111-1111-1111-111111111111/cover.png',
-              '11111111-1111-1111-1111-111111111111')$$,
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
   '24. cover upload into owner''s uid folder still allowed'
 );
 
 -- EXPECT: contributor can upload into the project's folder.
 SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
 SELECT lives_ok(
-  $$INSERT INTO storage.objects (bucket_id, name, owner)
-      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/bob-file.bin',
-              '22222222-2222-2222-2222-222222222222')$$,
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/bob-file.pdf',
+              '22222222-2222-2222-2222-222222222222', '{"size": 1000}')$$,
   '25. contributor can upload into the project folder'
 );
 
 -- EXPECT: eve (non-member) cannot upload into the project's folder.
 SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
 SELECT throws_ok(
-  $$INSERT INTO storage.objects (bucket_id, name, owner)
-      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/eve-file.bin',
-              '33333333-3333-3333-3333-333333333333')$$,
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/eve-file.pdf',
+              '33333333-3333-3333-3333-333333333333', '{"size": 1000}')$$,
   NULL, '26. non-member project upload rejected'
 );
 
@@ -877,6 +877,248 @@ SELECT throws_ok(
       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
   NULL, '71. declining an already-decided application is rejected'
 );
+
+-- ---------------------------------------------------------------------------
+-- 11. Storage upload hardening: extension allowlists + size caps.
+--     The client validators (src/lib/validators.ts) are mirrored server-side
+--     in public.is_allowed_storage_upload, used by every INSERT/UPDATE
+--     storage policy. These tests pin that behaviour.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: an executable is rejected even though the folder is owned.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('avatars', '11111111-1111-1111-1111-111111111111/evil.exe',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '72. avatars reject disallowed extension (.exe)'
+);
+
+-- EXPECT: an SVG (script-capable) is rejected for avatars, not just exe.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('avatars', '11111111-1111-1111-1111-111111111111/avatar.svg',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '73. avatars reject SVG (embedded-script vector)'
+);
+
+-- EXPECT: an oversized image is rejected even with a valid extension.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('avatars', '11111111-1111-1111-1111-111111111111/avatar.png',
+              '11111111-1111-1111-1111-111111111111', '{"size": 8388609}')$$,
+  NULL, '74. avatars reject image over 8 MB'
+);
+
+-- EXPECT: a valid avatar still lands.
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('avatars', '11111111-1111-1111-1111-111111111111/avatar.png',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  '75. avatars accept a valid PNG'
+);
+
+-- EXPECT: proofs allow PDF but reject executables.
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('skill-proofs', '11111111-1111-1111-1111-111111111111/cert.pdf',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  '76. skill-proofs accept a PDF'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('skill-proofs', '11111111-1111-1111-1111-111111111111/cert.exe',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '77. skill-proofs reject .exe'
+);
+
+-- EXPECT: library-files allow code files (a core use case) but cap size.
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('library-files', '11111111-1111-1111-1111-111111111111/code.ts',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  '78. library-files accept a TS file'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('library-files', '11111111-1111-1111-1111-111111111111/big.mov',
+              '11111111-1111-1111-1111-111111111111', '{"size": 209715201}')$$,
+  NULL, '79. library-files reject video over 200 MB'
+);
+
+-- EXPECT: the same gate applies to project-media (video is allowed up to its cap).
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/demo.mp4',
+              '11111111-1111-1111-1111-111111111111', '{"size": 209715200}')$$,
+  '80. project-media accept a 200 MB video'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/demo.mp4',
+              '11111111-1111-1111-1111-111111111111', '{"size": 209715201}')$$,
+  NULL, '81. project-media reject video over 200 MB'
+);
+
+-- EXPECT: a video path with a 60 MB payload (50 MB default cap) is rejected.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('project-media', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/big.pdf',
+              '11111111-1111-1111-1111-111111111111', '{"size": 52428801}')$$,
+  NULL, '82. project-media reject non-media file over 50 MB'
+);
+
+-- EXPECT: banner/background/team-avatar buckets share the image gate.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('banners', '11111111-1111-1111-1111-111111111111/banner.svg',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '83. banners reject SVG'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('backgrounds', '11111111-1111-1111-1111-111111111111/bg.exe',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '84. backgrounds reject .exe'
+);
+
+-- EXPECT: challenge submissions accept a PDF but reject an executable.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('challenge-submissions',
+              '22222222-2222-2222-2222-222222222222/submission.pdf',
+              '22222222-2222-2222-2222-222222222222', '{"size": 1000}')$$,
+  '85. challenge-submissions accept a PDF'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('challenge-submissions',
+              '22222222-2222-2222-2222-222222222222/submission.exe',
+              '22222222-2222-2222-2222-222222222222', '{"size": 1000}')$$,
+  NULL, '86. challenge-submissions reject .exe'
+);
+
+-- ---------------------------------------------------------------------------
+-- 12. Community posts upload limits: images, body, title, link scheme.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: a valid post with one small data-URL image still lands.
+SELECT lives_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, images)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000001',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Img post',
+              'hello', ARRAY['data:image/png;base64,iVBORw0KGgo='])$$,
+  '87. post with a valid data-URL image is accepted'
+);
+
+-- EXPECT: more than 4 images is rejected server-side.
+SELECT throws_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, images)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000002',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Img flood',
+              'hello', ARRAY[
+                'data:image/png;base64,AAAA', 'data:image/png;base64,BBBB',
+                'data:image/png;base64,CCCC', 'data:image/png;base64,DDDD',
+                'data:image/png;base64,EEEE'])$$,
+  NULL, '88. more than 4 post images is rejected'
+);
+
+-- EXPECT: an oversized base64 image (> 12 MB) is rejected.
+SELECT throws_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, images)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000003',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Big img',
+              'hello', ARRAY['data:image/png;base64,' || repeat('A', 12582912)])$$,
+  NULL, '89. oversized post image (> 12 MB) is rejected'
+);
+
+-- EXPECT: an image element that isn't an image/http(s) URL is rejected.
+SELECT throws_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, images)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000004',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Bad img',
+              'hello', ARRAY['javascript:alert(1)'])$$,
+  NULL, '90. post image must be data:image or http(s) URL'
+);
+
+-- EXPECT: a javascript: link_url is rejected (stored-XSS guard).
+SELECT throws_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, link_url)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000005',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Bad link',
+              'hello', 'javascript:alert(1)')$$,
+  NULL, '91. javascript: link_url is rejected'
+);
+
+-- EXPECT: a normal https link is fine.
+SELECT lives_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body, link_url)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000006',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Good link',
+              'hello', 'https://example.com/work')$$,
+  '92. https link_url is accepted'
+);
+
+-- EXPECT: body beyond the 2000-char composer cap is rejected.
+SELECT throws_ok(
+  $$INSERT INTO public.posts(id, author_id, type, title, body)
+      VALUES ('e0e0e0e0-0000-4000-8000-000000000007',
+              '11111111-1111-1111-1111-111111111111', 'discussion', 'Long body',
+              repeat('x', 2001))$$,
+  NULL, '93. post body over 2000 chars is rejected'
+);
+
+-- ---------------------------------------------------------------------------
+-- 13. OAuth profile creation: handle_new_user picks up provider names.
+-- ---------------------------------------------------------------------------
+-- Google/Apple send full_name, GitHub sends user_name/name. The auto-created
+-- profile should use it instead of falling back to the email prefix.
+-- (auth.users inserts run as postgres — same as the fixture at the top.)
+SELECT set_config('role', 'postgres', true);
+INSERT INTO auth.users(id, email, raw_user_meta_data)
+  VALUES ('44444444-4444-4444-4444-444444444444', 'dev@example.com',
+          '{"full_name": "Jane Dev", "avatar_url": "https://example.com/jane.png"}')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+SELECT is(
+  (SELECT display_name FROM public.profiles
+    WHERE id = '44444444-4444-4444-4444-444444444444'),
+  'Jane Dev',
+  '94. OAuth full_name becomes the profile display name'
+);
+
+-- EXPECT: a generated handle is still assigned (unique, claimable later).
+SELECT is(
+  (SELECT count(*) FROM public.profiles
+    WHERE id = '44444444-4444-4444-4444-444444444444'
+      AND handle LIKE 'user\_%')::bigint,
+  1::bigint,
+  '95. OAuth sign-in still gets a generated handle'
+);
+
+-- EXPECT: GitHub's user_name key works too.
+SELECT set_config('role', 'postgres', true);
+INSERT INTO auth.users(id, email, raw_user_meta_data)
+  VALUES ('55555555-5555-5555-5555-555555555555', 'builder@example.com',
+          '{"user_name": "Builder Gal"}')
+  ON CONFLICT (id) DO NOTHING;
+
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+SELECT is(
+  (SELECT display_name FROM public.profiles
+    WHERE id = '55555555-5555-5555-5555-555555555555'),
+  'Builder Gal',
+  '96. GitHub user_name becomes the profile display name'
+);
+
 
 SELECT * FROM finish();
 ROLLBACK;

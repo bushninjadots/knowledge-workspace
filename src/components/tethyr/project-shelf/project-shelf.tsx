@@ -1,8 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion, useMotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
-import { ProjectShelfHeader } from "./project-shelf-header";
-import { ProjectShelfCover } from "./project-shelf-cover";
+import { cn } from "@/lib/utils";
+import { ProjectShelfHeader, type ProjectView } from "./project-shelf-header";
+import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
+import { CoverGradient } from "./cover-gradient";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { clamp, dragDirection, wheelStep } from "./shelf-navigation";
@@ -18,6 +20,18 @@ interface ProjectShelfProps {
   setCategory: (v: string) => void;
 }
 
+const VIEW_STORAGE_KEY = "tethyr-project-view";
+
+function loadSavedView(): ProjectView {
+  try {
+    const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (saved === "grid" || saved === "list") return saved;
+  } catch {
+    /* ignore */
+  }
+  return "shelf";
+}
+
 export function ProjectShelf({
   projects,
   meId,
@@ -30,6 +44,7 @@ export function ProjectShelf({
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+  const [view, setView] = useState<ProjectView>(loadSavedView);
   const containerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -48,6 +63,15 @@ export function ProjectShelf({
   useEffect(() => {
     if (activeIndex > maxOffset) setActiveIndex(maxOffset);
   }, [maxOffset, activeIndex]);
+
+  // Remember the chosen view across visits (mirrors the opportunity filters).
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch {
+      /* ignore */
+    }
+  }, [view]);
 
   const advance = useCallback(
     (dir: -1 | 1) => {
@@ -122,7 +146,8 @@ export function ProjectShelf({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (overlayIndex != null) return;
+      // Arrow browsing belongs to the carousel — in grid/list the page scrolls.
+      if (view !== "shelf" || overlayIndex != null) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.key === "ArrowLeft") navigate(-1);
@@ -130,7 +155,7 @@ export function ProjectShelf({
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [navigate, overlayIndex]);
+  }, [navigate, overlayIndex, view]);
 
   // Mouse wheel browses the shelf left/right instead of scrolling the page.
   // Native listener (not React's passive onWheel) so preventDefault works.
@@ -140,7 +165,7 @@ export function ProjectShelf({
     const el = carouselRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (maxOffset <= 0 || overlayIndex != null) return;
+      if (view !== "shelf" || maxOffset <= 0 || overlayIndex != null) return;
       e.preventDefault();
       if (wheelLocked.current) return;
       const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
@@ -156,7 +181,7 @@ export function ProjectShelf({
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [maxOffset, overlayIndex, advance, isMobile]);
+  }, [maxOffset, overlayIndex, advance, isMobile, view]);
 
   const handleCardClick = useCallback((_project: ProjectRow, index: number) => {
     setOverlayIndex(index);
@@ -189,6 +214,8 @@ export function ProjectShelf({
         category={category}
         setCategory={setCategory}
         count={projects.length}
+        view={view}
+        onViewChange={setView}
       />
 
       {projects.length === 0 ? (
@@ -226,6 +253,35 @@ export function ProjectShelf({
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
               forceFace
+              onClick={() => handleCardClick(project, i)}
+            />
+          ))}
+        </div>
+      ) : view === "grid" ? (
+        /* Desktop grid: every project at once */
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {projects.map((project, i) => (
+            <ProjectShelfCover
+              key={project.id}
+              project={project}
+              index={i}
+              meId={meId}
+              isContributor={contributorIds.has(project.id)}
+              prefersReducedMotion={prefersReducedMotion ?? false}
+              forceFace
+              onClick={() => handleCardClick(project, i)}
+            />
+          ))}
+        </div>
+      ) : view === "list" ? (
+        /* Desktop list: compact rows */
+        <div className="space-y-3">
+          {projects.map((project, i) => (
+            <ProjectListRow
+              key={project.id}
+              project={project}
+              meId={meId}
+              isContributor={contributorIds.has(project.id)}
               onClick={() => handleCardClick(project, i)}
             />
           ))}
@@ -366,6 +422,96 @@ export function ProjectShelf({
         }}
       />
     </div>
+  );
+}
+
+/* Compact horizontal row used by the list view */
+function ProjectListRow({
+  project,
+  meId,
+  isContributor,
+  onClick,
+}: {
+  project: ProjectRow;
+  meId: string | null;
+  isContributor: boolean;
+  onClick: () => void;
+}) {
+  const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
+  const isOwn = project.profiles?.id === meId;
+
+  return (
+    <button
+      onClick={onClick}
+      className="group flex w-full items-center gap-4 rounded-xl border card-border bg-surface p-3 text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm"
+      aria-label={`View ${project.title}`}
+    >
+      {/* Cover thumb */}
+      <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg">
+        <CoverGradient
+          tags={project.tags}
+          coverUrl={project.cover_url}
+          progress={project.progress_percent}
+          fit="cover"
+        />
+        <div className="absolute left-2 top-2 flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+            <span className={cn("h-1 w-1 rounded-full", status.dot)} />
+            {status.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className="min-w-0 truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary"
+            title={project.title}
+          >
+            {project.title}
+          </p>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {isOwn && (
+              <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[10px] font-medium text-brand-green">
+                Your project
+              </span>
+            )}
+            {isContributor && (
+              <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[10px] font-medium text-brand-purple">
+                Contributing
+              </span>
+            )}
+            <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+              {project.progress_percent}%
+            </span>
+          </div>
+        </div>
+        {project.profiles && (
+          <p className="truncate text-xs text-muted-foreground">
+            by {project.profiles.display_name || project.profiles.handle || "Member"}
+          </p>
+        )}
+        {project.description && (
+          <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-muted-foreground/85">
+            {project.description}
+          </p>
+        )}
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {project.tags.slice(0, 3).map((t) => (
+            <span
+              key={t}
+              className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+            >
+              {t}
+            </span>
+          ))}
+          {project.tags.length > 3 && (
+            <span className="text-[10px] text-muted-foreground/50">+{project.tags.length - 3}</span>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }
 
