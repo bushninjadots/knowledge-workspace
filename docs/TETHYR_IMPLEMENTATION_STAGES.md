@@ -74,7 +74,7 @@ Implement the smallest change that improves coherence, trust, or the core collab
 
 - [x] Replace high-risk Supabase `as any` boundaries with typed query/mutation adapters. (2026-08-18: all hand-written `as any` sites removed; the only remaining ones are auto-generated in `routeTree.gen.ts`.)
 - [ ] Add tests for permissions, loading/error/empty states, and notification destinations.
-- [ ] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation.
+- [x] Add keyboard/focus coverage for WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile navigation. (2026-08-20: partial — the shared `SegmentedControl` (ARIA tabs: roving tabindex + arrow keys) and `ProfileLink` (link vs. non-interactive fallback) now have keyboard/focus tests. WorkspaceGrid, ProjectShelf, dialogs, drawers, and mobile nav remain outstanding.)
 - [ ] Audit meaningful image alt text and dynamic-accent contrast.
 - [ ] Measure query/list performance, then add pagination or lazy loading where evidence requires it.
 
@@ -112,6 +112,12 @@ Implemented the findings from `docs/UX_FULL_REVIEW_2026-08-20.md` (full status t
 - **Completeness consolidation (L2)**: the dashboard welcome header no longer duplicates the completeness ring — the next-steps module is the single completeness surface on that screen.
 - **Shared SegmentedControl (L3)**: extracted `src/components/tethyr/segmented-control.tsx` (one container + pill treatment, tab semantics) and adopted it on the Explore views and Skill workshop tabs; challenges filter chips intentionally stay chips (`rounded-full` per the radius scale).
 - **Validation**: typecheck, 203 Vitest tests, ESLint, production build, and browser checks (mobile nav labels, Explore/skills tablists, community rail) all passed.
+
+#### 2026-08-20 (third pass) — keyboard/focus coverage + commit
+
+- Added the ARIA tabs keyboard pattern to the shared `SegmentedControl` (roving tabindex — only the active tab is in the tab order — plus Left/Right/Up/Down arrow selection with focus following) and component tests for it, plus `ProfileLink` tests (renders a link with a handle, a non-interactive fallback without one, and passes title/style through).
+- Pushed the UX-review commit (`6cfceff`) to `origin/main`; re-verified the full surface in the browser post-commit (dashboard, explore + arrow-key tab navigation, skills tablist, settings, community rail, messages) with no console errors.
+- Validation: typecheck, 218 Vitest tests, ESLint, production build all passed.
 
 ### 2026-08-19 — Public Studio layout
 

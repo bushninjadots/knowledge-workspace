@@ -316,7 +316,7 @@ completeness in one row. Consider consolidating the two dashboard surfaces
 
 ### L3. Visual inconsistency in headers
 
-> ✅ **Resolved 2026-08-20** — page titles use the shared `font-display … font-semibold tracking-tight` style, and a shared `SegmentedControl` component (`src/components/tethyr/segmented-control.tsx`) now drives the Explore views and Skill workshop tabs with one container + pill treatment and proper tab semantics. The challenges type/difficulty/status filters stay as chips — that's a multi-group filter row, not a tab bar, and `rounded-full` chips match the radius scale for tags.
+> ✅ **Resolved 2026-08-20** — page titles use the shared `font-display … font-semibold tracking-tight` style, and a shared `SegmentedControl` component (`src/components/tethyr/segmented-control.tsx`) now drives the Explore views and Skill workshop tabs with one container + pill treatment and proper tab semantics — including the ARIA tabs keyboard pattern (roving tabindex, arrow-key selection + focus), covered by component tests. The challenges type/difficulty/status filters stay as chips — that's a multi-group filter row, not a tab bar, and `rounded-full` chips match the radius scale for tags.
 
 - `sessions.tsx` / `sessions.$id.tsx` use `text-2xl font-bold` headers while
   connections/dashboard use `font-display text-2xl/3xl font-semibold`.
