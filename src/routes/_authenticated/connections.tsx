@@ -66,7 +66,7 @@ function ConnectionsPage() {
   };
 
   return (
-    <div className="animate-room-enter mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="animate-room-enter mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <header className="mb-6">
         <div className="flex items-baseline gap-3">
           <h1 className="font-display text-2xl font-semibold sm:text-3xl">Connections</h1>
@@ -122,7 +122,7 @@ function ConnectionsPage() {
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold">Your people</h2>
         {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-elevated/40" />
             ))}
@@ -136,7 +136,7 @@ function ConnectionsPage() {
             actionHref="/explore"
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {accepted.map((c) => (
               <FriendRow key={c.id} conn={c} />
             ))}

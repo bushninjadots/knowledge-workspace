@@ -14,6 +14,7 @@ import {
   type LibraryItem,
 } from "@/hooks/use-library";
 import { cn } from "@/lib/utils";
+import { getItemExcerpt } from "@/lib/library-excerpt";
 
 const TYPE_ICONS: Record<string, typeof FileText> = {
   note: FileText,
@@ -47,13 +48,6 @@ function formatRelativeTime(dateStr: string): string {
   });
 }
 
-function getExcerpt(content: string): string {
-  if (!content) return "";
-  // Strip HTML tags
-  const text = content.replace(/<[^>]+>/g, "").trim();
-  return text.length > 120 ? text.slice(0, 120) + "…" : text;
-}
-
 export function ItemCard({
   item,
   layout = "grid",
@@ -67,7 +61,7 @@ export function ItemCard({
 
   const Icon = TYPE_ICONS[item.type] ?? FileText;
   const iconColor = TYPE_COLORS[item.type] ?? "text-muted-foreground";
-  const excerpt = getExcerpt(item.content);
+  const excerpt = getItemExcerpt(item.content, item.content_format ?? "html");
 
   if (layout === "list") {
     return (

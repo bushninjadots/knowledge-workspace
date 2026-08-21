@@ -12,14 +12,16 @@ import { burstConfetti } from "@/lib/confetti";
 import { EmptyState } from "./empty-state";
 
 function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm" | "md" }) {
-  const Icon = ACHIEVEMENT_ICONS[def.type] ?? (() => <Award className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />);
+  const Icon = ACHIEVEMENT_ICONS[def.type];
+  const iconClass = size === "sm" ? "h-3 w-3" : "h-5 w-5";
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full ${def.color} ${
+      aria-hidden="true"
+      className={`flex shrink-0 items-center justify-center rounded-full text-foreground ${def.color} ${
         size === "sm" ? "h-5 w-5" : "h-10 w-10"
       }`}
     >
-      <Icon className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />
+      {Icon ? <Icon className={iconClass} /> : <Award className={iconClass} />}
     </span>
   );
 }
@@ -74,7 +76,7 @@ export function AchievementGrid({
         .select("achievement, awarded_at")
         .eq("profile_id", profileId)
         .order("awarded_at", { ascending: false });
-      if (error) return [] as { achievement: AchievementType; awarded_at: string }[];
+      if (error) throw error;
       return (data ?? []) as { achievement: AchievementType; awarded_at: string }[];
     },
     staleTime: 60_000,
@@ -125,24 +127,14 @@ export function AchievementGrid({
     );
   }
 
-  const earnedSet = new Set((earned ?? []).map((e) => e.achievement));
+  const earnedSet = new Set((earned ?? []).map((e) => String(e.achievement).trim().toLowerCase()));
 
   // Show earned first, then locked
   const sorted = [...ACHIEVEMENTS].sort((a, b) => {
-    const aEarned = earnedSet.has(a.type) ? 0 : 1;
+    const aEarned = earnedSet.has(a.type.toLowerCase()) ? 0 : 1;
     const bEarned = earnedSet.has(b.type) ? 0 : 1;
     return aEarned - bEarned;
   });
-
-  if (earnedSet.size === 0) {
-    return (
-      <EmptyState
-        icon={<Award className="h-5 w-5" />}
-        title="No achievements yet"
-        description="Earn badges by contributing, collaborating, and sharing on Tethyr."
-      />
-    );
-  }
 
   function toggleFavorite(type: AchievementType) {
     const next = favoriteAchievement === type ? null : type;
@@ -156,11 +148,13 @@ export function AchievementGrid({
     <div className="flex flex-wrap gap-2">
       {isOwnProfile && (
         <p className="w-full text-[11px] text-muted-foreground">
-          Tap an earned badge to pin it next to your name.
+          {earnedSet.size > 0
+            ? "Tap an earned badge to pin it next to your name."
+            : "Build, contribute, and collaborate to unlock your first badge."}
         </p>
       )}
       {sorted.map((def) => {
-        const isEarned = earnedSet.has(def.type);
+        const isEarned = earnedSet.has(def.type.toLowerCase());
         const isFavorite = favoriteAchievement === def.type;
         return (
           <button

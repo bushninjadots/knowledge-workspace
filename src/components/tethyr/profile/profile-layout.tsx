@@ -121,6 +121,8 @@ export function ProfileLayout({
             <BannerStrip
               bannerSigned={bannerSigned}
               bannerCaption={profile?.banner_caption ?? null}
+              overlay={background?.bannerOverlay ?? "soft"}
+              captionPosition={background?.bannerCaptionPosition ?? "right"}
               userId={userId}
               onChange={onChange}
             />

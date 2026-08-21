@@ -1,6 +1,14 @@
 import { memo, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { TrendingUp, HandHeart, Handshake, Trophy, Target, ArrowRight } from "lucide-react";
+import {
+  TrendingUp,
+  HandHeart,
+  Handshake,
+  Trophy,
+  Target,
+  ArrowRight,
+  BookOpen,
+} from "lucide-react";
 import { useChallenges } from "@/hooks/use-challenges";
 import { useTrendingSkills, useCurrentUser } from "@/hooks/use-current-user";
 import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
@@ -98,6 +106,13 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
       })
     : null;
   const needsCompletion = completeness != null && completeness < 100;
+  const resources = (me?.projects ?? [])
+    .flatMap((project) =>
+      (project.resources ?? [])
+        .slice(0, 2)
+        .map((resource) => ({ ...resource, projectId: project.id, projectTitle: project.title })),
+    )
+    .slice(0, 4);
 
   return (
     <aside
@@ -178,6 +193,42 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
             ))}
           </div>
         )}
+      </RailCard>
+
+      <RailCard
+        title="Useful resources"
+        icon={<BookOpen className="h-3.5 w-3.5 text-brand-purple" />}
+      >
+        {resources.length === 0 ? (
+          <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+            Project guides, references, and tools shared by builders will appear here.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {resources.map((resource, index) => (
+              <a
+                key={`${resource.projectId}-${index}`}
+                href={resource.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group block rounded-lg px-2 py-2 transition-colors hover:bg-surface-elevated/60"
+              >
+                <span className="block truncate text-xs font-medium group-hover:text-primary">
+                  {resource.title}
+                </span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  From {resource.projectTitle}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+        <Link
+          to="/library"
+          className="mt-2 inline-flex items-center gap-1 px-2 text-xs font-medium text-primary hover:underline"
+        >
+          Open Library <ArrowRight className="h-3 w-3" />
+        </Link>
       </RailCard>
 
       {/* One clear CTA — complete the profile / set learning goals */}

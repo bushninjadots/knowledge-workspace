@@ -49,10 +49,10 @@ function MessagesPage() {
   }
 
   return (
-    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-7xl md:h-screen">
+    <div className="animate-room-enter mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-[90rem] md:h-screen">
       {/* Seating chart — conversation list */}
       <aside
-        className={`w-full flex-col border-r border-border/60 sm:w-80 ${
+        className={`w-full flex-col border-r border-border/60 sm:w-96 ${
           active ? "hidden sm:flex" : "flex"
         }`}
       >
@@ -254,7 +254,7 @@ function Thread({
         </div>
       </header>
 
-      <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto p-4 bg-noise">
+      <div ref={scrollerRef} className="flex-1 space-y-3 overflow-y-auto bg-noise p-6 sm:p-8">
         {hasNextPage && (
           <div className="flex justify-center">
             <Button

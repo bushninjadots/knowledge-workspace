@@ -16,6 +16,12 @@ export const PROJECT_CATEGORIES = [
 
 export type ProjectCategory = (typeof PROJECT_CATEGORIES)[number];
 
+// Categories used by the Explore filters. "Projects" is a view, not a craft,
+// so it belongs in the main tab bar rather than beside Design and Development.
+export const EXPLORE_FILTER_CATEGORIES = PROJECT_CATEGORIES.filter(
+  (category) => category !== "Projects",
+);
+
 /** A "browse by need" chip: a role label mapped to the skills it implies. */
 export interface OpportunityNeedChip {
   label: string;

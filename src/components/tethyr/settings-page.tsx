@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -52,7 +52,8 @@ export function SettingsPage() {
   const { data: authUser } = useAuthUser();
   const { data: me, refresh: refreshUser } = useCurrentUser();
   const prefs = useNotificationPreferences();
-  const bg = (me?.profile as Record<string, unknown> | null)?.background as ProfileBackground | null | undefined;
+  const bg = (me?.profile as Record<string, unknown> | null)?.background as
+    ProfileBackground | null | undefined;
 
   const [newPassword, setNewPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -72,11 +73,45 @@ export function SettingsPage() {
   const [selectedPattern, setSelectedPattern] = useState(bg?.pattern ?? "dots");
   const [selectedGradient, setSelectedGradient] = useState(bg?.gradient ?? "tethyr");
   const [strength, setStrength] = useState(bg?.strength ?? BACKGROUND_DEFAULT_STRENGTH);
-  const [cardBorders, setCardBorders] = useState<CardBorderPreference>(bg?.cardBorders ?? "neutral");
+  const [cardBorders, setCardBorders] = useState<CardBorderPreference>(
+    bg?.cardBorders ?? "neutral",
+  );
   const [accentMode, setAccentMode] = useState<AccentMode>(bg?.accentMode ?? "dynamic");
   const [customAccent, setCustomAccent] = useState(bg?.accentColor ?? "#38bdf8");
   const [density, setDensity] = useState<ContentDensity>(bg?.density ?? "comfortable");
+  const [bannerOverlay, setBannerOverlay] = useState<"none" | "soft" | "strong">(
+    bg?.bannerOverlay ?? "soft",
+  );
+  const [bannerCaptionPosition, setBannerCaptionPosition] = useState<"left" | "center" | "right">(
+    bg?.bannerCaptionPosition ?? "right",
+  );
   const [savingAppearance, setSavingAppearance] = useState(false);
+
+  // The current-user query resolves after this page mounts. Re-seed the local
+  // controls when it does so saving appearance cannot overwrite a persisted
+  // preference with the initial defaults.
+  useEffect(() => {
+    if (!me?.profile) return;
+    const stored = me.profile.background;
+    const storedColor = stored?.color ?? null;
+    const colorOption = BACKGROUND_COLORS.find(
+      (color) =>
+        color.id === storedColor || color.color.toLowerCase() === storedColor?.toLowerCase(),
+    );
+    setBgMode(
+      stored?.mode === "pattern" ? "pattern" : stored?.mode === "gradient" ? "gradient" : "color",
+    );
+    setSelectedTint(colorOption?.id ?? "sky");
+    setSelectedPattern(stored?.pattern ?? "dots");
+    setSelectedGradient(stored?.gradient ?? "tethyr");
+    setStrength(stored?.strength ?? BACKGROUND_DEFAULT_STRENGTH);
+    setCardBorders(stored?.cardBorders ?? "neutral");
+    setAccentMode(stored?.accentMode ?? "dynamic");
+    setCustomAccent(stored?.accentColor ?? "#38bdf8");
+    setDensity(stored?.density ?? "comfortable");
+    setBannerOverlay(stored?.bannerOverlay ?? "soft");
+    setBannerCaptionPosition(stored?.bannerCaptionPosition ?? "right");
+  }, [me?.profile]);
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -144,7 +179,7 @@ export function SettingsPage() {
     setSavingAppearance(true);
     const payload: ProfileBackground = {
       mode: bgMode,
-      color: selectedTint,
+      color: BACKGROUND_COLORS.find((color) => color.id === selectedTint)?.color ?? selectedTint,
       pattern: selectedPattern,
       gradient: selectedGradient,
       image_url: bg?.image_url ?? null,
@@ -153,6 +188,8 @@ export function SettingsPage() {
       accentMode,
       accentColor: accentMode === "custom" ? customAccent : null,
       density,
+      bannerOverlay,
+      bannerCaptionPosition,
     };
     const { error } = await supabase
       .from("profiles")
@@ -443,6 +480,37 @@ export function SettingsPage() {
                       }`}
                     >
                       {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-border/60 pt-4">
+                <div>
+                  <p className="font-medium">Studio banner</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use the same banner treatment on Dashboard and Studio.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(["none", "soft", "strong"] as const).map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setBannerOverlay(value)}
+                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${bannerOverlay === value ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:bg-surface/80"}`}
+                    >
+                      {value === "none" ? "No overlay" : `${value} overlay`}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(["left", "center", "right"] as const).map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setBannerCaptionPosition(value)}
+                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${bannerCaptionPosition === value ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:bg-surface/80"}`}
+                    >
+                      Caption {value}
                     </button>
                   ))}
                 </div>

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, GalleryHorizontal, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { PROJECT_CATEGORIES } from "@/data/mocks/catalog";
+import { EXPLORE_FILTER_CATEGORIES } from "@/data/mocks/catalog";
 
 export type ProjectView = "shelf" | "grid" | "list";
 
@@ -33,16 +33,6 @@ export function ProjectShelfHeader({
 }: ProjectShelfHeaderProps) {
   return (
     <div className="space-y-4">
-      {/* Title */}
-      <div>
-        <p className="text-xs uppercase tracking-wider text-primary/70">Explore</p>
-        <h1 className="font-display text-2xl font-semibold">What's being built right now</h1>
-        <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-          Browse active projects, find people to collaborate with, and discover what the community
-          is working on.
-        </p>
-      </div>
-
       {/* Search */}
       <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
         <Search className="h-4 w-4 text-muted-foreground" />
@@ -56,7 +46,7 @@ export function ProjectShelfHeader({
 
       {/* Categories */}
       <div className="flex flex-wrap gap-2">
-        {PROJECT_CATEGORIES.map((c) => (
+        {EXPLORE_FILTER_CATEGORIES.map((c) => (
           <button
             key={c}
             type="button"
@@ -89,7 +79,7 @@ export function ProjectShelfHeader({
         </AnimatePresence>
 
         <div
-          className="flex items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5"
+          className="hidden items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5 md:flex"
           role="group"
           aria-label="Project view"
         >

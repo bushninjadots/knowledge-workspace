@@ -33,6 +33,7 @@ import {
   NEED_BADGE,
   NEED_LABEL,
   OPPORTUNITY_NEED_CHIPS,
+  EXPLORE_FILTER_CATEGORIES,
   PROJECT_CATEGORIES,
   STAGE_RANK,
 } from "@/data/mocks/catalog";
@@ -527,11 +528,12 @@ function ExplorePage() {
             <p className="section-label">Choose a direction</p>
             <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
               <div>
+                {" "}
                 <h1
                   id="explore-intent-heading"
                   className="font-display text-2xl font-semibold tracking-tight"
                 >
-                  What are you here to do?
+                  Find work, people, and openings
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Start with an intention, then find the work or people that make it possible.
@@ -555,7 +557,7 @@ function ExplorePage() {
                 onClick={() => {
                   setIntent("build");
                   setTab("projects");
-                  setCategory("Projects");
+                  setCategory("All");
                 }}
               />
               <IntentButton
@@ -585,7 +587,7 @@ function ExplorePage() {
                 onClick={() => {
                   setIntent("feedback");
                   setTab("projects");
-                  setCategory("Projects");
+                  setCategory("All");
                 }}
               />
             </div>
@@ -608,9 +610,9 @@ function ExplorePage() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center gap-4 px-4 py-6">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-48 w-64 shrink-0 animate-pulse rounded-xl bg-surface" />
+            <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-48 animate-pulse rounded-xl bg-surface" />
               ))}
             </div>
           ) : tab === "opportunities" ? (
@@ -786,7 +788,7 @@ function ExplorePage() {
                   )}
 
                   <div className="mb-4 flex flex-wrap gap-2">
-                    {PROJECT_CATEGORIES.map((c) => (
+                    {EXPLORE_FILTER_CATEGORIES.map((c) => (
                       <button
                         key={c}
                         type="button"
@@ -940,7 +942,7 @@ function ExplorePage() {
               </div>
               {/* People tab filter chips */}
               <div className="mb-6 flex flex-wrap gap-2">
-                {PROJECT_CATEGORIES.map((c) => (
+                {EXPLORE_FILTER_CATEGORIES.map((c) => (
                   <button
                     key={c}
                     type="button"

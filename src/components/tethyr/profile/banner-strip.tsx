@@ -19,11 +19,15 @@ export function BannerStrip({
   bannerCaption,
   userId,
   onChange,
+  overlay = "soft",
+  captionPosition = "right",
 }: {
   bannerSigned: string | null;
   bannerCaption?: string | null;
   userId: string;
   onChange: () => void;
+  overlay?: "none" | "soft" | "strong" | null;
+  captionPosition?: "left" | "center" | "right" | null;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -110,6 +114,12 @@ export function BannerStrip({
           />
         ) : (
           <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
+        )}
+        {overlay && overlay !== "none" && (
+          <div
+            aria-hidden="true"
+            className={`absolute inset-0 ${overlay === "strong" ? "bg-background/45" : "bg-background/20"}`}
+          />
         )}
 
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
@@ -198,7 +208,7 @@ export function BannerStrip({
           bannerCaption && (
             <button
               onClick={openCaptionEditor}
-              className="absolute bottom-4 right-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-xs"
+              className={`absolute bottom-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-xs ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
               title="Click to edit caption"
             >
               {bannerCaption}

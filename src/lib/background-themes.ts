@@ -33,6 +33,9 @@ export type ProfileBackground = {
   accentMode?: AccentMode | null;
   accentColor?: string | null;
   density?: ContentDensity | null;
+  /** Shared banner presentation preferences for Dashboard and Studio. */
+  bannerOverlay?: "none" | "soft" | "strong" | null;
+  bannerCaptionPosition?: "left" | "center" | "right" | null;
 };
 
 /** Default tint strength when a row predates the strength slider. */
@@ -187,6 +190,8 @@ export function emptyBackground(): ProfileBackground {
     accentMode: "dynamic",
     accentColor: null,
     density: "comfortable",
+    bannerOverlay: "soft",
+    bannerCaptionPosition: "right",
   };
 }
 

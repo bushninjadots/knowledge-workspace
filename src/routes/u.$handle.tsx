@@ -349,8 +349,16 @@ function PublicProfileRoute() {
             ) : (
               <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
             )}
+            {publicBackground?.bannerOverlay && publicBackground.bannerOverlay !== "none" && (
+              <div
+                aria-hidden="true"
+                className={`absolute inset-0 ${publicBackground.bannerOverlay === "strong" ? "bg-background/45" : "bg-background/20"}`}
+              />
+            )}
             {profile.banner_caption && (
-              <span className="absolute bottom-4 right-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs">
+              <span
+                className={`absolute bottom-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs ${publicBackground?.bannerCaptionPosition === "left" ? "left-4" : publicBackground?.bannerCaptionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+              >
                 {profile.banner_caption}
               </span>
             )}

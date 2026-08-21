@@ -136,11 +136,13 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
     <div className="min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Header */}
-        <div className="mb-6 flex items-end justify-between">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl font-bold">{title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {items.length} {items.length === 1 ? "item" : "items"}
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              {view.type === "all"
+                ? "Keep the references, snippets, and working notes that help your projects move."
+                : `${items.length} ${items.length === 1 ? "item" : "items"}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -182,11 +184,20 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
             <Button
               size="sm"
+              variant="outline"
+              className="gap-2 border-border/60 bg-surface/60"
+              onClick={onNewNote}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Start a doc
+            </Button>
+            <Button
+              size="sm"
               className="gap-2 bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,var(--background))] hover:opacity-90"
               onClick={onNewNote}
             >
               <Plus className="h-3.5 w-3.5" />
-              New Note
+              New note
             </Button>
           </div>
         </div>

@@ -10,6 +10,8 @@ import {
   Globe,
   Upload,
   FolderOpen,
+  Code2,
+  FileCode2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -53,6 +55,8 @@ function LibraryItemPage() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [workspaceMode, setWorkspaceMode] = useState<"docs" | "code">("docs");
+  const [preview, setPreview] = useState(false);
 
   // Sync local state when item loads
   useEffect(() => {
@@ -239,10 +243,67 @@ function LibraryItemPage() {
           className="mb-6 w-full bg-transparent text-2xl font-bold outline-none placeholder:text-muted-foreground/40 font-display"
         />
 
-        {/* Editor */}
-        {item.type === "note" || item.type === "document" ? (
-          <NoteEditor content={content} onChange={handleContentChange} />
-        ) : item.type === "link" && item.url ? (
+        {/* Editor / code-doc workspace */}
+        {(item.type === "note" || item.type === "document") && (
+          <>
+            <div className="mb-4 rounded-xl border border-brand-green/20 bg-brand-green/5 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    {workspaceMode === "code" ? (
+                      <FileCode2 className="h-4 w-4 text-brand-green" />
+                    ) : (
+                      <Code2 className="h-4 w-4 text-brand-purple" />
+                    )}
+                    {workspaceMode === "code" ? "Code workspace" : "Docs workspace"}
+                  </div>
+                  <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+                    {workspaceMode === "code"
+                      ? "Write a snippet, implementation note, or README. Use Code block for syntax-highlighted code."
+                      : "Explain the idea, decisions, and next steps. Add code blocks whenever a reader needs the implementation."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-background/50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceMode("docs")}
+                    className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "docs" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
+                  >
+                    Docs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceMode("code")}
+                    className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "code" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
+                  >
+                    Code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreview((value) => !value)}
+                    className="rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    {preview ? "Edit" : "Preview"}
+                  </button>
+                </div>
+              </div>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                To publish this into a project, use <strong>Link to project</strong> below. GitHub
+                sync can be enabled after a repository is linked and your GitHub account is
+                connected.
+              </p>
+            </div>
+            {preview ? (
+              <article
+                className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+            ) : (
+              <NoteEditor content={content} onChange={handleContentChange} />
+            )}
+          </>
+        )}
+        {item.type === "link" && item.url ? (
           <div className="rounded-xl border card-border bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
               <Globe className="h-5 w-5 text-teaching" />
@@ -314,6 +375,21 @@ function LibraryItemPage() {
                 </option>
               ))}
             </select>
+          </div>
+        )}
+        {(item.type === "note" || item.type === "document") && projectId && (
+          <div className="mt-4 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">GitHub sync</span>
+            <span className="mx-1.5">·</span>
+            Link this doc to a project with a connected GitHub repository to enable repository sync
+            when the project owner turns it on.
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/profile" })}
+              className="ml-1 font-medium text-brand-green hover:underline"
+            >
+              Connect GitHub
+            </button>
           </div>
         )}
 

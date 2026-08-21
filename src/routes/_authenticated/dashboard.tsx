@@ -13,7 +13,7 @@ import {
   Ticket,
   Plus,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
@@ -24,6 +24,11 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
+import {
+  AvailabilitySelector,
+  useUpdateAvailability,
+} from "@/components/tethyr/availability-badge";
+import type { AvailabilityStatus } from "@/lib/skill-match";
 import { WelcomeModal } from "@/components/tethyr/welcome-modal";
 const WorkspaceGrid = lazy(() =>
   import("@/components/tethyr/workspace/workspace-grid").then((m) => ({
@@ -41,6 +46,7 @@ import { useChallenges } from "@/hooks/use-challenges";
 import { useProjectReturnChanges } from "@/hooks/use-project-loop";
 import { supabase } from "@/integrations/supabase/client";
 import { seoMeta } from "@/lib/seo";
+import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () =>
@@ -81,6 +87,8 @@ function DashboardContent({
 }) {
   const { data: sessionRequests = [] } = useSessionRequests();
   const { data: connections = [] } = useConnections();
+  const queryClient = useQueryClient();
+  const updateAvailability = useUpdateAvailability();
   const { data: unreadData } = useUnreadCounts();
 
   const { data: myChallenges = [], isLoading: challengesLoading } = useChallenges("active");
@@ -120,10 +128,11 @@ function DashboardContent({
   });
 
   useEffect(() => {
-    if (data?.userId) {
-      checkAndAwardAchievements().catch(() => {});
-    }
-  }, [data?.userId]);
+    if (!data?.userId) return;
+    checkAndAwardAchievements()
+      .then(() => queryClient.invalidateQueries({ queryKey: ["achievements", data.userId] }))
+      .catch(() => {});
+  }, [data?.userId, queryClient]);
 
   const input = useMemo(
     () => ({
@@ -163,6 +172,10 @@ function DashboardContent({
   const pendingInviteCount = useMemo(
     () => pendingSessionCount + pendingConnectionCount,
     [pendingSessionCount, pendingConnectionCount],
+  );
+  const firstName = useMemo(
+    () => data?.profile?.display_name?.split(/\s+/)[0] ?? data?.profile?.handle ?? "member",
+    [data?.profile],
   );
   const unreadMessageCount = useMemo(() => unreadData?.total ?? 0, [unreadData]);
   const activeProjects = useMemo(
@@ -581,6 +594,23 @@ function DashboardContent({
             Your next move
           </h2>
           <WelcomeModal />
+          <DashboardWelcomeBanner
+            bannerSigned={data?.bannerSigned ?? null}
+            bannerCaption={data?.profile?.banner_caption ?? null}
+            bannerOverlay={data?.background?.bannerOverlay ?? "soft"}
+            bannerCaptionPosition={data?.background?.bannerCaptionPosition ?? "right"}
+            userId={data.userId}
+            onBannerChange={queryClient.invalidateQueries.bind(queryClient, {
+              queryKey: ["current-user"],
+            })}
+            firstName={firstName}
+            availability={data?.profile?.availability as AvailabilityStatus}
+            onAvailabilityChange={(status) => updateAvailability.mutate(status)}
+            pendingSessionCount={pendingSessionCount}
+            activeProjectId={activeProjects[0]?.id ?? null}
+            hasOpenRole={todayOpps.length > 0}
+            reputationScore={data?.profile?.reputation_score ?? null}
+          />
           {renderModule("today")}
           <ProjectReturnShelf />
           <WeeklyShowYourWorkPrompt projectId={activeProjects[0]?.id ?? null} />
@@ -613,6 +643,104 @@ function DashboardContent({
         </section>
       </div>
     </div>
+  );
+}
+
+/* ── Welcome banner ── */
+
+function DashboardWelcomeBanner({
+  bannerSigned,
+  bannerCaption,
+  bannerOverlay,
+  bannerCaptionPosition,
+  userId,
+  onBannerChange,
+  firstName,
+  availability,
+  onAvailabilityChange,
+  pendingSessionCount,
+  activeProjectId,
+  hasOpenRole,
+  reputationScore,
+}: {
+  bannerSigned: string | null;
+  bannerCaption: string | null;
+  bannerOverlay: "none" | "soft" | "strong" | null;
+  bannerCaptionPosition: "left" | "center" | "right" | null;
+  userId: string;
+  onBannerChange: () => void;
+  firstName: string;
+  availability: AvailabilityStatus;
+  onAvailabilityChange: (status: AvailabilityStatus) => void;
+  pendingSessionCount: number;
+  activeProjectId: string | null;
+  hasOpenRole: boolean;
+  reputationScore: number | null;
+}) {
+  return (
+    <section
+      aria-labelledby="dashboard-welcome-heading"
+      className="overflow-hidden rounded-xl bg-surface-elevated/30"
+    >
+      <BannerStrip
+        bannerSigned={bannerSigned}
+        bannerCaption={bannerCaption}
+        overlay={bannerOverlay}
+        captionPosition={bannerCaptionPosition}
+        userId={userId}
+        onChange={onBannerChange}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="section-label">Welcome back</p>
+            <AvailabilitySelector current={availability} onSave={onAvailabilityChange} />
+          </div>
+          <h1
+            id="dashboard-welcome-heading"
+            className="mt-1 font-display text-2xl font-semibold sm:text-3xl"
+          >
+            Hey {firstName},{" "}
+            <span className="text-[var(--user-accent,var(--trust))]">what&apos;s next?</span>
+          </h1>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {pendingSessionCount > 0 ? (
+            <Link
+              to="/sessions"
+              search={{ tab: "requests" }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+            >
+              Review requests <ArrowRight className="h-3 w-3" />
+            </Link>
+          ) : activeProjectId ? (
+            <Link
+              to="/projects/$id"
+              params={{ id: activeProjectId }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+            >
+              Continue building <ArrowRight className="h-3 w-3" />
+            </Link>
+          ) : hasOpenRole ? (
+            <Link
+              to="/explore"
+              search={{ tab: "opportunities" }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+            >
+              Find a role <ArrowRight className="h-3 w-3" />
+            </Link>
+          ) : (
+            <CreateProjectButton size="sm" variant="default" className="rounded-full" />
+          )}
+          {reputationScore != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
+              <Award className="h-3.5 w-3.5" />
+              {reputationScore} rep
+            </span>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

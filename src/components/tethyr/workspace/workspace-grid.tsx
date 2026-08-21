@@ -142,6 +142,7 @@ export function WorkspaceGrid({
   const hiddenRef = useRef(hidden);
   const pinnedRef = useRef(pinned);
   const hydratedRef = useRef(false);
+  const hydratedKeyRef = useRef<string | null>(null);
   const saveRef = useRef(save);
 
   useEffect(() => {
@@ -158,9 +159,15 @@ export function WorkspaceGrid({
     pinnedRef.current = pinned;
   }, [pinned]);
 
-  // Load saved layout once the preferences arrive.
+  // Load saved layout once the preferences for this user/page arrive. The
+  // hydration key matters when auth changes without a full page reload: a
+  // cached layout from the previous session must never become the next user's
+  // starting arrangement.
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !userId) return;
+    const hydrationKey = `${page}:${userId}`;
+    if (hydratedKeyRef.current === hydrationKey) return;
+
     const merged = mergeLayout(
       modules,
       saved?.items,
@@ -173,9 +180,9 @@ export function WorkspaceGrid({
     setItems(packForPins(merged.items, merged.pinned));
     setHidden(merged.hidden);
     setPinned(merged.pinned);
+    hydratedKeyRef.current = hydrationKey;
     hydratedRef.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
+  }, [defaultItems, isLoading, migrateRetiredModules, modules, page, saved, userId]);
 
   // Debounced persistence on any layout/visibility change.
   useEffect(() => {
