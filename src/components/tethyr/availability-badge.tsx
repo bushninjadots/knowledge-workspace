@@ -39,9 +39,12 @@ export function AvailabilityBadge({
 export function AvailabilitySelector({
   current,
   onSave,
+  openUp = false,
 }: {
   current: AvailabilityStatus;
   onSave: (status: AvailabilityStatus) => void;
+  /** Open the menu above the trigger (for bottom-anchored placements like the sidebar). */
+  openUp?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const currentDisplay = getStatusDisplay(current);
@@ -72,7 +75,9 @@ export function AvailabilitySelector({
           <div
             role="listbox"
             aria-label="Availability statuses"
-            className="absolute right-0 z-50 mt-1 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl"
+            className={`absolute right-0 z-50 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl ${
+              openUp ? "bottom-full mb-1" : "top-full mt-1"
+            }`}
           >
             {AVAILABILITY_OPTIONS.map((opt) => {
               const Icon = opt.icon;

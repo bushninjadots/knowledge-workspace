@@ -175,6 +175,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <AvailabilitySelector
             current={(me?.profile?.availability as AvailabilityStatus) ?? "available"}
             onSave={(s) => updateAvailability.mutate(s)}
+            openUp
           />
         </div>
 

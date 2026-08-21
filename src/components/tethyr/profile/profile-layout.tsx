@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
-import { BannerOverlay } from "@/components/tethyr/profile/banner-overlay";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
@@ -128,24 +127,16 @@ export function ProfileLayout({
               onChange={onChange}
             />
           ) : (
-            <div
-              className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
-              style={{ borderColor: palette?.dominant ?? "transparent" }}
-            >
-              {bannerSigned ? (
-                <img
-                  src={bannerSigned}
-                  alt=""
-                  width="1280"
-                  height="288"
-                  decoding="async"
-                  className="h-full w-full object-cover object-center"
-                />
-              ) : (
-                <div className="h-full w-full bg-[var(--user-accent-subtle,var(--surface-elevated))]" />
-              )}
-              <BannerOverlay overlay={background?.bannerOverlay} />
-            </div>
+            <BannerStrip
+              bannerSigned={bannerSigned}
+              bannerCaption={profile?.banner_caption ?? null}
+              overlay={background?.bannerOverlay ?? "soft"}
+              captionPosition={background?.bannerCaptionPosition ?? "right"}
+              userId={userId}
+              onChange={onChange}
+              readonly
+              showCaption
+            />
           )}
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">

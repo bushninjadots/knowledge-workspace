@@ -14,7 +14,7 @@ import {
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
-import { BannerOverlay } from "@/components/tethyr/profile/banner-overlay";
+import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
@@ -335,31 +335,16 @@ function PublicProfileRoute() {
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <div
-            className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
-            style={{ borderColor: bannerAccent ?? "transparent" }}
-          >
-            {bannerSigned ? (
-              <img
-                src={bannerSigned}
-                alt={`${profile.display_name ?? "Member"} banner`}
-                width="1280"
-                height="288"
-                decoding="async"
-                className="h-full w-full object-cover object-center"
-              />
-            ) : (
-              <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
-            )}
-            <BannerOverlay overlay={publicBackground?.bannerOverlay} />
-            {profile.banner_caption && (
-              <span
-                className={`absolute bottom-4 z-20 max-w-[11rem] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs ${publicBackground?.bannerCaptionPosition === "left" ? "left-4" : publicBackground?.bannerCaptionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
-              >
-                {profile.banner_caption}
-              </span>
-            )}
-          </div>
+          <BannerStrip
+            bannerSigned={bannerSigned}
+            bannerCaption={profile.banner_caption ?? null}
+            overlay={publicBackground?.bannerOverlay ?? "soft"}
+            captionPosition={publicBackground?.bannerCaptionPosition ?? "right"}
+            userId={profile.id}
+            onChange={() => {}}
+            readonly
+            showCaption
+          />
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             <div className="relative shrink-0 -mt-16 sm:-mt-20">

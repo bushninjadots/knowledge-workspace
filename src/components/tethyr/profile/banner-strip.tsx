@@ -23,6 +23,7 @@ export function BannerStrip({
   overlay = "soft",
   captionPosition = "right",
   readonly = false,
+  showCaption = false,
 }: {
   bannerSigned: string | null;
   bannerCaption?: string | null;
@@ -31,6 +32,8 @@ export function BannerStrip({
   overlay?: string | null;
   captionPosition?: "left" | "center" | "right" | null;
   readonly?: boolean;
+  /** Show a non-interactive caption when readonly (viewer-facing banners). */
+  showCaption?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -147,6 +150,14 @@ export function BannerStrip({
           </div>
         )}
         <input ref={ref} type="file" accept="image/*" className="hidden" onChange={handle} />
+
+        {readonly && showCaption && bannerCaption && (
+          <span
+            className={`absolute bottom-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+          >
+            {bannerCaption}
+          </span>
+        )}
 
         {!readonly &&
           (editingCaption ? (
