@@ -134,7 +134,7 @@ export function PublicStudioWorkspace({
                   <Link
                     to="/projects/$id"
                     params={{ id: featuredProject.id }}
-                    className="block rounded-lg border card-border bg-background/50 p-4 transition hover:bg-surface"
+                    className="block rounded-lg border-2 border-[var(--user-accent-border,var(--primary))] bg-background/50 p-5 transition hover:bg-surface"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="min-w-0 text-base font-semibold text-foreground">

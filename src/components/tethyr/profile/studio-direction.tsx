@@ -53,18 +53,33 @@ export function StudioDirection({ projects, learningGoals, availability, canEdit
         <DirectionItem
           icon={<Hammer className="h-3.5 w-3.5" />}
           label="Building now"
-          value={currentProject?.title ?? "Choose a project to lead your Studio."}
+          value={
+            currentProject?.title ??
+            (canEdit
+              ? "Choose a project to lead your Studio."
+              : "No active project pinned yet.")
+          }
           projectId={currentProject?.id}
         />
         <DirectionItem
           icon={<Users className="h-3.5 w-3.5" />}
           label="Open to"
-          value={availabilityLabel ?? "Set your availability so people know how to approach you."}
+          value={
+            availabilityLabel ??
+            (canEdit
+              ? "Set your availability so people know how to approach you."
+              : "No availability shared yet.")
+          }
         />
         <DirectionItem
           icon={<Compass className="h-3.5 w-3.5" />}
           label="Growing toward"
-          value={learningGoals ?? "Add a learning direction to make your next step visible."}
+          value={
+            learningGoals ??
+            (canEdit
+              ? "Add a learning direction to make your next step visible."
+              : "No learning direction shared yet.")
+          }
         />
       </div>
     </section>
