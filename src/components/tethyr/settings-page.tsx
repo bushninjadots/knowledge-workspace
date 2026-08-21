@@ -41,11 +41,15 @@ import {
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_DEFAULT_STRENGTH,
   hasAppearanceSettings,
+  normalizeBannerOverlay,
+  type BannerOverlayId,
   type CardBorderPreference,
   type AccentMode,
   type ContentDensity,
   type ProfileBackground,
 } from "@/lib/background-themes";
+import { BannerOverlayPicker } from "@/components/tethyr/profile/banner-overlay";
+
 
 export function SettingsPage() {
   const navigate = useNavigate();
