@@ -110,7 +110,7 @@ function NotificationsPage() {
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <NotificationHeader />
-        <section id="main-content" className="mt-6 min-w-0" aria-label="Notifications content">
+        <section className="mt-6 min-w-0" aria-label="Notifications content">
           <p className="mb-3 text-sm text-muted-foreground">
             Start with <span className="font-medium text-foreground">Needs action</span> when you
             want to focus on decisions and replies; everything else can wait.
