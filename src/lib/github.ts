@@ -122,6 +122,84 @@ export async function fetchRepoReadme(fullName: string, token?: string): Promise
   return { text: null, rateLimited: false, unauthorized: false };
 }
 
+export type RepoFileResult = {
+  text: string | null;
+  /** Git blob SHA of the fetched file — used for idempotent re-sync. */
+  sha: string | null;
+  notFound: boolean;
+  rateLimited: boolean;
+  unauthorized: boolean;
+};
+
+function decodeBase64Utf8(b64: string): string {
+  const bytes = Uint8Array.from(atob(b64.replace(/\n/g, "")), (ch) => ch.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Fetch a single file from a repository via the contents API (JSON accept so
+ * we also get the blob SHA for idempotent sync). Path segments are encoded
+ * individually so spaces and slashes survive. Binary content (NUL byte after
+ * decode) is rejected with text=null rather than surfaced as garbage.
+ */
+export async function fetchRepoFile(
+  fullName: string,
+  path: string,
+  ref?: string,
+  token?: string,
+): Promise<RepoFileResult> {
+  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+  const search = new URLSearchParams();
+  if (ref) search.set("ref", ref);
+  const qs = search.size ? `?${search.toString()}` : "";
+
+  const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let res: Response | null;
+  try {
+    res = await fetchWithTimeout(
+      `https://api.github.com/repos/${fullName}/contents/${encodedPath}${qs}`,
+      { headers },
+    );
+  } catch {
+    res = null;
+  }
+  if (!res)
+    return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: false };
+  if (res.status === 404)
+    return { text: null, sha: null, notFound: true, rateLimited: false, unauthorized: false };
+  if (res.status === 401)
+    return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: true };
+  if (res.status === 403 || res.status === 429)
+    return { text: null, sha: null, notFound: false, rateLimited: true, unauthorized: false };
+  if (!res.ok)
+    return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: false };
+
+  try {
+    const json = (await res.json()) as { content?: string; encoding?: string; sha?: string };
+    if (json.encoding !== "base64" || typeof json.content !== "string")
+      return {
+        text: null,
+        sha: json.sha ?? null,
+        notFound: false,
+        rateLimited: false,
+        unauthorized: false,
+      };
+    const text = decodeBase64Utf8(json.content);
+    const binary = text.includes("\u0000");
+    return {
+      text: binary ? null : text,
+      sha: json.sha ?? null,
+      notFound: false,
+      rateLimited: false,
+      unauthorized: false,
+    };
+  } catch {
+    return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: false };
+  }
+}
+
 export type GithubCommitLite = {
   sha: string;
   message: string;

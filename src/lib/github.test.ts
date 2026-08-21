@@ -3,6 +3,7 @@ import {
   absolutizeRelativeLinks,
   getRepoFullName,
   fetchRepoReadme,
+  fetchRepoFile,
   fetchRepoMeta,
   fetchRepoCommits,
   validateGitHubToken,
@@ -294,5 +295,93 @@ describe("githubTokenErrorMessage", () => {
     expect(githubTokenErrorMessage("network")).toContain("GitHub");
     expect(githubTokenErrorMessage("empty")).toContain("token");
     expect(githubTokenErrorMessage("storage")).toContain("save");
+  });
+});
+
+describe("fetchRepoFile", () => {
+  it("fetches raw content and sha via the contents API", async () => {
+    const content = btoa("# Hello file");
+    const fetch = mockFetch(async (url) =>
+      url.includes("api.github.com/repos/owner/repo/contents/README.md")
+        ? Response.json({ content, encoding: "base64", sha: "abc123" })
+        : new Response("nf", { status: 404 }),
+    );
+    const result = await fetchRepoFile("owner/repo", "README.md");
+    expect(result).toEqual({
+      text: "# Hello file",
+      sha: "abc123",
+      notFound: false,
+      rateLimited: false,
+      unauthorized: false,
+    });
+    expect(String(fetch.mock.calls[0][0])).toContain("repos/owner/repo/contents/README.md");
+  });
+
+  it("passes the ref as a query param and the token as a header", async () => {
+    const fetch = mockFetch(async () =>
+      Response.json({ content: btoa("x"), encoding: "base64", sha: "s" }),
+    );
+    await fetchRepoFile("owner/repo", "docs/a b.md", "dev", "ghp_secret");
+    const [url, init] = fetch.mock.calls[0];
+    expect(String(url)).toContain("docs/a%20b.md");
+    expect(String(url)).toContain("ref=dev");
+    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer ghp_secret");
+  });
+
+  it("decodes multi-byte UTF-8 correctly", async () => {
+    mockFetch(async () =>
+      Response.json({
+        content: btoa(String.fromCharCode(...new TextEncoder().encode("# héllo ✓"))),
+        encoding: "base64",
+        sha: "s",
+      }),
+    );
+    const result = await fetchRepoFile("owner/repo", "README.md");
+    expect(result.text).toBe("# héllo ✓");
+  });
+
+  it("flags missing files as notFound", async () => {
+    mockFetch(async () => new Response("nf", { status: 404 }));
+    const result = await fetchRepoFile("owner/repo", "missing.md");
+    expect(result.notFound).toBe(true);
+    expect(result.text).toBeNull();
+  });
+
+  it("flags 401 as unauthorized and 403/429 as rate-limited", async () => {
+    mockFetch(async () => new Response("nope", { status: 401 }));
+    expect((await fetchRepoFile("owner/repo", "f", undefined, "bad")).unauthorized).toBe(true);
+
+    mockFetch(async () => new Response("limit", { status: 403 }));
+    expect((await fetchRepoFile("owner/repo", "f")).rateLimited).toBe(true);
+  });
+
+  it("flags binary content via null bytes after decoding", async () => {
+    const bytes = new Uint8Array([0x50, 0x4b, 0x00, 0x03]); // PK zip header w/ NUL
+    mockFetch(async () =>
+      Response.json({
+        content: btoa(String.fromCharCode(...bytes)),
+        encoding: "base64",
+        sha: "s",
+      }),
+    );
+    const result = await fetchRepoFile("owner/repo", "file.zip");
+    expect(result.text).toBeNull();
+    expect(result.notFound).toBe(false);
+    expect(result.rateLimited).toBe(false);
+    expect(result.unauthorized).toBe(false);
+  });
+
+  it("surfaces network failures as a generic miss", async () => {
+    mockFetch(async () => {
+      throw new TypeError("down");
+    });
+    const result = await fetchRepoFile("owner/repo", "README.md");
+    expect(result).toEqual({
+      text: null,
+      sha: null,
+      notFound: false,
+      rateLimited: false,
+      unauthorized: false,
+    });
   });
 });
