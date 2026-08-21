@@ -57,8 +57,8 @@ export function GithubLinkDialog({
         <DialogHeader>
           <DialogTitle>Link GitHub file</DialogTitle>
           <DialogDescription>
-            Pick one of your repositories and the file to pull from. Nothing changes until you
-            press “Sync from GitHub”.
+            Pick one of your repositories and the file to pull from. Nothing changes until you press
+            “Sync from GitHub”.
           </DialogDescription>
         </DialogHeader>
 

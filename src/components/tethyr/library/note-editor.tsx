@@ -105,8 +105,7 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
-  const activeLanguage =
-    (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
+  const activeLanguage = (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border/40 px-4 py-2">

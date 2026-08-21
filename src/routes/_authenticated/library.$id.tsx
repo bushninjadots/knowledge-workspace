@@ -30,10 +30,7 @@ import {
   useTogglePin,
   libraryKeys,
 } from "@/hooks/use-library";
-import {
-  syncLibraryItemFromGithub,
-  unlinkLibraryItemGithub,
-} from "@/lib/github-server";
+import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
 import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
 import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
 import { NoteEditor } from "@/components/tethyr/library/note-editor";
@@ -481,7 +478,9 @@ function LibraryItemPage() {
                   onClick={() => {
                     if (
                       hasChanges &&
-                      !window.confirm("Syncing replaces your unsaved edits with the GitHub version. Continue?")
+                      !window.confirm(
+                        "Syncing replaces your unsaved edits with the GitHub version. Continue?",
+                      )
                     )
                       return;
                     syncGithub.mutate(item.id);
