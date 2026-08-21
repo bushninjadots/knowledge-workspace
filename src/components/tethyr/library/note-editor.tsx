@@ -12,7 +12,8 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
 import { SignedImage } from "./signed-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
-import lowlight from "@/lib/lowlight";
+import lowlight, { CODE_LANGUAGE_OPTIONS } from "@/lib/lowlight";
+import { Markdown } from "@tiptap/markdown";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,6 +104,9 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
   function addTable() {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
+
+  const activeLanguage =
+    (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border/40 px-4 py-2">
@@ -222,6 +226,27 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
       >
         <CodeSquare className="h-4 w-4" />
       </ToolbarButton>
+      {editor.isActive("codeBlock") && (
+        <select
+          value={activeLanguage === "" ? "none" : activeLanguage}
+          onChange={(e) => {
+            const next = e.target.value;
+            editor
+              .chain()
+              .focus()
+              .setCodeBlockLanguage(next === "none" ? null : next)
+              .run();
+          }}
+          aria-label="Code block language"
+          className="h-8 rounded-lg border border-border/50 bg-background px-2 text-xs text-foreground outline-none"
+        >
+          {CODE_LANGUAGE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
 
       <Separator orientation="vertical" className="mx-1 h-5 bg-border/40" />
 
@@ -242,12 +267,15 @@ export function NoteEditor({
   content,
   onChange,
   editable = true,
+  format = "html",
 }: {
   content: string;
-  onChange?: (html: string) => void;
+  onChange?: (value: string) => void;
   editable?: boolean;
+  format?: "html" | "markdown";
 }) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -266,8 +294,10 @@ export function NoteEditor({
       ExternalImage,
       SignedImage,
       Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
+      ...(format === "markdown" ? [Markdown] : []),
     ],
     content,
+    ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
     editable,
     editorProps: {
       attributes: {
@@ -373,8 +403,13 @@ export function NoteEditor({
   // Sync external content changes
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content, { emitUpdate: false });
+    if (!editor) return;
+    const current = format === "markdown" ? editor.getMarkdown() : editor.getHTML();
+    if (content !== current) {
+      editor.commands.setContent(content, {
+        ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
+        emitUpdate: false,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
