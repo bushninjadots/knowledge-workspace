@@ -640,10 +640,12 @@ export type Database = {
         Row: {
           collection_id: string | null
           content: string
+          content_format: string
           created_at: string
           file_size: number | null
           file_type: string | null
           file_url: string | null
+          github_source: Json | null
           id: string
           is_favorite: boolean
           is_pinned: boolean
@@ -659,10 +661,12 @@ export type Database = {
         Insert: {
           collection_id?: string | null
           content?: string
+          content_format?: string
           created_at?: string
           file_size?: number | null
           file_type?: string | null
           file_url?: string | null
+          github_source?: Json | null
           id?: string
           is_favorite?: boolean
           is_pinned?: boolean
@@ -678,10 +682,12 @@ export type Database = {
         Update: {
           collection_id?: string | null
           content?: string
+          content_format?: string
           created_at?: string
           file_size?: number | null
           file_type?: string | null
           file_url?: string | null
+          github_source?: Json | null
           id?: string
           is_favorite?: boolean
           is_pinned?: boolean

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
 import { sanitizeFilename, validateLibraryFile } from "@/lib/validators";
+import { parseGithubSource, type GithubSource } from "@/lib/github-source";
 
 /* ───────── Types ───────── */
 
@@ -21,6 +22,8 @@ export type LibraryItem = {
   is_favorite: boolean;
   project_id: string | null;
   reading_progress: number;
+  content_format: "html" | "markdown";
+  github_source: GithubSource | null;
   created_at: string;
   updated_at: string;
 };
@@ -82,6 +85,17 @@ export const libraryKeys = {
 
 /* ───────── Items ───────── */
 
+// Rows come back with content_format as a plain string and github_source as
+// raw JSONB; normalize both so consumers always see the validated shape.
+function normalizeItem<T>(item: T): T {
+  const row = item as Record<string, unknown>;
+  return {
+    ...item,
+    content_format: row.content_format === "markdown" ? "markdown" : "html",
+    github_source: parseGithubSource(row.github_source),
+  } as T;
+}
+
 export function useLibraryItems(filters?: LibraryFilter) {
   const { data: me } = useCurrentUser();
   const userId = me?.userId;
@@ -108,7 +122,7 @@ export function useLibraryItems(filters?: LibraryFilter) {
 
       const { data, error } = await query.limit(100);
       if (error) throw error;
-      return (data ?? []) as LibraryItem[];
+      return (data ?? []).map(normalizeItem) as LibraryItem[];
     },
   });
 }
@@ -133,7 +147,7 @@ export function useProjectLibraryItems(projectId: string | null) {
         .order("is_pinned", { ascending: false })
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as LibraryItem[];
+      return (data ?? []).map(normalizeItem) as LibraryItem[];
     },
   });
 }
@@ -179,7 +193,7 @@ export function useLibraryItem(id: string | null) {
         collection = col as LibraryCollection | null;
       }
 
-      return { ...item, tags, collection } as LibraryItemWithTags;
+      return { ...normalizeItem(item), tags, collection } as LibraryItemWithTags;
     },
   });
 }
@@ -234,6 +248,8 @@ export function useUpdateItem() {
       is_favorite?: boolean;
       reading_progress?: number;
       url?: string;
+      content_format?: "html" | "markdown";
+      github_source?: GithubSource | null;
     }) => {
       const { id, ...updates } = input;
       const { data, error } = await supabase
@@ -700,7 +716,7 @@ export function useLibrarySearch(query: string) {
         .order("updated_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as LibraryItem[];
+      return (data ?? []).map(normalizeItem) as LibraryItem[];
     },
   });
 }
