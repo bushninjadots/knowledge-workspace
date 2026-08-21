@@ -308,7 +308,7 @@ export function NoteEditor({
       if (!onChange) return;
       onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
     },
-  });
+  }, [format]);
 
   // ── Upload image to Supabase storage ──
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {

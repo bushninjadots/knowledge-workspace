@@ -16,7 +16,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import { Image } from "@tiptap/extension-image";
 import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { Markdown } from "@tiptap/markdown";
-import lowlight from "@/lib/lowlight";
+import lowlight, { CODE_LANGUAGE_OPTIONS } from "@/lib/lowlight";
 import {
   Bold,
   Italic,
@@ -100,6 +100,8 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
   function addTable() {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
+
+  const activeLanguage = (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border/40 px-4 py-2">
@@ -219,6 +221,27 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
       >
         <CodeSquare className="h-4 w-4" />
       </ToolbarButton>
+      {editor.isActive("codeBlock") && (
+        <select
+          value={activeLanguage === "" ? "none" : activeLanguage}
+          onChange={(e) => {
+            const next = e.target.value;
+            editor
+              .chain()
+              .focus()
+              .updateAttributes("codeBlock", { language: next === "none" ? null : next })
+              .run();
+          }}
+          aria-label="Code block language"
+          className="h-8 rounded-lg border border-border/50 bg-background px-2 text-xs text-foreground outline-none"
+        >
+          {CODE_LANGUAGE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
 
       <Separator orientation="vertical" className="mx-1 h-5 bg-border/40" />
 
