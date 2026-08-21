@@ -24,11 +24,6 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
-import {
-  AvailabilitySelector,
-  useUpdateAvailability,
-} from "@/components/tethyr/availability-badge";
-import type { AvailabilityStatus } from "@/lib/skill-match";
 import { WelcomeModal } from "@/components/tethyr/welcome-modal";
 const WorkspaceGrid = lazy(() =>
   import("@/components/tethyr/workspace/workspace-grid").then((m) => ({
@@ -88,7 +83,6 @@ function DashboardContent({
   const { data: sessionRequests = [] } = useSessionRequests();
   const { data: connections = [] } = useConnections();
   const queryClient = useQueryClient();
-  const updateAvailability = useUpdateAvailability();
   const { data: unreadData } = useUnreadCounts();
 
   const { data: myChallenges = [], isLoading: challengesLoading } = useChallenges("active");
@@ -604,8 +598,6 @@ function DashboardContent({
               queryKey: ["current-user"],
             })}
             firstName={firstName}
-            availability={data?.profile?.availability as AvailabilityStatus}
-            onAvailabilityChange={(status) => updateAvailability.mutate(status)}
             pendingSessionCount={pendingSessionCount}
             activeProjectId={activeProjects[0]?.id ?? null}
             hasOpenRole={todayOpps.length > 0}
@@ -656,8 +648,6 @@ function DashboardWelcomeBanner({
   userId,
   onBannerChange,
   firstName,
-  availability,
-  onAvailabilityChange,
   pendingSessionCount,
   activeProjectId,
   hasOpenRole,
@@ -670,8 +660,6 @@ function DashboardWelcomeBanner({
   userId: string;
   onBannerChange: () => void;
   firstName: string;
-  availability: AvailabilityStatus;
-  onAvailabilityChange: (status: AvailabilityStatus) => void;
   pendingSessionCount: number;
   activeProjectId: string | null;
   hasOpenRole: boolean;
@@ -693,10 +681,7 @@ function DashboardWelcomeBanner({
       />
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="section-label">Welcome back</p>
-            <AvailabilitySelector current={availability} onSave={onAvailabilityChange} />
-          </div>
+          <p className="section-label">Welcome back</p>
           <h1
             id="dashboard-welcome-heading"
             className="mt-1 font-display text-2xl font-semibold sm:text-3xl"
