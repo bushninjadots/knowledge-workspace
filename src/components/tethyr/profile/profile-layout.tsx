@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
+import { BannerOverlay } from "@/components/tethyr/profile/banner-overlay";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
@@ -143,6 +144,7 @@ export function ProfileLayout({
               ) : (
                 <div className="h-full w-full bg-[var(--user-accent-subtle,var(--surface-elevated))]" />
               )}
+              <BannerOverlay overlay={background?.bannerOverlay} />
             </div>
           )}
 

@@ -114,7 +114,7 @@ export function SettingsPage() {
     setAccentMode(stored?.accentMode ?? "dynamic");
     setCustomAccent(stored?.accentColor ?? "#38bdf8");
     setDensity(stored?.density ?? "comfortable");
-    setBannerOverlay(stored?.bannerOverlay ?? "soft");
+    setBannerOverlay(normalizeBannerOverlay(stored?.bannerOverlay));
     setBannerCaptionPosition(stored?.bannerCaptionPosition ?? "right");
   }, [me?.profile]);
 
@@ -497,17 +497,7 @@ export function SettingsPage() {
                     Use the same banner treatment on Dashboard and Studio.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {(["none", "soft", "strong"] as const).map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => setBannerOverlay(value)}
-                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${bannerOverlay === value ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:bg-surface/80"}`}
-                    >
-                      {value === "none" ? "No overlay" : `${value} overlay`}
-                    </button>
-                  ))}
-                </div>
+                <BannerOverlayPicker value={bannerOverlay} onChange={setBannerOverlay} />
                 <div className="flex flex-wrap gap-1">
                   {(["left", "center", "right"] as const).map((value) => (
                     <button

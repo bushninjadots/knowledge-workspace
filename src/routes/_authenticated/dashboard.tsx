@@ -665,7 +665,7 @@ function DashboardWelcomeBanner({
 }: {
   bannerSigned: string | null;
   bannerCaption: string | null;
-  bannerOverlay: "none" | "soft" | "strong" | null;
+  bannerOverlay: string | null;
   bannerCaptionPosition: "left" | "center" | "right" | null;
   userId: string;
   onBannerChange: () => void;
