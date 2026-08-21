@@ -34,9 +34,80 @@ export type ProfileBackground = {
   accentColor?: string | null;
   density?: ContentDensity | null;
   /** Shared banner presentation preferences for Dashboard and Studio. */
-  bannerOverlay?: "none" | "soft" | "strong" | null;
+  bannerOverlay?: BannerOverlayId | null;
   bannerCaptionPosition?: "left" | "center" | "right" | null;
 };
+
+/**
+ * Banner overlay treatments. These sit above the banner image only — they
+ * never tint the page background — so a member can keep their photo readable
+ * behind captions without changing the surface hierarchy.
+ */
+export type BannerOverlayId =
+  | "none"
+  | "soft"
+  | "strong"
+  | "scrim"
+  | "vignette"
+  | "spotlight"
+  | "duotone";
+
+export type BannerOverlayOption = {
+  id: BannerOverlayId;
+  label: string;
+  description: string;
+};
+
+export const BANNER_OVERLAYS: BannerOverlayOption[] = [
+  { id: "none", label: "None", description: "Show the image untouched" },
+  { id: "soft", label: "Soft", description: "A light, even wash" },
+  { id: "strong", label: "Strong", description: "A heavier wash for busy photos" },
+  { id: "scrim", label: "Bottom scrim", description: "Fades toward the caption" },
+  { id: "vignette", label: "Vignette", description: "Darkens the outer edges" },
+  { id: "spotlight", label: "Spotlight", description: "Lifts the centre of the image" },
+  { id: "duotone", label: "Duotone", description: "Tints with your accent colour" },
+];
+
+/** Normalise a stored value (older rows / unknown ids fall back to `soft`). */
+export function normalizeBannerOverlay(value: string | null | undefined): BannerOverlayId {
+  return BANNER_OVERLAYS.some((option) => option.id === value)
+    ? (value as BannerOverlayId)
+    : "soft";
+}
+
+/** Layer styles for a banner overlay, or null when no overlay should render. */
+export function bannerOverlayStyle(value: string | null | undefined): CSSProperties | null {
+  const id = normalizeBannerOverlay(value);
+  switch (id) {
+    case "none":
+      return null;
+    case "soft":
+      return { backgroundColor: "color-mix(in oklab, var(--background) 20%, transparent)" };
+    case "strong":
+      return { backgroundColor: "color-mix(in oklab, var(--background) 45%, transparent)" };
+    case "scrim":
+      return {
+        backgroundImage:
+          "linear-gradient(to top, color-mix(in oklab, var(--background) 78%, transparent) 0%, color-mix(in oklab, var(--background) 30%, transparent) 45%, transparent 100%)",
+      };
+    case "vignette":
+      return {
+        backgroundImage:
+          "radial-gradient(120% 100% at 50% 50%, transparent 40%, color-mix(in oklab, var(--background) 70%, transparent) 100%)",
+      };
+    case "spotlight":
+      return {
+        backgroundImage:
+          "radial-gradient(80% 70% at 50% 35%, color-mix(in oklab, var(--foreground) 10%, transparent) 0%, color-mix(in oklab, var(--background) 55%, transparent) 100%)",
+      };
+    case "duotone":
+      return {
+        backgroundImage:
+          "linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 45%, transparent) 0%, color-mix(in oklab, var(--background) 60%, transparent) 100%)",
+      };
+  }
+}
+
 
 /** Default tint strength when a row predates the strength slider. */
 export const BACKGROUND_DEFAULT_STRENGTH = 34;
