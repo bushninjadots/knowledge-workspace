@@ -278,6 +278,7 @@ export function NoteEditor({
     extensions: [
       StarterKit.configure({
         codeBlock: false,
+        link: false,
       }),
       Link.configure({
         openOnClick: false,

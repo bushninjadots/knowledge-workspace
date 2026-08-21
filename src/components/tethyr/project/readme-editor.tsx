@@ -248,7 +248,7 @@ export function ReadmeEditor({
     // null and crash `editor.commands`). This is also the SSR-safe path.
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({ codeBlock: false, link: false }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: { class: "text-brand-green underline" },
