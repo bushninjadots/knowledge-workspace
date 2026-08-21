@@ -8,15 +8,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   fetchRepoCommits,
+  fetchRepoFile,
   fetchRepoMeta,
   fetchRepoReadme,
   fetchUserRepos,
   validateGitHubToken,
   type GithubCommitLite,
   type GithubRepoLite,
+  type RepoFileResult,
   type RepoMeta,
   type RepoReadmeResult,
 } from "./github";
+import { parseGithubSource, type GithubSource } from "./github-source";
 
 async function getStoredToken(userId: string): Promise<string | null> {
   // Dynamic import keeps the service-role client out of the client bundle.
@@ -209,4 +212,132 @@ export const fetchRepoMetaServer = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<RepoMeta | null> => {
     const token = await getStoredToken(context.userId);
     return fetchRepoMeta(data.owner, data.repo, token ?? undefined);
+  });
+
+/** Fetch an arbitrary repo file on the server, using the stored token when present. */
+export const fetchRepoFileServer = createServerFn({ method: "POST" })
+  .validator((d: { fullName: string; path: string; ref?: string }) => ({
+    fullName: d.fullName.trim(),
+    path: d.path.replace(/^\/+/, "").trim(),
+    ref: d.ref?.trim() || undefined,
+  }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }): Promise<RepoFileResult> => {
+    const token = await getStoredToken(context.userId);
+    return fetchRepoFile(data.fullName, data.path, data.ref, token ?? undefined);
+  });
+
+/** Attach (or replace) a GitHub file link on a library item. Owner-only. */
+export const linkLibraryItemGithub = createServerFn({ method: "POST" })
+  .validator((d: { itemId: string; repo: string; path: string; branch?: string }) => ({
+    itemId: d.itemId.trim(),
+    repo: d.repo.trim(),
+    path: d.path.replace(/^\/+/, "").trim(),
+    branch: d.branch?.trim() || null,
+  }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: item } = await supabaseAdmin
+      .from("library_items")
+      .select("id, user_id")
+      .eq("id", data.itemId)
+      .maybeSingle();
+    if (!item || item.user_id !== context.userId)
+      return { ok: false as const, reason: "forbidden" as const };
+
+    const source: GithubSource = {
+      repo: data.repo,
+      path: data.path,
+      branch: data.branch,
+      synced_at: null,
+      sha: null,
+    };
+    const { error } = await supabaseAdmin
+      .from("library_items")
+      .update({ github_source: source })
+      .eq("id", data.itemId);
+    if (error) throw error;
+    return { ok: true as const, source };
+  });
+
+/** Remove a GitHub file link without touching the item's content. Owner-only. */
+export const unlinkLibraryItemGithub = createServerFn({ method: "POST" })
+  .validator((d: { itemId: string }) => ({ itemId: d.itemId.trim() }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: item } = await supabaseAdmin
+      .from("library_items")
+      .select("id, user_id")
+      .eq("id", data.itemId)
+      .maybeSingle();
+    if (!item || item.user_id !== context.userId)
+      return { ok: false as const, reason: "forbidden" as const };
+
+    const { error } = await supabaseAdmin
+      .from("library_items")
+      .update({ github_source: null })
+      .eq("id", data.itemId);
+    if (error) throw error;
+    return { ok: true as const };
+  });
+
+export type SyncResult =
+  | { ok: true; updated: boolean; source: GithubSource }
+  | {
+      ok: false;
+      reason:
+        | "not_linked"
+        | "forbidden"
+        | "not_found"
+        | "rate_limited"
+        | "unauthorized"
+        | "binary"
+        | "network";
+    };
+
+/**
+ * Pull the linked GitHub file into a library item. Owner-only, manual, and
+ * idempotent by blob SHA: syncing an unchanged file leaves content untouched.
+ * Pulled content is Markdown by definition of the source format.
+ */
+export const syncLibraryItemFromGithub = createServerFn({ method: "POST" })
+  .validator((d: { itemId: string }) => ({ itemId: d.itemId.trim() }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }): Promise<SyncResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: item } = await supabaseAdmin
+      .from("library_items")
+      .select("id, user_id, github_source")
+      .eq("id", data.itemId)
+      .maybeSingle();
+    if (!item || item.user_id !== context.userId) return { ok: false, reason: "forbidden" };
+    const source = parseGithubSource(item.github_source);
+    if (!source) return { ok: false, reason: "not_linked" };
+
+    const token = await getStoredToken(context.userId);
+    const result = await fetchRepoFile(
+      source.repo,
+      source.path,
+      source.branch ?? undefined,
+      token ?? undefined,
+    );
+    if (result.unauthorized) return { ok: false, reason: "unauthorized" };
+    if (result.rateLimited) return { ok: false, reason: "rate_limited" };
+    if (result.notFound) return { ok: false, reason: "not_found" };
+    if (!result.text) return { ok: false, reason: "binary" };
+    if (source.sha && result.sha === source.sha) return { ok: true, updated: false, source };
+
+    const synced: GithubSource = {
+      ...source,
+      synced_at: new Date().toISOString(),
+      sha: result.sha,
+    };
+    const { error } = await supabaseAdmin
+      .from("library_items")
+      .update({ content: result.text, content_format: "markdown", github_source: synced })
+      .eq("id", data.itemId);
+    if (error) throw error;
+    return { ok: true, updated: true, source: synced };
   });
