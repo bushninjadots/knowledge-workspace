@@ -14,6 +14,8 @@ import {
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
+import { BannerOverlay } from "@/components/tethyr/profile/banner-overlay";
+
 import { ConnectButton } from "@/components/tethyr/connect-button";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
