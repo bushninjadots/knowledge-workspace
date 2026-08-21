@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import DOMPurify from "dompurify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowLeft,
   Star,
@@ -12,6 +16,9 @@ import {
   FolderOpen,
   Code2,
   FileCode2,
+  Github,
+  RefreshCw,
+  Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +28,14 @@ import {
   useDeleteItem,
   useToggleFavorite,
   useTogglePin,
+  libraryKeys,
 } from "@/hooks/use-library";
+import {
+  syncLibraryItemFromGithub,
+  unlinkLibraryItemGithub,
+} from "@/lib/github-server";
+import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
+import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
 import { NoteEditor } from "@/components/tethyr/library/note-editor";
 import { LibraryContentLayout } from "@/components/tethyr/library/library-layout";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -50,24 +64,28 @@ function LibraryItemPage() {
   const togglePin = useTogglePin();
 
   const projects = me?.projects ?? [];
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [workspaceMode, setWorkspaceMode] = useState<"docs" | "code">("docs");
+  const [ghDialogOpen, setGhDialogOpen] = useState(false);
   const [preview, setPreview] = useState(false);
 
-  // Sync local state when item loads
+  // Sync local state when the item loads or changes server-side (e.g. after a
+  // GitHub pull). Keyed on updated_at so external updates reach the editor.
   useEffect(() => {
     if (item) {
       setTitle(item.title);
       setContent(item.content);
       setProjectId(item.project_id ?? null);
+      setWorkspaceMode(item.content_format === "markdown" ? "code" : "docs");
       setHasChanges(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id]);
+  }, [item?.id, item?.updated_at]);
 
   useEffect(() => {
     if (item?.title) document.title = `${item.title} — Tethyr`;
@@ -102,10 +120,65 @@ function LibraryItemPage() {
     setHasChanges(true);
   }
 
+  function handleModeSwitch(target: "docs" | "code") {
+    if (target === workspaceMode) return;
+    const currentFormat = workspaceMode === "code" ? "markdown" : "html";
+    const targetFormat = target === "code" ? "markdown" : "html";
+    if (currentFormat !== targetFormat && content.trim()) {
+      const confirmed = window.confirm(
+        target === "code"
+          ? "Convert this doc to Markdown? Rich-text formatting is translated as faithfully as possible."
+          : "Convert this Markdown into rich text?",
+      );
+      if (!confirmed) return;
+      setContent(target === "code" ? htmlToMarkdown(content) : markdownToHtml(content));
+    }
+    setWorkspaceMode(target);
+    setHasChanges(true);
+  }
+
+  const isOwner = !!me?.userId && item?.user_id === me.userId;
+
+  const syncGithub = useMutation({
+    mutationFn: (itemId: string) => syncLibraryItemFromGithub({ data: { itemId } }),
+    onSuccess: (result) => {
+      if (result.ok) {
+        queryClient.invalidateQueries({ queryKey: libraryKeys.item(id) });
+        toast.success(result.updated ? "Synced from GitHub" : "Already up to date");
+        setHasChanges(false);
+      } else {
+        const messages: Record<string, string> = {
+          not_found: "File not found in that repo — check the path/branch.",
+          rate_limited: "GitHub rate limit hit — try again in a few minutes.",
+          unauthorized: "GitHub rejected the saved token — reconnect it in your profile.",
+          binary: "That file looks binary — link a text/Markdown file instead.",
+          not_linked: "This item has no GitHub file linked.",
+          forbidden: "Only the owner can sync this item.",
+          network: "Couldn't reach GitHub — try again.",
+        };
+        toast.error(messages[result.reason] ?? "Sync failed");
+      }
+    },
+  });
+
+  const unlinkGithub = useMutation({
+    mutationFn: (itemId: string) => unlinkLibraryItemGithub({ data: { itemId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.item(id) });
+      toast.success("GitHub link removed");
+    },
+  });
+
   function handleSave() {
     if (!item) return;
     updateItem.mutate(
-      { id: item.id, title, content, project_id: projectId },
+      {
+        id: item.id,
+        title,
+        content,
+        project_id: projectId,
+        content_format: workspaceMode === "code" ? "markdown" : "html",
+      },
       {
         onSuccess: () => {
           setHasChanges(false);
@@ -266,14 +339,14 @@ function LibraryItemPage() {
                 <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-background/50 p-1">
                   <button
                     type="button"
-                    onClick={() => setWorkspaceMode("docs")}
+                    onClick={() => handleModeSwitch("docs")}
                     className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "docs" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
                   >
                     Docs
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkspaceMode("code")}
+                    onClick={() => handleModeSwitch("code")}
                     className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "code" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
                   >
                     Code
@@ -287,19 +360,24 @@ function LibraryItemPage() {
                   </button>
                 </div>
               </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">
-                To publish this into a project, use <strong>Link to project</strong> below. GitHub
-                sync can be enabled after a repository is linked and your GitHub account is
-                connected.
-              </p>
             </div>
             {preview ? (
-              <article
-                className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
+              workspaceMode === "code" ? (
+                <article className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                </article>
+              ) : (
+                <article
+                  className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+                />
+              )
             ) : (
-              <NoteEditor content={content} onChange={handleContentChange} />
+              <NoteEditor
+                content={content}
+                onChange={handleContentChange}
+                format={workspaceMode === "code" ? "markdown" : "html"}
+              />
             )}
           </>
         )}
@@ -377,20 +455,94 @@ function LibraryItemPage() {
             </select>
           </div>
         )}
-        {(item.type === "note" || item.type === "document") && projectId && (
-          <div className="mt-4 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">GitHub sync</span>
-            <span className="mx-1.5">·</span>
-            Link this doc to a project with a connected GitHub repository to enable repository sync
-            when the project owner turns it on.
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/profile" })}
-              className="ml-1 font-medium text-brand-green hover:underline"
-            >
-              Connect GitHub
-            </button>
+        {(item.type === "note" || item.type === "document") && isOwner && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs">
+            <Github className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {item.github_source ? (
+              <>
+                <span className="font-medium text-foreground">
+                  {item.github_source.repo}/{item.github_source.path}
+                </span>
+                {item.github_source.branch && (
+                  <span className="text-muted-foreground">· {item.github_source.branch}</span>
+                )}
+                <span className="text-muted-foreground">
+                  ·{" "}
+                  {item.github_source.synced_at
+                    ? `Synced ${new Date(item.github_source.synced_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+                    : "Not synced yet"}
+                </span>
+                <span className="flex-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 text-xs"
+                  disabled={syncGithub.isPending}
+                  onClick={() => {
+                    if (
+                      hasChanges &&
+                      !window.confirm("Syncing replaces your unsaved edits with the GitHub version. Continue?")
+                    )
+                      return;
+                    syncGithub.mutate(item.id);
+                  }}
+                >
+                  {syncGithub.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  Sync from GitHub
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 gap-1.5 text-xs text-muted-foreground"
+                  disabled={unlinkGithub.isPending}
+                  onClick={() => unlinkGithub.mutate(item.id)}
+                >
+                  <Unlink className="h-3 w-3" />
+                  Unlink
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground">
+                  Pull updates from a file in your GitHub repository — always on your terms.
+                </span>
+                <span className="flex-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => setGhDialogOpen(true)}
+                >
+                  <Github className="h-3 w-3" />
+                  Link GitHub file
+                </Button>
+              </>
+            )}
           </div>
+        )}
+        {(item.type === "note" || item.type === "document") && isOwner && (
+          <GithubLinkDialog
+            open={ghDialogOpen}
+            onOpenChange={setGhDialogOpen}
+            itemId={item.id}
+            initial={
+              item.github_source
+                ? {
+                    repo: item.github_source.repo,
+                    path: item.github_source.path,
+                    branch: item.github_source.branch,
+                  }
+                : undefined
+            }
+            onLinked={() => {
+              queryClient.invalidateQueries({ queryKey: libraryKeys.item(item.id) });
+              toast.success("GitHub file linked");
+            }}
+          />
         )}
 
         {/* Collection */}
