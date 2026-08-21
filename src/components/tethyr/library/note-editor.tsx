@@ -234,7 +234,7 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
             editor
               .chain()
               .focus()
-              .setCodeBlockLanguage(next === "none" ? null : next)
+              .updateAttributes("codeBlock", { language: next === "none" ? null : next })
               .run();
           }}
           aria-label="Code block language"
