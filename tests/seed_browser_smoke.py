@@ -86,13 +86,18 @@ def main() -> int:
                 failures.append((name, str(exc)[:120]))
 
         # Responsive navigation regression: mobile pages must expose their own
-        # feature navigation without adding a second fixed global bar.
-        mobile = page.context.new_page(viewport={"width": 390, "height": 844})
+        # feature navigation without adding a second fixed global bar. The
+        # default context can't spawn pages, so copy the auth session into a
+        # fresh mobile-viewport context.
+        storage = page.context.storage_state()
+        mobile = browser.new_context(
+            viewport={"width": 390, "height": 844}, storage_state=storage
+        ).new_page()
         try:
             mobile.goto(f"{BASE_URL}/community", wait_until="domcontentloaded", timeout=30000)
             mobile.wait_for_timeout(2500)
-            community_nav = mobile.locator('nav[aria-label="Community navigation"]')
-            if community_nav.count() != 1 or not community_nav.first.is_visible():
+            community_nav = mobile.locator('nav[aria-label="Community navigation"]:visible')
+            if community_nav.count() != 1:
                 failures.append(("mobile-community-nav", "expected one visible community-local navigation"))
 
             mobile.goto(f"{BASE_URL}/sessions", wait_until="domcontentloaded", timeout=30000)

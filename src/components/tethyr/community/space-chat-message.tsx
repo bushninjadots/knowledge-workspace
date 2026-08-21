@@ -3,7 +3,7 @@ import { MessageCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { timeAgo } from "@/lib/time";
 import { useComments, type PostWithAuthor } from "@/hooks/use-community";
-import { CommentThreadInline } from "@/components/tethyr/community/post-card";
+import { CommentThreadInline } from "@/components/tethyr/community/post-comments";
 
 /**
  * Compact chat row for a space's quick messages (posts with no title created
