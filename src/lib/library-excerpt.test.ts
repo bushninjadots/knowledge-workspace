@@ -12,9 +12,7 @@ describe("getItemExcerpt", () => {
   });
 
   it("flattens markdown links and images to their text/src", () => {
-    expect(getItemExcerpt("See [docs](https://x.y) now", "markdown")).toBe(
-      "See docs now",
-    );
+    expect(getItemExcerpt("See [docs](https://x.y) now", "markdown")).toBe("See docs now");
     expect(getItemExcerpt("![logo](img.png)", "markdown")).toBe("logo");
   });
 
