@@ -83,9 +83,10 @@ export function SettingsPage() {
   const [accentMode, setAccentMode] = useState<AccentMode>(bg?.accentMode ?? "dynamic");
   const [customAccent, setCustomAccent] = useState(bg?.accentColor ?? "#38bdf8");
   const [density, setDensity] = useState<ContentDensity>(bg?.density ?? "comfortable");
-  const [bannerOverlay, setBannerOverlay] = useState<"none" | "soft" | "strong">(
-    bg?.bannerOverlay ?? "soft",
+  const [bannerOverlay, setBannerOverlay] = useState<BannerOverlayId>(
+    normalizeBannerOverlay(bg?.bannerOverlay),
   );
+
   const [bannerCaptionPosition, setBannerCaptionPosition] = useState<"left" | "center" | "right">(
     bg?.bannerCaptionPosition ?? "right",
   );
