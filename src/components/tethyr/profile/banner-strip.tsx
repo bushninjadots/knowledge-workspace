@@ -8,6 +8,7 @@ import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
+import { BannerOverlay } from "@/components/tethyr/profile/banner-overlay";
 
 const QUICK_EMOJI = ["✨", "🚀", "🌿", "💜", "🎨", "🔥", "🌊", "☕️", "🎧", "🌸"];
 
@@ -27,7 +28,7 @@ export function BannerStrip({
   bannerCaption?: string | null;
   userId: string;
   onChange: () => void;
-  overlay?: "none" | "soft" | "strong" | null;
+  overlay?: string | null;
   captionPosition?: "left" | "center" | "right" | null;
   readonly?: boolean;
 }) {
@@ -117,12 +118,7 @@ export function BannerStrip({
         ) : (
           <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
         )}
-        {overlay && overlay !== "none" && (
-          <div
-            aria-hidden="true"
-            className={`absolute inset-0 ${overlay === "strong" ? "bg-background/45" : "bg-background/20"}`}
-          />
-        )}
+        <BannerOverlay overlay={overlay} />
 
         {!readonly && (
           <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
