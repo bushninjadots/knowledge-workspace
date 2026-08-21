@@ -246,6 +246,11 @@ export function WorkspaceGrid({
   }, [items, hidden, contents, pinned, isMobile]);
 
   const layouts = useMemo(() => ({ lg: visibleItems }), [visibleItems]);
+  const flowItems = useMemo(
+    () => [...visibleItems].sort((a, b) => a.y - b.y || a.x - b.x),
+    [visibleItems],
+  );
+  const flowColumns = width > 0 && width < BREAKPOINTS.md ? COLS.sm : COLS.md;
   const sectionModules = useMemo(
     () =>
       visibleItems
@@ -390,7 +395,9 @@ export function WorkspaceGrid({
     <div
       id={showSectionNav ? `workspace-section-${it.i}` : undefined}
       key={it.i}
-      className={`content-safe h-full ${showSectionNav ? "scroll-mt-20" : ""} ${customizing ? "ws-editing" : ""}`}
+      className={`content-safe ${customizing ? "h-full" : ""} ${
+        showSectionNav ? "scroll-mt-20" : ""
+      } ${customizing ? "ws-editing" : ""}`}
     >
       <ModuleShell
         module={modules.find((m) => m.id === it.i)}
@@ -567,8 +574,8 @@ export function WorkspaceGrid({
       {/* ── Grid ── */}
       <div ref={containerRef}>
         {isMobile ? (
-          <div className="space-y-4">{visibleItems.map(renderGridItem)}</div>
-        ) : (
+          <div className="space-y-4">{flowItems.map(renderGridItem)}</div>
+        ) : customizing ? (
           width > 0 && (
             <ResponsiveGridLayout
               className="ws-grid"
@@ -593,6 +600,23 @@ export function WorkspaceGrid({
               {visibleItems.map(renderGridItem)}
             </ResponsiveGridLayout>
           )
+        ) : (
+          <div
+            className="ws-flow-grid"
+            style={{ "--workspace-columns": flowColumns } as React.CSSProperties}
+          >
+            {flowItems.map((item) => (
+              <div
+                key={item.i}
+                className="ws-flow-item"
+                style={{
+                  gridColumn: `span ${Math.min(item.w, flowColumns)} / span ${Math.min(item.w, flowColumns)}`,
+                }}
+              >
+                {renderGridItem(item)}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
@@ -697,11 +721,7 @@ function ModuleShell({
   children: React.ReactNode;
 }) {
   if (!customizing) {
-    return (
-      <div className="content-safe min-w-0 overflow-x-hidden">
-        {children}
-      </div>
-    );
+    return <div className="content-safe min-w-0 overflow-x-hidden">{children}</div>;
   }
   const Icon = module?.icon;
   return (

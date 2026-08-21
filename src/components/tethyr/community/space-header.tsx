@@ -1,4 +1,13 @@
-import { Users, Settings, Lock, Check, UserPlus, Hourglass, ShieldAlert } from "lucide-react";
+import {
+  Users,
+  Settings,
+  Lock,
+  Check,
+  UserPlus,
+  Hourglass,
+  ShieldAlert,
+  MessageCircle,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,14 +22,20 @@ import {
 } from "@/hooks/use-community-spaces";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
+export type SpaceSortMode = "latest" | "top" | "unanswered";
+
 export function SpaceHeader({
   space,
   myRole,
   onBack,
+  sortMode,
+  onSortModeChange,
 }: {
   space: CommunitySpace;
   myRole: SpaceMemberRole | null;
   onBack: () => void;
+  sortMode: SpaceSortMode;
+  onSortModeChange: (mode: SpaceSortMode) => void;
 }) {
   const joinSpace = useJoinSpace();
   const leaveSpace = useLeaveSpace();
@@ -130,6 +145,10 @@ export function SpaceHeader({
                 <Users className="h-3.5 w-3.5" />
                 {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
               </span>
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle className="h-3.5 w-3.5" />
+                Room discussion
+              </span>
             </p>
           </div>
         </div>
@@ -199,6 +218,36 @@ export function SpaceHeader({
           {space.description}
         </p>
       )}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+        <span className="section-label">Room view</span>
+        <div
+          role="group"
+          aria-label="Sort room discussion"
+          className="flex items-center gap-1 rounded-lg bg-surface-elevated/50 p-1"
+        >
+          {(
+            [
+              ["latest", "Latest"],
+              ["top", "Top"],
+              ["unanswered", "Unanswered"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onSortModeChange(value)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                sortMode === value
+                  ? "bg-surface text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

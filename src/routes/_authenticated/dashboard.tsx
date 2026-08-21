@@ -55,8 +55,21 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardPage() {
-  const { data } = useCurrentUser();
-  return <DashboardContent data={data!} />;
+  const { data, isLoading } = useCurrentUser();
+  if (isLoading) {
+    return (
+      <div className="space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-surface" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-44 animate-pulse rounded-xl bg-surface" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (!data) return null;
+  return <DashboardContent data={data} />;
 }
 
 /* ── Dashboard content (the workspace grid) ──────────────────────────────── */
@@ -724,7 +737,7 @@ function TodayCard({
   children: React.ReactNode;
   highlight?: boolean;
 }) {
-  const className = `group relative flex flex-col rounded-xl border p-5 transition-all duration-200 ${
+  const className = `group relative flex flex-col rounded-xl border p-5 transition-spatial duration-200 ${
     highlight
       ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
       : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"

@@ -127,6 +127,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   openComments,
   highlightedPostId,
   sortMode,
+  spaceSortMode,
   mySkillNames,
   activeSpace,
   reportedPostCounts,
@@ -140,6 +141,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   onClearSearch,
   onGoHome,
   focusComposer,
+  onSpaceSortChange,
   lastReadAt,
 }: {
   /** Posts to render — pre-filtered and sorted by the feed owner. */
@@ -152,6 +154,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   openComments: Set<string>;
   highlightedPostId: string | null;
   sortMode: SortMode;
+  spaceSortMode?: "latest" | "top" | "unanswered";
   mySkillNames: Set<string>;
   activeSpace?: CommunitySpace;
   /** Post id → open report count — badges and dims reported posts for moderators. */
@@ -169,6 +172,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   onClearSearch: () => void;
   onGoHome: () => void;
   focusComposer: (presetType?: string) => void;
+  onSpaceSortChange?: (mode: "latest" | "top" | "unanswered") => void;
   /** Member's read cursor for the active space — messages newer than this get an "Unread" divider. */
   lastReadAt?: string | null;
 }) {
@@ -199,13 +203,18 @@ export const CommunityFeedList = memo(function CommunityFeedList({
   }
 
   if (posts.length === 0 && activeSpace) {
+    const unansweredView = spaceSortMode === "unanswered";
     return (
       <EmptyState
         icon={<Users className="h-5 w-5" />}
-        title="This space is quiet"
-        description={`Say hi in ${activeSpace.name} — everyone who's joined can chat here. No post types, no titles, just hit Enter.`}
-        actionLabel="Start chatting"
-        onAction={focusComposer}
+        title={unansweredView ? "No unanswered discussions" : "This space is quiet"}
+        description={
+          unansweredView
+            ? `Every titled discussion in ${activeSpace.name} has a reply.`
+            : `Say hi in ${activeSpace.name} — members can post a message and reply in threads.`
+        }
+        actionLabel={unansweredView ? "View latest" : "Start chatting"}
+        onAction={unansweredView ? () => onSpaceSortChange?.("latest") : focusComposer}
       />
     );
   }
@@ -285,7 +294,7 @@ export const CommunityFeedList = memo(function CommunityFeedList({
     : -1;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={activeSpace ? "flex flex-col" : "flex flex-col gap-5"}>
       {posts.map((post, index) => {
         const isFirstUnread = firstUnreadIndex >= 0 && index === firstUnreadIndex;
         const overlap =
@@ -303,14 +312,14 @@ export const CommunityFeedList = memo(function CommunityFeedList({
         // lightweight chat rows; structured posts keep the full card.
         if (activeSpace && !post.title.trim()) {
           return (
-            <div key={post.id} className="flex flex-col gap-5">
+            <div key={post.id} className="flex flex-col">
               {isFirstUnread && <UnreadDivider />}
               <SpaceChatMessage post={post} defaultOpenComments={openComments.has(post.id)} />
             </div>
           );
         }
         return (
-          <div key={post.id} className="flex flex-col gap-5">
+          <div key={post.id} className="flex flex-col">
             {isFirstUnread && <UnreadDivider />}
             <PostCardWithComments
               post={post}
@@ -320,7 +329,11 @@ export const CommunityFeedList = memo(function CommunityFeedList({
               onDelete={onDelete}
               onEdit={onEdit}
               onToggleAction={onToggleAction}
-              className="transition-lift animate-stagger"
+              className={`${
+                activeSpace
+                  ? "border-b border-border/60 py-5 first:pt-0"
+                  : "transition-lift animate-stagger"
+              }`}
               index={index}
               highlighted={post.id === highlightedPostId}
               skillOverlap={overlap}

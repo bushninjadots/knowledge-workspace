@@ -28,7 +28,7 @@ export const SpaceChatMessage = memo(function SpaceChatMessage({
   return (
     <article
       id={`post-${post.id}`}
-      className="card-border border bg-surface px-4 py-3 transition-colors hover:bg-surface-elevated/40 sm:px-5"
+      className="border-b border-border/60 px-1 py-4 transition-colors first:pt-0 hover:bg-surface-elevated/30 sm:px-2"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-green text-xs font-semibold text-background">

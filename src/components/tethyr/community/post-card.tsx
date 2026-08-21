@@ -34,9 +34,17 @@ import {
   UserPlus,
   Share2,
   BarChart3,
+  MoreHorizontal,
 } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   POST_TYPE_LABEL,
   flairClasses,
@@ -431,7 +439,8 @@ export function PostCard({
 
       {/* Attached project */}
       {(post.project_id || post.project_snapshot) && (
-        <div className="mt-3">
+        <div className="mt-3 border-l-2 border-brand-green/60 pl-3">
+          <p className="section-label mb-1">Project context</p>
           <ProjectCardInline
             project_id={post.project_id}
             project_snapshot={post.project_snapshot}
@@ -576,7 +585,7 @@ export function PostCard({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Actions — keep the response path calm; secondary actions live in More. */}
       <div className="mt-4 flex flex-wrap items-center gap-1 border-t border-border/60 pt-3 text-xs text-muted-foreground">
         <ActionButton
           icon={Heart}
@@ -585,14 +594,6 @@ export function PostCard({
           active={liked}
           activeClass="text-brand-green"
           onClick={() => onToggleAction?.("like")}
-        />
-        <ActionButton
-          icon={ThumbsUp}
-          label="Helpful"
-          count={post.stats.helpful}
-          active={helpful}
-          activeClass="text-primary"
-          onClick={() => onToggleAction?.("helpful")}
         />
         <ActionButton
           icon={MessageCircle}
@@ -610,34 +611,51 @@ export function PostCard({
           activeClass="text-brand-purple"
           onClick={() => onToggleAction?.("save")}
         />
-        <ActionButton
-          icon={Share2}
-          label="Share"
-          count={0}
-          onClick={() => setShareDialogOpen(true)}
-        />
-        {canReport && (
-          <ActionButton
-            icon={Flag}
-            label="Report"
-            count={0}
-            activeClass="text-destructive"
-            onClick={() => setReportOpen(true)}
-          />
-        )}
-        <button
-          onClick={() => setOfferOpen(true)}
-          disabled={offered}
-          className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-medium transition-colors active:scale-95 ${
-            isRequestType
-              ? "border border-primary bg-primary/10 text-primary hover:bg-primary/20"
-              : "hover:bg-surface-elevated hover:text-foreground"
-          } ${offered ? "opacity-60" : ""}`}
-        >
-          <HandHeart className={`h-3.5 w-3.5 ${offered ? "fill-current" : ""}`} />
-          {offered ? "Offered" : "Offer Help"}
-          {post.stats.offers > 0 && <span className="tabular-nums">{post.stats.offers}</span>}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="More post actions"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-surface-elevated hover:text-foreground"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+              More
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-44">
+            <DropdownMenuItem onClick={() => onToggleAction?.("helpful")}>
+              <ThumbsUp className="mr-2 h-3.5 w-3.5" />
+              {helpful ? "Not helpful" : "Mark helpful"}
+              {post.stats.helpful > 0 && (
+                <span className="ml-auto tabular-nums text-muted-foreground">
+                  {post.stats.helpful}
+                </span>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+              <Share2 className="mr-2 h-3.5 w-3.5" />
+              Share to a Space
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOfferOpen(true)} disabled={offered}>
+              <HandHeart className="mr-2 h-3.5 w-3.5" />
+              {offered ? "Help offered" : isRequestType ? "Offer to help" : "Offer help"}
+              {post.stats.offers > 0 && (
+                <span className="ml-auto tabular-nums text-muted-foreground">
+                  {post.stats.offers}
+                </span>
+              )}
+            </DropdownMenuItem>
+            {canReport && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setReportOpen(true)}>
+                  <Flag className="mr-2 h-3.5 w-3.5" />
+                  Report post
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {showComments && (

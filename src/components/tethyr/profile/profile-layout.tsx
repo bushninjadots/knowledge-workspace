@@ -258,6 +258,7 @@ export function ProfileLayout({
           }))}
           learningGoals={profile?.learning_goals}
           availability={profile?.availability}
+          canEdit={isOwnProfile}
         />
 
         {/* STUDIO WORKSPACE + SIDEBAR */}

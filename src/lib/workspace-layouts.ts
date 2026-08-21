@@ -162,7 +162,7 @@ export const DASHBOARD_MODULES: WorkspaceModule[] = [
 export const PROFILE_MODULES: WorkspaceModule[] = [
   {
     id: "projects",
-    title: "Work",
+    title: "Projects",
     icon: IconSparkles,
     defaultW: 12,
     defaultH: 14,
@@ -173,7 +173,7 @@ export const PROFILE_MODULES: WorkspaceModule[] = [
   },
   {
     id: "overview",
-    title: "Direction",
+    title: "Profile details",
     icon: IconBarChart,
     defaultW: 12,
     defaultH: 18,
@@ -403,8 +403,8 @@ export const PROFILE_LAYOUT_PRESETS: WorkspaceLayoutPreset[] = [
     ...createPreset(
       PROFILE_MODULES,
       {
-        overview: { x: 0, y: 0, w: 12, h: 18 },
-        projects: { x: 0, y: 19, w: 12, h: 14 },
+        projects: { x: 0, y: 0, w: 12, h: 14 },
+        overview: { x: 0, y: 15, w: 12, h: 18 },
         skills: { x: 0, y: 34, w: 12, h: 14 },
       },
       ["projects"],

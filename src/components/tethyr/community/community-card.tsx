@@ -1,4 +1,4 @@
-import { Users, UserPlus, Hourglass, Check } from "lucide-react";
+import { Users, UserPlus, Hourglass, Check, Lock, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -61,23 +61,17 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
 
   const initial = space.name.charAt(0).toUpperCase();
 
-  // The card is a click target that contains its own Join/Leave button, so it
-  // must not be a <button> (a button cannot contain a button). A keyboard-
-  // accessible div keeps the open-space action while staying valid HTML.
+  // Keep the open-space action separate from the Join/Leave button. This
+  // avoids nested interactive elements and gives keyboard users one clear
+  // target for opening the space.
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onClick?.()}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      className="group flex w-full cursor-pointer flex-col rounded-xl border card-border bg-surface p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm"
-    >
-      <div className="flex items-start gap-3">
+    <div className="group flex w-full flex-col rounded-xl border card-border bg-surface p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm">
+      <button
+        type="button"
+        onClick={() => onClick?.()}
+        className="flex w-full items-start gap-3 text-left"
+        aria-label={`Open ${space.name}`}
+      >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
           {avatarUrl ? (
             <img
@@ -109,11 +103,25 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
             </p>
           )}
         </div>
-      </div>
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Users className="h-3.5 w-3.5" />
-          {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
+      </button>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            {space.visibility === "private" ? (
+              <Lock className="h-3.5 w-3.5" />
+            ) : (
+              <MessageCircle className="h-3.5 w-3.5" />
+            )}
+            {space.visibility === "private"
+              ? "Private"
+              : space.join_type === "review"
+                ? "Approval"
+                : "Open room"}
+          </span>
         </div>
         <Button
           size="sm"

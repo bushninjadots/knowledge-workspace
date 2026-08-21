@@ -1,22 +1,8 @@
 // Community navigation catalog — the destination set rendered in the sidebar
-// rail (desktop) and the mobile nav sheet. Grouped by purpose; the union keeps
-// older ids (questions, following) valid so deep links never break even when a
-// group doesn't surface them as top-level items.
+// rail (desktop) and the mobile nav sheet. Post-type views remain valid for
+// deep links and are surfaced as secondary filters in the feed header.
 import type { LucideIcon } from "lucide-react";
-import {
-  Bookmark,
-  FolderKanban,
-  HandHeart,
-  Handshake,
-  HelpCircle,
-  Home,
-  Library,
-  Lightbulb,
-  MessageSquare,
-  Sparkles,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Bookmark, Home, UserRound, Users } from "lucide-react";
 
 export type CommunityNavId =
   | "home"
@@ -52,34 +38,15 @@ export const COMMUNITY_NAV_GROUPS: CommunityNavGroup[] = [
     label: "Feed",
     items: [
       { id: "home", label: "Home feed", icon: Home },
-      { id: "help", label: "Help requests", icon: HandHeart },
-      { id: "collab", label: "Collaborations", icon: Handshake },
-    ],
-  },
-  {
-    label: "Post types",
-    items: [
-      { id: "showcase", label: "Showcases", icon: Sparkles },
-      { id: "questions", label: "Questions", icon: HelpCircle },
-      { id: "tip", label: "Tips", icon: Lightbulb },
-      { id: "discussion", label: "Discussions", icon: MessageSquare },
+      { id: "following", label: "Following", icon: UserRound },
     ],
   },
   {
     label: "Discover",
-    items: [
-      { id: "communities", label: "Communities", icon: Users },
-      // Challenges is app-level (sidebar owns the destination); the feed's
-      // `challenges` nav id stays valid for deep links but isn't surfaced here.
-      { id: "trending", label: "Trending", icon: TrendingUp },
-      { id: "resources", label: "Resources", icon: Library },
-    ],
+    items: [{ id: "communities", label: "Communities", icon: Users }],
   },
   {
     label: "You",
-    items: [
-      { id: "projects", label: "Project updates", icon: FolderKanban },
-      { id: "saved", label: "Saved", icon: Bookmark },
-    ],
+    items: [{ id: "saved", label: "Saved", icon: Bookmark }],
   },
 ];

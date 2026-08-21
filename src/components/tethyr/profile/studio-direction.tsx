@@ -37,7 +37,7 @@ export function StudioDirection({ projects, learningGoals, availability, canEdit
         <div>
           <p className="section-label">Direction</p>
           <h2 id="studio-direction-heading" className="mt-1 font-display text-lg font-semibold">
-            What this person is moving toward
+            {canEdit ? "What you’re moving toward" : "What this person is moving toward"}
           </h2>
         </div>
         {canEdit && (

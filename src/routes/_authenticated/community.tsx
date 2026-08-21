@@ -67,7 +67,9 @@ function CommunityPage() {
   const [composerPresetType, setComposerPresetType] = useState<string | null>(null);
 
   const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
-  const { data: spacePosts = [] } = useCommunitySpacePosts(activeSpace?.id ?? "");
+  const { data: spacePosts = [], isLoading: spacePostsLoading } = useCommunitySpacePosts(
+    activeSpace?.id ?? "",
+  );
 
   // If deep-linked to a space, auto-navigate to it
   useEffect(() => {
@@ -136,6 +138,7 @@ function CommunityPage() {
             onSearchChange={setSearchQuery}
             activeSpace={activeSpace ?? undefined}
             spacePosts={spacePosts}
+            spacePostsLoading={spacePostsLoading}
             composerPresetType={composerPresetType}
             focusComposer={focusComposer}
             deepLinkedPostId={deepLinkedPostId}

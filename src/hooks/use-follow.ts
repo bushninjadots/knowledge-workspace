@@ -157,6 +157,7 @@ export function useFollowingFeed() {
         .from("posts")
         .select("*")
         .in("author_id", followedIds)
+        .is("space_id", null)
         .order("created_at", { ascending: false })
         .limit(50);
 

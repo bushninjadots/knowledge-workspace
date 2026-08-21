@@ -286,6 +286,7 @@ export function useInfinitePosts() {
       const { data: rawPosts, error } = await sb
         .from("posts")
         .select<typeof POSTS_SELECT, PostRow>(POSTS_SELECT)
+        .is("space_id", null)
         .order("created_at", { ascending: false })
         .range(from, to);
 

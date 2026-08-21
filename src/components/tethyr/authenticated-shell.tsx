@@ -55,12 +55,15 @@ export function AuthenticatedShell() {
       {/* Mobile overlay */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-foreground/20" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0">
+          <div
+            className="absolute inset-0 bg-foreground/20 transition-opacity duration-200"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 transition-transform duration-200 ease-out">
             <DashboardSidebar onNavigate={() => setOpen(false)} />
           </div>
           <button
-            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5"
+            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5 transition-transform duration-150 active:scale-95"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           >

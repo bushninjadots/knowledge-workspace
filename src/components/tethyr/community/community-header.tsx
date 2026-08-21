@@ -14,6 +14,18 @@ const SORT_OPTIONS: { label: string; value: SortMode }[] = [
   { label: "Most offers", value: "offers" },
 ];
 
+const POST_TYPE_FILTERS: { label: string; value: CommunityNavId }[] = [
+  { label: "All posts", value: "home" },
+  { label: "Showcases", value: "showcase" },
+  { label: "Questions", value: "questions" },
+  { label: "Discussions", value: "discussion" },
+  { label: "Resources", value: "resources" },
+  { label: "Project updates", value: "projects" },
+  { label: "Help requests", value: "help" },
+  { label: "Collaborations", value: "collab" },
+  { label: "Tips", value: "tip" },
+];
+
 function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
@@ -60,6 +72,41 @@ function navTitle(nav: CommunityNavId): string {
   }
 }
 
+function navDescription(nav: CommunityNavId): string {
+  switch (nav) {
+    case "home":
+      return "Find work worth responding to, share progress, and leave useful context.";
+    case "communities":
+      return "Find a room for the conversations you want to keep building.";
+    case "help":
+      return "People who need a hand with something real.";
+    case "collab":
+      return "Open calls for teammates, feedback, and shared work.";
+    case "projects":
+      return "Project updates from people building in public.";
+    case "questions":
+      return "Questions with enough context to earn a useful answer.";
+    case "resources":
+      return "Tools, references, and working knowledge worth passing on.";
+    case "showcase":
+      return "Show the work, the process, and what changed.";
+    case "tip":
+      return "Lessons learned from making the thing.";
+    case "discussion":
+      return "Open-ended conversations with a reason to exist.";
+    case "challenges":
+      return "Practice with visible outcomes.";
+    case "following":
+      return "Posts from people whose work you want to keep up with.";
+    case "saved":
+      return "The posts and ideas you chose to keep close.";
+    case "trending":
+      return "What is drawing useful attention across Tethyr.";
+    default:
+      return "A place for purposeful posts, useful context, and collaboration.";
+  }
+}
+
 /**
  * Memoized presentational header: title block, search, active-filter badges and
  * the sticky sort/focus controls. All props are controlled by the feed owner,
@@ -79,6 +126,7 @@ export const CommunityHeader = memo(function CommunityHeader({
   onMySkillsOnlyChange,
   sortMode,
   onSortModeChange,
+  onNavChange,
   onOpenTrending,
 }: {
   nav: CommunityNavId;
@@ -93,9 +141,10 @@ export const CommunityHeader = memo(function CommunityHeader({
   onMySkillsOnlyChange: (value: boolean) => void;
   sortMode: SortMode;
   onSortModeChange: (value: SortMode) => void;
+  onNavChange: (value: CommunityNavId) => void;
   onOpenTrending: () => void;
 }) {
-  const showFeedControls = nav === "home" && !isSearching;
+  const showFeedControls = nav !== "communities" && nav !== "challenges" && !isSearching;
 
   return (
     <header className="mb-6">
@@ -103,10 +152,7 @@ export const CommunityHeader = memo(function CommunityHeader({
         <div>
           <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
           <h1 className="font-display text-2xl font-semibold tracking-tight">{navTitle(nav)}</h1>
-          <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-            Share project updates, ask for help, request collaboration, or drop a resource. Every
-            post has purpose.
-          </p>
+          <p className="mt-1 max-w-lg text-sm text-muted-foreground">{navDescription(nav)}</p>
         </div>
         <button
           type="button"
@@ -177,8 +223,8 @@ export const CommunityHeader = memo(function CommunityHeader({
       )}
 
       {showFeedControls && (
-        <div className="sticky top-0 z-20 -mx-2 space-y-1.5 border-b border-border/40 bg-background/85 px-2 py-2 mb-4">
-          {/* Row 1: sort + my-skills (post types now live in the sidebar nav) */}
+        <div className="sticky top-12 z-20 -mx-2 mb-4 space-y-1.5 border-b border-border/40 bg-background/95 px-2 py-2">
+          {/* Row 1: sort + my-skills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
@@ -229,6 +275,27 @@ export const CommunityHeader = memo(function CommunityHeader({
                 }`}
               >
                 {f}
+              </button>
+            ))}
+          </div>
+
+          {/* Post types stay secondary to the feed itself. */}
+          <div
+            className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none"
+            aria-label="Post type filters"
+          >
+            {POST_TYPE_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => onNavChange(filter.value)}
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
+                  nav === filter.value
+                    ? "bg-surface-elevated font-medium text-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
+                }`}
+              >
+                {filter.label}
               </button>
             ))}
           </div>
