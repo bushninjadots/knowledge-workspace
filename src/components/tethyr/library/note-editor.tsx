@@ -305,7 +305,7 @@ export function NoteEditor({
     },
     onUpdate: ({ editor: e }) => {
       if (!onChange) return;
-      onChange(e.getHTML());
+      onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
     },
   });
 

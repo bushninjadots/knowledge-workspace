@@ -689,6 +689,7 @@ function DashboardWelcomeBanner({
         captionPosition={bannerCaptionPosition}
         userId={userId}
         onChange={onBannerChange}
+        readonly
       />
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
         <div className="min-w-0">

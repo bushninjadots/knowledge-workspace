@@ -17,10 +17,11 @@ import lowlight from "@/lib/lowlight";
 
 // Mirrors the NoteEditor schema (minus editor-only helpers) so conversions
 // preserve everything users can actually author — especially fenced code
-// blocks with their language.
+// blocks with their language. StarterKit ships codeBlock+link; we disable
+// both so the explicit extensions below are the single source of truth.
 function conversionExtensions() {
   return [
-    StarterKit,
+    StarterKit.configure({ codeBlock: false, link: false }),
     Link,
     TaskList,
     TaskItem.configure({ nested: true }),
