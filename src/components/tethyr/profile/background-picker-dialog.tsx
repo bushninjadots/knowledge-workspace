@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Ban, Check, ImagePlus, LoaderCircle, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,7 @@ import {
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
   appearanceStyle,
-  backgroundImagePublicUrl,
+  backgroundImageSignedUrl,
   backgroundStyle,
   clampStrength,
   emptyBackground,
@@ -84,10 +85,12 @@ export function BackgroundPickerDialog({
     else setPublicDraft(updater);
   };
 
-  const draftImageUrl = useMemo(
-    () => (activeDraft.image_url ? backgroundImagePublicUrl(activeDraft.image_url) : null),
-    [activeDraft.image_url],
-  );
+  const { data: draftImageUrl = null } = useQuery({
+    queryKey: ["signed-background", activeDraft.image_url],
+    queryFn: () => backgroundImageSignedUrl(activeDraft.image_url),
+    enabled: !!activeDraft.image_url,
+    staleTime: 60 * 60 * 1000,
+  });
 
   const previewStyle = useMemo(() => {
     const style = {

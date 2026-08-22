@@ -377,8 +377,17 @@ export function backgroundStyle(
   }
 }
 
-/** Public URL for a background image — public bucket, so no signed URL needed. */
-export function backgroundImagePublicUrl(imageUrl: string | null | undefined): string | null {
+/**
+ * Signed URL for a background image. The `backgrounds` bucket is private, so
+ * plain public URLs no longer resolve — resolve through a short-lived signed
+ * URL instead (resolved against the PUBLIC SELECT policy on storage.objects).
+ */
+export async function backgroundImageSignedUrl(
+  imageUrl: string | null | undefined,
+): Promise<string | null> {
   if (!imageUrl) return null;
-  return supabase.storage.from("backgrounds").getPublicUrl(imageUrl).data.publicUrl;
+  const { data } = await supabase.storage
+    .from("backgrounds")
+    .createSignedUrl(imageUrl, 60 * 60 * 24);
+  return data?.signedUrl ?? null;
 }

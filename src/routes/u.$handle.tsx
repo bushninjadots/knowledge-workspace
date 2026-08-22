@@ -10,7 +10,7 @@ import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
 import {
   appearanceStyle,
-  backgroundImagePublicUrl,
+  backgroundImageSignedUrl,
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
@@ -240,7 +240,7 @@ function PublicProfileRoute() {
         avatarSigned,
         bannerSigned,
         publicBackground: publicBg ?? null,
-        backgroundImageUrl: backgroundImagePublicUrl(
+        backgroundImageUrl: await backgroundImageSignedUrl(
           publicBg?.mode === "image" ? publicBg.image_url : null,
         ),
       };

@@ -3,7 +3,7 @@
 // this key and the whole app re-syncs automatically.
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { backgroundImagePublicUrl, type ProfileBackground } from "@/lib/background-themes";
+import { backgroundImageSignedUrl, type ProfileBackground } from "@/lib/background-themes";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
 export type Profile = {
@@ -180,7 +180,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const avatarSigned = avatarRes.data?.signedUrl ?? null;
   const bannerSigned = bannerRes.data?.signedUrl ?? null;
   const background = (profile?.background ?? null) as ProfileBackground | null;
-  const backgroundImageUrl = backgroundImagePublicUrl(
+  const backgroundImageUrl = await backgroundImageSignedUrl(
     background?.mode === "image" ? background.image_url : null,
   );
 
