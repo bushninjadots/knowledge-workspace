@@ -29,8 +29,10 @@ import {
   gradientBackgroundImage,
   hasAppearanceSettings,
   imageOpacityFor,
+  type ContentDensity,
   type ProfileBackground,
 } from "@/lib/background-themes";
+import { BannerOverlayPicker } from "./banner-overlay";
 import { cn } from "@/lib/utils";
 
 const EMPTY_BACKGROUND = emptyBackground();
@@ -263,11 +265,11 @@ export function BackgroundPickerDialog({
                     <button
                       key={option.id}
                       type="button"
-                      aria-pressed={(activeDraft.cardBorders ?? "accent") === option.id}
+                      aria-pressed={(activeDraft.cardBorders ?? "neutral") === option.id}
                       onClick={() => setActiveDraft((d) => ({ ...d, cardBorders: option.id }))}
                       className={cn(
                         "min-w-0 rounded-lg border p-3 text-left transition",
-                        (activeDraft.cardBorders ?? "accent") === option.id
+                        (activeDraft.cardBorders ?? "neutral") === option.id
                           ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                           : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
                       )}
@@ -332,6 +334,85 @@ export function BackgroundPickerDialog({
                     />
                     <span>Choose a colour</span>
                   </label>
+                </div>
+              </section>
+
+              {/* DENSITY */}
+              <section className="space-y-3" aria-labelledby="density-heading">
+                <div>
+                  <h3
+                    id="density-heading"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Density
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    How much breathing room sits between elements.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Content density">
+                  {(["comfortable", "compact"] as const).map((d: ContentDensity) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={(activeDraft.density ?? "comfortable") === d}
+                      onClick={() => setActiveDraft((prev) => ({ ...prev, density: d }))}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-xs transition",
+                        (activeDraft.density ?? "comfortable") === d
+                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                          : "border-border/60 text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {d === "comfortable" ? "Comfortable" : "Compact"}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* BANNER OVERLAY + CAPTION POSITION */}
+              <section className="space-y-3" aria-labelledby="banner-overlay-heading">
+                <div>
+                  <h3
+                    id="banner-overlay-heading"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Banner overlay
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Keeps captions readable on your banner image — used on Dashboard and Studio.
+                  </p>
+                </div>
+                <BannerOverlayPicker
+                  value={activeDraft.bannerOverlay}
+                  onChange={(value) =>
+                    setActiveDraft((prev) => ({ ...prev, bannerOverlay: value }))
+                  }
+                />
+                <div
+                  className="flex flex-wrap items-center gap-2"
+                  role="group"
+                  aria-label="Banner caption position"
+                >
+                  <span className="text-[11px] text-muted-foreground">Caption position</span>
+                  {(["left", "center", "right"] as const).map((position) => (
+                    <button
+                      key={position}
+                      type="button"
+                      aria-pressed={(activeDraft.bannerCaptionPosition ?? "right") === position}
+                      onClick={() =>
+                        setActiveDraft((prev) => ({ ...prev, bannerCaptionPosition: position }))
+                      }
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-xs capitalize transition",
+                        (activeDraft.bannerCaptionPosition ?? "right") === position
+                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                          : "border-border/60 text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {position}
+                    </button>
+                  ))}
                 </div>
               </section>
 

@@ -33,14 +33,16 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-        <div className="h-6 w-32 animate-pulse rounded-full bg-surface-elevated" />
+      <div className="h-full rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+        <div className="h-6 w-32 animate-pulse rounded bg-surface-elevated" />
       </div>
     );
   }
 
+  const avatarInitial = (s?: string | null) => (s ?? "?").charAt(0).toUpperCase();
+
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
+    <div className="h-full rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="font-display text-lg font-semibold">Connections</h2>
@@ -53,6 +55,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
         )}
       </div>
 
+      {/* Incoming requests — keep the emphasized surface (needs accept/decline) */}
       {incoming.length > 0 && (
         <div className="mt-5 space-y-2">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -63,8 +66,8 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
               key={c.id}
               className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
-                {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-background">
+                {avatarInitial(c.other?.display_name ?? c.other?.handle)}
               </div>
               <div className="min-w-0 flex-1">
                 {c.other?.handle ? (
@@ -133,51 +136,52 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
         </div>
       )}
 
+      {/* Sent requests — compact rows */}
       {outgoing.length > 0 && (
-        <div className="mt-5 space-y-2">
+        <div className="mt-5">
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
             Sent ({outgoing.length})
           </p>
-          {outgoing.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated text-xs font-semibold">
-                {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
+          <div className="mt-2 divide-y divide-border/50">
+            {outgoing.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-xs font-semibold">
+                  {avatarInitial(c.other?.display_name ?? c.other?.handle)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  {c.other?.handle ? (
+                    <Link
+                      to="/u/$handle"
+                      params={{ handle: c.other.handle }}
+                      className="truncate text-sm hover:text-primary"
+                      title={c.other?.display_name || c.other?.handle || undefined}
+                    >
+                      {c.other?.display_name || c.other?.handle}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm" title={c.other?.display_name || "Member"}>
+                      {c.other?.display_name || "Member"}
+                    </p>
+                  )}
+                  <p className="truncate text-[11px] text-muted-foreground">Waiting for response</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setWithdrawId(c.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Withdraw request from ${c.other?.display_name ?? c.other?.handle ?? "member"}`}
+                  title="Withdraw request"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="min-w-0 flex-1">
-                {c.other?.handle ? (
-                  <Link
-                    to="/u/$handle"
-                    params={{ handle: c.other.handle }}
-                    className="truncate text-sm hover:text-primary"
-                    title={c.other?.display_name || c.other?.handle || undefined}
-                  >
-                    {c.other?.display_name || c.other?.handle}
-                  </Link>
-                ) : (
-                  <p className="truncate text-sm" title={c.other?.display_name || "Member"}>
-                    {c.other?.display_name || "Member"}
-                  </p>
-                )}
-                <p className="truncate text-[11px] text-muted-foreground">Waiting for response</p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setWithdrawId(c.id)}
-                className="text-muted-foreground hover:text-destructive"
-                aria-label={`Withdraw request from ${c.other?.display_name ?? c.other?.handle ?? "member"}`}
-                title="Withdraw request"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Accepted connections — compact rows */}
       <div className="mt-5">
         {accepted.length === 0 && incoming.length === 0 && outgoing.length === 0 ? (
           <EmptyState
@@ -186,14 +190,11 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
             description="Search for people and send your first connection request."
           />
         ) : accepted.length > 0 ? (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="divide-y divide-border/50">
             {accepted.slice(0, 6).map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background">
-                  {(c.other?.display_name ?? c.other?.handle ?? "?").charAt(0).toUpperCase()}
+              <div key={c.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-purple text-sm font-semibold text-background">
+                  {avatarInitial(c.other?.display_name ?? c.other?.handle)}
                 </div>
                 <div className="min-w-0 flex-1">
                   {c.other?.handle ? (

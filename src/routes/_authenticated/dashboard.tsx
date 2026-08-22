@@ -200,15 +200,15 @@ function DashboardContent({
                   action={<CreateProjectButton label="Start a project" variant="outline" />}
                 />
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-border/50">
                   {activeProjects.slice(0, 3).map((p) => (
                     <Link
                       key={p.id}
                       to="/projects/$id"
                       params={{ id: p.id }}
-                      className="block rounded-xl border card-border bg-background/40 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                      className="group block py-3 first:pt-1 last:pb-1"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <p className="truncate text-sm font-medium" title={p.title}>
                           {p.title}
                         </p>
@@ -252,14 +252,14 @@ function DashboardContent({
                   }
                 />
               ) : (
-                <div className="space-y-1.5">
+                <div className="divide-y divide-border/50">
                   {myApplications.slice(0, 4).map((app) => (
                     <Link
                       key={app.id}
                       to="/projects/$id"
                       params={{ id: app.project_open_roles?.projects?.id ?? "" }}
                       search={{ tab: "people" } as Record<string, string>}
-                      className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                      className="flex items-center justify-between py-2.5 text-sm first:pt-1 last:pb-1"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">
@@ -308,13 +308,13 @@ function DashboardContent({
                   }
                 />
               ) : (
-                <div className="space-y-1.5">
+                <div className="divide-y divide-border/50">
                   {joinedChallenges.slice(0, 3).map((c) => (
                     <Link
                       key={c.id}
                       to="/challenges/$id"
                       params={{ id: c.id }}
-                      className="flex items-center justify-between rounded-lg border card-border bg-background/40 px-3 py-2 text-sm transition hover:bg-surface-elevated/50"
+                      className="flex items-center justify-between py-2.5 text-sm first:pt-1 last:pb-1"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium" title={c.title}>
@@ -378,139 +378,142 @@ function DashboardContent({
 
         case "today":
           return (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <TodayCard
-                icon={activeProjects.length > 0 ? Folder : Plus}
-                accent="var(--trust)"
-                title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
-                href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
-                action={
-                  activeProjects.length === 0 ? (
-                    <CreateProjectButton
-                      label="Create project"
-                      variant="outline"
-                      className="mt-3"
-                    />
-                  ) : undefined
-                }
-                highlight={activeProjects.length > 0}
-              >
-                {activeProjects.length > 0 ? (
-                  <div className="mt-3 space-y-2">
-                    <p className="truncate text-sm font-semibold" title={activeProjects[0].title}>
-                      {activeProjects[0].title}
-                    </p>
-                    <div className="flex items-center gap-2">
+            <section
+              aria-labelledby="today-heading"
+              className="rounded-xl bg-surface-elevated/30 p-5"
+            >
+              <p id="today-heading" className="section-label mb-1">
+                Your next move
+              </p>
+              <div className="divide-y divide-border/50">
+                <TodayRow
+                  icon={activeProjects.length > 0 ? Folder : Plus}
+                  accent="var(--trust)"
+                  title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
+                  href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
+                >
+                  {activeProjects.length > 0 ? (
+                    <div className="flex items-center gap-3">
+                      <p className="truncate text-xs font-medium" title={activeProjects[0].title}>
+                        {activeProjects[0].title}
+                      </p>
                       <Progress
                         value={activeProjects[0].progress_percent ?? 0}
-                        className="h-1.5"
+                        className="h-1 w-20"
                         aria-label={`Progress: ${activeProjects[0].progress_percent ?? 0}%`}
                       />
                       <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
                         {activeProjects[0].progress_percent ?? 0}%
                       </span>
+                      {activeProjects.length > 1 && (
+                        <span className="text-[11px] text-muted-foreground">
+                          +{activeProjects.length - 1} more
+                        </span>
+                      )}
                     </div>
-                    {activeProjects.length > 1 && (
-                      <p className="text-[11px] text-muted-foreground">
-                        +{activeProjects.length - 1} more project
-                        {activeProjects.length > 2 ? "s" : ""}
+                  ) : (
+                    <>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Create your first project to start building in public.
                       </p>
+                      <CreateProjectButton
+                        label="Create project"
+                        variant="outline"
+                        className="mt-2"
+                      />
+                    </>
+                  )}
+                </TodayRow>
+
+                <TodayRow
+                  icon={UserPlus}
+                  accent="var(--learning)"
+                  title={
+                    pendingInviteCount > 0 || unreadMessageCount > 0
+                      ? "You have activity"
+                      : "No pending invites"
+                  }
+                  href={
+                    pendingSessionCount > 0
+                      ? "/sessions"
+                      : pendingConnectionCount > 0
+                        ? "/connections"
+                        : "/messages"
+                  }
+                  search={pendingSessionCount > 0 ? { tab: "requests" } : undefined}
+                >
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                    {pendingSessionCount > 0 && (
+                      <span>
+                        <span className="font-medium tabular-nums text-foreground">
+                          {pendingSessionCount}
+                        </span>{" "}
+                        session request{pendingSessionCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {pendingConnectionCount > 0 && (
+                      <span>
+                        <span className="font-medium tabular-nums text-foreground">
+                          {pendingConnectionCount}
+                        </span>{" "}
+                        connection request{pendingConnectionCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {unreadMessageCount > 0 && (
+                      <span>
+                        <span className="font-medium tabular-nums text-foreground">
+                          {unreadMessageCount}
+                        </span>{" "}
+                        unread message{unreadMessageCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {pendingInviteCount === 0 && unreadMessageCount === 0 && (
+                      <span>All clear — nothing needs your attention.</span>
                     )}
                   </div>
-                ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Create your first project to start building in public.
+                </TodayRow>
+
+                <TodayRow
+                  icon={Users}
+                  accent="var(--ai)"
+                  title="Find collaborators"
+                  href="/explore"
+                >
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Discover people with complementary skills who are open to team-ups.
                   </p>
-                )}
-              </TodayCard>
-              <TodayCard
-                icon={UserPlus}
-                accent="var(--learning)"
-                title={
-                  pendingInviteCount > 0 || unreadMessageCount > 0
-                    ? "You have activity"
-                    : "No pending invites"
-                }
-                href={
-                  pendingSessionCount > 0
-                    ? "/sessions"
-                    : pendingConnectionCount > 0
-                      ? "/connections"
-                      : "/messages"
-                }
-                search={pendingSessionCount > 0 ? { tab: "requests" } : undefined}
-                highlight={pendingInviteCount > 0 || unreadMessageCount > 0}
-              >
-                <div className="mt-3 space-y-1.5">
-                  {pendingSessionCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {pendingSessionCount}
-                      </span>{" "}
-                      session request{pendingSessionCount !== 1 ? "s" : ""}
+                </TodayRow>
+
+                <TodayRow
+                  icon={TrendingUp}
+                  accent="var(--brand-purple)"
+                  title={
+                    todayOpps.length > 0
+                      ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
+                      : "Browse opportunities"
+                  }
+                  href="/explore"
+                >
+                  {opportunitiesLoading ? (
+                    <p className="mt-1 text-xs text-muted-foreground">Loading open roles…</p>
+                  ) : todayOpps.length > 0 ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {todayOpps
+                        .slice(0, 2)
+                        .map((opp) => `${opp.title} — ${opp.projects?.title}`)
+                        .join(" · ")}
+                      {todayOpps.length > 2 && (
+                        <span className="ml-1 text-[11px]">+{todayOpps.length - 2} more</span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Check back as projects open new roles.
                     </p>
                   )}
-                  {pendingConnectionCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {pendingConnectionCount}
-                      </span>{" "}
-                      connection request{pendingConnectionCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {unreadMessageCount > 0 && (
-                    <p className="text-xs">
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {unreadMessageCount}
-                      </span>{" "}
-                      unread message{unreadMessageCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
-                  {pendingInviteCount === 0 && unreadMessageCount === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      All clear — nothing needs your attention.
-                    </p>
-                  )}
-                </div>
-              </TodayCard>
-              <TodayCard icon={Users} accent="var(--ai)" title="Find collaborators" href="/explore">
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Discover people with complementary skills who are open to team-ups.
-                </p>
-              </TodayCard>
-              <TodayCard
-                icon={TrendingUp}
-                accent="var(--brand-purple)"
-                title={
-                  todayOpps.length > 0
-                    ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
-                    : "Browse opportunities"
-                }
-                href="/explore"
-                highlight={todayOpps.length > 0}
-              >
-                {opportunitiesLoading ? (
-                  <p className="mt-3 text-xs text-muted-foreground">Loading open roles…</p>
-                ) : todayOpps.length > 0 ? (
-                  <div className="mt-3 space-y-1">
-                    {todayOpps.slice(0, 2).map((opp) => (
-                      <p key={opp.id} className="truncate text-xs text-muted-foreground">
-                        {opp.title} — {opp.projects?.title}
-                      </p>
-                    ))}
-                    {todayOpps.length > 2 && (
-                      <p className="text-[11px] text-muted-foreground">
-                        +{todayOpps.length - 2} more
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Check back as projects open new roles.
-                  </p>
-                )}
-              </TodayCard>
-            </div>
+                </TodayRow>
+              </div>
+            </section>
           );
 
         case "next-steps":
@@ -609,7 +612,7 @@ function DashboardContent({
           {renderModule("next-steps")}
         </section>
 
-        <section aria-labelledby="dashboard-modules-heading" className="space-y-4">
+        <section aria-labelledby="dashboard-modules-heading" className="space-y-6">
           <div>
             <h2 id="dashboard-modules-heading" className="font-display text-lg font-semibold">
               Build and discover
@@ -832,55 +835,45 @@ function DashboardModuleLoading({ title }: { title: string }) {
   );
 }
 
-function TodayCard({
+function TodayRow({
   icon: Icon,
   accent,
   title,
   href,
   search,
-  action,
   children,
-  highlight,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   accent: string;
   title: string;
   href?: string;
   search?: Record<string, string>;
-  action?: React.ReactNode;
   children: React.ReactNode;
-  highlight?: boolean;
 }) {
-  const className = `group relative flex flex-col rounded-xl border p-5 transition-spatial duration-200 ${
-    highlight
-      ? "card-border bg-surface shadow-sm hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-      : "card-border bg-surface/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
-  }`;
   const content = (
-    <>
-      <div className="flex items-start justify-between">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: accent, color: "#fff" }}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-        {href && (
-          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
-        )}
+    <div className="flex items-start gap-3 py-3.5 first:pt-2 last:pb-1">
+      <span
+        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        style={{ backgroundColor: accent, color: "#fff" }}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-sm font-medium">{title}</h3>
+        {children}
       </div>
-      <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      {children}
-      {action}
-    </>
+      {href && (
+        <ArrowRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+      )}
+    </div>
   );
 
   return href ? (
-    <Link to={href} search={search} className={className}>
+    <Link to={href} search={search} className="group block">
       {content}
     </Link>
   ) : (
-    <div className={className}>{content}</div>
+    <div className="group block">{content}</div>
   );
 }
 

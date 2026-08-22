@@ -728,7 +728,7 @@ function ModuleShell({
   children: React.ReactNode;
 }) {
   if (!customizing) {
-    return <div className="content-safe min-w-0 overflow-x-hidden">{children}</div>;
+    return <div className="content-safe h-full min-w-0 overflow-x-hidden">{children}</div>;
   }
   const Icon = module?.icon;
   return (

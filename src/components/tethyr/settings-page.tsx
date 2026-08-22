@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -26,38 +26,24 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/tethyr/theme-toggle";
+import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser, useCurrentUser } from "@/hooks/use-current-user";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { CATEGORY_LABELS, ALL_CATEGORIES } from "@/lib/notification-categories";
 import { deleteAccount } from "@/lib/account-server";
 import { friendlyError } from "@/lib/error-message";
-import {
-  BACKGROUND_COLORS,
-  BACKGROUND_PATTERNS,
-  BACKGROUND_GRADIENTS,
-  clampStrength,
-  BACKGROUND_MIN_STRENGTH,
-  BACKGROUND_MAX_STRENGTH,
-  BACKGROUND_DEFAULT_STRENGTH,
-  hasAppearanceSettings,
-  normalizeBannerOverlay,
-  type BannerOverlayId,
-  type CardBorderPreference,
-  type AccentMode,
-  type ContentDensity,
-  type ProfileBackground,
-} from "@/lib/background-themes";
-import { BannerOverlayPicker } from "@/components/tethyr/profile/banner-overlay";
-
+import type { ProfileBackground } from "@/lib/background-themes";
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { data: authUser } = useAuthUser();
   const { data: me, refresh: refreshUser } = useCurrentUser();
   const prefs = useNotificationPreferences();
-  const bg = (me?.profile as Record<string, unknown> | null)?.background as
-    ProfileBackground | null | undefined;
+  const bg = me?.profile?.background as ProfileBackground | null | undefined;
+  const publicBg = me?.profile?.public_background as ProfileBackground | null | undefined;
+
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   const [newPassword, setNewPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
@@ -68,55 +54,6 @@ export function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
-
-  // Appearance — seeded from the user's current background on mount
-  const [bgMode, setBgMode] = useState<"color" | "pattern" | "gradient">(
-    bg?.mode === "pattern" ? "pattern" : bg?.mode === "gradient" ? "gradient" : "color",
-  );
-  const [selectedTint, setSelectedTint] = useState(bg?.color ?? "sky");
-  const [selectedPattern, setSelectedPattern] = useState(bg?.pattern ?? "dots");
-  const [selectedGradient, setSelectedGradient] = useState(bg?.gradient ?? "tethyr");
-  const [strength, setStrength] = useState(bg?.strength ?? BACKGROUND_DEFAULT_STRENGTH);
-  const [cardBorders, setCardBorders] = useState<CardBorderPreference>(
-    bg?.cardBorders ?? "neutral",
-  );
-  const [accentMode, setAccentMode] = useState<AccentMode>(bg?.accentMode ?? "dynamic");
-  const [customAccent, setCustomAccent] = useState(bg?.accentColor ?? "#38bdf8");
-  const [density, setDensity] = useState<ContentDensity>(bg?.density ?? "comfortable");
-  const [bannerOverlay, setBannerOverlay] = useState<BannerOverlayId>(
-    normalizeBannerOverlay(bg?.bannerOverlay),
-  );
-
-  const [bannerCaptionPosition, setBannerCaptionPosition] = useState<"left" | "center" | "right">(
-    bg?.bannerCaptionPosition ?? "right",
-  );
-  const [savingAppearance, setSavingAppearance] = useState(false);
-
-  // The current-user query resolves after this page mounts. Re-seed the local
-  // controls when it does so saving appearance cannot overwrite a persisted
-  // preference with the initial defaults.
-  useEffect(() => {
-    if (!me?.profile) return;
-    const stored = me.profile.background;
-    const storedColor = stored?.color ?? null;
-    const colorOption = BACKGROUND_COLORS.find(
-      (color) =>
-        color.id === storedColor || color.color.toLowerCase() === storedColor?.toLowerCase(),
-    );
-    setBgMode(
-      stored?.mode === "pattern" ? "pattern" : stored?.mode === "gradient" ? "gradient" : "color",
-    );
-    setSelectedTint(colorOption?.id ?? "sky");
-    setSelectedPattern(stored?.pattern ?? "dots");
-    setSelectedGradient(stored?.gradient ?? "tethyr");
-    setStrength(stored?.strength ?? BACKGROUND_DEFAULT_STRENGTH);
-    setCardBorders(stored?.cardBorders ?? "neutral");
-    setAccentMode(stored?.accentMode ?? "dynamic");
-    setCustomAccent(stored?.accentColor ?? "#38bdf8");
-    setDensity(stored?.density ?? "comfortable");
-    setBannerOverlay(normalizeBannerOverlay(stored?.bannerOverlay));
-    setBannerCaptionPosition(stored?.bannerCaptionPosition ?? "right");
-  }, [me?.profile]);
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -177,33 +114,6 @@ export function SettingsPage() {
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/login" });
-  }
-
-  async function saveAppearance() {
-    if (!me?.userId) return;
-    setSavingAppearance(true);
-    const payload: ProfileBackground = {
-      mode: bgMode,
-      color: BACKGROUND_COLORS.find((color) => color.id === selectedTint)?.color ?? selectedTint,
-      pattern: selectedPattern,
-      gradient: selectedGradient,
-      image_url: bg?.image_url ?? null,
-      strength,
-      cardBorders,
-      accentMode,
-      accentColor: accentMode === "custom" ? customAccent : null,
-      density,
-      bannerOverlay,
-      bannerCaptionPosition,
-    };
-    const { error } = await supabase
-      .from("profiles")
-      .update({ background: hasAppearanceSettings(payload) ? payload : null })
-      .eq("id", me.userId);
-    setSavingAppearance(false);
-    if (error) return toast.error(friendlyError(error));
-    toast.success("Appearance saved");
-    refreshUser();
   }
 
   return (
@@ -305,11 +215,11 @@ export function SettingsPage() {
               Appearance
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Customize how Tethyr looks and feels.
+              How Tethyr looks and feels — theme, background, accent, and surfaces.
             </p>
 
             <div className="mt-4 space-y-4">
-              {/* Theme */}
+              {/* Theme — a device-level preference, kept here */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Theme</p>
@@ -318,207 +228,26 @@ export function SettingsPage() {
                 <ThemeToggle variant="icon" />
               </div>
 
-              {/* Background Mode */}
-              <div className="space-y-2">
-                <p className="font-medium">Background</p>
-                <div className="flex gap-1">
-                  {(["color", "pattern", "gradient"] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setBgMode(mode)}
-                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
-                        bgMode === mode
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-surface text-muted-foreground hover:bg-surface/80"
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-
-                {bgMode === "color" && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {BACKGROUND_COLORS.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setSelectedTint(c.id)}
-                        aria-label={c.label}
-                        className={`h-7 w-7 rounded-full border-2 transition ${
-                          selectedTint === c.id
-                            ? "border-primary scale-110"
-                            : "border-transparent hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: c.color }}
-                      />
-                    ))}
+              <div className="border-t border-border/60 pt-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium">Background, accent &amp; surfaces</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      The same editor as your Studio — colour, pattern, gradient, image, density,
+                      and banner treatment. Changes apply everywhere instantly.
+                    </p>
                   </div>
-                )}
-
-                {bgMode === "pattern" && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {BACKGROUND_PATTERNS.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => setSelectedPattern(p.id)}
-                        className={`rounded-md px-3 py-1.5 text-sm transition ${
-                          selectedPattern === p.id
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-surface text-muted-foreground hover:bg-surface/80"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {bgMode === "gradient" && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {BACKGROUND_GRADIENTS.map((g) => (
-                      <button
-                        key={g.id}
-                        onClick={() => setSelectedGradient(g.id)}
-                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition ${
-                          selectedGradient === g.id
-                            ? "border-primary scale-110"
-                            : "border-transparent hover:scale-105"
-                        }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${g.from}, ${g.to})`,
-                        }}
-                        aria-label={g.label}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Strength slider */}
-                <div className="flex items-center gap-3 pt-1">
-                  <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                    Strength
-                  </Label>
-                  <input
-                    type="range"
-                    min={BACKGROUND_MIN_STRENGTH}
-                    max={BACKGROUND_MAX_STRENGTH}
-                    value={strength}
-                    onChange={(e) => setStrength(clampStrength(Number(e.target.value)))}
-                    className="flex-1 accent-primary"
-                  />
-                  <span className="w-8 text-right text-xs text-muted-foreground">{strength}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAppearanceOpen(true)}
+                    className="shrink-0"
+                  >
+                    <Paintbrush className="mr-1.5 h-3.5 w-3.5" />
+                    Open appearance editor
+                  </Button>
                 </div>
               </div>
-
-              {/* Accent Color */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Accent Color</p>
-                  <p className="text-sm text-muted-foreground">
-                    {accentMode === "dynamic" ? "Follows your banner" : "Custom accent"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={customAccent}
-                    onChange={(e) => setCustomAccent(e.target.value)}
-                    disabled={accentMode === "dynamic"}
-                    className="h-7 w-7 cursor-pointer rounded-md border border-border disabled:opacity-40"
-                  />
-                  <div className="flex gap-1">
-                    {(["dynamic", "custom"] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        onClick={() => setAccentMode(mode)}
-                        className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
-                          accentMode === mode
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-surface text-muted-foreground hover:bg-surface/80"
-                        }`}
-                      >
-                        {mode}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Density */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Density</p>
-                  <p className="text-sm text-muted-foreground">Spacing between elements</p>
-                </div>
-                <div className="flex gap-1">
-                  {(["comfortable", "compact"] as const).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDensity(d)}
-                      className={`rounded-md px-3 py-1.5 text-sm transition ${
-                        density === d
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-surface text-muted-foreground hover:bg-surface/80"
-                      }`}
-                    >
-                      {d === "comfortable" ? "Comfortable" : "Compact"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Card Borders */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Card Borders</p>
-                  <p className="text-sm text-muted-foreground">How card edges are styled</p>
-                </div>
-                <div className="flex gap-1">
-                  {(["neutral", "accent", "none"] as const).map((b) => (
-                    <button
-                      key={b}
-                      onClick={() => setCardBorders(b)}
-                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${
-                        cardBorders === b
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-surface text-muted-foreground hover:bg-surface/80"
-                      }`}
-                    >
-                      {b}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3 border-t border-border/60 pt-4">
-                <div>
-                  <p className="font-medium">Studio banner</p>
-                  <p className="text-sm text-muted-foreground">
-                    Use the same banner treatment on Dashboard and Studio.
-                  </p>
-                </div>
-                <BannerOverlayPicker value={bannerOverlay} onChange={setBannerOverlay} />
-                <div className="flex flex-wrap gap-1">
-                  {(["left", "center", "right"] as const).map((value) => (
-                    <button
-                      key={value}
-                      onClick={() => setBannerCaptionPosition(value)}
-                      className={`rounded-md px-3 py-1.5 text-sm capitalize transition ${bannerCaptionPosition === value ? "bg-primary text-primary-foreground" : "bg-surface text-muted-foreground hover:bg-surface/80"}`}
-                    >
-                      Caption {value}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <Button onClick={saveAppearance} disabled={savingAppearance} className="w-full">
-                {savingAppearance ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="mr-2 h-4 w-4" />
-                )}
-                Save appearance
-              </Button>
             </div>
           </section>
 
@@ -697,6 +426,18 @@ export function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Appearance — the same editor as the Studio, so every surface stays in sync. */}
+      {me?.userId && (
+        <BackgroundPickerDialog
+          open={appearanceOpen}
+          onOpenChange={setAppearanceOpen}
+          background={bg ?? null}
+          publicBackground={publicBg ?? null}
+          userId={me.userId}
+          onSaved={refreshUser}
+        />
+      )}
     </div>
   );
 }

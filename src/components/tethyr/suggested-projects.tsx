@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Folder, Users, MessageSquare, Sparkles } from "lucide-react";
+import { Folder, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { scoreProjectMatch } from "@/lib/skill-match";
@@ -30,12 +30,12 @@ const STAGE_LABELS: Record<string, string> = {
   growing: "Growing",
 };
 
-const STAGE_COLORS: Record<string, string> = {
-  planning: "border-muted-foreground/30 bg-muted-foreground/5 text-muted-foreground",
-  building: "border-primary/30 bg-primary/10 text-primary",
-  testing: "border-brand-purple/30 bg-brand-purple/10 text-brand-purple",
-  launch: "border-brand-green/30 bg-brand-green/10 text-brand-green",
-  growing: "border-brand-green/30 bg-brand-green/10 text-brand-green",
+const STAGE_TEXT: Record<string, string> = {
+  planning: "text-muted-foreground",
+  building: "text-primary",
+  testing: "text-brand-purple",
+  launch: "text-brand-green",
+  growing: "text-brand-green",
 };
 
 export const SuggestedProjects = memo(function SuggestedProjects({
@@ -106,9 +106,9 @@ export const SuggestedProjects = memo(function SuggestedProjects({
 
   if (isLoading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="card-border h-28 animate-pulse rounded-xl border bg-surface" />
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-16 animate-pulse rounded-lg bg-surface" />
         ))}
       </div>
     );
@@ -127,67 +127,49 @@ export const SuggestedProjects = memo(function SuggestedProjects({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((p) => (
-        <Link
-          key={p.id}
-          to="/projects/$id"
-          params={{ id: p.id }}
-          className="card-border rounded-xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium" title={p.title}>
-                {p.title}
-              </p>
-              {p.description && (
-                <p
-                  className="mt-1 line-clamp-2 text-xs text-muted-foreground"
-                  title={p.description ?? undefined}
-                >
-                  {p.description}
-                </p>
-              )}
+    <div className="divide-y divide-border/50">
+      {data.map((p) => {
+        const reasons = p.reasons.slice(0, 2).join(" · ");
+        return (
+          <Link
+            key={p.id}
+            to="/projects/$id"
+            params={{ id: p.id }}
+            className="group block py-3 first:pt-1 last:pb-1"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium" title={p.title}>
+                    {p.title}
+                  </p>
+                  {p.stage && (
+                    <span
+                      className={`shrink-0 text-[11px] font-medium ${
+                        STAGE_TEXT[p.stage] ?? STAGE_TEXT.building
+                      }`}
+                    >
+                      {STAGE_LABELS[p.stage] ?? p.stage}
+                    </span>
+                  )}
+                </div>
+                {p.description && (
+                  <p
+                    className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+                    title={p.description}
+                  >
+                    {p.description}
+                  </p>
+                )}
+                {reasons && <p className="mt-1.5 text-[11px] text-muted-foreground">{reasons}</p>}
+              </div>
+              <span className="mt-0.5 hidden shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition group-hover:text-primary sm:inline-flex">
+                View project <ArrowRight className="h-3 w-3" />
+              </span>
             </div>
-            {p.stage && (
-              <span
-                className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[p.stage] ?? STAGE_COLORS.building}`}
-              >
-                {STAGE_LABELS[p.stage] ?? p.stage}
-              </span>
-            )}
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-1">
-            {p.looking_for_collaborators && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
-                <Users className="h-2.5 w-2.5" />
-                Seeking collaborators
-              </span>
-            )}
-            {p.looking_for_feedback && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
-                <MessageSquare className="h-2.5 w-2.5" />
-                Wants feedback
-              </span>
-            )}
-          </div>
-
-          {p.reasons.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {p.reasons.map((r: string) => (
-                <span
-                  key={r}
-                  className="inline-flex items-center gap-1 rounded-full border border-brand-green/20 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green"
-                >
-                  <Sparkles className="h-2.5 w-2.5" />
-                  {r}
-                </span>
-              ))}
-            </div>
-          )}
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 });

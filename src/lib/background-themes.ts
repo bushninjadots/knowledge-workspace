@@ -44,13 +44,7 @@ export type ProfileBackground = {
  * behind captions without changing the surface hierarchy.
  */
 export type BannerOverlayId =
-  | "none"
-  | "soft"
-  | "strong"
-  | "scrim"
-  | "vignette"
-  | "spotlight"
-  | "duotone";
+  "none" | "soft" | "strong" | "scrim" | "vignette" | "spotlight" | "duotone";
 
 export type BannerOverlayOption = {
   id: BannerOverlayId;
@@ -107,7 +101,6 @@ export function bannerOverlayStyle(value: string | null | undefined): CSSPropert
       };
   }
 }
-
 
 /** Default tint strength when a row predates the strength slider. */
 export const BACKGROUND_DEFAULT_STRENGTH = 34;
@@ -340,7 +333,7 @@ export function backgroundStyle(
   // tint: mixed into the theme's own background so text keeps its contrast
   // in both light and dark mode.
   const strength = clampStrength(background.strength);
-  const patternPct = Math.round(strength * 0.4);
+  const patternPct = Math.round(strength * 0.22);
   const base = background.color
     ? `color-mix(in oklab, ${background.color} ${strength}%, var(--background))`
     : "var(--background)";

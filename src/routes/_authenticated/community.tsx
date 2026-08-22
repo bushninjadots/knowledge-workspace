@@ -120,7 +120,7 @@ function CommunityPage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-8">
+      <div className="mx-auto flex max-w-[100rem] gap-6 p-4 md:p-8">
         <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
 
         <div className="min-w-0 flex-1">

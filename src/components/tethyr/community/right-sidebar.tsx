@@ -5,6 +5,8 @@ import {
   HandHeart,
   Handshake,
   Trophy,
+  Flag,
+  Star,
   Target,
   ArrowRight,
   BookOpen,
@@ -27,8 +29,8 @@ function RailCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-4">
-      <p className="section-label mb-3 flex items-center gap-1.5 px-1">
+    <div className="rounded-xl bg-surface-elevated/30 p-3.5">
+      <p className="section-label mb-2 flex items-center gap-1.5 px-1">
         {icon}
         {title}
       </p>
@@ -55,7 +57,7 @@ function DigestRow({
   return (
     <Link
       to={to}
-      className="group flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-surface-elevated/60"
+      className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-elevated/60"
     >
       <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tint}`}>
         <Icon className="h-3.5 w-3.5" />
@@ -116,7 +118,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
 
   return (
     <aside
-      className={`${mobile ? "flex flex-col gap-4" : "hidden w-72 shrink-0 flex-col gap-4 xl:flex"}`}
+      className={`${mobile ? "flex flex-col gap-3" : "hidden w-72 shrink-0 flex-col gap-3 xl:flex"}`}
     >
       {/* Today — one digest instead of three separate widgets */}
       <RailCard title="Today" icon={<Target className="h-3.5 w-3.5 text-primary" />}>
@@ -133,11 +135,17 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
           </div>
         ) : (
           <div className="flex flex-col">
-            {challenges.slice(0, 3).map((challenge) => (
+            {challenges.slice(0, 3).map((challenge, index) => (
               <DigestRow
                 key={challenge.id}
-                icon={Trophy}
-                tint="bg-brand-green/10 text-brand-green"
+                icon={index === 1 ? Flag : index === 2 ? Star : Trophy}
+                tint={
+                  index === 1
+                    ? "bg-brand-purple/10 text-brand-purple"
+                    : index === 2
+                      ? "bg-primary/10 text-primary"
+                      : "bg-brand-green/10 text-brand-green"
+                }
                 label={challenge.title}
                 detail={`${challenge.difficulty} · ${challenge.participant_count ?? 0} joined`}
                 to={`/challenges/${challenge.id}`}

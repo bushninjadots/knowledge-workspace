@@ -147,7 +147,7 @@ export const CommunityHeader = memo(function CommunityHeader({
   const showFeedControls = nav !== "communities" && nav !== "challenges" && !isSearching;
 
   return (
-    <header className="mb-6">
+    <header className="mb-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
@@ -164,7 +164,7 @@ export const CommunityHeader = memo(function CommunityHeader({
         </button>
       </div>
 
-      <div className="relative mt-4">
+      <div className="relative mt-5">
         <Search
           className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden="true"
@@ -194,7 +194,7 @@ export const CommunityHeader = memo(function CommunityHeader({
         </p>
       )}
       {!isSearching && activeFilterCount > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {focusFilter !== "all" && (
             <FilterBadge
               label={`Focus: ${focusFilter}`}
@@ -223,7 +223,7 @@ export const CommunityHeader = memo(function CommunityHeader({
       )}
 
       {showFeedControls && (
-        <div className="sticky top-12 z-20 -mx-2 mb-4 space-y-1.5 border-b border-border/40 bg-background/95 px-2 py-2">
+        <div className="sticky top-12 z-20 -mx-2 mb-5 space-y-2 border-b border-border/40 bg-background/95 px-2 py-3">
           {/* Row 1: sort + my-skills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
@@ -253,7 +253,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           </div>
 
           {/* Row 2: focus chips */}
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+          <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => onFocusFilterChange("all")}
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
@@ -280,10 +280,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           </div>
 
           {/* Post types stay secondary to the feed itself. */}
-          <div
-            className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none"
-            aria-label="Post type filters"
-          >
+          <div className="flex flex-wrap gap-1.5" aria-label="Post type filters">
             {POST_TYPE_FILTERS.map((filter) => (
               <button
                 key={filter.value}

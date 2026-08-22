@@ -2,12 +2,11 @@
 // availability overlap, and language compatibility.
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { Sparkles, Zap } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { computeMatchScore, type SkillMeta, type AvailabilityStatus } from "@/lib/skill-match";
-import { AvailabilityBadge } from "./availability-badge";
+import { ConnectButton } from "./connect-button";
 import { EmptyState } from "./empty-state";
 import { ProfileLink } from "./profile-link";
 
@@ -133,9 +132,9 @@ export const SuggestedCreators = memo(function SuggestedCreators({
 
   if (isLoading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="card-border h-24 animate-pulse rounded-xl border bg-surface" />
+          <div key={i} className="h-14 animate-pulse rounded-lg bg-surface" />
         ))}
       </div>
     );
@@ -154,48 +153,40 @@ export const SuggestedCreators = memo(function SuggestedCreators({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="divide-y divide-border/50">
       {data.map((c) => {
         const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
+        const name = c.display_name || c.handle || "Untitled member";
+        const context = [
+          ...c.teachSkills.slice(0, 2).map((s) => s.name),
+          ...(c.availability === "available" || c.availability === "looking_for_team"
+            ? ["Available"]
+            : []),
+        ].join(" · ");
         return (
-          <ProfileLink
-            key={c.id}
-            handle={c.handle}
-            className="card-border rounded-xl border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
+          <div key={c.id} className="flex items-center gap-3 py-3 first:pt-1 last:pb-1">
+            <ProfileLink
+              handle={c.handle}
+              className="flex min-w-0 flex-1 items-center gap-3"
+              title={name}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-background">
                 {initial}
               </div>
               <div className="min-w-0">
-                <p
-                  className="truncate text-sm font-medium"
-                  title={c.display_name || c.handle || "Untitled member"}
-                >
-                  {c.display_name || c.handle || "Untitled member"}
-                </p>
+                <p className="truncate text-sm font-medium">{name}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {c.creator_title || c.category || "Member"}
                 </p>
               </div>
-            </div>
-
-            <AvailabilityBadge status={c.availability} size="xs" />
-
-            {c.matchReasons.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {c.matchReasons.slice(0, 2).map((reason: string) => (
-                  <span
-                    key={reason}
-                    className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green"
-                  >
-                    <Zap className="h-2.5 w-2.5" />
-                    {reason}
-                  </span>
-                ))}
-              </div>
+            </ProfileLink>
+            {context && (
+              <p className="hidden max-w-[16rem] shrink-0 truncate text-[11px] text-muted-foreground md:block">
+                {context}
+              </p>
             )}
-          </ProfileLink>
+            <ConnectButton targetId={c.id} targetName={name} />
+          </div>
         );
       })}
     </div>
