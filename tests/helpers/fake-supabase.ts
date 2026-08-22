@@ -22,6 +22,7 @@ export interface FakeSupabaseHandle {
   client: {
     from: ReturnType<typeof vi.fn>;
     auth: { getUser: ReturnType<typeof vi.fn> };
+    rpc: ReturnType<typeof vi.fn>;
   };
   /** Every `from(table)` call recorded by the chainable builder. */
   calls: FakeCall[];
@@ -129,8 +130,10 @@ export function createFakeSupabase(): FakeSupabaseHandle {
     })),
   };
 
+  const rpc = vi.fn(async () => ({ data: null, error: null }));
+
   return {
-    client: { from, auth },
+    client: { from, auth, rpc },
     calls,
     on(key, handler) {
       handlers[key] = handler;
