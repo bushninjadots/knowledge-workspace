@@ -1,17 +1,25 @@
 #!/usr/bin/env node
 /**
- * Fails when a module exports a component, helper, hook, or type that nothing
- * else in the repo imports. Keeps dead UI code from accumulating: pair it with
- * `npm run typecheck` in CI so both "broken" and "unused" fail the build.
+ * Fails when a NEW unused export (component, hook, helper, or type) is
+ * introduced. Existing unused exports are recorded in
+ * `scripts/unused-exports-baseline.json`, so the check is actionable from day
+ * one: the build only breaks on additions, and the baseline can be shrunk as
+ * dead code gets removed.
+ *
+ * Usage:
+ *   node scripts/check-unused-exports.mjs                  # check (CI)
+ *   node scripts/check-unused-exports.mjs --update-baseline # re-record
  *
  * Deliberately simple (no TS program): it collects exported identifiers per
  * file and looks for any reference to that identifier from another file.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const SCAN_DIRS = ["src"];
+const BASELINE_PATH = path.join(ROOT, "scripts", "unused-exports-baseline.json");
+const UPDATE = process.argv.includes("--update-baseline");
+
 /** Files whose exports are consumed by the framework / tooling, not by imports. */
 const IGNORED_FILES = [
   /^src\/routes\//, // TanStack file routes (Route, loaders, head)
@@ -24,10 +32,9 @@ const IGNORED_FILES = [
   /\.test\.(ts|tsx)$/,
   /\.d\.ts$/,
 ];
-/** Individual export names that are intentionally part of a public surface. */
-const IGNORED_EXPORTS = new Set(["default"]);
 
 function walk(dir, out = []) {
+  if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) walk(full, out);
@@ -36,15 +43,10 @@ function walk(dir, out = []) {
   return out;
 }
 
-const files = SCAN_DIRS.flatMap((dir) => walk(path.join(ROOT, dir))).map((f) =>
-  path.relative(ROOT, f).split(path.sep).join("/"),
-);
-// Anything in the repo may reference an export (tests, scripts, docs of record).
-const referenceFiles = [
-  ...files,
-  ...walk(path.join(ROOT, "tests")).map((f) => path.relative(ROOT, f).split(path.sep).join("/")),
-];
-
+const rel = (f) => path.relative(ROOT, f).split(path.sep).join("/");
+const files = walk(path.join(ROOT, "src")).map(rel);
+// Anything in the repo may reference an export (tests included).
+const referenceFiles = [...files, ...walk(path.join(ROOT, "tests")).map(rel)];
 const sources = new Map(referenceFiles.map((f) => [f, readFileSync(path.join(ROOT, f), "utf8")]));
 
 const EXPORT_PATTERNS = [
@@ -54,7 +56,7 @@ const EXPORT_PATTERNS = [
   /export\s+(?:type|interface|enum)\s+([A-Za-z0-9_$]+)/g,
 ];
 
-const findings = [];
+const unused = [];
 
 for (const file of files) {
   if (IGNORED_FILES.some((re) => re.test(file))) continue;
@@ -65,22 +67,45 @@ for (const file of files) {
   }
 
   for (const name of names) {
-    if (IGNORED_EXPORTS.has(name)) continue;
+    if (name === "default") continue;
     const usage = new RegExp(`\\b${name.replace(/\$/g, "\\$")}\\b`);
     const usedElsewhere = referenceFiles.some(
       (other) => other !== file && usage.test(sources.get(other) ?? ""),
     );
-    if (!usedElsewhere) findings.push(`${file} → ${name}`);
+    if (!usedElsewhere) unused.push(`${file} → ${name}`);
   }
 }
 
-if (findings.length > 0) {
-  console.error(`Unused exports detected (${findings.length}):\n`);
-  for (const finding of findings) console.error(`  ${finding}`);
+unused.sort();
+
+if (UPDATE) {
+  writeFileSync(BASELINE_PATH, `${JSON.stringify(unused, null, 2)}\n`);
+  console.log(`Baseline updated with ${unused.length} known unused exports.`);
+  process.exit(0);
+}
+
+const baseline = existsSync(BASELINE_PATH)
+  ? new Set(JSON.parse(readFileSync(BASELINE_PATH, "utf8")))
+  : new Set();
+
+const added = unused.filter((entry) => !baseline.has(entry));
+const fixed = [...baseline].filter((entry) => !unused.includes(entry));
+
+if (added.length > 0) {
+  console.error(`New unused exports detected (${added.length}):\n`);
+  for (const entry of added) console.error(`  ${entry}`);
   console.error(
-    "\nRemove them, use them, or add an intentional exception in scripts/check-unused-exports.mjs.",
+    "\nUse them, delete them, or (only with a reason) re-record the baseline:\n" +
+      "  npm run check:unused -- --update-baseline",
   );
   process.exit(1);
 }
 
-console.log(`No unused exports found across ${files.length} files.`);
+if (fixed.length > 0) {
+  console.log(`${fixed.length} baseline entries are no longer unused — nice.`);
+  console.log("Shrink the baseline with: npm run check:unused -- --update-baseline");
+}
+
+console.log(
+  `No new unused exports across ${files.length} files (${baseline.size} known, tracked in the baseline).`,
+);
