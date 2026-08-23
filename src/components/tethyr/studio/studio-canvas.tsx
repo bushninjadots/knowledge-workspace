@@ -108,7 +108,7 @@ export function StudioCanvas({
             Add blocks from the left sidebar to start building your {page.type === "profile" ? "studio" : "project"} page.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-            {(["text-block", "heading-block", "hero-block", "status-block"]).map((type) => (
+            {(["text", "heading", "project-hero", "project-status"]).map((type) => (
               <button
                 key={type}
                 type="button"

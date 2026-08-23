@@ -96,7 +96,7 @@ export function usePage({ ownerId, ownerType }: FetchPageParams) {
         theme,
       };
     },
-    staleTime: 2 * 60 * 1000, // 2 min — pages change only through explicit editing.
+    staleTime: 0, // Never serve stale page data — mutations must reflect immediately.
     enabled: !!ownerId,
   });
 }

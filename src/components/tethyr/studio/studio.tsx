@@ -169,7 +169,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         {
           onSuccess: () => {
             console.log("[Studio] ✅ writeLayout success, refetching");
-            refetchPage();
+            // Small delay to let the mutation's own cache invalidation propagate.
+            setTimeout(() => refetchPage(), 100);
             opts?.onDone?.();
           },
           onError: (err) => {
