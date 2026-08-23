@@ -11,6 +11,7 @@ import {
   PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
@@ -24,6 +25,7 @@ import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock } from "@/lib/block-registry";
+import { useQueryClient } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
@@ -46,6 +48,7 @@ interface StudioProps {
 
 export function Studio({ userId, profile, projects }: StudioProps) {
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   // ── Page selection ────────────────────────────────────────────────────
   const [activePage, setActivePage] = useState<StudioPage | null>(() => {
@@ -252,6 +255,18 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [pageData, saveAsTemplate],
   );
 
+  // ── Re-seed templates ────────────────────────────────────────────────
+  const handleReseed = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any).rpc("reseed_default_templates");
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["templates"] });
+      toast.success(`Templates refreshed`);
+    } catch (err) {
+      toast.error(friendlyError(err, "Failed to re-seed"));
+    }
+  }, [qc]);
+
   // ── Fork template ─────────────────────────────────────────────────────
   const handleForkTemplate = useCallback(
     (templateId: string) => {
@@ -381,6 +396,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onForkTemplate={handleForkTemplate}
               onApplyTheme={handleApplyTheme}
               onSaveAsTemplate={handleSaveAsTemplate}
+              onReseed={handleReseed}
               templates={publicTemplates}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}

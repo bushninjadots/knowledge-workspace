@@ -41,6 +41,7 @@ interface StudioSidebarProps {
   onForkTemplate: (templateId: string) => void;
   onApplyTheme: (themeId: string) => void;
   onSaveAsTemplate: (name: string, opts?: { description?: string; category?: string }) => void;
+  onReseed: () => void;
   templates: TemplateData[];
   themes: ThemeCatalogEntry[];
   currentThemeId: string | null;
@@ -49,7 +50,7 @@ interface StudioSidebarProps {
 export function StudioSidebar({
   activePage, activeTab, onTabChange,
   onAddBlock, onApplyTemplate, onForkTemplate, onApplyTheme,
-  onSaveAsTemplate, templates, themes, currentThemeId,
+  onSaveAsTemplate, onReseed, templates, themes, currentThemeId,
 }: StudioSidebarProps) {
   return (
     <div className="flex h-full flex-col">
@@ -89,6 +90,7 @@ export function StudioSidebar({
             onApply={onApplyTemplate}
             onFork={onForkTemplate}
             onSaveAsTemplate={onSaveAsTemplate}
+            onReseed={onReseed}
           />
         )}
         {activeTab === "themes" && (
@@ -180,12 +182,13 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
 // ── Templates Panel ──────────────────────────────────────────────────────────
 
 function TemplatesPanel({
-  templates, onApply, onFork, onSaveAsTemplate,
+  templates, onApply, onFork, onSaveAsTemplate, onReseed,
 }: {
   templates: TemplateData[];
   onApply: (id: string) => void;
   onFork: (id: string) => void;
   onSaveAsTemplate: (name: string, opts?: { description?: string; category?: string }) => void;
+  onReseed: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Popular");
@@ -210,6 +213,15 @@ function TemplatesPanel({
         >
           + Save
         </button>
+        {templates.length === 0 && (
+          <button
+            type="button"
+            onClick={onReseed}
+            className="rounded px-1.5 py-0.5 text-[10px] text-amber-500 hover:text-amber-400"
+          >
+            Re-seed
+          </button>
+        )}
       </div>
 
       {showSave && (

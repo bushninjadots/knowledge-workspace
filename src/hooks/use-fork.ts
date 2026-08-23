@@ -73,7 +73,7 @@ export function useForkLayout() {
       // 1. Fetch the parent layout's sections and metadata.
       const { data: parent, error: fetchErr } = await (supabase as any)
         .from("layouts")
-        .select("sections, name")
+        .select("sections, name, theme_id")
         .eq("id", parentLayoutId)
         .single();
 
@@ -87,14 +87,19 @@ export function useForkLayout() {
       );
 
       // 2. Create a new layout with the copied sections.
+      //    Set created_by so the user owns the fork and can edit it.
       const forkName = name ?? `Fork of ${parent?.name ?? "layout"}`;
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id ?? null;
       const { data: child, error: insertErr } = await (supabase as any)
         .from("layouts")
         .insert({
           name: forkName,
           type: "custom",
           sections,
+          theme_id: parent?.theme_id ?? null,
           is_template: false,
+          created_by: userId,
         })
         .select("id")
         .single();
