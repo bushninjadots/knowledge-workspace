@@ -4,7 +4,7 @@
 // block picker, and template save/apply actions.
 
 import { useState, useMemo } from "react";
-import { Edit3, Eye, Palette, Plus, Send, X, Bookmark, GalleryHorizontalEnd } from "lucide-react";
+import { Palette, Plus, Send, X, Bookmark, GalleryHorizontalEnd } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
@@ -45,7 +45,7 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToolbarProps) {
-  const { isEditing, stopEditing, startEditing } = useEditMode();
+  const { isEditing } = useEditMode();
   const publishPage = usePublishPage();
   const unpublishPage = useUnpublishPage();
   const updateLayout = useUpdatePageLayout();
@@ -84,7 +84,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
   // ── Publish / Unpublish ────────────────────────────────────────────────
   async function handlePublish() {
-    try { await publishPage.mutateAsync({ pageId: page!.id }); toast.success("Page published"); stopEditing(); onRefresh(); }
+    try { await publishPage.mutateAsync({ pageId: page!.id }); toast.success("Page published"); onRefresh(); }
     catch (err) { toast.error(friendlyError(err, "Failed to publish")); }
   }
   async function handleUnpublish() {
@@ -112,24 +112,6 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── No page ──────────────────────────────────────────────────────────
   if (!page) return null;
 
-  // ── Entry point (not editing) ──────────────────────────────────────
-  if (!isEditing) {
-    return (
-      <div className="mb-6 flex items-center gap-3 border-b border-border/30 pb-3">
-        <button
-          type="button"
-          onClick={startEditing}
-          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-        >
-          <Edit3 className="h-3.5 w-3.5" /> Arrange page
-        </button>
-        {page.status === "draft" && (
-          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">Draft</span>
-        )}
-      </div>
-    );
-  }
-
   // ── Editing toolbar ────────────────────────────────────────────────
   return (
     <>
@@ -143,7 +125,6 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowTemplateName(true)}><Bookmark className="h-3.5 w-3.5" /> Save template</Button>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowThemePicker(!showThemePicker)}><Palette className="h-3.5 w-3.5" /> Theme</Button>
           <span className="text-muted-foreground/30 mx-1">·</span>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={stopEditing}><Eye className="h-3.5 w-3.5" /> Done</Button>
           {isPublished ? (
             <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={handleUnpublish}><X className="h-3.5 w-3.5" /> Unpublish</Button>
           ) : (

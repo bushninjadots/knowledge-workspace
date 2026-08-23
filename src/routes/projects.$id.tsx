@@ -50,7 +50,7 @@ import type { ProjectFile } from "@/components/tethyr/project/project-files";
 import "@/components/tethyr/blocks/project";
 import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
+import { EditModeProvider, useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import { useProjectPage } from "@/hooks/use-project-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 
@@ -178,7 +178,6 @@ function ProjectPage() {
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [preselectPath, setPreselectPath] = useState<string | null>(null);
   const [preselectNonce, setPreselectNonce] = useState(0);
-  const [directionEditing, setDirectionEditing] = useState(false);
   const [presentationSaveState, setPresentationSaveState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -453,7 +452,7 @@ function ProjectPage() {
 
   if (isLoading) {
     return (
-      <Shell>
+      <Shell isOwner={false}>
         <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
           <div className="h-40 rounded-xl bg-surface" />
           <div className="h-8 w-2/3 rounded bg-surface" />
@@ -465,7 +464,7 @@ function ProjectPage() {
   }
   if (error || !data) {
     return (
-      <Shell>
+      <Shell isOwner={false}>
         <div className="p-8 text-sm text-muted-foreground">Project not found.</div>
       </Shell>
     );
@@ -517,7 +516,8 @@ function ProjectPage() {
   });
 
   return (
-    <Shell accentColor={accent} pageThemeStyle={pageThemeStyle}>
+    <EditModeProvider>
+    <Shell accentColor={accent} pageThemeStyle={pageThemeStyle} isOwner={isOwner}>
       {/* Legacy header — hidden when blocks render the page */}
       {!blocksArePage && (
         <ProjectHeader
@@ -554,7 +554,6 @@ function ProjectPage() {
         isOwner={isOwner}
         isContributor={isContributor}
         canWatch={!!me?.userId && !isOwner}
-        onShapeDirection={isOwner ? () => setDirectionEditing(true) : undefined}
         onAction={handleWorkbenchAction}
         onPresentationChange={(preset) => {
           setPresentationSaveState("saving");
@@ -582,8 +581,8 @@ function ProjectPage() {
         <ProjectPulse
           project={project}
           isOwner={isOwner}
-          editing={directionEditing}
-          onEditingChange={setDirectionEditing}
+          editing={false}
+          onEditingChange={() => {}}
           gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
           milestones={milestones}
           openNeedCount={needs.filter((need) => !need.is_filled).length}
@@ -593,9 +592,7 @@ function ProjectPage() {
       {/* Block system — replaces legacy presentation when active.
           When blocks exist they ARE the page; legacy duplicate sections hide. */}
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
-        <EditModeProvider>
           <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
-        </EditModeProvider>
       </div>
 
       {/* Legacy sections — only shown when blocks aren't the active page */}
@@ -945,6 +942,7 @@ function ProjectPage() {
         </Suspense>
       )}
     </Shell>
+    </EditModeProvider>
   );
 }
 
@@ -982,12 +980,15 @@ function Shell({
   children,
   accentColor,
   pageThemeStyle,
+  isOwner,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
   pageThemeStyle?: React.CSSProperties;
+  isOwner: boolean;
 }) {
   const navigate = useNavigate();
+  const { isEditing, startEditing, stopEditing } = useEditMode();
   const accentStyle: React.CSSProperties = {
     ...(accentColor
       ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
@@ -996,23 +997,45 @@ function Shell({
   };
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
-        <button
-          onClick={() =>
-            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
-          }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
-          aria-label="Go back"
-          title="Back"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back
-        </button>
-        <Link to="/" className="font-display text-lg font-semibold text-foreground">
-          Tethyr
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-sm text-muted-foreground">Project</span>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-sm sm:px-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() =>
+              window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-label="Go back"
+            title="Back"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </button>
+          <Link to="/" className="font-display text-lg font-semibold text-foreground">
+            Tethyr
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm text-muted-foreground">Project</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {isOwner && !isEditing && (
+            <button
+              type="button"
+              onClick={startEditing}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Customize
+            </button>
+          )}
+          {isOwner && isEditing && (
+            <button
+              type="button"
+              onClick={stopEditing}
+              className="text-xs font-medium text-foreground hover:text-muted-foreground transition-colors"
+            >
+              Done
+            </button>
+          )}
+        </div>
       </header>
       <main className="flex-1">{children}</main>
     </div>

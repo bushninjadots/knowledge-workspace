@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Hammer, Users } from "lucide-react";
+import { Compass, Hammer, Users } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export type StudioDirectionProject = {
@@ -33,21 +33,11 @@ export function StudioDirection({ projects, learningGoals, availability, canEdit
       aria-labelledby="studio-direction-heading"
       className="border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-4 sm:px-5"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="section-label">Direction</p>
-          <h2 id="studio-direction-heading" className="mt-1 font-display text-lg font-semibold">
-            {canEdit ? "What you’re moving toward" : "What this person is moving toward"}
-          </h2>
-        </div>
-        {canEdit && (
-          <Link
-            to="/profile"
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            Edit Studio <ArrowRight className="h-3 w-3" />
-          </Link>
-        )}
+      <div>
+        <p className="section-label">Direction</p>
+        <h2 id="studio-direction-heading" className="mt-1 font-display text-lg font-semibold">
+          {canEdit ? "What you're moving toward" : "What this person is moving toward"}
+        </h2>
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <DirectionItem

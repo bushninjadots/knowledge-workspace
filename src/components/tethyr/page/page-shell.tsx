@@ -145,8 +145,9 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   // ── Rendered page ────────────────────────────────────────────────────
   return (
     <div>
-      {/* Editor toolbar (owner only) */}
-      {isOwner && (
+      {/* Editor toolbar — only shows editing tools when in edit mode.
+          The Customize/Done toggle lives in the page Shell header. */}
+      {isOwner && isEditing && (
         <EditorToolbar
           page={page}
           onRefresh={() => refetch()}
@@ -159,9 +160,14 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
         {layout.sections.length === 0 ? (
           <div className="flex min-h-[20vh] items-center justify-center px-4">
             {isOwner && isEditing ? (
-              <p className="text-sm text-muted-foreground" role="status">
-                Your page is empty. Add blocks to get started.
-              </p>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground" role="status">
+                  Your page is empty.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Use Add block above to start building.
+                </p>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground" role="status">Nothing here yet.</p>
             )}

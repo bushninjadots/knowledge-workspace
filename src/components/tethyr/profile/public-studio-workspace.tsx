@@ -439,9 +439,7 @@ export function PublicStudioWorkspace({
             Work, contribution, and direction
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {canCustomize
-              ? "Arrange this public space to decide how people encounter your work."
-              : "See the work this person is building and the contribution behind it."}
+            See the work this person is building and the contribution behind it.
           </p>
         </div>
       </div>
@@ -449,11 +447,11 @@ export function PublicStudioWorkspace({
         page="profile"
         userId={profileId}
         modules={PUBLIC_STUDIO_MODULES}
-        canCustomize={canCustomize}
+        canCustomize={false}
         layoutStorage={layoutStorage}
         layoutPresets={PUBLIC_STUDIO_PRESETS}
         showModuleTitles={false}
-        showPresetPicker={canCustomize}
+        showPresetPicker={false}
         showSectionNav
         workspaceLabel="public Studio"
         renderModule={renderModule}
