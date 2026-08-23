@@ -169,6 +169,9 @@ export function useSaveAsTemplate() {
         .eq("layout_id", layoutId)
         .maybeSingle();
 
+      // created_by MUST be auth.uid() — RLS requires auth.uid() = created_by
+      // for INSERT. Copying source.created_by fails when source has null.
+      const me = (await supabase.auth.getUser()).data.user;
       const { error: insertErr } = await (supabase as any)
         .from("layouts")
         .insert({
@@ -179,7 +182,7 @@ export function useSaveAsTemplate() {
           sections: source.sections,
           theme_id: pageForTheme?.theme_id ?? null,
           is_template: true,
-          created_by: source.created_by,
+          created_by: me?.id ?? null,
         });
       if (insertErr) throw insertErr;
     },
@@ -229,11 +232,11 @@ export function useApplyTemplate() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ templateId, layoutId }: ApplyTemplateParams) => {
-      // 1. Fetch the template's sections.
+    mutationFn: async ({ templateId, pageId, layoutId }: ApplyTemplateParams) => {
+      // 1. Fetch the template's sections and theme.
       const { data: template, error: fetchErr } = await (supabase as any)
         .from("layouts")
-        .select("sections")
+        .select("sections, theme_id")
         .eq("id", templateId)
         .single();
 
@@ -254,12 +257,18 @@ export function useApplyTemplate() {
 
       if (updateErr) throw updateErr;
 
-      // 3. Bump template usage count.
+      // 3. Apply the template's theme to the page if it has one.
+      if (template?.theme_id) {
+        await (supabase as any)
+          .from("pages")
+          .update({ theme_id: template.theme_id })
+          .eq("id", pageId);
+      }
+
+      // 4. Bump template usage count.
       await (supabase as any)
         .rpc("increment_usage_count", { template_id: templateId })
-        .catch(() => {
-          // Non-critical — don't fail the whole operation.
-        });
+        .catch(() => {});
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["templates"] });

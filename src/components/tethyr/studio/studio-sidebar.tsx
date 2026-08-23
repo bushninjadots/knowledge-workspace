@@ -41,6 +41,7 @@ interface StudioSidebarProps {
   onForkTemplate: (templateId: string) => void;
   onApplyTheme: (themeId: string) => void;
   onSaveAsTemplate: (name: string, opts?: { description?: string; category?: string }) => void;
+  themeNames: Map<string, string>;
   onReseed: () => void;
   templates: TemplateData[];
   themes: ThemeCatalogEntry[];
@@ -50,6 +51,7 @@ interface StudioSidebarProps {
 export function StudioSidebar({
   activePage, activeTab, onTabChange,
   onAddBlock, onApplyTemplate, onForkTemplate, onApplyTheme,
+  themeNames,
   onSaveAsTemplate, onReseed, templates, themes, currentThemeId,
 }: StudioSidebarProps) {
   return (
@@ -91,6 +93,7 @@ export function StudioSidebar({
             onFork={onForkTemplate}
             onSaveAsTemplate={onSaveAsTemplate}
             onReseed={onReseed}
+            themeNames={themeNames}
           />
         )}
         {activeTab === "themes" && (
@@ -182,12 +185,13 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
 // ── Templates Panel ──────────────────────────────────────────────────────────
 
 function TemplatesPanel({
-  templates, onApply, onFork, onSaveAsTemplate, onReseed,
+  templates, onApply, onFork, onSaveAsTemplate, onReseed, themeNames,
 }: {
   templates: TemplateData[];
   onApply: (id: string) => void;
   onFork: (id: string) => void;
   onSaveAsTemplate: (name: string, opts?: { description?: string; category?: string }) => void;
+  themeNames: Map<string, string>;
   onReseed: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -279,10 +283,24 @@ function TemplatesPanel({
             key={t.id}
             className="group rounded-lg border border-border/20 bg-surface/20 p-2.5 transition-colors hover:border-border/40"
           >
-            <p className="text-xs font-medium text-foreground truncate">{t.name}</p>
-            {t.creatorHandle && (
-              <p className="text-[10px] text-muted-foreground">by @{t.creatorHandle}</p>
+            {/* Theme preview strip */}
+            {t.themeId && (
+              <div className="mb-1.5 flex items-center gap-1.5">
+                <div
+                  className="h-3 w-full rounded-sm border border-border/30"
+                  style={{
+                    background: `linear-gradient(90deg, var(--muted-foreground), transparent)`,
+                  }}
+                />
+                <span className="shrink-0 text-[9px] text-muted-foreground/50">
+                  {themeNames.get(t.themeId)?.replace(/\s/g, '') ?? ''}
+                </span>
+              </div>
             )}
+            <p className="text-xs font-medium text-foreground truncate">{t.name}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {t.creatorHandle ? `by @${t.creatorHandle}` : 'Community template'}
+            </p>
             <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-0.5">
                 <TrendingUp className="h-2.5 w-2.5" /> {t.usageCount}

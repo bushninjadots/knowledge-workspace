@@ -73,6 +73,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const { data: themeCatalog = [] } = useThemeCatalog();
   const { data: publicTemplates = [] } = usePublicTemplates({ sort: "popular" });
 
+  // Theme name lookup for template cards.
+  const themeNames = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of themeCatalog) m.set(t.id, t.name);
+    return m;
+  }, [themeCatalog]);
+
   // ── Mutations ─────────────────────────────────────────────────────────
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
@@ -397,6 +404,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onApplyTheme={handleApplyTheme}
               onSaveAsTemplate={handleSaveAsTemplate}
               onReseed={handleReseed}
+              themeNames={themeNames}
               templates={publicTemplates}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
