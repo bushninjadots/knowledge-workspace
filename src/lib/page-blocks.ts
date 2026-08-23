@@ -225,6 +225,8 @@ export interface TemplateData {
   sections: LayoutSection[];
   /** The theme tokens bundled with this template (null = default). */
   themeTokens: ThemeTokens | null;
+  /** The theme ID for this template. */
+  themeId: string | null;
   /** Creator profile info — joined from layouts.created_by → profiles. */
   createdBy: string | null;
   creatorHandle: string | null;

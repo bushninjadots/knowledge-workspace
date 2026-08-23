@@ -87,9 +87,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       const layout = activePage.type === "profile"
         ? createDefaultProfileLayout()
         : createDefaultProjectLayout();
-      createPage.mutate({ ownerId: activePage.id, ownerType: activePage.type, defaultLayout: layout });
+      createPage.mutate({ ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout });
     }
-  }, [pageLoading, pageData, activePage, createPage]);
+  }, [pageLoading, pageData, activePage, createPage, userId]);
 
   // Refetch after page creation.
   useEffect(() => {

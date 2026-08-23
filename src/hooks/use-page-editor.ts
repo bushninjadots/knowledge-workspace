@@ -14,6 +14,7 @@ const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 interface CreatePageParams {
   ownerId: string;
   ownerType: PageOwnerType;
+  userId?: string;
   defaultLayout?: PageLayout;
 }
 
@@ -41,16 +42,18 @@ export function useCreatePage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ownerId, ownerType, defaultLayout }: CreatePageParams) => {
-      // Create layout first with the default sections.
+    mutationFn: async ({ ownerId, ownerType, userId, defaultLayout }: CreatePageParams) => {
+      // Create a layout with the default sections. For created_by, prefer
+      // the explicit userId; fall back to auth.uid() so RLS allows future updates.
       const sections = defaultLayout?.sections ?? createDefaultProfileLayout().sections;
+      const effectiveUserId = userId ?? (await supabase.auth.getUser())?.data.user?.id ?? ownerId;
       const { data: layoutData, error: layoutError } = await (supabase as any)
         .from("layouts")
         .insert({
           name: `Page for ${ownerType}`,
           sections: sections as unknown as Record<string, unknown>[],
           is_template: false,
-          created_by: ownerId,
+          created_by: effectiveUserId,
         })
         .select("id")
         .single();

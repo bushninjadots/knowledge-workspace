@@ -25,6 +25,7 @@ function mapLayoutRow(row: any): TemplateData {
     category: row.category ?? null,
     sections: row.sections ?? [],
     themeTokens: null,
+    themeId: row.theme_id ?? null,
     createdBy: row.created_by ?? null,
     creatorHandle: row.creator_handle ?? null,
     creatorDisplayName: row.creator_display_name ?? null,
@@ -38,7 +39,7 @@ function mapLayoutRow(row: any): TemplateData {
 // ── Queries ──────────────────────────────────────────────────────────────────
 
 const TEMPLATE_SELECT =
-  "id, name, description, type, category, sections, created_by, usage_count, fork_count, created_at, updated_at";
+  "id, name, description, type, category, sections, theme_id, created_by, usage_count, fork_count, created_at, updated_at";
 
 interface UsePublicTemplatesParams {
   /** Filter by category. */
@@ -145,23 +146,42 @@ interface SaveAsTemplateParams {
   category?: string;
 }
 
-/** Mark an existing layout as a public template with optional metadata. */
+/** Create a duplicate layout and mark it as a public template. The original
+ * page layout stays private — only the copy becomes a template. */
 export function useSaveAsTemplate() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ layoutId, name, description, category }: SaveAsTemplateParams) => {
-      const { error } = await (supabase as any)
+      // 1. Fetch the current layout's sections.
+      const { data: source, error: fetchErr } = await (supabase as any)
         .from("layouts")
-        .update({
-          is_template: true,
-          name,
-          ...(description !== undefined ? { description } : {}),
-          ...(category !== undefined ? { category } : {}),
-        })
-        .eq("id", layoutId);
+        .select("sections, created_by")
+        .eq("id", layoutId)
+        .single();
+      if (fetchErr) throw fetchErr;
 
-      if (error) throw error;
+      // 2. Create a NEW layout row (a copy) marked as a template,
+      //    carrying the page's current theme ID.
+      const { data: pageForTheme } = await (supabase as any)
+        .from("pages")
+        .select("theme_id")
+        .eq("layout_id", layoutId)
+        .maybeSingle();
+
+      const { error: insertErr } = await (supabase as any)
+        .from("layouts")
+        .insert({
+          name,
+          description: description ?? null,
+          type: "standard",
+          category: category ?? null,
+          sections: source.sections,
+          theme_id: pageForTheme?.theme_id ?? null,
+          is_template: true,
+          created_by: source.created_by,
+        });
+      if (insertErr) throw insertErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["templates"] });
