@@ -600,6 +600,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}
                     onAddBlock={handleAddBlock}
+                    onUpdateBlockConfig={handleUpdateBlockConfig}
                     onLayoutChange={writeLayout}
                     onRefetch={refetchPage}
                   />

@@ -20,6 +20,7 @@ interface StudioCanvasProps {
   onToggleVisibility: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onAddBlock: (blockType: string) => void;
+  onUpdateBlockConfig: (blockId: string, config: Record<string, unknown>) => void;
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
@@ -29,7 +30,7 @@ export function StudioCanvas({
   page, pageData, pageLoading, pageError,
   selectedBlockId, onSelectBlock,
   onRemoveBlock, onToggleVisibility, onMoveBlock,
-  onAddBlock, onReorderBlocks, onRefetch,
+  onAddBlock, onUpdateBlockConfig, onReorderBlocks, onRefetch,
 }: StudioCanvasProps) {
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
 
@@ -136,6 +137,9 @@ export function StudioCanvas({
             const isLast = idx === section.blocks.length - 1;
             const isDragOver = dragOverBlockId === block.id;
 
+            const blockWidth = (block.config?.width as string) ?? "full";
+            const widthClass = blockWidth === "2/3" ? "w-2/3" : blockWidth === "1/2" ? "w-1/2" : blockWidth === "1/3" ? "w-1/3" : "w-full";
+
             return (
               <div
                 key={block.id}
@@ -145,7 +149,7 @@ export function StudioCanvas({
                 onDragOver={(e) => handleDragOver(e, block.id)}
                 onDragLeave={() => setDragOverBlockId(null)}
                 onDrop={(e) => handleDrop(e, section.id, block.id, idx)}
-                className={`group/block relative rounded-md transition-all ${
+                className={`group/block relative rounded-md transition-all ${widthClass} ${
                   isSelected
                     ? "ring-2 ring-primary/30 bg-primary/[0.03]"
                     : isDragOver
@@ -210,6 +214,28 @@ export function StudioCanvas({
                   </button>
                 </div>
 
+                {/* Resize handle — right edge, visible on hover */}
+                <div
+                  className="pointer-events-none absolute right-0 top-0 h-full w-2 cursor-col-resize opacity-0 group-hover/block:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const widths = ["full", "2/3", "1/2", "1/3"];
+                    const currentIdx = widths.indexOf(blockWidth);
+                    const nextWidth = widths[(currentIdx + 1) % widths.length];
+                    onUpdateBlockConfig(block.id, { ...block.config, width: nextWidth });
+                  }}
+                  title="Click to resize: Full → 2/3 → 1/2 → 1/3"
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-primary/40" />
+                </div>
+
+                {/* Width label — shown when not full width */}
+                {blockWidth !== "full" && (
+                  <span className="absolute -right-1 -top-2 z-20 rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-medium text-primary opacity-0 group-hover/block:opacity-100 transition-opacity pointer-events-none">
+                    {blockWidth}
+                  </span>
+                )}
+
                 {/* Selected indicator — subtle left border */}
                 {isSelected && (
                   <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
@@ -226,7 +252,7 @@ export function StudioCanvas({
         onClick={() => {
           // Open the sidebar to blocks tab — signal via a simple add
           // Not ideal but functional: just pick text block as default
-          onAddBlock("text-block");
+          onAddBlock("text");
         }}
         className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40 py-4 text-xs text-muted-foreground transition-colors hover:border-border/60 hover:text-foreground"
       >
