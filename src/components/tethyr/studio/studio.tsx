@@ -2,7 +2,7 @@
 // Three-column editing environment for profiles and projects.
 // Owns all state and mutation wiring — children receive data + callbacks.
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Monitor, Tablet, Smartphone,
@@ -11,10 +11,10 @@ import {
   PanelRightClose, PanelRightOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
+import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
 import {
   useCreatePage, useUpdatePageLayout, usePublishPage, useUnpublishPage,
 } from "@/hooks/use-page-editor";
@@ -23,13 +23,11 @@ import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
-import { createBlockInstance, getAllBlocks, getBlock } from "@/lib/block-registry";
+import { createBlockInstance, getBlock } from "@/lib/block-registry";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
 import type { PageLayout, PageOwnerType } from "@/lib/page-blocks";
-import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
-import type { TemplateData } from "@/lib/page-blocks";
 
 export type StudioPage = {
   id: string;
@@ -48,7 +46,6 @@ interface StudioProps {
 
 export function Studio({ userId, profile, projects }: StudioProps) {
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
   // ── Page selection ────────────────────────────────────────────────────
   const [activePage, setActivePage] = useState<StudioPage | null>(() => {
@@ -62,6 +59,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const [rightOpen, setRightOpen] = useState(true);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<string>("pages");
+  const ensuringRef = useRef(false);
 
   // ── Query data ────────────────────────────────────────────────────────
   const { data: pageData, isLoading: pageLoading, isError: pageError, refetch: refetchPage } = usePage({
@@ -81,6 +79,22 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const applyTemplate = useApplyTemplate();
   const saveAsTemplate = useSaveAsTemplate();
   const forkLayout = useForkLayout();
+
+  // Auto-create page when owner visits studio and no page exists yet.
+  useEffect(() => {
+    if (!pageLoading && !pageData && activePage && !createPage.isPending && !ensuringRef.current) {
+      ensuringRef.current = true;
+      const layout = activePage.type === "profile"
+        ? createDefaultProfileLayout()
+        : createDefaultProjectLayout();
+      createPage.mutate({ ownerId: activePage.id, ownerType: activePage.type, defaultLayout: layout });
+    }
+  }, [pageLoading, pageData, activePage, createPage]);
+
+  // Refetch after page creation.
+  useEffect(() => {
+    if (createPage.isSuccess) refetchPage();
+  }, [createPage.isSuccess, refetchPage]);
 
   // ── Layout helpers ────────────────────────────────────────────────────
   const layout: PageLayout = pageData?.layout ?? { sections: [] };
@@ -102,9 +116,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     (blockType: string) => {
       const inst = createBlockInstance(blockType as any);
       if (!inst) return;
-      const sections = (layout.sections ?? []).map((s) => ({
-        ...s, blocks: [...s.blocks],
-      }));
+      const existing = pageData?.layout?.sections ?? [];
+      const sections = existing.map((s: any) => ({ ...s, blocks: [...s.blocks] }));
       let last = sections[sections.length - 1];
       if (!last) {
         last = { id: `sect_${Date.now()}`, position: 0, layout: "full", blocks: [] };
@@ -114,7 +127,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         type: inst.type,
         position: last.blocks.length,
-        config: inst.config as Record<string, unknown>,
+        config: { ...inst.config } as Record<string, unknown>,
         visible: true,
       };
       sections[sections.length - 1] = { ...last, blocks: [...last.blocks, newBlock] };

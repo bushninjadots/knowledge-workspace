@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { PageLayout, PageOwnerType, PageStatus } from "@/lib/page-blocks";
+import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { invalidatePage } from "@/hooks/use-page";
 
 const DEFAULT_LAYOUT_ID = "00000000-0000-0000-0000-000000000002";
@@ -13,6 +14,7 @@ const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 interface CreatePageParams {
   ownerId: string;
   ownerType: PageOwnerType;
+  defaultLayout?: PageLayout;
 }
 
 interface UpdateLayoutParams {
@@ -39,13 +41,28 @@ export function useCreatePage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ownerId, ownerType }: CreatePageParams) => {
+    mutationFn: async ({ ownerId, ownerType, defaultLayout }: CreatePageParams) => {
+      // Create layout first with the default sections.
+      const sections = defaultLayout?.sections ?? createDefaultProfileLayout().sections;
+      const { data: layoutData, error: layoutError } = await (supabase as any)
+        .from("layouts")
+        .insert({
+          name: `Page for ${ownerType}`,
+          sections: sections as unknown as Record<string, unknown>[],
+          is_template: false,
+          created_by: ownerId,
+        })
+        .select("id")
+        .single();
+
+      if (layoutError || !layoutData) throw layoutError ?? new Error("Failed to create layout");
+
       const { data, error } = await (supabase as any)
         .from("pages")
         .insert({
           owner_id: ownerId,
           owner_type: ownerType,
-          layout_id: DEFAULT_LAYOUT_ID,
+          layout_id: layoutData.id,
           theme_id: DEFAULT_THEME_ID,
           status: "draft",
         })
