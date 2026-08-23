@@ -3,7 +3,7 @@
 // milestones, updates, discussions and open roles all carry public SELECT
 // policies. Repository-workspace layout: compact header → sticky tab bar
 // (README as homepage, with Files / Activity / People / Discussions) below.
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -52,6 +52,7 @@ import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProjectPage } from "@/hooks/use-project-page";
+import { themeTokensToStyle } from "@/lib/theme-tokens";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -438,6 +439,13 @@ function ProjectPage() {
   // Fetch or auto-create the project's page (block-based presentation).
   const { page: projectPage } = useProjectPage({ projectId: id, isOwner });
 
+  // Apply page theme as CSS vars on the outer wrapper so the entire project
+  // (header, workbench, pulse, blocks, README, tabs) gets themed.
+  const pageThemeStyle = useMemo(
+    () => themeTokensToStyle(projectPage?.theme ?? {}),
+    [projectPage?.theme],
+  );
+
   if (isLoading) {
     return (
       <Shell>
@@ -504,7 +512,7 @@ function ProjectPage() {
   });
 
   return (
-    <Shell accentColor={accent}>
+    <Shell accentColor={accent} pageThemeStyle={pageThemeStyle}>
       <ProjectHeader
         project={project}
         coverSigned={coverSigned}
@@ -571,16 +579,13 @@ function ProjectPage() {
         openNeedCount={needs.filter((need) => !need.is_filled).length}
       />
 
-      {/* Block-based project presentation — renders Hero, About, Status, Team,
-          Activity blocks from the page system. Complements, not replaces,
-          the existing project sections below. */}
-      {projectPage && (
+      {/* Block-based page presentation — always renders for owners.
+          When no page exists yet, shows a "Set up" button. */}
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
         <EditModeProvider>
-          <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
-            <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
-          </div>
+          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
         </EditModeProvider>
-      )}
+      </div>
 
       <div className="animate-room-enter min-h-screen bg-noise">
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
@@ -956,14 +961,19 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
 function Shell({
   children,
   accentColor,
+  pageThemeStyle,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
+  pageThemeStyle?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
-  const accentStyle = accentColor
-    ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
-    : undefined;
+  const accentStyle: React.CSSProperties = {
+    ...(accentColor
+      ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
+      : {}),
+    ...(pageThemeStyle ?? {}),
+  };
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">

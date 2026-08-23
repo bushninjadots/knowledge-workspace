@@ -115,15 +115,21 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   if (!page) {
     if (isOwner) {
       return (
-        <div className="flex min-h-[40vh] items-center justify-center px-4">
-          <div className="max-w-sm text-center">
-            <p className="text-sm text-muted-foreground">No page set up yet.</p>
+        <div className="mb-4">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent,var(--surface-elevated))]/5 px-4 py-4">
+            <p className="flex-1 text-sm text-muted-foreground">
+              Your {ownerType} page isn't set up yet. Create one to start customizing.
+            </p>
             <Button
+              variant="default"
               size="sm"
-              className="mt-3"
-              onClick={() => createPage.mutate({ ownerId, ownerType })}
+              className="gap-1.5 text-xs"
+              onClick={() => createPage.mutate(
+                { ownerId, ownerType },
+                { onSuccess: () => refetch() },
+              )}
             >
-              {createPage.isPending ? "Creating..." : "Create page"}
+              {createPage.isPending ? "Setting up..." : "Set up page"}
             </Button>
           </div>
         </div>

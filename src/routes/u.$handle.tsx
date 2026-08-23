@@ -36,6 +36,7 @@ import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
+import { themeTokensToStyle } from "@/lib/theme-tokens";
 
 type PublicProfile = {
   id: string;
@@ -341,11 +342,19 @@ function PublicProfileRoute() {
     isOwner: meId === profile.id,
   });
 
+  // Apply page theme as CSS vars on the outer wrapper so the entire Studio
+  // (identity card, direction, blocks, workspace) gets themed, not just blocks.
+  const pageThemeStyle = useMemo(
+    () => themeTokensToStyle(profilePage?.theme ?? {}),
+    [profilePage?.theme],
+  );
+
   return (
     <Shell
       accentColor={bannerAccent}
       background={publicBackground}
       backgroundImageUrl={backgroundImageUrl}
+      pageThemeStyle={pageThemeStyle}
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
@@ -458,18 +467,15 @@ function PublicProfileRoute() {
           availability={profile.availability}
         />
 
-        {/* Block-based profile presentation — renders ProfileHeader, Bio, Skills,
-            and Featured Projects from the page system. Complements the existing
-            StudioDirection and WorkspaceGrid below. */}
-        {profilePage && (
-          <EditModeProvider>
-            <PageShell
-              ownerId={profile.id}
-              ownerType="profile"
-              isOwner={meId === profile.id}
-            />
-          </EditModeProvider>
-        )}
+        {/* Block-based page presentation — always renders for owners.
+            When no page exists yet, shows a "Set up" button. */}
+        <EditModeProvider>
+          <PageShell
+            ownerId={profile.id}
+            ownerType="profile"
+            isOwner={meId === profile.id}
+          />
+        </EditModeProvider>
 
         <PublicStudioWorkspace
           profile={profile}
@@ -502,11 +508,13 @@ function Shell({
   accentColor,
   background,
   backgroundImageUrl,
+  pageThemeStyle,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
   background?: ProfileBackground | null;
   backgroundImageUrl?: string | null;
+  pageThemeStyle?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
   const accentStyle = {
@@ -514,6 +522,7 @@ function Shell({
       ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
       : {}),
     ...appearanceStyle(background),
+    ...(pageThemeStyle ?? {}),
   };
 
   return (
