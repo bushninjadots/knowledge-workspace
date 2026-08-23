@@ -55,9 +55,7 @@ export function StudioDirection({ projects, learningGoals, availability, canEdit
           label="Building now"
           value={
             currentProject?.title ??
-            (canEdit
-              ? "Choose a project to lead your Studio."
-              : "No active project pinned yet.")
+            (canEdit ? "Choose a project to lead your Studio." : "No active project pinned yet.")
           }
           projectId={currentProject?.id}
         />

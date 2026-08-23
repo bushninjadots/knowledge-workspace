@@ -55,12 +55,7 @@ import {
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
-import {
-  useAddComment,
-  useReportPost,
-  useVotePoll,
-  type PollData,
-} from "@/hooks/use-community";
+import { useAddComment, useReportPost, useVotePoll, type PollData } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import {
   Dialog,

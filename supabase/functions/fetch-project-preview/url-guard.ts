@@ -199,8 +199,7 @@ export function classifyUrl(raw: string): GuardedUrl {
     return { ok: false, reason: "blocked-hostname" };
   }
 
-  const looksLikeLiteral =
-    hostname.startsWith("[") || /^[0-9a-fx.:]+$/.test(hostname);
+  const looksLikeLiteral = hostname.startsWith("[") || /^[0-9a-fx.:]+$/.test(hostname);
   if (looksLikeLiteral) {
     if (!hostnameIsLiteralIp(hostname)) return { ok: false, reason: "ip-shaped-hostname-invalid" };
     if (hostname.includes(":")) {
@@ -247,10 +246,12 @@ export async function assertPublicHost(
   for (const addr of addresses) {
     if (addr.includes(":")) {
       const groups = parseIpv6(addr);
-      if (!groups || isPrivateIpv6(groups)) return { ok: false, reason: `private-resolution:${addr}` };
+      if (!groups || isPrivateIpv6(groups))
+        return { ok: false, reason: `private-resolution:${addr}` };
     } else {
       const v4 = parseIpv4(addr);
-      if (v4 === null || isPrivateIpv4(v4)) return { ok: false, reason: `private-resolution:${addr}` };
+      if (v4 === null || isPrivateIpv4(v4))
+        return { ok: false, reason: `private-resolution:${addr}` };
     }
   }
   return cls;

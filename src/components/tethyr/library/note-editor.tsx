@@ -273,42 +273,45 @@ export function NoteEditor({
   editable?: boolean;
   format?: "html" | "markdown";
 }) {
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false,
-        link: false,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: "text-brand-green underline" },
-      }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      ExternalImage,
-      SignedImage,
-      Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
-      ...(format === "markdown" ? [Markdown] : []),
-    ],
-    content,
-    ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
-    editable,
-    editorProps: {
-      attributes: {
-        class: "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
+  const editor = useEditor(
+    {
+      immediatelyRender: false,
+      extensions: [
+        StarterKit.configure({
+          codeBlock: false,
+          link: false,
+        }),
+        Link.configure({
+          openOnClick: false,
+          HTMLAttributes: { class: "text-brand-green underline" },
+        }),
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        CodeBlockLowlight.configure({ lowlight }),
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableCell,
+        TableHeader,
+        ExternalImage,
+        SignedImage,
+        Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
+        ...(format === "markdown" ? [Markdown] : []),
+      ],
+      content,
+      ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
+      editable,
+      editorProps: {
+        attributes: {
+          class: "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
+        },
+      },
+      onUpdate: ({ editor: e }) => {
+        if (!onChange) return;
+        onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
       },
     },
-    onUpdate: ({ editor: e }) => {
-      if (!onChange) return;
-      onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
-    },
-  }, [format]);
+    [format],
+  );
 
   // ── Upload image to Supabase storage ──
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {

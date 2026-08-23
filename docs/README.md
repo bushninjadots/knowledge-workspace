@@ -26,11 +26,16 @@ If a change should alter product direction or a binding rule, update the appropr
 | [`TETHYR_DESIGN_SYSTEM.md`](./TETHYR_DESIGN_SYSTEM.md) | Surfaces, typography, spacing, states, responsiveness, and component reuse       |
 | [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md)           | Required analysis, design review, implementation review, and validation workflow |
 | [`TETHYR_ARCHITECTURE.md`](./TETHYR_ARCHITECTURE.md)   | Route, component, data, server, security, and documentation ownership            |
+| [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md)               | Major redesign specification — block system, templates, fork/remix, phases |
+| [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) | Redesign data model, component ownership, and migration strategy          |
 | [`../AGENTS.md`](../AGENTS.md)                         | Binding constitution and project-wide agent guardrails                           |
 
 ## Context Documents
 
-- [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md) — staged execution priorities
+- [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification
+- [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) — redesign architecture proposal
+- [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete; awaiting approval)
+- [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md) — staged execution priorities (includes redesign Stages 8–18)
 - [`TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`](./TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md) — dated forensic audit and findings
 - [`UI_UX_FULL_AUDIT.md`](./UI_UX_FULL_AUDIT.md) — detailed dated UI/UX audit
 - [`UX_AUDIT.md`](./UX_AUDIT.md) — route-level UX findings and priorities

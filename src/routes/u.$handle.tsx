@@ -30,6 +30,12 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 
+// Block system — profile blocks via PageShell.
+import "@/components/tethyr/blocks/profile";
+import "@/components/tethyr/blocks/content";
+import { PageShell } from "@/components/tethyr/page/page-shell";
+import { useProfilePage } from "@/hooks/use-profile-page";
+
 type PublicProfile = {
   id: string;
   handle: string | null;
@@ -327,6 +333,13 @@ function PublicProfileRoute() {
   const backgroundImageUrl = data.backgroundImageUrl;
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
   const languages = profile.languages ?? [];
+
+  // Fetch or auto-create the profile's page (block-based presentation).
+  const { page: profilePage } = useProfilePage({
+    profileId: profile.id,
+    isOwner: meId === profile.id,
+  });
+
   return (
     <Shell
       accentColor={bannerAccent}
@@ -443,6 +456,18 @@ function PublicProfileRoute() {
           learningGoals={profile.learning_goals}
           availability={profile.availability}
         />
+
+        {/* Block-based profile presentation — renders ProfileHeader, Bio, Skills,
+            and Featured Projects from the page system. Complements the existing
+            StudioDirection and WorkspaceGrid below. */}
+        {profilePage && (
+          <PageShell
+            ownerId={profile.id}
+            ownerType="profile"
+            isOwner={meId === profile.id}
+            isEditing={false}
+          />
+        )}
 
         <PublicStudioWorkspace
           profile={profile}

@@ -196,9 +196,9 @@ describe("assertPublicHost", () => {
 
   it("never resolves literal IPs (already classified statically)", async () => {
     const { resolve, getCalls } = makeResolver(["127.0.0.1"]);
-    await expect(
-      assertPublicHost("https://93.184.216.34/", resolve),
-    ).resolves.toMatchObject({ ok: true });
+    await expect(assertPublicHost("https://93.184.216.34/", resolve)).resolves.toMatchObject({
+      ok: true,
+    });
     expect(getCalls()).toBe(0);
 
     const privateResult = await assertPublicHost("https://127.0.0.1/", resolve);
@@ -206,9 +206,9 @@ describe("assertPublicHost", () => {
   });
 
   it("skips the DNS phase when no resolver is available", async () => {
-    await expect(
-      assertPublicHost("https://example.com/", null),
-    ).resolves.toMatchObject({ ok: true });
+    await expect(assertPublicHost("https://example.com/", null)).resolves.toMatchObject({
+      ok: true,
+    });
     await expect(
       assertPublicHost("http://169.254.169.254/", null), // static checks still apply
     ).resolves.toMatchObject({ ok: false });
@@ -245,15 +245,15 @@ describe("extractRepoTarget", () => {
       platform: "github",
       api: "https://api.github.com/repos/torvalds/linux",
     });
-    expect(
-      extractRepoTarget(new URL("https://www.github.com/torvalds/linux.git")),
-    ).toMatchObject({ platform: "github" });
-    expect(
-      extractRepoTarget(new URL("https://gitlab.com/gitlab-org/gitlab")),
-    ).toMatchObject({ platform: "gitlab" });
-    expect(
-      extractRepoTarget(new URL("https://codeberg.org/forgejo/forgejo")),
-    ).toMatchObject({ platform: "codeberg" });
+    expect(extractRepoTarget(new URL("https://www.github.com/torvalds/linux.git"))).toMatchObject({
+      platform: "github",
+    });
+    expect(extractRepoTarget(new URL("https://gitlab.com/gitlab-org/gitlab"))).toMatchObject({
+      platform: "gitlab",
+    });
+    expect(extractRepoTarget(new URL("https://codeberg.org/forgejo/forgejo"))).toMatchObject({
+      platform: "codeberg",
+    });
   });
 
   it("encodes nested GitLab groups as a single path", () => {

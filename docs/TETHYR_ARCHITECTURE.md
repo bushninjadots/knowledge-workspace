@@ -1,6 +1,7 @@
 # Tethyr Architecture Guide
 
 > Implementation map for AI-assisted work. This is a navigation guide, not a replacement for source code or migration history.
+> For the redesign architecture (block/page/template system), see [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md).
 
 ## Runtime Shape
 
@@ -112,6 +113,8 @@ Do not add security headers in individual page components. Do not expose service
 - `docs/TETHYR_DESIGN_SYSTEM.md` — implementation-level visual guidance
 - `docs/TETHYR_UX_RULES.md` — required reasoning, review, and validation workflow
 - This file — architecture ownership and implementation map
+- [`docs/TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification (block system, templates, fork/remix, community layouts)
+- [`docs/TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) — redesign data model, component ownership, and migration strategy
 - Dated audit documents — historical/current-state findings; they do not silently override the constitution
 - `docs/superpowers/specs/` and `docs/superpowers/plans/` — feature-specific proposals and execution records
 
@@ -120,3 +123,16 @@ When documents disagree, prefer the binding constitution and current source, the
 ## Change-Scope Rule
 
 Make the smallest change that improves coherence, trust, accessibility, maintainability, or the core collaboration loop. A local request is not permission to redesign unrelated routes or normalize the entire application.
+
+## Redesign Architecture (Proposed)
+
+The block/page/template system introduces new conceptual owners. These are documented in [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) and will be integrated into this architecture guide after Phase 1 audit is complete and the architecture is approved. Key proposed additions:
+
+- `src/components/tethyr/page/` — page shell, layout, section, block renderer, block registry
+- `src/components/tethyr/blocks/` — registered block components (content, media, project, people, community)
+- `src/components/tethyr/editor/` — customize bar, block picker, config panel, drag handle, publish controls
+- `src/components/tethyr/templates/` — template card, library, preview, fork button, lineage view
+- `src/hooks/` — use-page, use-page-editor, use-block-registry, use-templates, use-fork, use-theme
+- `src/lib/` — block-validation, layout-serializer, theme-applier, fork-lineage, page-migration
+
+**Do not create these files during Phase 1 (audit).** They are documented here for architectural review only.

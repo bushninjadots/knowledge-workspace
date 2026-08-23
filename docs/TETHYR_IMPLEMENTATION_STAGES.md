@@ -2,10 +2,13 @@
 
 > Created August 9, 2026 from `docs/TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`.
 > This is an implementation plan, not a permission to expand the product scope.
+> **Major redesign phases are tracked in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md#19-phased-implementation).**
 
 ## Operating rule
 
 Implement the smallest change that improves coherence, trust, or the core collaboration loop. Each stage must be validated before the next stage begins. Do not add new top-level features while a higher-priority stage is incomplete.
+
+The redesign (Stages 8–18 below) must not begin until the existing Stage 7 deferred items are triaged and the Phase 1 redesign audit is approved.
 
 ## Stage 0 — Baseline and release safety
 
@@ -86,6 +89,186 @@ Implement the smallest change that improves coherence, trust, or the core collab
 - [ ] Evaluate external calendar sync.
 - [ ] Evaluate push/email notifications.
 - [ ] Evaluate API, analytics, leaderboards, and native mobile only with a concrete product case.
+
+## Stage 8–18 — Major Redesign (TETHYR_REDESIGN_SPEC.md)
+
+> **⚠️ Do not begin these stages until Phase 1 audit is complete and architecture is approved.**
+
+These stages implement the block/page/template/fork system described in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) and [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md).
+
+### Stage 8 — Redesign Phase 1: Full Audit
+
+**Goal:** understand the complete codebase and produce the architectural proposal.
+
+- [ ] Inspect every route, component, hook, and library module.
+- [ ] Map current profile/project architecture against the proposed block model.
+- [ ] Identify what can be preserved, what needs to change, and what can be retired.
+- [ ] Identify architectural risks, migration risks, and data-boundary issues.
+- [ ] Design the page/block/template data architecture.
+- [ ] Explain how existing functionality (WorkspaceGrid, public Studio layout, dashboard priority flow, project page sections) connects to the new model.
+- [ ] Produce the phased implementation plan with gating criteria.
+- [ ] **Wait for approval before any code changes.**
+
+### Stage 9 — Redesign Phase 2: Page / Block Foundation ✅ DONE (2026-08-23)
+
+**Goal:** create the underlying page model, block registry, renderer, theme system, and hooks without touching existing routes.
+
+- [x] Core type system (`src/lib/page-blocks.ts`) — BlockDefinition, BlockContext, PageLayout, LayoutSection, LayoutBlockInstance, ThemeTokens, PageData.
+- [x] Block registry (`src/lib/block-registry.ts`) — register, get, getAll, getByCategory, createBlockInstance, validate.
+- [x] Theme token applicator (`src/lib/theme-tokens.ts`) — flattens ThemeTokens → CSS custom properties.
+- [x] useTheme hook (`src/hooks/use-theme.ts`) — fetches theme by ID, returns CSS var map.
+- [x] usePage hook (`src/hooks/use-page.ts`) — fetches page with joined layout + theme for owner.
+- [x] usePageEditor hook (`src/hooks/use-page-editor.ts`) — create, updateLayout, updateTheme, publish, unpublish.
+- [x] PageShell component (`src/components/tethyr/page/page-shell.tsx`) — loading/error/empty/draft/published states.
+- [x] PageLayoutRenderer (`src/components/tethyr/page/page-layout.tsx`) — sections → blocks with grid layout.
+- [x] BlockRenderer (`src/components/tethyr/page/block-renderer.tsx`) — type → registry lookup → component.
+- [x] Content blocks — Text, Heading, Markdown, Divider — each self-registering.
+- [x] Database migration (`supabase/migrations/20260823000000_page_system_foundation.sql`) — pages, layouts, themes tables with RLS.
+- [x] Tests — block registry (10), theme tokens (9) = 19 new tests.
+- [x] Validation — typecheck passes, 369 tests pass, no existing routes touched.
+
+**Not changed:** existing routes, existing hooks, existing components, existing styles.
+
+**Files created (Phase 2 + Phase 3):**
+- `src/lib/page-blocks.ts` — core type system
+- `src/lib/block-registry.ts` — module-level block registry
+- `src/lib/block-registry.test.ts` — 10 registry tests
+- `src/lib/theme-tokens.ts` — CSS var applicator
+- `src/lib/theme-tokens.test.ts` — 9 theme tests
+- `src/hooks/use-theme.ts` — theme fetch hook
+- `src/hooks/use-page.ts` — page + layout + theme hook
+- `src/hooks/use-page-editor.ts` — create/update/publish mutations
+- `src/components/tethyr/page/page-shell.tsx` — page with 6 states
+- `src/components/tethyr/page/page-layout.tsx` — sections → grid → blocks
+- `src/components/tethyr/page/block-renderer.tsx` — type → registry → component
+- `src/components/tethyr/page/index.ts` — barrel
+- `src/components/tethyr/blocks/content/text-block.tsx`
+- `src/components/tethyr/blocks/content/heading-block.tsx`
+- `src/components/tethyr/blocks/content/markdown-block.tsx`
+- `src/components/tethyr/blocks/content/divider-block.tsx`
+- `src/components/tethyr/blocks/content/index.ts` — barrel
+- `src/components/tethyr/blocks/project/hero-block.tsx`
+- `src/components/tethyr/blocks/project/about-block.tsx`
+- `src/components/tethyr/blocks/project/status-block.tsx`
+- `src/components/tethyr/blocks/project/team-block.tsx`
+- `src/components/tethyr/blocks/project/activity-block.tsx`
+- `src/components/tethyr/blocks/project/index.ts` — barrel
+- `src/routes/dev.tsx` — block system preview page
+- `supabase/migrations/20260823000000_page_system_foundation.sql` — pages/layouts/themes tables + RLS + defaults
+
+### Stage 10 — Redesign Phase 3: Project Space ✅ DONE (2026-08-23)
+
+**Goal:** create project-specific blocks and prove the block system can render real project data.
+
+- [x] Project Hero block — banner, title, description, status badges, progress, tags.
+- [x] Project About block — README/description/vision rendered as markdown.
+- [x] Project Status block — status, stage, season, progress bar, tools.
+- [x] Project Team block — contributors with avatars, names, roles via ProfileLink.
+- [x] Project Activity block — recent activity timeline from project_activity table.
+- [x] All blocks self-register via `registerBlock()` — no central switch statement.
+- [x] All blocks use existing hooks and Supabase patterns — no new data sources.
+- [x] Migration pushed to remote Supabase (pages, layouts, themes tables live).
+- [x] Dev preview page (`/dev`) exercises both content and project block categories.
+
+**Not changed:** existing project route (`projects.$id.tsx`) — blocks exist alongside, not instead of. Wiring them in is Stage 10b.
+
+### Stage 10b — Wire Project Blocks into Route ✅ DONE (2026-08-23)
+
+**Goal:** prove the block system renders real project data on the actual project page.
+
+- [x] `src/lib/default-layouts.ts` — `createDefaultProjectLayout()` (Hero → About → Status+Team → Activity).
+- [x] `src/hooks/use-project-page.ts` — auto-creates page + layout for projects with no page yet.
+- [x] `projects.$id.tsx` imports block registrations and `useProjectPage`.
+- [x] `PageShell` inserted between ProjectPulse and the README content area.
+- [x] Blocks render from real project data via existing Supabase queries — Hero, About, Status, Team, Activity.
+
+**How it works:** When a project owner visits their project page, `useProjectPage` detects no page exists yet, creates a layout with the default block structure, creates a page referencing it, and publishes it. On subsequent visits, the page is fetched and rendered via `PageShell`. Non-owners only fetch (no auto-create).
+
+**Validation:** typecheck passes, 369 tests pass, production build passes.
+
+**Validation:** typecheck passes, 369 tests pass, migration pushed.
+
+### Stage 11 — Redesign Phase 4: Personal Profile ✅ DONE (2026-08-23)
+
+**Goal:** create profile-specific blocks and wire them into the public studio route.
+
+- [x] ProfileHeader block — avatar, display name, handle, creator title, category, location, timezone, languages, reputation.
+- [x] ProfileSkills block — teach skills + learn skills with semantic color chips.
+- [x] ProfileProjects block — contributed projects with role, status, progress.
+- [x] ProfileBio block — about text + learning goals.
+- [x] All blocks self-register via `registerBlock()`.
+- [x] `createDefaultProfileLayout()` — Header → Bio → Skills+Projects (two column).
+- [x] `useProfilePage` hook — auto-creates page + layout for profiles with no page yet.
+- [x] `u.$handle.tsx` imports blocks + `useProfilePage` + renders `PageShell` between StudioDirection and PublicStudioWorkspace.
+- [x] Blocks render from real profile data via existing Supabase queries.
+
+**How it works:** Same auto-create pattern as projects. When a profile owner visits their own public studio, `useProfilePage` detects no page exists, creates the default profile layout, creates the page (published), and renders blocks. Non-owners only fetch.
+
+**Not changed:** existing identity header (avatar + name in Shell), StudioDirection, PublicStudioWorkspace — blocks coexist alongside.
+
+**Files created (Phase 4):**
+- `src/components/tethyr/blocks/profile/header-block.tsx`
+- `src/components/tethyr/blocks/profile/skills-block.tsx`
+- `src/components/tethyr/blocks/profile/projects-block.tsx`
+- `src/components/tethyr/blocks/profile/bio-block.tsx`
+- `src/components/tethyr/blocks/profile/index.ts` — barrel
+- `src/hooks/use-profile-page.ts`
+
+**Validation:** typecheck passes, 369 tests pass, production build passes.
+
+### Stage 12 — Redesign Phase 5: Visual Editor
+
+- [ ] Customize mode entry/exit.
+- [ ] Block picker, add/remove/reorder blocks.
+- [ ] Block configuration panel.
+- [ ] Drag-and-drop reordering.
+- [ ] Preview, save draft, publish.
+
+### Stage 13 — Redesign Phase 6: Template System
+
+- [ ] Template model (templates table, creation, publication).
+- [ ] Template serialization (layout + theme, no private content).
+- [ ] Template application (apply layout to a page).
+- [ ] Template categories and metadata.
+
+### Stage 14 — Redesign Phase 7: Template Library
+
+- [ ] Public template browsing (featured, popular, new, trending).
+- [ ] Template detail page (preview, creator, usage count, actions).
+- [ ] Template search and filtering by category.
+- [ ] "Made with Tethyr" attribution mechanism.
+
+### Stage 15 — Redesign Phase 8: Fork / Remix
+
+- [ ] Fork model (forks table, lineage tracking).
+- [ ] Fork action (copy layout structure, preserve user content).
+- [ ] Remix action (fork + modify + republish).
+- [ ] Template lineage display.
+- [ ] Template versioning and safe update model.
+- [ ] Creator credit signals.
+
+### Stage 16 — Redesign Phase 9: Themes
+
+- [ ] Expand theme token architecture.
+- [ ] Initial theme catalog (Minimal, Developer, Terminal, Paper, etc.).
+- [ ] User theme customization (accent, typography, spacing, borders).
+- [ ] Theme preview and application.
+
+### Stage 17 — Redesign Phase 10: Migration
+
+- [ ] Map existing profiles to block-based pages.
+- [ ] Map existing projects to block-based Project Spaces.
+- [ ] Migrate existing customization data (WorkspaceGrid layouts, public Studio layouts).
+- [ ] Verify no data loss; preserve all existing functionality.
+
+### Stage 18 — Redesign Phase 11: Polish
+
+- [ ] Mobile audit at 390px and 768px.
+- [ ] Accessibility audit (keyboard, screen reader, contrast, reduced motion).
+- [ ] Performance audit (lazy loading, bundle size, render efficiency).
+- [ ] UX audit (empty states, loading states, error states).
+- [ ] Permission and security audit (template safety, private data enforcement).
+- [ ] Consistency audit across all pages.
 
 ## Execution log
 

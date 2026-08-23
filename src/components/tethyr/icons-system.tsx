@@ -117,12 +117,7 @@ export function LogoInfinity({ className = "h-12 w-12" }: { className?: string }
 // Icon variants for different use cases
 export function IconLearnCompact({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M12 3L4 7V13C4 17.418 12 21 12 21S20 17.418 20 13V7L12 3Z"
         stroke="currentColor"
@@ -135,12 +130,7 @@ export function IconLearnCompact({ className = "h-5 w-5" }: { className?: string
 
 export function IconTeachCompact({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M4 5H20V19H4V5ZM7 9H17M7 13H14"
         stroke="currentColor"
@@ -154,12 +144,7 @@ export function IconTeachCompact({ className = "h-5 w-5" }: { className?: string
 
 export function IconConnectCompact({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="10" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="14" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
     </svg>
@@ -168,12 +153,7 @@ export function IconConnectCompact({ className = "h-5 w-5" }: { className?: stri
 
 export function IconGrowCompact({ className = "h-5 w-5" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M12 18V6M6 12H18M12 6L10 8"
         stroke="currentColor"

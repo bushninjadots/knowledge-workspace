@@ -491,7 +491,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((row, i) => {
+      {data.map((row) => {
         const p = row.profiles;
         if (!p) return null;
         const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();
@@ -565,7 +565,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.map((row, i) => {
+      {data.map((row) => {
         const p = row.profiles;
         if (!p) return null;
         const initial = (p.display_name ?? p.handle ?? "?").charAt(0).toUpperCase();

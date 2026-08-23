@@ -27,10 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SectionCard } from "./section-card";
-import {
-  PROJECT_STATUS_LABEL,
-  PROJECT_STATUS_STYLE,
-} from "./types";
+import { PROJECT_STATUS_LABEL, PROJECT_STATUS_STYLE } from "./types";
 import type { ProjectRow, ProjectSkill } from "./types";
 import { ProjectDialog } from "./project-dialog";
 import { ProjectLibraryAddDialog } from "./project-library-add-dialog";

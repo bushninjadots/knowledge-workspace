@@ -169,6 +169,10 @@ describe("GitHubConnect token sync", () => {
         handle.calls.some((c) => c.action === "upsert" && c.table === "connected_accounts"),
       ).toBe(true);
     });
+    const accountUpsert = handle.calls.find(
+      (c) => c.action === "upsert" && c.table === "connected_accounts",
+    );
+    expect(accountUpsert?.projection).toBe("id, provider, username, created_at");
   });
 
   it("does not connect the account when the token is invalid", async () => {

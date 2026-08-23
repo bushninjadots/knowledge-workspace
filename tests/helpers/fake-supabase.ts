@@ -8,6 +8,7 @@ export type FakeCall = {
   table: string;
   action: string;
   value?: unknown;
+  projection?: string;
 };
 
 export type FakeHandler = () => { data: unknown; error: unknown };
@@ -53,6 +54,7 @@ export function createFakeSupabase(): FakeSupabaseHandle {
     const builder = {
       _action: "select" as string,
       _value: undefined as unknown,
+      _projection: undefined as string | undefined,
 
       // Mutations -----------------------------------------------------------
       insert(v: unknown) {
@@ -76,7 +78,8 @@ export function createFakeSupabase(): FakeSupabaseHandle {
       },
 
       // Filters (all no-ops, just keep the chain alive) ---------------------
-      select(_cols?: string) {
+      select(cols?: string) {
+        builder._projection = cols;
         return builder;
       },
       eq() {
@@ -114,7 +117,12 @@ export function createFakeSupabase(): FakeSupabaseHandle {
 
       // Thenable — lets `await sb.from(...).select().eq(...)` resolve --------
       then(onFulfilled: (v: { data: unknown; error: unknown }) => unknown) {
-        calls.push({ table, action: builder._action, value: builder._value });
+        calls.push({
+          table,
+          action: builder._action,
+          value: builder._value,
+          ...(builder._projection ? { projection: builder._projection } : {}),
+        });
         const handler =
           handlers[`${table}:${builder._action}`] ?? (() => ({ data: null, error: null }));
         return Promise.resolve(handler()).then(onFulfilled);

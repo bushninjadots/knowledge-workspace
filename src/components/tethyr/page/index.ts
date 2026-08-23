@@ -1,0 +1,4 @@
+// ── Page System Barrel ────────────────────────────────────────────────────────
+export { PageShell } from "./page-shell";
+export { PageLayoutRenderer } from "./page-layout";
+export { BlockRenderer } from "./block-renderer";

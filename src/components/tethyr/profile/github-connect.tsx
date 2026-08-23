@@ -73,7 +73,9 @@ export function useConnectGitHub() {
           },
           { onConflict: "user_id,provider" },
         )
-        .select()
+        // connected_accounts contains server-only access_token/metadata columns;
+        // request only the safe representation after the upsert.
+        .select("id, provider, username, created_at")
         .single();
       if (error) throw error;
 

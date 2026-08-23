@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  assertPublicHost,
-  classifyUrl,
-  extractRepoTarget,
-  type RepoTarget,
-} from "./url-guard.ts";
+import { assertPublicHost, classifyUrl, extractRepoTarget, type RepoTarget } from "./url-guard.ts";
 
 /**
  * fetch-project-preview
@@ -213,11 +208,12 @@ async function fetchRepoPreview(target: RepoTarget): Promise<PreviewResult | nul
       platform: target.platform,
       url: asString(data.html_url) ?? target.api,
       logo: asString(owner?.avatar_url),
-      stars: typeof data.stargazers_count === "number"
-        ? data.stargazers_count
-        : typeof data.stars_count === "number"
-          ? data.stars_count
-          : undefined,
+      stars:
+        typeof data.stargazers_count === "number"
+          ? data.stargazers_count
+          : typeof data.stars_count === "number"
+            ? data.stars_count
+            : undefined,
       language: asString(data.language),
       owner: asString(owner?.login),
     };

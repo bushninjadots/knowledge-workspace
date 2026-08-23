@@ -5,13 +5,16 @@ import { useNotificationPreferences } from "@/hooks/use-notification-preferences
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { NotificationType, Notification } from "@/hooks/use-notifications";
+import type { Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
 import { getNotificationDestination } from "@/lib/notification-destinations";
 import {
   TYPE_CATEGORY,
-  CATEGORY_LABELS,
-  type NotificationCategory,
+  NOTIFICATION_CATEGORY_VIEWS,
+  typesForNotificationView,
+  isNotificationMuted,
+  isNotificationCategoryViewKey,
+  type NotificationCategoryViewKey,
 } from "@/lib/notification-categories";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
@@ -37,47 +40,9 @@ export const Route = createFileRoute("/_authenticated/notifications")({
   ),
 });
 
-// Every notification type has exactly one canonical home (see
-// `lib/notification-categories.ts`), so tabs never show the same item twice
-// and muting a category maps 1:1 to the tab that would show it.
-const CATEGORY_TYPE_MAP: Record<string, NotificationType[] | null> = {
-  all: null,
-  // Cross-cutting “decisions and replies” queue — intentionally overlaps the
-  // category tabs below.
-  action: [
-    "connection_request",
-    "session_invite",
-    "project_invite",
-    "team_invite",
-    "role_application_accepted",
-    "role_application_declined",
-    "challenge_submitted",
-    "challenge_resubmitted",
-  ],
-  // The remaining tabs are derived from the shared type→category map so the
-  // page can never drift from the preferences in /settings.
-  ...Object.fromEntries(
-    (Object.keys(CATEGORY_LABELS) as NotificationCategory[]).map((category) => [
-      category,
-      (Object.entries(TYPE_CATEGORY) as [NotificationType, NotificationCategory][])
-        .filter(([, c]) => c === category)
-        .map(([type]) => type),
-    ]),
-  ),
-};
-
-const TABS = [
-  { key: "all", label: "All" },
-  { key: "action", label: "Needs action" },
-  { key: "message", label: "Messages" },
-  { key: "session", label: "Sessions" },
-  { key: "community", label: "Community" },
-  { key: "project", label: "Projects" },
-  { key: "reputation", label: "Reputation" },
-  { key: "achievement", label: "Achievements" },
-  { key: "moderation", label: "Moderation" },
-] as const;
-
+// Category browsing is exclusive; Needs action is the only intentional
+// cross-cutting view. Both definitions live in the shared category module so
+// the route and Settings cannot drift apart.
 function useNotificationNavigator() {
   const navigate = useNavigate();
 
@@ -88,12 +53,12 @@ function useNotificationNavigator() {
 
 function NotificationsPage() {
   useNotificationRealtime();
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState<NotificationCategoryViewKey>("all");
   const navigateToNotification = useNotificationNavigator();
   const { mutedCategories } = useNotificationPreferences();
   const muted = new Set(mutedCategories);
 
-  const types = CATEGORY_TYPE_MAP[activeCategory];
+  const types = typesForNotificationView(activeCategory);
   const filterType = types && types.length === 1 ? types[0] : undefined;
 
   const { data: allNotifications = [], isLoading } = useNotifications(
@@ -104,7 +69,7 @@ function NotificationsPage() {
     types && types.length > 1
       ? allNotifications.filter((n) => types.includes(n.type))
       : allNotifications
-  ).filter((n) => !muted.has(TYPE_CATEGORY[n.type]));
+  ).filter((n) => !isNotificationMuted(n.type, [...muted]));
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
@@ -115,9 +80,15 @@ function NotificationsPage() {
             Start with <span className="font-medium text-foreground">Needs action</span> when you
             want to focus on decisions and replies; everything else can wait.
           </p>
-          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
+          <Tabs
+            value={activeCategory}
+            onValueChange={(value) => {
+              if (isNotificationCategoryViewKey(value)) setActiveCategory(value);
+            }}
+            className="mb-6"
+          >
             <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
-              {TABS.map((tab) => (
+              {NOTIFICATION_CATEGORY_VIEWS.map((tab) => (
                 <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
                   {tab.label}
                 </TabsTrigger>

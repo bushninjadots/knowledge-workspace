@@ -46,6 +46,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
+// Block system — registers project blocks and renders them via PageShell.
+import "@/components/tethyr/blocks/project";
+import "@/components/tethyr/blocks/content";
+import { PageShell } from "@/components/tethyr/page/page-shell";
+import { useProjectPage } from "@/hooks/use-project-page";
+
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
 );
@@ -428,6 +434,9 @@ function ProjectPage() {
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
 
+  // Fetch or auto-create the project's page (block-based presentation).
+  const { page: projectPage } = useProjectPage({ projectId: id, isOwner });
+
   if (isLoading) {
     return (
       <Shell>
@@ -560,6 +569,20 @@ function ProjectPage() {
         milestones={milestones}
         openNeedCount={needs.filter((need) => !need.is_filled).length}
       />
+
+      {/* Block-based project presentation — renders Hero, About, Status, Team,
+          Activity blocks from the page system. Complements, not replaces,
+          the existing project sections below. */}
+      {projectPage && (
+        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
+          <PageShell
+            ownerId={id}
+            ownerType="project"
+            isOwner={isOwner}
+            isEditing={false}
+          />
+        </div>
+      )}
 
       <div className="animate-room-enter min-h-screen bg-noise">
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">

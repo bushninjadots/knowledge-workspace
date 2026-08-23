@@ -6,6 +6,7 @@ import { useCreatePost } from "@/hooks/use-community";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SpaceTypingUser } from "@/hooks/use-space-typing";
+import { friendlyError } from "@/lib/error-message";
 
 /**
  * Lightweight chat composer for a community space. Members who have joined can
@@ -54,8 +55,7 @@ export function SpaceChatComposer({
       qc.invalidateQueries({ queryKey: ["posts"] });
       textareaRef.current?.focus();
     } catch (err: unknown) {
-      const e = err as { message?: string; error?: { message?: string } };
-      toast.error(e?.message ?? e?.error?.message ?? "Couldn't send — try again");
+      toast.error(friendlyError(err, "Couldn't send — try again"));
     } finally {
       setSending(false);
     }
