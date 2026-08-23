@@ -12,6 +12,7 @@ import {
   Bell,
   Swords,
   Link2,
+  Settings,
   Palette,
 } from "lucide-react";
 import { Logo } from "./logo";

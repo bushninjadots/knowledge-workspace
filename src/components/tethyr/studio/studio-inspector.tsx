@@ -1,49 +1,36 @@
 // ── Studio Inspector ─────────────────────────────────────────────────────────
-// Right panel: properties/design inspector for the selected block.
-// Tabs: Content, Design, Layout.
+// Right panel: Content/Design/Layout tabs for selected block + publish state info.
 
 import { useState } from "react";
 import {
-  GripVertical,
-  Eye,
-  EyeOff,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Copy,
+  Eye, EyeOff, ArrowUp, ArrowDown, Trash2, Send, Globe,
 } from "lucide-react";
-import { usePage } from "@/hooks/use-page";
-import { useUpdatePageLayout } from "@/hooks/use-page-editor";
-import { getBlock } from "@/lib/block-registry";
-import type { StudioPage } from "./studio";
+import type { LayoutBlockInstance, PageData } from "@/lib/page-blocks";
+import type { BlockDefinition } from "@/lib/page-blocks";
 
 type InspectorTab = "content" | "design" | "layout";
 
 interface StudioInspectorProps {
-  activePage: StudioPage | null;
-  selectedBlockId: string | null;
+  selectedBlock: LayoutBlockInstance | null;
+  selectedBlockDef: BlockDefinition | undefined;
+  pageData: PageData | undefined | null;
+  isPublished: boolean;
+  onPublish: () => void;
+  onUnpublish: () => void;
   onSelectBlock: (blockId: string | null) => void;
+  onMoveBlock: (blockId: string, direction: "up" | "down") => void;
+  onRemoveBlock: (blockId: string) => void;
+  onRefetch: () => void;
 }
 
-export function StudioInspector({ activePage, selectedBlockId, onSelectBlock }: StudioInspectorProps) {
+export function StudioInspector({
+  selectedBlock, selectedBlockDef, pageData, isPublished,
+  onPublish, onUnpublish,
+  onSelectBlock, onMoveBlock, onRemoveBlock,
+}: StudioInspectorProps) {
   const [activeTab, setActiveTab] = useState<InspectorTab>("content");
 
-  const { data: pageData, refetch } = usePage({
-    ownerId: activePage?.id ?? "",
-    ownerType: activePage?.type ?? "project",
-  });
-  const updateLayout = useUpdatePageLayout();
-
-  if (!activePage || !pageData) return null;
-
-  const layout = pageData.layout ?? { sections: [] };
-  const blocks = layout.sections.flatMap((s) => s.blocks);
-  const selectedBlock = selectedBlockId
-    ? blocks.find((b) => b.id === selectedBlockId)
-    : null;
-  const registeredBlock = selectedBlock
-    ? getBlock(selectedBlock.type)
-    : null;
+  const blocks = pageData?.layout?.sections.flatMap((s) => s.blocks) ?? [];
 
   return (
     <div className="flex h-full flex-col">
@@ -70,26 +57,103 @@ export function StudioInspector({ activePage, selectedBlockId, onSelectBlock }: 
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
         {!selectedBlock ? (
-          <div className="py-8 text-center">
-            <p className="text-xs text-muted-foreground">
-              Select a block on the canvas to edit its properties.
-            </p>
-          </div>
+          <EmptyState blocks={blocks} onSelectBlock={onSelectBlock} />
         ) : activeTab === "content" ? (
-          <ContentTab block={selectedBlock} registeredBlock={registeredBlock} />
+          <ContentTab block={selectedBlock} def={selectedBlockDef} />
         ) : activeTab === "design" ? (
-          <DesignTab block={selectedBlock} />
+          <DesignTab block={selectedBlock} def={selectedBlockDef} />
         ) : (
           <LayoutTab
             blocks={blocks}
-            selectedBlockId={selectedBlockId}
-            pageData={pageData}
-            updateLayout={updateLayout}
+            selectedBlockId={selectedBlock.id}
             onSelectBlock={onSelectBlock}
-            refetch={refetch}
+            onMoveBlock={onMoveBlock}
+            onRemoveBlock={onRemoveBlock}
           />
         )}
       </div>
+
+      {/* ── Publish status ──────────────────────────────────────────────── */}
+      <div className="shrink-0 border-t border-border/20 px-3 py-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2 w-2 rounded-full ${isPublished ? "bg-green-500" : "bg-amber-500"}`}
+          />
+          <span className="text-[11px] font-medium text-foreground">
+            {isPublished ? "Published" : "Draft"}
+          </span>
+        </div>
+        {isPublished ? (
+          <button
+            type="button"
+            onClick={onUnpublish}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-border/30 bg-surface/30 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            <EyeOff className="h-3 w-3" /> Unpublish
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onPublish}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/20"
+          >
+            <Send className="h-3 w-3" /> Publish now
+          </button>
+        )}
+        {isPublished && (
+          <p className="mt-1.5 text-[10px] text-muted-foreground/60">
+            <Globe className="mr-0.5 inline h-2.5 w-2.5" />
+            Visible to everyone
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Empty state ──────────────────────────────────────────────────────────────
+
+function EmptyState({
+  blocks, onSelectBlock,
+}: {
+  blocks: LayoutBlockInstance[];
+  onSelectBlock: (id: string | null) => void;
+}) {
+  if (blocks.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-xs text-muted-foreground">
+          No blocks on this page yet.
+        </p>
+        <p className="mt-1 text-[10px] text-muted-foreground/60">
+          Add blocks from the left sidebar.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+        Select a block
+      </p>
+      {blocks.map((b) => (
+        <button
+          key={b.id}
+          type="button"
+          onClick={() => onSelectBlock(b.id)}
+          className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+            b.visible === false ? "opacity-50 line-through" : ""
+          } text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground`}
+        >
+          <span
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+              b.visible === false ? "bg-muted-foreground/40" : "bg-primary/60"
+            }`}
+          />
+          <span className="truncate">{b.type}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -97,11 +161,10 @@ export function StudioInspector({ activePage, selectedBlockId, onSelectBlock }: 
 // ── Content tab ─────────────────────────────────────────────────────────────
 
 function ContentTab({
-  block,
-  registeredBlock,
+  block, def,
 }: {
-  block: { id: string; type: string; config: Record<string, unknown>; visible?: boolean };
-  registeredBlock: { label: string; type: string; category: string } | undefined | null;
+  block: LayoutBlockInstance;
+  def: BlockDefinition | undefined;
 }) {
   return (
     <div className="space-y-4">
@@ -110,22 +173,19 @@ function ContentTab({
           Block
         </p>
         <p className="mt-1 text-xs font-medium text-foreground">
-          {registeredBlock?.label ?? block.type}
+          {def?.label ?? block.type}
         </p>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">
-          Type: {block.type}
+        <p className="mt-0.5 text-[10px] text-muted-foreground font-mono">
+          {block.type}
         </p>
       </div>
 
       <div>
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-          Content
+          Config
         </p>
-
-        {Object.entries(block.config).length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">
-            This block has no configurable content properties.
-          </p>
+        {!block.config || Object.keys(block.config).length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">No configurable properties.</p>
         ) : (
           <div className="space-y-2">
             {Object.entries(block.config).map(([key, value]) => (
@@ -139,26 +199,56 @@ function ContentTab({
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
           Visibility
         </p>
-        <span className="text-[11px] text-muted-foreground">
-          {block.visible === false ? "Hidden" : "Visible"}
+        <span className="inline-flex items-center gap-1 text-[11px]">
+          {block.visible === false ? (
+            <>
+              <EyeOff className="h-3 w-3 text-amber-500" />
+              <span className="text-muted-foreground">Hidden</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-3 w-3 text-green-500" />
+              <span className="text-muted-foreground">Visible</span>
+            </>
+          )}
         </span>
       </div>
+
+      {def?.defaults && (
+        <div>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            Defaults
+          </p>
+          <div className="space-y-1.5">
+            {Object.entries(def.defaults).map(([key, value]) => (
+              <ConfigField key={key} label={key} value={value} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Design tab ──────────────────────────────────────────────────────────────
 
-function DesignTab({ block }: { block: { id: string; type: string; config: Record<string, unknown> } }) {
+function DesignTab({
+  block, def,
+}: {
+  block: LayoutBlockInstance;
+  def: BlockDefinition | undefined;
+}) {
   return (
     <div className="space-y-4">
       <div>
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
           Typography
         </p>
-        <p className="text-[11px] text-muted-foreground">
-          Block inherits page theme typography.
-        </p>
+        <div className="space-y-1.5">
+          <TokenDisplay label="Font family" value="var(--font-sans)" />
+          <TokenDisplay label="Heading" value="var(--font-display)" />
+          <TokenDisplay label="Base size" value="var(--text-base)" />
+        </div>
       </div>
 
       <div>
@@ -166,10 +256,12 @@ function DesignTab({ block }: { block: { id: string; type: string; config: Recor
           Colors
         </p>
         <div className="space-y-1.5">
-          <ColorRow label="Background" value="var(--background)" />
-          <ColorRow label="Text" value="var(--foreground)" />
-          <ColorRow label="Surface" value="var(--surface)" />
-          <ColorRow label="Accent" value="var(--primary)" />
+          <ColorSwatch label="Background" cssVar="--background" />
+          <ColorSwatch label="Foreground" cssVar="--foreground" />
+          <ColorSwatch label="Surface" cssVar="--surface" />
+          <ColorSwatch label="Primary" cssVar="--primary" />
+          <ColorSwatch label="Muted" cssVar="--muted-foreground" />
+          <ColorSwatch label="Border" cssVar="--border" />
         </div>
       </div>
 
@@ -177,18 +269,21 @@ function DesignTab({ block }: { block: { id: string; type: string; config: Recor
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
           Borders & Radius
         </p>
-        <p className="text-[11px] text-muted-foreground">
-          Inherited from page theme.
-        </p>
+        <div className="space-y-1.5">
+          <TokenDisplay label="Card radius" value="var(--radius-lg)" />
+          <TokenDisplay label="Input radius" value="var(--radius-md)" />
+          <TokenDisplay label="Button radius" value="var(--radius-md)" />
+          <TokenDisplay label="Card border" value="var(--card-border)" />
+        </div>
       </div>
 
       <div>
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-          Spacing
+          Category
         </p>
-        <p className="text-[11px] text-muted-foreground">
-          Default block spacing applied.
-        </p>
+        <span className="rounded-full border border-border/30 bg-surface/40 px-2 py-0.5 text-[10px] text-muted-foreground capitalize">
+          {def?.category ?? "unknown"}
+        </span>
       </div>
     </div>
   );
@@ -197,66 +292,34 @@ function DesignTab({ block }: { block: { id: string; type: string; config: Recor
 // ── Layout tab ──────────────────────────────────────────────────────────────
 
 function LayoutTab({
-  blocks,
-  selectedBlockId,
-  pageData,
-  updateLayout,
-  onSelectBlock,
-  refetch,
+  blocks, selectedBlockId, onSelectBlock, onMoveBlock, onRemoveBlock,
 }: {
-  blocks: { id: string; type: string; config: Record<string, unknown>; visible?: boolean }[];
+  blocks: LayoutBlockInstance[];
   selectedBlockId: string | null;
-  pageData: { id: string; layoutId: string; layout?: { sections: { id: string; blocks: { id: string; type: string; config: Record<string, unknown>; visible?: boolean }[] }[] } };
-  updateLayout: any;
   onSelectBlock: (id: string | null) => void;
-  refetch: () => void;
+  onMoveBlock: (blockId: string, direction: "up" | "down") => void;
+  onRemoveBlock: (blockId: string) => void;
 }) {
-  const handleMoveBlock = (blockId: string, direction: "up" | "down") => {
-    if (!pageData.layout) return;
-    const sections = pageData.layout.sections.map((s) => ({
-      ...s,
-      blocks: [...s.blocks],
-    }));
-
-    for (const section of sections) {
-      const idx = section.blocks.findIndex((b) => b.id === blockId);
-      if (idx === -1) continue;
-      const newIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= section.blocks.length) return;
-      const [moved] = section.blocks.splice(idx, 1);
-      section.blocks.splice(newIdx, 0, moved);
-      break;
-    }
-
-    updateLayout.mutate(
-      { pageId: pageData.id, layoutId: pageData.layoutId, layout: { sections } },
-      { onSuccess: () => refetch() },
+  if (blocks.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-xs text-muted-foreground">No blocks to arrange.</p>
+      </div>
     );
-  };
-
-  const handleRemoveBlock = (blockId: string) => {
-    if (!pageData.layout) return;
-    const sections = pageData.layout.sections
-      .map((s) => ({ ...s, blocks: s.blocks.filter((b) => b.id !== blockId) }))
-      .filter((s) => s.blocks.length > 0);
-    updateLayout.mutate(
-      { pageId: pageData.id, layoutId: pageData.layoutId, layout: { sections } },
-      { onSuccess: () => { refetch(); onSelectBlock(null); } },
-    );
-  };
+  }
 
   return (
     <div className="space-y-1">
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-        Section order
+        Block order
       </p>
-      {blocks.length === 0 && (
-        <p className="text-[11px] text-muted-foreground">No blocks on this page.</p>
-      )}
-      {blocks.map((block) => {
-        const registered = getBlock(block.type);
+      <p className="mb-2 text-[10px] text-muted-foreground">Drag to reorder or use arrows:</p>
+
+      {blocks.map((block, idx) => {
         const isSelected = selectedBlockId === block.id;
-        const isHidden = block.visible === false;
+        const isFirst = idx === 0;
+        const isLast = idx === blocks.length - 1;
+
         return (
           <div
             key={block.id}
@@ -266,36 +329,44 @@ function LayoutTab({
                 : "text-muted-foreground hover:bg-surface-elevated/50"
             }`}
           >
-            <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+            <span className="shrink-0 text-[10px] text-muted-foreground/40 w-4 text-center">
+              {idx + 1}
+            </span>
             <button
               type="button"
               onClick={() => onSelectBlock(block.id)}
-              className={`flex-1 truncate text-left text-[11px] ${isHidden ? "line-through opacity-50" : ""}`}
+              className={`flex-1 truncate text-left text-[11px] ${
+                block.visible === false ? "line-through opacity-50" : ""
+              }`}
             >
-              {registered?.label ?? block.type}
+              {block.type}
             </button>
             <div className="hidden gap-0.5 group-hover:flex">
+              {!isFirst && (
+                <button
+                  type="button"
+                  onClick={() => onMoveBlock(block.id, "up")}
+                  className="rounded p-0.5 hover:text-foreground"
+                  aria-label="Move up"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+              )}
+              {!isLast && (
+                <button
+                  type="button"
+                  onClick={() => onMoveBlock(block.id, "down")}
+                  className="rounded p-0.5 hover:text-foreground"
+                  aria-label="Move down"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => handleMoveBlock(block.id, "up")}
-                className="rounded p-0.5 hover:text-foreground"
-                aria-label="Move up"
-              >
-                <ArrowUp className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleMoveBlock(block.id, "down")}
-                className="rounded p-0.5 hover:text-foreground"
-                aria-label="Move down"
-              >
-                <ArrowDown className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRemoveBlock(block.id)}
-                className="rounded p-0.5 hover:text-destructive"
-                aria-label="Remove block"
+                onClick={() => onRemoveBlock(block.id)}
+                className="rounded p-0.5 hover:text-red-400"
+                aria-label="Remove"
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -311,25 +382,43 @@ function LayoutTab({
 
 function ConfigField({ label, value }: { label: string; value: unknown }) {
   const displayValue =
-    typeof value === "string" ? value : typeof value === "object" ? JSON.stringify(value) : String(value);
-  const truncated = displayValue.length > 60 ? displayValue.slice(0, 60) + "…" : displayValue;
+    typeof value === "string"
+      ? value
+      : typeof value === "number" || typeof value === "boolean"
+        ? String(value)
+        : value === null
+          ? "null"
+          : typeof value === "object"
+            ? JSON.stringify(value)
+            : String(value);
+  const truncated = displayValue.length > 50 ? displayValue.slice(0, 50) + "…" : displayValue;
 
   return (
     <div>
-      <p className="text-[10px] font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-[11px] text-foreground break-words">{truncated}</p>
+      <p className="text-[10px] font-medium text-muted-foreground/60">{label}</p>
+      <p className="mt-0.5 text-[11px] text-foreground break-words font-mono">{truncated}</p>
     </div>
   );
 }
 
-function ColorRow({ label, value }: { label: string; value: string }) {
+function ColorSwatch({ label, cssVar }: { label: string; cssVar: string }) {
   return (
     <div className="flex items-center gap-2">
       <div
-        className="h-3.5 w-3.5 rounded border border-border/40"
-        style={{ backgroundColor: value }}
+        className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
+        style={{ backgroundColor: `var(${cssVar})` }}
       />
       <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className="ml-auto text-[10px] text-muted-foreground/40 font-mono">{cssVar}</span>
+    </div>
+  );
+}
+
+function TokenDisplay({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className="text-[10px] text-muted-foreground/40 font-mono">{value}</span>
     </div>
   );
 }

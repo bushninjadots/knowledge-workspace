@@ -1,79 +1,34 @@
 // ── Studio Canvas ────────────────────────────────────────────────────────────
-// Center panel: renders the real published page with contextual editing controls.
-// When hovering a block: subtle boundary + Edit/Move/Duplicate/Delete actions.
+// Center panel: renders the real page with contextual hover controls.
 
-import { useState, useCallback } from "react";
-import { GripVertical, Pencil, Copy, Trash2, Eye, EyeOff } from "lucide-react";
-import { usePage } from "@/hooks/use-page";
-import { useUpdatePageLayout } from "@/hooks/use-page-editor";
+import { GripVertical, Pencil, Copy, Trash2, Eye, EyeOff, Plus } from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StudioPage } from "./studio";
-import type { BlockContext, PageLayout, LayoutSection, LayoutBlockInstance } from "@/lib/page-blocks";
+import type { BlockContext, PageData, PageLayout, LayoutSection, LayoutBlockInstance } from "@/lib/page-blocks";
 
 interface StudioCanvasProps {
   page: StudioPage;
+  pageData: PageData | undefined | null;
+  pageLoading: boolean;
+  pageError: boolean;
   selectedBlockId: string | null;
   onSelectBlock: (blockId: string | null) => void;
+  onRemoveBlock: (blockId: string) => void;
+  onToggleVisibility: (blockId: string) => void;
+  onMoveBlock: (blockId: string, direction: "up" | "down") => void;
+  onAddBlock: (blockType: string) => void;
+  onLayoutChange: (layout: PageLayout) => void;
+  onRefetch: () => void;
 }
 
-export function StudioCanvas({ page, selectedBlockId, onSelectBlock }: StudioCanvasProps) {
-  const { data: pageData, isLoading, isError, refetch } = usePage({
-    ownerId: page.id,
-    ownerType: page.type,
-  });
-  const updateLayout = useUpdatePageLayout();
-  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
-
-  const handleLayoutChange = useCallback(
-    (newLayout: PageLayout) => {
-      if (!pageData) return;
-      updateLayout.mutate({
-        pageId: pageData.id,
-        layoutId: pageData.layoutId,
-        layout: newLayout,
-      }, { onSuccess: () => refetch() });
-    },
-    [pageData, updateLayout, refetch],
-  );
-
-  const handleRemoveBlock = useCallback(
-    (blockId: string) => {
-      if (!pageData?.layout) return;
-      const sections = pageData.layout.sections
-        .map((s) => ({
-          ...s,
-          blocks: s.blocks.filter((b) => b.id !== blockId),
-        }))
-        .filter((s) => s.blocks.length > 0);
-      handleLayoutChange({ sections });
-      onSelectBlock(null);
-    },
-    [pageData, handleLayoutChange, onSelectBlock],
-  );
-
-  const handleToggleVisibility = useCallback(
-    (blockId: string) => {
-      if (!pageData?.layout) return;
-      const sections = pageData.layout.sections.map((s) => ({
-        ...s,
-        blocks: s.blocks.map((b) =>
-          b.id === blockId ? { ...b, visible: !b.visible } : b,
-        ),
-      }));
-      handleLayoutChange({ sections });
-    },
-    [pageData, handleLayoutChange],
-  );
-
-  const blockContext: BlockContext = {
-    ownerId: page.id,
-    ownerType: page.type,
-    pageId: pageData?.id ?? "",
-    isEditing: true,
-  };
-
-  if (isLoading) {
+export function StudioCanvas({
+  page, pageData, pageLoading, pageError,
+  selectedBlockId, onSelectBlock,
+  onRemoveBlock, onToggleVisibility, onMoveBlock,
+  onAddBlock, onRefetch,
+}: StudioCanvasProps) {
+  if (pageLoading) {
     return (
       <div className="space-y-4 p-8">
         <Skeleton className="h-8 w-48" />
@@ -83,14 +38,14 @@ export function StudioCanvas({ page, selectedBlockId, onSelectBlock }: StudioCan
     );
   }
 
-  if (isError || !pageData) {
+  if (pageError || !pageData) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-muted-foreground">This page couldn't be loaded.</p>
           <button
             type="button"
-            onClick={() => refetch()}
+            onClick={() => onRefetch()}
             className="mt-2 text-xs text-primary hover:underline"
           >
             Try again
@@ -100,139 +55,147 @@ export function StudioCanvas({ page, selectedBlockId, onSelectBlock }: StudioCan
     );
   }
 
+  const blockContext: BlockContext = {
+    ownerId: page.id,
+    ownerType: page.type,
+    pageId: pageData.id,
+    isEditing: true,
+  };
+
   const layout: PageLayout = pageData.layout ?? { sections: [] };
 
   if (layout.sections.length === 0) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="max-w-xs text-center">
-          <p className="text-sm text-muted-foreground">Your page is empty.</p>
+          <p className="text-sm text-foreground font-medium">Your page is empty</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Add blocks from the left sidebar to start building.
+            Add blocks from the left sidebar to start building your {page.type === "profile" ? "studio" : "project"} page.
           </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+            {(["text-block", "heading-block", "hero-block", "status-block"]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => onAddBlock(type)}
+                className="rounded-md border border-border/30 bg-surface/40 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors"
+              >
+                <Plus className="mr-1 inline h-3 w-3" />
+                {type.replace("-block", "").replace(/-/g, " ")}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {layout.sections.map((section) => (
-        <SectionWrapper
-          key={section.id}
-          section={section}
-          hoveredBlockId={hoveredBlockId}
-          selectedBlockId={selectedBlockId}
-          onHoverBlock={setHoveredBlockId}
-          onSelectBlock={onSelectBlock}
-          onToggleVisibility={handleToggleVisibility}
-          onRemoveBlock={handleRemoveBlock}
-          context={blockContext}
-          onLayoutChange={handleLayoutChange}
-        />
-      ))}
-    </div>
-  );
-}
+        <div key={section.id} className="space-y-2">
+          {section.blocks.map((block) => {
+            const isSelected = selectedBlockId === block.id;
+            const isHidden = block.visible === false;
+            const isFirst = section.blocks.indexOf(block) === 0;
+            const isLast = section.blocks.indexOf(block) === section.blocks.length - 1;
 
-// ── Section wrapper with add-section button ──────────────────────────────────
+            return (
+              <div
+                key={block.id}
+                className={`group/block relative rounded-md transition-all ${
+                  isSelected
+                    ? "ring-2 ring-primary/30 bg-primary/[0.03]"
+                    : "ring-1 ring-transparent hover:ring-border/20"
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectBlock(block.id);
+                }}
+              >
+                {/* Block content */}
+                <div className={isHidden ? "opacity-30" : ""}>
+                  <SingleBlockRenderer block={block} context={blockContext} />
+                </div>
 
-function SectionWrapper({
-  section,
-  hoveredBlockId,
-  selectedBlockId,
-  onHoverBlock,
-  onSelectBlock,
-  onToggleVisibility,
-  onRemoveBlock,
-  context,
-  onLayoutChange,
-}: {
-  section: LayoutSection;
-  hoveredBlockId: string | null;
-  selectedBlockId: string | null;
-  onHoverBlock: (id: string | null) => void;
-  onSelectBlock: (id: string | null) => void;
-  onToggleVisibility: (blockId: string) => void;
-  onRemoveBlock: (blockId: string) => void;
-  context: BlockContext;
-  onLayoutChange: (layout: PageLayout) => void;
-}) {
-  return (
-    <div className="relative rounded-lg transition-colors">
-      {section.blocks.map((block) => {
-        const isHovered = hoveredBlockId === block.id;
-        const isSelected = selectedBlockId === block.id;
-        const isHidden = block.visible === false;
+                {/* Hover controls — top-right corner */}
+                <div className="pointer-events-none absolute -top-0 right-0 z-10 flex -translate-y-full items-center gap-0.5 rounded-md border border-border/30 bg-surface-elevated p-0.5 opacity-0 shadow-sm transition-opacity group-hover/block:opacity-100">
+                  {!isFirst && (
+                    <button
+                      type="button"
+                      className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
+                      aria-label="Move up"
+                      onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, "up"); }}
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 15l-6-6-6 6"/></svg>
+                    </button>
+                  )}
+                  {!isLast && (
+                    <button
+                      type="button"
+                      className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
+                      aria-label="Move down"
+                      onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, "down"); }}
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  )}
+                  <span className="h-3 w-px bg-border/40" />
+                  <button
+                    type="button"
+                    className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
+                    aria-label={isHidden ? "Show block" : "Hide block"}
+                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(block.id); }}
+                  >
+                    {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </button>
+                  <button
+                    type="button"
+                    className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-red-400"
+                    aria-label="Remove block"
+                    onClick={(e) => { e.stopPropagation(); onRemoveBlock(block.id); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
 
-        return (
-          <div
-            key={block.id}
-            className={`group/block relative rounded-md transition-colors ${
-              isSelected
-                ? "ring-1 ring-primary/40 bg-primary/5"
-                : isHovered
-                  ? "ring-1 ring-border/30 bg-surface/30"
-                  : "ring-1 ring-transparent"
-            }`}
-            onMouseEnter={() => onHoverBlock(block.id)}
-            onMouseLeave={() => onHoverBlock(null)}
-            onClick={() => onSelectBlock(block.id)}
-          >
-            {/* Block content */}
-            <div className={isHidden ? "opacity-30" : ""}>
-              <BlockRendererWrapper block={block} context={context} />
-            </div>
-
-            {/* Hover controls */}
-            {isHovered && (
-              <div className="pointer-events-none absolute -top-0 right-0 z-10 flex -translate-y-full items-center gap-0.5 rounded-md border border-border/30 bg-surface-elevated p-0.5 shadow-sm">
-                <button
-                  type="button"
-                  className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
-                  aria-label="Edit block"
-                  onClick={(e) => { e.stopPropagation(); onSelectBlock(block.id); }}
-                >
-                  <Pencil className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={block.visible === false ? "Show block" : "Hide block"}
-                  onClick={(e) => { e.stopPropagation(); onToggleVisibility(block.id); }}
-                >
-                  {block.visible === false ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                </button>
-                <button
-                  type="button"
-                  className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-destructive"
-                  aria-label="Remove block"
-                  onClick={(e) => { e.stopPropagation(); onRemoveBlock(block.id); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                {/* Selected indicator — subtle left border */}
+                {isSelected && (
+                  <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
+                )}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Add section button at bottom */}
+      <button
+        type="button"
+        onClick={() => {
+          // Open the sidebar to blocks tab — signal via a simple add
+          // Not ideal but functional: just pick text block as default
+          onAddBlock("text-block");
+        }}
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40 py-4 text-xs text-muted-foreground transition-colors hover:border-border/60 hover:text-foreground"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add section
+      </button>
     </div>
   );
 }
 
-// ── Single block renderer without layout management ──────────────────────────
+// ── Single block renderer ────────────────────────────────────────────────────
 
-function BlockRendererWrapper({
-  block,
-  context,
+function SingleBlockRenderer({
+  block, context,
 }: {
   block: LayoutBlockInstance;
   context: BlockContext;
 }) {
-  // Simply render the block through the page layout system.
-  // Each block component handles its own data fetching.
   const layout: PageLayout = {
-    sections: [{ id: "temp", position: 0, layout: "full", blocks: [block] }],
+    sections: [{ id: "single", position: 0, layout: "full", blocks: [block] }],
   };
   return <PageLayoutRenderer layout={layout} context={context} />;
 }
