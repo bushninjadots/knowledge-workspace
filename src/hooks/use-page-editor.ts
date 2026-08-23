@@ -4,7 +4,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { PageLayout, PageOwnerType, PageStatus } from "@/lib/page-blocks";
+import type { PageLayout, PageOwnerType, PageStatus, ThemeTokens } from "@/lib/page-blocks";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { invalidatePage } from "@/hooks/use-page";
 
@@ -163,6 +163,28 @@ export function useUnpublishPage() {
       const { error } = await (supabase as any)
         .from("pages")
         .update({ status: "draft" as PageStatus, published_at: null })
+        .eq("id", pageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["page"] });
+    },
+  });
+}
+
+/**
+ * Save per-page theme token overrides (radius, colors, typography).
+ * These merge on top of the base theme tokens at render time.
+ */
+export function useUpdateThemeOverrides() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, overrides }: { pageId: string; overrides: ThemeTokens | null }) => {
+      const { error } = await (supabase as any)
+        .from("pages")
+        .update({ theme_overrides: overrides })
         .eq("id", pageId);
 
       if (error) throw error;

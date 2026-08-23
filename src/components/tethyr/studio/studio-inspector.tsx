@@ -24,7 +24,8 @@ interface StudioInspectorProps {
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onRemoveBlock: (blockId: string) => void;
   onUpdateBlockConfig?: (blockId: string, config: Record<string, unknown>) => void;
-  onUpdateTheme?: (themeId: string, tokens: ThemeTokens) => void;
+  onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
+  currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
   currentThemeId?: string | null;
   onRefetch: () => void;
@@ -34,7 +35,7 @@ export function StudioInspector({
   selectedBlock, selectedBlockDef, pageData, isPublished,
   onPublish, onUnpublish,
   onSelectBlock, onMoveBlock, onRemoveBlock,
-  onUpdateBlockConfig, onUpdateTheme,
+  onUpdateBlockConfig, onUpdateThemeOverrides, currentOverrides,
   themes = [], currentThemeId,
 }: StudioInspectorProps) {
   const [activeTab, setActiveTab] = useState<InspectorTab>("content");
@@ -88,7 +89,8 @@ export function StudioInspector({
             pageData={pageData}
             themes={themes}
             currentThemeId={currentThemeId}
-            onUpdateTheme={onUpdateTheme}
+            currentOverrides={currentOverrides}
+            onUpdateThemeOverrides={onUpdateThemeOverrides}
           />
         ) : null}
       </div>
@@ -359,15 +361,17 @@ function LayoutTab({
 // ── Theme Editor Tab ────────────────────────────────────────────────────────
 
 function ThemeEditorTab({
-  pageData, themes, currentThemeId, onUpdateTheme,
+  pageData, themes, currentThemeId, currentOverrides, onUpdateThemeOverrides,
 }: {
   pageData: PageData | undefined | null;
   themes: ThemeCatalogEntry[];
   currentThemeId?: string | null;
-  onUpdateTheme?: (themeId: string, tokens: ThemeTokens) => void;
+  currentOverrides?: ThemeTokens | null;
+  onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
 }) {
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
-  const tokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
+  const baseTokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
+  const tokens = currentOverrides ? { ...baseTokens, ...currentOverrides } as Record<string, string> : baseTokens;
 
   // Extract current radius from tokens or use defaults
   const getRadiusValue = (cssVar: string, fallback: string) => {
@@ -378,21 +382,23 @@ function ThemeEditorTab({
   const currentRadiusLg = parseInt(getRadiusValue("--radius-lg", "12px")) || 12;
 
   const setRadius = useCallback((size: number) => {
-    if (!onUpdateTheme || !currentThemeId) return;
-    const newTokens = {
-      ...(pageData?.theme ?? {}),
+    if (!onUpdateThemeOverrides) return;
+    // Build override that merges radius changes on top of existing overrides.
+    const existing = currentOverrides ?? {} as any;
+    const newOverrides: ThemeTokens = {
+      ...existing,
       borders: {
-        ...(pageData?.theme?.borders ?? {}),
+        ...(existing as any).borders ?? {},
         radius: {
-          ...(pageData?.theme?.borders?.radius ?? {}),
+          ...((existing as any).borders?.radius ?? {}),
           lg: `${size}px`,
           xl: `${Math.round(size * 1.33)}px`,
           "2xl": `${Math.round(size * 1.67)}px`,
         },
       },
-    };
-    onUpdateTheme(currentThemeId, newTokens);
-  }, [currentThemeId, pageData?.theme, onUpdateTheme]);
+    } as ThemeTokens;
+    onUpdateThemeOverrides(newOverrides);
+  }, [currentOverrides, onUpdateThemeOverrides]);
 
   const setShapePreset = useCallback((preset: "rounded" | "angular" | "sharp") => {
     const sizes = { rounded: 12, angular: 4, sharp: 0 };

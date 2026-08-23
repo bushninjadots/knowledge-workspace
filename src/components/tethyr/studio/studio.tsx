@@ -21,6 +21,7 @@ import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
 import {
   useCreatePage, useUpdatePageLayout, usePublishPage, useUnpublishPage,
+  useUpdateThemeOverrides,
 } from "@/hooks/use-page-editor";
 import { usePage, invalidatePage } from "@/hooks/use-page";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
@@ -103,6 +104,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
   const updateTheme = useUpdatePageTheme();
+  const updateThemeOverrides = useUpdateThemeOverrides();
   const publishPage = usePublishPage();
   const unpublishPage = useUnpublishPage();
   const applyTemplate = useApplyTemplate();
@@ -295,13 +297,27 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [layout, writeLayout],
   );
 
-  // ── Update theme tokens ───────────────────────────────────────────────
-  const handleUpdateThemeTokens = useCallback(
-    (_themeId: string, _tokens: any) => {
-      toast.success("Theme updated — refresh to see changes");
-      refetchPage();
+  // ── Update theme overrides ──────────────────────────────────────────
+  const handleUpdateThemeOverrides = useCallback(
+    (overrides: any) => {
+      if (!pageData) { toast.error("No page loaded"); return; }
+      console.log(`[Studio] Saving theme overrides to page ${pageData.id}`);
+      updateThemeOverrides.mutate(
+        { pageId: pageData.id, overrides },
+        {
+          onSuccess: () => {
+            console.log("[Studio] ✅ Theme overrides saved");
+            refetchPage();
+            toast.success("Theme updated");
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ Theme override error:", err);
+            toast.error(friendlyError(err, "Failed to save theme"));
+          },
+        },
+      );
     },
-    [refetchPage],
+    [pageData, updateThemeOverrides, refetchPage],
   );
 
   // ── Publish / Save Draft / Preview ────────────────────────────────────
@@ -621,7 +637,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onMoveBlock={handleMoveBlock}
               onRemoveBlock={handleRemoveBlock}
               onUpdateBlockConfig={handleUpdateBlockConfig}
-              onUpdateTheme={handleUpdateThemeTokens}
+              onUpdateThemeOverrides={handleUpdateThemeOverrides}
+              currentOverrides={pageData?.theme ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onRefetch={refetchPage}

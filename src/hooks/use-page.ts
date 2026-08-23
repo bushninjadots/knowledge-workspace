@@ -13,6 +13,7 @@ interface PageRow {
   owner_type: PageOwnerType;
   layout_id: string;
   theme_id: string | null;
+  theme_overrides: ThemeTokens | null;
   status: string;
   published_at: string | null;
   created_at: string;
@@ -49,7 +50,7 @@ export function usePage({ ownerId, ownerType }: FetchPageParams) {
       const { data: row, error } = await (supabase as any)
         .from("pages")
         .select(
-          "id, owner_id, owner_type, layout_id, theme_id, status, published_at, created_at, updated_at",
+          "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, status, published_at, created_at, updated_at",
         )
         .eq("owner_id", ownerId)
         .eq("owner_type", ownerType)
@@ -79,7 +80,10 @@ export function usePage({ ownerId, ownerType }: FetchPageParams) {
           .select("tokens")
           .eq("id", pageRow.theme_id)
           .maybeSingle();
-        theme = (themeRow as unknown as ThemeRow | null)?.tokens ?? null;
+        // Merge theme_overrides on top of base theme tokens so user
+      // customizations (radius, colors, typography) take precedence.
+      const overrides = (pageRow as any).theme_overrides as ThemeTokens | null;
+      theme = overrides ? { ...((themeRow as unknown as ThemeRow | null)?.tokens ?? {} as ThemeTokens), ...overrides } : theme;
       }
 
       return {
