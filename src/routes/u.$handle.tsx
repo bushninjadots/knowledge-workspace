@@ -2,7 +2,7 @@
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
 import { useEffect, useMemo } from "react";
-import { createFileRoute, notFound, useNavigate, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, notFound, useParams, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,7 @@ import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 import "@/components/tethyr/blocks/profile";
 import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditModeProvider, useEditMode } from "@/components/tethyr/page/edit-mode-context";
+import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 
@@ -61,12 +61,13 @@ type PublicProfile = {
   reputation_score: number | null;
   favorite_achievement: string | null;
   availability: string | null;
-  background?: ProfileBackground | null;
-  public_background?: ProfileBackground | null;
+  background: ProfileBackground | null;
+  public_background: ProfileBackground | null;
   evidence_shelf: EvidenceShelfItem[];
 };
 
 type SkillLite = { id: string; slug: string; name: string; category: string };
+
 type TeachSkillLite = SkillLite & {
   verification_level: SkillVerificationLevel;
   experience_level: SkillExperienceLevel;
@@ -237,7 +238,6 @@ function PublicProfileRoute() {
             ).slice(0, 6)
           : [],
       } as PublicProfile;
-      // The public Studio prefers its own backdrop and falls back to the app one.
       const publicBg = (profileRow.public_background ?? profileRow.background) as
         ProfileBackground | null | undefined;
       return {
@@ -261,9 +261,6 @@ function PublicProfileRoute() {
   const { data: connections = [] } = useConnections();
   const endorse = useEndorseSkill();
 
-  // Only people I'm already connected with can start a conversation — Messages
-  // lists accepted connections, so a bare "Start a conversation" link would be
-  // a dead end for everyone else (they'd land on an empty thread list).
   const connectionId = useMemo(() => {
     if (!meId || !data?.profile?.id) return null;
     return (
@@ -277,9 +274,6 @@ function PublicProfileRoute() {
   }, [connections, meId, data?.profile?.id]);
   const publicLayout = usePublicStudioLayout(data?.profile.id ?? null);
 
-  // Live updates: when the member changes their backdrop, banner, or name,
-  // viewers of the public Studio see it appear without refreshing. The channel
-  // is keyed by the profile id so it refetches only this page's data.
   useEffect(() => {
     const profileId = data?.profile?.id;
     if (!profileId) return;
@@ -303,9 +297,22 @@ function PublicProfileRoute() {
     };
   }, [data?.profile?.id, handle, queryClient]);
 
+  const { page: profilePage } = useProfilePage({
+    profileId: data?.profile?.id ?? "",
+    isOwner: meId === data?.profile?.id,
+  });
+
+  const pageThemeStyle = useMemo(
+    () => themeTokensToStyle(profilePage?.theme ?? {}),
+    [profilePage?.theme],
+  );
+
+  const blocksArePage = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
+  const isOwner = !!(meId && data?.profile && meId === data.profile.id);
+
   if (isLoading) {
     return (
-      <Shell isOwner={false}>
+      <Shell accentColor={null} background={null} pageThemeStyle={pageThemeStyle}>
         <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
           <div className="h-48 rounded-xl bg-surface" />
           <div className="flex items-center gap-4">
@@ -323,7 +330,7 @@ function PublicProfileRoute() {
 
   if (error || !data) {
     return (
-      <Shell isOwner={false}>
+      <Shell accentColor={null} background={null} pageThemeStyle={pageThemeStyle}>
         <div className="p-8 text-sm text-muted-foreground">Person not found.</div>
       </Shell>
     );
@@ -336,34 +343,15 @@ function PublicProfileRoute() {
   const initial = (profile.display_name ?? profile.handle ?? "?").charAt(0).toUpperCase();
   const languages = profile.languages ?? [];
 
-  // Fetch or auto-create the profile's page (block-based presentation).
-  const { page: profilePage } = useProfilePage({
-    profileId: profile.id,
-    isOwner: meId === profile.id,
-  });
-
-  // Apply page theme as CSS vars on the outer wrapper so the entire Studio
-  // (identity card, direction, blocks, workspace) gets themed, not just blocks.
-  const pageThemeStyle = useMemo(
-    () => themeTokensToStyle(profilePage?.theme ?? {}),
-    [profilePage?.theme],
-  );
-
-  // When blocks are active they become the page — hide legacy duplicate sections.
-  const blocksArePage = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
-
-  const isOwner = meId === profile.id;
-
   return (
-    <EditModeProvider>
-      <Shell
-        accentColor={bannerAccent}
-        background={publicBackground}
-        backgroundImageUrl={backgroundImageUrl}
-        pageThemeStyle={pageThemeStyle}
-        isOwner={isOwner}
-      >
+    <Shell
+      accentColor={bannerAccent}
+      background={publicBackground}
+      backgroundImageUrl={backgroundImageUrl}
+      pageThemeStyle={pageThemeStyle}
+    >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
+        {/* Identity card */}
         <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
           <BannerStrip
             bannerSigned={bannerSigned}
@@ -477,12 +465,10 @@ function PublicProfileRoute() {
           />
         )}
 
-        {/* Block-based page presentation — becomes the primary view */}
-          <PageShell
-            ownerId={profile.id}
-            ownerType="profile"
-            isOwner={isOwner}
-          />
+        {/* Block-based page presentation */}
+        <EditModeProvider>
+          <PageShell ownerId={profile.id} ownerType="profile" isOwner={isOwner} />
+        </EditModeProvider>
 
         {/* Legacy workspace — hidden when blocks are the page */}
         {!blocksArePage && (
@@ -494,7 +480,7 @@ function PublicProfileRoute() {
             learnSkills={learnSkills}
             contributedProjects={contributedProjects}
             layoutStorage={publicLayout}
-            canCustomize={meId === profile.id}
+            canCustomize={false}
             endorsePending={endorse.isPending}
             onEndorse={(skill) => {
               if (!meId) return;
@@ -510,7 +496,6 @@ function PublicProfileRoute() {
         )}
       </div>
     </Shell>
-    </EditModeProvider>
   );
 }
 
@@ -520,17 +505,14 @@ function Shell({
   background,
   backgroundImageUrl,
   pageThemeStyle,
-  isOwner,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
   background?: ProfileBackground | null;
   backgroundImageUrl?: string | null;
   pageThemeStyle?: React.CSSProperties;
-  isOwner: boolean;
 }) {
   const navigate = useNavigate();
-  const { isEditing, startEditing, stopEditing } = useEditMode();
   const accentStyle = {
     ...(accentColor
       ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
@@ -545,46 +527,24 @@ function Shell({
       style={accentStyle}
     >
       <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-sm sm:px-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
-            }
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
-            aria-label="Go back"
-            title="Back"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back
-          </button>
-          <Link to="/" className="font-display text-lg font-semibold text-foreground">
-            Tethyr
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm text-muted-foreground">Studio</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {isOwner && !isEditing && (
-            <button
-              type="button"
-              onClick={startEditing}
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Customize
-            </button>
-          )}
-          {isOwner && isEditing && (
-            <button
-              type="button"
-              onClick={stopEditing}
-              className="text-xs font-medium text-foreground hover:text-muted-foreground transition-colors"
-            >
-              Done
-            </button>
-          )}
-        </div>
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
+        <button
+          type="button"
+          onClick={() =>
+            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
+          }
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          aria-label="Go back"
+          title="Back"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
+        <Link to="/" className="font-display text-lg font-semibold text-foreground">
+          Tethyr
+        </Link>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-sm text-muted-foreground">Studio</span>
       </header>
       <main className="flex-1">{children}</main>
     </div>

@@ -86,6 +86,16 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
     [page, handleLayoutChange],
   );
 
+  const createdRef = useRef(false);
+
+  // Auto-create the page on first render when owner and no page exists.
+  useEffect(() => {
+    if (!page && isOwner && !isLoading && !createPage.isPending && !createdRef.current) {
+      createdRef.current = true;
+      createPage.mutate({ ownerId, ownerType });
+    }
+  }, [page, isOwner, isLoading, createPage, ownerId, ownerType]);
+
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -110,16 +120,6 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
       </div>
     );
   }
-
-  const createdRef = useRef(false);
-
-  // Auto-create the page on first render when owner and no page exists.
-  useEffect(() => {
-    if (!page && isOwner && !isLoading && !createPage.isPending && !createdRef.current) {
-      createdRef.current = true;
-      createPage.mutate({ ownerId, ownerType });
-    }
-  }, [page, isOwner, isLoading, createPage, ownerId, ownerType]);
 
   // ── No page yet ──────────────────────────────────────────────────────
   if (!page) {
@@ -147,7 +147,7 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
     <div>
       {/* Editor toolbar — only shows editing tools when in edit mode.
           The Customize/Done toggle lives in the page Shell header. */}
-      {isOwner && isEditing && (
+      {isOwner && (
         <EditorToolbar
           page={page}
           onRefresh={() => refetch()}
