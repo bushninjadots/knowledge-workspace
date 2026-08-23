@@ -47,8 +47,7 @@ import type { Contributor } from "@/components/tethyr/project/project-main-conte
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 // Block system — registers project blocks and renders them via PageShell.
-import "@/components/tethyr/blocks/project";
-import "@/components/tethyr/blocks/content";
+import "@/components/tethyr/blocks/register-all";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProjectPage } from "@/hooks/use-project-page";

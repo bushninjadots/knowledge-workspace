@@ -31,8 +31,7 @@ import { friendlyError } from "@/lib/error-message";
 import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 
 // Block system — profile blocks via PageShell.
-import "@/components/tethyr/blocks/profile";
-import "@/components/tethyr/blocks/content";
+import "@/components/tethyr/blocks/register-all";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
