@@ -28,6 +28,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
@@ -136,6 +137,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/studio': typeof AuthenticatedStudioRoute
   '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/studio': typeof AuthenticatedStudioRoute
   '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sessions'
     | '/settings'
+    | '/studio'
     | '/templates'
     | '/projects/$id'
     | '/skills/$slug'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sessions'
     | '/settings'
+    | '/studio'
     | '/templates'
     | '/projects/$id'
     | '/skills/$slug'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
+    | '/_authenticated/studio'
     | '/_authenticated/templates'
     | '/projects/$id'
     | '/skills/$slug'
@@ -538,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/studio': {
+      id: '/_authenticated/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof AuthenticatedStudioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/templates': {
       id: '/_authenticated/templates'
       path: '/templates'
@@ -682,6 +701,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRouteWithChildren
   AuthenticatedSpacesSlugReportsRoute: typeof AuthenticatedSpacesSlugReportsRoute
   AuthenticatedSpacesSlugSettingsRoute: typeof AuthenticatedSpacesSlugSettingsRoute
@@ -699,6 +719,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStudioRoute: AuthenticatedStudioRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRouteWithChildren,
   AuthenticatedSpacesSlugReportsRoute: AuthenticatedSpacesSlugReportsRoute,
   AuthenticatedSpacesSlugSettingsRoute: AuthenticatedSpacesSlugSettingsRoute,
