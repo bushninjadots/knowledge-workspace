@@ -10,6 +10,7 @@ import { Layout, MapPin } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -81,7 +82,12 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
     );
   }
 
-  if (!project) return null;
+  if (!project) {
+    if (context.isEditing) {
+      return <BlockEmptyState label="Project Hero" detail="Project data is loading or not available." />;
+    }
+    return null;
+  }
 
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>

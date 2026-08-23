@@ -3,20 +3,27 @@
 // Fetches the page data (layout + theme), applies the theme tokens as CSS
 // custom properties, and renders the layout with blocks.
 //
+// When `isOwner` is true, the editor toolbar is shown (customize button or
+// full edit controls via EditModeProvider). Layout changes are persisted
+// through usePageEditor mutations.
+//
 // States handled:
 //   • Loading — skeleton pulse
 //   • No page yet — empty state with "create page" action (owner only)
 //   • Error — friendly error with retry
 //   • Published/draft — resolved page with layout
+//   • Editing — blocks get move/remove/configure controls
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
-import { useCreatePage } from "@/hooks/use-page-editor";
+import { useCreatePage, useUpdatePageLayout } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
+import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
+import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 
 interface PageShellProps {
@@ -26,14 +33,14 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
-  /** Whether the page is in edit mode (shows edit controls). */
-  isEditing?: boolean;
 }
 
-export function PageShell({ ownerId, ownerType, isOwner, isEditing = false }: PageShellProps) {
+export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   const { data: page, isLoading, isError, refetch } = usePage({ ownerId, ownerType });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const createPage = useCreatePage();
+  const updateLayout = useUpdatePageLayout();
+  const { isEditing } = useEditMode();
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -50,6 +57,34 @@ export function PageShell({ ownerId, ownerType, isOwner, isEditing = false }: Pa
     const base = themeTokensToStyle(page?.theme ?? {});
     return { ...base, ...themeVars } as React.CSSProperties;
   }, [page?.theme, themeVars]);
+
+  // ── Layout change handler (persists to DB) ─────────────────────────────
+  const handleLayoutChange = useCallback(
+    (newLayout: PageLayout) => {
+      if (!page) return;
+      updateLayout.mutate({
+        pageId: page.id,
+        layoutId: page.layoutId,
+        layout: newLayout,
+      });
+    },
+    [page, updateLayout],
+  );
+
+  // ── Block config change handler ────────────────────────────────────────
+  const handleBlockConfigChange = useCallback(
+    (blockId: string, config: Record<string, unknown>) => {
+      if (!page || !page.layout) return;
+      const sections = page.layout.sections.map((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) =>
+          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
+        ),
+      }));
+      handleLayoutChange({ sections });
+    },
+    [page, handleLayoutChange],
+  );
 
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
@@ -106,20 +141,39 @@ export function PageShell({ ownerId, ownerType, isOwner, isEditing = false }: Pa
 
   // ── Rendered page ────────────────────────────────────────────────────
   return (
-    <div style={containerStyle} data-page-id={page.id} data-page-status={page.status}>
-      {layout.sections.length === 0 ? (
-        <div className="flex min-h-[20vh] items-center justify-center px-4">
-          {isOwner && isEditing ? (
-            <p className="text-sm text-muted-foreground">
-              Your page is empty. Add blocks to get started.
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">Nothing here yet.</p>
-          )}
-        </div>
-      ) : (
-        <PageLayoutRenderer layout={layout} context={blockContext} />
+    <div>
+      {/* Editor toolbar (owner only) */}
+      {isOwner && (
+        <EditorToolbar
+          page={page}
+          onRefresh={() => refetch()}
+          ownerId={ownerId}
+          ownerType={ownerType}
+        />
       )}
+
+      <div style={containerStyle} data-page-id={page.id} data-page-status={page.status} role="region" aria-label={`${ownerType} page`}>
+        {layout.sections.length === 0 ? (
+          <div className="flex min-h-[20vh] items-center justify-center px-4">
+            {isOwner && isEditing ? (
+              <p className="text-sm text-muted-foreground" role="status">
+                Your page is empty. Add blocks to get started.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground" role="status">Nothing here yet.</p>
+            )}
+          </div>
+        ) : isOwner ? (
+          <PageLayoutRenderer
+            layout={layout}
+            context={blockContext}
+            onLayoutChange={handleLayoutChange}
+            onBlockConfigChange={handleBlockConfigChange}
+          />
+        ) : (
+          <PageLayoutRenderer layout={layout} context={blockContext} />
+        )}
+      </div>
     </div>
   );
 }

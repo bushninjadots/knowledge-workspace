@@ -56,7 +56,16 @@ function ProfileProjectsBlock({ context }: BlockProps) {
     );
   }
 
-  if (!data || data.length === 0) return null;
+  if (!data || data.length === 0) {
+    if (context.isEditing) {
+      return (
+        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
+          Projects block — contributed projects will appear here.
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div>

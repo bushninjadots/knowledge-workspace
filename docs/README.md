@@ -34,7 +34,8 @@ If a change should alter product direction or a binding rule, update the appropr
 
 - [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification
 - [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) — redesign architecture proposal
-- [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete; awaiting approval)
+- [`TETHYR_REDESIGN_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_AUDIT_2026-08-23.md) — **Phase 1 audit report** (complete)
+- [`TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md`](./TETHYR_REDESIGN_FINAL_AUDIT_2026-08-23.md) — **Phase 11 final audit** — all 11 phases complete, all gates passing
 - [`TETHYR_IMPLEMENTATION_STAGES.md`](./TETHYR_IMPLEMENTATION_STAGES.md) — staged execution priorities (includes redesign Stages 8–18)
 - [`TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md`](./TETHYR_FULL_FORENSIC_AUDIT_2026-08-09.md) — dated forensic audit and findings
 - [`UI_UX_FULL_AUDIT.md`](./UI_UX_FULL_AUDIT.md) — detailed dated UI/UX audit

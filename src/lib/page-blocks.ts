@@ -212,11 +212,66 @@ export interface PageData {
 export type BlockRegistry = Map<BlockType, BlockDefinition>;
 
 // ---------------------------------------------------------------------------
-// Defaults
+// Template Types
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_LAYOUT: PageLayout = {
+/** A template is a layout that has been marked as reusable by its creator. */
+export interface TemplateData {
+  id: string;
+  name: string;
+  description: string | null;
+  type: LayoutType;
+  category: string | null;
+  sections: LayoutSection[];
+  /** The theme tokens bundled with this template (null = default). */
+  themeTokens: ThemeTokens | null;
+  /** Creator profile info — joined from layouts.created_by → profiles. */
+  createdBy: string | null;
+  creatorHandle: string | null;
+  creatorDisplayName: string | null;
+  usageCount: number;
+  forkCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Categories for browsing templates in the library. */
+export type TemplateCategory =
+  | "minimal"
+  | "developer"
+  | "portfolio"
+  | "documentation"
+  | "startup"
+  | "community"
+  | "creative"
+  | "experimental";
+
+// ---------------------------------------------------------------------------
+// Fork / Remix Types
+// ---------------------------------------------------------------------------
+
+/** A fork record — the lineage link from parent layout to child layout. */
+export interface ForkData {
+  id: string;
+  parentLayoutId: string;
+  childLayoutId: string;
+  creatorId: string;
+  forkedAt: string;
+}
+
+/** A lineage node returned by get_layout_lineage. */
+export interface LineageNode {
+  layoutId: string;
+  parentId: string;
+  depth: number;
+}
+
+// ---------------------------------------------------------------------------
+// Defaults (internal — not exported)
+// ---------------------------------------------------------------------------
+
+const DEFAULT_LAYOUT: PageLayout = {
   sections: [],
 };
 
-export const DEFAULT_THEME_TOKENS: ThemeTokens = {};
+const DEFAULT_THEME_TOKENS: ThemeTokens = {};

@@ -57,7 +57,17 @@ function ProjectTeamBlock({ context }: BlockProps) {
     );
   }
 
-  if (!contributors || contributors.length === 0) return null;
+  // In edit mode, always show the block even when empty so the owner can interact with it.
+  if (!contributors || contributors.length === 0) {
+    if (context.isEditing) {
+      return (
+        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
+          Team block — contributors will appear here when added.
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div>

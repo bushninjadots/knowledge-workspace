@@ -28,6 +28,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSessionsRouteImport } from './routes/_authenticated/sessions'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as SkillsSlugRouteImport } from './routes/skills.$slug'
 import { Route as TeamsSlugRouteImport } from './routes/teams.$slug'
@@ -35,6 +36,7 @@ import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as AuthenticatedChallengesIdRouteImport } from './routes/_authenticated/challenges.$id'
 import { Route as AuthenticatedLibraryIdRouteImport } from './routes/_authenticated/library.$id'
 import { Route as AuthenticatedSessionsIdRouteImport } from './routes/_authenticated/sessions.$id'
+import { Route as AuthenticatedTemplatesIdRouteImport } from './routes/_authenticated/templates.$id'
 import { Route as AuthenticatedSpacesSlugReportsRouteImport } from './routes/_authenticated/spaces.$slug.reports'
 import { Route as AuthenticatedSpacesSlugSettingsRouteImport } from './routes/_authenticated/spaces.$slug.settings'
 
@@ -134,6 +136,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/projects/$id',
   path: '/projects/$id',
@@ -170,6 +177,12 @@ const AuthenticatedSessionsIdRoute = AuthenticatedSessionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedSessionsRoute,
 } as any)
+const AuthenticatedTemplatesIdRoute =
+  AuthenticatedTemplatesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedTemplatesRoute,
+  } as any)
 const AuthenticatedSpacesSlugReportsRoute =
   AuthenticatedSpacesSlugReportsRouteImport.update({
     id: '/spaces/$slug/reports',
@@ -202,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -209,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/spaces/$slug/reports': typeof AuthenticatedSpacesSlugReportsRoute
   '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -231,6 +246,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
+  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -238,6 +254,7 @@ export interface FileRoutesByTo {
   '/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/library/$id': typeof AuthenticatedLibraryIdRoute
   '/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/spaces/$slug/reports': typeof AuthenticatedSpacesSlugReportsRoute
   '/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -262,6 +279,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/sessions': typeof AuthenticatedSessionsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$id': typeof ProjectsIdRoute
   '/skills/$slug': typeof SkillsSlugRoute
   '/teams/$slug': typeof TeamsSlugRoute
@@ -269,6 +287,7 @@ export interface FileRoutesById {
   '/_authenticated/challenges/$id': typeof AuthenticatedChallengesIdRoute
   '/_authenticated/library/$id': typeof AuthenticatedLibraryIdRoute
   '/_authenticated/sessions/$id': typeof AuthenticatedSessionsIdRoute
+  '/_authenticated/templates/$id': typeof AuthenticatedTemplatesIdRoute
   '/_authenticated/spaces/$slug/reports': typeof AuthenticatedSpacesSlugReportsRoute
   '/_authenticated/spaces/$slug/settings': typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -293,6 +312,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sessions'
     | '/settings'
+    | '/templates'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -300,6 +320,7 @@ export interface FileRouteTypes {
     | '/challenges/$id'
     | '/library/$id'
     | '/sessions/$id'
+    | '/templates/$id'
     | '/spaces/$slug/reports'
     | '/spaces/$slug/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -322,6 +343,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sessions'
     | '/settings'
+    | '/templates'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -329,6 +351,7 @@ export interface FileRouteTypes {
     | '/challenges/$id'
     | '/library/$id'
     | '/sessions/$id'
+    | '/templates/$id'
     | '/spaces/$slug/reports'
     | '/spaces/$slug/settings'
   id:
@@ -352,6 +375,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/sessions'
     | '/_authenticated/settings'
+    | '/_authenticated/templates'
     | '/projects/$id'
     | '/skills/$slug'
     | '/teams/$slug'
@@ -359,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/challenges/$id'
     | '/_authenticated/library/$id'
     | '/_authenticated/sessions/$id'
+    | '/_authenticated/templates/$id'
     | '/_authenticated/spaces/$slug/reports'
     | '/_authenticated/spaces/$slug/settings'
   fileRoutesById: FileRoutesById
@@ -513,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/projects/$id': {
       id: '/projects/$id'
       path: '/projects/$id'
@@ -561,6 +593,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sessions/$id'
       preLoaderRoute: typeof AuthenticatedSessionsIdRouteImport
       parentRoute: typeof AuthenticatedSessionsRoute
+    }
+    '/_authenticated/templates/$id': {
+      id: '/_authenticated/templates/$id'
+      path: '/$id'
+      fullPath: '/templates/$id'
+      preLoaderRoute: typeof AuthenticatedTemplatesIdRouteImport
+      parentRoute: typeof AuthenticatedTemplatesRoute
     }
     '/_authenticated/spaces/$slug/reports': {
       id: '/_authenticated/spaces/$slug/reports'
@@ -617,6 +656,20 @@ const AuthenticatedSessionsRouteWithChildren =
     AuthenticatedSessionsRouteChildren,
   )
 
+interface AuthenticatedTemplatesRouteChildren {
+  AuthenticatedTemplatesIdRoute: typeof AuthenticatedTemplatesIdRoute
+}
+
+const AuthenticatedTemplatesRouteChildren: AuthenticatedTemplatesRouteChildren =
+  {
+    AuthenticatedTemplatesIdRoute: AuthenticatedTemplatesIdRoute,
+  }
+
+const AuthenticatedTemplatesRouteWithChildren =
+  AuthenticatedTemplatesRoute._addFileChildren(
+    AuthenticatedTemplatesRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedChallengesRoute: typeof AuthenticatedChallengesRouteWithChildren
   AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRoute
@@ -629,6 +682,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSessionsRoute: typeof AuthenticatedSessionsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRouteWithChildren
   AuthenticatedSpacesSlugReportsRoute: typeof AuthenticatedSpacesSlugReportsRoute
   AuthenticatedSpacesSlugSettingsRoute: typeof AuthenticatedSpacesSlugSettingsRoute
 }
@@ -645,6 +699,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSessionsRoute: AuthenticatedSessionsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRouteWithChildren,
   AuthenticatedSpacesSlugReportsRoute: AuthenticatedSpacesSlugReportsRoute,
   AuthenticatedSpacesSlugSettingsRoute: AuthenticatedSpacesSlugSettingsRoute,
 }

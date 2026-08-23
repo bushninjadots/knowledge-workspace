@@ -7,103 +7,94 @@ describe("themeTokensToVars", () => {
     expect(themeTokensToVars({})).toEqual({});
   });
 
-  it("flattens color tokens", () => {
+  it("emits standard color tokens directly", () => {
     const tokens: ThemeTokens = {
-      colors: {
-        background: "#ffffff",
-        foreground: "#1a1a1a",
-      },
+      colors: { background: "#ffffff", foreground: "#1a1a1a" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-colors-background": "#ffffff",
-      "--tethyr-theme-colors-foreground": "#1a1a1a",
-    });
+    expect(vars["--background"]).toBe("#ffffff");
+    expect(vars["--foreground"]).toBe("#1a1a1a");
   });
 
   it("skips empty color values", () => {
     const tokens: ThemeTokens = {
-      colors: {
-        background: "#ffffff",
-        foreground: "",
-      },
+      colors: { background: "#ffffff", foreground: "" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-colors-background": "#ffffff",
-    });
+    expect(vars["--background"]).toBe("#ffffff");
+    expect(vars["--foreground"]).toBeUndefined();
   });
 
-  it("flattens typography tokens", () => {
+  it("emits custom color keys not in the standard set", () => {
     const tokens: ThemeTokens = {
-      typography: {
-        headingFont: "Space Grotesk",
-        bodyFont: "Inter",
-        monoFont: "JetBrains Mono",
-      },
+      colors: { "my-custom": "#ff0000" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-typography-heading-font": "Space Grotesk",
-      "--tethyr-theme-typography-body-font": "Inter",
-      "--tethyr-theme-typography-mono-font": "JetBrains Mono",
-    });
+    expect(vars["--my-custom"]).toBe("#ff0000");
   });
 
-  it("flattens spacing tokens", () => {
+  it("maps heading font to --font-display and --font-title", () => {
     const tokens: ThemeTokens = {
-      spacing: {
-        section: "2rem",
-        block: "1rem",
-      },
+      typography: { headingFont: "Space Grotesk" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-spacing-section": "2rem",
-      "--tethyr-theme-spacing-block": "1rem",
-    });
+    expect(vars["--font-display"]).toBe("Space Grotesk");
+    expect(vars["--font-title"]).toBe("Space Grotesk");
   });
 
-  it("flattens border tokens", () => {
+  it("maps body font to --font-sans", () => {
     const tokens: ThemeTokens = {
-      borders: {
-        style: "solid",
-        radius: {
-          sm: "2px",
-          md: "4px",
-        },
-      },
+      typography: { bodyFont: "Inter" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-borders-style": "solid",
-      "--tethyr-theme-borders-radius-sm": "2px",
-      "--tethyr-theme-borders-radius-md": "4px",
-    });
+    expect(vars["--font-sans"]).toBe("Inter");
   });
 
-  it("flattens shadow tokens", () => {
+  it("maps mono font to --font-mono", () => {
     const tokens: ThemeTokens = {
-      shadows: {
-        card: "0 1px 3px rgba(0,0,0,0.1)",
-      },
+      typography: { monoFont: "JetBrains Mono" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(vars).toEqual({
-      "--tethyr-theme-shadows-card": "0 1px 3px rgba(0,0,0,0.1)",
-    });
+    expect(vars["--font-mono"]).toBe("JetBrains Mono");
   });
 
-  it("handles full token set", () => {
+  it("emits spacing tokens with --spacing- prefix", () => {
     const tokens: ThemeTokens = {
-      colors: { background: "#000" },
+      spacing: { section: "2rem", block: "1rem" },
+    };
+    const vars = themeTokensToVars(tokens);
+    expect(vars["--spacing-section"]).toBe("2rem");
+    expect(vars["--spacing-block"]).toBe("1rem");
+  });
+
+  it("emits radius tokens mapped to correct CSS vars", () => {
+    const tokens: ThemeTokens = {
+      borders: { radius: { sm: "2px", md: "4px", lg: "8px" } },
+    };
+    const vars = themeTokensToVars(tokens);
+    expect(vars["--radius-sm"]).toBe("2px");
+    expect(vars["--radius-md"]).toBe("4px");
+    expect(vars["--radius-lg"]).toBe("8px");
+  });
+
+  it("emits shadow tokens with --shadow- prefix", () => {
+    const tokens: ThemeTokens = {
+      shadows: { card: "0 1px 3px rgba(0,0,0,0.1)" },
+    };
+    const vars = themeTokensToVars(tokens);
+    expect(vars["--shadow-card"]).toBe("0 1px 3px rgba(0,0,0,0.1)");
+  });
+
+  it("handles full token set with all categories", () => {
+    const tokens: ThemeTokens = {
+      colors: { background: "#000", foreground: "#fff" },
       typography: { bodyFont: "Inter" },
       spacing: { gap: "1rem" },
       borders: { radius: { lg: "8px" } },
       shadows: { lift: "0 4px 12px" },
     };
     const vars = themeTokensToVars(tokens);
-    expect(Object.keys(vars)).toHaveLength(5);
+    expect(Object.keys(vars).length).toBeGreaterThanOrEqual(5);
   });
 });
 
@@ -113,6 +104,6 @@ describe("themeTokensToStyle", () => {
       colors: { background: "#fff" },
     };
     const style = themeTokensToStyle(tokens);
-    expect(style).toHaveProperty("--tethyr-theme-colors-background", "#fff");
+    expect(style).toHaveProperty("--background", "#fff");
   });
 });

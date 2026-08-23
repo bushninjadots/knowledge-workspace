@@ -55,7 +55,16 @@ function ProjectActivityBlock({ context }: BlockProps) {
     );
   }
 
-  if (!activity || activity.length === 0) return null;
+  if (!activity || activity.length === 0) {
+    if (context.isEditing) {
+      return (
+        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
+          Activity feed — events will appear here as the project evolves.
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div>

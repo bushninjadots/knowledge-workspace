@@ -50,6 +50,7 @@ import type { ProjectFile } from "@/components/tethyr/project/project-files";
 import "@/components/tethyr/blocks/project";
 import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
+import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProjectPage } from "@/hooks/use-project-page";
 
 const ProjectNeeds = lazy(() =>
@@ -574,14 +575,11 @@ function ProjectPage() {
           Activity blocks from the page system. Complements, not replaces,
           the existing project sections below. */}
       {projectPage && (
-        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
-          <PageShell
-            ownerId={id}
-            ownerType="project"
-            isOwner={isOwner}
-            isEditing={false}
-          />
-        </div>
+        <EditModeProvider>
+          <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
+            <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
+          </div>
+        </EditModeProvider>
       )}
 
       <div className="animate-room-enter min-h-screen bg-noise">

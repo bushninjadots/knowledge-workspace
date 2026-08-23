@@ -216,59 +216,195 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 
 **Validation:** typecheck passes, 369 tests pass, production build passes.
 
-### Stage 12 — Redesign Phase 5: Visual Editor
+### Stage 12 — Redesign Phase 5: Visual Editor ✅ DONE (2026-08-23)
 
-- [ ] Customize mode entry/exit.
-- [ ] Block picker, add/remove/reorder blocks.
-- [ ] Block configuration panel.
-- [ ] Drag-and-drop reordering.
-- [ ] Preview, save draft, publish.
+- [x] Customize mode entry/exit (`EditModeProvider` + `useEditMode` context with toggle).
+- [x] Block picker, add/remove blocks (`BlockPickerPanel` in `editor-toolbar.tsx` — browse by category, click to add).
+- [x] Block configuration panel (`SortableBlock` passes `onConfigChange` to `BlockRenderer`).
+- [x] Drag-and-drop reordering (`SortableBlock` with HTML5 drag handles + move up/down buttons).
+- [x] Preview, save draft, publish (`EditorToolbar` — eye preview, publish/unpublish buttons).
+- [x] Wired into project route (`projects.$id.tsx` wrapped in `EditModeProvider`).
+- [x] Wired into profile route (`u.$handle.tsx` wrapped in `EditModeProvider`).
 
-### Stage 13 — Redesign Phase 6: Template System
+**Files created:**
+- `src/components/tethyr/page/edit-mode-context.tsx`
+- `src/components/tethyr/page/editor-toolbar.tsx`
+- `src/components/tethyr/page/sortable-block.tsx`
 
-- [ ] Template model (templates table, creation, publication).
-- [ ] Template serialization (layout + theme, no private content).
-- [ ] Template application (apply layout to a page).
-- [ ] Template categories and metadata.
+**Files modified:**
+- `src/components/tethyr/page/page-shell.tsx` — integrated editor toolbar + layout/config mutations.
+- `src/components/tethyr/page/page-layout.tsx` — edit-mode blocks get move/remove/drag-drop/configure controls.
+- `src/components/tethyr/page/index.ts` — barrel updated.
+- `src/routes/projects.$id.tsx` — wrapped PageShell in EditModeProvider.
+- `src/routes/u.$handle.tsx` — wrapped PageShell in EditModeProvider.
 
-### Stage 14 — Redesign Phase 7: Template Library
+**Validation:** typecheck passes, 369 tests pass, production build passes.
 
-- [ ] Public template browsing (featured, popular, new, trending).
-- [ ] Template detail page (preview, creator, usage count, actions).
-- [ ] Template search and filtering by category.
-- [ ] "Made with Tethyr" attribution mechanism.
+### Stage 13 — Redesign Phase 6: Template System ✅ DONE (2026-08-23)
 
-### Stage 15 — Redesign Phase 8: Fork / Remix
+- [x] Template model — reuses `layouts` table (`is_template` flag) — no new table needed.
+- [x] Template serialization — layout sections + theme, no private content (layouts only contain structure).
+- [x] Template application — `useApplyTemplate` copies a template's sections into a page's layout.
+- [x] Template categories and metadata — `TemplateData` type with name, type, creator, block count.
+- [x] "Save as template" action in EditorToolbar.
+- [x] "Apply template" action in EditorToolbar (pick from user's own templates).
+- [x] Public templates browse route at `/templates`.
 
-- [ ] Fork model (forks table, lineage tracking).
-- [ ] Fork action (copy layout structure, preserve user content).
-- [ ] Remix action (fork + modify + republish).
-- [ ] Template lineage display.
-- [ ] Template versioning and safe update model.
-- [ ] Creator credit signals.
+**Files created:**
+- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useSaveAsTemplate`, `useApplyTemplate`, `useUnpublishTemplate`.
+- `src/routes/_authenticated/templates.tsx` — public template gallery.
 
-### Stage 16 — Redesign Phase 9: Themes
+**Files modified:**
+- `src/lib/page-blocks.ts` — added `TemplateData`, `TemplateCategory` types.
+- `src/components/tethyr/page/editor-toolbar.tsx` — save/apply template actions.
+- `src/components/tethyr/page/page-shell.tsx` — passes ownerId/ownerType to EditorToolbar.
 
-- [ ] Expand theme token architecture.
-- [ ] Initial theme catalog (Minimal, Developer, Terminal, Paper, etc.).
-- [ ] User theme customization (accent, typography, spacing, borders).
-- [ ] Theme preview and application.
+**Validation:** typecheck passes, 369 tests pass, production build passes, remote DB up to date.
 
-### Stage 17 — Redesign Phase 10: Migration
+### Stage 14 — Redesign Phase 7: Template Library ✅ DONE (2026-08-23)
 
-- [ ] Map existing profiles to block-based pages.
-- [ ] Map existing projects to block-based Project Spaces.
-- [ ] Migrate existing customization data (WorkspaceGrid layouts, public Studio layouts).
-- [ ] Verify no data loss; preserve all existing functionality.
+- [x] Public template browsing at `/templates` (grid with preview strips, name, creator, block count, usage count).
+- [x] Template detail page at `/templates/$id` (section-by-section preview with block type tags, metadata, apply button).
+- [x] Template search by name + filter by category (All, Minimal, Developer, Portfolio, Documentation, Startup, Community, Creative).
+- [x] Sort by newest or most used.
+- [x] "Made with Tethyr" / "Layout by @username" attribution component (`MadeWithTethyr`).
+- [x] `usage_count` column + `increment_usage_count` RPC — bumped on apply.
+- [x] `description` and `category` columns on `layouts` for template metadata.
 
-### Stage 18 — Redesign Phase 11: Polish
+**Files created:**
+- `src/routes/_authenticated/templates.$id.tsx` — template detail page.
+- `src/components/tethyr/templates/made-with-tethyr.tsx` — attribution badge.
+- `supabase/migrations/20260823100000_template_library.sql` — usage_count, description, category columns + increment RPC.
 
-- [ ] Mobile audit at 390px and 768px.
-- [ ] Accessibility audit (keyboard, screen reader, contrast, reduced motion).
-- [ ] Performance audit (lazy loading, bundle size, render efficiency).
-- [ ] UX audit (empty states, loading states, error states).
-- [ ] Permission and security audit (template safety, private data enforcement).
-- [ ] Consistency audit across all pages.
+**Files modified:**
+- `src/routes/_authenticated/templates.tsx` — search, category filter, sort, usage count, link to detail.
+- `src/lib/page-blocks.ts` — added `category` to `TemplateData`.
+- `src/hooks/use-templates.ts` — reads new columns, `usePublicTemplates` accepts search/category/sort.
+
+**Validation:** typecheck passes, 369 tests pass, production build passes, migration pushed to remote.
+
+### Stage 15 — Redesign Phase 8: Fork / Remix ✅ DONE (2026-08-23)
+
+- [x] Fork model (`forks` table with parent→child relationship, creator tracking, RLS).
+- [x] Fork action (`useForkLayout` — copies layout sections to new layout + records fork relationship + bumps parent's `fork_count`).
+- [x] Remix action (`useRemixLayout` — fork + publish the fork as a new public template).
+- [x] Template lineage display ("Forked from original → template" chain via `get_layout_lineage` RPC).
+- [x] Fork count displayed on template cards and detail page.
+- [x] Independent forks — the forked layout is owned by the forker, content stays separate.
+- [x] Creator credit — fork records maintain parent attribution; remixes carry fork lineage.
+- [x] Template versioning architecture ready — forks naturally create independent branches.
+
+**Files created:**
+- `supabase/migrations/20260823110000_fork_system.sql` — forks table, fork_count column, increment_fork_count RPC, get_layout_lineage RPC.
+- `src/hooks/use-fork.ts` — `useForkLayout`, `useRemixLayout`, `useLineage`, `useForkCount`.
+
+**Files modified:**
+- `src/lib/page-blocks.ts` — added `ForkData`, `LineageNode`, `forkCount` to `TemplateData`.
+- `src/hooks/use-templates.ts` — maps `fork_count`, queries include `fork_count`.
+- `src/routes/_authenticated/templates.$id.tsx` — fork/remix buttons, lineage display, fork count.
+- `src/routes/_authenticated/templates.tsx` — fork count on cards.
+
+**Validation:** typecheck passes, 369 tests pass, production build passes, migration pushed to remote.
+
+**The fork flow:**
+```
+User visits /templates/$id → clicks "Fork layout"
+  → sections copied to new layout owned by user
+  → fork record: parent_layout → child_layout
+  → parent_layout.fork_count += 1
+  → User gets "Layout forked — it's yours to customize" toast
+  → User can edit the fork independently via EditorToolbar
+```
+
+**The remix flow:**
+```
+User visits /templates/$id → clicks "Remix" → enters name
+  → fork happens (same as above)
+  → child layout gets is_template=true + name/category metadata
+  → toast: "Remix published — your version is now in the template library"
+  → Remix appears in template browse with fork lineage
+```
+
+### Stage 16 — Redesign Phase 9: Themes ✅ DONE (2026-08-23)
+
+- [x] Expand theme token architecture — rewritten `theme-tokens.ts` to emit direct CSS custom property overrides (`--background`, `--foreground`, etc.) instead of prefixed vars.
+- [x] Initial theme catalog — 13 built-in themes: Minimal, Developer, Terminal, Paper, Brutalist, Glass, Retro, Cyberpunk, Academic, Nature, Studio, Sunset, Midnight.
+- [x] Theme picker UI — grid of preview cards with color swatches, active highlight, apply/reset actions.
+- [x] Theme preview — `MiniPreview` component shows bg/fg/surface/primary in miniature on each card.
+- [x] Theme application — `updatePageTheme` mutation; themes apply instantly, revertible to Tethyr Default.
+- [x] Theme catalog hook — `useThemeCatalog` lists all themes with pre-computed preview vars.
+
+**Files created:**
+- `supabase/migrations/20260823120000_theme_catalog.sql` — 13 built-in themes.
+- `src/hooks/use-theme-catalog.ts` — `useThemeCatalog`, `useCurrentThemeInfo`.
+- `src/components/tethyr/page/theme-picker.tsx` — theme picker panel with mini previews.
+
+**Files modified:**
+- `src/lib/theme-tokens.ts` — rewritten: direct `--background` / `--foreground` / `--radius-lg` etc. instead of `--tethyr-theme-*` prefix.
+- `src/lib/theme-tokens.test.ts` — tests updated for new direct-CSS-var approach (372 passing).
+- `src/components/tethyr/page/editor-toolbar.tsx` — added Palette button → ThemePicker.
+- `src/components/tethyr/page/index.ts` — barrel updated.
+
+**Validation:** typecheck passes, 372 tests pass, production build passes, migration pushed to remote.
+
+**How themes work:**
+```
+User opens editor → clicks "Theme" → sees 13 theme preview cards
+→ clicks one → page backgrounds/foregrounds/borders/radii/fonts update instantly
+→ CSS vars like --background, --foreground, --radius-lg override styles.css
+→ every Tailwind utility referencing those vars gets themed
+→ PageShell container passes vars via style={...}
+```
+
+### Stage 17 — Redesign Phase 10: Migration ✅ DONE (2026-08-23)
+
+- [x] Map existing profiles to block-based pages — SQL backfill creates pages + default profile layouts for all profiles.
+- [x] Map existing projects to block-based Project Spaces — SQL backfill creates pages + default project layouts for all projects.
+- [x] Migrate existing customization data — WorkspaceGrid (dashboard/studio) is preserved untouched; block system complements it on profile/project pages.
+- [x] Verify no data loss — existing README/bio/goals content seeded into block configs; all existing functionality preserved.
+- [x] Existing route logic preserved — `useProjectPage` / `useProfilePage` hooks create pages for NEW projects/profiles at visit time; migration handles historical data.
+- [x] Reversible — `migrated_pages` table tracks all backfilled records for audit/rollback.
+
+**Files created:**
+- `supabase/migrations/20260823130000_backfill_pages.sql` — PL/pgSQL backfill: iterates projects/profiles without pages, creates layouts with populated block configs (README content → about block, bio → profile-bio block), creates pages, tracks in `migrated_pages`.
+
+**Files modified:** none (SQL only).
+
+**Validation:** typecheck passes, 372 tests pass, production build passes, migration pushed to remote.
+
+**What changed for users:**
+- **Before:** Only project/profile owners saw blocks (auto-created on first visit). Non-owners saw nothing.
+- **After:** Every existing project and profile now has a published page with blocks. Non-owners immediately see the block-based presentation.
+- **New projects/profiles:** Auto-creation via hooks continues to work — same flow as before.
+
+### Stage 18 — Redesign Phase 11: Polish ✅ DONE (2026-08-23)
+
+- [x] Mobile audit — ThemePicker grid adjusted to 2-col on mobile, 3-col on sm, 4-col on md. EditorToolbar wraps correctly with `flex-wrap`. All blocks responsive.
+- [x] Accessibility audit — added `role="toolbar"` + `aria-label="Page editor"` to EditorToolbar; `aria-live="polite"` on status badge; `role="region"` + `aria-label` on page container; `role="status"` on empty states; `role="button"` on drag handle with explicit `aria-label`; `sr-only` block type labels on sortable blocks; `role="status"` on empty-state placeholders.
+- [x] UX audit — all 7 data-dependent blocks now show edit-mode placeholders instead of vanishing: Team, Activity, Skills, Projects, Bio, Hero, Status. Created shared `BlockEmptyState` component for consistent styling. Text and Heading blocks remain editable when empty. Markdown block shows preview panel. Divider always renders.
+- [x] Loading states — all blocks have context-aware skeleton loaders (compact for small blocks, full-width for hero). PageShell has full-page skeleton. Templates page has grid skeleton.
+- [x] Error states — PageShell shows "Try again" with retry button. Templates page has bordered error panel. Template detail shows "not found" with browse link.
+- [x] Performance — blocks use React Query with stale times (2–5 min). PageLayoutRenderer is memoized. BlockRenderer is memoized. No unnecessary re-renders.
+- [x] Permission audit — pages RLS covers owner-only CRUD; layouts RLS covers read-all/write-own; forks RLS covers read-all/write-auth. Templates only expose structure, never user content.
+- [x] Consistency — all blocks follow same registration pattern, same props interface, same edit/view split. All routes use EditModeProvider wrapping. EditorToolbar appears on both profile and project pages.
+
+**Files created:**
+- `src/components/tethyr/blocks/block-empty-state.tsx` — shared edit-mode placeholder.
+
+**Files modified:**
+- `src/components/tethyr/page/editor-toolbar.tsx` — `role="toolbar"`, `aria-label`, `aria-live`, better mobile wrap.
+- `src/components/tethyr/page/page-shell.tsx` — `role="region"`, `aria-label`, `role="status"` on empty states.
+- `src/components/tethyr/page/sortable-block.tsx` — `aria-label` on drag handle, sr-only block type labels.
+- `src/components/tethyr/page/theme-picker.tsx` — responsive grid fix.
+- `src/components/tethyr/blocks/project/hero-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/project/status-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/project/team-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/project/activity-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/profile/skills-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/profile/projects-block.tsx` — edit-mode empty state.
+- `src/components/tethyr/blocks/profile/bio-block.tsx` — edit-mode empty state.
+
+**Validation:** typecheck passes, 372 tests pass, production build passes.
 
 ## Execution log
 

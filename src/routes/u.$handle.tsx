@@ -34,6 +34,7 @@ import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 import "@/components/tethyr/blocks/profile";
 import "@/components/tethyr/blocks/content";
 import { PageShell } from "@/components/tethyr/page/page-shell";
+import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 
 type PublicProfile = {
@@ -461,12 +462,13 @@ function PublicProfileRoute() {
             and Featured Projects from the page system. Complements the existing
             StudioDirection and WorkspaceGrid below. */}
         {profilePage && (
-          <PageShell
-            ownerId={profile.id}
-            ownerType="profile"
-            isOwner={meId === profile.id}
-            isEditing={false}
-          />
+          <EditModeProvider>
+            <PageShell
+              ownerId={profile.id}
+              ownerType="profile"
+              isOwner={meId === profile.id}
+            />
+          </EditModeProvider>
         )}
 
         <PublicStudioWorkspace

@@ -36,7 +36,16 @@ function ProfileBioBlock({ context }: BlockProps) {
 
   const hasBio = data.bio && data.bio.trim().length > 0;
   const hasGoals = data.learning_goals && data.learning_goals.trim().length > 0;
-  if (!hasBio && !hasGoals) return null;
+  if (!hasBio && !hasGoals) {
+    if (context.isEditing) {
+      return (
+        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
+          Bio block — your bio and learning goals will appear here once set.
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="space-y-3">

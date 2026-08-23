@@ -7,6 +7,7 @@ import { BarChart3, Clock, Wrench } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -44,7 +45,10 @@ function ProjectStatusBlock({ context }: BlockProps) {
   });
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
-  if (!data) return null;
+  if (!data) {
+    if (context.isEditing) return <BlockEmptyState label="Status & Progress" detail="Project data is loading or not available." />;
+    return null;
+  }
 
   return (
     <div className="rounded-lg border border-border bg-surface p-4">

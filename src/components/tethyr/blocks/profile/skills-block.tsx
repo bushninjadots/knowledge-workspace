@@ -45,7 +45,16 @@ function ProfileSkillsBlock({ context }: BlockProps) {
   if (!data) return null;
 
   const { teach, learn } = data;
-  if (teach.length === 0 && learn.length === 0) return null;
+  if (teach.length === 0 && learn.length === 0) {
+    if (context.isEditing) {
+      return (
+        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
+          Skills block — skills will appear here when added to your profile.
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
