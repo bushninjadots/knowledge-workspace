@@ -11,6 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Studio } from "@/components/tethyr/studio/studio";
 
+// Block registration side-effect imports — must be imported so the block
+// registry is populated before createBlockInstance() is called.
+import "@/components/tethyr/blocks/content";
+import "@/components/tethyr/blocks/project";
+import "@/components/tethyr/blocks/profile";
+
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioRoute,
   head: () => ({
