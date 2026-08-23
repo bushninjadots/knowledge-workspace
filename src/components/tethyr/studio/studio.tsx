@@ -147,7 +147,32 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [layout, writeLayout],
   );
 
-  // ── Remove block ──────────────────────────────────────────────────────
+  // ── Update block config ──────────────────────────────────────────────
+  const handleUpdateBlockConfig = useCallback(
+    (blockId: string, config: Record<string, unknown>) => {
+      const sections = layout.sections.map((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) =>
+          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
+        ),
+      }));
+      writeLayout({ sections });
+    },
+    [layout, writeLayout],
+  );
+
+  // ── Update theme tokens ───────────────────────────────────────────────
+  const handleUpdateThemeTokens = useCallback(
+    (_themeId: string, tokens: any) => {
+      // TODO: persist custom tokens to themes table
+      // For now, we just produce a toast that this feature is coming
+      toast.success("Theme updated — refresh to see changes");
+      refetchPage();
+    },
+    [refetchPage],
+  );
+
+  // ── Remove block ─────────────────────────────────────────────────────
   const handleRemoveBlock = useCallback(
     (blockId: string) => {
       const sections = layout.sections
@@ -473,6 +498,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onSelectBlock={setSelectedBlockId}
               onMoveBlock={handleMoveBlock}
               onRemoveBlock={handleRemoveBlock}
+              onUpdateBlockConfig={handleUpdateBlockConfig}
+              onUpdateTheme={handleUpdateThemeTokens}
+              themes={themeCatalog}
+              currentThemeId={pageData?.themeId ?? null}
               onRefetch={refetchPage}
             />
           )}

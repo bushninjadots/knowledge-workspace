@@ -283,23 +283,14 @@ function TemplatesPanel({
             key={t.id}
             className="group rounded-lg border border-border/20 bg-surface/20 p-2.5 transition-colors hover:border-border/40"
           >
-            {/* Theme preview strip */}
-            {t.themeId && (
-              <div className="mb-1.5 flex items-center gap-1.5">
-                <div
-                  className="h-3 w-full rounded-sm border border-border/30"
-                  style={{
-                    background: `linear-gradient(90deg, var(--muted-foreground), transparent)`,
-                  }}
-                />
-                <span className="shrink-0 text-[9px] text-muted-foreground/50">
-                  {themeNames.get(t.themeId)?.replace(/\s/g, '') ?? ''}
-                </span>
-              </div>
-            )}
+            {/* Mini block preview — visual thumbnail of template structure */}
+            <TemplatePreviewCard template={t} themeNames={themeNames} />
             <p className="text-xs font-medium text-foreground truncate">{t.name}</p>
             <p className="text-[10px] text-muted-foreground">
               {t.creatorHandle ? `by @${t.creatorHandle}` : 'Community template'}
+              {t.themeId && themeNames.get(t.themeId) && (
+                <span className="ml-1 text-[9px] text-muted-foreground/40">· {themeNames.get(t.themeId)}</span>
+              )}
             </p>
             <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-0.5">
@@ -400,6 +391,96 @@ function ThemesPanel({
               </button>
             );
           })}
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Panel ───────────────────────────────────────────────────────────
+
+// ── Template Preview Card ──────────────────────────────────────────────────
+// Shows a compact visual preview of a template using miniature block indicators.
+
+const BLOCK_PREVIEW_COLORS: Record<string, string> = {
+  "text-block": "#94a3b8",
+  "heading-block": "#f8fafc",
+  "markdown-block": "#94a3b8",
+  "divider-block": "#475569",
+  "project-hero": "#6366f1",
+  "project-about": "#94a3b8",
+  "project-status": "#10b981",
+  "project-team": "#f59e0b",
+  "project-milestones": "#8b5cf6",
+  "project-needs": "#ef4444",
+  "project-roles": "#ec4899",
+  "project-discussions": "#06b6d4",
+  "project-activity": "#84cc16",
+  "project-files": "#64748b",
+  "project-repos": "#0ea5e9",
+  "project-sessions": "#14b8a6",
+  "project-evidence": "#a855f7",
+  "project-credits": "#f97316",
+  "project-timeline": "#eab308",
+  "profile-header": "#6366f1",
+  "profile-direction": "#10b981",
+  "profile-bio": "#94a3b8",
+  "profile-skills": "#8b5cf6",
+  "profile-experience": "#f59e0b",
+  "profile-tools": "#64748b",
+  "profile-projects": "#ec4899",
+  "profile-links": "#06b6d4",
+  "profile-achievements": "#f97316",
+  "profile-gallery": "#84cc16",
+};
+
+function TemplatePreviewCard({ template, themeNames }: { template: TemplateData; themeNames: Map<string, string> }) {
+  const sections = template.sections ?? [];
+  const firstSection = sections[0];
+  const blocks = firstSection?.blocks?.slice(0, 6) ?? [];
+  const allBlocks = sections.flatMap((s: any) => s.blocks ?? []).slice(0, 10);
+  const sectionCount = sections.length;
+  const totalBlocks = sections.reduce((sum: number, s: any) => sum + (s.blocks?.length ?? 0), 0);
+  const themeName = template.themeId ? themeNames.get(template.themeId) : null;
+
+  return (
+    <div className="mb-2 overflow-hidden rounded-md border border-border/30 bg-surface/40">
+      {/* Mini blocks visualization */}
+      <div className="p-1.5 space-y-1">
+        {allBlocks.slice(0, 5).map((block: any, i: number) => {
+          const color = BLOCK_PREVIEW_COLORS[block.type] ?? "#64748b";
+          const isLong = block.type.includes("hero") || block.type.includes("header");
+          return (
+            <div
+              key={i}
+              className="rounded-sm transition-all"
+              style={{
+                height: isLong ? "6px" : "4px",
+                width: isLong ? "100%" : `${60 + Math.random() * 40}%`,
+                backgroundColor: color,
+                opacity: 0.6,
+              }}
+            />
+          );
+        })}
+        {allBlocks.length > 5 && (
+          <div className="flex gap-1">
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+          </div>
+        )}
+      </div>
+
+      {/* Bottom info strip */}
+      <div className="flex items-center justify-between bg-surface-elevated/30 px-1.5 py-1">
+        <span className="text-[8px] text-muted-foreground/50">
+          {sectionCount}s · {totalBlocks}b
+        </span>
+        {themeName && (
+          <span className="rounded-sm bg-primary/10 px-1 text-[7px] text-primary/60">
+            {themeName}
+          </span>
+        )}
       </div>
     </div>
   );
