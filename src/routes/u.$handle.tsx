@@ -349,6 +349,9 @@ function PublicProfileRoute() {
     [profilePage?.theme],
   );
 
+  // When blocks are active they become the page — hide legacy duplicate sections.
+  const blocksArePage = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
+
   return (
     <Shell
       accentColor={bannerAccent}
@@ -457,18 +460,20 @@ function PublicProfileRoute() {
           </div>
         </div>
 
-        <StudioDirection
-          projects={contributedProjects.map((project) => ({
-            id: project.id,
-            title: project.title,
-            status: project.status,
-          }))}
-          learningGoals={profile.learning_goals}
-          availability={profile.availability}
-        />
+        {/* Legacy direction — hidden when blocks are the page */}
+        {!blocksArePage && (
+          <StudioDirection
+            projects={contributedProjects.map((project) => ({
+              id: project.id,
+              title: project.title,
+              status: project.status,
+            }))}
+            learningGoals={profile.learning_goals}
+            availability={profile.availability}
+          />
+        )}
 
-        {/* Block-based page presentation — always renders for owners.
-            When no page exists yet, shows a "Set up" button. */}
+        {/* Block-based page presentation — becomes the primary view */}
         <EditModeProvider>
           <PageShell
             ownerId={profile.id}
@@ -477,27 +482,30 @@ function PublicProfileRoute() {
           />
         </EditModeProvider>
 
-        <PublicStudioWorkspace
-          profile={profile}
-          profileId={profile.id}
-          meId={meId}
-          teachSkills={teachSkills}
-          learnSkills={learnSkills}
-          contributedProjects={contributedProjects}
-          layoutStorage={publicLayout}
-          canCustomize={meId === profile.id}
-          endorsePending={endorse.isPending}
-          onEndorse={(skill) => {
-            if (!meId) return;
-            endorse.mutate(
-              { profileId: profile.id, skillId: skill.id, endorsedBy: meId },
-              {
-                onSuccess: () => toast.success(`Endorsed ${skill.name}`),
-                onError: (e: Error) => toast.error(friendlyError(e)),
-              },
-            );
-          }}
-        />
+        {/* Legacy workspace — hidden when blocks are the page */}
+        {!blocksArePage && (
+          <PublicStudioWorkspace
+            profile={profile}
+            profileId={profile.id}
+            meId={meId}
+            teachSkills={teachSkills}
+            learnSkills={learnSkills}
+            contributedProjects={contributedProjects}
+            layoutStorage={publicLayout}
+            canCustomize={meId === profile.id}
+            endorsePending={endorse.isPending}
+            onEndorse={(skill) => {
+              if (!meId) return;
+              endorse.mutate(
+                { profileId: profile.id, skillId: skill.id, endorsedBy: meId },
+                {
+                  onSuccess: () => toast.success(`Endorsed ${skill.name}`),
+                  onError: (e: Error) => toast.error(friendlyError(e)),
+                },
+              );
+            }}
+          />
+        )}
       </div>
     </Shell>
   );

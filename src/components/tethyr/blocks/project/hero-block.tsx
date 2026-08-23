@@ -91,9 +91,9 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
 
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>
-      {/* Dark overlay for readability when banner image is present */}
+      {/* Overlay for readability when banner image is present */}
       {project.cover_url && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-background/90" />
       )}
 
       <div className="relative px-6 py-8 sm:px-8 sm:py-12">

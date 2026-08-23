@@ -446,6 +446,11 @@ function ProjectPage() {
     [projectPage?.theme],
   );
 
+  // When blocks are active they become the page — hide legacy presentation
+  // sections that duplicate what blocks already show. Interactive tools
+  // (workbench, file upload, milestone editors, session scheduling) stay.
+  const blocksArePage = !!projectPage && (projectPage.layout?.sections?.length ?? 0) > 0;
+
   if (isLoading) {
     return (
       <Shell>
@@ -513,29 +518,32 @@ function ProjectPage() {
 
   return (
     <Shell accentColor={accent} pageThemeStyle={pageThemeStyle}>
-      <ProjectHeader
-        project={project}
-        coverSigned={coverSigned}
-        creator={creator}
-        contributors={contributors}
-        avatarSigned={avatarSigned}
-        links={links}
-        repoStats={repoStats}
-        communityPostCount={communityPostCount}
-        openNeedCount={needs.filter((need) => !need.is_filled).length}
-        onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
-        onSignIn={isSignedOut ? signInToJoin : undefined}
-        onPostUpdate={
-          isOwner || isContributor
-            ? () => {
-                setTab("activity", { scrollToTop: false });
-                setTimeout(() => scrollToSection("project-activity"), 80);
-              }
-            : undefined
-        }
-        onOpenDiscussions={() => scrollToSection("project-discussions")}
-        onOpenNeeds={() => scrollToSection("project-needs")}
-      />
+      {/* Legacy header — hidden when blocks render the page */}
+      {!blocksArePage && (
+        <ProjectHeader
+          project={project}
+          coverSigned={coverSigned}
+          creator={creator}
+          contributors={contributors}
+          avatarSigned={avatarSigned}
+          links={links}
+          repoStats={repoStats}
+          communityPostCount={communityPostCount}
+          openNeedCount={needs.filter((need) => !need.is_filled).length}
+          onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
+          onSignIn={isSignedOut ? signInToJoin : undefined}
+          onPostUpdate={
+            isOwner || isContributor
+              ? () => {
+                  setTab("activity", { scrollToTop: false });
+                  setTimeout(() => scrollToSection("project-activity"), 80);
+                }
+              : undefined
+          }
+          onOpenDiscussions={() => scrollToSection("project-discussions")}
+          onOpenNeeds={() => scrollToSection("project-needs")}
+        />
+      )}
 
       <ProjectWorkbench
         project={project}
@@ -569,27 +577,31 @@ function ProjectPage() {
         presentationSaveState={presentationSaveState}
       />
 
-      <ProjectPulse
-        project={project}
-        isOwner={isOwner}
-        editing={directionEditing}
-        onEditingChange={setDirectionEditing}
-        gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
-        milestones={milestones}
-        openNeedCount={needs.filter((need) => !need.is_filled).length}
-      />
+      {/* Legacy pulse — hidden when blocks render the page */}
+      {!blocksArePage && (
+        <ProjectPulse
+          project={project}
+          isOwner={isOwner}
+          editing={directionEditing}
+          onEditingChange={setDirectionEditing}
+          gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
+          milestones={milestones}
+          openNeedCount={needs.filter((need) => !need.is_filled).length}
+        />
+      )}
 
-      {/* Block-based page presentation — always renders for owners.
-          When no page exists yet, shows a "Set up" button. */}
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
+      {/* Block system — replaces legacy presentation when active.
+          When blocks exist they ARE the page; legacy duplicate sections hide. */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <EditModeProvider>
           <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
         </EditModeProvider>
       </div>
 
+      {/* Legacy sections — only shown when blocks aren't the active page */}
+      {!blocksArePage && (
       <div className="animate-room-enter min-h-screen bg-noise">
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
-          {/* The README is the project's homepage: identity, intent, and work context. */}
           <section aria-labelledby="project-homepage-heading" className="pt-6">
             <h2 id="project-homepage-heading" className="sr-only">
               Project homepage
@@ -886,6 +898,14 @@ function ProjectPage() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* Interactive tools — always available regardless of block state */}
+      {blocksArePage && (
+        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-8">
+          <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
+        </div>
+      )}
 
       {joinModalOpen && (
         <Suspense fallback={null}>

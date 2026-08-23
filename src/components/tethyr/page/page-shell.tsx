@@ -14,7 +14,7 @@
 //   • Published/draft — resolved page with layout
 //   • Editing — blocks get move/remove/configure controls
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
@@ -111,27 +111,24 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
     );
   }
 
+  const createdRef = useRef(false);
+
+  // Auto-create the page on first render when owner and no page exists.
+  useEffect(() => {
+    if (!page && isOwner && !isLoading && !createPage.isPending && !createdRef.current) {
+      createdRef.current = true;
+      createPage.mutate({ ownerId, ownerType });
+    }
+  }, [page, isOwner, isLoading, createPage, ownerId, ownerType]);
+
   // ── No page yet ──────────────────────────────────────────────────────
   if (!page) {
     if (isOwner) {
       return (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent,var(--surface-elevated))]/5 px-4 py-4">
-            <p className="flex-1 text-sm text-muted-foreground">
-              Your {ownerType} page isn't set up yet. Create one to start customizing.
-            </p>
-            <Button
-              variant="default"
-              size="sm"
-              className="gap-1.5 text-xs"
-              onClick={() => createPage.mutate(
-                { ownerId, ownerType },
-                { onSuccess: () => refetch() },
-              )}
-            >
-              {createPage.isPending ? "Setting up..." : "Set up page"}
-            </Button>
-          </div>
+        <div className="py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            {createPage.isPending ? "Preparing your page…" : "Setting up your page layout…"}
+          </p>
         </div>
       );
     }

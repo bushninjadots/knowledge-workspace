@@ -57,7 +57,7 @@ function ProfileSkillsBlock({ context }: BlockProps) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="bg-surface/40 p-4 rounded-lg">
       {/* Skills I share */}
       {teach.length > 0 && (
         <div className="mb-3">

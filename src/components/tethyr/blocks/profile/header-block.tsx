@@ -42,7 +42,7 @@ function ProfileHeaderBlock({ context }: BlockProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-5 rounded-xl border border-border bg-surface p-5">
+      <div className="flex items-center gap-5 bg-surface/40 p-5 rounded-xl">
         <Skeleton className="h-20 w-20 rounded-full" />
         <div className="space-y-2">
           <Skeleton className="h-7 w-48" />
@@ -58,7 +58,7 @@ function ProfileHeaderBlock({ context }: BlockProps) {
   const initial = (data.display_name ?? data.handle ?? "?").charAt(0).toUpperCase();
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
+    <div className="bg-surface/40 p-5 rounded-xl">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         {/* Avatar */}
         <div className="shrink-0">

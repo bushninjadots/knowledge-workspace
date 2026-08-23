@@ -51,7 +51,7 @@ function ProjectStatusBlock({ context }: BlockProps) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div>
       <div className="flex flex-wrap items-center gap-3">
         {/* Status badge */}
         <div className="flex items-center gap-2">

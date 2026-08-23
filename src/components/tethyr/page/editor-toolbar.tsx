@@ -115,12 +115,16 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Entry point (not editing) ──────────────────────────────────────
   if (!isEditing) {
     return (
-      <div className="mb-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={startEditing} className="gap-1.5 text-xs">
-          <Edit3 className="h-3.5 w-3.5" /> Customize
-        </Button>
+      <div className="mb-6 flex items-center gap-3 border-b border-border/30 pb-3">
+        <button
+          type="button"
+          onClick={startEditing}
+          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+        >
+          <Edit3 className="h-3.5 w-3.5" /> Arrange page
+        </button>
         {page.status === "draft" && (
-          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">Draft</span>
+          <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">Draft</span>
         )}
       </div>
     );
@@ -129,15 +133,17 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Editing toolbar ────────────────────────────────────────────────
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent,var(--surface-elevated))]/5 px-3 py-2" role="toolbar" aria-label="Page editor">
-        <span className="rounded-full bg-[var(--user-accent,var(--trust))] px-2 py-0.5 text-[11px] font-semibold text-[var(--user-accent-foreground,white)]" aria-label="Edit mode active">Editing</span>
-        <span className="text-[11px] text-muted-foreground" aria-live="polite">{isPublished ? "Published" : "Draft"}</span>
-        <div className="ml-auto flex items-center gap-1.5 sm:flex-nowrap flex-wrap">
+      <div className="mb-6 border-b border-border/30 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-medium text-foreground mr-2">Editing</span>
+          <span className="text-[11px] text-muted-foreground" aria-live="polite">{isPublished ? "Published" : "Draft"}</span>
+          <span className="text-muted-foreground/30 mx-1">·</span>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowPicker(!showPicker)}><Plus className="h-3.5 w-3.5" /> Add block</Button>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowApplyPanel(!showApplyPanel)}><GalleryHorizontalEnd className="h-3.5 w-3.5" /> Apply template</Button>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowTemplateName(true)}><Bookmark className="h-3.5 w-3.5" /> Save template</Button>
           <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={() => setShowThemePicker(!showThemePicker)}><Palette className="h-3.5 w-3.5" /> Theme</Button>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={stopEditing}><Eye className="h-3.5 w-3.5" /> Preview</Button>
+          <span className="text-muted-foreground/30 mx-1">·</span>
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={stopEditing}><Eye className="h-3.5 w-3.5" /> Done</Button>
           {isPublished ? (
             <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={handleUnpublish}><X className="h-3.5 w-3.5" /> Unpublish</Button>
           ) : (
