@@ -41,10 +41,11 @@ export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
   }
 
   function handleReset() {
-    // Reset to Tethyr Default by setting theme_id to null.
+    // Reset to Tethyr Default by setting theme_id to the default.
+    const DEFAULT_ID = "00000000-0000-0000-0000-000000000001";
     setApplyingId("default");
     updateTheme.mutate(
-      { pageId: page.id, themeId: null as unknown as string },
+      { pageId: page.id, themeId: DEFAULT_ID },
       {
         onSuccess: () => {
           setApplyingId(null);

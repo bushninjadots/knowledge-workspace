@@ -55,9 +55,15 @@ describe("block-registry", () => {
     expect(getBlock("text")).toBe(textBlock);
   });
 
-  it("throws when registering the same type twice", () => {
+  it("warns and skips when registering the same type twice", () => {
     registerBlock(textBlock);
-    expect(() => registerBlock(textBlock)).toThrow('Block type "text" is already registered.');
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Should not throw — duplicate is a no-op with a console warning.
+    expect(() => registerBlock(textBlock)).not.toThrow();
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('Block type "text" already registered'),
+    );
+    spy.mockRestore();
   });
 
   it("returns undefined for unregistered types", () => {

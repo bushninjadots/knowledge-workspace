@@ -75,6 +75,27 @@ export function usePublicTemplates(params: UsePublicTemplatesParams = {}) {
 
       // Fetch creator profiles separately.
       const rows: TemplateData[] = (data ?? []).map(mapLayoutRow);
+
+      // Batch-fetch creator profiles for display names.
+      const creatorIds = [...new Set(rows.map((r) => r.createdBy).filter(Boolean))];
+      if (creatorIds.length > 0) {
+        const { data: profiles } = await (supabase as any)
+          .from("profiles")
+          .select("id, handle, display_name")
+          .in("id", creatorIds);
+        if (profiles) {
+          const typed = profiles as { id: string; handle: string | null; display_name: string | null }[];
+          const profileMap = new Map(typed.map((p) => [p.id, p]));
+          for (const row of rows) {
+            const profile = row.createdBy ? profileMap.get(row.createdBy) : undefined;
+            if (profile) {
+              row.creatorHandle = profile.handle ?? null;
+              row.creatorDisplayName = profile.display_name ?? null;
+            }
+          }
+        }
+      }
+
       return rows;
     },
     staleTime: 2 * 60 * 1000,

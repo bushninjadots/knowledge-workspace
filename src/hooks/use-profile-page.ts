@@ -41,6 +41,7 @@ export function useProfilePage({ profileId, isOwner }: UseProfilePageOptions) {
 async function autoCreatePage(profileId: string, qc: ReturnType<typeof useQueryClient>) {
   try {
     const defaultLayout = createDefaultProfileLayout();
+    const me = (await supabase.auth.getUser()).data.user;
     const { data: layoutData, error: layoutError } = await (supabase as any)
       .from("layouts")
       .insert({
@@ -48,7 +49,7 @@ async function autoCreatePage(profileId: string, qc: ReturnType<typeof useQueryC
         type: "standard",
         sections: defaultLayout.sections as unknown as Record<string, unknown>[],
         is_template: false,
-        created_by: profileId,
+        created_by: me?.id ?? profileId,
       })
       .select("id")
       .single();

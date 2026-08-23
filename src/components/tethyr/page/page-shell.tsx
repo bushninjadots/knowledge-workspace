@@ -42,6 +42,26 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   const updateLayout = useUpdatePageLayout();
   const { isEditing } = useEditMode();
 
+  // Diagnostic: log whether blocks are registered (once per mount).
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Dynamic import to avoid circular deps at module level.
+      import("@/lib/block-registry").then(({ getAllBlocks }) => {
+        const all = getAllBlocks();
+        console.log(
+          `[PageShell] ${ownerType}/${ownerId} | isOwner=${isOwner} | page=${page?.id ?? "null"} | sections=${page?.layout?.sections?.length ?? 0} | blocks_registered=${all.length}`,
+        );
+        if (all.length === 0) {
+          console.warn(
+            "[PageShell] ⚠ No blocks registered — block picker and renderer will be empty. Did you import 'register-all'?",
+          );
+        }
+      });
+    }
+    // Only run on mount or when page/owner type changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!page, ownerType]);
+
   const blockContext: BlockContext = useMemo(
     () => ({
       ownerId,
@@ -144,9 +164,9 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
 
   // ── Rendered page ────────────────────────────────────────────────────
   return (
-    <div>
-      {/* Editor toolbar — only shows editing tools when in edit mode.
-          The Customize/Done toggle lives in the page Shell header. */}
+    <div data-page-shell={`${ownerType}:${ownerId}`}>
+      {/* Editor toolbar — always visible for owners. The "Arrange page"
+          entry point appears when not editing; full tools when editing. */}
       {isOwner && (
         <EditorToolbar
           page={page}

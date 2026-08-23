@@ -732,8 +732,8 @@ function ModuleShell({
   }
   const Icon = module?.icon;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-surface/70">
-      <div className="flex items-center gap-2 border-b border-border/60 bg-surface-elevated/60 px-3 py-2">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-border/30">
+      <div className="flex items-center gap-2 bg-surface-elevated/30 px-3 py-2">
         <span
           className="ws-drag-handle flex shrink-0 cursor-grab items-center rounded-md p-0.5 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground active:cursor-grabbing"
           title="Drag to move"
