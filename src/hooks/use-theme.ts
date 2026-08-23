@@ -38,6 +38,6 @@ export function useTheme(themeId: string | null | undefined) {
       const theme = data as unknown as ThemeRecord;
       return themeTokensToVars(theme.tokens ?? {});
     },
-    staleTime: 5 * 60 * 1000, // 5 min — themes change rarely.
+    staleTime: 30 * 1000, // 30s — theme queries should refetch promptly after mutations.
   });
 }

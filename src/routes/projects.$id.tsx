@@ -591,7 +591,7 @@ function ProjectPage() {
           When blocks exist they ARE the page; legacy duplicate sections hide. */}
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <EditModeProvider>
-          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
+          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} hideEditor />
         </EditModeProvider>
       </div>
 

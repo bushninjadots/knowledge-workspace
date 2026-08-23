@@ -33,9 +33,11 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
+  /** Hide the in-page editor toolbar (when editing is done through /studio). */
+  hideEditor?: boolean;
 }
 
-export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
+export function PageShell({ ownerId, ownerType, isOwner, hideEditor }: PageShellProps) {
   const { data: page, isLoading, isError, refetch } = usePage({ ownerId, ownerType });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const createPage = useCreatePage();
@@ -165,9 +167,9 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   // ── Rendered page ────────────────────────────────────────────────────
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
-      {/* Editor toolbar — always visible for owners. The "Arrange page"
-          entry point appears when not editing; full tools when editing. */}
-      {isOwner && (
+      {/* Editor toolbar — only shown on surfaces that own their editing
+          (not when editing is handled through /studio). */}
+      {isOwner && !hideEditor && (
         <EditorToolbar
           page={page}
           onRefresh={() => refetch()}

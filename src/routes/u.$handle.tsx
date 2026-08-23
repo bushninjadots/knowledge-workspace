@@ -466,7 +466,7 @@ function PublicProfileRoute() {
 
         {/* Block-based page presentation */}
         <EditModeProvider>
-          <PageShell ownerId={profile.id} ownerType="profile" isOwner={isOwner} />
+          <PageShell ownerId={profile.id} ownerType="profile" isOwner={isOwner} hideEditor />
         </EditModeProvider>
 
         {/* Legacy workspace — hidden when blocks are the page */}

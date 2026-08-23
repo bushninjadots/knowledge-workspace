@@ -120,8 +120,9 @@ export function useUpdatePageTheme() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["page"] });
+      qc.invalidateQueries({ queryKey: ["theme", vars.themeId] });
     },
   });
 }

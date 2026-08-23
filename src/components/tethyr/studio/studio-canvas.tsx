@@ -1,11 +1,13 @@
 // ── Studio Canvas ────────────────────────────────────────────────────────────
-// Center panel: renders the real page with contextual hover controls.
+// Center panel: renders the real page with contextual hover controls and
+// drag-to-reorder for blocks.
 
-import { GripVertical, Pencil, Copy, Trash2, Eye, EyeOff, Plus } from "lucide-react";
+import { useState, useCallback } from "react";
+import { GripVertical, Trash2, Eye, EyeOff, Plus } from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StudioPage } from "./studio";
-import type { BlockContext, PageData, PageLayout, LayoutSection, LayoutBlockInstance } from "@/lib/page-blocks";
+import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
 
 interface StudioCanvasProps {
   page: StudioPage;
@@ -18,6 +20,7 @@ interface StudioCanvasProps {
   onToggleVisibility: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onAddBlock: (blockType: string) => void;
+  onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
 }
@@ -26,8 +29,40 @@ export function StudioCanvas({
   page, pageData, pageLoading, pageError,
   selectedBlockId, onSelectBlock,
   onRemoveBlock, onToggleVisibility, onMoveBlock,
-  onAddBlock, onRefetch,
+  onAddBlock, onReorderBlocks, onRefetch,
 }: StudioCanvasProps) {
+  const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
+    e.dataTransfer.setData("text/plain", blockId);
+    e.dataTransfer.effectAllowed = "move";
+    (e.currentTarget as HTMLElement).style.opacity = "0.4";
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    (e.currentTarget as HTMLElement).style.opacity = "1";
+    setDragOverBlockId(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, blockId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverBlockId(blockId);
+  }, []);
+
+  const handleDrop = useCallback((
+    e: React.DragEvent,
+    sectionId: string,
+    targetBlockId: string,
+    targetIndex: number,
+  ) => {
+    e.preventDefault();
+    const draggedBlockId = e.dataTransfer.getData("text/plain");
+    if (draggedBlockId && draggedBlockId !== targetBlockId) {
+      onReorderBlocks(sectionId, draggedBlockId, targetIndex);
+    }
+    setDragOverBlockId(null);
+  }, [onReorderBlocks]);
   if (pageLoading) {
     return (
       <div className="space-y-4 p-8">
@@ -94,20 +129,29 @@ export function StudioCanvas({
     <div className="space-y-3">
       {layout.sections.map((section) => (
         <div key={section.id} className="space-y-2">
-          {section.blocks.map((block) => {
+          {section.blocks.map((block, idx) => {
             const isSelected = selectedBlockId === block.id;
             const isHidden = block.visible === false;
-            const isFirst = section.blocks.indexOf(block) === 0;
-            const isLast = section.blocks.indexOf(block) === section.blocks.length - 1;
+            const isFirst = idx === 0;
+            const isLast = idx === section.blocks.length - 1;
+            const isDragOver = dragOverBlockId === block.id;
 
             return (
               <div
                 key={block.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, block.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, block.id)}
+                onDragLeave={() => setDragOverBlockId(null)}
+                onDrop={(e) => handleDrop(e, section.id, block.id, idx)}
                 className={`group/block relative rounded-md transition-all ${
                   isSelected
                     ? "ring-2 ring-primary/30 bg-primary/[0.03]"
-                    : "ring-1 ring-transparent hover:ring-border/20"
-                }`}
+                    : isDragOver
+                      ? "ring-2 ring-primary/20 bg-primary/[0.05]"
+                      : "ring-1 ring-transparent hover:ring-border/20"
+                } ${isDragOver ? "scale-[1.01]" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectBlock(block.id);
@@ -120,6 +164,13 @@ export function StudioCanvas({
 
                 {/* Hover controls — top-right corner */}
                 <div className="pointer-events-none absolute -top-0 right-0 z-10 flex -translate-y-full items-center gap-0.5 rounded-md border border-border/30 bg-surface-elevated p-0.5 opacity-0 shadow-sm transition-opacity group-hover/block:opacity-100">
+                  {/* Drag handle */}
+                  <span
+                    className="pointer-events-auto rounded p-1 text-muted-foreground/50 cursor-grab active:cursor-grabbing"
+                    aria-label="Drag to reorder"
+                  >
+                    <GripVertical className="h-3 w-3" />
+                  </span>
                   {!isFirst && (
                     <button
                       type="button"

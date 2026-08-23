@@ -191,6 +191,23 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [layout, writeLayout],
   );
 
+  // ── Drag reorder blocks ────────────────────────────────────────────────
+  const handleReorderBlocks = useCallback(
+    (sectionId: string, blockId: string, targetIndex: number) => {
+      const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      for (const section of sections) {
+        const idx = section.blocks.findIndex((b) => b.id === blockId);
+        if (idx === -1) continue;
+        const [moved] = section.blocks.splice(idx, 1);
+        const clampedTarget = Math.min(targetIndex, section.blocks.length);
+        section.blocks.splice(clampedTarget, 0, moved);
+        break;
+      }
+      writeLayout({ sections });
+    },
+    [layout, writeLayout],
+  );
+
   // ── Publish / Save Draft / Preview ────────────────────────────────────
   const handlePublish = useCallback(async () => {
     if (!pageData) return;
@@ -428,6 +445,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onRemoveBlock={handleRemoveBlock}
                     onToggleVisibility={handleToggleVisibility}
                     onMoveBlock={handleMoveBlock}
+                    onReorderBlocks={handleReorderBlocks}
                     onAddBlock={handleAddBlock}
                     onLayoutChange={writeLayout}
                     onRefetch={refetchPage}
