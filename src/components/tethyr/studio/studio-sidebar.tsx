@@ -44,6 +44,8 @@ interface StudioSidebarProps {
   themeNames: Map<string, string>;
   onReseed: () => void;
   templates: TemplateData[];
+  templatesLoading?: boolean;
+  templatesError?: boolean;
   themes: ThemeCatalogEntry[];
   currentThemeId: string | null;
 }
@@ -52,7 +54,7 @@ export function StudioSidebar({
   activePage, activeTab, onTabChange,
   onAddBlock, onApplyTemplate, onForkTemplate, onApplyTheme,
   themeNames,
-  onSaveAsTemplate, onReseed, templates, themes, currentThemeId,
+  onSaveAsTemplate, onReseed, templates, templatesLoading, templatesError, themes, currentThemeId,
 }: StudioSidebarProps) {
   return (
     <div className="flex h-full flex-col">
@@ -89,6 +91,8 @@ export function StudioSidebar({
         {activeTab === "templates" && (
           <TemplatesPanel
             templates={templates}
+            templatesLoading={templatesLoading}
+            templatesError={templatesError}
             onApply={onApplyTemplate}
             onFork={onForkTemplate}
             onSaveAsTemplate={onSaveAsTemplate}
@@ -185,9 +189,11 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
 // ── Templates Panel ──────────────────────────────────────────────────────────
 
 function TemplatesPanel({
-  templates, onApply, onFork, onSaveAsTemplate, onReseed, themeNames,
+  templates, onApply, onFork, onSaveAsTemplate, onReseed, themeNames, templatesLoading, templatesError,
 }: {
   templates: TemplateData[];
+  templatesLoading?: boolean;
+  templatesError?: boolean;
   onApply: (id: string) => void;
   onFork: (id: string) => void;
   onSaveAsTemplate: (name: string, opts?: { description?: string; category?: string }) => void;
@@ -244,6 +250,26 @@ function TemplatesPanel({
             className="w-full rounded bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary hover:bg-primary/20 disabled:opacity-40"
           >
             Save current layout as template
+          </button>
+        </div>
+      )}
+
+      {/* Loading / Error states */}
+      {templatesLoading && (
+        <div className="mb-3 space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border border-border/20 bg-surface/20 p-2.5 animate-pulse">
+              <div className="h-3 w-24 rounded bg-surface/40 mb-1.5" />
+              <div className="h-2 w-16 rounded bg-surface/40" />
+            </div>
+          ))}
+        </div>
+      )}
+      {templatesError && (
+        <div className="mb-3 rounded-md border border-red-500/20 bg-red-500/5 p-3 text-center">
+          <p className="text-[11px] text-red-400">Could not load templates.</p>
+          <button type="button" onClick={onReseed} className="mt-1 text-[10px] text-primary hover:underline">
+            Try re-seeding
           </button>
         </div>
       )}

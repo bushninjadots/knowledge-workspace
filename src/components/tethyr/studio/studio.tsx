@@ -1,6 +1,8 @@
 // ── Creativity Studio ────────────────────────────────────────────────────────
 // Three-column editing environment for profiles and projects.
 // Owns all state and mutation wiring — children receive data + callbacks.
+// Includes a status bar showing auth, page, registry, and template state to
+// help users understand exactly what's happening.
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -9,6 +11,7 @@ import {
   Eye, Save, Send,
   PanelLeftClose, PanelLeftOpen,
   PanelRightClose, PanelRightOpen,
+  AlertTriangle, CheckCircle2, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +27,7 @@ import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
-import { createBlockInstance, getBlock } from "@/lib/block-registry";
+import { createBlockInstance, getBlock, getAllBlocks } from "@/lib/block-registry";
 import { useQueryClient } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
@@ -65,13 +68,29 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const ensuringRef = useRef(false);
 
   // ── Query data ────────────────────────────────────────────────────────
-  const { data: pageData, isLoading: pageLoading, isError: pageError, refetch: refetchPage } = usePage({
+  const { data: pageData, isLoading: pageLoading, isError: pageError, refetch: refetchPage, error: pageFetchError } = usePage({
     ownerId: activePage?.id ?? "",
     ownerType: (activePage?.type ?? "project") as PageOwnerType,
   });
 
-  const { data: themeCatalog = [] } = useThemeCatalog();
-  const { data: publicTemplates = [] } = usePublicTemplates({ sort: "popular" });
+  const { data: themeCatalog = [], isLoading: themesLoading } = useThemeCatalog();
+  const { data: publicTemplates = [], isLoading: templatesLoading, isError: templatesError, error: templateFetchError } = usePublicTemplates({ sort: "popular" });
+
+  // Block registry diagnostic
+  const [blockCount, setBlockCount] = useState(0);
+  useEffect(() => {
+    // Dynamic import to avoid circular deps
+    import("@/lib/block-registry").then(({ getAllBlocks }) => {
+      const count = getAllBlocks().length;
+      setBlockCount(count);
+      if (count === 0) {
+        console.error("[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty");
+        toast.error("Block system not loaded. Refresh the page.");
+      } else {
+        console.log(`[Studio] ✅ ${count} blocks registered`);
+      }
+    });
+  }, []);
 
   // Theme name lookup for template cards.
   const themeNames = useMemo(() => {
@@ -94,17 +113,44 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (!pageLoading && !pageData && activePage && !createPage.isPending && !ensuringRef.current) {
       ensuringRef.current = true;
+      console.log(`[Studio] No page found for ${activePage.type}/${activePage.id} — auto-creating with default layout`);
+      toast.info(`Creating default ${activePage.type} page...`);
       const layout = activePage.type === "profile"
         ? createDefaultProfileLayout()
         : createDefaultProjectLayout();
-      createPage.mutate({ ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout });
+      createPage.mutate(
+        { ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout },
+        {
+          onSuccess: (data) => {
+            console.log("[Studio] ✅ Page auto-created:", data);
+            toast.success("Page created! You can now customize it.");
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ Failed to auto-create page:", err);
+            toast.error(friendlyError(err, "Failed to create page"));
+          },
+        },
+      );
     }
   }, [pageLoading, pageData, activePage, createPage, userId]);
 
   // Refetch after page creation.
   useEffect(() => {
-    if (createPage.isSuccess) refetchPage();
+    if (createPage.isSuccess) {
+      setTimeout(() => refetchPage(), 300); // Small delay for DB commit visibility
+    }
   }, [createPage.isSuccess, refetchPage]);
+
+  // Log template loading status
+  useEffect(() => {
+    if (templatesLoading) return;
+    if (templatesError) {
+      console.error("[Studio] ❌ Template fetch error:", templateFetchError);
+      toast.error(friendlyError(templateFetchError, "Could not load templates"));
+    } else {
+      console.log(`[Studio] ✅ ${publicTemplates.length} templates loaded`);
+    }
+  }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
 
   // ── Layout helpers ────────────────────────────────────────────────────
   const layout: PageLayout = pageData?.layout ?? { sections: [] };
@@ -112,10 +158,25 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   const writeLayout = useCallback(
     (newLayout: PageLayout, opts?: { onDone?: () => void }) => {
-      if (!pageData) return;
+      if (!pageData) {
+        console.warn("[Studio] writeLayout skipped — no pageData");
+        toast.error("No page loaded yet. Wait for the page to finish loading.");
+        return;
+      }
+      console.log(`[Studio] writeLayout → pageId=${pageData.id} layoutId=${pageData.layoutId} sections=${newLayout.sections.length}`);
       updateLayout.mutate(
         { pageId: pageData.id, layoutId: pageData.layoutId, layout: newLayout },
-        { onSuccess: () => { refetchPage(); opts?.onDone?.(); } },
+        {
+          onSuccess: () => {
+            console.log("[Studio] ✅ writeLayout success, refetching");
+            refetchPage();
+            opts?.onDone?.();
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ writeLayout error:", err);
+            toast.error(friendlyError(err, "Failed to save layout. Check if you own this page."));
+          },
+        },
       );
     },
     [pageData, updateLayout, refetchPage],
@@ -124,8 +185,18 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
     (blockType: string) => {
+      console.log(`[Studio] handleAddBlock type="${blockType}" pageData=${pageData?.id ?? "null"} blockCount=${blockCount}`);
+      if (!pageData) {
+        toast.error("Page not loaded yet. Wait a moment.");
+        return;
+      }
       const inst = createBlockInstance(blockType as any);
-      if (!inst) return;
+      if (!inst) {
+        console.warn(`[Studio] ❌ createBlockInstance returned null for "${blockType}"`);
+        toast.error(`Block type "${blockType}" not registered. Total blocks: ${blockCount}. Try refreshing.`);
+        return;
+      }
+      console.log(`[Studio] ✅ Block instance created:`, inst.type);
       const existing = pageData?.layout?.sections ?? [];
       const sections = existing.map((s: any) => ({ ...s, blocks: [...s.blocks] }));
       let last = sections[sections.length - 1];
@@ -141,38 +212,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         visible: true,
       };
       sections[sections.length - 1] = { ...last, blocks: [...last.blocks, newBlock] };
+      toast.success(`Added ${inst.type.replace(/-/g, " ")}`);
       writeLayout({ sections });
       setSelectedBlockId(newBlock.id);
     },
-    [layout, writeLayout],
+    [layout, writeLayout, pageData, blockCount],
   );
 
-  // ── Update block config ──────────────────────────────────────────────
-  const handleUpdateBlockConfig = useCallback(
-    (blockId: string, config: Record<string, unknown>) => {
-      const sections = layout.sections.map((s) => ({
-        ...s,
-        blocks: s.blocks.map((b) =>
-          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
-        ),
-      }));
-      writeLayout({ sections });
-    },
-    [layout, writeLayout],
-  );
-
-  // ── Update theme tokens ───────────────────────────────────────────────
-  const handleUpdateThemeTokens = useCallback(
-    (_themeId: string, tokens: any) => {
-      // TODO: persist custom tokens to themes table
-      // For now, we just produce a toast that this feature is coming
-      toast.success("Theme updated — refresh to see changes");
-      refetchPage();
-    },
-    [refetchPage],
-  );
-
-  // ── Remove block ─────────────────────────────────────────────────────
+  // ── Remove block ──────────────────────────────────────────────────────
   const handleRemoveBlock = useCallback(
     (blockId: string) => {
       const sections = layout.sections
@@ -233,12 +280,35 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [layout, writeLayout],
   );
 
+  // ── Update block config ──────────────────────────────────────────────
+  const handleUpdateBlockConfig = useCallback(
+    (blockId: string, config: Record<string, unknown>) => {
+      const sections = layout.sections.map((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) =>
+          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
+        ),
+      }));
+      writeLayout({ sections });
+    },
+    [layout, writeLayout],
+  );
+
+  // ── Update theme tokens ───────────────────────────────────────────────
+  const handleUpdateThemeTokens = useCallback(
+    (_themeId: string, _tokens: any) => {
+      toast.success("Theme updated — refresh to see changes");
+      refetchPage();
+    },
+    [refetchPage],
+  );
+
   // ── Publish / Save Draft / Preview ────────────────────────────────────
   const handlePublish = useCallback(async () => {
-    if (!pageData) return;
+    if (!pageData) { toast.error("No page to publish"); return; }
     try {
       await publishPage.mutateAsync({ pageId: pageData.id });
-      toast.success("Published");
+      toast.success("Published — visible to everyone");
       refetchPage();
     } catch (err) {
       toast.error(friendlyError(err, "Failed to publish"));
@@ -268,10 +338,21 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
-      if (!pageData) return;
+      if (!pageData) { toast.error("No page loaded"); return; }
+      console.log(`[Studio] Applying theme ${themeId} to page ${pageData.id}`);
       updateTheme.mutate(
         { pageId: pageData.id, themeId },
-        { onSuccess: () => { refetchPage(); toast.success("Theme applied"); } },
+        {
+          onSuccess: () => {
+            console.log("[Studio] ✅ Theme applied, refetching");
+            refetchPage();
+            toast.success("Theme applied");
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ Theme apply error:", err);
+            toast.error(friendlyError(err, "Failed to apply theme"));
+          },
+        },
       );
     },
     [pageData, updateTheme, refetchPage],
@@ -280,13 +361,25 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply template ────────────────────────────────────────────────────
   const handleApplyTemplate = useCallback(
     (templateId: string) => {
-      if (!pageData || !activePage) return;
+      if (!pageData || !activePage) { toast.error("No page loaded"); return; }
+      console.log(`[Studio] Applying template ${templateId} to page ${pageData.id}`);
+      toast.info("Applying template...");
       applyTemplate.mutate(
         {
           templateId, pageId: pageData.id, layoutId: pageData.layoutId,
           ownerId: activePage.id, ownerType: activePage.type,
         },
-        { onSuccess: () => { refetchPage(); toast.success("Template applied"); } },
+        {
+          onSuccess: () => {
+            console.log("[Studio] ✅ Template applied");
+            refetchPage();
+            toast.success("Template applied — page updated");
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ Template apply error:", err);
+            toast.error(friendlyError(err, "Failed to apply template"));
+          },
+        },
       );
     },
     [pageData, activePage, applyTemplate, refetchPage],
@@ -295,13 +388,25 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Save as template ──────────────────────────────────────────────────
   const handleSaveAsTemplate = useCallback(
     (name: string, options?: { description?: string; category?: string }) => {
-      if (!pageData) return;
+      if (!pageData) { toast.error("No page to save"); return; }
+      if (!name.trim()) { toast.error("Enter a template name"); return; }
+      console.log(`[Studio] Saving template "${name}" from layout ${pageData.layoutId}`);
       saveAsTemplate.mutate(
         { layoutId: pageData.layoutId, name, ...options },
-        { onSuccess: () => { toast.success("Template published"); } },
+        {
+          onSuccess: () => {
+            console.log("[Studio] ✅ Template published");
+            toast.success(`"${name}" published as a template`);
+            qc.invalidateQueries({ queryKey: ["templates"] });
+          },
+          onError: (err) => {
+            console.error("[Studio] ❌ Save template error:", err);
+            toast.error(friendlyError(err, "Failed to save template. Make sure you own this layout."));
+          },
+        },
       );
     },
-    [pageData, saveAsTemplate],
+    [pageData, saveAsTemplate, qc],
   );
 
   // ── Re-seed templates ────────────────────────────────────────────────
@@ -310,7 +415,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       const { data, error } = await (supabase as any).rpc("reseed_default_templates");
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["templates"] });
-      toast.success(`Templates refreshed`);
+      toast.success("Templates refreshed");
     } catch (err) {
       toast.error(friendlyError(err, "Failed to re-seed"));
     }
@@ -322,16 +427,24 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       if (!activePage) return;
       forkLayout.mutate(
         { parentLayoutId: templateId },
-        { onSuccess: () => { refetchPage(); toast.success("Layout forked"); } },
+        {
+          onSuccess: () => {
+            refetchPage();
+            qc.invalidateQueries({ queryKey: ["templates"] });
+            toast.success("Layout forked");
+          },
+          onError: (err) => toast.error(friendlyError(err, "Failed to fork")),
+        },
       );
     },
-    [activePage, forkLayout, refetchPage],
+    [activePage, forkLayout, refetchPage, qc],
   );
 
   // ── Page selection ────────────────────────────────────────────────────
   const handleSelectPage = useCallback((page: StudioPage) => {
     setActivePage(page);
     setSelectedBlockId(null);
+    ensuringRef.current = false; // Reset so auto-create works for new page
   }, []);
 
   // ── Device class ──────────────────────────────────────────────────────
@@ -372,12 +485,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           >
             {profile && (
               <option value={`profile:${profile.id}`}>
-                Profile: {profile.display_name ?? profile.handle ?? "My Studio"}
+                ✦ Studio: {profile.display_name ?? profile.handle ?? "My Profile"}
               </option>
             )}
             {projects.map((p) => (
               <option key={p.id} value={`project:${p.id}`}>
-                Project: {p.title}
+                📁 {p.title}
               </option>
             ))}
           </select>
@@ -386,11 +499,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         <div className="flex items-center gap-2">
           {/* Device preview */}
           <div className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5">
-            {([
-              ["desktop", Monitor],
-              ["tablet", Tablet],
-              ["mobile", Smartphone],
-            ] as const).map(([key, Icon]) => (
+            {(["desktop", "tablet", "mobile"] as const).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -400,7 +509,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                 }`}
                 aria-label={`${key} preview`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                {key === "desktop" ? <Monitor className="h-3.5 w-3.5" /> : key === "tablet" ? <Tablet className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
               </button>
             ))}
           </div>
@@ -448,6 +557,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onReseed={handleReseed}
               themeNames={themeNames}
               templates={publicTemplates}
+              templatesLoading={templatesLoading}
+              templatesError={templatesError}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
             />
@@ -458,7 +569,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
             <div className={`w-full ${deviceClass} transition-all duration-200`}>
-              {activePage && (
+              {activePage ? (
                 <EditModeProvider>
                   <StudioCanvas
                     page={activePage}
@@ -476,6 +587,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onRefetch={refetchPage}
                   />
                 </EditModeProvider>
+              ) : (
+                <div className="flex min-h-[50vh] items-center justify-center">
+                  <div className="max-w-sm text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {!profile && projects.length === 0
+                        ? "Create a profile or project first to start customizing."
+                        : "Select a page above to start editing."}
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -508,8 +629,22 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         </div>
       </div>
 
+      {/* ── Status bar ───────────────────────────────────────────────────── */}
+      <StatusBar
+        userId={userId}
+        pageLoading={pageLoading}
+        pageError={pageError}
+        pageFetchError={pageFetchError as Error | null}
+        pageData={pageData}
+        blockCount={blockCount}
+        templatesLoading={templatesLoading}
+        templatesError={templatesError}
+        templateCount={publicTemplates.length}
+        createPending={createPage.isPending}
+      />
+
       {/* ── Panel toggles ───────────────────────────────────────────────── */}
-      <div className="pointer-events-none fixed bottom-4 left-4 z-40 flex gap-2">
+      <div className="pointer-events-none fixed bottom-10 left-4 z-40 flex gap-2">
         <button
           type="button"
           onClick={() => setLeftOpen(!leftOpen)}
@@ -519,7 +654,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           {leftOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
         </button>
       </div>
-      <div className="pointer-events-none fixed bottom-4 right-4 z-40 flex gap-2">
+      <div className="pointer-events-none fixed bottom-10 right-4 z-40 flex gap-2">
         <button
           type="button"
           onClick={() => setRightOpen(!rightOpen)}
@@ -529,6 +664,97 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           {rightOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Status Bar ───────────────────────────────────────────────────────────────
+// Shows real-time diagnostic info: auth, page state, block count, templates.
+
+function StatusBar({
+  userId, pageLoading, pageError, pageFetchError, pageData, blockCount,
+  templatesLoading, templatesError, templateCount, createPending,
+}: {
+  userId: string;
+  pageLoading: boolean;
+  pageError: boolean;
+  pageFetchError: Error | null;
+  pageData: { id: string; layout?: { sections: any[] }; status: string; themeId: string } | null | undefined;
+  blockCount: number;
+  templatesLoading: boolean;
+  templatesError: boolean;
+  templateCount: number;
+  createPending: boolean;
+}) {
+  const sectionCount = pageData?.layout?.sections?.length ?? 0;
+  const blockInstanceCount = pageData?.layout?.sections?.reduce((sum: number, s: any) => sum + (s.blocks?.length ?? 0), 0) ?? 0;
+
+  return (
+    <div className="h-8 shrink-0 border-t border-border/20 bg-surface-elevated/20 px-4 flex items-center gap-4 text-[10px] text-muted-foreground">
+      {/* Auth */}
+      <span className="flex items-center gap-1">
+        <CheckCircle2 className="h-3 w-3 text-green-500" />
+        Logged in
+      </span>
+
+      {/* Page */}
+      {pageLoading || createPending ? (
+        <span className="flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          {createPending ? "Creating page..." : "Loading page..."}
+        </span>
+      ) : pageError ? (
+        <span className="flex items-center gap-1 text-red-400" title={pageFetchError?.message}>
+          <AlertTriangle className="h-3 w-3" />
+          Page error
+        </span>
+      ) : pageData ? (
+        <span className="flex items-center gap-1" title={`ID: ${pageData.id}`}>
+          <CheckCircle2 className="h-3 w-3 text-green-500" />
+          Page: {sectionCount}s · {blockInstanceCount}b · {pageData.status}
+        </span>
+      ) : (
+        <span className="flex items-center gap-1 text-amber-400">
+          <Loader2 className="h-3 w-3" />
+          No page yet
+        </span>
+      )}
+
+      <span className="text-border/40">|</span>
+
+      {/* Blocks */}
+      <span className={`flex items-center gap-1 ${blockCount === 0 ? "text-red-400" : ""}`}>
+        {blockCount === 0 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
+        {blockCount} blocks
+      </span>
+
+      <span className="text-border/40">|</span>
+
+      {/* Templates */}
+      {templatesLoading ? (
+        <span className="flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />Loading templates...
+        </span>
+      ) : templatesError ? (
+        <span className="flex items-center gap-1 text-red-400">
+          <AlertTriangle className="h-3 w-3" />Template error
+        </span>
+      ) : (
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3 text-green-500" />
+          {templateCount} templates
+        </span>
+      )}
+
+      {/* Page ID indicator */}
+      {pageData && (
+        <>
+          <span className="text-border/40">|</span>
+          <span className="text-muted-foreground/40 font-mono truncate max-w-[200px]" title={pageData.id}>
+            {pageData.id.slice(0, 8)}…
+          </span>
+        </>
+      )}
     </div>
   );
 }
