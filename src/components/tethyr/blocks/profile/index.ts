@@ -5,3 +5,6 @@ export { ProfileBioBlock } from "./bio-block";
 export { ProfileToolsBlock } from "./tools-block";
 export { ProfileLinksBlock } from "./links-block";
 export { ProfileExperienceBlock } from "./experience-block";
+export { ProfileDirectionBlock } from "./direction-block";
+export { ProfileAchievementsBlock } from "./achievements-block";
+export { ProfileGalleryBlock } from "./gallery-block";

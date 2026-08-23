@@ -1,0 +1,47 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Heart, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileLink } from "@/components/tethyr/profile-link";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
+import { registerBlock } from "@/lib/block-registry";
+import type { BlockProps } from "@/lib/page-blocks";
+
+type CreditRow = { id: string; profile_id: string; role: string; description: string | null; profiles: { display_name: string | null; handle: string | null; avatar_url: string | null } | null };
+
+function ProjectCreditsBlock({ context }: BlockProps) {
+  const projectId = context.ownerType === "project" ? context.ownerId : null;
+  const { data, isLoading } = useQuery({
+    queryKey: ["project-credits-block", projectId],
+    queryFn: async () => {
+      if (!projectId) return [] as CreditRow[];
+      const { data: d } = await (supabase as any).from("project_credits").select("id,profile_id,role,description,profiles(display_name,handle,avatar_url)").eq("project_id", projectId).order("role");
+      return (d ?? []) as CreditRow[];
+    }, enabled: !!projectId,
+  });
+  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
+  if (!data?.length) { if (context.isEditing) return <BlockEmptyState label="Credits" detail="Credits will appear here." />; return null; }
+  return (
+    <div>
+      <h4 className="mb-3 text-sm font-medium text-foreground">Credits ({data.length})</h4>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {data.map((c) => {
+          const p = c.profiles;
+          const initial = (p?.display_name ?? p?.handle ?? "?").charAt(0).toUpperCase();
+          return (
+            <div key={c.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5">
+              <Avatar className="h-8 w-8"><AvatarImage src={p?.avatar_url ?? undefined} /><AvatarFallback className="text-xs">{initial}</AvatarFallback></Avatar>
+              <div className="min-w-0 flex-1">
+                <ProfileLink handle={p?.handle ?? null} className="text-sm font-medium hover:underline">{p?.display_name ?? p?.handle ?? "Unnamed"}</ProfileLink>
+                <p className="text-xs text-muted-foreground">{c.role}{c.description ? ` — ${c.description}` : ""}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+registerBlock({ type: "project-credits", category: "people", label: "Credits", description: "People credited for contributions to this project.", icon: "Heart", defaults: {}, component: ProjectCreditsBlock });
+export { ProjectCreditsBlock };

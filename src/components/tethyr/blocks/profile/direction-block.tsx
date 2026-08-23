@@ -1,0 +1,62 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Compass, Hammer, Users, ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
+import { registerBlock } from "@/lib/block-registry";
+import type { BlockProps } from "@/lib/page-blocks";
+
+const AVAIL_LABEL: Record<string, string> = { available: "Open to collaboration", busy: "Focused on current work", away: "Taking a step back" };
+
+type DirData = { availability: string | null; learning_goals: string | null; active_project: { id: string; title: string } | null };
+
+function ProfileDirectionBlock({ context }: BlockProps) {
+  const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const { data, isLoading } = useQuery({
+    queryKey: ["profile-direction-block", profileId],
+    queryFn: async (): Promise<DirData | null> => {
+      if (!profileId) return null;
+      const { data: d } = await supabase.from("profiles").select("availability, learning_goals").eq("id", profileId).maybeSingle();
+      if (!d) return null;
+      let activeProject: DirData["active_project"] = null;
+      try {
+        const { data: contrib } = await supabase.from("project_contributors").select("project_id, role, projects!inner(id, title, status)").eq("profile_id", profileId).eq("role", "creator").limit(1);
+        if (contrib?.length) {
+          const p = (contrib[0] as any).projects;
+          if (p && (p.status === "active" || p.status === "planning")) activeProject = { id: p.id, title: p.title };
+        }
+      } catch {}
+      return { availability: (d as any).availability ?? null, learning_goals: (d as any).learning_goals ?? null, active_project: activeProject };
+    }, enabled: !!profileId,
+  });
+  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
+  if (!data || (!data.availability && !data.learning_goals && !data.active_project)) {
+    if (context.isEditing) return <BlockEmptyState label="Direction" detail="Set your availability and learning goals on your profile." />;
+    return null;
+  }
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {data.active_project && (
+        <Link to="/projects/$id" params={{ id: data.active_project.id }} className="rounded-lg border border-border bg-surface p-3 hover:bg-surface-elevated transition-colors group">
+          <Hammer className="h-4 w-4 text-muted-foreground mb-1" /><p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Building now</p>
+          <p className="mt-1 text-sm font-medium group-hover:text-primary transition-colors flex items-center gap-1">{data.active_project.title}<ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100" /></p>
+        </Link>
+      )}
+      {data.availability && (
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <Users className="h-4 w-4 text-muted-foreground mb-1" /><p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Open to</p>
+          <p className="mt-1 text-sm font-medium">{AVAIL_LABEL[data.availability] ?? data.availability}</p>
+        </div>
+      )}
+      {data.learning_goals && (
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <Compass className="h-4 w-4 text-muted-foreground mb-1" /><p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Growing toward</p>
+          <p className="mt-1 text-sm leading-relaxed">{data.learning_goals}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+registerBlock({ type: "profile-direction", category: "people", label: "Direction", description: "Availability, learning goals, and active project.", icon: "Compass", defaults: {}, component: ProfileDirectionBlock });
+export { ProfileDirectionBlock };

@@ -1,104 +1,50 @@
-// ── Default Project Layout ────────────────────────────────────────────────────
-// Generates a standard block layout for a new project page.
-// Used by useProjectPage to auto-create pages for projects that don't have one.
+// ── Default Layouts ──────────────────────────────────────────────────────────
+// Generates comprehensive block layouts for new pages.
+// Every existing project/profile section has a corresponding block type so
+// owners can add, remove, reorder, or hide any section they want.
 
-import type { PageLayout, LayoutSection, LayoutBlockInstance } from "@/lib/page-blocks";
+import type { PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
 
 let _counter = 0;
-function nextId(): string {
-  return `blk-${++_counter}-${Date.now().toString(36)}`;
+function nid(): string { return `b-${++_counter}-${Date.now().toString(36)}`; }
+
+function blk(type: string, position: number, config: Record<string, unknown> = {}): LayoutBlockInstance {
+  return { id: nid(), type, position, config, visible: true };
 }
 
-/**
- * Default project layout:
- *   Hero → About → Status + Team → Activity
- * This is a starting point; the owner can customize it later.
- */
+/** Full default project page — every section that has data appears. */
 export function createDefaultProjectLayout(): PageLayout {
-  const sections: LayoutSection[] = [
-    {
-      id: nextId(),
-      position: 0,
-      layout: "full",
-      blocks: [
-        block("project-hero", 0, { showDescription: true, showProgress: true, showTags: true }),
-      ],
-    },
-    {
-      id: nextId(),
-      position: 1,
-      layout: "full",
-      blocks: [
-        block("divider", 0, {}),
-        block("project-about", 1, {}),
-      ],
-    },
-    {
-      id: nextId(),
-      position: 2,
-      layout: "two_column",
-      blocks: [
-        block("project-status", 0, {}),
-        block("project-team", 1, {}),
-      ],
-    },
-    {
-      id: nextId(),
-      position: 3,
-      layout: "full",
-      blocks: [
-        block("project-activity", 0, {}),
-      ],
-    },
-  ];
-
-  return { sections };
-}
-
-/**
- * Default profile layout:
- *   ProfileHeader → Bio → Divider → Skills + Projects (two column)
- * The identity header from the existing route (Shell + avatar) remains;
- * this layout complements it with blocks below.
- */
-export function createDefaultProfileLayout(): PageLayout {
   return {
     sections: [
-      {
-        id: nextId(),
-        position: 0,
-        layout: "full",
-        blocks: [
-          block("profile-header", 0, {}),
-        ],
-      },
-      {
-        id: nextId(),
-        position: 1,
-        layout: "full",
-        blocks: [
-          block("profile-bio", 0, {}),
-        ],
-      },
-      {
-        id: nextId(),
-        position: 2,
-        layout: "two_column",
-        blocks: [
-          block("profile-skills", 0, {}),
-          block("profile-projects", 1, {}),
-        ],
-      },
+      { id: nid(), position: 0, layout: "full", blocks: [blk("project-hero", 0, { showDescription: true, showProgress: true, showTags: true })] },
+      { id: nid(), position: 1, layout: "full", blocks: [blk("divider", 0), blk("project-about", 1)] },
+      { id: nid(), position: 2, layout: "two_column", blocks: [blk("project-status", 0), blk("project-milestones", 1)] },
+      { id: nid(), position: 3, layout: "two_column", blocks: [blk("project-team", 0), blk("project-roles", 1)] },
+      { id: nid(), position: 4, layout: "full", blocks: [blk("project-files", 0)] },
+      { id: nid(), position: 5, layout: "full", blocks: [blk("project-repos", 0)] },
+      { id: nid(), position: 6, layout: "two_column", blocks: [blk("project-needs", 0), blk("project-discussions", 1)] },
+      { id: nid(), position: 7, layout: "full", blocks: [blk("project-sessions", 0)] },
+      { id: nid(), position: 8, layout: "full", blocks: [blk("project-evidence", 0)] },
+      { id: nid(), position: 9, layout: "full", blocks: [blk("project-credits", 0)] },
+      { id: nid(), position: 10, layout: "full", blocks: [blk("project-activity", 0)] },
+      { id: nid(), position: 11, layout: "full", blocks: [blk("project-timeline", 0)] },
     ],
   };
 }
 
-function block(type: string, position: number, config: Record<string, unknown>): LayoutBlockInstance {
+/** Full default profile — every section that has data appears. */
+export function createDefaultProfileLayout(): PageLayout {
   return {
-    id: nextId(),
-    type,
-    position,
-    config,
-    visible: true,
+    sections: [
+      { id: nid(), position: 0, layout: "full", blocks: [blk("profile-header", 0)] },
+      { id: nid(), position: 1, layout: "full", blocks: [blk("profile-direction", 0)] },
+      { id: nid(), position: 2, layout: "full", blocks: [blk("profile-bio", 0)] },
+      { id: nid(), position: 3, layout: "two_column", blocks: [blk("profile-skills", 0), blk("profile-experience", 1)] },
+      { id: nid(), position: 4, layout: "full", blocks: [blk("profile-tools", 0)] },
+      { id: nid(), position: 5, layout: "full", blocks: [blk("profile-projects", 0)] },
+      { id: nid(), position: 6, layout: "full", blocks: [blk("profile-links", 0)] },
+      { id: nid(), position: 7, layout: "full", blocks: [blk("profile-achievements", 0)] },
+      { id: nid(), position: 8, layout: "full", blocks: [blk("profile-gallery", 0)] },
+    ],
   };
 }
