@@ -141,15 +141,16 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col" data-page-layout>
-      {sections.map((section, si) => {            // Override grid classes based on device preview.
-            // Mobile: always single column. Tablet: max 2 columns.
-            let gridClass = SECTION_GRID[section.layout] ?? "";
-            if (devicePreview === "mobile") {
-              gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
-            } else if (devicePreview === "tablet") {
-              gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
-              gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
-            }
+      {sections.map((section, si) => {
+        // Override grid classes based on device preview.
+        // Mobile: always single column. Tablet: max 2 columns.
+        let gridClass = SECTION_GRID[section.layout] ?? "";
+        if (devicePreview === "mobile") {
+          gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
+        } else if (devicePreview === "tablet") {
+          gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
+          gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
+        }
         const blocks = section.blocks
           .filter((b) => b.visible !== false)
           .sort((a, b) => a.position - b.position);
