@@ -285,6 +285,18 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       { pageId: pageData.id, layoutId: pageData.layoutId, layout: draftLayout },
       {
         onSuccess: async () => {
+          // Save theme overrides after layout save succeeds (not in parallel).
+          if (overridesDirtyRef.current && draftOverrides != null) {
+            try {
+              await updateThemeOverrides.mutateAsync({
+                pageId: pageData.id,
+                overrides: draftOverrides,
+              });
+              overridesDirtyRef.current = false;
+            } catch (themeErr) {
+              toast.error(friendlyError(themeErr, "Failed to save theme"));
+            }
+          }
           setDirty(false);
           dirtyRef.current = false;
           savedLayoutRef.current = draftLayout;
@@ -297,17 +309,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         },
       },
     );
-    if (overridesDirtyRef.current && draftOverrides != null) {
-      updateThemeOverrides.mutate(
-        { pageId: pageData.id, overrides: draftOverrides },
-        {
-          onError: (err) => {
-            toast.error(friendlyError(err, "Failed to save theme"));
-          },
-        },
-      );
-      overridesDirtyRef.current = false;
-    }
   }, [pageData, draftLayout, draftOverrides, updateLayout, updateThemeOverrides, refetchPage]);
 
   const canUndo = historyIndex > 0;
@@ -385,6 +386,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       sections[sections.length - 1] = { ...last, blocks: [...last.blocks, newBlock] };
       toast.success(`Added ${inst.type.replace(/-/g, " ")}`);
       applyDraft({ sections });
+      setSelectionType("block");
       setSelectedBlockId(newBlock.id);
     },
     [applyDraft, draftLayout, pageData, blockCount],
@@ -397,7 +399,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         .map((s) => ({ ...s, blocks: s.blocks.filter((b) => b.id !== blockId) }))
         .filter((s) => s.blocks.length > 0);
       applyDraft({ sections });
-      if (selectedBlockId === blockId) setSelectedBlockId(null);
+      if (selectedBlockId === blockId) {
+        setSelectionType("page");
+        setSelectedBlockId(null);
+        setSelectedSectionId(null);
+      }
     },
     [draftLayout, applyDraft, selectedBlockId],
   );
@@ -886,6 +892,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         handleSelectPageLevel();
         return;
       }
+      // Delete / Backspace: remove selected block or section
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectionType === "block" && selectedBlockId) {
+          handleRemoveBlock(selectedBlockId);
+        } else if (selectionType === "section" && selectedSectionId) {
+          handleRemoveSection(selectedSectionId);
+        }
+        return;
+      }
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) return;
       const key = e.key.toLowerCase();
@@ -903,7 +918,17 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleUndo, handleRedo, handleSave, handleSelectPageLevel]);
+  }, [
+    handleUndo,
+    handleRedo,
+    handleSave,
+    handleSelectPageLevel,
+    handleRemoveBlock,
+    handleRemoveSection,
+    selectionType,
+    selectedBlockId,
+    selectedSectionId,
+  ]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">

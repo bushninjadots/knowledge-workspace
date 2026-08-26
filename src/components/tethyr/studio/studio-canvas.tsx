@@ -311,29 +311,27 @@ export function StudioCanvas({
                 className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm"
                 onClick={(e) => e.stopPropagation()}
               >
-                {colCount <= 2 && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onLayoutChange({
-                        ...layout,
-                        sections: layout.sections.map((s) =>
-                          s.id === section.id
-                            ? {
-                                ...s,
-                                layout: s.layout === "two_column" ? "full" : "two_column",
-                              }
-                            : s,
-                        ),
-                      });
-                    }}
-                    className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                    title="Toggle columns"
-                  >
-                    <Columns2 className="h-3 w-3" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const LAYOUT_CYCLE = ["full", "two_column", "three_column"] as const;
+                    const currentIdx = LAYOUT_CYCLE.indexOf(
+                      section.layout as (typeof LAYOUT_CYCLE)[number],
+                    );
+                    const nextLayout = LAYOUT_CYCLE[(currentIdx + 1) % LAYOUT_CYCLE.length];
+                    onLayoutChange({
+                      ...layout,
+                      sections: layout.sections.map((s) =>
+                        s.id === section.id ? { ...s, layout: nextLayout } : s,
+                      ),
+                    });
+                  }}
+                  className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+                  title={`Layout: ${section.layout.replace(/_/g, " ")} (click to cycle)`}
+                >
+                  <Columns2 className="h-3 w-3" />
+                </button>
                 <button
                   type="button"
                   onClick={(e) => {
