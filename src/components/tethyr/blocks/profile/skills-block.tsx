@@ -126,7 +126,11 @@ registerBlock({
   label: "Skills",
   description: "Skills the person shares and skills they're growing.",
   icon: "GraduationCap",
-  defaults: {},
+  defaults: { showCategories: true, showEndorsements: true },
+  fields: [
+    { key: "showCategories", label: "Show category headers", type: "toggle" },
+    { key: "showEndorsements", label: "Show endorsement counts", type: "toggle" },
+  ],
   component: ProfileSkillsBlock,
 });
 

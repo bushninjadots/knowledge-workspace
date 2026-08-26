@@ -1089,6 +1089,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onDuplicateBlock={handleDuplicateBlock}
                     onLayoutChange={applyDraft}
                     onRefetch={refetchPage}
+                    devicePreview={devicePreview}
                   />
                 </EditModeProvider>
               ) : (

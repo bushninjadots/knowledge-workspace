@@ -126,7 +126,12 @@ registerBlock({
   label: "Status & Progress",
   description: "Current status, stage, progress bar, season, and tool stack.",
   icon: "BarChart3",
-  defaults: {},
+  defaults: { showProgress: true, showStage: true, showTools: true },
+  fields: [
+    { key: "showProgress", label: "Show progress bar", type: "toggle" },
+    { key: "showStage", label: "Show current stage", type: "toggle" },
+    { key: "showTools", label: "Show tool stack", type: "toggle" },
+  ],
   component: ProjectStatusBlock,
 });
 

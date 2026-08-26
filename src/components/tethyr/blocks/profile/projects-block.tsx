@@ -124,7 +124,11 @@ registerBlock({
   label: "Featured Projects",
   description: "Projects the person has contributed to, with role and status.",
   icon: "Folder",
-  defaults: {},
+  defaults: { showStatus: true, showProgress: true },
+  fields: [
+    { key: "showStatus", label: "Show project status", type: "toggle" },
+    { key: "showProgress", label: "Show progress bars", type: "toggle" },
+  ],
   component: ProfileProjectsBlock,
 });
 

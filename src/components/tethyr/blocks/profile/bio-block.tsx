@@ -13,7 +13,7 @@ type BioData = {
   teaching_style: string | null;
 };
 
-function ProfileBioBlock({ context }: BlockProps) {
+function ProfileBioBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -46,9 +46,12 @@ function ProfileBioBlock({ context }: BlockProps) {
     return null;
   }
 
+  const showAbout = config.showAbout !== false;
+  const showGoals = config.showGoals !== false;
+
   return (
     <div className="space-y-3">
-      {hasBio && (
+      {hasBio && showAbout && (
         <div>
           <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             About
@@ -56,7 +59,7 @@ function ProfileBioBlock({ context }: BlockProps) {
           <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{data.bio}</p>
         </div>
       )}
-      {hasGoals && (
+      {hasGoals && showGoals && (
         <div>
           <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Learning goals
@@ -76,7 +79,11 @@ registerBlock({
   label: "About / Bio",
   description: "The person's bio, learning goals, and teaching style.",
   icon: "FileText",
-  defaults: {},
+  defaults: { showAbout: true, showGoals: true },
+  fields: [
+    { key: "showAbout", label: "Show bio", type: "toggle" },
+    { key: "showGoals", label: "Show learning goals", type: "toggle" },
+  ],
   component: ProfileBioBlock,
 });
 

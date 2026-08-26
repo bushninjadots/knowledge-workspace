@@ -27,6 +27,8 @@ interface PageLayoutRendererProps {
   onLayoutChange?: (layout: PageLayoutType) => void;
   /** Called when a block's config changes. */
   onBlockConfigChange?: (blockId: string, config: Record<string, unknown>) => void;
+  /** When set, overrides responsive breakpoints to match the preview mode. */
+  devicePreview?: "desktop" | "tablet" | "mobile";
 }
 
 /** Tailwind grid classes for each section layout type. */
@@ -49,6 +51,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   context,
   onLayoutChange,
   onBlockConfigChange,
+  devicePreview,
 }: PageLayoutRendererProps) {
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
@@ -138,8 +141,15 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col" data-page-layout>
-      {sections.map((section, si) => {
-        const gridClass = SECTION_GRID[section.layout] ?? "";
+      {sections.map((section, si) => {            // Override grid classes based on device preview.
+            // Mobile: always single column. Tablet: max 2 columns.
+            let gridClass = SECTION_GRID[section.layout] ?? "";
+            if (devicePreview === "mobile") {
+              gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
+            } else if (devicePreview === "tablet") {
+              gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
+              gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
+            }
         const blocks = section.blocks
           .filter((b) => b.visible !== false)
           .sort((a, b) => a.position - b.position);

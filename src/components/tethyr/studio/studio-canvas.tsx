@@ -47,6 +47,7 @@ interface StudioCanvasProps {
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
+  devicePreview?: "desktop" | "tablet" | "mobile";
 }
 
 export function StudioCanvas({
@@ -72,6 +73,7 @@ export function StudioCanvas({
   onReorderBlocks,
   onLayoutChange,
   onRefetch,
+  devicePreview,
 }: StudioCanvasProps) {
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
@@ -262,8 +264,11 @@ export function StudioCanvas({
                 const isDragOver = dragOverBlockId === block.id;
 
                 const blockWidth = (block.config?.width as string) ?? "full";
-                const widthClass =
-                  blockWidth === "2/3"
+                // On mobile preview, force all blocks to full width
+                const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
+                const widthClass = mobileOverride
+                  ? "w-full"
+                  : blockWidth === "2/3"
                     ? "w-2/3"
                     : blockWidth === "1/2"
                       ? "w-1/2"
@@ -296,7 +301,7 @@ export function StudioCanvas({
                   >
                     {/* Block content */}
                     <div className={isHidden ? "opacity-30" : ""}>
-                      <SingleBlockRenderer block={block} context={blockContext} />
+                      <SingleBlockRenderer block={block} context={blockContext} devicePreview={devicePreview} />
                     </div>
 
                     {/* Floating toolbar — shown only when this block is selected */}
@@ -426,12 +431,14 @@ function getBlockLabel(block: LayoutBlockInstance): string {
 function SingleBlockRenderer({
   block,
   context,
+  devicePreview,
 }: {
   block: LayoutBlockInstance;
   context: BlockContext;
+  devicePreview?: "desktop" | "tablet" | "mobile";
 }) {
   const layout: PageLayout = {
     sections: [{ id: "single", position: 0, layout: "full", blocks: [block] }],
   };
-  return <PageLayoutRenderer layout={layout} context={context} />;
+  return <PageLayoutRenderer layout={layout} context={context} devicePreview={devicePreview} />;
 }
