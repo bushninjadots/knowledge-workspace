@@ -315,11 +315,22 @@ export function StudioCanvas({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const LAYOUT_CYCLE = ["full", "two_column", "three_column"] as const;
+                    const LAYOUT_CYCLE = [
+                      "full",
+                      "two_column",
+                      "three_column",
+                      "sidebar_left",
+                      "sidebar_right",
+                      "feature",
+                    ] as const;
                     const currentIdx = LAYOUT_CYCLE.indexOf(
                       section.layout as (typeof LAYOUT_CYCLE)[number],
                     );
-                    const nextLayout = LAYOUT_CYCLE[(currentIdx + 1) % LAYOUT_CYCLE.length];
+                    // If current layout isn't in cycle (shouldn't happen), start from full
+                    const nextLayout =
+                      LAYOUT_CYCLE[
+                        ((currentIdx === -1 ? 0 : currentIdx) + 1) % LAYOUT_CYCLE.length
+                      ];
                     onLayoutChange({
                       ...layout,
                       sections: layout.sections.map((s) =>
