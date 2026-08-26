@@ -198,8 +198,8 @@ export function StudioCanvas({
   }
 
   const blockContext: BlockContext = {
-    ownerId: page.id,
-    ownerType: page.type,
+    ownerId: pageData.ownerId,
+    ownerType: pageData.ownerType,
     pageId: pageData.id,
     isEditing: true,
   };
@@ -341,7 +341,7 @@ export function StudioCanvas({
                 )}
               </div>
             ) : (
-              <div className="space-y-2 p-2 pt-4">
+              <div className="flex flex-wrap gap-2 p-2 pt-4">
                 {section.blocks.length === 0 ? (
                   <EmptySection onAddBlock={onAddBlock} />
                 ) : (
@@ -371,7 +371,7 @@ export function StudioCanvas({
                       e.stopPropagation();
                       onAddBlock("text");
                     }}
-                    className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
+                    className="flex basis-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
                     <Plus className="h-3 w-3" />
                     Add block
@@ -578,9 +578,16 @@ function BlockCard({
         onSelect(block.id);
       }}
     >
-      {/* Block type badge — always visible */}
-      <div className="absolute -top-1.5 left-2 z-10 rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
-        {blockDef?.label ?? block.type}
+      {/* Block type badge + width indicator — always visible */}
+      <div className="absolute -top-1.5 left-2 z-10 flex items-center gap-1">
+        <span className="rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
+          {blockDef?.label ?? block.type}
+        </span>
+        {blockWidth !== "full" && (
+          <span className="rounded bg-primary/10 px-1 py-0.5 text-[7px] font-medium text-primary/70 border border-primary/15">
+            {blockWidth}
+          </span>
+        )}
       </div>
 
       {/* Block content */}

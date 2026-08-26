@@ -968,6 +968,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
+          {/* Public view indicator */}
+          <span
+            className="text-[9px] text-muted-foreground/40 select-none"
+            title="The canvas shows your page as visitors see it. Publish to make changes live."
+          >
+            Public view
+          </span>
+
+          <span className="h-4 w-px bg-border/40" aria-hidden="true" />
+
           {/* Undo / Redo */}
           <div className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5">
             <button
