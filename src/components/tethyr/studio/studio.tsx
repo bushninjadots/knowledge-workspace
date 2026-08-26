@@ -284,13 +284,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     updateLayout.mutate(
       { pageId: pageData.id, layoutId: pageData.layoutId, layout: draftLayout },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setDirty(false);
           dirtyRef.current = false;
           savedLayoutRef.current = draftLayout;
           savedOverridesRef.current = draftOverrides ?? null;
           toast.success("Changes saved");
-          setTimeout(() => refetchPage(), 100);
+          await refetchPage();
         },
         onError: (err) => {
           toast.error(friendlyError(err, "Failed to save changes. Check if you own this page."));
@@ -636,8 +636,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
     try {
       await publishPage.mutateAsync({ pageId: pageData.id });
+      // Invalidate ALL page-related queries so the public profile page
+      // picks up the fresh layout immediately (not just the Studio's query).
+      qc.invalidateQueries({ queryKey: ["page"] });
+      qc.invalidateQueries({ queryKey: ["public-profile"] });
+      qc.invalidateQueries({ queryKey: ["profile-page"] });
+      await refetchPage();
       toast.success("Published — visible to everyone");
-      refetchPage();
     } catch (err) {
       toast.error(friendlyError(err, "Failed to publish"));
     }
@@ -649,6 +654,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     updateLayout,
     updateThemeOverrides,
     refetchPage,
+    qc,
   ]);
 
   const handleUnpublish = useCallback(async () => {

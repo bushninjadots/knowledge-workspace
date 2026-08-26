@@ -98,7 +98,7 @@ export function StudioCanvas({
   onMoveBlock,
   onAddBlock,
   onAddSection,
-  onUpdateBlockConfig: _onUpdateBlockConfig,
+  onUpdateBlockConfig,
   onDuplicateBlock,
   onReorderBlocks,
   onLayoutChange,
@@ -155,7 +155,10 @@ export function StudioCanvas({
       if (!data.startsWith("section:")) return;
       const sourceId = data.replace("section:", "");
       if (sourceId === targetSectionId) return;
-      const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const sections = layout.sections.map((s) => ({
+        ...s,
+        blocks: [...s.blocks],
+      }));
       const srcIdx = sections.findIndex((s) => s.id === sourceId);
       const tgtIdx = sections.findIndex((s) => s.id === targetSectionId);
       if (srcIdx === -1 || tgtIdx === -1) return;
@@ -182,6 +185,14 @@ export function StudioCanvas({
       setDragOverBlockId(null);
     },
     [onReorderBlocks],
+  );
+
+  // ── Inline block config change (typing in heading/text blocks) ─────────
+  const handleInlineConfigChange = useCallback(
+    (blockId: string, newConfig: Record<string, unknown>) => {
+      onUpdateBlockConfig(blockId, newConfig);
+    },
+    [onUpdateBlockConfig],
   );
 
   if (pageLoading) {
@@ -273,6 +284,8 @@ export function StudioCanvas({
             onDragLeave={() => setDragOverSectionId(null)}
             onDrop={(e) => handleSectionDrop(e, section.id)}
             onClick={(e) => {
+              // Only select section if clicking the section container itself,
+              // not any child element (block, button, toolbar, etc.)
               if (e.target === e.currentTarget) {
                 onSelectSection(section.id);
               }
@@ -294,7 +307,10 @@ export function StudioCanvas({
 
             {/* Section quick-actions toolbar — shown when selected */}
             {isSectionSelected && (
-              <div className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm">
+              <div
+                className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {colCount <= 2 && (
                   <button
                     type="button"
@@ -304,7 +320,10 @@ export function StudioCanvas({
                         ...layout,
                         sections: layout.sections.map((s) =>
                           s.id === section.id
-                            ? { ...s, layout: s.layout === "two_column" ? "full" : "two_column" }
+                            ? {
+                                ...s,
+                                layout: s.layout === "two_column" ? "full" : "two_column",
+                              }
                             : s,
                         ),
                       });
@@ -345,11 +364,11 @@ export function StudioCanvas({
                   handleBlockDragOver,
                   handleBlockDrop,
                   onSelectBlock,
-                  onAddBlock,
                   () => setShowBlockPicker(true),
                   onMoveBlock,
                   onDuplicateBlock,
                   onToggleVisibility,
+                  handleInlineConfigChange,
                   devicePreview,
                 )}
               </div>
@@ -377,6 +396,7 @@ export function StudioCanvas({
                       onMoveBlock={onMoveBlock}
                       onDuplicateBlock={onDuplicateBlock}
                       onToggleVisibility={onToggleVisibility}
+                      onConfigChange={handleInlineConfigChange}
                     />
                   ))
                 )}
@@ -427,10 +447,13 @@ export function StudioCanvas({
 }
 
 // ── Grid blocks renderer ─────────────────────────────────────────────────────
-// Renders blocks in a grid layout with column boundaries and per-column add buttons.
 
 function renderGridBlocks(
-  section: { id: string; blocks: LayoutBlockInstance[]; layout: string },
+  section: {
+    id: string;
+    blocks: LayoutBlockInstance[];
+    layout: string;
+  },
   sectionIdx: number,
   colCount: number,
   blockContext: BlockContext,
@@ -447,11 +470,11 @@ function renderGridBlocks(
     targetIndex: number,
   ) => void,
   onSelect: (blockId: string) => void,
-  onAddBlock: (blockType: string) => void,
   onShowPicker: () => void,
   onMoveBlock: (blockId: string, direction: "up" | "down") => void,
   onDuplicateBlock: (blockId: string) => void,
   onToggleVisibility: (blockId: string) => void,
+  onConfigChange: (blockId: string, config: Record<string, unknown>) => void,
   devicePreview?: "desktop" | "tablet" | "mobile",
 ) {
   // Group blocks by column
@@ -510,6 +533,7 @@ function renderGridBlocks(
                   onMoveBlock={onMoveBlock}
                   onDuplicateBlock={onDuplicateBlock}
                   onToggleVisibility={onToggleVisibility}
+                  onConfigChange={onConfigChange}
                 />
               ))
             )}
@@ -552,6 +576,7 @@ function BlockCard({
   onMoveBlock,
   onDuplicateBlock,
   onToggleVisibility,
+  onConfigChange,
 }: {
   block: LayoutBlockInstance;
   idx: number;
@@ -574,6 +599,7 @@ function BlockCard({
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onDuplicateBlock: (blockId: string) => void;
   onToggleVisibility: (blockId: string) => void;
+  onConfigChange: (blockId: string, config: Record<string, unknown>) => void;
 }) {
   const isHidden = block.visible === false;
   const blockWidth = (block.config?.width as string) ?? "full";
@@ -612,7 +638,7 @@ function BlockCard({
         onSelect(block.id);
       }}
     >
-      {/* Block type badge + width indicator — always visible */}
+      {/* Block type badge + width indicator */}
       <div className="absolute -top-1.5 left-2 z-10 flex items-center gap-1">
         <span className="rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
           {blockDef?.label ?? block.type}
@@ -624,9 +650,14 @@ function BlockCard({
         )}
       </div>
 
-      {/* Block content */}
+      {/* Block content — with inline config change wired */}
       <div className={isHidden ? "opacity-30" : ""}>
-        <SingleBlockRenderer block={block} context={blockContext} devicePreview={devicePreview} />
+        <SingleBlockRenderer
+          block={block}
+          context={blockContext}
+          devicePreview={devicePreview}
+          onConfigChange={(config) => onConfigChange(block.id, config)}
+        />
       </div>
 
       {/* Floating toolbar — shown only when this block is selected */}
@@ -732,7 +763,6 @@ function EmptyColumn({ colIdx: _colIdx, onAdd }: { colIdx: number; onAdd: () => 
 }
 
 // ── Block Picker Modal ────────────────────────────────────────────────────────
-// Inline modal that shows all available blocks grouped by category with search.
 
 function BlockPickerModal({
   onSelect,
@@ -859,13 +889,22 @@ function SingleBlockRenderer({
   block,
   context,
   devicePreview,
+  onConfigChange,
 }: {
   block: LayoutBlockInstance;
   context: BlockContext;
   devicePreview?: "desktop" | "tablet" | "mobile";
+  onConfigChange?: (config: Record<string, unknown>) => void;
 }) {
   const layout: PageLayout = {
     sections: [{ id: "single", position: 0, layout: "full", blocks: [block] }],
   };
-  return <PageLayoutRenderer layout={layout} context={context} devicePreview={devicePreview} />;
+  return (
+    <PageLayoutRenderer
+      layout={layout}
+      context={context}
+      devicePreview={devicePreview}
+      onBlockConfigChange={onConfigChange ? (_bid, config) => onConfigChange(config) : undefined}
+    />
+  );
 }
