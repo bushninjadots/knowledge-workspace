@@ -183,8 +183,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           "[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty",
         );
         toast.error("Block system not loaded. Refresh the page.");
-      } else {
-        console.log(`[Studio] ✅ ${count} blocks registered`);
       }
     });
   }, []);
@@ -211,17 +209,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (!pageLoading && !pageData && activePage && !createPage.isPending && !ensuringRef.current) {
       ensuringRef.current = true;
-      console.log(
-        `[Studio] No page found for ${activePage.type}/${activePage.id} — auto-creating with default layout`,
-      );
       toast.info(`Creating default ${activePage.type} page...`);
       const layout =
         activePage.type === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
       createPage.mutate(
         { ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout },
         {
-          onSuccess: (data) => {
-            console.log("[Studio] ✅ Page auto-created:", data);
+          onSuccess: () => {
             toast.success("Page created! You can now customize it.");
           },
           onError: (err) => {
@@ -246,8 +240,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     if (templatesError) {
       console.error("[Studio] ❌ Template fetch error:", templateFetchError);
       toast.error(friendlyError(templateFetchError, "Could not load templates"));
-    } else {
-      console.log(`[Studio] ✅ ${publicTemplates.length} templates loaded`);
     }
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
 
@@ -353,9 +345,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
     (blockType: string) => {
-      console.log(
-        `[Studio] handleAddBlock type="${blockType}" pageData=${pageData?.id ?? "null"} blockCount=${blockCount}`,
-      );
       if (!pageData) {
         toast.error("Page not loaded yet. Wait a moment.");
         return;
@@ -368,7 +357,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         );
         return;
       }
-      console.log(`[Studio] ✅ Block instance created:`, inst.type);
       const existing = draftLayout.sections;
       const sections = existing.map((s: LayoutSection) => ({ ...s, blocks: [...s.blocks] }));
       let last = sections[sections.length - 1];
@@ -690,12 +678,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         toast.error("No page loaded");
         return;
       }
-      console.log(`[Studio] Applying theme ${themeId} to page ${pageData.id}`);
       updateTheme.mutate(
         { pageId: pageData.id, themeId },
         {
           onSuccess: async () => {
-            console.log("[Studio] ✅ Theme applied, refetching");
             // Adopt the fresh merged theme so the theme editor and dirty
             // detection track the newly applied theme, not the stale draft.
             const fresh = await refetchPage();
@@ -724,7 +710,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         toast.error("No page loaded");
         return;
       }
-      console.log(`[Studio] Applying template ${templateId} to page ${pageData.id}`);
       toast.info("Applying template...");
       applyTemplate.mutate(
         {
@@ -736,7 +721,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         },
         {
           onSuccess: async () => {
-            console.log("[Studio] ✅ Template applied");
             // Deterministically adopt the server's freshly applied layout as
             // the new draft (refetch resolves with the updated page data).
             const fresh = await refetchPage();
@@ -768,12 +752,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         toast.error("Enter a template name");
         return;
       }
-      console.log(`[Studio] Saving template "${name}" from layout ${pageData.layoutId}`);
       saveAsTemplate.mutate(
         { layoutId: pageData.layoutId, name, ...options },
         {
           onSuccess: () => {
-            console.log("[Studio] ✅ Template published");
             toast.success(`"${name}" published as a template`);
             qc.invalidateQueries({ queryKey: ["templates"] });
           },
