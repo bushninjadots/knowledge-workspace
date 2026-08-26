@@ -1,11 +1,23 @@
-// ── Studio Canvas ────────────────────────────────────────────────────────────// Center panel: renders the real page with selection outlines, a contextual
-// floating toolbar for the selected block, drag-to-reorder, and section
-// click areas. Width control is handled exclusively by the inspector.
+// ── Studio Canvas ────────────────────────────────────────────────────────────
+// Center panel: renders the real page with selection outlines, a contextual
+// floating toolbar for the selected block, drag-to-reorder, section
+// grid layouts with column boundaries, per-column add buttons, and
+// empty section states. Width control is handled by the inspector.
 
 import { useState, useCallback } from "react";
-import { GripVertical, Trash2, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Copy } from "lucide-react";
+import {
+  GripVertical,
+  Trash2,
+  EyeOff,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  Columns2,
+} from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getBlock } from "@/lib/block-registry";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
 import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
@@ -46,6 +58,15 @@ const CANVAS_GRID: Record<string, string> = {
   feature: "grid grid-cols-2 gap-3",
 };
 
+const COLUMN_COUNT: Record<string, number> = {
+  full: 1,
+  two_column: 2,
+  three_column: 3,
+  sidebar_left: 2,
+  sidebar_right: 2,
+  feature: 2,
+};
+
 export function StudioCanvas({
   page,
   pageData,
@@ -58,14 +79,14 @@ export function StudioCanvas({
   onSelectBlock,
   onSelectSection,
   onSelectPage,
-  onRemoveBlock,
-  onRemoveSection: _onRemoveSection,
-  onToggleVisibility,
-  onMoveBlock,
+  onRemoveBlock: _onRemoveBlock,
+  onRemoveSection,
+  onToggleVisibility: _onToggleVisibility,
+  onMoveBlock: _onMoveBlock,
   onAddBlock,
   onAddSection,
   onUpdateBlockConfig: _onUpdateBlockConfig,
-  onDuplicateBlock,
+  onDuplicateBlock: _onDuplicateBlock,
   onReorderBlocks,
   onLayoutChange,
   onRefetch,
@@ -120,7 +141,6 @@ export function StudioCanvas({
       if (!data.startsWith("section:")) return;
       const sourceId = data.replace("section:", "");
       if (sourceId === targetSectionId) return;
-      // Reorder sections
       const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
       const srcIdx = sections.findIndex((s) => s.id === sourceId);
       const tgtIdx = sections.findIndex((s) => s.id === targetSectionId);
@@ -218,6 +238,14 @@ export function StudioCanvas({
     <div className="space-y-3" onClick={onSelectPage}>
       {layout.sections.map((section, sectionIdx) => {
         const isSectionSelected = selectedSectionId === section.id;
+        const isSectionDragOver = dragOverSectionId === section.id && dragType === "section";
+        const gridClass = CANVAS_GRID[section.layout] ?? "";
+        const isMultiColumn = gridClass !== "";
+        const forceSingle =
+          devicePreview === "mobile" ||
+          (devicePreview === "tablet" && section.layout === "three_column");
+        const colCount = forceSingle ? 1 : (COLUMN_COUNT[section.layout] ?? 1);
+        const useGrid = isMultiColumn && !forceSingle;
 
         return (
           <div
@@ -225,7 +253,7 @@ export function StudioCanvas({
             className={`group/section relative rounded-lg transition-all ${
               isSectionSelected
                 ? "ring-2 ring-primary/25 bg-primary/[0.02]"
-                : dragOverSectionId === section.id && dragType === "section"
+                : isSectionDragOver
                   ? "ring-2 ring-primary/20 bg-primary/[0.05]"
                   : "ring-1 ring-transparent hover:ring-border/20"
             }`}
@@ -241,174 +269,102 @@ export function StudioCanvas({
               }
             }}
           >
-            {/* Section drag handle — visible on hover */}
+            {/* Section drag handle */}
             <div className="pointer-events-none absolute -left-1 top-2 z-20 opacity-0 group-hover/section:opacity-100 transition-opacity">
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing pointer-events-auto" />
             </div>
 
-            {/* Section label — shown when section is selected */}
+            {/* Section label — always visible */}
+            <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium text-muted-foreground border border-border/20">
+              {isSectionSelected && <span className="text-primary mr-1">●</span>}
+              Section {sectionIdx + 1}
+              {colCount > 1 && (
+                <span className="ml-1 text-muted-foreground/50">· {colCount} col</span>
+              )}
+            </div>
+
+            {/* Section quick-actions toolbar — shown when selected */}
             {isSectionSelected && (
-              <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-primary/10 px-2 py-0.5 text-[9px] font-medium text-primary">
-                Section {sectionIdx + 1} · {section.layout.replace("_", " ")}
+              <div className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm">
+                {colCount <= 2 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLayoutChange({
+                        ...layout,
+                        sections: layout.sections.map((s) =>
+                          s.id === section.id
+                            ? { ...s, layout: s.layout === "two_column" ? "full" : "two_column" }
+                            : s,
+                        ),
+                      });
+                    }}
+                    className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+                    title="Toggle columns"
+                  >
+                    <Columns2 className="h-3 w-3" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveSection(section.id);
+                  }}
+                  className="rounded p-0.5 text-muted-foreground hover:text-red-400"
+                  title="Delete section"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
             )}
 
-            {/* Section blocks container — grid or stack based on layout */}
-            {(() => {
-              const sectionGrid = CANVAS_GRID[section.layout] ?? "";
-              const isMultiColumn = sectionGrid !== "";
-              const forceSingle =
-                devicePreview === "mobile" ||
-                (devicePreview === "tablet" && section.layout === "three_column");
-              const containerClass = forceSingle
-                ? "space-y-2"
-                : isMultiColumn
-                  ? sectionGrid
-                  : "space-y-2";
-
-              return (
-                <div className={`${containerClass} p-2`}>
-                  {section.blocks.map((block, idx) => {
-                    const isSelected = selectedBlockId === block.id;
-                    const isHidden = block.visible === false;
-                    const isDragOver = dragOverBlockId === block.id;
-
-                    const blockWidth = (block.config?.width as string) ?? "full";
-                    // On mobile preview, force all blocks to full width
-                    const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
-                    const widthClass = mobileOverride
-                      ? "w-full"
-                      : isMultiColumn
-                        ? "" // In grid mode, width is controlled by grid placement
-                        : blockWidth === "2/3"
-                          ? "w-2/3"
-                          : blockWidth === "1/2"
-                            ? "w-1/2"
-                            : blockWidth === "1/3"
-                              ? "w-1/3"
-                              : blockWidth === "auto"
-                                ? "w-auto"
-                                : "w-full";
-
-                    // Column/span placement for multi-column sections
-                    const gridStyle: React.CSSProperties = {};
-                    if (isMultiColumn && !forceSingle) {
-                      if (block.span && block.span > 1) {
-                        gridStyle.gridColumn = `span ${Math.min(block.span, section.layout === "three_column" ? 3 : 2)}`;
-                      } else if (block.column != null && block.column >= 0) {
-                        gridStyle.gridColumn = `${block.column + 1} / span 1`;
-                      }
-                    }
-
-                    return (
-                      <div
-                        key={block.id}
-                        style={gridStyle}
-                        className={`group/block relative rounded-md transition-all ${widthClass} ${
-                          isSelected
-                            ? "ring-2 ring-primary/30 bg-primary/[0.03]"
-                            : isDragOver
-                              ? "ring-2 ring-primary/20 bg-primary/[0.05]"
-                              : "ring-1 ring-transparent hover:ring-border/20"
-                        } ${isDragOver ? "scale-[1.01]" : ""}`}
-                        draggable
-                        onDragStart={(e) => handleBlockDragStart(e, block.id)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleBlockDragOver(e, block.id)}
-                        onDragLeave={() => setDragOverBlockId(null)}
-                        onDrop={(e) => handleBlockDrop(e, section.id, block.id, idx)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectBlock(block.id);
-                        }}
-                      >
-                        {/* Block content */}
-                        <div className={isHidden ? "opacity-30" : ""}>
-                          <SingleBlockRenderer
-                            block={block}
-                            context={blockContext}
-                            devicePreview={devicePreview}
-                          />
-                        </div>
-
-                        {/* Floating toolbar — shown only when this block is selected */}
-                        {isSelected && (
-                          <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
-                            <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
-                              {getBlockLabel(block)}
-                            </span>
-                            <span className="h-3.5 w-px bg-border/40" />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onMoveBlock(block.id, "up");
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-foreground"
-                              aria-label="Move up"
-                            >
-                              <ArrowUp className="h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onMoveBlock(block.id, "down");
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-foreground"
-                              aria-label="Move down"
-                            >
-                              <ArrowDown className="h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDuplicateBlock(block.id);
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-foreground"
-                              aria-label="Duplicate"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleVisibility(block.id);
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-foreground"
-                              aria-label={isHidden ? "Show block" : "Hide block"}
-                            >
-                              {isHidden ? (
-                                <EyeOff className="h-3 w-3" />
-                              ) : (
-                                <Eye className="h-3 w-3" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRemoveBlock(block.id);
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-red-400"
-                              aria-label="Delete block"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Selected indicator — left border accent */}
-                        {isSelected && (
-                          <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* Add block button at bottom of section */}
+            {/* Blocks container */}
+            {useGrid ? (
+              <div className={`${gridClass} p-2 pt-4`}>
+                {renderGridBlocks(
+                  section,
+                  sectionIdx,
+                  colCount,
+                  blockContext,
+                  selectedBlockId,
+                  dragOverBlockId,
+                  dragType,
+                  handleBlockDragStart,
+                  handleDragEnd,
+                  handleBlockDragOver,
+                  handleBlockDrop,
+                  onSelectBlock,
+                  onAddBlock,
+                  devicePreview,
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2 p-2 pt-4">
+                {section.blocks.length === 0 ? (
+                  <EmptySection onAddBlock={onAddBlock} />
+                ) : (
+                  section.blocks.map((block, idx) => (
+                    <BlockCard
+                      key={block.id}
+                      block={block}
+                      idx={idx}
+                      sectionId={section.id}
+                      sectionBlockCount={section.blocks.length}
+                      blockContext={blockContext}
+                      isSelected={selectedBlockId === block.id}
+                      isDragOver={dragOverBlockId === block.id}
+                      devicePreview={devicePreview}
+                      onDragStart={handleBlockDragStart}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleBlockDragOver}
+                      onDrop={handleBlockDrop}
+                      onSelect={onSelectBlock}
+                    />
+                  ))
+                )}
+                {section.blocks.length > 0 && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -420,9 +376,9 @@ export function StudioCanvas({
                     <Plus className="h-3 w-3" />
                     Add block
                   </button>
-                </div>
-              );
-            })()}
+                )}
+              </div>
+            )}
           </div>
         );
       })}
@@ -432,7 +388,6 @@ export function StudioCanvas({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          // Add a default blank section
           onAddSection({
             id: "blank",
             label: "Blank",
@@ -441,22 +396,301 @@ export function StudioCanvas({
             layout: "full",
           });
         }}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40 py-4 text-xs text-muted-foreground transition-colors hover:border-border/60 hover:text-foreground"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border/30 py-6 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-4 w-4" />
         Add section
       </button>
     </div>
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Grid blocks renderer ─────────────────────────────────────────────────────
+// Renders blocks in a grid layout with column boundaries and per-column add buttons.
 
-import { getBlock } from "@/lib/block-registry";
+function renderGridBlocks(
+  section: { id: string; blocks: LayoutBlockInstance[]; layout: string },
+  sectionIdx: number,
+  colCount: number,
+  blockContext: BlockContext,
+  selectedBlockId: string | null,
+  dragOverBlockId: string | null,
+  dragType: string | null,
+  onDragStart: (e: React.DragEvent, blockId: string) => void,
+  onDragEnd: (e: React.DragEvent) => void,
+  onDragOver: (e: React.DragEvent, blockId: string) => void,
+  onDrop: (
+    e: React.DragEvent,
+    sectionId: string,
+    targetBlockId: string,
+    targetIndex: number,
+  ) => void,
+  onSelect: (blockId: string) => void,
+  onAddBlock: (blockType: string) => void,
+  devicePreview?: "desktop" | "tablet" | "mobile",
+) {
+  // Group blocks by column
+  const columns: LayoutBlockInstance[][] = Array.from({ length: colCount }, () => []);
+  const unassigned: LayoutBlockInstance[] = [];
 
-function getBlockLabel(block: LayoutBlockInstance): string {
-  const def = getBlock(block.type);
-  return def?.label ?? block.type.replace(/-/g, " ");
+  for (const block of section.blocks) {
+    const col = block.column;
+    if (col != null && col >= 0 && col < colCount) {
+      columns[col].push(block);
+    } else {
+      unassigned.push(block);
+    }
+  }
+
+  // Distribute unassigned blocks round-robin into columns
+  for (let i = 0; i < unassigned.length; i++) {
+    columns[i % colCount].push(unassigned[i]);
+  }
+
+  return (
+    <>
+      {columns.map((colBlocks, colIdx) => (
+        <div key={colIdx} className="relative">
+          {/* Column boundary indicator */}
+          {colIdx > 0 && (
+            <div className="absolute -left-1.5 top-0 bottom-0 w-px border-l border-dashed border-border/30" />
+          )}
+
+          {/* Column label */}
+          <div className="mb-1 text-center text-[8px] text-muted-foreground/30 font-medium">
+            Col {colIdx + 1}
+          </div>
+
+          {/* Blocks in this column */}
+          <div className="space-y-2">
+            {colBlocks.length === 0 ? (
+              <EmptyColumn colIdx={colIdx} onAddBlock={onAddBlock} />
+            ) : (
+              colBlocks.map((block, idx) => (
+                <BlockCard
+                  key={block.id}
+                  block={block}
+                  idx={idx}
+                  sectionId={section.id}
+                  sectionBlockCount={colBlocks.length}
+                  blockContext={blockContext}
+                  isSelected={selectedBlockId === block.id}
+                  isDragOver={dragOverBlockId === block.id}
+                  devicePreview={devicePreview}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
+                  onDragOver={onDragOver}
+                  onDrop={onDrop}
+                  onSelect={onSelect}
+                />
+              ))
+            )}
+
+            {/* Per-column add button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddBlock("text");
+              }}
+              className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/20 py-1.5 text-[9px] text-muted-foreground/40 transition-colors hover:border-border/40 hover:text-muted-foreground"
+            >
+              <Plus className="h-2.5 w-2.5" />
+              Add
+            </button>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ── Block Card ───────────────────────────────────────────────────────────────
+
+function BlockCard({
+  block,
+  idx,
+  sectionId,
+  sectionBlockCount: _sectionBlockCount,
+  blockContext,
+  isSelected,
+  isDragOver,
+  devicePreview,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+  onSelect,
+}: {
+  block: LayoutBlockInstance;
+  idx: number;
+  sectionId: string;
+  sectionBlockCount: number;
+  blockContext: BlockContext;
+  isSelected: boolean;
+  isDragOver: boolean;
+  devicePreview?: "desktop" | "tablet" | "mobile";
+  onDragStart: (e: React.DragEvent, blockId: string) => void;
+  onDragEnd: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent, blockId: string) => void;
+  onDrop: (
+    e: React.DragEvent,
+    sectionId: string,
+    targetBlockId: string,
+    targetIndex: number,
+  ) => void;
+  onSelect: (blockId: string) => void;
+}) {
+  const isHidden = block.visible === false;
+  const blockWidth = (block.config?.width as string) ?? "full";
+  const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
+  const widthClass = mobileOverride
+    ? "w-full"
+    : blockWidth === "2/3"
+      ? "w-2/3"
+      : blockWidth === "1/2"
+        ? "w-1/2"
+        : blockWidth === "1/3"
+          ? "w-1/3"
+          : blockWidth === "auto"
+            ? "w-auto"
+            : "w-full";
+
+  const blockDef = getBlock(block.type);
+
+  return (
+    <div
+      className={`group/block relative rounded-md transition-all ${widthClass} ${
+        isSelected
+          ? "ring-2 ring-primary/30 bg-primary/[0.03]"
+          : isDragOver
+            ? "ring-2 ring-primary/20 bg-primary/[0.05]"
+            : "ring-1 ring-transparent hover:ring-border/20"
+      } ${isDragOver ? "scale-[1.01]" : ""}`}
+      draggable
+      onDragStart={(e) => onDragStart(e, block.id)}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => onDragOver(e, block.id)}
+      onDragLeave={() => {}}
+      onDrop={(e) => onDrop(e, sectionId, block.id, idx)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(block.id);
+      }}
+    >
+      {/* Block type badge — always visible */}
+      <div className="absolute -top-1.5 left-2 z-10 rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
+        {blockDef?.label ?? block.type}
+      </div>
+
+      {/* Block content */}
+      <div className={isHidden ? "opacity-30" : ""}>
+        <SingleBlockRenderer block={block} context={blockContext} devicePreview={devicePreview} />
+      </div>
+
+      {/* Floating toolbar — shown only when this block is selected */}
+      {isSelected && (
+        <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
+          <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
+            {blockDef?.label ?? block.type}
+          </span>
+          <span className="h-3.5 w-px bg-border/40" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Move handled by parent
+            }}
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Move up"
+          >
+            <ArrowUp className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Move down"
+          >
+            <ArrowDown className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Duplicate"
+          >
+            <Copy className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label={isHidden ? "Show block" : "Hide block"}
+          >
+            {isHidden ? <EyeOff className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          </button>
+        </div>
+      )}
+
+      {/* Selected indicator */}
+      {isSelected && (
+        <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
+      )}
+    </div>
+  );
+}
+
+// ── Empty States ─────────────────────────────────────────────────────────────
+
+function EmptySection({ onAddBlock }: { onAddBlock: (type: string) => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/30 py-6 text-center">
+      <p className="text-[10px] text-muted-foreground/50 mb-2">Empty section</p>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddBlock("text");
+        }}
+        className="flex items-center gap-1 rounded-md bg-surface/40 px-3 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Plus className="h-3 w-3" />
+        Add first block
+      </button>
+    </div>
+  );
+}
+
+function EmptyColumn({
+  colIdx: _colIdx,
+  onAddBlock,
+}: {
+  colIdx: number;
+  onAddBlock: (type: string) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/20 py-4 text-center min-h-[60px]">
+      <p className="text-[9px] text-muted-foreground/30 mb-1">Empty</p>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddBlock("text");
+        }}
+        className="flex items-center gap-0.5 text-[9px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+      >
+        <Plus className="h-2.5 w-2.5" />
+        Add
+      </button>
+    </div>
+  );
 }
 
 // ── Single block renderer ────────────────────────────────────────────────────
