@@ -11,7 +11,7 @@ import { blockMarkdownToHtml } from "@/lib/block-markdown";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
-function ProjectAboutBlock({ context }: BlockProps) {
+function ProjectAboutBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -35,7 +35,13 @@ function ProjectAboutBlock({ context }: BlockProps) {
   if (isLoading) return <Skeleton className="h-32 w-full rounded-xl" />;
   if (!data) return null;
 
-  const content = data.readme || data.vision || data.description;
+  const showReadme = config.showReadme !== false;
+  const showVision = config.showVision !== false;
+  const parts: string[] = [];
+  if (showReadme && data.readme) parts.push(data.readme);
+  if (showVision && data.vision) parts.push(data.vision);
+  if (data.description) parts.push(data.description);
+  const content = parts.join("\n\n");
   if (!content) return null;
 
   const html = blockMarkdownToHtml(content);
@@ -56,7 +62,11 @@ registerBlock({
   label: "About / README",
   description: "The project's description, vision, and README content.",
   icon: "FileText",
-  defaults: {},
+  defaults: { showReadme: true, showVision: true },
+  fields: [
+    { key: "showReadme", label: "Show README", type: "toggle" },
+    { key: "showVision", label: "Show vision", type: "toggle" },
+  ],
   component: ProjectAboutBlock,
 });
 

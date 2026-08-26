@@ -93,12 +93,12 @@ export function StudioCanvas({
   onSelectPage,
   onRemoveBlock: _onRemoveBlock,
   onRemoveSection,
-  onToggleVisibility: _onToggleVisibility,
-  onMoveBlock: _onMoveBlock,
+  onToggleVisibility,
+  onMoveBlock,
   onAddBlock,
   onAddSection,
   onUpdateBlockConfig: _onUpdateBlockConfig,
-  onDuplicateBlock: _onDuplicateBlock,
+  onDuplicateBlock,
   onReorderBlocks,
   onLayoutChange,
   onRefetch,
@@ -351,6 +351,9 @@ export function StudioCanvas({
                   onSelectBlock,
                   onAddBlock,
                   () => setShowBlockPicker(true),
+                  onMoveBlock,
+                  onDuplicateBlock,
+                  onToggleVisibility,
                   devicePreview,
                 )}
               </div>
@@ -375,6 +378,9 @@ export function StudioCanvas({
                       onDragOver={handleBlockDragOver}
                       onDrop={handleBlockDrop}
                       onSelect={onSelectBlock}
+                      onMoveBlock={onMoveBlock}
+                      onDuplicateBlock={onDuplicateBlock}
+                      onToggleVisibility={onToggleVisibility}
                     />
                   ))
                 )}
@@ -447,6 +453,9 @@ function renderGridBlocks(
   onSelect: (blockId: string) => void,
   onAddBlock: (blockType: string) => void,
   onShowPicker: () => void,
+  onMoveBlock: (blockId: string, direction: "up" | "down") => void,
+  onDuplicateBlock: (blockId: string) => void,
+  onToggleVisibility: (blockId: string) => void,
   devicePreview?: "desktop" | "tablet" | "mobile",
 ) {
   // Group blocks by column
@@ -502,6 +511,9 @@ function renderGridBlocks(
                   onDragOver={onDragOver}
                   onDrop={onDrop}
                   onSelect={onSelect}
+                  onMoveBlock={onMoveBlock}
+                  onDuplicateBlock={onDuplicateBlock}
+                  onToggleVisibility={onToggleVisibility}
                 />
               ))
             )}
@@ -541,6 +553,9 @@ function BlockCard({
   onDragOver,
   onDrop,
   onSelect,
+  onMoveBlock,
+  onDuplicateBlock,
+  onToggleVisibility,
 }: {
   block: LayoutBlockInstance;
   idx: number;
@@ -560,6 +575,9 @@ function BlockCard({
     targetIndex: number,
   ) => void;
   onSelect: (blockId: string) => void;
+  onMoveBlock: (blockId: string, direction: "up" | "down") => void;
+  onDuplicateBlock: (blockId: string) => void;
+  onToggleVisibility: (blockId: string) => void;
 }) {
   const isHidden = block.visible === false;
   const blockWidth = (block.config?.width as string) ?? "full";
@@ -626,7 +644,7 @@ function BlockCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              // Move handled by parent
+              onMoveBlock(block.id, "up");
             }}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
             aria-label="Move up"
@@ -637,6 +655,7 @@ function BlockCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              onMoveBlock(block.id, "down");
             }}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
             aria-label="Move down"
@@ -647,6 +666,7 @@ function BlockCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              onDuplicateBlock(block.id);
             }}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
             aria-label="Duplicate"
@@ -657,6 +677,7 @@ function BlockCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              onToggleVisibility(block.id);
             }}
             className="rounded p-1 text-muted-foreground hover:text-foreground"
             aria-label={isHidden ? "Show block" : "Hide block"}

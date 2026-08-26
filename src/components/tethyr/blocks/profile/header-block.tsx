@@ -23,7 +23,7 @@ type ProfileHeaderData = {
   reputation_score: number | null;
 };
 
-function ProfileHeaderBlock({ context }: BlockProps) {
+function ProfileHeaderBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -56,8 +56,11 @@ function ProfileHeaderBlock({ context }: BlockProps) {
   }
 
   if (!data) return null;
-
   const initial = (data.display_name ?? data.handle ?? "?").charAt(0).toUpperCase();
+  const showTitle = config.showTitle !== false;
+  const showHandle = config.showHandle !== false;
+  const showLocation = config.showLocation !== false;
+  const showReputation = config.showReputation !== false;
 
   return (
     <div className="bg-surface/40 p-5 rounded-xl">
@@ -75,10 +78,10 @@ function ProfileHeaderBlock({ context }: BlockProps) {
           <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
             {data.display_name || "Untitled"}
           </h2>
-          {data.creator_title && (
+          {showTitle && data.creator_title && (
             <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
           )}
-          <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>
+          {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
 
           {/* Metadata chips */}
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -87,7 +90,7 @@ function ProfileHeaderBlock({ context }: BlockProps) {
                 {data.category}
               </span>
             )}
-            {data.country && (
+            {showLocation && data.country && (
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" /> {data.country}
               </span>
@@ -102,7 +105,7 @@ function ProfileHeaderBlock({ context }: BlockProps) {
                 <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
               </span>
             )}
-            {data.reputation_score != null && data.reputation_score > 0 && (
+            {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2.5 py-0.5 text-trust">
                 <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
               </span>
@@ -120,7 +123,13 @@ registerBlock({
   label: "Profile Header",
   description: "Avatar, name, handle, category, location, timezone, languages, and reputation.",
   icon: "User",
-  defaults: {},
+  defaults: { showTitle: true, showHandle: true, showLocation: true, showReputation: true },
+  fields: [
+    { key: "showTitle", label: "Show title", type: "toggle" },
+    { key: "showHandle", label: "Show handle", type: "toggle" },
+    { key: "showLocation", label: "Show location", type: "toggle" },
+    { key: "showReputation", label: "Show reputation", type: "toggle" },
+  ],
   component: ProfileHeaderBlock,
 });
 

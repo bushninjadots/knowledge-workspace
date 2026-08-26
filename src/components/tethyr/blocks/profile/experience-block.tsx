@@ -12,7 +12,7 @@ type ExpData = {
   teaching_style: string | null;
 };
 
-function ProfileExperienceBlock({ context }: BlockProps) {
+function ProfileExperienceBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -35,9 +35,12 @@ function ProfileExperienceBlock({ context }: BlockProps) {
       return <BlockEmptyState label="Experience" detail="Experience details will appear here." />;
     return null;
   }
-  const hasExp = data.years_experience != null;
-  const hasTitle = !!data.creator_title;
-  const hasStyle = !!data.teaching_style;
+  const showRole = config.showRole !== false;
+  const showYears = config.showYears !== false;
+  const showStyle = config.showTeachingStyle !== false;
+  const hasExp = showYears && data.years_experience != null;
+  const hasTitle = showRole && !!data.creator_title;
+  const hasStyle = showStyle && !!data.teaching_style;
   if (!hasExp && !hasTitle && !hasStyle) {
     if (context.isEditing)
       return (
@@ -86,7 +89,12 @@ registerBlock({
   label: "Experience",
   description: "Years of experience, role, and teaching style.",
   icon: "Briefcase",
-  defaults: {},
+  defaults: { showRole: true, showYears: true, showTeachingStyle: true },
+  fields: [
+    { key: "showRole", label: "Show role", type: "toggle" },
+    { key: "showYears", label: "Show years of experience", type: "toggle" },
+    { key: "showTeachingStyle", label: "Show teaching style", type: "toggle" },
+  ],
   component: ProfileExperienceBlock,
 });
 export { ProfileExperienceBlock };
