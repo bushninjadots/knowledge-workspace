@@ -1,26 +1,51 @@
-// ── Studio Canvas ────────────────────────────────────────────────────────────
-// Center panel: renders the real page with contextual hover controls and
-// drag-to-reorder for blocks.
+// ── Studio Canvas ────────────────────────────────────────────────────────────// Center panel: renders the real page with selection outlines, a contextual
+// floating toolbar for the selected block, drag-to-reorder, and section
+// click areas. Width control is handled exclusively by the inspector.
 
 import { useState, useCallback } from "react";
-import { GripVertical, Trash2, Eye, EyeOff, Plus } from "lucide-react";
+import {
+  GripVertical,
+  Trash2,
+  Eye,
+  EyeOff,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  ChevronDown,
+} from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { StudioPage } from "./studio";
-import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
+import type { StudioPage, SelectionType } from "./studio";
+import type { SectionPreset } from "./section-presets";
+import type {
+  BlockContext,
+  PageData,
+  PageLayout,
+  LayoutBlockInstance,
+  LayoutSection,
+} from "@/lib/page-blocks";
 
 interface StudioCanvasProps {
   page: StudioPage;
   pageData: PageData | undefined | null;
+  layout: PageLayout;
   pageLoading: boolean;
   pageError: boolean;
+  selectionType: SelectionType;
   selectedBlockId: string | null;
-  onSelectBlock: (blockId: string | null) => void;
+  selectedSectionId: string | null;
+  onSelectBlock: (blockId: string) => void;
+  onSelectSection: (sectionId: string) => void;
+  onSelectPage: () => void;
   onRemoveBlock: (blockId: string) => void;
+  onRemoveSection: (sectionId: string) => void;
   onToggleVisibility: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onAddBlock: (blockType: string) => void;
+  onAddSection: (preset: SectionPreset) => void;
   onUpdateBlockConfig: (blockId: string, config: Record<string, unknown>) => void;
+  onDuplicateBlock: (blockId: string) => void;
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
@@ -29,15 +54,23 @@ interface StudioCanvasProps {
 export function StudioCanvas({
   page,
   pageData,
+  layout,
   pageLoading,
   pageError,
+  selectionType,
   selectedBlockId,
+  selectedSectionId,
   onSelectBlock,
+  onSelectSection,
+  onSelectPage,
   onRemoveBlock,
+  onRemoveSection,
   onToggleVisibility,
   onMoveBlock,
   onAddBlock,
+  onAddSection,
   onUpdateBlockConfig,
+  onDuplicateBlock,
   onReorderBlocks,
   onRefetch,
 }: StudioCanvasProps) {
@@ -71,6 +104,7 @@ export function StudioCanvas({
     },
     [onReorderBlocks],
   );
+
   if (pageLoading) {
     return (
       <div className="space-y-4 p-8">
@@ -105,23 +139,24 @@ export function StudioCanvas({
     isEditing: true,
   };
 
-  const layout: PageLayout = pageData.layout ?? { sections: [] };
-
   if (layout.sections.length === 0) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center" onClick={onSelectPage}>
         <div className="max-w-xs text-center">
           <p className="text-sm text-foreground font-medium">Your page is empty</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Add blocks from the left sidebar to start building your{" "}
-            {page.type === "profile" ? "studio" : "project"} page.
+            Add a section to start building your {page.type === "profile" ? "studio" : "project"}{" "}
+            page.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-1.5">
             {["text", "heading", "project-hero", "project-status"].map((type) => (
               <button
                 key={type}
                 type="button"
-                onClick={() => onAddBlock(type)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddBlock(type);
+                }}
                 className="rounded-md border border-border/30 bg-surface/40 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors"
               >
                 <Plus className="mr-1 inline h-3 w-3" />
@@ -135,167 +170,182 @@ export function StudioCanvas({
   }
 
   return (
-    <div className="space-y-3">
-      {layout.sections.map((section) => (
-        <div key={section.id} className="space-y-2">
-          {section.blocks.map((block, idx) => {
-            const isSelected = selectedBlockId === block.id;
-            const isHidden = block.visible === false;
-            const isFirst = idx === 0;
-            const isLast = idx === section.blocks.length - 1;
-            const isDragOver = dragOverBlockId === block.id;
+    <div className="space-y-3" onClick={onSelectPage}>
+      {layout.sections.map((section, sectionIdx) => {
+        const isSectionSelected = selectedSectionId === section.id;
 
-            const blockWidth = (block.config?.width as string) ?? "full";
-            const widthClass =
-              blockWidth === "2/3"
-                ? "w-2/3"
-                : blockWidth === "1/2"
-                  ? "w-1/2"
-                  : blockWidth === "1/3"
-                    ? "w-1/3"
-                    : "w-full";
+        return (
+          <div
+            key={section.id}
+            className={`relative rounded-lg transition-all ${
+              isSectionSelected
+                ? "ring-2 ring-primary/25 bg-primary/[0.02]"
+                : "ring-1 ring-transparent hover:ring-border/20"
+            }`}
+            onClick={(e) => {
+              // Only select the section if the click is directly on the section wrapper,
+              // not on a child block (blocks stopPropagation).
+              if (e.target === e.currentTarget) {
+                onSelectSection(section.id);
+              }
+            }}
+          >
+            {/* Section label — shown when section is selected */}
+            {isSectionSelected && (
+              <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-primary/10 px-2 py-0.5 text-[9px] font-medium text-primary">
+                Section {sectionIdx + 1} · {section.layout.replace("_", " ")}
+              </div>
+            )}
 
-            return (
-              <div
-                key={block.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, block.id)}
-                onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, block.id)}
-                onDragLeave={() => setDragOverBlockId(null)}
-                onDrop={(e) => handleDrop(e, section.id, block.id, idx)}
-                className={`group/block relative rounded-md transition-all ${widthClass} ${
-                  isSelected
-                    ? "ring-2 ring-primary/30 bg-primary/[0.03]"
-                    : isDragOver
-                      ? "ring-2 ring-primary/20 bg-primary/[0.05]"
-                      : "ring-1 ring-transparent hover:ring-border/20"
-                } ${isDragOver ? "scale-[1.01]" : ""}`}
+            <div className="space-y-2 p-2">
+              {section.blocks.map((block, idx) => {
+                const isSelected = selectedBlockId === block.id;
+                const isHidden = block.visible === false;
+                const isDragOver = dragOverBlockId === block.id;
+
+                const blockWidth = (block.config?.width as string) ?? "full";
+                const widthClass =
+                  blockWidth === "2/3"
+                    ? "w-2/3"
+                    : blockWidth === "1/2"
+                      ? "w-1/2"
+                      : blockWidth === "1/3"
+                        ? "w-1/3"
+                        : blockWidth === "auto"
+                          ? "w-auto"
+                          : "w-full";
+
+                return (
+                  <div
+                    key={block.id}
+                    className={`group/block relative rounded-md transition-all ${widthClass} ${
+                      isSelected
+                        ? "ring-2 ring-primary/30 bg-primary/[0.03]"
+                        : isDragOver
+                          ? "ring-2 ring-primary/20 bg-primary/[0.05]"
+                          : "ring-1 ring-transparent hover:ring-border/20"
+                    } ${isDragOver ? "scale-[1.01]" : ""}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, block.id)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => {
+                      handleDragOver(e, block.id);
+                    }}
+                    onDragLeave={() => setDragOverBlockId(null)}
+                    onDrop={(e) => handleDrop(e, section.id, block.id, idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectBlock(block.id);
+                    }}
+                  >
+                    {/* Block content */}
+                    <div className={isHidden ? "opacity-30" : ""}>
+                      <SingleBlockRenderer block={block} context={blockContext} />
+                    </div>
+
+                    {/* Floating toolbar — shown only when this block is selected */}
+                    {isSelected && (
+                      <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
+                        <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
+                          {getBlockLabel(block)}
+                        </span>
+                        <span className="h-3.5 w-px bg-border/40" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveBlock(block.id, "up");
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-foreground"
+                          aria-label="Move up"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onMoveBlock(block.id, "down");
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-foreground"
+                          aria-label="Move down"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDuplicateBlock(block.id);
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-foreground"
+                          aria-label="Duplicate"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleVisibility(block.id);
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-foreground"
+                          aria-label={isHidden ? "Show block" : "Hide block"}
+                        >
+                          {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveBlock(block.id);
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-red-400"
+                          aria-label="Delete block"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Selected indicator — left border accent */}
+                    {isSelected && (
+                      <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Add block button at bottom of section */}
+              <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelectBlock(block.id);
+                  onAddBlock("text");
                 }}
+                className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
               >
-                {/* Block content */}
-                <div className={isHidden ? "opacity-30" : ""}>
-                  <SingleBlockRenderer block={block} context={blockContext} />
-                </div>
-
-                {/* Hover controls — top-right corner */}
-                <div className="pointer-events-none absolute -top-0 right-0 z-10 flex -translate-y-full items-center gap-0.5 rounded-md border border-border/30 bg-surface-elevated p-0.5 opacity-0 shadow-sm transition-opacity group-hover/block:opacity-100">
-                  {/* Drag handle */}
-                  <span
-                    className="pointer-events-auto rounded p-1 text-muted-foreground/50 cursor-grab active:cursor-grabbing"
-                    aria-label="Drag to reorder"
-                  >
-                    <GripVertical className="h-3 w-3" />
-                  </span>
-                  {!isFirst && (
-                    <button
-                      type="button"
-                      className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
-                      aria-label="Move up"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMoveBlock(block.id, "up");
-                      }}
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M18 15l-6-6-6 6" />
-                      </svg>
-                    </button>
-                  )}
-                  {!isLast && (
-                    <button
-                      type="button"
-                      className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
-                      aria-label="Move down"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMoveBlock(block.id, "down");
-                      }}
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    </button>
-                  )}
-                  <span className="h-3 w-px bg-border/40" />
-                  <button
-                    type="button"
-                    className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
-                    aria-label={isHidden ? "Show block" : "Hide block"}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleVisibility(block.id);
-                    }}
-                  >
-                    {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                  </button>
-                  <button
-                    type="button"
-                    className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-red-400"
-                    aria-label="Remove block"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveBlock(block.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-
-                {/* Resize handle — right edge, visible on hover */}
-                <div
-                  className="pointer-events-none absolute right-0 top-0 h-full w-2 cursor-col-resize opacity-0 group-hover/block:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const widths = ["full", "2/3", "1/2", "1/3"];
-                    const currentIdx = widths.indexOf(blockWidth);
-                    const nextWidth = widths[(currentIdx + 1) % widths.length];
-                    onUpdateBlockConfig(block.id, { ...block.config, width: nextWidth });
-                  }}
-                  title="Click to resize: Full → 2/3 → 1/2 → 1/3"
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-primary/40" />
-                </div>
-
-                {/* Width label — shown when not full width */}
-                {blockWidth !== "full" && (
-                  <span className="absolute -right-1 -top-2 z-20 rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-medium text-primary opacity-0 group-hover/block:opacity-100 transition-opacity pointer-events-none">
-                    {blockWidth}
-                  </span>
-                )}
-
-                {/* Selected indicator — subtle left border */}
-                {isSelected && (
-                  <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ))}
+                <Plus className="h-3 w-3" />
+                Add block
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Add section button at bottom */}
       <button
         type="button"
-        onClick={() => {
-          // Open the sidebar to blocks tab — signal via a simple add
-          // Not ideal but functional: just pick text block as default
-          onAddBlock("text");
+        onClick={(e) => {
+          e.stopPropagation();
+          // Add a default blank section
+          onAddSection({
+            id: "blank",
+            label: "Blank",
+            description: "Empty section",
+            icon: "Square",
+            layout: "full",
+          });
         }}
         className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/40 py-4 text-xs text-muted-foreground transition-colors hover:border-border/60 hover:text-foreground"
       >
@@ -304,6 +354,15 @@ export function StudioCanvas({
       </button>
     </div>
   );
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+import { getBlock } from "@/lib/block-registry";
+
+function getBlockLabel(block: LayoutBlockInstance): string {
+  const def = getBlock(block.type);
+  return def?.label ?? block.type.replace(/-/g, " ");
 }
 
 // ── Single block renderer ────────────────────────────────────────────────────

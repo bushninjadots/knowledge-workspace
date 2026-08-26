@@ -8,26 +8,40 @@ import {
   Plus,
   LayoutTemplate,
   Palette,
-  Settings,
   FileText,
   TrendingUp,
   GitFork,
   Download,
+  Square,
+  RectangleHorizontal,
+  Columns2,
+  Columns3,
+  Layout,
+  Rows2,
 } from "lucide-react";
 import { getAllBlocks } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage } from "./studio";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
 import type { LayoutSection, TemplateData } from "@/lib/page-blocks";
+import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
 
-type SidebarTab = "pages" | "templates" | "themes" | "settings";
+type SidebarTab = "pages" | "templates" | "themes";
 
 const TABS: { key: SidebarTab; icon: React.FC<{ className?: string }>; label: string }[] = [
-  { key: "pages", icon: FileText, label: "Pages" },
+  { key: "pages", icon: FileText, label: "Build" },
   { key: "templates", icon: LayoutTemplate, label: "Templates" },
   { key: "themes", icon: Palette, label: "Themes" },
-  { key: "settings", icon: Settings, label: "Settings" },
 ];
+
+const PRESET_ICONS: Record<string, React.FC<{ className?: string }>> = {
+  Square,
+  RectangleHorizontal,
+  Columns2,
+  Columns3,
+  Layout,
+  Rows2,
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   content: "Content",
@@ -55,6 +69,7 @@ interface StudioSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onAddBlock: (blockType: string) => void;
+  onAddSection: (preset: SectionPreset) => void;
   onApplyTemplate: (templateId: string) => void;
   onForkTemplate: (templateId: string) => void;
   onApplyTheme: (themeId: string) => void;
@@ -73,6 +88,7 @@ export function StudioSidebar({
   activeTab,
   onTabChange,
   onAddBlock,
+  onAddSection,
   onApplyTemplate,
   onForkTemplate,
   onApplyTheme,
@@ -114,7 +130,9 @@ export function StudioSidebar({
 
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === "pages" && <BlockLibrary onAddBlock={onAddBlock} />}
+        {activeTab === "pages" && (
+          <BuildPanel onAddBlock={onAddBlock} onAddSection={onAddSection} />
+        )}
         {activeTab === "templates" && (
           <TemplatesPanel
             templates={templates}
@@ -145,9 +163,16 @@ export function StudioSidebar({
   );
 }
 
-// ── Block Library ────────────────────────────────────────────────────────────
+// ── Build Panel ──────────────────────────────────────────────────────────────
+// Section presets at the top, then the block library grouped by category.
 
-function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
+function BuildPanel({
+  onAddBlock,
+  onAddSection,
+}: {
+  onAddBlock: (type: string) => void;
+  onAddSection: (preset: SectionPreset) => void;
+}) {
   const [search, setSearch] = useState("");
   const blocks = getAllBlocks();
 
@@ -168,8 +193,32 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
 
   return (
     <div className="px-3 py-4">
+      {/* ── Section presets ──────────────────────────────────────────────── */}
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Add Blocks
+        Add Section
+      </p>
+      <div className="mb-5 grid grid-cols-2 gap-1.5">
+        {SECTION_PRESETS.map((preset) => {
+          const Icon = PRESET_ICONS[preset.icon] ?? Square;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => onAddSection(preset)}
+              className="group flex flex-col items-center gap-1 rounded-md border border-border/20 bg-surface/20 px-2 py-2.5 text-center transition-colors hover:border-border/40 hover:bg-surface-elevated/50"
+            >
+              <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+              <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">
+                {preset.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Block library ────────────────────────────────────────────────── */}
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Add Block
       </p>
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
@@ -193,10 +242,19 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
                 key={block.type}
                 type="button"
                 onClick={() => onAddBlock(block.type)}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-surface-elevated/50 hover:text-foreground"
+                className="flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-surface-elevated/50 hover:text-foreground"
               >
-                <Plus className="h-3 w-3 shrink-0" />
-                <span className="truncate">{block.label}</span>
+                <Plus className="h-3 w-3 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <span className="block truncate text-xs font-medium text-current">
+                    {block.label}
+                  </span>
+                  {block.description && (
+                    <span className="block truncate text-[10px] text-muted-foreground/60">
+                      {block.description}
+                    </span>
+                  )}
+                </div>
               </button>
             ))}
           </div>

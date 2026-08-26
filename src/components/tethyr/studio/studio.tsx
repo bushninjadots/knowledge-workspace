@@ -13,6 +13,8 @@ import {
   Eye,
   Save,
   Send,
+  Undo2,
+  Redo2,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
@@ -44,11 +46,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
+import { type SectionPreset } from "./section-presets";
 import type {
   LayoutSection,
   PageData,
   PageLayout,
   PageOwnerType,
+  SectionLayoutType,
   ThemeTokens,
 } from "@/lib/page-blocks";
 
@@ -59,6 +63,7 @@ export type StudioPage = {
   type: "profile" | "project";
 };
 
+export type SelectionType = "page" | "section" | "block";
 export type DevicePreview = "desktop" | "tablet" | "mobile";
 
 interface StudioProps {
@@ -89,8 +94,51 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [selectionType, setSelectionType] = useState<SelectionType>("page");
   const [sidebarTab, setSidebarTab] = useState<string>("pages");
   const ensuringRef = useRef(false);
+
+  // ── Draft editing state ───────────────────────────────────────────────
+  // The Studio edits a local working copy of the layout. Every change (width,
+  // text, reorder, visibility) updates the draft and the undo history
+  // instantly — nothing touches the database until the user presses Save.
+  // This replaces the old per-click mutation + refetch loop.
+  const [draftLayout, setDraftLayout] = useState<PageLayout>({ sections: [] });
+  const [draftOverrides, setDraftOverrides] = useState<ThemeTokens | null>(null);
+  const [history, setHistory] = useState<PageLayout[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [dirty, setDirty] = useState(false);
+  const historyRef = useRef<PageLayout[]>([]);
+  const historyIndexRef = useRef(-1);
+  const dirtyRef = useRef(false);
+  // Last-persisted state, for accurate dirty detection after undo/redo.
+  const savedLayoutRef = useRef<PageLayout | null>(null);
+  const savedOverridesRef = useRef<ThemeTokens | null>(null);
+  // Tracks whether the user actually edited the theme this session. Theme
+  // overrides only hit the DB on Save when this is true — otherwise a plain
+  // layout save would persist the entire merged theme as overrides.
+  const overridesDirtyRef = useRef(false);
+
+  // When a page loads or the page selection changes, adopt the server layout
+  // as the fresh draft and reset the undo history.
+  const resetDraft = useCallback((layout: PageLayout, overrides: ThemeTokens | null = null) => {
+    setDraftLayout(layout);
+    setDraftOverrides(overrides);
+    setHistory([layout]);
+    setHistoryIndex(0);
+    historyRef.current = [layout];
+    historyIndexRef.current = 0;
+    setDirty(false);
+    dirtyRef.current = false;
+    savedLayoutRef.current = layout;
+    savedOverridesRef.current = overrides;
+    overridesDirtyRef.current = false;
+  }, []);
+
+  // Track which page the draft belongs to so we only reset on page change,
+  // not on every refetch (refetches after save return the same layout).
+  const draftOwnerRef = useRef<string | null>(null);
 
   // ── Query data ────────────────────────────────────────────────────────
   const {
@@ -103,6 +151,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     ownerId: activePage?.id ?? "",
     ownerType: (activePage?.type ?? "project") as PageOwnerType,
   });
+
+  // When a page loads or the page selection changes, adopt the server layout
+  // as the fresh draft and reset the undo history.
+  useEffect(() => {
+    if (!pageData) return;
+    if (draftOwnerRef.current !== pageData.id) {
+      draftOwnerRef.current = pageData.id;
+      resetDraft(pageData.layout ?? { sections: [] }, pageData.theme ?? null);
+    }
+  }, [pageData, resetDraft]);
 
   const { data: themeCatalog = [] } = useThemeCatalog();
   const {
@@ -193,39 +251,102 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
 
   // ── Layout helpers ────────────────────────────────────────────────────
-  // Stabilize the empty-layout identity so callbacks depending on `layout`
-  // don't re-create on every render when no page is loaded.
-  const layout = useMemo<PageLayout>(() => pageData?.layout ?? { sections: [] }, [pageData]);
   const isPublished = pageData?.status === "published";
 
-  const writeLayout = useCallback(
-    (newLayout: PageLayout, opts?: { onDone?: () => void }) => {
-      if (!pageData) {
-        console.warn("[Studio] writeLayout skipped — no pageData");
-        toast.error("No page loaded yet. Wait for the page to finish loading.");
-        return;
-      }
-      console.log(
-        `[Studio] writeLayout → pageId=${pageData.id} layoutId=${pageData.layoutId} sections=${newLayout.sections.length}`,
-      );
-      updateLayout.mutate(
-        { pageId: pageData.id, layoutId: pageData.layoutId, layout: newLayout },
+  // Apply an edit to the draft: update the layout, push the previous state
+  // onto the undo stack (truncating any redo tail), and mark dirty.
+  const applyDraft = useCallback((newLayout: PageLayout) => {
+    setDraftLayout(newLayout);
+    setDirty(true);
+    dirtyRef.current = true;
+    // Truncate redo tail, then push the new snapshot.
+    const next = historyRef.current.slice(0, historyIndexRef.current + 1);
+    next.push(newLayout);
+    // Cap history at 100 entries.
+    if (next.length > 100) next.shift();
+    historyRef.current = next;
+    historyIndexRef.current = next.length - 1;
+    setHistory(next);
+    setHistoryIndex(next.length - 1);
+  }, []);
+
+  // Persist the draft (layout + theme overrides) to the database.
+  const handleSave = useCallback(() => {
+    if (!pageData) {
+      toast.error("No page loaded yet. Wait for the page to finish loading.");
+      return;
+    }
+    if (!dirtyRef.current) {
+      toast.info("No unsaved changes");
+      return;
+    }
+    updateLayout.mutate(
+      { pageId: pageData.id, layoutId: pageData.layoutId, layout: draftLayout },
+      {
+        onSuccess: () => {
+          setDirty(false);
+          dirtyRef.current = false;
+          savedLayoutRef.current = draftLayout;
+          savedOverridesRef.current = draftOverrides ?? null;
+          toast.success("Changes saved");
+          setTimeout(() => refetchPage(), 100);
+        },
+        onError: (err) => {
+          toast.error(friendlyError(err, "Failed to save changes. Check if you own this page."));
+        },
+      },
+    );
+    if (overridesDirtyRef.current && draftOverrides != null) {
+      updateThemeOverrides.mutate(
+        { pageId: pageData.id, overrides: draftOverrides },
         {
-          onSuccess: () => {
-            console.log("[Studio] ✅ writeLayout success, refetching");
-            // Small delay to let the mutation's own cache invalidation propagate.
-            setTimeout(() => refetchPage(), 100);
-            opts?.onDone?.();
-          },
           onError: (err) => {
-            console.error("[Studio] ❌ writeLayout error:", err);
-            toast.error(friendlyError(err, "Failed to save layout. Check if you own this page."));
+            toast.error(friendlyError(err, "Failed to save theme"));
           },
         },
       );
+      overridesDirtyRef.current = false;
+    }
+  }, [pageData, draftLayout, draftOverrides, updateLayout, updateThemeOverrides, refetchPage]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  // Undo/redo restore a history snapshot. Mark the draft dirty only if the
+  // restored state actually differs from what's persisted (so undoing back to
+  // the saved state shows a clean "Saved" indicator instead of false "unsaved").
+  const syncDirtyAfterHistory = useCallback(
+    (layout: PageLayout) => {
+      const equal =
+        savedLayoutRef.current != null &&
+        JSON.stringify(layout) === JSON.stringify(savedLayoutRef.current) &&
+        JSON.stringify(draftOverrides ?? null) ===
+          JSON.stringify(savedOverridesRef.current ?? null);
+      setDirty(!equal);
+      dirtyRef.current = !equal;
     },
-    [pageData, updateLayout, refetchPage],
+    [draftOverrides],
   );
+
+  const handleUndo = useCallback(() => {
+    const idx = historyIndexRef.current - 1;
+    if (idx < 0) return;
+    historyIndexRef.current = idx;
+    setHistoryIndex(idx);
+    const restored = historyRef.current[idx];
+    setDraftLayout(restored);
+    syncDirtyAfterHistory(restored);
+  }, [syncDirtyAfterHistory]);
+
+  const handleRedo = useCallback(() => {
+    const idx = historyIndexRef.current + 1;
+    if (idx >= historyRef.current.length) return;
+    historyIndexRef.current = idx;
+    setHistoryIndex(idx);
+    const restored = historyRef.current[idx];
+    setDraftLayout(restored);
+    syncDirtyAfterHistory(restored);
+  }, [syncDirtyAfterHistory]);
 
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
@@ -246,7 +367,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         return;
       }
       console.log(`[Studio] ✅ Block instance created:`, inst.type);
-      const existing = pageData?.layout?.sections ?? [];
+      const existing = draftLayout.sections;
       const sections = existing.map((s: LayoutSection) => ({ ...s, blocks: [...s.blocks] }));
       let last = sections[sections.length - 1];
       if (!last) {
@@ -262,40 +383,40 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       };
       sections[sections.length - 1] = { ...last, blocks: [...last.blocks, newBlock] };
       toast.success(`Added ${inst.type.replace(/-/g, " ")}`);
-      writeLayout({ sections });
+      applyDraft({ sections });
       setSelectedBlockId(newBlock.id);
     },
-    [writeLayout, pageData, blockCount],
+    [applyDraft, draftLayout, pageData, blockCount],
   );
 
   // ── Remove block ──────────────────────────────────────────────────────
   const handleRemoveBlock = useCallback(
     (blockId: string) => {
-      const sections = layout.sections
+      const sections = draftLayout.sections
         .map((s) => ({ ...s, blocks: s.blocks.filter((b) => b.id !== blockId) }))
         .filter((s) => s.blocks.length > 0);
-      writeLayout({ sections });
+      applyDraft({ sections });
       if (selectedBlockId === blockId) setSelectedBlockId(null);
     },
-    [layout, writeLayout, selectedBlockId],
+    [draftLayout, applyDraft, selectedBlockId],
   );
 
   // ── Toggle visibility ─────────────────────────────────────────────────
   const handleToggleVisibility = useCallback(
     (blockId: string) => {
-      const sections = layout.sections.map((s) => ({
+      const sections = draftLayout.sections.map((s) => ({
         ...s,
         blocks: s.blocks.map((b) => (b.id === blockId ? { ...b, visible: !b.visible } : b)),
       }));
-      writeLayout({ sections });
+      applyDraft({ sections });
     },
-    [layout, writeLayout],
+    [draftLayout, applyDraft],
   );
 
   // ── Move block ────────────────────────────────────────────────────────
   const handleMoveBlock = useCallback(
     (blockId: string, direction: "up" | "down") => {
-      const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
       for (const section of sections) {
         const idx = section.blocks.findIndex((b) => b.id === blockId);
         if (idx === -1) continue;
@@ -305,15 +426,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         section.blocks.splice(newIdx, 0, moved);
         break;
       }
-      writeLayout({ sections });
+      applyDraft({ sections });
     },
-    [layout, writeLayout],
+    [draftLayout, applyDraft],
   );
 
   // ── Drag reorder blocks ────────────────────────────────────────────────
   const handleReorderBlocks = useCallback(
     (sectionId: string, blockId: string, targetIndex: number) => {
-      const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
       for (const section of sections) {
         const idx = section.blocks.findIndex((b) => b.id === blockId);
         if (idx === -1) continue;
@@ -322,56 +443,157 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         section.blocks.splice(clampedTarget, 0, moved);
         break;
       }
-      writeLayout({ sections });
+      applyDraft({ sections });
     },
-    [layout, writeLayout],
+    [draftLayout, applyDraft],
+  );
+
+  // ── Add section ──────────────────────────────────────────────────────
+  const handleAddSection = useCallback(
+    (preset: SectionPreset) => {
+      if (!pageData) {
+        toast.error("Page not loaded yet.");
+        return;
+      }
+      const newBlocks = (preset.starterBlocks ?? []).map((sb, i) => {
+        const inst = createBlockInstance(sb.type);
+        return {
+          id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          type: sb.type,
+          position: i,
+          config: { ...(inst?.config ?? {}), ...(sb.config ?? {}) } as Record<string, unknown>,
+          visible: true,
+        };
+      });
+      const newSection: LayoutSection = {
+        id: `sect_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        position: draftLayout.sections.length,
+        layout: preset.layout,
+        blocks: newBlocks,
+      };
+      const sections = [...draftLayout.sections, newSection];
+      applyDraft({ sections });
+      setSelectionType("section");
+      setSelectedSectionId(newSection.id);
+      setSelectedBlockId(null);
+      toast.success(`Added ${preset.label} section`);
+    },
+    [applyDraft, draftLayout, pageData],
+  );
+
+  // ── Remove section ──────────────────────────────────────────────────────
+  const handleRemoveSection = useCallback(
+    (sectionId: string) => {
+      const sections = draftLayout.sections.filter((s) => s.id !== sectionId);
+      applyDraft({ sections });
+      if (selectedSectionId === sectionId) {
+        setSelectionType("page");
+        setSelectedSectionId(null);
+      }
+    },
+    [draftLayout, applyDraft, selectedSectionId],
+  );
+
+  // ── Move section ─────────────────────────────────────────────────────────
+  const handleMoveSection = useCallback(
+    (sectionId: string, direction: "up" | "down") => {
+      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const idx = sections.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return;
+      const newIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= sections.length) return;
+      const [moved] = sections.splice(idx, 1);
+      sections.splice(newIdx, 0, moved);
+      applyDraft({ sections });
+    },
+    [draftLayout, applyDraft],
+  );
+
+  // ── Update section layout ────────────────────────────────────────────────
+  const handleUpdateSectionLayout = useCallback(
+    (sectionId: string, layout: SectionLayoutType) => {
+      const sections = draftLayout.sections.map((s) => (s.id === sectionId ? { ...s, layout } : s));
+      applyDraft({ sections });
+    },
+    [draftLayout, applyDraft],
+  );
+
+  // ── Duplicate block ──────────────────────────────────────────────────────
+  const handleDuplicateBlock = useCallback(
+    (blockId: string) => {
+      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      for (const section of sections) {
+        const idx = section.blocks.findIndex((b) => b.id === blockId);
+        if (idx === -1) continue;
+        const original = section.blocks[idx];
+        const clone = {
+          ...original,
+          id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          config: { ...original.config },
+        };
+        section.blocks.splice(idx + 1, 0, clone);
+        applyDraft({ sections });
+        setSelectionType("block");
+        setSelectedBlockId(clone.id);
+        toast.success("Block duplicated");
+        return;
+      }
+    },
+    [draftLayout, applyDraft],
   );
 
   // ── Update block config ──────────────────────────────────────────────
   const handleUpdateBlockConfig = useCallback(
     (blockId: string, config: Record<string, unknown>) => {
-      const sections = layout.sections.map((s) => ({
+      const sections = draftLayout.sections.map((s) => ({
         ...s,
         blocks: s.blocks.map((b) =>
           b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
         ),
       }));
-      writeLayout({ sections });
+      applyDraft({ sections });
     },
-    [layout, writeLayout],
+    [draftLayout, applyDraft],
   );
 
   // ── Update theme overrides ──────────────────────────────────────────
-  const handleUpdateThemeOverrides = useCallback(
-    (overrides: ThemeTokens | null) => {
-      if (!pageData) {
-        toast.error("No page loaded");
-        return;
-      }
-      console.log(`[Studio] Saving theme overrides to page ${pageData.id}`);
-      updateThemeOverrides.mutate(
-        { pageId: pageData.id, overrides },
-        {
-          onSuccess: () => {
-            console.log("[Studio] ✅ Theme overrides saved");
-            refetchPage();
-            toast.success("Theme updated");
-          },
-          onError: (err) => {
-            console.error("[Studio] ❌ Theme override error:", err);
-            toast.error(friendlyError(err, "Failed to save theme"));
-          },
-        },
-      );
-    },
-    [pageData, updateThemeOverrides, refetchPage],
-  );
+  // Local-only: edits land in the draft and persist on Save, matching the
+  // layout editing model instead of writing to the DB on every slider move.
+  const handleUpdateThemeOverrides = useCallback((overrides: ThemeTokens | null) => {
+    setDraftOverrides(overrides);
+    setDirty(true);
+    dirtyRef.current = true;
+    overridesDirtyRef.current = true;
+  }, []);
 
   // ── Publish / Save Draft / Preview ────────────────────────────────────
   const handlePublish = useCallback(async () => {
     if (!pageData) {
       toast.error("No page to publish");
       return;
+    }
+    // Save any unsaved draft edits before publishing so the live page
+    // reflects what the user sees in the Studio.
+    if (dirtyRef.current) {
+      try {
+        await updateLayout.mutateAsync({
+          pageId: pageData.id,
+          layoutId: pageData.layoutId,
+          layout: draftLayout,
+        });
+        if (overridesDirtyRef.current && draftOverrides != null) {
+          await updateThemeOverrides.mutateAsync({
+            pageId: pageData.id,
+            overrides: draftOverrides,
+          });
+          overridesDirtyRef.current = false;
+        }
+        setDirty(false);
+        dirtyRef.current = false;
+      } catch (err) {
+        toast.error(friendlyError(err, "Failed to save changes before publishing"));
+        return;
+      }
     }
     try {
       await publishPage.mutateAsync({ pageId: pageData.id });
@@ -380,7 +602,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     } catch (err) {
       toast.error(friendlyError(err, "Failed to publish"));
     }
-  }, [pageData, publishPage, refetchPage]);
+  }, [
+    pageData,
+    draftLayout,
+    draftOverrides,
+    publishPage,
+    updateLayout,
+    updateThemeOverrides,
+    refetchPage,
+  ]);
 
   const handleUnpublish = useCallback(async () => {
     if (!pageData) return;
@@ -413,9 +643,17 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       updateTheme.mutate(
         { pageId: pageData.id, themeId },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             console.log("[Studio] ✅ Theme applied, refetching");
-            refetchPage();
+            // Adopt the fresh merged theme so the theme editor and dirty
+            // detection track the newly applied theme, not the stale draft.
+            const fresh = await refetchPage();
+            const data = fresh?.data ?? pageData;
+            if (data) {
+              setDraftOverrides(data.theme ?? null);
+              savedOverridesRef.current = data.theme ?? null;
+              overridesDirtyRef.current = false;
+            }
             toast.success("Theme applied");
           },
           onError: (err) => {
@@ -446,9 +684,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           ownerType: activePage.type,
         },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             console.log("[Studio] ✅ Template applied");
-            refetchPage();
+            // Deterministically adopt the server's freshly applied layout as
+            // the new draft (refetch resolves with the updated page data).
+            const fresh = await refetchPage();
+            const data = fresh?.data ?? pageData;
+            if (data) {
+              draftOwnerRef.current = data.id;
+              resetDraft(data.layout ?? { sections: [] }, data.theme ?? null);
+            }
             toast.success("Template applied — page updated");
           },
           onError: (err) => {
@@ -458,7 +703,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         },
       );
     },
-    [pageData, activePage, applyTemplate, refetchPage],
+    [pageData, activePage, applyTemplate, refetchPage, resetDraft],
   );
 
   // ── Save as template ──────────────────────────────────────────────────
@@ -513,15 +758,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         { parentLayoutId: templateId },
         {
           onSuccess: () => {
-            refetchPage();
+            // A fork creates an independent copy owned by the user; it does
+            // NOT change the current page's layout, so the draft stays put
+            // (including any unsaved edits).
             qc.invalidateQueries({ queryKey: ["templates"] });
-            toast.success("Layout forked");
           },
           onError: (err) => toast.error(friendlyError(err, "Failed to fork")),
         },
       );
     },
-    [activePage, forkLayout, refetchPage, qc],
+    [activePage, forkLayout, qc],
   );
 
   // ── Page selection ────────────────────────────────────────────────────
@@ -543,11 +789,76 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [devicePreview]);
 
-  // ── Blocks for canvas/inspector ───────────────────────────────────────
-  const blocks = layout.sections.flatMap((s) => s.blocks);
+  // ── Selection helpers ─────────────────────────────────────────────────
+  const blocks = draftLayout.sections.flatMap((s) => s.blocks);
   const selectedBlock = selectedBlockId
     ? (blocks.find((b) => b.id === selectedBlockId) ?? null)
     : null;
+  const selectedSection = selectedSectionId
+    ? (draftLayout.sections.find((s) => s.id === selectedSectionId) ?? null)
+    : null;
+
+  const handleSelectPageLevel = useCallback(() => {
+    setSelectionType("page");
+    setSelectedBlockId(null);
+    setSelectedSectionId(null);
+  }, []);
+
+  const handleSelectSection = useCallback((sectionId: string) => {
+    setSelectionType("section");
+    setSelectedBlockId(null);
+    setSelectedSectionId(sectionId);
+  }, []);
+
+  const handleSelectBlock = useCallback(
+    (blockId: string) => {
+      setSelectionType("block");
+      setSelectedBlockId(blockId);
+      // Also track which section the block belongs to.
+      for (const section of draftLayout.sections) {
+        if (section.blocks.some((b) => b.id === blockId)) {
+          setSelectedSectionId(section.id);
+          break;
+        }
+      }
+    },
+    [draftLayout],
+  );
+
+  // Keyboard shortcuts: Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z or Ctrl+Y redo,
+  // Ctrl/Cmd+S save, Escape deselect. Ignore when typing in inputs.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+      // Escape: deselect everything → page selection
+      if (e.key === "Escape") {
+        handleSelectPageLevel();
+        return;
+      }
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) handleRedo();
+        else handleUndo();
+      } else if (key === "y") {
+        e.preventDefault();
+        handleRedo();
+      } else if (key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleUndo, handleRedo, handleSave, handleSelectPageLevel]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -618,6 +929,49 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
+          {/* Undo / Redo */}
+          <div className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              className="rounded px-1.5 py-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
+              aria-label="Undo (Ctrl+Z)"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              className="rounded px-1.5 py-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
+              aria-label="Redo (Ctrl+Shift+Z)"
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Save with dirty indicator */}
+          <Button
+            variant={dirty ? "outline" : "ghost"}
+            size="sm"
+            className={`h-7 gap-1.5 text-[11px] ${dirty ? "border-primary/40 text-primary" : ""}`}
+            onClick={handleSave}
+            disabled={updateLayout.isPending}
+            title={dirty ? "Save changes (Ctrl+S)" : "No unsaved changes"}
+          >
+            {dirty && (
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"
+                aria-hidden="true"
+              />
+            )}
+            <Save className="h-3.5 w-3.5" />
+            {updateLayout.isPending ? "Saving…" : dirty ? "Save" : "Saved"}
+          </Button>
+
           {isPublished ? (
             <Button
               variant="ghost"
@@ -627,11 +981,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             >
               Unpublish
             </Button>
-          ) : (
-            <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px]">
-              <Save className="h-3.5 w-3.5" /> Draft
-            </Button>
-          )}
+          ) : null}
           <Button
             variant="ghost"
             size="sm"
@@ -646,7 +996,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               size="sm"
               className="h-7 gap-1.5 text-[11px]"
               onClick={handlePublish}
-              disabled={publishPage.isPending}
+              disabled={publishPage.isPending || updateLayout.isPending}
             >
               <Send className="h-3.5 w-3.5" /> {publishPage.isPending ? "Publishing…" : "Publish"}
             </Button>
@@ -668,6 +1018,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               activeTab={sidebarTab}
               onTabChange={setSidebarTab}
               onAddBlock={handleAddBlock}
+              onAddSection={handleAddSection}
               onApplyTemplate={handleApplyTemplate}
               onForkTemplate={handleForkTemplate}
               onApplyTheme={handleApplyTheme}
@@ -692,17 +1043,25 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                   <StudioCanvas
                     page={activePage}
                     pageData={pageData}
+                    layout={draftLayout}
                     pageLoading={pageLoading}
                     pageError={pageError}
+                    selectionType={selectionType}
                     selectedBlockId={selectedBlockId}
-                    onSelectBlock={setSelectedBlockId}
+                    selectedSectionId={selectedSectionId}
+                    onSelectBlock={handleSelectBlock}
+                    onSelectSection={handleSelectSection}
+                    onSelectPage={handleSelectPageLevel}
                     onRemoveBlock={handleRemoveBlock}
+                    onRemoveSection={handleRemoveSection}
                     onToggleVisibility={handleToggleVisibility}
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}
                     onAddBlock={handleAddBlock}
+                    onAddSection={handleAddSection}
                     onUpdateBlockConfig={handleUpdateBlockConfig}
-                    onLayoutChange={writeLayout}
+                    onDuplicateBlock={handleDuplicateBlock}
+                    onLayoutChange={applyDraft}
                     onRefetch={refetchPage}
                   />
                 </EditModeProvider>
@@ -729,18 +1088,22 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         >
           {rightOpen && (
             <StudioInspector
+              selectionType={selectionType}
               selectedBlock={selectedBlock}
               selectedBlockDef={selectedBlockId ? getBlock(selectedBlockId) : undefined}
+              selectedSection={selectedSection}
               pageData={pageData}
               isPublished={isPublished}
               onPublish={handlePublish}
               onUnpublish={handleUnpublish}
-              onSelectBlock={setSelectedBlockId}
               onMoveBlock={handleMoveBlock}
               onRemoveBlock={handleRemoveBlock}
+              onRemoveSection={handleRemoveSection}
+              onMoveSection={handleMoveSection}
               onUpdateBlockConfig={handleUpdateBlockConfig}
+              onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
-              currentOverrides={pageData?.theme ?? null}
+              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onRefetch={refetchPage}
@@ -755,6 +1118,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         pageError={pageError}
         pageFetchError={pageFetchError as Error | null}
         pageData={pageData}
+        layout={draftLayout}
+        dirty={dirty}
         blockCount={blockCount}
         templatesLoading={templatesLoading}
         templatesError={templatesError}
@@ -803,6 +1168,8 @@ function StatusBar({
   pageError,
   pageFetchError,
   pageData,
+  layout,
+  dirty,
   blockCount,
   templatesLoading,
   templatesError,
@@ -813,18 +1180,19 @@ function StatusBar({
   pageError: boolean;
   pageFetchError: Error | null;
   pageData: PageData | null | undefined;
+  layout: PageLayout;
+  dirty: boolean;
   blockCount: number;
   templatesLoading: boolean;
   templatesError: boolean;
   templateCount: number;
   createPending: boolean;
 }) {
-  const sectionCount = pageData?.layout?.sections?.length ?? 0;
-  const blockInstanceCount =
-    pageData?.layout?.sections?.reduce(
-      (sum: number, s: LayoutSection) => sum + (s.blocks?.length ?? 0),
-      0,
-    ) ?? 0;
+  const sectionCount = layout.sections.length;
+  const blockInstanceCount = layout.sections.reduce(
+    (sum: number, s: LayoutSection) => sum + (s.blocks?.length ?? 0),
+    0,
+  );
 
   return (
     <div className="h-8 shrink-0 border-t border-border/20 bg-surface-elevated/20 px-4 flex items-center gap-4 text-[10px] text-muted-foreground">
@@ -849,6 +1217,12 @@ function StatusBar({
         <span className="flex items-center gap-1" title={`ID: ${pageData.id}`}>
           <CheckCircle2 className="h-3 w-3 text-green-500" />
           Page: {sectionCount}s · {blockInstanceCount}b · {pageData.status}
+          {dirty && (
+            <span className="flex items-center gap-1 text-amber-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              unsaved
+            </span>
+          )}
         </span>
       ) : (
         <span className="flex items-center gap-1 text-amber-400">
