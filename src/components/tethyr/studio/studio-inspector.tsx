@@ -6,16 +6,8 @@
 //
 // Never exposes raw config keys, CSS variables, or JSON to the user.
 
-import { useCallback } from "react";
-import {
-  EyeOff,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Send,
-  Globe,
-  Copy,
-} from "lucide-react";
+import { useCallback, useState } from "react";
+import { EyeOff, ArrowUp, ArrowDown, Trash2, Send, Globe, Copy } from "lucide-react";
 import type {
   LayoutBlockInstance,
   PageData,
@@ -499,6 +491,7 @@ function PageInspector({
   currentOverrides?: ThemeTokens | null;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
 }) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
   const baseTokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
   const tokens = currentOverrides
@@ -571,65 +564,89 @@ function PageInspector({
         </div>
       </div>
 
-      {/* Radius slider */}
-      <div>
-        <SectionLabel>
-          Corner radius: <span className="text-foreground">{currentRadiusLg}px</span>
-        </SectionLabel>
-        <input
-          type="range"
-          min="0"
-          max="24"
-          value={currentRadiusLg}
-          onChange={(e) => setRadius(parseInt(e.target.value))}
-          className="mt-1.5 w-full h-1 accent-primary cursor-pointer"
-        />
-        <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground/50">
-          <span>0px</span>
-          <span>24px</span>
-        </div>
+      {/* Advanced toggle */}
+      <div className="flex items-center justify-between">
+        <SectionLabel>Advanced</SectionLabel>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={`relative h-5 w-9 rounded-full transition-colors ${
+            showAdvanced ? "bg-primary" : "bg-border"
+          }`}
+          role="switch"
+          aria-checked={showAdvanced}
+        >
+          <span
+            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+              showAdvanced ? "left-[18px]" : "left-0.5"
+            }`}
+          />
+        </button>
       </div>
 
-      {/* Colors */}
-      <div>
-        <SectionLabel>Colors</SectionLabel>
-        <div className="mt-1.5 space-y-1.5">
-          {[
-            ["Background", "--background"],
-            ["Surface", "--surface"],
-            ["Foreground", "--foreground"],
-            ["Primary", "--primary"],
-            ["Border", "--border"],
-          ].map(([label, cssVar]) => (
-            <div key={cssVar} className="flex items-center gap-2">
-              <div
-                className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
-                style={{ backgroundColor: `var(${cssVar})` }}
-              />
-              <span className="text-[10px] text-muted-foreground">{label}</span>
+      {showAdvanced && (
+        <>
+          {/* Radius slider */}
+          <div>
+            <SectionLabel>
+              Corner radius: <span className="text-foreground">{currentRadiusLg}px</span>
+            </SectionLabel>
+            <input
+              type="range"
+              min="0"
+              max="24"
+              value={currentRadiusLg}
+              onChange={(e) => setRadius(parseInt(e.target.value))}
+              className="mt-1.5 w-full h-1 accent-primary cursor-pointer"
+            />
+            <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground/50">
+              <span>0px</span>
+              <span>24px</span>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Typography */}
-      <div>
-        <SectionLabel>Typography</SectionLabel>
-        <div className="mt-1.5 space-y-1">
-          {[
-            ["Display", tokens["font-display"] ?? "var(--font-display)"],
-            ["Body", tokens["font-sans"] ?? "var(--font-sans)"],
-            ["Mono", tokens["font-mono"] ?? "var(--font-mono)"],
-          ].map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground">{label}</span>
-              <span className="text-[9px] text-muted-foreground/40 font-mono truncate max-w-[120px]">
-                {value}
-              </span>
+          {/* Colors */}
+          <div>
+            <SectionLabel>Colors</SectionLabel>
+            <div className="mt-1.5 space-y-1.5">
+              {[
+                ["Background", "--background"],
+                ["Surface", "--surface"],
+                ["Foreground", "--foreground"],
+                ["Primary", "--primary"],
+                ["Border", "--border"],
+              ].map(([label, cssVar]) => (
+                <div key={cssVar} className="flex items-center gap-2">
+                  <div
+                    className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
+                    style={{ backgroundColor: `var(${cssVar})` }}
+                  />
+                  <span className="text-[10px] text-muted-foreground">{label}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          {/* Typography */}
+          <div>
+            <SectionLabel>Typography</SectionLabel>
+            <div className="mt-1.5 space-y-1">
+              {[
+                ["Display", tokens["font-display"] ?? "var(--font-display)"],
+                ["Body", tokens["font-sans"] ?? "var(--font-sans)"],
+                ["Mono", tokens["font-mono"] ?? "var(--font-mono)"],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">{label}</span>
+                  <span className="text-[9px] text-muted-foreground/40 font-mono truncate max-w-[120px]">
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

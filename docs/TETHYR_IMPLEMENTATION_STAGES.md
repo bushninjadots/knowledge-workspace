@@ -504,3 +504,45 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Added coverage for signed-out, loading, error/retry, stale-data error precedence, and authenticated states.
 - Added WorkspaceGrid coverage proving child-owned headers remain single-owner in normal and customize modes, while grid-owned chrome renders exactly one title.
 - Validation: 71 Vitest tests, TypeScript, changed-file lint (0 errors), Prettier, production build, route smoke, and `git diff --check` passed.
+
+### 2026-08-26 — Creativity Studio Redesign: Phases 1–3 ✅ DONE
+
+**Phase 1 — Selection Model + Sections as First-Class:**
+- Page / Section / Block selection state with Escape to deselect
+- Sections are clickable and show selection outlines
+- "+ Add Section" sidebar button with visual preset picker (Blank, 1-Column, 2-Columns, 3-Columns, Hero, Two-Row)
+- Section CRUD: add, select, remove, move up/down, duplicate, change layout
+- Canvas: section wrappers with drag handles for reordering
+- Floating toolbar on selected block with labeled actions (move, duplicate, hide, delete)
+- Removed fake pointer-events-none resize handle (width control moved to inspector)
+
+**Phase 2 — Contextual Inspector:**
+- Inspector adapts to selection type:
+  - Page: theme name, shape presets (Rounded/Angular/Sharp), Advanced toggle
+  - Section: layout grid, block list, move/duplicate/delete actions
+  - Block: name from registry, content fields from schema, width control, actions
+- Removed Design tab (raw CSS variable display)
+- Removed Layout tab (section inspector handles this)
+- Removed raw config key display (no more Object.entries(config))
+
+**Phase 3 — Block Field Schemas:**
+- Added BlockField type to page-blocks.ts (text, textarea, toggle, select, image, color)
+- BlockDefinition now has optional `fields` array
+- Blocks with schemas: heading (text + size), text (textarea), divider (label), markdown (textarea), project-hero (3 toggles)
+- Inspector generates form controls from fields: toggle switches, segmented selects, textareas, URL inputs with preview
+- Section duplicate added to inspector actions
+
+**Files changed:**
+- `src/lib/page-blocks.ts` — BlockField type, fields property on BlockDefinition
+- `src/components/tethyr/studio/studio.tsx` — Selection state, section CRUD, duplicate handlers, Escape key
+- `src/components/tethyr/studio/studio-canvas.tsx` — Selection UI, section drag-reorder, floating toolbar, remove fake resize
+- `src/components/tethyr/studio/studio-inspector.tsx` — Contextual panels, block field rendering, advanced toggle
+- `src/components/tethyr/studio/studio-sidebar.tsx` — Section presets grid, Build tab, removed Settings
+- `src/components/tethyr/studio/section-presets.ts` — Section preset definitions
+- `src/components/tethyr/blocks/content/heading-block.tsx` — Fields schema
+- `src/components/tethyr/blocks/content/text-block.tsx` — Fields schema
+- `src/components/tethyr/blocks/content/divider-block.tsx` — Fields schema
+- `src/components/tethyr/blocks/content/markdown-block.tsx` — Fields schema
+- `src/components/tethyr/blocks/project/hero-block.tsx` — Fields schema
+
+**Verification:** typecheck clean, 380 unit tests pass, 21/21 e2e browser checks pass.

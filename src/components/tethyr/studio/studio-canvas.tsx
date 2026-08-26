@@ -12,7 +12,6 @@ import {
   ArrowUp,
   ArrowDown,
   Copy,
-  ChevronDown,
 } from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +22,6 @@ import type {
   PageData,
   PageLayout,
   LayoutBlockInstance,
-  LayoutSection,
 } from "@/lib/page-blocks";
 
 interface StudioCanvasProps {
@@ -57,48 +55,97 @@ export function StudioCanvas({
   layout,
   pageLoading,
   pageError,
-  selectionType,
+  selectionType: _selectionType,
   selectedBlockId,
   selectedSectionId,
   onSelectBlock,
   onSelectSection,
   onSelectPage,
   onRemoveBlock,
-  onRemoveSection,
+  onRemoveSection: _onRemoveSection,
   onToggleVisibility,
   onMoveBlock,
   onAddBlock,
   onAddSection,
-  onUpdateBlockConfig,
+  onUpdateBlockConfig: _onUpdateBlockConfig,
   onDuplicateBlock,
   onReorderBlocks,
+  onLayoutChange,
   onRefetch,
 }: StudioCanvasProps) {
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+  const [dragType, setDragType] = useState<"block" | "section" | null>(null);
 
-  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
-    e.dataTransfer.setData("text/plain", blockId);
+  // ── Block drag handlers ───────────────────────────────────────────────
+  const handleBlockDragStart = useCallback((e: React.DragEvent, blockId: string) => {
+    e.dataTransfer.setData("text/plain", `block:${blockId}`);
     e.dataTransfer.effectAllowed = "move";
+    setDragType("block");
     (e.currentTarget as HTMLElement).style.opacity = "0.4";
   }, []);
 
   const handleDragEnd = useCallback((e: React.DragEvent) => {
     (e.currentTarget as HTMLElement).style.opacity = "1";
     setDragOverBlockId(null);
+    setDragOverSectionId(null);
+    setDragType(null);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent, blockId: string) => {
+  const handleBlockDragOver = useCallback((e: React.DragEvent, blockId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     setDragOverBlockId(blockId);
   }, []);
 
-  const handleDrop = useCallback(
+  // ── Section drag handlers ─────────────────────────────────────────────
+  const handleSectionDragStart = useCallback((e: React.DragEvent, sectionId: string) => {
+    e.dataTransfer.setData("text/plain", `section:${sectionId}`);
+    e.dataTransfer.effectAllowed = "move";
+    setDragType("section");
+    (e.currentTarget as HTMLElement).style.opacity = "0.4";
+  }, []);
+
+  const handleSectionDragOver = useCallback((e: React.DragEvent, sectionId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverSectionId(sectionId);
+  }, []);
+
+  const handleSectionDrop = useCallback(
+    (e: React.DragEvent, targetSectionId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const data = e.dataTransfer.getData("text/plain");
+      if (!data.startsWith("section:")) return;
+      const sourceId = data.replace("section:", "");
+      if (sourceId === targetSectionId) return;
+      // Reorder sections
+      const sections = layout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const srcIdx = sections.findIndex((s) => s.id === sourceId);
+      const tgtIdx = sections.findIndex((s) => s.id === targetSectionId);
+      if (srcIdx === -1 || tgtIdx === -1) return;
+      const [moved] = sections.splice(srcIdx, 1);
+      sections.splice(tgtIdx, 0, moved);
+      onLayoutChange({ sections });
+      setDragOverSectionId(null);
+      setDragType(null);
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleBlockDrop = useCallback(
     (e: React.DragEvent, sectionId: string, targetBlockId: string, targetIndex: number) => {
       e.preventDefault();
-      const draggedBlockId = e.dataTransfer.getData("text/plain");
-      if (draggedBlockId && draggedBlockId !== targetBlockId) {
-        onReorderBlocks(sectionId, draggedBlockId, targetIndex);
+      e.stopPropagation();
+      const data = e.dataTransfer.getData("text/plain");
+      if (data.startsWith("block:")) {
+        const blockId = data.replace("block:", "");
+        if (blockId && blockId !== targetBlockId) {
+          onReorderBlocks(sectionId, blockId, targetIndex);
+        }
       }
       setDragOverBlockId(null);
     },
@@ -177,19 +224,30 @@ export function StudioCanvas({
         return (
           <div
             key={section.id}
-            className={`relative rounded-lg transition-all ${
+            className={`group/section relative rounded-lg transition-all ${
               isSectionSelected
                 ? "ring-2 ring-primary/25 bg-primary/[0.02]"
-                : "ring-1 ring-transparent hover:ring-border/20"
+                : dragOverSectionId === section.id && dragType === "section"
+                  ? "ring-2 ring-primary/20 bg-primary/[0.05]"
+                  : "ring-1 ring-transparent hover:ring-border/20"
             }`}
+            draggable
+            onDragStart={(e) => handleSectionDragStart(e, section.id)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleSectionDragOver(e, section.id)}
+            onDragLeave={() => setDragOverSectionId(null)}
+            onDrop={(e) => handleSectionDrop(e, section.id)}
             onClick={(e) => {
-              // Only select the section if the click is directly on the section wrapper,
-              // not on a child block (blocks stopPropagation).
               if (e.target === e.currentTarget) {
                 onSelectSection(section.id);
               }
             }}
           >
+            {/* Section drag handle — visible on hover */}
+            <div className="pointer-events-none absolute -left-1 top-2 z-20 opacity-0 group-hover/section:opacity-100 transition-opacity">
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing pointer-events-auto" />
+            </div>
+
             {/* Section label — shown when section is selected */}
             {isSectionSelected && (
               <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-primary/10 px-2 py-0.5 text-[9px] font-medium text-primary">
@@ -226,13 +284,11 @@ export function StudioCanvas({
                           : "ring-1 ring-transparent hover:ring-border/20"
                     } ${isDragOver ? "scale-[1.01]" : ""}`}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, block.id)}
+                    onDragStart={(e) => handleBlockDragStart(e, block.id)}
                     onDragEnd={handleDragEnd}
-                    onDragOver={(e) => {
-                      handleDragOver(e, block.id);
-                    }}
+                    onDragOver={(e) => handleBlockDragOver(e, block.id)}
                     onDragLeave={() => setDragOverBlockId(null)}
-                    onDrop={(e) => handleDrop(e, section.id, block.id, idx)}
+                    onDrop={(e) => handleBlockDrop(e, section.id, block.id, idx)}
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelectBlock(block.id);
