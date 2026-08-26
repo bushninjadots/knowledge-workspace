@@ -27,6 +27,9 @@ registerBlock({
   description: "A horizontal rule to separate sections. Optionally add a label.",
   icon: "Minus",
   defaults: { label: "" },
+  fields: [
+    { key: "label", label: "Divider label", type: "text", placeholder: "Optional label..." },
+  ],
   component: DividerBlock,
 });
 

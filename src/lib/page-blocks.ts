@@ -68,8 +68,28 @@ export interface BlockDefinition {
   defaults: BlockConfig;
   /** Whether the block expects to control its own container (e.g. full-width hero). */
   containerless?: boolean;
+  /**
+   * Editable fields exposed in the Studio inspector.
+   * Each entry generates a form control in the block inspector panel.
+   * If omitted, the inspector shows only the width + actions controls.
+   */
+  fields?: BlockField[];
   /** The React component that renders this block. */
   component: React.ComponentType<BlockProps>;
+}
+
+/** Describes a single editable field for a block in the Studio inspector. */
+export interface BlockField {
+  /** Config key this field reads/writes. */
+  key: string;
+  /** Human-readable label shown in the inspector. */
+  label: string;
+  /** The type of form control to render. */
+  type: "text" | "textarea" | "toggle" | "select" | "image" | "color";
+  /** Placeholder text for text/textarea inputs. */
+  placeholder?: string;
+  /** Options for select-type fields. */
+  options?: Array<{ label: string; value: string }>;
 }
 
 // ---------------------------------------------------------------------------

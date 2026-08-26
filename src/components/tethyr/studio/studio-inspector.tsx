@@ -8,7 +8,6 @@
 
 import { useCallback } from "react";
 import {
-  Eye,
   EyeOff,
   ArrowUp,
   ArrowDown,
@@ -16,8 +15,6 @@ import {
   Send,
   Globe,
   Copy,
-  ChevronUp,
-  ChevronDown,
 } from "lucide-react";
 import type {
   LayoutBlockInstance,
@@ -46,6 +43,7 @@ interface StudioInspectorProps {
   onRemoveBlock: (blockId: string) => void;
   onRemoveSection: (sectionId: string) => void;
   onMoveSection: (sectionId: string, direction: "up" | "down") => void;
+  onDuplicateSection: (sectionId: string) => void;
   onUpdateBlockConfig?: (blockId: string, config: Record<string, unknown>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
@@ -70,6 +68,7 @@ export function StudioInspector({
   onRemoveBlock,
   onRemoveSection,
   onMoveSection,
+  onDuplicateSection,
   onUpdateBlockConfig,
   onUpdateSectionLayout,
   onUpdateThemeOverrides,
@@ -95,6 +94,7 @@ export function StudioInspector({
             onUpdateLayout={onUpdateSectionLayout}
             onRemove={onRemoveSection}
             onMove={onMoveSection}
+            onDuplicate={onDuplicateSection}
           />
         ) : (
           <PageInspector
@@ -162,13 +162,22 @@ function BlockInspector({
 }) {
   const currentWidth = (block.config?.width as string) ?? "full";
 
-  const setWidth = useCallback(
-    (w: string) => {
+  const updateField = useCallback(
+    (key: string, value: unknown) => {
       if (!onUpdateConfig) return;
-      onUpdateConfig(block.id, { ...block.config, width: w });
+      onUpdateConfig(block.id, { ...block.config, [key]: value });
     },
     [block.id, block.config, onUpdateConfig],
   );
+
+  const setWidth = useCallback(
+    (w: string) => {
+      updateField("width", w);
+    },
+    [updateField],
+  );
+
+  const fields = def?.fields ?? [];
 
   return (
     <div className="space-y-5">
@@ -180,6 +189,131 @@ function BlockInspector({
           <p className="mt-0.5 text-[10px] text-muted-foreground/60">{def.description}</p>
         )}
       </div>
+
+      {/* Content fields from block schema */}
+      {fields.length > 0 && (
+        <div>
+          <SectionLabel>Content</SectionLabel>
+          <div className="mt-1.5 space-y-3">
+            {fields.map((field) => {
+              const value = block.config?.[field.key];
+              switch (field.type) {
+                case "text":
+                  return (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[10px] text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <input
+                        type="text"
+                        value={typeof value === "string" ? value : ""}
+                        placeholder={field.placeholder}
+                        onChange={(e) => updateField(field.key, e.target.value)}
+                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                  );
+                case "textarea":
+                  return (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[10px] text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <textarea
+                        value={typeof value === "string" ? value : ""}
+                        placeholder={field.placeholder}
+                        onChange={(e) => updateField(field.key, e.target.value)}
+                        rows={3}
+                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                      />
+                    </div>
+                  );
+                case "toggle":
+                  return (
+                    <div key={field.key} className="flex items-center justify-between">
+                      <label className="text-[10px] text-muted-foreground">{field.label}</label>
+                      <button
+                        type="button"
+                        onClick={() => updateField(field.key, !value)}
+                        className={`relative h-5 w-9 rounded-full transition-colors ${
+                          value ? "bg-primary" : "bg-border"
+                        }`}
+                        role="switch"
+                        aria-checked={!!value}
+                      >
+                        <span
+                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+                            value ? "left-[18px]" : "left-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                case "select":
+                  return (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[10px] text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <div className="flex flex-wrap gap-1">
+                        {field.options?.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => updateField(field.key, opt.value)}
+                            className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+                              String(value) === opt.value
+                                ? "bg-primary/15 text-primary"
+                                : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                case "image":
+                  return (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-[10px] text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <input
+                        type="url"
+                        value={typeof value === "string" ? value : ""}
+                        placeholder={field.placeholder ?? "https://..."}
+                        onChange={(e) => updateField(field.key, e.target.value)}
+                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      {typeof value === "string" && value && (
+                        <img
+                          src={value}
+                          alt=""
+                          className="mt-2 h-16 w-full rounded-md object-cover border border-border/20"
+                        />
+                      )}
+                    </div>
+                  );
+                case "color":
+                  return (
+                    <div key={field.key} className="flex items-center gap-2">
+                      <label className="text-[10px] text-muted-foreground">{field.label}</label>
+                      <input
+                        type="color"
+                        value={typeof value === "string" ? value : "#000000"}
+                        onChange={(e) => updateField(field.key, e.target.value)}
+                        className="h-6 w-6 cursor-pointer rounded border border-border/30"
+                      />
+                    </div>
+                  );
+                default:
+                  return null;
+              }
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Width */}
       <div>
@@ -256,11 +390,13 @@ function SectionInspector({
   onUpdateLayout,
   onRemove,
   onMove,
+  onDuplicate,
 }: {
   section: LayoutSection;
   onUpdateLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onRemove: (sectionId: string) => void;
   onMove: (sectionId: string, direction: "up" | "down") => void;
+  onDuplicate: (sectionId: string) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -330,6 +466,11 @@ function SectionInspector({
             onClick={() => onMove(section.id, "down")}
             icon={<ArrowDown className="h-3 w-3" />}
             label="Move down"
+          />
+          <ActionButton
+            onClick={() => onDuplicate(section.id)}
+            icon={<Copy className="h-3 w-3" />}
+            label="Duplicate"
           />
           <ActionButton
             onClick={() => onRemove(section.id)}

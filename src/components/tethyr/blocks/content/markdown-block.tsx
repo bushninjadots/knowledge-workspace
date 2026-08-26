@@ -65,6 +65,9 @@ registerBlock({
     "Rich text with markdown formatting. Supports headings, bold, italic, code, links, and lists.",
   icon: "FileText",
   defaults: { content: "" },
+  fields: [
+    { key: "content", label: "Markdown content", type: "textarea", placeholder: "Write markdown..." },
+  ],
   component: MarkdownBlock,
 });
 

@@ -518,6 +518,32 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     [draftLayout, applyDraft],
   );
 
+  // ── Duplicate section ──────────────────────────────────────────────────
+  const handleDuplicateSection = useCallback(
+    (sectionId: string) => {
+      const idx = draftLayout.sections.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return;
+      const original = draftLayout.sections[idx];
+      const clone: LayoutSection = {
+        id: `sect_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        position: idx + 1,
+        layout: original.layout,
+        blocks: original.blocks.map((b) => ({
+          ...b,
+          id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          config: { ...b.config },
+        })),
+      };
+      const sections = [...draftLayout.sections];
+      sections.splice(idx + 1, 0, clone);
+      applyDraft({ sections });
+      setSelectionType("section");
+      setSelectedSectionId(clone.id);
+      toast.success("Section duplicated");
+    },
+    [draftLayout, applyDraft],
+  );
+
   // ── Duplicate block ──────────────────────────────────────────────────────
   const handleDuplicateBlock = useCallback(
     (blockId: string) => {
@@ -1100,6 +1126,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onRemoveBlock={handleRemoveBlock}
               onRemoveSection={handleRemoveSection}
               onMoveSection={handleMoveSection}
+              onDuplicateSection={handleDuplicateSection}
               onUpdateBlockConfig={handleUpdateBlockConfig}
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}

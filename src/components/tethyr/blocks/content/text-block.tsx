@@ -40,6 +40,9 @@ registerBlock({
   description: "A paragraph of plain text. Great for descriptions and bios.",
   icon: "Type",
   defaults: { content: "" },
+  fields: [
+    { key: "content", label: "Text", type: "textarea", placeholder: "Write something..." },
+  ],
   containerless: false,
   component: TextBlock,
 });

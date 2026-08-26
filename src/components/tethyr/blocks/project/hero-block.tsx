@@ -169,6 +169,11 @@ registerBlock({
   description: "The project's identity banner — title, status, progress, and tags.",
   icon: "Layout",
   defaults: { showDescription: true, showProgress: true, showTags: true },
+  fields: [
+    { key: "showDescription", label: "Show description", type: "toggle" },
+    { key: "showProgress", label: "Show progress bar", type: "toggle" },
+    { key: "showTags", label: "Show tags", type: "toggle" },
+  ],
   containerless: true,
   component: ProjectHeroBlock,
 });

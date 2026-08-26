@@ -69,6 +69,20 @@ registerBlock({
   description: "A section heading. Choose from H1–H4 for hierarchy.",
   icon: "Heading",
   defaults: { content: "", level: 2 },
+  fields: [
+    { key: "content", label: "Heading text", type: "text", placeholder: "Enter heading..." },
+    {
+      key: "level",
+      label: "Size",
+      type: "select",
+      options: [
+        { label: "H1 — Page title", value: "1" },
+        { label: "H2 — Section", value: "2" },
+        { label: "H3 — Subsection", value: "3" },
+        { label: "H4 — Minor", value: "4" },
+      ],
+    },
+  ],
   component: HeadingBlock,
 });
 
