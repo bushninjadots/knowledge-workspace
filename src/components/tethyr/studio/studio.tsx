@@ -668,7 +668,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     try {
       await unpublishPage.mutateAsync({ pageId: pageData.id });
       toast.success("Reverted to draft");
-      refetchPage();
+      await refetchPage();
     } catch (err) {
       toast.error(friendlyError(err, "Failed to unpublish"));
     }
@@ -824,7 +824,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Page selection ────────────────────────────────────────────────────
   const handleSelectPage = useCallback((page: StudioPage) => {
     setActivePage(page);
+    setSelectionType("page");
     setSelectedBlockId(null);
+    setSelectedSectionId(null);
     ensuringRef.current = false; // Reset so auto-create works for new page
   }, []);
 
