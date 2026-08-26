@@ -12,8 +12,8 @@
 
 ## The problem
 
-Tethyr's loop is strong at *discover work* and *build*, but thin in the middle —
-*collaborate* and *become known*. Three concrete symptoms:
+Tethyr's loop is strong at _discover work_ and _build_, but thin in the middle —
+_collaborate_ and _become known_. Three concrete symptoms:
 
 1. **Collaboration has no persistent identity.** A project re-declares its roster
    every time. There is no "crew that builds together across projects."
@@ -36,50 +36,56 @@ session_links    → session_id, team_id?, project_id?, outcome
 ```
 
 `reputation_events` already exists (written by the existing triggers) — the
-evidence trail only needs to *expose* it, not create it.
+evidence trail only needs to _expose_ it, not create it.
 
 ## The features
 
 ### 1. Teams & crews
+
 A team is a roster + a shipped-work record — never a chat or feed. `team_projects`
-makes the team the project's *People* anchor ("Built by **Crew Name**"), with
+makes the team the project's _People_ anchor ("Built by **Crew Name**"), with
 per-project roles layered on top. Surfaces: project People section, Studio
 "Teams I build with", and a Team page whose flagship is its shipped work.
 
-### 2. Project "need help now" *(prototyped — see below)*
+### 2. Project "need help now" _(prototyped — see below)_
+
 A lightweight, urgent ask pinned at the top of the project workspace, feeding
 Explore. Filling a need records a `need_filled` activity event.
 
 ### 3. Recurring sessions
+
 Extend `sessions` with recurrence + `session_links`. A team owns a recurring
 meetup (roster auto-invited); a session can record an **outcome** (decision /
 milestone / recap) that lands in the project as evidence.
 
 ### 4. Reputation evidence trail
+
 Expose `reputation_events` publicly: score → tier → linked proof. Studio shows
 "why you're trusted" instead of a bare number, and this becomes the data source
 for team-level stats (evidence, not vanity metrics).
 
 ### 5. Stage 5 connectors
+
 - Library → project with explicit `visibility` (private / team / public).
 - Messages → project-anchored threads ("feedback on Project X").
 
 ### 6. Credits (the unifier)
+
 Every project ships with a film-style **Credits roll** — auto-compiled from the
 evidence trail (updates, milestones, files, session outcomes, filled needs,
-challenge passes). Reputation becomes a *rollup* of credits; discovery can search
+challenge passes). Reputation becomes a _rollup_ of credits; discovery can search
 "who's credited on projects like this." Credits is a rendering layer on top of the
 evidence all five features already feed.
 
 ## Sequenced rollout
 
-| Order | Step | Precondition |
-|---|---|---|
-| **Now** | `project_needs` table + RLS + activity trigger + project UI + Explore | None beyond existing `is_project_visible` |
-| After Stage 3 | Link needs → skill catalog for match scoring; recurring sessions | Project workspace hierarchy stable |
-| After Stage 4 | Teams + team_members + team_projects + team page | Studio/dashboard simplified |
-| After Stage 5 | Expose reputation events; Library/Messages connectors | Supporting systems wired to work |
-| Last | Credits rendering layer | Evidence trail live |
+| Order         | Step                                                                  | Precondition                              |
+| ------------- | --------------------------------------------------------------------- | ----------------------------------------- |
+| **Now**       | `project_needs` table + RLS + activity trigger + project UI + Explore | None beyond existing `is_project_visible` |
+| After Stage 3 | Link needs → skill catalog for match scoring; recurring sessions      | Project workspace hierarchy stable        |
+| After Stage 4 | Teams + team_members + team_projects + team page                      | Studio/dashboard simplified               |
+| After Stage 5 | Expose reputation events; Library/Messages connectors                 | Supporting systems wired to work          |
+| Last          | Credits rendering layer                                               | Evidence trail live                       |
 
 ## Migration sketch (for the later steps)
 
@@ -113,6 +119,7 @@ create table public.team_projects (
 deferred until the sessions surface is revisited.)
 
 ## Open questions
+
 - Should a project belong to at most one team, or many? (Proposal: one primary
   team, mirroring one owner — keeps People unambiguous.)
 - Should "filling a need" award reputation immediately, or only after the owner

@@ -23,32 +23,32 @@ Each icon is a React component that accepts `className` and renders an inline SV
 
 ### Icon Mapping
 
-| Achievement | Current Lucide | New Custom Icon |
-|---|---|---|
-| `first_project` | Rocket | Rocket with infinity trail loop |
-| `first_milestone` | Flag | Flag with small star burst at tip |
-| `first_endorsement` | ThumbsUp | Thumbs up with small sparkle accent |
-| `five_endorsements` | Star | 5-pointed star with inner detail |
-| `ten_endorsements` | Award | Medal/ribbon with infinity knot center |
-| `community_recognized` | Shield | Shield with checkmark + subtle wave |
-| `mentor` | GraduationCap | Cap with book + infinity tassel |
-| `collaborator` | Users | Two figures with linking arc |
-| `prolific_teacher` | BookOpen | Open book with radiating lines |
-| `project_builder` | Hammer | Hammer with small blueprint corner |
-| `community_builder` | MessageCircle | Speech bubble with people dots |
-| `reliable_collaborator` | Clock | Clock with infinity loop on face |
-| `helped_ten_people` | Heart | Heart with small hands cupping |
-| `learner_journey` | Compass | Compass with path trail |
-| `challenge_winner` | Trophy | Trophy with wave motif base |
-| `crew_founder` | Users | Two figures + infinity link |
-| `team_player` | Users | Three figures in arc formation |
-| `milestone_master` | Target | Target with concentric rings + arrow |
-| `helping_hand` | HeartHandshake | Handshake with heart above |
-| `conversation_starter` | MessageSquare | Chat bubble with spark/dots |
-| `role_filler` | BadgeCheck | Badge with checkmark |
-| `first_session` | Calendar | Calendar with small play mark |
-| `session_teacher` | Presentation | Presentation board with person |
-| `streak_4_weeks` | Flame | Flame with 4 concentric rings |
+| Achievement             | Current Lucide | New Custom Icon                        |
+| ----------------------- | -------------- | -------------------------------------- |
+| `first_project`         | Rocket         | Rocket with infinity trail loop        |
+| `first_milestone`       | Flag           | Flag with small star burst at tip      |
+| `first_endorsement`     | ThumbsUp       | Thumbs up with small sparkle accent    |
+| `five_endorsements`     | Star           | 5-pointed star with inner detail       |
+| `ten_endorsements`      | Award          | Medal/ribbon with infinity knot center |
+| `community_recognized`  | Shield         | Shield with checkmark + subtle wave    |
+| `mentor`                | GraduationCap  | Cap with book + infinity tassel        |
+| `collaborator`          | Users          | Two figures with linking arc           |
+| `prolific_teacher`      | BookOpen       | Open book with radiating lines         |
+| `project_builder`       | Hammer         | Hammer with small blueprint corner     |
+| `community_builder`     | MessageCircle  | Speech bubble with people dots         |
+| `reliable_collaborator` | Clock          | Clock with infinity loop on face       |
+| `helped_ten_people`     | Heart          | Heart with small hands cupping         |
+| `learner_journey`       | Compass        | Compass with path trail                |
+| `challenge_winner`      | Trophy         | Trophy with wave motif base            |
+| `crew_founder`          | Users          | Two figures + infinity link            |
+| `team_player`           | Users          | Three figures in arc formation         |
+| `milestone_master`      | Target         | Target with concentric rings + arrow   |
+| `helping_hand`          | HeartHandshake | Handshake with heart above             |
+| `conversation_starter`  | MessageSquare  | Chat bubble with spark/dots            |
+| `role_filler`           | BadgeCheck     | Badge with checkmark                   |
+| `first_session`         | Calendar       | Calendar with small play mark          |
+| `session_teacher`       | Presentation   | Presentation board with person         |
+| `streak_4_weeks`        | Flame          | Flame with 4 concentric rings          |
 
 ### Implementation
 
@@ -60,7 +60,14 @@ type IconProps = SVGProps<SVGSVGElement>;
 
 export function IconFirstProject(props: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       {/* Custom SVG paths */}
     </svg>
   );
@@ -70,6 +77,7 @@ export function IconFirstProject(props: IconProps) {
 ```
 
 Export a lookup map:
+
 ```tsx
 export const ACHIEVEMENT_ICONS: Record<string, React.ComponentType<IconProps>> = {
   first_project: IconFirstProject,

@@ -5,7 +5,7 @@
 // right (properties/design inspector). Shared architecture for both profiles
 // and projects.
 
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -42,7 +42,11 @@ function StudioRoute() {
       ]);
 
       return {
-        profile: (profileRes.data ?? null) as { id: string; handle: string | null; display_name: string | null } | null,
+        profile: (profileRes.data ?? null) as {
+          id: string;
+          handle: string | null;
+          display_name: string | null;
+        } | null,
         projects: (projectsRes.data ?? []) as { id: string; title: string; status: string }[],
       };
     },
@@ -65,7 +69,10 @@ function StudioRoute() {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="max-w-sm text-center">
           <p className="text-sm text-muted-foreground">Sign in to access the Creativity Studio.</p>
-          <Link to="/login" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+          <Link
+            to="/login"
+            className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+          >
             Log in
           </Link>
         </div>

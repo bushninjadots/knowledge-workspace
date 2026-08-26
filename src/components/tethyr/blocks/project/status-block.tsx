@@ -3,7 +3,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Clock, Wrench } from "lucide-react";
+import { Clock, Wrench } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,11 +20,17 @@ type StatusData = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  planning: "Planning", active: "Active", paused: "Paused", completed: "Completed",
+  planning: "Planning",
+  active: "Active",
+  paused: "Paused",
+  completed: "Completed",
 };
 const SEASON_LABEL: Record<string, string> = {
-  research: "Researching", prototype: "Prototyping", feedback: "Gathering feedback",
-  launch: "Launching", building: "Building",
+  research: "Researching",
+  prototype: "Prototyping",
+  feedback: "Gathering feedback",
+  launch: "Launching",
+  building: "Building",
 };
 
 function ProjectStatusBlock({ context }: BlockProps) {
@@ -46,7 +52,13 @@ function ProjectStatusBlock({ context }: BlockProps) {
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
   if (!data) {
-    if (context.isEditing) return <BlockEmptyState label="Status & Progress" detail="Project data is loading or not available." />;
+    if (context.isEditing)
+      return (
+        <BlockEmptyState
+          label="Status & Progress"
+          detail="Project data is loading or not available."
+        />
+      );
     return null;
   }
 
@@ -84,7 +96,9 @@ function ProjectStatusBlock({ context }: BlockProps) {
       {data.progress_percent > 0 && (
         <div className="mt-3 flex items-center gap-3">
           <Progress value={data.progress_percent} className="h-1.5 flex-1" />
-          <span className="text-xs tabular-nums text-muted-foreground">{data.progress_percent}%</span>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {data.progress_percent}%
+          </span>
         </div>
       )}
 

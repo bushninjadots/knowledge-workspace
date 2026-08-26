@@ -158,5 +158,5 @@ UI on the library item page (note/document types only, owner actions):
   Markdown unification (migration blast radius).
 - Manual pull-only sync per user request ("so it updates but that should be an
   option").
-- Project link is *not* required to link a GitHub file — any note/document can
+- Project link is _not_ required to link a GitHub file — any note/document can
   be linked directly by its owner.

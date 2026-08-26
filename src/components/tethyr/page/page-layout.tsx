@@ -7,7 +7,6 @@
 // and drag-and-drop reordering.
 
 import { memo, useCallback, useState } from "react";
-import { Plus } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { Button } from "@/components/ui/button";
@@ -19,12 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type {
-  PageLayout as PageLayoutType,
-  BlockContext,
-  LayoutBlockInstance,
-  LayoutSection,
-} from "@/lib/page-blocks";
+import type { PageLayout as PageLayoutType, BlockContext, LayoutSection } from "@/lib/page-blocks";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -133,7 +127,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         newSections.splice(srcSectionIdx, 1);
         if (sectionIdx > srcSectionIdx) sectionIdx--;
       }
-      reindex(newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks);
+      reindex(
+        newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks,
+      );
       onLayoutChange({ sections: newSections });
     },
     [layout, onLayoutChange, sections],
@@ -209,9 +205,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               onClick={() => {
                 if (!removingBlockId) return;
                 for (let si = 0; si < layout.sections.length; si++) {
-                  const bi = layout.sections[si].blocks.findIndex(
-                    (b) => b.id === removingBlockId,
-                  );
+                  const bi = layout.sections[si].blocks.findIndex((b) => b.id === removingBlockId);
                   if (bi !== -1) {
                     handleRemove(si, bi);
                     break;

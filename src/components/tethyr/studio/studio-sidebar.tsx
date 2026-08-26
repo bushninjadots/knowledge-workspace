@@ -4,14 +4,21 @@
 
 import { useState } from "react";
 import {
-  Search, Plus, LayoutTemplate, Palette, Settings,
-  FileText, TrendingUp, Clock, GitFork, Download,
+  Search,
+  Plus,
+  LayoutTemplate,
+  Palette,
+  Settings,
+  FileText,
+  TrendingUp,
+  GitFork,
+  Download,
 } from "lucide-react";
 import { getAllBlocks } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage } from "./studio";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
-import type { TemplateData } from "@/lib/page-blocks";
+import type { LayoutSection, TemplateData } from "@/lib/page-blocks";
 
 type SidebarTab = "pages" | "templates" | "themes" | "settings";
 
@@ -23,13 +30,24 @@ const TABS: { key: SidebarTab; icon: React.FC<{ className?: string }>; label: st
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
-  content: "Content", media: "Media", project: "Project",
-  people: "People", community: "Community", utility: "Utility",
+  content: "Content",
+  media: "Media",
+  project: "Project",
+  people: "People",
+  community: "Community",
+  utility: "Utility",
 };
 
 const TEMPLATE_CATEGORIES = [
-  "Featured", "Popular", "Newest", "Developer",
-  "Portfolio", "Documentation", "Startup", "Creative", "Minimal",
+  "Featured",
+  "Popular",
+  "Newest",
+  "Developer",
+  "Portfolio",
+  "Documentation",
+  "Startup",
+  "Creative",
+  "Minimal",
 ];
 
 interface StudioSidebarProps {
@@ -51,10 +69,21 @@ interface StudioSidebarProps {
 }
 
 export function StudioSidebar({
-  activePage, activeTab, onTabChange,
-  onAddBlock, onApplyTemplate, onForkTemplate, onApplyTheme,
+  activePage,
+  activeTab,
+  onTabChange,
+  onAddBlock,
+  onApplyTemplate,
+  onForkTemplate,
+  onApplyTheme,
   themeNames,
-  onSaveAsTemplate, onReseed, templates, templatesLoading, templatesError, themes, currentThemeId,
+  onSaveAsTemplate,
+  onReseed,
+  templates,
+  templatesLoading,
+  templatesError,
+  themes,
+  currentThemeId,
 }: StudioSidebarProps) {
   return (
     <div className="flex h-full flex-col">
@@ -85,9 +114,7 @@ export function StudioSidebar({
 
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === "pages" && (
-          <BlockLibrary onAddBlock={onAddBlock} />
-        )}
+        {activeTab === "pages" && <BlockLibrary onAddBlock={onAddBlock} />}
         {activeTab === "templates" && (
           <TemplatesPanel
             templates={templates}
@@ -101,11 +128,7 @@ export function StudioSidebar({
           />
         )}
         {activeTab === "themes" && (
-          <ThemesPanel
-            themes={themes}
-            currentThemeId={currentThemeId}
-            onApply={onApplyTheme}
-          />
+          <ThemesPanel themes={themes} currentThemeId={currentThemeId} onApply={onApplyTheme} />
         )}
         {activeTab === "settings" && <SettingsPanel activePage={activePage} />}
       </div>
@@ -129,9 +152,10 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
   const blocks = getAllBlocks();
 
   const filtered = search
-    ? blocks.filter((b) =>
-        b.label.toLowerCase().includes(search.toLowerCase()) ||
-        b.type.toLowerCase().includes(search.toLowerCase()),
+    ? blocks.filter(
+        (b) =>
+          b.label.toLowerCase().includes(search.toLowerCase()) ||
+          b.type.toLowerCase().includes(search.toLowerCase()),
       )
     : blocks;
 
@@ -189,7 +213,14 @@ function BlockLibrary({ onAddBlock }: { onAddBlock: (type: string) => void }) {
 // ── Templates Panel ──────────────────────────────────────────────────────────
 
 function TemplatesPanel({
-  templates, onApply, onFork, onSaveAsTemplate, onReseed, themeNames, templatesLoading, templatesError,
+  templates,
+  onApply,
+  onFork,
+  onSaveAsTemplate,
+  onReseed,
+  themeNames,
+  templatesLoading,
+  templatesError,
 }: {
   templates: TemplateData[];
   templatesLoading?: boolean;
@@ -245,7 +276,11 @@ function TemplatesPanel({
           />
           <button
             type="button"
-            onClick={() => { onSaveAsTemplate(saveName); setSaveName(""); setShowSave(false); }}
+            onClick={() => {
+              onSaveAsTemplate(saveName);
+              setSaveName("");
+              setShowSave(false);
+            }}
             disabled={!saveName.trim()}
             className="w-full rounded bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary hover:bg-primary/20 disabled:opacity-40"
           >
@@ -258,7 +293,10 @@ function TemplatesPanel({
       {templatesLoading && (
         <div className="mb-3 space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-border/20 bg-surface/20 p-2.5 animate-pulse">
+            <div
+              key={i}
+              className="rounded-lg border border-border/20 bg-surface/20 p-2.5 animate-pulse"
+            >
               <div className="h-3 w-24 rounded bg-surface/40 mb-1.5" />
               <div className="h-2 w-16 rounded bg-surface/40" />
             </div>
@@ -268,7 +306,11 @@ function TemplatesPanel({
       {templatesError && (
         <div className="mb-3 rounded-md border border-red-500/20 bg-red-500/5 p-3 text-center">
           <p className="text-[11px] text-red-400">Could not load templates.</p>
-          <button type="button" onClick={onReseed} className="mt-1 text-[10px] text-primary hover:underline">
+          <button
+            type="button"
+            onClick={onReseed}
+            className="mt-1 text-[10px] text-primary hover:underline"
+          >
             Try re-seeding
           </button>
         </div>
@@ -313,9 +355,11 @@ function TemplatesPanel({
             <TemplatePreviewCard template={t} themeNames={themeNames} />
             <p className="text-xs font-medium text-foreground truncate">{t.name}</p>
             <p className="text-[10px] text-muted-foreground">
-              {t.creatorHandle ? `by @${t.creatorHandle}` : 'Community template'}
+              {t.creatorHandle ? `by @${t.creatorHandle}` : "Community template"}
               {t.themeId && themeNames.get(t.themeId) && (
-                <span className="ml-1 text-[9px] text-muted-foreground/40">· {themeNames.get(t.themeId)}</span>
+                <span className="ml-1 text-[9px] text-muted-foreground/40">
+                  · {themeNames.get(t.themeId)}
+                </span>
               )}
             </p>
             <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -358,7 +402,9 @@ function TemplatesPanel({
 // ── Themes Panel ─────────────────────────────────────────────────────────────
 
 function ThemesPanel({
-  themes, currentThemeId, onApply,
+  themes,
+  currentThemeId,
+  onApply,
 }: {
   themes: ThemeCatalogEntry[];
   currentThemeId: string | null;
@@ -382,7 +428,10 @@ function ThemesPanel({
           }`}
         >
           <span className="flex items-center gap-2">
-            <span className="h-3.5 w-3.5 rounded border border-border/40" style={{ background: "var(--background)" }} />
+            <span
+              className="h-3.5 w-3.5 rounded border border-border/40"
+              style={{ background: "var(--background)" }}
+            />
             Tethyr Default
           </span>
         </button>
@@ -406,13 +455,17 @@ function ThemesPanel({
                 <div className="flex items-center gap-2">
                   {/* Mini preview swatch */}
                   <div className="flex h-3.5 w-3.5 shrink-0 overflow-hidden rounded border border-border/40">
-                    <div className="w-1/2" style={{ background: colors["--foreground"] ?? "#fff" }} />
-                    <div className="w-1/2" style={{ background: colors["--primary"] ?? "#6366f1" }} />
+                    <div
+                      className="w-1/2"
+                      style={{ background: colors["--foreground"] ?? "#fff" }}
+                    />
+                    <div
+                      className="w-1/2"
+                      style={{ background: colors["--primary"] ?? "#6366f1" }}
+                    />
                   </div>
                   <span className="truncate">{theme.name}</span>
-                  {isActive && (
-                    <span className="ml-auto text-[10px] text-primary">Active</span>
-                  )}
+                  {isActive && <span className="ml-auto text-[10px] text-primary">Active</span>}
                 </div>
               </button>
             );
@@ -459,20 +512,27 @@ const BLOCK_PREVIEW_COLORS: Record<string, string> = {
   "profile-gallery": "#84cc16",
 };
 
-function TemplatePreviewCard({ template, themeNames }: { template: TemplateData; themeNames: Map<string, string> }) {
+function TemplatePreviewCard({
+  template,
+  themeNames,
+}: {
+  template: TemplateData;
+  themeNames: Map<string, string>;
+}) {
   const sections = template.sections ?? [];
-  const firstSection = sections[0];
-  const blocks = firstSection?.blocks?.slice(0, 6) ?? [];
-  const allBlocks = sections.flatMap((s: any) => s.blocks ?? []).slice(0, 10);
+  const allBlocks = sections.flatMap((s: LayoutSection) => s.blocks ?? []).slice(0, 10);
   const sectionCount = sections.length;
-  const totalBlocks = sections.reduce((sum: number, s: any) => sum + (s.blocks?.length ?? 0), 0);
+  const totalBlocks = sections.reduce(
+    (sum: number, s: LayoutSection) => sum + (s.blocks?.length ?? 0),
+    0,
+  );
   const themeName = template.themeId ? themeNames.get(template.themeId) : null;
 
   return (
     <div className="mb-2 overflow-hidden rounded-md border border-border/30 bg-surface/40">
       {/* Mini blocks visualization */}
       <div className="p-1.5 space-y-1">
-        {allBlocks.slice(0, 5).map((block: any, i: number) => {
+        {allBlocks.slice(0, 5).map((block, i: number) => {
           const color = BLOCK_PREVIEW_COLORS[block.type] ?? "#64748b";
           const isLong = block.type.includes("hero") || block.type.includes("header");
           return (

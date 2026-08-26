@@ -3,7 +3,6 @@
 // editable textarea. Registers itself as "text" in the block registry.
 
 import { useCallback } from "react";
-import { Type } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 

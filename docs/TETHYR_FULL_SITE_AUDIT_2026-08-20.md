@@ -8,16 +8,17 @@
 
 ## Executive Summary
 
-| Domain | P0 | P1 | P2 | P3 | Total |
-|--------|----|----|----|----|-------|
-| Code Quality & Architecture | 0 | 4 | 7 | 4 | 15 |
-| UX & Design System | 0 | 5 | 8 | 6 | 19 |
-| Accessibility | 5 | 5 | 6 | 3 | 19 |
-| Security & RLS | 2 | 4 | 3 | 1 | 10 |
-| Performance & Bundle | 3 | 5 | 4 | 3 | 15 |
-| **TOTAL** | **10** | **23** | **28** | **17** | **78** |
+| Domain                      | P0     | P1     | P2     | P3     | Total  |
+| --------------------------- | ------ | ------ | ------ | ------ | ------ |
+| Code Quality & Architecture | 0      | 4      | 7      | 4      | 15     |
+| UX & Design System          | 0      | 5      | 8      | 6      | 19     |
+| Accessibility               | 5      | 5      | 6      | 3      | 19     |
+| Security & RLS              | 2      | 4      | 3      | 1      | 10     |
+| Performance & Bundle        | 3      | 5      | 4      | 3      | 15     |
+| **TOTAL**                   | **10** | **23** | **28** | **17** | **78** |
 
 **Critical themes:**
+
 1. **10 P0s** — 5 accessibility (missing skip nav, unlabeled forms, unlabeled landmarks), 3 performance (unbounded queries), 2 security (SSRF in edge function, `.env` in git history)
 2. **Unbounded queries** are the most widespread issue — 7 queries lack `.limit()` and will degrade as data grows
 3. **Accessibility has the most P0s** — fundamental keyboard/screen reader barriers exist
@@ -31,37 +32,44 @@
 ### Security
 
 **S1. Edge function SSRF — fetches arbitrary user-supplied URLs server-side**
+
 - `supabase/functions/fetch-project-preview/index.ts:48,71,94,114`
 - The Open Graph fallback path does `await fetch(url)` on raw user input with no URL validation or allowlist. Attacker can probe internal services, access cloud metadata endpoints, bypass firewalls.
 - **Fix:** Block private IPs, allowlist protocols, remove or restrict the OG fallback path.
 
 **S2. `.env` with publishable keys committed to git history**
+
 - Git history (commit `784841a`). File was removed but credentials remain in history.
 - **Fix:** Confirm old Supabase project/key pair is deactivated. Rotate if still active.
 
 ### Accessibility
 
 **A1. No skip navigation link**
+
 - `src/routes/__root.tsx:125` — No skip link as first focusable element. Keyboard users must Tab through 10+ nav links on every page load.
 - **WCAG:** 2.4.1 Bypass Blocks
 - **Fix:** Add sr-only skip link anchoring to `<main id="main-content">`.
 
 **A2. Follow button has no toggle state for assistive tech**
+
 - `src/components/tethyr/follow-button.tsx:63` — No `aria-pressed` attribute.
 - **WCAG:** 4.1.2 Name, Role, Value
 - **Fix:** Add `aria-pressed={isFollowing}`.
 
 **A3. Radix Progress bar has no accessible value**
+
 - `src/components/ui/progress.tsx:13` — No `aria-label`, `aria-valuenow`, or visible text.
 - **WCAG:** 1.1.1, 4.1.2
 - **Fix:** Pass `aria-label` to Progress component.
 
 **A4. Multiple unlabeled `<nav>` landmarks**
+
 - `src/components/tethyr/community/left-sidebar.tsx:39` — No `aria-label`. Screen readers can't distinguish between navs.
 - **WCAG:** 1.3.1
 - **Fix:** Add `aria-label` to every `<nav>`.
 
 **A5. Create Challenge dialog form inputs missing labels**
+
 - `src/components/tethyr/community/create-challenge-dialog.tsx:129-183` — Inputs use placeholder only, no `<label>` or `aria-label`.
 - **WCAG:** 1.3.1, 3.3.2
 - **Fix:** Add `<Label htmlFor>` or `aria-label` to each input.
@@ -69,14 +77,17 @@
 ### Performance
 
 **P1. useCurrentUser fetches ALL user projects without limit**
+
 - `src/hooks/use-current-user.ts:152-159` — No `.limit()`. Every page load fetches full project list with `*` columns.
 - **Fix:** Add `.limit(50)`, select only needed columns.
 
 **P2. useMyProjects fetches ALL user projects without limit**
+
 - `src/hooks/use-projects.ts:873-877` — Same pattern, no limit.
 - **Fix:** Add `.limit(50)`.
 
 **P3. useCommunitySpaces fetches ALL spaces without limit**
+
 - `src/hooks/use-community-spaces.ts:70-73` — Unbounded, scales linearly with space count.
 - **Fix:** Add `.limit(100)`, implement pagination.
 
@@ -87,66 +98,80 @@
 ### Code Quality (4)
 
 **C1. Duplicate type definitions: `SkillVerificationLevel` and `SkillExperienceLevel`**
+
 - `src/hooks/use-current-user.ts:59-60` and `src/components/tethyr/profile-sections.tsx:84,100` — Identical types in two modules.
 - **Fix:** Define once, re-export from the other.
 
 **C2. Dead re-export in `use-current-user.ts`**
+
 - `src/hooks/use-current-user.ts:7,9` — `ProjectRow` and `ActivityRow` imported and re-exported but never consumed from this path.
 - **Fix:** Remove dead re-export.
 
 **C3. `profile-sections.tsx` is a 1693-line monolith**
+
 - 20+ exports spanning types, constants, inline components, and a 640-line CRUD dialog.
 - **Fix:** Split into focused modules (types, badges, cards, dialog, timeline).
 
 **C4. `as unknown as` type casts in production code (12 instances)**
+
 - 12 double-casts across `projects.$id.tsx`, `use-current-user.ts`, `use-public-studio-layout.ts`, `seo.ts`.
 - **Fix:** Fix Supabase queries to select correct shape, or add Zod validation.
 
 ### UX & Design System (5)
 
 **U1. `rounded-[2.5rem]` CTA violates border radius scale**
+
 - `src/routes/index.tsx:250` — 2.5rem radius exists nowhere in the design system scale.
 - **Fix:** Use `rounded-xl` or `rounded-full`.
 
 **U2. `rounded-2xl` on team avatar — inconsistent with avatar radius**
+
 - `src/components/tethyr/team/team-page.tsx:281` — Should be `rounded-full` per design system.
 - **Fix:** Change to `rounded-full` or `rounded-xl`.
 
 **U3. Excessive `shadow-2xl` on 3 custom overlays**
+
 - `global-search.tsx:559`, `project-shelf-overlay.tsx:142`, `project-join-modal.tsx:58`
 - **Fix:** Replace `shadow-2xl` → `shadow-lg` on custom overlays.
 
 **U4. `font-title` vs `font-display` inconsistency (8 places)**
+
 - `challenges.tsx`, `empty-state.tsx`, `post-card.tsx`, `challenges-section.tsx`, `community-header.tsx`, `space-header.tsx`, `project-header.tsx`
 - **Fix:** Replace all `font-title` → `font-display`.
 
 **U5. Inline error components duplicate error page markup**
+
 - `community.tsx:48-63`, `messages.tsx:31-56` — Identical error markup, not using shared `ErrorComponent`.
 - **Fix:** Remove inline `errorComponent` definitions; use root-level or shared component.
 
 ### Accessibility (5)
 
 **A6. Dashboard has duplicate `<h1>` headings**
+
 - `src/routes/_authenticated/dashboard.tsx:54` and `:391`
 - **WCAG:** 1.3.1
 - **Fix:** Demote second heading to `<h2>`.
 
 **A7. Trophy icon uses `aria-label` on non-interactive element without `role="img"`**
+
 - `src/components/tethyr/project/project-header.tsx:175`
 - **WCAG:** 1.1.1
 - **Fix:** Add `role="img"`.
 
 **A8. Signup "Your main craft" label disconnected from buttons**
+
 - `src/routes/signup.tsx:110-128` — No `htmlFor`, not in `<fieldset>`/`<legend>`.
 - **WCAG:** 1.3.1
 - **Fix:** Wrap in `<fieldset>` with `<legend>`.
 
 **A9. Multiple `<main>` landmarks on authenticated pages**
+
 - `src/components/tethyr/navbar.tsx:54` and `src/components/tethyr/authenticated-shell.tsx:122`
 - **WCAG:** 1.3.1
 - **Fix:** Remove `<main>` from navbar; keep only in shell.
 
 **A10. Messages textarea missing label**
+
 - `src/routes/_authenticated/messages.tsx:407-414` — Placeholder only, no `aria-label`.
 - **WCAG:** 3.3.2
 - **Fix:** Add `aria-label="Message text"`.
@@ -154,40 +179,49 @@
 ### Security (4)
 
 **S3. Edge function CORS allows all origins**
+
 - `supabase/functions/fetch-project-preview/index.ts:5` — `Access-Control-Allow-Origin: *`
 - **Fix:** Restrict to application origin.
 
 **S4. Edge function leaks internal error messages**
+
 - `supabase/functions/fetch-project-preview/index.ts:149-153` — Returns `err.message` directly.
 - **Fix:** Return generic error, log details server-side.
 
 **S5. `connected_accounts.access_token` exposed to client via RLS**
+
 - `supabase/migrations/20260807000000_project_repositories.sql:70-72`
 - **Fix:** Exclude column from client queries, or encrypt at rest.
 
 **S6. `project_repositories` public-read ignores private projects**
+
 - `supabase/migrations/20260807000000_project_repositories.sql:20-22` — `USING (true)` blanket policy.
 - **Fix:** Replace with `public.is_project_visible(project_id)`.
 
 ### Performance (5)
 
 **P4. lowlight chunk is 480KB — largest client bundle**
+
 - `.output/public/assets/lowlight-BJw2BDUf.js`
 - **Fix:** Use `highlight.js/lib/core` with only 4 languages, or evaluate `shiki`.
 
 **P5. Main app chunk is 418KB — too large for initial load**
+
 - `.output/public/assets/index-4ndFt-bc.js`
 - **Fix:** Audit with `vite-bundle-analyzer`, lazy-load Radix components not needed on first paint.
 
 **P6. WorkspaceGrid not lazy-loaded on dashboard**
+
 - `src/routes/_authenticated/dashboard.tsx:28` — `react-grid-layout` imported eagerly.
 - **Fix:** Lazy-load WorkspaceGrid.
 
 **P7. framer-motion imported eagerly via SectionReveal**
+
 - `src/routes/index.tsx` → `section-reveal.tsx` → `framer-motion` (384KB)
 - **Fix:** Lazy-load SectionReveal or extract useReducedMotion check.
 
 **P8. client chunk is 205KB**
+
 - `.output/public/assets/client-Du_W3t_4.js` — Framework overhead, limited optimization possible.
 
 ---
@@ -301,6 +335,7 @@
 ## Positives — What's Done Well
 
 ### Code Quality
+
 - Zero `as any` in application code (only auto-generated `routeTree.gen.ts`)
 - No `@ts-ignore` usage anywhere
 - TypeScript strict mode is clean
@@ -312,6 +347,7 @@
 - 253 tests passing, typecheck clean, build succeeds
 
 ### UX & Design System
+
 - Card primitive used consistently (`border card-border bg-surface rounded-md`)
 - Badge/tag system well-defined (`rounded-full` on all pills)
 - Responsive grids are mobile-first (`sm:grid-cols-2` → `lg:grid-cols-3` → `xl:grid-cols-4`)
@@ -321,6 +357,7 @@
 - Whitespace is intentional (`py-24`, `py-32`, `gap-6`, `gap-8`)
 
 ### Accessibility
+
 - `<html lang="en">` correctly set
 - Reduced motion support via `useReducedMotion()` + CSS media query
 - SegmentedControl implements proper ARIA tabs pattern
@@ -333,6 +370,7 @@
 - 100+ `aria-label` instances across the codebase
 
 ### Security
+
 - RLS is comprehensive across 115 migrations
 - Private project visibility enforced at DB level via `is_project_visible()`
 - GitHub tokens are server-only (`user_github_tokens` has no client RLS)
@@ -346,6 +384,7 @@
 - `.env` properly gitignored
 
 ### Performance
+
 - 22 `React.lazy()` calls for code splitting
 - Paginated community feed with cursor-based pagination
 - Most queries bounded with `.limit()`
@@ -361,12 +400,14 @@
 ## Recommended Priority Order
 
 ### Immediate (this week)
+
 1. **S1** — Fix edge function SSRF (security P0)
 2. **A1** — Add skip navigation link (accessibility P0)
 3. **P1-P3** — Add `.limit()` to 3 unbounded queries (performance P0)
 4. **S5** — Exclude `access_token` from client queries (security P1)
 
 ### Short-term (next 2 weeks)
+
 5. **A2-A5** — Fix 4 accessibility P0s (labels, landmarks, toggle state)
 6. **S3-S4** — Fix edge function CORS and error leakage (security P1)
 7. **S6** — Fix `project_repositories` public-read for private projects (security P1)
@@ -375,6 +416,7 @@
 10. **A6-A10** — Fix accessibility P1s (headings, labels, landmarks)
 
 ### Medium-term (1 month)
+
 11. **P4-P8** — Bundle optimization (lazy loading, chunk splitting)
 12. **U6-U13** — Design system consistency (backdrop-blur, buttons, responsive)
 13. **A11-A16** — Accessibility P2s (heading hierarchy, forms, loading states)
@@ -382,8 +424,9 @@
 15. **P9-P15** — Performance P2s (social graph limits, hydration dedup)
 
 ### Low priority (when time allows)
+
 16. All P3 items across all domains
 
 ---
 
-*Audit conducted by 5 parallel agents (code quality, UX/design, accessibility, security, performance) and consolidated into this report.*
+_Audit conducted by 5 parallel agents (code quality, UX/design, accessibility, security, performance) and consolidated into this report._

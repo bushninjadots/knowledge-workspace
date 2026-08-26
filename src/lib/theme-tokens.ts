@@ -13,12 +13,30 @@ import type { ThemeTokens } from "@/lib/page-blocks";
 
 /** Top-level color keys — emitted as `--key: value`. */
 const COLOR_KEYS = [
-  "background", "foreground", "muted", "muted-foreground",
-  "surface", "surface-elevated", "surface-sunken",
-  "card", "card-foreground", "primary", "primary-foreground",
-  "secondary", "secondary-foreground", "border", "border-strong",
-  "input", "ring", "destructive", "destructive-foreground",
-  "trust", "learning", "teaching", "ai", "warning",
+  "background",
+  "foreground",
+  "muted",
+  "muted-foreground",
+  "surface",
+  "surface-elevated",
+  "surface-sunken",
+  "card",
+  "card-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "border",
+  "border-strong",
+  "input",
+  "ring",
+  "destructive",
+  "destructive-foreground",
+  "trust",
+  "learning",
+  "teaching",
+  "ai",
+  "warning",
 ] as const;
 
 /**
@@ -67,8 +85,12 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
   // ── Borders: radius ───────────────────────────────────────────────────
   if (tokens.borders?.radius) {
     const radiusMap: Record<string, string> = {
-      sm: "--radius-sm", md: "--radius-md", lg: "--radius-lg",
-      xl: "--radius-xl", "2xl": "--radius-2xl", "3xl": "--radius-3xl",
+      sm: "--radius-sm",
+      md: "--radius-md",
+      lg: "--radius-lg",
+      xl: "--radius-xl",
+      "2xl": "--radius-2xl",
+      "3xl": "--radius-3xl",
       "4xl": "--radius-4xl",
     };
     for (const [key, cssVar] of Object.entries(radiusMap)) {

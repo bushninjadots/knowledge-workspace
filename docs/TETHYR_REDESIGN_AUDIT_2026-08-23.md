@@ -15,6 +15,7 @@ This audit covers the entire Tethyr codebase as of 2026-08-23. Every route, comp
 ## 2. What Tethyr Is Today
 
 Tethyr is a **creative collaboration network** with:
+
 - **29 routes** (5 public, 24 authenticated)
 - **~216 Tethyr components** across 7 domains
 - **29 hooks** managing data fetching, mutations, and state
@@ -49,35 +50,35 @@ Public routes           Authenticated routes
 
 ### 3.1 Public Routes
 
-| Route | Purpose | Auth Boundary | Composition Pattern |
-|---|---|---|---|
-| `/` (index) | Landing page — hero, featured projects, trending skills, activity, spaces | Public | Large hero + sections as page flow |
-| `/projects/$id` | Public project workspace — README, workbench, people, discussions, evidence | Public (with signed-out join state) | Header → workbench → tabs (files/activity) → inline sections (people, discussions, needs, credits) |
-| `/u/$handle` | Public studio — identity header + customizable workspace | Public (with connection-gated actions) | Fixed identity header → PublicStudioWorkspace (WorkspaceGrid) |
-| `/skills/$slug` | Public skill hub — people, projects, workshops | Public | Header → tabs (sharing, growing, projects, workshops) |
-| `/teams/$slug` | Public team page | Public | Team identity → members → projects |
-| `/login`, `/signup`, `/reset-password` | Auth entry flow | Signed-out only | Centered forms with validation |
-| `/privacy`, `/terms` | Legal pages | Public | Static content |
+| Route                                  | Purpose                                                                     | Auth Boundary                          | Composition Pattern                                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `/` (index)                            | Landing page — hero, featured projects, trending skills, activity, spaces   | Public                                 | Large hero + sections as page flow                                                                 |
+| `/projects/$id`                        | Public project workspace — README, workbench, people, discussions, evidence | Public (with signed-out join state)    | Header → workbench → tabs (files/activity) → inline sections (people, discussions, needs, credits) |
+| `/u/$handle`                           | Public studio — identity header + customizable workspace                    | Public (with connection-gated actions) | Fixed identity header → PublicStudioWorkspace (WorkspaceGrid)                                      |
+| `/skills/$slug`                        | Public skill hub — people, projects, workshops                              | Public                                 | Header → tabs (sharing, growing, projects, workshops)                                              |
+| `/teams/$slug`                         | Public team page                                                            | Public                                 | Team identity → members → projects                                                                 |
+| `/login`, `/signup`, `/reset-password` | Auth entry flow                                                             | Signed-out only                        | Centered forms with validation                                                                     |
+| `/privacy`, `/terms`                   | Legal pages                                                                 | Public                                 | Static content                                                                                     |
 
 ### 3.2 Authenticated Routes
 
-| Route | Purpose | Composition Pattern |
-|---|---|---|
-| `/dashboard` | Priority flow + WorkspaceGrid | Welcome header → next-steps → WorkspaceGrid (12 modules, drag/drop/hide/pin) |
-| `/explore` | Discover projects, creators, opportunities | Intent bar → SegmentedControl tabs → filters → card grids/project shelf |
-| `/profile` | Private Studio (identity management) | ProfileLayout → tabs (Overview, Skills, Projects, Activity, Sessions, Communities, GitHub) |
-| `/community` | Community feed with spaces | Left rail + feed + right rail + mobile drawers |
-| `/challenges` | Challenge discovery + detail | List with filters → detail page with progress/submission/review |
-| `/sessions` | Sessions management | Sidebar tabs (upcoming, calendar, history, requests, availability) |
-| `/sessions/$id` | Session detail | Session info + participants + notes + resources |
-| `/library` | Personal library | Sidebar + grid/list + search |
-| `/library/$id` | Library item detail | Note editor (TipTap) or file viewer |
-| `/messages` | Direct messages | Conversation list + thread + composer |
-| `/connections` | Connection management | Incoming requests + accepted list |
-| `/notifications` | Notification feed | Category tabs → filtered feed |
-| `/settings` | Account hub | Settings page component (delegated) |
-| `/spaces/$slug/settings` | Space moderation | Space settings |
-| `/spaces/$slug/reports` | Space reports inbox | Report queue |
+| Route                    | Purpose                                    | Composition Pattern                                                                        |
+| ------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `/dashboard`             | Priority flow + WorkspaceGrid              | Welcome header → next-steps → WorkspaceGrid (12 modules, drag/drop/hide/pin)               |
+| `/explore`               | Discover projects, creators, opportunities | Intent bar → SegmentedControl tabs → filters → card grids/project shelf                    |
+| `/profile`               | Private Studio (identity management)       | ProfileLayout → tabs (Overview, Skills, Projects, Activity, Sessions, Communities, GitHub) |
+| `/community`             | Community feed with spaces                 | Left rail + feed + right rail + mobile drawers                                             |
+| `/challenges`            | Challenge discovery + detail               | List with filters → detail page with progress/submission/review                            |
+| `/sessions`              | Sessions management                        | Sidebar tabs (upcoming, calendar, history, requests, availability)                         |
+| `/sessions/$id`          | Session detail                             | Session info + participants + notes + resources                                            |
+| `/library`               | Personal library                           | Sidebar + grid/list + search                                                               |
+| `/library/$id`           | Library item detail                        | Note editor (TipTap) or file viewer                                                        |
+| `/messages`              | Direct messages                            | Conversation list + thread + composer                                                      |
+| `/connections`           | Connection management                      | Incoming requests + accepted list                                                          |
+| `/notifications`         | Notification feed                          | Category tabs → filtered feed                                                              |
+| `/settings`              | Account hub                                | Settings page component (delegated)                                                        |
+| `/spaces/$slug/settings` | Space moderation                           | Space settings                                                                             |
+| `/spaces/$slug/reports`  | Space reports inbox                        | Report queue                                                                               |
 
 ---
 
@@ -90,41 +91,49 @@ Public routes           Authenticated routes
 ### 4.2 Tethyr Components by Domain
 
 #### Community (23 files)
+
 Post cards, feed, composer, poll composer, comment system, left/right sidebars, community header, space header, space chat, mobile bottom nav, challenge card, create challenge/space dialogs, share space dialog, space settings dialog, attach project panel, project card inline, communities section, challenges section.
 
 **Pattern:** Heavily card-based. Feed + sidebar navigation. Deeply composed but many cards within cards. Mobile has its own separate navigation system.
 
 #### Project (28 files)
+
 Project header, workbench, pulse, tabs, README editor, README display, files explorer, activity, community posts, discussions, milestones, open roles, role applications, files, repos, resources, timeline, updates, needs, credits, main content, people, link picker, search, join modal.
 
 **Pattern:** This is Tethyr's strongest composition. README-first with workbench and inline sections. Already structured like block-like sections (each section component = near-block). Some lazy-loaded.
 
 #### Profile / Studio (28 files)
+
 Profile layout, overview tab, skills tab, projects tab, activity tab, sessions tab, communities tab, reviews tab, public studio workspace, studio direction, section card, chip list card, projects card, project dialog, project library add dialog, timeline card, badges, contribution graph, banner overlay, banner strip, background picker, about card, text card, links card, skill editing, credits, GitHub connect.
 
 **Pattern:** Private Studio uses tabbed interface. Public Studio uses WorkspaceGrid. Repeated SectionCard wrapping pattern (SectionCard → content). Identity header is fixed; workspace is customizable.
 
 #### Sessions (13 files)
+
 Sessions layout, sidebar, overview cards, upcoming sessions, sessions calendar, session history, session requests, session resources, today schedule, availability settings, schedule session wizard, request session dialog, session filters.
 
 **Pattern:** Card-heavy. Sidebar + content area. Many cards within cards.
 
 #### Library (9 files)
+
 Library layout, sidebar, item card, collection card, collection dialog, note editor, file upload zone, search bar, signed image, GitHub link dialog.
 
 **Pattern:** Sidebar + grid/list. Rich note editor (TipTap). File upload zone.
 
 #### Workspace (2 files)
+
 WorkspaceGrid + tests. React Grid Layout with drag/drop, resize, hide, pin, reorder, presets.
 
 **Pattern:** Core interaction primitive. Used by dashboard, public studio, and private studio. 12-column grid. Module registry drives available modules.
 
 #### Notifications (5 files)
+
 Notification feed, card, header, dropdown, empty state.
 
 **Pattern:** Feed-based list with category tabs. Shared category model with settings.
 
 #### Top-Level (43 files)
+
 Dashboard shell (authenticated shell, sidebar, navbar, footer, mobile nav), shared components (empty state, follow button, connect button, profile link, reputation display, activity timeline, achievements, badges, theme toggle, global search, segmented control, auth shell, oauth buttons, first session onboarding, welcome modal, next steps, suggested creators/projects, discover skills, drag-drop file input, connections card, background layer, settings page).
 
 **Pattern:** Well-organized. Several reusable primitives (EmptyState, ProfileLink, SegmentedControl). Some one-off compositions.
@@ -147,47 +156,49 @@ Dashboard shell (authenticated shell, sidebar, navbar, footer, mobile nav), shar
 
 ### 5.1 Data Hooks (by domain)
 
-| Hook | Domain | Pattern |
-|---|---|---|
-| `useCurrentUser` | Identity | Single query, widely invalidated |
-| `useSkillsCatalog` | Skills | Catalog query + trending aggregation |
-| `useProjects` | Projects | Detail query + multiple list/mutation hooks |
-| `useCommunity` | Community | Infinite query feed + CRUD mutations |
-| `useCommunitySpaces` | Spaces | Spaces CRUD + member count |
-| `useSpaceChat` | Chat | Messages + send + realtime |
-| `useSpaceJoinRequests` | Moderation | Join request management |
-| `useSpaceReports` | Moderation | Report queue |
-| `useSpaceSettings` | Moderation | Space settings CRUD |
-| `useSpaceMembers` | Membership | Member list |
-| `useSpaceTyping` | Realtime | Typing indicators |
-| `useSpaceReadState` | Realtime | Read receipts |
-| `useChallenges` | Challenges | List + detail + join/progress/submit/review |
-| `useSessions` | Sessions | CRUD + calendar + requests |
-| `useConnections` | Connections | List + accept/decline |
-| `useMessages` | Messages | Threads + send + typing + read |
-| `useNotifications` | Notifications | Feed + realtime subscription |
-| `useNotificationPreferences` | Settings | Mute categories |
-| `useFollow` | Social | Follow/unfollow |
-| `useLibrary` | Library | Items + collections CRUD |
-| `useTeams` | Teams | Team CRUD |
-| `useCredits` | Credits | Credits roll |
-| `usePublicStudioLayout` | Layout | Public studio layout persistence |
-| `useLayoutPreferences` | Layout | Private layout persistence |
-| `useProjectLoop` | Loop | Return changes + evidence shelf |
-| `useProjectRepos` | Repos | GitHub repository integration |
-| `useProjectScrollSpy` | UI | Scroll position tracking |
-| `useSignedUrl` | Storage | Signed URL generation |
-| `useSkillEndorsements` | Skills | Endorse/unendorse |
+| Hook                         | Domain        | Pattern                                     |
+| ---------------------------- | ------------- | ------------------------------------------- |
+| `useCurrentUser`             | Identity      | Single query, widely invalidated            |
+| `useSkillsCatalog`           | Skills        | Catalog query + trending aggregation        |
+| `useProjects`                | Projects      | Detail query + multiple list/mutation hooks |
+| `useCommunity`               | Community     | Infinite query feed + CRUD mutations        |
+| `useCommunitySpaces`         | Spaces        | Spaces CRUD + member count                  |
+| `useSpaceChat`               | Chat          | Messages + send + realtime                  |
+| `useSpaceJoinRequests`       | Moderation    | Join request management                     |
+| `useSpaceReports`            | Moderation    | Report queue                                |
+| `useSpaceSettings`           | Moderation    | Space settings CRUD                         |
+| `useSpaceMembers`            | Membership    | Member list                                 |
+| `useSpaceTyping`             | Realtime      | Typing indicators                           |
+| `useSpaceReadState`          | Realtime      | Read receipts                               |
+| `useChallenges`              | Challenges    | List + detail + join/progress/submit/review |
+| `useSessions`                | Sessions      | CRUD + calendar + requests                  |
+| `useConnections`             | Connections   | List + accept/decline                       |
+| `useMessages`                | Messages      | Threads + send + typing + read              |
+| `useNotifications`           | Notifications | Feed + realtime subscription                |
+| `useNotificationPreferences` | Settings      | Mute categories                             |
+| `useFollow`                  | Social        | Follow/unfollow                             |
+| `useLibrary`                 | Library       | Items + collections CRUD                    |
+| `useTeams`                   | Teams         | Team CRUD                                   |
+| `useCredits`                 | Credits       | Credits roll                                |
+| `usePublicStudioLayout`      | Layout        | Public studio layout persistence            |
+| `useLayoutPreferences`       | Layout        | Private layout persistence                  |
+| `useProjectLoop`             | Loop          | Return changes + evidence shelf             |
+| `useProjectRepos`            | Repos         | GitHub repository integration               |
+| `useProjectScrollSpy`        | UI            | Scroll position tracking                    |
+| `useSignedUrl`               | Storage       | Signed URL generation                       |
+| `useSkillEndorsements`       | Skills        | Endorse/unendorse                           |
 
 ### 5.2 Pattern Analysis
 
 **Strong patterns:**
+
 - React Query throughout (useQuery, useMutation, useInfiniteQuery)
 - Consistent query key conventions
 - Query invalidation after mutations
 - Supabase client used consistently (direct access in hooks)
 
 **Areas to improve:**
+
 - Several hooks use `select("*")` — broad queries
 - Some hooks mix query logic with component-level concerns
 - Layout preference hooks duplicate patterns between public/private
@@ -199,60 +210,60 @@ Dashboard shell (authenticated shell, sidebar, navbar, footer, mobile nav), shar
 
 ### 6.1 Core Utilities
 
-| File | Purpose |
-|---|---|
-| `utils.ts` | General utilities (cn, etc.) |
-| `validators.ts` | URL validation, safe href |
-| `error-message.ts` | Friendly error extraction |
-| `error-capture.ts` | Server error reporting |
-| `error-page.ts` | Safe error rendering |
-| `seo.ts` | Metadata, canonical links |
-| `sitemap.ts` | Sitemap generation |
-| `time.ts` | Time formatting |
-| `timezones.ts` | Timezone utilities |
-| `confetti.ts` | Confetti effect |
+| File               | Purpose                      |
+| ------------------ | ---------------------------- |
+| `utils.ts`         | General utilities (cn, etc.) |
+| `validators.ts`    | URL validation, safe href    |
+| `error-message.ts` | Friendly error extraction    |
+| `error-capture.ts` | Server error reporting       |
+| `error-page.ts`    | Safe error rendering         |
+| `seo.ts`           | Metadata, canonical links    |
+| `sitemap.ts`       | Sitemap generation           |
+| `time.ts`          | Time formatting              |
+| `timezones.ts`     | Timezone utilities           |
+| `confetti.ts`      | Confetti effect              |
 
 ### 6.2 Domain Logic
 
-| File | Purpose |
-|---|---|
-| `reputation.ts` | Reputation tier math, achievement checks |
-| `profile-completeness.ts` | Profile completeness calculation |
-| `skill-match.ts` | Skill matching scoring |
-| `notification-categories.ts` | Type→category map, view definitions |
-| `notification-destinations.ts` | Notification click destinations |
-| `project-presentation.ts` | Project section visibility presets |
-| `project-seasons.ts` | Project season definitions |
-| `workspace-layouts.ts` | Module registry, presets, grid config |
-| `community-data.ts` | Post type labels, community constants |
-| `community-validation.ts` | Post validation |
-| `file-tree.ts` | File tree data structure |
-| `line-diff.ts` | Diff display |
-| `library-excerpt.ts` | Library content excerpt |
-| `content-format.ts` | Content format detection |
-| `credits.ts` | Credits roll data |
-| `background-themes.ts` | Background theme definitions |
-| `dominant-color.ts` | Image color extraction |
-| `category-colors.ts` | Skill category colors |
+| File                           | Purpose                                  |
+| ------------------------------ | ---------------------------------------- |
+| `reputation.ts`                | Reputation tier math, achievement checks |
+| `profile-completeness.ts`      | Profile completeness calculation         |
+| `skill-match.ts`               | Skill matching scoring                   |
+| `notification-categories.ts`   | Type→category map, view definitions      |
+| `notification-destinations.ts` | Notification click destinations          |
+| `project-presentation.ts`      | Project section visibility presets       |
+| `project-seasons.ts`           | Project season definitions               |
+| `workspace-layouts.ts`         | Module registry, presets, grid config    |
+| `community-data.ts`            | Post type labels, community constants    |
+| `community-validation.ts`      | Post validation                          |
+| `file-tree.ts`                 | File tree data structure                 |
+| `line-diff.ts`                 | Diff display                             |
+| `library-excerpt.ts`           | Library content excerpt                  |
+| `content-format.ts`            | Content format detection                 |
+| `credits.ts`                   | Credits roll data                        |
+| `background-themes.ts`         | Background theme definitions             |
+| `dominant-color.ts`            | Image color extraction                   |
+| `category-colors.ts`           | Skill category colors                    |
 
 ### 6.3 Auth & Security
 
-| File | Purpose |
-|---|---|
-| `auth-error.ts` | Auth error message mapping |
-| `auth-token.ts` | Auth token management |
-| `security-headers.ts` | Response security headers |
-| `account-server.ts` | Server-side account deletion |
-| `sentry.ts` | Error monitoring |
+| File                  | Purpose                      |
+| --------------------- | ---------------------------- |
+| `auth-error.ts`       | Auth error message mapping   |
+| `auth-token.ts`       | Auth token management        |
+| `security-headers.ts` | Response security headers    |
+| `account-server.ts`   | Server-side account deletion |
+| `sentry.ts`           | Error monitoring             |
 
 ### 6.4 External Integrations
 
-| File | Purpose |
-|---|---|
-| `github.ts` | GitHub client-side operations |
+| File               | Purpose                       |
+| ------------------ | ----------------------------- |
+| `github.ts`        | GitHub client-side operations |
 | `github-server.ts` | GitHub server-side operations |
-| `github-source.ts` | GitHub source linking |
-| `lowlight.ts` | Syntax highlighting |
+| `github-source.ts` | GitHub source linking         |
+| `lowlight.ts`      | Syntax highlighting           |
 
 ---
 
@@ -260,77 +271,77 @@ Dashboard shell (authenticated shell, sidebar, navbar, footer, mobile nav), shar
 
 ### 7.1 Core Tables
 
-| Table | Purpose | Key Columns |
-|---|---|---|
-| `profiles` | User identity | handle, display_name, bio, avatar, banner, skills, availability, reputation_score, background, notification_preferences, public_studio_layout, evidence_shelf |
-| `projects` | Project workspaces | title, description, goal, vision, status, stage, visibility, progress_percent, cover_url, gallery, resources, links, tags, readme, tools, looking_for_feedback, looking_for_collaborators, is_featured, presentation_preset, season, collaboration_brief, lineage |
-| `skills` | Skill catalog | slug, name, category, description, tools |
-| `profile_skills_teach` | Teaching skills | profile_id, skill_id, verification_level, experience_level, proof_url |
-| `profile_skills_learn` | Learning skills | profile_id, skill_id |
+| Table                  | Purpose            | Key Columns                                                                                                                                                                                                                                                       |
+| ---------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`             | User identity      | handle, display_name, bio, avatar, banner, skills, availability, reputation_score, background, notification_preferences, public_studio_layout, evidence_shelf                                                                                                     |
+| `projects`             | Project workspaces | title, description, goal, vision, status, stage, visibility, progress_percent, cover_url, gallery, resources, links, tags, readme, tools, looking_for_feedback, looking_for_collaborators, is_featured, presentation_preset, season, collaboration_brief, lineage |
+| `skills`               | Skill catalog      | slug, name, category, description, tools                                                                                                                                                                                                                          |
+| `profile_skills_teach` | Teaching skills    | profile_id, skill_id, verification_level, experience_level, proof_url                                                                                                                                                                                             |
+| `profile_skills_learn` | Learning skills    | profile_id, skill_id                                                                                                                                                                                                                                              |
 
 ### 7.2 Collaboration Tables
 
-| Table | Purpose | Status |
-|---|---|---|
-| `project_contributors` | Project team (creator, contributor, mentor) | Active |
-| `project_milestones` | Project milestones | Active |
-| `project_updates` | Weekly project updates | Active |
-| `project_discussions` | Project-scoped discussions | Active |
-| `project_open_roles` | Open project roles | Active |
-| `project_role_applications` | Role applications | Active |
-| `project_needs` | Immediate project needs | Active |
-| `project_files` | Project file storage | Active |
-| `project_repositories` | Linked external repos | Active |
-| `project_activity` | Project activity feed | Active |
-| `project_watchers` | Project watching | Active |
-| `teams` | Teams/crews | Active |
-| `team_members` | Team membership | Active |
+| Table                       | Purpose                                     | Status |
+| --------------------------- | ------------------------------------------- | ------ |
+| `project_contributors`      | Project team (creator, contributor, mentor) | Active |
+| `project_milestones`        | Project milestones                          | Active |
+| `project_updates`           | Weekly project updates                      | Active |
+| `project_discussions`       | Project-scoped discussions                  | Active |
+| `project_open_roles`        | Open project roles                          | Active |
+| `project_role_applications` | Role applications                           | Active |
+| `project_needs`             | Immediate project needs                     | Active |
+| `project_files`             | Project file storage                        | Active |
+| `project_repositories`      | Linked external repos                       | Active |
+| `project_activity`          | Project activity feed                       | Active |
+| `project_watchers`          | Project watching                            | Active |
+| `teams`                     | Teams/crews                                 | Active |
+| `team_members`              | Team membership                             | Active |
 
 ### 7.3 Community Tables
 
-| Table | Purpose | Status |
-|---|---|---|
-| `posts` | Community posts (14 types) | Active |
-| `comments` | Nested comments | Active |
-| `polls` | Polls with options | Active |
-| `poll_votes` | Poll voting | Active |
-| `community_spaces` | Community spaces | Active |
-| `space_members` | Space membership | Active |
-| `space_join_requests` | Space join requests | Active |
-| `space_bans` | Space bans | Active |
-| `space_messages` | Space chat messages | Active |
-| `follows` | User follows | Active |
-| `post_reports` | Post reporting | Active |
-| `moderation_log` | Moderation actions | Active |
+| Table                 | Purpose                    | Status |
+| --------------------- | -------------------------- | ------ |
+| `posts`               | Community posts (14 types) | Active |
+| `comments`            | Nested comments            | Active |
+| `polls`               | Polls with options         | Active |
+| `poll_votes`          | Poll voting                | Active |
+| `community_spaces`    | Community spaces           | Active |
+| `space_members`       | Space membership           | Active |
+| `space_join_requests` | Space join requests        | Active |
+| `space_bans`          | Space bans                 | Active |
+| `space_messages`      | Space chat messages        | Active |
+| `follows`             | User follows               | Active |
+| `post_reports`        | Post reporting             | Active |
+| `moderation_log`      | Moderation actions         | Active |
 
 ### 7.4 Collaboration Tables
 
-| Table | Purpose | Status |
-|---|---|---|
-| `sessions` | Collaboration sessions | Active |
-| `session_participants` | Session attendance | Active |
-| `session_availability` | Availability slots | Active |
-| `session_resources` | Session resources | Active |
-| `challenges` | Community challenges | Active |
+| Table                    | Purpose                 | Status |
+| ------------------------ | ----------------------- | ------ |
+| `sessions`               | Collaboration sessions  | Active |
+| `session_participants`   | Session attendance      | Active |
+| `session_availability`   | Availability slots      | Active |
+| `session_resources`      | Session resources       | Active |
+| `challenges`             | Community challenges    | Active |
 | `challenge_participants` | Challenge participation | Active |
-| `connections` | User connections | Active |
-| `messages` | Direct messages | Active |
-| `notifications` | Notification feed | Active |
+| `connections`            | User connections        | Active |
+| `messages`               | Direct messages         | Active |
+| `notifications`          | Notification feed       | Active |
 
 ### 7.5 Support Tables
 
-| Table | Purpose |
-|---|---|
-| `library_items` | Library notes, files, links |
-| `library_collections` | Library collections |
-| `library_item_collections` | Item-collection junction |
-| `connected_accounts` | GitHub OAuth tokens |
-| `user_layout_preferences` | Dashboard/private studio layouts |
-| `user_github_tokens` | GitHub personal tokens |
-| `reputation_events` | Reputation change log |
-| `achievements` | Achievement definitions |
-| `user_achievements` | Earned achievements |
-| `skill_endorsements` | Skill endorsements |
+| Table                      | Purpose                          |
+| -------------------------- | -------------------------------- |
+| `library_items`            | Library notes, files, links      |
+| `library_collections`      | Library collections              |
+| `library_item_collections` | Item-collection junction         |
+| `connected_accounts`       | GitHub OAuth tokens              |
+| `user_layout_preferences`  | Dashboard/private studio layouts |
+| `user_github_tokens`       | GitHub personal tokens           |
+| `reputation_events`        | Reputation change log            |
+| `achievements`             | Achievement definitions          |
+| `user_achievements`        | Earned achievements              |
+| `skill_endorsements`       | Skill endorsements               |
 
 ### 7.6 Key Observations
 
@@ -357,39 +368,40 @@ Dashboard shell (authenticated shell, sidebar, navbar, footer, mobile nav), shar
 
 ### 8.2 Current vs. Redesign Needs
 
-| Aspect | Current State | Redesign Needs |
-|---|---|---|
-| Theme system | Single light/dark with semantic tokens | Need multi-theme architecture with token exchange |
-| Radius scale | Tight (2–8px) | Good; keep as foundation |
-| Typography | Good hierarchy with 4 font families | Keep; extend with theme-variable fonts |
-| Surface hierarchy | Well-defined levels 0–4 | Keep; blocks will target specific levels |
-| Color system | Semantic + user accent | Extend with theme color palettes |
-| Shadows | Minimal intentionally | Keep the restraint |
-| Motion | Restrained, reduced-motion aware | Keep |
+| Aspect            | Current State                          | Redesign Needs                                    |
+| ----------------- | -------------------------------------- | ------------------------------------------------- |
+| Theme system      | Single light/dark with semantic tokens | Need multi-theme architecture with token exchange |
+| Radius scale      | Tight (2–8px)                          | Good; keep as foundation                          |
+| Typography        | Good hierarchy with 4 font families    | Keep; extend with theme-variable fonts            |
+| Surface hierarchy | Well-defined levels 0–4                | Keep; blocks will target specific levels          |
+| Color system      | Semantic + user accent                 | Extend with theme color palettes                  |
+| Shadows           | Minimal intentionally                  | Keep the restraint                                |
+| Motion            | Restrained, reduced-motion aware       | Keep                                              |
 
 ### 8.3 Existing Primitives That Map to Blocks
 
 The project page already has block-like sections. These are the clearest candidates:
 
-| Current Component | Maps to Block Type |
-|---|---|
-| `ProjectHeader` | Hero + identity block (composite) |
-| `ProjectReadmeTab` / `ReadmeEditor` | Markdown/README block |
-| `MilestonesTimeline` | Roadmap/Timeline block |
-| `ProjectNeeds` | Current work / needs block |
-| `ProjectPeopleTab` | Team block |
-| `ProjectFilesExplorer` | Files block |
-| `ProjectActivityTab` | Activity block |
-| `ProjectDiscussions` | Discussions block |
-| `ProjectCredits` | Credits block |
-| `ProjectCommunityPosts` | Community posts block |
-| `ProjectOpenRoles` | Open roles block |
-| `ProjectUpdates` | Updates block |
-| `ProjectRepos` | Repositories block |
-| `ProjectTimeline` | Timeline block |
-| `ProjectResources` | Resources block |
+| Current Component                   | Maps to Block Type                |
+| ----------------------------------- | --------------------------------- |
+| `ProjectHeader`                     | Hero + identity block (composite) |
+| `ProjectReadmeTab` / `ReadmeEditor` | Markdown/README block             |
+| `MilestonesTimeline`                | Roadmap/Timeline block            |
+| `ProjectNeeds`                      | Current work / needs block        |
+| `ProjectPeopleTab`                  | Team block                        |
+| `ProjectFilesExplorer`              | Files block                       |
+| `ProjectActivityTab`                | Activity block                    |
+| `ProjectDiscussions`                | Discussions block                 |
+| `ProjectCredits`                    | Credits block                     |
+| `ProjectCommunityPosts`             | Community posts block             |
+| `ProjectOpenRoles`                  | Open roles block                  |
+| `ProjectUpdates`                    | Updates block                     |
+| `ProjectRepos`                      | Repositories block                |
+| `ProjectTimeline`                   | Timeline block                    |
+| `ProjectResources`                  | Resources block                   |
 
 The profile also has block-like sections:
+
 - `ProfileHeader` (identity) → Profile header block
 - Skills display → Skills block
 - Projects display → Featured projects block
@@ -442,7 +454,7 @@ The profile also has block-like sections:
 
 1. **New tables:** `pages`, `layouts`, `themes`, `templates`, `forks`
 2. **Migration:** map existing `project_presentation_preset` values, `public_studio_layout` JSONB, and `user_layout_preferences` JSONB into the new page/layout model.
-3. **Existing data preserved:** all project data, profile data, community data remain in their current tables. Only the *presentation layer* changes.
+3. **Existing data preserved:** all project data, profile data, community data remain in their current tables. Only the _presentation layer_ changes.
 
 ### 10.3 Component Changes
 
@@ -484,7 +496,7 @@ The profile also has block-like sections:
 
 **Risk:** Templates must never expose private project data, member lists, files, discussions, or activity. The serialization boundary between "structural template" and "user content" must be watertight.
 
-**Mitigation:** Templates store block *types* and *positions* plus *default configs* only. When a template is applied, blocks query the user's own data. Template serialization explicitly strips content fields. RLS prevents cross-tenant data access at the database level regardless of template structure.
+**Mitigation:** Templates store block _types_ and _positions_ plus _default configs_ only. When a template is applied, blocks query the user's own data. Template serialization explicitly strips content fields. RLS prevents cross-tenant data access at the database level regardless of template structure.
 
 ### 11.5 Public/Private Distinction
 
@@ -505,25 +517,25 @@ The profile also has block-like sections:
 These must be answered before Phase 2 begins:
 
 1. **Should the block system replace or coexist with WorkspaceGrid?**
-   - *Recommendation:* Replace WorkspaceGrid on profile and project pages with the block editor. Keep WorkspaceGrid on the dashboard. The dashboard is a tool surface; profiles and projects are public destinations.
+   - _Recommendation:_ Replace WorkspaceGrid on profile and project pages with the block editor. Keep WorkspaceGrid on the dashboard. The dashboard is a tool surface; profiles and projects are public destinations.
 
 2. **How does `profiles.public_studio_layout` map into the new page/block model?**
-   - *Recommendation:* One `page` per profile with `owner_type=profile`. The current public_studio_layout JSONB maps into the initial `layout` for that page. Users can customize from there.
+   - _Recommendation:_ One `page` per profile with `owner_type=profile`. The current public_studio_layout JSONB maps into the initial `layout` for that page. Users can customize from there.
 
 3. **Should the project README be a block or remain a first-class concept?**
-   - *Recommendation:* The README is special — it defines the project. Make it a required, always-visible block at the top of every Project Space. It can be a "markdown" block type with project-specific defaults.
+   - _Recommendation:_ The README is special — it defines the project. Make it a required, always-visible block at the top of every Project Space. It can be a "markdown" block type with project-specific defaults.
 
 4. **Should the dashboard become a block-based page?**
-   - *Recommendation:* Not in Phase 2–5. The dashboard is a tool, not a public destination. It already has a good customization system (WorkspaceGrid). Revisit after profile/project pages are migrated.
+   - _Recommendation:_ Not in Phase 2–5. The dashboard is a tool, not a public destination. It already has a good customization system (WorkspaceGrid). Revisit after profile/project pages are migrated.
 
 5. **What is the minimal viable block set for Phase 2?**
-   - *Recommendation:* Text, Heading, Markdown, Divider, About (project description), Status, Team, Files, Activity, Roadmap, Tech Stack, Skills. That covers 100% of current profile and project sections. Add more blocks incrementally.
+   - _Recommendation:_ Text, Heading, Markdown, Divider, About (project description), Status, Team, Files, Activity, Roadmap, Tech Stack, Skills. That covers 100% of current profile and project sections. Add more blocks incrementally.
 
 6. **How should the theme token system evolve?**
-   - *Recommendation:* The current CSS variable system in `styles.css` becomes the "default" theme. Additional themes define alternative token sets. A `theme` table stores token JSONB. A ThemeProvider applies tokens as CSS custom properties at runtime.
+   - _Recommendation:_ The current CSS variable system in `styles.css` becomes the "default" theme. Additional themes define alternative token sets. A `theme` table stores token JSONB. A ThemeProvider applies tokens as CSS custom properties at runtime.
 
 7. **Should the template table live in Supabase or a separate service?**
-   - *Recommendation:* Supabase. Templates are closely coupled with the page/layout model and benefit from the same RLS, migrations, and realtime features. No complexity overhead from a separate service.
+   - _Recommendation:_ Supabase. Templates are closely coupled with the page/layout model and benefit from the same RLS, migrations, and realtime features. No complexity overhead from a separate service.
 
 ---
 
@@ -566,9 +578,11 @@ These must be answered before Phase 2 begins:
 ## 14. Phased Implementation Plan (Refined)
 
 ### Phase 1 — Audit ✅ COMPLETE
+
 This document. Awaiting approval.
 
 ### Phase 2 — Block Foundation
+
 **Scope:** Page model, block registry, block renderer, layout model, theme model, draft/publish workflow.
 **Data:** `pages`, `layouts`, `themes` tables. Migration to create them.
 **Components:** `PageShell`, `PageLayout`, `LayoutSection`, `BlockRenderer`, `BlockRegistry`.
@@ -577,18 +591,21 @@ This document. Awaiting approval.
 **Gate:** Typecheck, full tests, authenticated browser smoke, no regression on existing routes.
 
 ### Phase 3 — Project Space
+
 **Scope:** Migrate `projects.$id.tsx` to block-based rendering.
 **Blocks:** Hero/Header, About/Markdown, Status, Team, Files, Activity, Roadmap, Tech Stack, Updates, Needs, Credits, Discussions, Community Posts.
 **Migration:** Generate default layouts for all existing projects. `presentation_preset` values inform initial block visibility.
 **Gate:** All existing project functionality works. Full test suite passes. Browser smoke.
 
 ### Phase 4 — Personal Profile
+
 **Scope:** Migrate `u.$handle.tsx` to block-based rendering. Migrate private Studio.
 **Blocks:** Profile Header, Skills, Featured Projects, Experience, Contributions, Activity, About, Links, Evidence.
 **Migration:** `public_studio_layout` JSONB → layout. Generate defaults for all existing profiles.
 **Gate:** All existing profile functionality works. Public/private distinction preserved.
 
 ### Phase 5 — Visual Editor
+
 **Scope:** Edit mode overlay, block picker, drag/drop reorder, config panel, preview, publish.
 **Gate:** Non-technical users can customize a page. Tests pass. Mobile editor works.
 

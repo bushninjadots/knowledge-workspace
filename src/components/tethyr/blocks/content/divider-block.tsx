@@ -1,7 +1,6 @@
 // ── Divider Block ─────────────────────────────────────────────────────────────
 // A horizontal divider / separator. Registers as "divider".
 
-import { Minus } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 

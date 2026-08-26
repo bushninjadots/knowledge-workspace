@@ -149,8 +149,7 @@ function TemplateDetailPage() {
                 params={{ handle: template.creatorHandle }}
                 className="flex items-center gap-1 hover:text-foreground"
               >
-                <User className="h-3 w-3" />
-                @{template.creatorHandle}
+                <User className="h-3 w-3" />@{template.creatorHandle}
               </Link>
             )}
             <span className="flex items-center gap-1">
@@ -255,7 +254,8 @@ function TemplateDetailPage() {
         {/* Fork/Remix explainer */}
         <p className="mt-2 text-[10px] text-muted-foreground/60">
           <strong>Fork:</strong> copy the layout to your account for private customization.{" "}
-          <strong>Remix:</strong> fork, customize, and publish your version as a new community template.
+          <strong>Remix:</strong> fork, customize, and publish your version as a new community
+          template.
         </p>
 
         {/* Made with Tethyr */}

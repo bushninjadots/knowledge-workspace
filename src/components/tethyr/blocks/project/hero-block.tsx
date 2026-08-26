@@ -6,7 +6,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,7 +50,9 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
       if (!projectId) return null;
       const { data, error } = await supabase
         .from("projects")
-        .select("id, title, description, status, stage, progress_percent, cover_url, tags, looking_for_collaborators, looking_for_feedback")
+        .select(
+          "id, title, description, status, stage, progress_percent, cover_url, tags, looking_for_collaborators, looking_for_feedback",
+        )
         .eq("id", projectId)
         .maybeSingle();
       if (error || !data) return null;
@@ -84,7 +86,9 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
 
   if (!project) {
     if (context.isEditing) {
-      return <BlockEmptyState label="Project Hero" detail="Project data is loading or not available." />;
+      return (
+        <BlockEmptyState label="Project Hero" detail="Project data is loading or not available." />
+      );
     }
     return null;
   }
@@ -92,9 +96,7 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>
       {/* Overlay for readability when banner image is present */}
-      {project.cover_url && (
-        <div className="absolute inset-0 bg-background/90" />
-      )}
+      {project.cover_url && <div className="absolute inset-0 bg-background/90" />}
 
       <div className="relative px-6 py-8 sm:px-8 sm:py-12">
         {/* Title */}

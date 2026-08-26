@@ -20,10 +20,12 @@
 ## Task 1: Add session achievement types + DB migration
 
 **Files:**
+
 - Create: `supabase/migrations/20260820220000_session_achievements.sql`
 - Modify: `src/lib/reputation.ts`
 
 **Interfaces:**
+
 - Consumes: existing `achievement_type` enum, `user_achievements` table, `award_earned_achievements()` function
 - Produces: 3 new achievement types: `first_session`, `session_teacher`, `streak_4_weeks`
 
@@ -308,9 +310,11 @@ git commit -m "feat: add session achievement types + DB migration"
 ## Task 2: Add achievement definitions to reputation.ts
 
 **Files:**
+
 - Modify: `src/lib/reputation.ts`
 
 **Interfaces:**
+
 - Consumes: existing `AchievementType` union, `ACHIEVEMENTS` array
 - Produces: 3 new entries in `ACHIEVEMENTS`, updated `AchievementType` union
 
@@ -391,9 +395,11 @@ git commit -m "feat: add session achievement definitions"
 ## Task 3: Centralized appearance settings
 
 **Files:**
+
 - Modify: `src/components/tethyr/settings-page.tsx`
 
 **Interfaces:**
+
 - Consumes: existing `background-themes.ts` utilities, `ThemeProvider`
 - Produces: Appearance section in settings page with theme, background, accent, density controls
 
@@ -430,9 +436,7 @@ const [density, setDensity] = useState<"comfortable" | "compact">("comfortable")
 // In the JSX, add after the Account section:
 <div className="space-y-4">
   <h2 className="text-lg font-semibold">Appearance</h2>
-  <p className="text-sm text-muted-foreground">
-    Customize how Tethyr looks and feels.
-  </p>
+  <p className="text-sm text-muted-foreground">Customize how Tethyr looks and feels.</p>
 
   {/* Theme */}
   <div className="flex items-center justify-between">
@@ -488,7 +492,7 @@ const [density, setDensity] = useState<"comfortable" | "compact">("comfortable")
       ))}
     </div>
   </div>
-</div>
+</div>;
 ```
 
 - [ ] **Step 4: Typecheck and commit**

@@ -4,9 +4,7 @@
 // order. Theme tab edits colors, radius, typography.
 
 import { useState, useCallback } from "react";
-import {
-  Eye, EyeOff, ArrowUp, ArrowDown, Trash2, Send, Globe,
-} from "lucide-react";
+import { Eye, EyeOff, ArrowUp, ArrowDown, Trash2, Send, Globe } from "lucide-react";
 import type { LayoutBlockInstance, PageData, ThemeTokens } from "@/lib/page-blocks";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
@@ -32,11 +30,20 @@ interface StudioInspectorProps {
 }
 
 export function StudioInspector({
-  selectedBlock, selectedBlockDef, pageData, isPublished,
-  onPublish, onUnpublish,
-  onSelectBlock, onMoveBlock, onRemoveBlock,
-  onUpdateBlockConfig, onUpdateThemeOverrides, currentOverrides,
-  themes = [], currentThemeId,
+  selectedBlock,
+  selectedBlockDef,
+  pageData,
+  isPublished,
+  onPublish,
+  onUnpublish,
+  onSelectBlock,
+  onMoveBlock,
+  onRemoveBlock,
+  onUpdateBlockConfig,
+  onUpdateThemeOverrides,
+  currentOverrides,
+  themes = [],
+  currentThemeId,
 }: StudioInspectorProps) {
   const [activeTab, setActiveTab] = useState<InspectorTab>("content");
 
@@ -75,7 +82,7 @@ export function StudioInspector({
             onUpdateConfig={onUpdateBlockConfig}
           />
         ) : activeTab === "design" ? (
-          <DesignTab block={selectedBlock!} def={selectedBlockDef} />
+          <DesignTab />
         ) : activeTab === "layout" ? (
           <LayoutTab
             blocks={blocks}
@@ -136,7 +143,8 @@ export function StudioInspector({
 // ── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState({
-  blocks, onSelectBlock,
+  blocks,
+  onSelectBlock,
 }: {
   blocks: LayoutBlockInstance[];
   onSelectBlock: (id: string | null) => void;
@@ -145,7 +153,9 @@ function EmptyState({
     return (
       <div className="py-8 text-center">
         <p className="text-xs text-muted-foreground">No blocks on this page yet.</p>
-        <p className="mt-1 text-[10px] text-muted-foreground/60">Add blocks from the left sidebar.</p>
+        <p className="mt-1 text-[10px] text-muted-foreground/60">
+          Add blocks from the left sidebar.
+        </p>
       </div>
     );
   }
@@ -163,7 +173,9 @@ function EmptyState({
             b.visible === false ? "opacity-50 line-through" : ""
           } text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground`}
         >
-          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${b.visible === false ? "bg-muted-foreground/40" : "bg-primary/60"}`} />
+          <span
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${b.visible === false ? "bg-muted-foreground/40" : "bg-primary/60"}`}
+          />
           <span className="truncate">{b.type}</span>
         </button>
       ))}
@@ -182,7 +194,9 @@ const WIDTH_PRESETS = [
 ];
 
 function ContentTab({
-  block, def, onUpdateConfig,
+  block,
+  def,
+  onUpdateConfig,
 }: {
   block: LayoutBlockInstance;
   def: BlockDefinition | undefined;
@@ -190,20 +204,28 @@ function ContentTab({
 }) {
   const currentWidth = (block.config?.width as string) ?? "full";
 
-  const setWidth = useCallback((w: string) => {
-    if (!onUpdateConfig) return;
-    onUpdateConfig(block.id, { ...block.config, width: w });
-  }, [block.id, block.config, onUpdateConfig]);
+  const setWidth = useCallback(
+    (w: string) => {
+      if (!onUpdateConfig) return;
+      onUpdateConfig(block.id, { ...block.config, width: w });
+    },
+    [block.id, block.config, onUpdateConfig],
+  );
 
-  const setConfigValue = useCallback((key: string, value: unknown) => {
-    if (!onUpdateConfig) return;
-    onUpdateConfig(block.id, { ...block.config, [key]: value });
-  }, [block.id, block.config, onUpdateConfig]);
+  const setConfigValue = useCallback(
+    (key: string, value: unknown) => {
+      if (!onUpdateConfig) return;
+      onUpdateConfig(block.id, { ...block.config, [key]: value });
+    },
+    [block.id, block.config, onUpdateConfig],
+  );
 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Block</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Block
+        </p>
         <p className="mt-1 text-xs font-medium text-foreground">{def?.label ?? block.type}</p>
         <p className="mt-0.5 text-[10px] text-muted-foreground font-mono">{block.type}</p>
       </div>
@@ -211,7 +233,9 @@ function ContentTab({
       {/* Width control */}
       {onUpdateConfig && (
         <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Width</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            Width
+          </p>
           <div className="flex flex-wrap gap-1">
             {WIDTH_PRESETS.map((preset) => (
               <button
@@ -234,48 +258,58 @@ function ContentTab({
       {/* Editable config */}
       {block.config && Object.keys(block.config).length > 0 && (
         <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Config</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            Config
+          </p>
           <div className="space-y-2">
             {Object.entries(block.config)
               .filter(([k]) => k !== "width") // width is handled above
               .map(([key, value]) => (
-              <div key={key}>
-                <p className="text-[9px] text-muted-foreground/60 mb-0.5">{key}</p>
-                {onUpdateConfig && typeof value === "string" ? (
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => setConfigValue(key, e.target.value)}
-                    className="w-full rounded border border-border/30 bg-surface/40 px-2 py-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                ) : typeof value === "boolean" ? (
-                  <button
-                    type="button"
-                    onClick={() => setConfigValue(key, !value)}
-                    className={`rounded px-2 py-0.5 text-[10px] ${
-                      value ? "bg-primary/15 text-primary" : "bg-surface/40 text-muted-foreground"
-                    }`}
-                  >
-                    {value ? "Yes" : "No"}
-                  </button>
-                ) : (
-                  <span className="text-[10px] text-foreground font-mono break-words">{
-                    typeof value === "string" ? value : JSON.stringify(value)
-                  }</span>
-                )}
-              </div>
-            ))}
+                <div key={key}>
+                  <p className="text-[9px] text-muted-foreground/60 mb-0.5">{key}</p>
+                  {onUpdateConfig && typeof value === "string" ? (
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => setConfigValue(key, e.target.value)}
+                      className="w-full rounded border border-border/30 bg-surface/40 px-2 py-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  ) : typeof value === "boolean" ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfigValue(key, !value)}
+                      className={`rounded px-2 py-0.5 text-[10px] ${
+                        value ? "bg-primary/15 text-primary" : "bg-surface/40 text-muted-foreground"
+                      }`}
+                    >
+                      {value ? "Yes" : "No"}
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-foreground font-mono break-words">
+                      {typeof value === "string" ? value : JSON.stringify(value)}
+                    </span>
+                  )}
+                </div>
+              ))}
           </div>
         </div>
       )}
 
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Visibility</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Visibility
+        </p>
         <span className="inline-flex items-center gap-1 text-[11px]">
           {block.visible === false ? (
-            <><EyeOff className="h-3 w-3 text-amber-500" /><span className="text-muted-foreground">Hidden</span></>
+            <>
+              <EyeOff className="h-3 w-3 text-amber-500" />
+              <span className="text-muted-foreground">Hidden</span>
+            </>
           ) : (
-            <><Eye className="h-3 w-3 text-green-500" /><span className="text-muted-foreground">Visible</span></>
+            <>
+              <Eye className="h-3 w-3 text-green-500" />
+              <span className="text-muted-foreground">Visible</span>
+            </>
           )}
         </span>
       </div>
@@ -285,16 +319,20 @@ function ContentTab({
 
 // ── Design tab ──────────────────────────────────────────────────────────────
 
-function DesignTab({ block, def }: { block: LayoutBlockInstance; def: BlockDefinition | undefined }) {
+function DesignTab() {
   return (
     <div className="space-y-4">
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Typography</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Typography
+        </p>
         <TokenDisplay label="Font family" value="var(--font-sans)" />
         <TokenDisplay label="Heading" value="var(--font-display)" />
       </div>
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Colors</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Colors
+        </p>
         <ColorSwatch label="Background" cssVar="--background" />
         <ColorSwatch label="Foreground" cssVar="--foreground" />
         <ColorSwatch label="Surface" cssVar="--surface" />
@@ -302,7 +340,9 @@ function DesignTab({ block, def }: { block: LayoutBlockInstance; def: BlockDefin
         <ColorSwatch label="Border" cssVar="--border" />
       </div>
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Borders</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Borders
+        </p>
         <RadiusDisplay label="lg" cssVar="--radius-lg" />
         <RadiusDisplay label="md" cssVar="--radius-md" />
         <RadiusDisplay label="sm" cssVar="--radius-sm" />
@@ -314,7 +354,11 @@ function DesignTab({ block, def }: { block: LayoutBlockInstance; def: BlockDefin
 // ── Layout tab ──────────────────────────────────────────────────────────────
 
 function LayoutTab({
-  blocks, selectedBlockId, onSelectBlock, onMoveBlock, onRemoveBlock,
+  blocks,
+  selectedBlockId,
+  onSelectBlock,
+  onMoveBlock,
+  onRemoveBlock,
 }: {
   blocks: LayoutBlockInstance[];
   selectedBlockId: string | null;
@@ -322,34 +366,72 @@ function LayoutTab({
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onRemoveBlock: (blockId: string) => void;
 }) {
-  if (blocks.length === 0) return <div className="py-4 text-center"><p className="text-xs text-muted-foreground">No blocks to arrange.</p></div>;
+  if (blocks.length === 0)
+    return (
+      <div className="py-4 text-center">
+        <p className="text-xs text-muted-foreground">No blocks to arrange.</p>
+      </div>
+    );
   return (
     <div className="space-y-1">
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Block order</p>
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+        Block order
+      </p>
       {blocks.map((block, idx) => {
         const isSelected = selectedBlockId === block.id;
         const isFirst = idx === 0;
         const isLast = idx === blocks.length - 1;
-        const widthLabel = WIDTH_PRESETS.find((p) => p.value === (block.config?.width ?? "full"))?.label;
-        const shape = block.config?.shape as string | undefined;
+        const widthLabel = WIDTH_PRESETS.find(
+          (p) => p.value === (block.config?.width ?? "full"),
+        )?.label;
         return (
           <div
             key={block.id}
             className={`group flex items-center gap-1.5 rounded-md px-2 py-1.5 transition-colors ${
-              isSelected ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-surface-elevated/50"
+              isSelected
+                ? "bg-primary/10 text-foreground"
+                : "text-muted-foreground hover:bg-surface-elevated/50"
             }`}
           >
-            <span className="shrink-0 text-[10px] text-muted-foreground/40 w-4 text-center">{idx + 1}</span>
-            <button type="button" onClick={() => onSelectBlock(block.id)} className="flex-1 truncate text-left text-[11px]">
+            <span className="shrink-0 text-[10px] text-muted-foreground/40 w-4 text-center">
+              {idx + 1}
+            </span>
+            <button
+              type="button"
+              onClick={() => onSelectBlock(block.id)}
+              className="flex-1 truncate text-left text-[11px]"
+            >
               {block.type}
               {widthLabel && widthLabel !== "Full" && (
                 <span className="ml-1 text-[9px] text-muted-foreground/50">({widthLabel})</span>
               )}
             </button>
             <div className="hidden gap-0.5 group-hover:flex">
-              {!isFirst && <button type="button" onClick={() => onMoveBlock(block.id, "up")} className="rounded p-0.5 hover:text-foreground"><ArrowUp className="h-3 w-3" /></button>}
-              {!isLast && <button type="button" onClick={() => onMoveBlock(block.id, "down")} className="rounded p-0.5 hover:text-foreground"><ArrowDown className="h-3 w-3" /></button>}
-              <button type="button" onClick={() => onRemoveBlock(block.id)} className="rounded p-0.5 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+              {!isFirst && (
+                <button
+                  type="button"
+                  onClick={() => onMoveBlock(block.id, "up")}
+                  className="rounded p-0.5 hover:text-foreground"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+              )}
+              {!isLast && (
+                <button
+                  type="button"
+                  onClick={() => onMoveBlock(block.id, "down")}
+                  className="rounded p-0.5 hover:text-foreground"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onRemoveBlock(block.id)}
+                className="rounded p-0.5 hover:text-red-400"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
             </div>
           </div>
         );
@@ -361,7 +443,11 @@ function LayoutTab({
 // ── Theme Editor Tab ────────────────────────────────────────────────────────
 
 function ThemeEditorTab({
-  pageData, themes, currentThemeId, currentOverrides, onUpdateThemeOverrides,
+  pageData,
+  themes,
+  currentThemeId,
+  currentOverrides,
+  onUpdateThemeOverrides,
 }: {
   pageData: PageData | undefined | null;
   themes: ThemeCatalogEntry[];
@@ -371,7 +457,9 @@ function ThemeEditorTab({
 }) {
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
   const baseTokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
-  const tokens = currentOverrides ? { ...baseTokens, ...currentOverrides } as Record<string, string> : baseTokens;
+  const tokens = currentOverrides
+    ? ({ ...baseTokens, ...currentOverrides } as Record<string, string>)
+    : baseTokens;
 
   // Extract current radius from tokens or use defaults
   const getRadiusValue = (cssVar: string, fallback: string) => {
@@ -381,41 +469,51 @@ function ThemeEditorTab({
 
   const currentRadiusLg = parseInt(getRadiusValue("--radius-lg", "12px")) || 12;
 
-  const setRadius = useCallback((size: number) => {
-    if (!onUpdateThemeOverrides) return;
-    // Build override that merges radius changes on top of existing overrides.
-    const existing = currentOverrides ?? {} as any;
-    const newOverrides: ThemeTokens = {
-      ...existing,
-      borders: {
-        ...(existing as any).borders ?? {},
-        radius: {
-          ...((existing as any).borders?.radius ?? {}),
-          lg: `${size}px`,
-          xl: `${Math.round(size * 1.33)}px`,
-          "2xl": `${Math.round(size * 1.67)}px`,
+  const setRadius = useCallback(
+    (size: number) => {
+      if (!onUpdateThemeOverrides) return;
+      // Build override that merges radius changes on top of existing overrides.
+      const existing = currentOverrides ?? {};
+      const newOverrides: ThemeTokens = {
+        ...existing,
+        borders: {
+          ...(existing.borders ?? {}),
+          radius: {
+            ...(existing.borders?.radius ?? {}),
+            lg: `${size}px`,
+            xl: `${Math.round(size * 1.33)}px`,
+            "2xl": `${Math.round(size * 1.67)}px`,
+          },
         },
-      },
-    } as ThemeTokens;
-    onUpdateThemeOverrides(newOverrides);
-  }, [currentOverrides, onUpdateThemeOverrides]);
+      };
+      onUpdateThemeOverrides(newOverrides);
+    },
+    [currentOverrides, onUpdateThemeOverrides],
+  );
 
-  const setShapePreset = useCallback((preset: "rounded" | "angular" | "sharp") => {
-    const sizes = { rounded: 12, angular: 4, sharp: 0 };
-    setRadius(sizes[preset]);
-  }, [setRadius]);
+  const setShapePreset = useCallback(
+    (preset: "rounded" | "angular" | "sharp") => {
+      const sizes = { rounded: 12, angular: 4, sharp: 0 };
+      setRadius(sizes[preset]);
+    },
+    [setRadius],
+  );
 
   return (
     <div className="space-y-4">
       {/* Active theme name */}
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Active theme</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Active theme
+        </p>
         <p className="mt-1 text-xs font-medium text-foreground">{activeTheme?.name ?? "Default"}</p>
       </div>
 
       {/* Shape presets */}
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Shape</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Shape
+        </p>
         <div className="flex gap-1">
           {[
             { label: "Rounded", value: "rounded" as const },
@@ -436,7 +534,11 @@ function ThemeEditorTab({
             >
               <div
                 className={`mx-auto mb-1 h-4 w-6 border border-current ${
-                  preset.value === "rounded" ? "rounded-md" : preset.value === "angular" ? "rounded-sm" : ""
+                  preset.value === "rounded"
+                    ? "rounded-md"
+                    : preset.value === "angular"
+                      ? "rounded-sm"
+                      : ""
                 }`}
               />
               {preset.label}
@@ -502,12 +604,17 @@ function ThemeEditorTab({
       >
         <div className="text-[10px] text-muted-foreground mb-1">Preview</div>
         <div className="h-1.5 w-12 rounded-full mb-2" style={{ background: "var(--primary)" }} />
-        <div className="h-1.5 w-8 rounded-full" style={{ background: "var(--muted-foreground)", opacity: 0.3 }} />
+        <div
+          className="h-1.5 w-8 rounded-full"
+          style={{ background: "var(--muted-foreground)", opacity: 0.3 }}
+        />
       </div>
 
       {/* Color tokens */}
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Colors</p>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Colors
+        </p>
         <div className="space-y-1.5">
           {[
             ["Background", "--background"],
@@ -518,7 +625,10 @@ function ThemeEditorTab({
             ["Muted", "--muted-foreground"],
           ].map(([label, cssVar]) => (
             <div key={cssVar} className="flex items-center gap-2">
-              <div className="h-3.5 w-3.5 shrink-0 rounded border border-border/40" style={{ backgroundColor: `var(${cssVar})` }} />
+              <div
+                className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
+                style={{ backgroundColor: `var(${cssVar})` }}
+              />
               <span className="text-[10px] text-muted-foreground">{label}</span>
               <span className="ml-auto text-[9px] text-muted-foreground/40 font-mono truncate max-w-[80px]">
                 {(() => {
@@ -533,10 +643,21 @@ function ThemeEditorTab({
 
       {/* Typography */}
       <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Typography</p>
-        <TokenDisplay label="Body" value={((tokens as Record<string, string>)?.["font-sans"]) ?? "var(--font-sans)"} />
-        <TokenDisplay label="Display" value={((tokens as Record<string, string>)?.["font-display"]) ?? "var(--font-display)"} />
-        <TokenDisplay label="Mono" value={((tokens as Record<string, string>)?.["font-mono"]) ?? "var(--font-mono)"} />
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          Typography
+        </p>
+        <TokenDisplay
+          label="Body"
+          value={(tokens as Record<string, string>)?.["font-sans"] ?? "var(--font-sans)"}
+        />
+        <TokenDisplay
+          label="Display"
+          value={(tokens as Record<string, string>)?.["font-display"] ?? "var(--font-display)"}
+        />
+        <TokenDisplay
+          label="Mono"
+          value={(tokens as Record<string, string>)?.["font-mono"] ?? "var(--font-mono)"}
+        />
       </div>
     </div>
   );
@@ -547,7 +668,10 @@ function ThemeEditorTab({
 function ColorSwatch({ label, cssVar }: { label: string; cssVar: string }) {
   return (
     <div className="flex items-center gap-2 py-0.5">
-      <div className="h-3.5 w-3.5 shrink-0 rounded border border-border/40" style={{ backgroundColor: `var(${cssVar})` }} />
+      <div
+        className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
+        style={{ backgroundColor: `var(${cssVar})` }}
+      />
       <span className="text-[11px] text-muted-foreground">{label}</span>
       <span className="ml-auto text-[10px] text-muted-foreground/40 font-mono">{cssVar}</span>
     </div>
@@ -557,7 +681,10 @@ function ColorSwatch({ label, cssVar }: { label: string; cssVar: string }) {
 function RadiusDisplay({ label, cssVar }: { label: string; cssVar: string }) {
   return (
     <div className="flex items-center gap-2 py-0.5">
-      <div className="h-3.5 w-5 shrink-0 border border-border/40" style={{ borderRadius: `var(${cssVar})` }} />
+      <div
+        className="h-3.5 w-5 shrink-0 border border-border/40"
+        style={{ borderRadius: `var(${cssVar})` }}
+      />
       <span className="text-[11px] text-muted-foreground">{label}</span>
       <span className="ml-auto text-[10px] text-muted-foreground/40 font-mono">{cssVar}</span>
     </div>
@@ -568,7 +695,9 @@ function TokenDisplay({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-0.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="text-[10px] text-muted-foreground/40 font-mono max-w-[120px] truncate">{value}</span>
+      <span className="text-[10px] text-muted-foreground/40 font-mono max-w-[120px] truncate">
+        {value}
+      </span>
     </div>
   );
 }

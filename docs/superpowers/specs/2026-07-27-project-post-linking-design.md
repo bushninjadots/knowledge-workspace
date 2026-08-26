@@ -68,7 +68,17 @@ interface PostRow {
 interface ProjectSnapshot {
   name: string;
   description: string | null;
-  platform: "tethyr" | "github" | "gitlab" | "codeberg" | "figma" | "behance" | "dribbble" | "notion" | "website" | "other";
+  platform:
+    | "tethyr"
+    | "github"
+    | "gitlab"
+    | "codeberg"
+    | "figma"
+    | "behance"
+    | "dribbble"
+    | "notion"
+    | "website"
+    | "other";
   url: string;
   logo: string | null;
   // Platform-specific optional fields
@@ -87,6 +97,7 @@ interface ProjectSnapshot {
 **Input:** `{ url: string }`
 
 **Platform detection:**
+
 - `github.com` → GitHub API (`https://api.github.com/repos/{owner}/{repo}`)
 - `gitlab.com` → GitLab API v4 (`https://gitlab.com/api/v4/projects/{encoded_path}`)
 - `codeberg.org` → Gitea API (`https://codeberg.org/api/v1/repos/{owner}/{repo}`)
@@ -120,6 +131,7 @@ Renders inside ComposerBar when "Attach Project" is clicked. Three tabs:
 3. **Create New** — inline form (name, description, visibility), creates project + attaches
 
 **ComposerBar modifications:**
+
 - Add "Attach Project" button (Paperclip icon) in the toolbar
 - Add `attachedProject` state: `{ projectId?: string; snapshot: ProjectSnapshot } | null`
 - Pass `project_id` and `project_snapshot` to `createPost.mutateAsync()`
@@ -144,6 +156,7 @@ Renders above the post body when `project_id` or `project_snapshot` is set.
 ```
 
 **Data resolution:**
+
 - If `project_id` is set: fetch live from `projects` table (always current)
 - If only `project_snapshot`: render from snapshot (external projects)
 
@@ -171,27 +184,28 @@ Stored in `posts.feedback_tags`. Optional, not shown if no project attached.
 
 ## Files to Create
 
-| File | Responsibility |
-|------|---------------|
-| `supabase/migrations/20260727110000_project_post_linking.sql` | Add columns + indexes to posts |
-| `supabase/functions/fetch-project-preview/index.ts` | Edge Function for external URL metadata |
-| `src/components/tethyr/community/attach-project-panel.tsx` | 3-tab project attachment panel |
-| `src/components/tethyr/community/project-card-inline.tsx` | Inline project card for PostCard |
-| `src/components/tethyr/project/project-community-posts.tsx` | Community posts list on project page |
+| File                                                          | Responsibility                          |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `supabase/migrations/20260727110000_project_post_linking.sql` | Add columns + indexes to posts          |
+| `supabase/functions/fetch-project-preview/index.ts`           | Edge Function for external URL metadata |
+| `src/components/tethyr/community/attach-project-panel.tsx`    | 3-tab project attachment panel          |
+| `src/components/tethyr/community/project-card-inline.tsx`     | Inline project card for PostCard        |
+| `src/components/tethyr/project/project-community-posts.tsx`   | Community posts list on project page    |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/hooks/use-community.ts` | Add `project_id`, `project_snapshot`, `feedback_tags` to PostRow + CreatePostInput |
-| `src/components/tethyr/community/composer-bar.tsx` | Add attach project button, state, chip, URL param reading |
-| `src/components/tethyr/community/post-card.tsx` | Import + render ProjectCardInline above post body |
-| `src/routes/projects.$id.tsx` | Add ProjectCommunityPosts section + Post to Community button |
-| `src/hooks/use-projects.ts` | Add `useMyProjects()` hook |
+| File                                               | Change                                                                             |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/hooks/use-community.ts`                       | Add `project_id`, `project_snapshot`, `feedback_tags` to PostRow + CreatePostInput |
+| `src/components/tethyr/community/composer-bar.tsx` | Add attach project button, state, chip, URL param reading                          |
+| `src/components/tethyr/community/post-card.tsx`    | Import + render ProjectCardInline above post body                                  |
+| `src/routes/projects.$id.tsx`                      | Add ProjectCommunityPosts section + Post to Community button                       |
+| `src/hooks/use-projects.ts`                        | Add `useMyProjects()` hook                                                         |
 
 ## Future Architecture
 
 Designed to support without rewriting:
+
 - Version update posts (new `project_snapshot.version` field)
 - Development logs (new post type)
 - Changelogs (aggregated from posts + milestones)

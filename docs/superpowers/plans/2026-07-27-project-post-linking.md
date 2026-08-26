@@ -33,6 +33,7 @@ Create `supabase/functions/fetch-project-preview/index.ts`
 **Input:** `{ url: string }`
 
 **Platform detection:**
+
 - `github.com` → GitHub API `https://api.github.com/repos/{owner}/{repo}`
 - `gitlab.com` → GitLab API v4 `https://gitlab.com/api/v4/projects/{encoded_path}`
 - `codeberg.org` → Gitea API `https://codeberg.org/api/v1/repos/{owner}/{repo}`
@@ -51,6 +52,7 @@ RLS: Authenticated only. Use Deno.serve pattern (check existing Edge Functions f
 **File: `src/hooks/use-community.ts`**
 
 Add to `PostRow` type:
+
 ```typescript
 project_id: string | null;
 project_snapshot: ProjectSnapshot | null;
@@ -58,11 +60,22 @@ feedback_tags: string[];
 ```
 
 Add new type:
+
 ```typescript
 export type ProjectSnapshot = {
   name: string;
   description: string | null;
-  platform: "tethyr" | "github" | "gitlab" | "codeberg" | "figma" | "behance" | "dribbble" | "notion" | "website" | "other";
+  platform:
+    | "tethyr"
+    | "github"
+    | "gitlab"
+    | "codeberg"
+    | "figma"
+    | "behance"
+    | "dribbble"
+    | "notion"
+    | "website"
+    | "other";
   url: string;
   logo: string | null;
   status?: string;
@@ -74,6 +87,7 @@ export type ProjectSnapshot = {
 ```
 
 Add to `CreatePostInput`:
+
 ```typescript
 project_id?: string | null;
 project_snapshot?: ProjectSnapshot | null;
@@ -85,12 +99,15 @@ Update `useCreatePost` mutation to include `project_id`, `project_snapshot`, `fe
 **File: `src/hooks/use-projects.ts`**
 
 Add new hook:
+
 ```typescript
 export function useMyProjects() {
   return useQuery({
     queryKey: ["my-projects"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await sb
         .from("projects")
@@ -101,7 +118,14 @@ export function useMyProjects() {
         if (error.code === "42P01") return [];
         throw error;
       }
-      return (data ?? []) as { id: string; title: string; description: string | null; status: string; stage: string; cover_url: string | null }[];
+      return (data ?? []) as {
+        id: string;
+        title: string;
+        description: string | null;
+        status: string;
+        stage: string;
+        cover_url: string | null;
+      }[];
     },
     staleTime: 30_000,
   });
@@ -117,11 +141,13 @@ export function useMyProjects() {
 Create `src/components/tethyr/community/attach-project-panel.tsx`
 
 Three tabs:
+
 1. **My Projects** — calls `useMyProjects()`, scrollable list, click to attach
 2. **External URL** — URL input, calls Edge Function via `supabase.functions.invoke("fetch-project-preview", ...)`, shows preview card, confirm
 3. **Create New** — inline form (name, description), creates project + attaches
 
 Props:
+
 ```typescript
 type Props = {
   onAttach: (project_id: string | null, snapshot: ProjectSnapshot) => void;
@@ -141,6 +167,7 @@ Style: `rounded-2xl border border-border/60 bg-background/40 p-3`, compact.
 **File: `src/components/tethyr/community/composer-bar.tsx`**
 
 Changes:
+
 - Import `Paperclip` icon + `AttachProjectPanel` + `ProjectSnapshot` type
 - Add state: `attachedProject: { projectId?: string; snapshot: ProjectSnapshot } | null`
 - Read `?attach_project=$id` URL param on mount → fetch project from `projects` table → set as attachment with snapshot
@@ -160,6 +187,7 @@ Changes:
 Create `src/components/tethyr/community/project-card-inline.tsx`
 
 Props:
+
 ```typescript
 type Props = {
   project_id?: string | null;
@@ -168,6 +196,7 @@ type Props = {
 ```
 
 Behavior:
+
 - If `project_id` is set: fetch live from `projects` table via `useQuery`
 - If only `snapshot`: render from snapshot data
 - Layout: logo (32px rounded-xl) | name + description (2 lines max) | stage badge | "Open Project →" link
@@ -183,6 +212,7 @@ Behavior:
 **File: `src/components/tethyr/community/post-card.tsx`**
 
 Changes:
+
 - Import `ProjectCardInline`
 - Render `<ProjectCardInline project_id={post.project_id} project_snapshot={post.project_snapshot} />` between the header and the body (before `<h3>` title)
 - Only render when `post.project_id || post.project_snapshot`
@@ -198,6 +228,7 @@ Create `src/components/tethyr/project/project-community-posts.tsx`
 Props: `{ projectId: string }`
 
 Behavior:
+
 - Query `posts` where `project_id = projectId`, ordered by `created_at DESC`, limit 10
 - Render as a list of linked community posts (title, author, time, type badge)
 - Each item links to `/community` (with anchor or scroll-into-view if possible)
@@ -214,6 +245,7 @@ Style: `card-border rounded-3xl border bg-surface p-6`
 **File: `src/routes/projects.$id.tsx`**
 
 Changes:
+
 - Import `ProjectCommunityPosts` + `useCreatePost` (or just `Link`)
 - Add `ProjectCommunityPosts` section below the tab content (always visible, not tab-gated)
 - Add "Post to Community" button in the header area (next to status badge), visible to owner/contributors

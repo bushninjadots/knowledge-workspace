@@ -4,13 +4,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import type { ThemeTokens } from "@/lib/page-blocks";
 import { themeTokensToVars } from "@/lib/theme-tokens";
 
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
 interface ThemeRecord {
-  tokens: ThemeTokens;
+  tokens: Json;
 }
 
 /**
@@ -23,7 +24,7 @@ export function useTheme(themeId: string | null | undefined) {
   return useQuery({
     queryKey: ["theme", resolvedId],
     queryFn: async (): Promise<Record<string, string>> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("themes")
         .select("tokens")
         .eq("id", resolvedId)
@@ -36,7 +37,7 @@ export function useTheme(themeId: string | null | undefined) {
       }
 
       const theme = data as unknown as ThemeRecord;
-      return themeTokensToVars(theme.tokens ?? {});
+      return themeTokensToVars((theme.tokens ?? {}) as ThemeTokens);
     },
     staleTime: 30 * 1000, // 30s — theme queries should refetch promptly after mutations.
   });

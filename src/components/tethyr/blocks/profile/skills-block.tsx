@@ -3,7 +3,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -16,10 +15,15 @@ type SkillRow = {
 };
 
 const EXP_LABEL: Record<string, string> = {
-  beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced", expert: "Expert",
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  expert: "Expert",
 };
 const VERIF_LABEL: Record<string, string> = {
-  self_declared: "Self-declared", proof_certified: "Certified", community_recognized: "Recognized",
+  self_declared: "Self-declared",
+  proof_certified: "Certified",
+  community_recognized: "Recognized",
 };
 
 function ProfileSkillsBlock({ context }: BlockProps) {
@@ -30,8 +34,16 @@ function ProfileSkillsBlock({ context }: BlockProps) {
     queryFn: async () => {
       if (!profileId) return null;
       const [teachRes, learnRes] = await Promise.all([
-        supabase.from("profile_skills_teach").select("skill_id, verification_level, experience_level, skills(id, slug, name, category)").eq("profile_id", profileId),
-        supabase.from("profile_skills_learn").select("skill_id, skills(id, slug, name, category)").eq("profile_id", profileId),
+        supabase
+          .from("profile_skills_teach")
+          .select(
+            "skill_id, verification_level, experience_level, skills(id, slug, name, category)",
+          )
+          .eq("profile_id", profileId),
+        supabase
+          .from("profile_skills_learn")
+          .select("skill_id, skills(id, slug, name, category)")
+          .eq("profile_id", profileId),
       ]);
       return {
         teach: (teachRes.data ?? []) as unknown as SkillRow[],

@@ -10,10 +10,10 @@
 
 ## The Problem It Solves
 
-Tethyr's loop is strong at *discover work* and *build*, but **collaboration has
+Tethyr's loop is strong at _discover work_ and _build_, but **collaboration has
 no persistent identity**. A project re-declares its roster every time; there is
 no "crew that builds together across projects." When the same 4 people ship
-their third project together, Tethyr has no way to say "built by *that crew*".
+their third project together, Tethyr has no way to say "built by _that crew_".
 
 Teams fix that: a **roster + a shipped-work record** — never a chat or feed.
 
@@ -22,12 +22,14 @@ Teams fix that: a **roster + a shipped-work record** — never a chat or feed.
 ## What a Team Is / Is Not
 
 **Is:**
+
 - A named, slugged group of people who build together.
 - Anchored to projects via `team_projects` ("Built by **Crew Name**").
 - A home for a roster with per-project roles layered on top.
 - Discoverable through its **shipped work** (its projects are the flagship).
 
 **Is not:**
+
 - A chat room or feed (Community already owns conversation).
 - A company/organization page with vanity metrics.
 - A follower group or interest tag.
@@ -109,7 +111,7 @@ Identity (name, cover, accent)
 ### Studio — "Teams I build with"
 
 - A compact list of the teams a person belongs to, each linking to the team
-  page. Sits near "Credited on", reinforcing *who you build with*.
+  page. Sits near "Credited on", reinforcing _who you build with_.
 
 ### Create flow
 
@@ -163,9 +165,9 @@ Identity (name, cover, accent)
 
 ## Sequencing
 
-| Step | Precondition |
-|---|---|
-| Teams + members + projects tables | Stage 4 done |
-| Team page + "Built by Crew" anchor | Tables live |
-| Team invite notifications | Notification map extended |
-| Credits roll across teams | Evidence trail + Credits spec done |
+| Step                               | Precondition                       |
+| ---------------------------------- | ---------------------------------- |
+| Teams + members + projects tables  | Stage 4 done                       |
+| Team page + "Built by Crew" anchor | Tables live                        |
+| Team invite notifications          | Notification map extended          |
+| Credits roll across teams          | Evidence trail + Credits spec done |

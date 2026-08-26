@@ -7,13 +7,13 @@
 
 ## Summary
 
-| Severity | Count |
-|----------|-------|
-| P0 — Critical | 5 |
-| P1 — Serious | 5 |
-| P2 — Moderate | 6 |
-| P3 — Minor | 3 |
-| **Total** | **19** |
+| Severity      | Count  |
+| ------------- | ------ |
+| P0 — Critical | 5      |
+| P1 — Serious  | 5      |
+| P2 — Moderate | 6      |
+| P3 — Minor    | 3      |
+| **Total**     | **19** |
 
 ---
 

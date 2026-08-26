@@ -19,6 +19,7 @@ Enhance the existing `GlobalSearch` component to cover all major data sources, m
 ```
 
 `GlobalSearch` receives a `variant` prop:
+
 - **`inline`**: renders its own input + absolute-positioned dropdown (for sidebar)
 - **`dialog`**: renders inside a `Dialog` component (for mobile), controlled by `open`/`onOpenChange` props
 
@@ -26,14 +27,14 @@ Enhance the existing `GlobalSearch` component to cover all major data sources, m
 
 6 parallel `useQuery` calls debounced at 200ms. Each enabled only when `debounced.length >= 1`.
 
-| Source | Table | Searched Columns | Scope | Limit |
-|---|---|---|---|---|
-| People | `profiles` | `display_name`, `handle`, `category`, `creator_title` | All public | 4 |
-| Skills | `skills` | `name` | All public | 4 |
-| Projects | `projects` | `title`, `description`, `tags` | All public | 4 |
-| Library Items | `library_items` | `title`, `content` | Current user only | 4 |
-| Community Posts | `posts` | `title`, `body` | All public | 4 |
-| Sessions | `sessions` | `title`, `description` | User is organizer | 4 |
+| Source          | Table           | Searched Columns                                      | Scope             | Limit |
+| --------------- | --------------- | ----------------------------------------------------- | ----------------- | ----- |
+| People          | `profiles`      | `display_name`, `handle`, `category`, `creator_title` | All public        | 4     |
+| Skills          | `skills`        | `name`                                                | All public        | 4     |
+| Projects        | `projects`      | `title`, `description`, `tags`                        | All public        | 4     |
+| Library Items   | `library_items` | `title`, `content`                                    | Current user only | 4     |
+| Community Posts | `posts`         | `title`, `body`                                       | All public        | 4     |
+| Sessions        | `sessions`      | `title`, `description`                                | User is organizer | 4     |
 
 Each query uses `ilike` with PostgREST escape handling (existing `escapeForOr` utility).
 
@@ -48,13 +49,13 @@ Each query uses `ilike` with PostgREST escape handling (existing `escapeForOr` u
 
 ### Keyboard Navigation
 
-| Key | Action |
-|---|---|
-| `/` | Focus search input, open dropdown |
-| `Escape` | Close dropdown, blur input |
-| `ArrowDown` / `ArrowUp` | Navigate result items |
-| `Enter` | Open highlighted/selected result |
-| `Tab` | Move between input and results |
+| Key                     | Action                            |
+| ----------------------- | --------------------------------- |
+| `/`                     | Focus search input, open dropdown |
+| `Escape`                | Close dropdown, blur input        |
+| `ArrowDown` / `ArrowUp` | Navigate result items             |
+| `Enter`                 | Open highlighted/selected result  |
+| `Tab`                   | Move between input and results    |
 
 ## Component Changes
 

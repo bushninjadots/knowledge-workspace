@@ -26,15 +26,15 @@ export function useThemeCatalog() {
   return useQuery({
     queryKey: ["themes", "catalog"],
     queryFn: async (): Promise<ThemeCatalogEntry[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("themes")
         .select("id, name, description, tokens, created_by")
         .order("name");
 
       if (error) throw error;
 
-      return (data ?? []).map((row: any) => {
-        const tokens: ThemeTokens = row.tokens ?? {};
+      return (data ?? []).map((row) => {
+        const tokens = (row.tokens ?? {}) as ThemeTokens;
         const previewVars = themeTokensToVars(tokens);
         return {
           id: row.id,
@@ -57,7 +57,7 @@ export function useCurrentThemeInfo(themeId: string | null | undefined) {
   return useQuery({
     queryKey: ["themes", "info", resolvedId],
     queryFn: async (): Promise<{ name: string; tokenCount: number } | null> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("themes")
         .select("name, tokens")
         .eq("id", resolvedId)
@@ -65,7 +65,7 @@ export function useCurrentThemeInfo(themeId: string | null | undefined) {
 
       if (error || !data) return null;
 
-      const vars = themeTokensToVars(data.tokens ?? {});
+      const vars = themeTokensToVars((data.tokens ?? {}) as ThemeTokens);
       return { name: data.name, tokenCount: Object.keys(vars).length };
     },
     staleTime: 5 * 60 * 1000,

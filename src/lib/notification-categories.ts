@@ -6,13 +6,7 @@ import type { NotificationType } from "@/hooks/use-notifications";
  * category tabs never show the same item twice.
  */
 export type NotificationCategory =
-  | "message"
-  | "session"
-  | "community"
-  | "project"
-  | "reputation"
-  | "achievement"
-  | "moderation";
+  "message" | "session" | "community" | "project" | "reputation" | "achievement" | "moderation";
 
 export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   message: "Messages",
@@ -84,9 +78,7 @@ export const NOTIFICATION_CATEGORY_VIEWS = [
 
 export type NotificationCategoryViewKey = (typeof NOTIFICATION_CATEGORY_VIEWS)[number]["key"];
 
-export function isNotificationCategoryViewKey(
-  value: string,
-): value is NotificationCategoryViewKey {
+export function isNotificationCategoryViewKey(value: string): value is NotificationCategoryViewKey {
   return NOTIFICATION_CATEGORY_VIEWS.some((view) => view.key === value);
 }
 

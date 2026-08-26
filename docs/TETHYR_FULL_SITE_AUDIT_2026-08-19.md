@@ -28,14 +28,14 @@ No build, type, or test regressions from the shipped batch.
 
 Verified in current source; these are closed.
 
-| 8-16 finding | Severity | Status |
-| ------------ | -------- | ------ |
-| G1 — Canonical links silently dropped without `VITE_PUBLIC_SITE_URL` | Medium | **Resolved** — `seo.ts` now falls back to `window.location.origin` and logs a dev-only warning. |
-| G2 — Raw `error.message` in route `errorComponent`s | Medium | **Resolved** — route error components now render friendly fallbacks ("This project couldn't be loaded", "Skill not found", etc.). |
-| #1 — Unlabelled icon-only controls (library editor, mobile skill tabs) | High | **Resolved** — library editor back/favorite/pin/delete/title all have `aria-label`; skill tabs are a proper `role="tablist"`/`role="tab"` with `aria-label`, `aria-selected`, `aria-controls`. |
-| #3 — Public profile terminology drift ("Studios" / "Currently learning") | Medium | **Resolved** — `/u/:handle` now uses "Skills they share" / "Skills they're growing". |
-| #6 — `/library/:id` missing page `head` | Medium | **Resolved** — has a `head` ("Library item — Tethyr") and syncs `document.title` to the item title. |
-| #9 — Bare-text loading states on `/projects/:id`, `/u/:handle` | Low | **Resolved** — both now render skeletons. |
+| 8-16 finding                                                             | Severity | Status                                                                                                                                                                                         |
+| ------------------------------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1 — Canonical links silently dropped without `VITE_PUBLIC_SITE_URL`     | Medium   | **Resolved** — `seo.ts` now falls back to `window.location.origin` and logs a dev-only warning.                                                                                                |
+| G2 — Raw `error.message` in route `errorComponent`s                      | Medium   | **Resolved** — route error components now render friendly fallbacks ("This project couldn't be loaded", "Skill not found", etc.).                                                              |
+| #1 — Unlabelled icon-only controls (library editor, mobile skill tabs)   | High     | **Resolved** — library editor back/favorite/pin/delete/title all have `aria-label`; skill tabs are a proper `role="tablist"`/`role="tab"` with `aria-label`, `aria-selected`, `aria-controls`. |
+| #3 — Public profile terminology drift ("Studios" / "Currently learning") | Medium   | **Resolved** — `/u/:handle` now uses "Skills they share" / "Skills they're growing".                                                                                                           |
+| #6 — `/library/:id` missing page `head`                                  | Medium   | **Resolved** — has a `head` ("Library item — Tethyr") and syncs `document.title` to the item title.                                                                                            |
+| #9 — Bare-text loading states on `/projects/:id`, `/u/:handle`           | Low      | **Resolved** — both now render skeletons.                                                                                                                                                      |
 
 ---
 
@@ -69,12 +69,12 @@ G2 (route-level) is closed, but ~30 component call-sites still pass raw `error.m
 
 ## 4. Carried forward (still open from 2026-08-16)
 
-| # | Finding | Severity | Notes |
-| -- | ------- | -------- | ----- |
-| 5 | Project page `head` title is generic ("Project — Tethyr"); the real title is only set client-side via `document.title` | Medium | Same on `/challenges/:id` and `/sessions/:id` (Low) — entity name isn't in SSR/meta. |
-| 7 | Landing Total Blocking Time ~940 ms | Medium | Unchanged; performance-only, needs a Lighthouse pass + main-thread investigation. |
-| — | Skills page "workshop"/"hub"/"Sharing"/"Growing" terminology drift | Low | `/skills/:slug` still uses "Skill workshop sections", a "Hub" crumb, and "Sharing"/"Growing" stat labels instead of canonical "Skills I share"/"Skills I'm growing" language. |
-| 10 | Minor radius/gradient deviations (`u.$handle` banner `rounded-t-3xl`, avatar `bg-gradient-brand`) | Low | Cosmetic. |
+| #   | Finding                                                                                                                | Severity | Notes                                                                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5   | Project page `head` title is generic ("Project — Tethyr"); the real title is only set client-side via `document.title` | Medium   | Same on `/challenges/:id` and `/sessions/:id` (Low) — entity name isn't in SSR/meta.                                                                                          |
+| 7   | Landing Total Blocking Time ~940 ms                                                                                    | Medium   | Unchanged; performance-only, needs a Lighthouse pass + main-thread investigation.                                                                                             |
+| —   | Skills page "workshop"/"hub"/"Sharing"/"Growing" terminology drift                                                     | Low      | `/skills/:slug` still uses "Skill workshop sections", a "Hub" crumb, and "Sharing"/"Growing" stat labels instead of canonical "Skills I share"/"Skills I'm growing" language. |
+| 10  | Minor radius/gradient deviations (`u.$handle` banner `rounded-t-3xl`, avatar `bg-gradient-brand`)                      | Low      | Cosmetic.                                                                                                                                                                     |
 
 ---
 
@@ -89,13 +89,13 @@ G2 (route-level) is closed, but ~30 component call-sites still pass raw `error.m
 
 ## 6. Priority order
 
-| # | Finding | Severity | Where |
-| -- | ------- | -------- | ----- |
-| 1 | Confetti ignores `prefers-reduced-motion` | Medium | `src/lib/confetti.ts` |
-| 2 | Project/challenge/session `head` titles are generic | Medium | `projects.$id.tsx`, `challenges.$id.tsx`, `sessions.$id.tsx` |
-| 3 | Raw error strings in toasts (G2 residual) | Low–Medium | ~30 component call-sites |
-| 4 | Icon-only withdraw button has no accessible name | Low | `connections.tsx` |
-| 5 | `FavoriteBadge` icon-only with hover-title | Low | `achievements.tsx` |
-| 6 | Skills page "workshop"/"hub" terminology | Low | `skills.$slug.tsx` |
-| 7 | Landing TBT (unchanged) | Medium | `/` (performance) |
-| 8 | Minor radius/gradient deviations (unchanged) | Low | `u.$handle.tsx`, `profile` |
+| #   | Finding                                             | Severity   | Where                                                        |
+| --- | --------------------------------------------------- | ---------- | ------------------------------------------------------------ |
+| 1   | Confetti ignores `prefers-reduced-motion`           | Medium     | `src/lib/confetti.ts`                                        |
+| 2   | Project/challenge/session `head` titles are generic | Medium     | `projects.$id.tsx`, `challenges.$id.tsx`, `sessions.$id.tsx` |
+| 3   | Raw error strings in toasts (G2 residual)           | Low–Medium | ~30 component call-sites                                     |
+| 4   | Icon-only withdraw button has no accessible name    | Low        | `connections.tsx`                                            |
+| 5   | `FavoriteBadge` icon-only with hover-title          | Low        | `achievements.tsx`                                           |
+| 6   | Skills page "workshop"/"hub" terminology            | Low        | `skills.$slug.tsx`                                           |
+| 7   | Landing TBT (unchanged)                             | Medium     | `/` (performance)                                            |
+| 8   | Minor radius/gradient deviations (unchanged)        | Low        | `u.$handle.tsx`, `profile`                                   |

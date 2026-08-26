@@ -50,15 +50,19 @@ Tethyr asks: **"What is this person building right now?"**
 ## The Four Pillars
 
 ### Build
+
 Everything starts with making something. Projects are the center of the ecosystem.
 
 ### Connect
+
 People discover one another naturally through work, skills, communities, and shared interests.
 
 ### Grow
+
 Learning happens through collaboration, mentoring, challenges, and contributing to real projects.
 
 ### Earn Reputation
+
 Recognition comes from visible contributions, consistency, completed work, and helping others — not self-promotion. **Evidence over score.**
 
 ---
@@ -120,6 +124,7 @@ Instead of: "I claim to be a React developer."
 Show: "Here are the 11 projects I've actually contributed to."
 
 Tethyr should show:
+
 - **Built with** — tools and skills used across projects
 - **Contributed to** — projects someone has helped build
 - **Currently building** — active projects
@@ -141,6 +146,7 @@ Structure: **README → identity → work → people → conversation → eviden
 - Tools, contributors, milestones, and community posts orbit the project
 
 This differentiates Tethyr from GitHub:
+
 - GitHub: code repository first
 - Tethyr: **the human project first**
 
@@ -175,6 +181,7 @@ The project is the **gravity well** that pulls everything together.
 Reputation should be based on contribution, not gamified numbers.
 
 **What builds reputation:**
+
 - Projects contributed to
 - Projects completed
 - Collaborations
@@ -238,27 +245,27 @@ Not:
 
 ## What Makes Tethyr Different
 
-| Most platforms | Tethyr |
-|---------------|--------|
-| Optimize for attention | Optimizes for progress |
-| Reward posting | Rewards building |
-| Showcase finished work | Celebrates the journey from idea to launch |
-| Ask "What have you done?" | Asks "What are you building next?" |
-| Skills are claims | Skills are evidenced through work |
-| Profiles are resumes | Profiles are portfolios of contribution |
+| Most platforms            | Tethyr                                     |
+| ------------------------- | ------------------------------------------ |
+| Optimize for attention    | Optimizes for progress                     |
+| Reward posting            | Rewards building                           |
+| Showcase finished work    | Celebrates the journey from idea to launch |
+| Ask "What have you done?" | Asks "What are you building next?"         |
+| Skills are claims         | Skills are evidenced through work          |
+| Profiles are resumes      | Profiles are portfolios of contribution    |
 
 ---
 
 ## Inspirations (What Tethyr Draws From)
 
-| Platform | What Tethyr Took |
-|----------|-----------------|
-| **GitHub** | Projects as the atomic unit, contributors, milestones, progress tracking, open collaboration |
-| **Behance / Dribbble** | Visual project showcases, cover images, creative portfolios, identity through work |
-| **Polywork** | Multi-faceted identity, skills as teach/learn, creator titles, availability badges |
-| **Discord** | Topic-based community spaces, real-time feel, community as a destination |
-| **Linear** | Clean, intentional UI. Border hierarchy. Crafted feel. Not over-decorated. |
-| **Vercel** | Typography-forward design. Restrained use of borders and shadows. |
+| Platform               | What Tethyr Took                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| **GitHub**             | Projects as the atomic unit, contributors, milestones, progress tracking, open collaboration |
+| **Behance / Dribbble** | Visual project showcases, cover images, creative portfolios, identity through work           |
+| **Polywork**           | Multi-faceted identity, skills as teach/learn, creator titles, availability badges           |
+| **Discord**            | Topic-based community spaces, real-time feel, community as a destination                     |
+| **Linear**             | Clean, intentional UI. Border hierarchy. Crafted feel. Not over-decorated.                   |
+| **Vercel**             | Typography-forward design. Restrained use of borders and shadows.                            |
 
 Tethyr doesn't copy any of them. It's its own category.
 
@@ -298,6 +305,7 @@ If the answer to all six is no, reconsider.
 Tethyr already has enough functionality. The next phase is not "build more."
 
 The priority is:
+
 1. Re-establish the visual system
 2. Rework the project experience as the flagship
 3. Refine profile/studio

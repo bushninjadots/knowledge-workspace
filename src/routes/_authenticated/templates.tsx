@@ -36,7 +36,11 @@ function TemplatesPage() {
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState<"newest" | "popular">("newest");
 
-  const { data: templates = [], isLoading, isError } = usePublicTemplates({
+  const {
+    data: templates = [],
+    isLoading,
+    isError,
+  } = usePublicTemplates({
     category: category || undefined,
     search: search || undefined,
     sort,
@@ -120,7 +124,9 @@ function TemplatesPage() {
           <div className="flex min-h-[30vh] flex-col items-center justify-center gap-2 text-center">
             <LayoutGrid className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              {search || category ? "No templates match your filters." : "No templates published yet."}
+              {search || category
+                ? "No templates match your filters."
+                : "No templates published yet."}
             </p>
             <p className="text-xs text-muted-foreground">
               Templates are created when users save their layouts for others to use.
@@ -184,8 +190,7 @@ function TemplatesPage() {
                   </span>
                   {t.creatorHandle && (
                     <span className="flex items-center gap-1 ml-auto truncate max-w-[100px]">
-                      <User className="h-3 w-3 shrink-0" />
-                      @{t.creatorHandle}
+                      <User className="h-3 w-3 shrink-0" />@{t.creatorHandle}
                     </span>
                   )}
                 </div>

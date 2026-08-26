@@ -7,18 +7,18 @@
 
 ## Summary Table
 
-| ID | Severity | Title | File(s) |
-|----|----------|-------|---------|
-| 1 | **P0** | Edge function SSRF — fetches arbitrary user-supplied URLs server-side | `supabase/functions/fetch-project-preview/index.ts:48,71,94,114` |
-| 2 | **P0** | `.env` with publishable keys committed to git history | Git history (commit `784841a`) |
-| 3 | **P1** | Edge function CORS allows all origins | `supabase/functions/fetch-project-preview/index.ts:5` |
-| 4 | **P1** | Edge function leaks internal error messages | `supabase/functions/fetch-project-preview/index.ts:150` |
-| 5 | **P1** | `connected_accounts.access_token` exposed to client via RLS | `supabase/migrations/20260807000000_project_repositories.sql:70-72` |
-| 6 | **P1** | `project_repositories` public-read policy ignores private projects | `supabase/migrations/20260807000000_project_repositories.sql:20-22` |
-| 7 | **P2** | CSP allows `unsafe-inline` for scripts | `src/lib/security-headers.ts:14` |
-| 8 | **P2** | Authenticated route guard is client-side only (`ssr: false`) | `src/routes/_authenticated/route.tsx:7,11-13` |
-| 9 | **P2** | No server-side password complexity enforcement | `src/routes/signup.tsx:77-78` |
-| 10 | **P3** | `console.error` in auth middleware logs env var names | `src/integrations/supabase/auth-middleware.ts:46` |
+| ID  | Severity | Title                                                                 | File(s)                                                             |
+| --- | -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1   | **P0**   | Edge function SSRF — fetches arbitrary user-supplied URLs server-side | `supabase/functions/fetch-project-preview/index.ts:48,71,94,114`    |
+| 2   | **P0**   | `.env` with publishable keys committed to git history                 | Git history (commit `784841a`)                                      |
+| 3   | **P1**   | Edge function CORS allows all origins                                 | `supabase/functions/fetch-project-preview/index.ts:5`               |
+| 4   | **P1**   | Edge function leaks internal error messages                           | `supabase/functions/fetch-project-preview/index.ts:150`             |
+| 5   | **P1**   | `connected_accounts.access_token` exposed to client via RLS           | `supabase/migrations/20260807000000_project_repositories.sql:70-72` |
+| 6   | **P1**   | `project_repositories` public-read policy ignores private projects    | `supabase/migrations/20260807000000_project_repositories.sql:20-22` |
+| 7   | **P2**   | CSP allows `unsafe-inline` for scripts                                | `src/lib/security-headers.ts:14`                                    |
+| 8   | **P2**   | Authenticated route guard is client-side only (`ssr: false`)          | `src/routes/_authenticated/route.tsx:7,11-13`                       |
+| 9   | **P2**   | No server-side password complexity enforcement                        | `src/routes/signup.tsx:77-78`                                       |
+| 10  | **P3**   | `console.error` in auth middleware logs env var names                 | `src/integrations/supabase/auth-middleware.ts:46`                   |
 
 ---
 
@@ -31,12 +31,14 @@
 **Issue:** The `fetch-project-preview` edge function takes a user-supplied `url` parameter and fetches it directly from the Deno server with no URL validation or allowlist. The GitHub/GitLab/Codeberg paths extract `owner/repo` from the URL and call external APIs, but the Open Graph fallback path (`index.ts:114`) does `await fetch(url, ...)` on the raw user input.
 
 **Risk:** An attacker can supply internal network URLs (e.g., `http://169.254.169.254/latest/meta-data/`, `http://localhost:54321/`, internal service endpoints) and read the response. This is a classic Server-Side Request Forgery (SSRF) that can:
+
 - Probe internal services and ports
 - Access cloud metadata endpoints (AWS, GCP, etc.)
 - Read Supabase Studio or other local services
 - Bypass firewalls and network ACLs
 
 **Evidence:**
+
 ```typescript
 // index.ts:114 — no URL validation before fetch
 const pageRes = await fetch(url, {
@@ -46,6 +48,7 @@ const pageRes = await fetch(url, {
 ```
 
 **Recommendation:** Implement a URL allowlist before fetching. At minimum:
+
 1. Only allow `http:` and `https:` protocols
 2. Block private/internal IP ranges (`10.*`, `172.16-31.*`, `192.168.*`, `127.*`, `169.254.*`, `localhost`, `*.local`)
 3. Only allow fetching from known hosting platforms (github.com, gitlab.com, codeberg.org, etc.) in the OG fallback path, or remove the OG fallback entirely
@@ -60,11 +63,13 @@ const pageRes = await fetch(url, {
 **Issue:** The initial commit included a `.env` file containing `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_URL` for a production Supabase project. The file was later removed (commit `6a52337`) and `.env` is now in `.gitignore`, but the credentials remain in git history.
 
 **Risk:** Anyone with access to the repository (collaborators, forks, leaked history) can extract the publishable key and project URL. While the publishable (anon) key is designed to be public-facing, having it in git history:
+
 - Exposes the exact Supabase project ID and URL
 - Combined with any RLS bypass, gives full data access
 - The `SUPABASE_SERVICE_ROLE_KEY` was **not** committed (good), so admin-level compromise is not at risk from this finding alone
 
 **Evidence:**
+
 ```
 # Initial commit (784841a) contained:
 SUPABASE_PUBLISHABLE_KEY="sb_publishable_Va6sj3RfHruP5qjIxVJNTQ_ln9vtjHU"
@@ -86,6 +91,7 @@ SUPABASE_URL="https://fxgemyzwpjhxfgacitaz.supabase.co"
 **Risk:** Any malicious website can make authenticated requests to this endpoint (if the user has a Supabase session). Combined with the SSRF finding above, this expands the attack surface: a malicious page could use the victim's browser to call the edge function and proxy internal network requests through it.
 
 **Evidence:**
+
 ```typescript
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,9 +100,11 @@ const corsHeaders = {
 ```
 
 **Recommendation:** Restrict CORS to the application origin(s):
+
 ```typescript
 "Access-Control-Allow-Origin": "https://tethyr.app"
 ```
+
 Or use Supabase's built-in CORS configuration.
 
 ---
@@ -110,6 +118,7 @@ Or use Supabase's built-in CORS configuration.
 **Risk:** Error messages can reveal internal infrastructure details (hostnames, ports, library versions) that aid further attacks.
 
 **Evidence:**
+
 ```typescript
 } catch (err) {
   return new Response(JSON.stringify({ error: err.message }), {
@@ -120,6 +129,7 @@ Or use Supabase's built-in CORS configuration.
 ```
 
 **Recommendation:** Return a generic error message and log the details server-side:
+
 ```typescript
 } catch {
   return new Response(JSON.stringify({ error: "Failed to fetch preview" }), {
@@ -140,6 +150,7 @@ Or use Supabase's built-in CORS configuration.
 **Risk:** If an XSS vulnerability exists anywhere in the application, the attacker can read the user's OAuth tokens (GitHub, etc.) from `connected_accounts`. These tokens provide access to the user's GitHub repositories and can be used to perform actions on their behalf.
 
 **Evidence:**
+
 ```sql
 -- migration 20260807000000, line 61
 access_token  text,  -- encrypted by Supabase Vault or stored as plaintext
@@ -151,6 +162,7 @@ CREATE POLICY "Users can read own connected accounts"
 ```
 
 **Recommendation:** The `access_token` column should never be readable by the client. Options:
+
 1. Remove the column from client-visible queries (use `supabaseAdmin` for token access only, like `user_github_tokens`)
 2. Encrypt the token at rest using pgcrypto or Supabase Vault
 3. At minimum, ensure the column is excluded from client queries (e.g., `.select('id, provider, provider_id, username')` never includes `access_token`)
@@ -168,6 +180,7 @@ Note: `user_github_tokens` (the Personal Access Token table) correctly has no cl
 **Risk:** An attacker can query `project_repositories` to discover private project repository URLs, which may contain sensitive code or internal naming conventions.
 
 **Evidence:**
+
 ```sql
 -- 20260807000000, line 20-22
 CREATE POLICY "Project repositories are publicly readable"
@@ -178,6 +191,7 @@ CREATE POLICY "Project repositories are publicly readable"
 The `20260808170000` migration's sweep only covered: `project_milestones`, `project_updates`, `project_discussions`, `discussion_replies`, `project_open_roles`, `project_activity`.
 
 **Recommendation:** Replace the blanket SELECT policy with:
+
 ```sql
 CREATE POLICY "Project repositories viewable by project visibility"
   ON project_repositories FOR SELECT
@@ -195,11 +209,13 @@ CREATE POLICY "Project repositories viewable by project visibility"
 **Issue:** The Content Security Policy includes `'unsafe-inline'` for `script-src`, which weakens XSS protection.
 
 **Risk:** If an XSS vulnerability exists, the attacker can inject inline scripts that bypass CSP. This is partially mitigated by:
+
 - TanStack Start/React's JSX escaping
 - The `'unsafe-eval'` is development-only
 - Supabase's own script tags may require it
 
 **Evidence:**
+
 ```typescript
 `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
 ```
@@ -217,9 +233,10 @@ CREATE POLICY "Project repositories viewable by project visibility"
 **Risk:** An unauthenticated user can view the HTML shell of authenticated routes (the route tree is public). The actual data protection comes from RLS on Supabase queries, not from this route guard. If any server function or data loader skips RLS, the client-side guard provides no protection.
 
 **Evidence:**
+
 ```typescript
 export const Route = createFileRoute("/_authenticated")({
-  ssr: false,  // Client-side only
+  ssr: false, // Client-side only
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/login" });
@@ -241,6 +258,7 @@ export const Route = createFileRoute("/_authenticated")({
 **Risk:** Weak passwords are vulnerable to brute-force and credential-stuffing attacks. While Supabase has rate limiting on auth endpoints, weak passwords significantly reduce the time needed for successful attacks.
 
 **Evidence:**
+
 ```typescript
 // signup.tsx:77
 if (password.length < 8) {
@@ -263,6 +281,7 @@ if (password.length < 8) {
 **Risk:** Low. The variable names are not secrets, but in shared logging environments, this could reveal infrastructure configuration. The actual values are never logged.
 
 **Evidence:**
+
 ```typescript
 console.error(`[Supabase] ${message}`);
 // message = "Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY..."

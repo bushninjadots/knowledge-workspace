@@ -11,24 +11,29 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
+import type { Database } from "@/integrations/supabase/types";
 import type { TemplateData, LayoutSection } from "@/lib/page-blocks";
 import { invalidatePage } from "@/hooks/use-page";
 
 // ── Row mappers ──────────────────────────────────────────────────────────────
 
-function mapLayoutRow(row: any): TemplateData {
+type LayoutRow = Database["public"]["Tables"]["layouts"]["Row"];
+
+type LayoutRowSubset = Omit<LayoutRow, "is_template">;
+
+function mapLayoutRow(row: LayoutRowSubset): TemplateData {
   return {
     id: row.id,
     name: row.name,
     description: row.description ?? null,
-    type: row.type,
+    type: row.type as TemplateData["type"],
     category: row.category ?? null,
-    sections: row.sections ?? [],
+    sections: (row.sections ?? []) as unknown as LayoutSection[],
     themeTokens: null,
     themeId: row.theme_id ?? null,
     createdBy: row.created_by ?? null,
-    creatorHandle: row.creator_handle ?? null,
-    creatorDisplayName: row.creator_display_name ?? null,
+    creatorHandle: null,
+    creatorDisplayName: null,
     usageCount: row.usage_count ?? 0,
     forkCount: row.fork_count ?? 0,
     createdAt: row.created_at,
@@ -57,10 +62,7 @@ export function usePublicTemplates(params: UsePublicTemplatesParams = {}) {
   return useQuery({
     queryKey: ["templates", "public", params],
     queryFn: async (): Promise<TemplateData[]> => {
-      let query = (supabase as any)
-        .from("layouts")
-        .select(TEMPLATE_SELECT)
-        .eq("is_template", true);
+      let query = supabase.from("layouts").select(TEMPLATE_SELECT).eq("is_template", true);
 
       if (category) query = query.eq("category", category);
       if (search) query = query.ilike("name", `%${search}%`);
@@ -77,15 +79,16 @@ export function usePublicTemplates(params: UsePublicTemplatesParams = {}) {
       const rows: TemplateData[] = (data ?? []).map(mapLayoutRow);
 
       // Batch-fetch creator profiles for display names.
-      const creatorIds = [...new Set(rows.map((r) => r.createdBy).filter(Boolean))];
+      const creatorIds = [
+        ...new Set(rows.map((r) => r.createdBy).filter((id): id is string => !!id)),
+      ];
       if (creatorIds.length > 0) {
-        const { data: profiles } = await (supabase as any)
+        const { data: profiles } = await supabase
           .from("profiles")
           .select("id, handle, display_name")
           .in("id", creatorIds);
         if (profiles) {
-          const typed = profiles as { id: string; handle: string | null; display_name: string | null }[];
-          const profileMap = new Map(typed.map((p) => [p.id, p]));
+          const profileMap = new Map(profiles.map((p) => [p.id, p]));
           for (const row of rows) {
             const profile = row.createdBy ? profileMap.get(row.createdBy) : undefined;
             if (profile) {
@@ -107,7 +110,7 @@ export function useMyTemplates() {
   return useQuery({
     queryKey: ["templates", "mine"],
     queryFn: async (): Promise<TemplateData[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("is_template", true)
@@ -126,7 +129,7 @@ export function useTemplate(templateId: string) {
     queryKey: ["templates", templateId],
     queryFn: async (): Promise<TemplateData | null> => {
       // Fetch layout.
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("layouts")
         .select(TEMPLATE_SELECT)
         .eq("id", templateId)
@@ -140,7 +143,7 @@ export function useTemplate(templateId: string) {
 
       // Fetch creator profile if available.
       if (data.created_by) {
-        const { data: profile } = await (supabase as any)
+        const { data: profile } = await supabase
           .from("profiles")
           .select("handle, display_name")
           .eq("id", data.created_by)
@@ -175,7 +178,7 @@ export function useSaveAsTemplate() {
   return useMutation({
     mutationFn: async ({ layoutId, name, description, category }: SaveAsTemplateParams) => {
       // 1. Fetch the current layout's sections.
-      const { data: source, error: fetchErr } = await (supabase as any)
+      const { data: source, error: fetchErr } = await supabase
         .from("layouts")
         .select("sections, created_by")
         .eq("id", layoutId)
@@ -184,7 +187,7 @@ export function useSaveAsTemplate() {
 
       // 2. Create a NEW layout row (a copy) marked as a template,
       //    carrying the page's current theme ID.
-      const { data: pageForTheme } = await (supabase as any)
+      const { data: pageForTheme } = await supabase
         .from("pages")
         .select("theme_id")
         .eq("layout_id", layoutId)
@@ -193,18 +196,17 @@ export function useSaveAsTemplate() {
       // created_by MUST be auth.uid() — RLS requires auth.uid() = created_by
       // for INSERT. Copying source.created_by fails when source has null.
       const me = (await supabase.auth.getUser()).data.user;
-      const { error: insertErr } = await (supabase as any)
-        .from("layouts")
-        .insert({
-          name,
-          description: description ?? null,
-          type: "standard",
-          category: category ?? null,
-          sections: source.sections,
-          theme_id: pageForTheme?.theme_id ?? null,
-          is_template: true,
-          created_by: me?.id ?? null,
-        });
+      const { error: insertErr } = await supabase.from("layouts").insert({
+        name,
+        description: description ?? null,
+        type: "standard",
+        category: category ?? null,
+        sections:
+          source.sections as unknown as Database["public"]["Tables"]["layouts"]["Insert"]["sections"],
+        theme_id: pageForTheme?.theme_id ?? null,
+        is_template: true,
+        created_by: me?.id ?? null,
+      });
       if (insertErr) throw insertErr;
     },
     onSuccess: () => {
@@ -223,7 +225,7 @@ export function useUnpublishTemplate() {
 
   return useMutation({
     mutationFn: async ({ layoutId }: { layoutId: string }) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("layouts")
         .update({ is_template: false })
         .eq("id", layoutId);
@@ -255,7 +257,7 @@ export function useApplyTemplate() {
   return useMutation({
     mutationFn: async ({ templateId, pageId, layoutId }: ApplyTemplateParams) => {
       // 1. Fetch the template's sections and theme.
-      const { data: template, error: fetchErr } = await (supabase as any)
+      const { data: template, error: fetchErr } = await supabase
         .from("layouts")
         .select("sections, theme_id")
         .eq("id", templateId)
@@ -263,33 +265,35 @@ export function useApplyTemplate() {
 
       if (fetchErr) throw fetchErr;
 
-      const sections: LayoutSection[] = (template?.sections ?? []).map(
-        (s: LayoutSection) => ({
-          ...s,
-          blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
-        }),
-      );
+      const sections: LayoutSection[] = (
+        (template?.sections ?? []) as unknown as LayoutSection[]
+      ).map((s: LayoutSection) => ({
+        ...s,
+        blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
+      }));
 
       // 2. Write sections into the destination layout.
-      const { error: updateErr } = await (supabase as any)
+      const { error: updateErr } = await supabase
         .from("layouts")
-        .update({ sections })
+        .update({
+          sections:
+            sections as unknown as Database["public"]["Tables"]["layouts"]["Update"]["sections"],
+        })
         .eq("id", layoutId);
 
       if (updateErr) throw updateErr;
 
       // 3. Apply the template's theme to the page if it has one.
       if (template?.theme_id) {
-        await (supabase as any)
-          .from("pages")
-          .update({ theme_id: template.theme_id })
-          .eq("id", pageId);
+        await supabase.from("pages").update({ theme_id: template.theme_id }).eq("id", pageId);
       }
 
       // 4. Bump template usage count.
-      await (supabase as any)
-        .rpc("increment_usage_count", { template_id: templateId })
-        .catch(() => {});
+      try {
+        await supabase.rpc("increment_usage_count", { template_id: templateId });
+      } catch {
+        // Non-critical — don't fail the whole operation.
+      }
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["templates"] });

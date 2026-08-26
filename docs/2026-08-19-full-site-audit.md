@@ -12,16 +12,16 @@ The codebase is in **solid MVP shape** — lint clean, type-check clean, product
 
 ### Health at a Glance
 
-| Area | Status | Notes |
-|------|--------|-------|
-| Build | ✅ Clean | Lint, typecheck, and build all pass |
-| Tests | ✅ 160/160 | But coverage is thin — only 24 test files |
-| Routing | ✅ No dead ends | 10 routes missing custom error components |
-| Type Safety | ⚠️ 36 `as unknown as` casts | Can silently produce garbage data |
-| Accessibility | ⚠️ Multiple gaps | Missing aria-labels, unlabeled inputs, no nav landmarks |
-| Performance | ⚠️ Project page is heavy | 20+ eager imports, missing image lazy-loading |
-| Security | ✅ Solid | Proper auth middleware, RLS, XSS protection. One env concern. |
-| UX | ⚠️ 6 error stubs with no recovery | Toast-only validation, native confirm() |
+| Area          | Status                            | Notes                                                         |
+| ------------- | --------------------------------- | ------------------------------------------------------------- |
+| Build         | ✅ Clean                          | Lint, typecheck, and build all pass                           |
+| Tests         | ✅ 160/160                        | But coverage is thin — only 24 test files                     |
+| Routing       | ✅ No dead ends                   | 10 routes missing custom error components                     |
+| Type Safety   | ⚠️ 36 `as unknown as` casts       | Can silently produce garbage data                             |
+| Accessibility | ⚠️ Multiple gaps                  | Missing aria-labels, unlabeled inputs, no nav landmarks       |
+| Performance   | ⚠️ Project page is heavy          | 20+ eager imports, missing image lazy-loading                 |
+| Security      | ✅ Solid                          | Proper auth middleware, RLS, XSS protection. One env concern. |
+| UX            | ⚠️ 6 error stubs with no recovery | Toast-only validation, native confirm()                       |
 
 ---
 
@@ -34,6 +34,7 @@ The codebase is in **solid MVP shape** — lint clean, type-check clean, product
 The `.env` file contains `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_PUBLISHABLE_KEY`. While `.gitignore` lists `.env`, if this file was ever committed to git history, those secrets are exposed. The service role key bypasses all RLS.
 
 **Action:**
+
 - Verify these keys were never committed: `git log --all --full-history -- .env`
 - If committed, rotate both keys in Supabase dashboard immediately
 - Create `.env.example` with placeholder values for onboarding
@@ -57,6 +58,7 @@ The `.env` file contains `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_PUBLISHABLE_K
 These bypass TypeScript's type safety entirely. If the Supabase schema changes at runtime, these silently produce garbage data with no error.
 
 **Key files:**
+
 - `src/hooks/use-current-user.ts:97,179`
 - `src/hooks/use-projects.ts:274,402,492,757`
 - `src/hooks/use-community.ts:268,308,449`
@@ -78,6 +80,7 @@ The project page eagerly imports **20+ heavy components** (ProjectHeader, Projec
 **13 of 14 `<img>` tags are missing lazy loading.** None have `width`/`height` attributes, causing layout shift (CLS).
 
 **Affected files:**
+
 - `src/components/tethyr/dashboard-sidebar.tsx:165`
 - `src/components/tethyr/project/project-header.tsx:71`
 - `src/components/tethyr/project/project-main-content.tsx:288`
@@ -98,6 +101,7 @@ The project page eagerly imports **20+ heavy components** (ProjectHeader, Projec
 **7 hooks follow a fetch-then-hydrate pattern:** fetch rows, then batch-fetch author profiles in a second query.
 
 **Affected hooks:**
+
 - `useProjectUpdates` (`use-projects.ts:249-283`)
 - `useDiscussions` (`use-projects.ts:364-412`)
 - `useDiscussionReplies` (`use-projects.ts:467-501`)
@@ -132,6 +136,7 @@ The project page eagerly imports **20+ heavy components** (ProjectHeader, Projec
 ### 2.7 Dashboard Layout Duplication
 
 **Files:**
+
 - `src/components/tethyr/authenticated-shell.tsx` — canonical layout
 - `src/routes/dashboard.tsx:97-209` — near-copy of the same layout
 
@@ -147,26 +152,26 @@ The dashboard creates its own `AuthenticatedDashboardLayout` that duplicates the
 
 #### 3.1.1 Missing `aria-label` on Icon-Only Buttons
 
-| File | Line | Element |
-|------|------|---------|
-| `notification-dropdown.tsx` | 52-59 | Bell button |
-| `notification-card.tsx` | 228-234 | "More actions" dropdown |
-| `composer-bar.tsx` | 602-606 | Remove-image button (X) |
-| `composer-bar.tsx` | 684-687 | Remove poll option button (X) |
-| `composer-bar.tsx` | 701-706 | Clear poll end-date button (X) |
-| `create-space-dialog.tsx` | 155-162 | Add-rule button (+) |
-| `create-space-dialog.tsx` | 175-181 | Remove-rule button (X) |
+| File                        | Line    | Element                        |
+| --------------------------- | ------- | ------------------------------ |
+| `notification-dropdown.tsx` | 52-59   | Bell button                    |
+| `notification-card.tsx`     | 228-234 | "More actions" dropdown        |
+| `composer-bar.tsx`          | 602-606 | Remove-image button (X)        |
+| `composer-bar.tsx`          | 684-687 | Remove poll option button (X)  |
+| `composer-bar.tsx`          | 701-706 | Clear poll end-date button (X) |
+| `create-space-dialog.tsx`   | 155-162 | Add-rule button (+)            |
+| `create-space-dialog.tsx`   | 175-181 | Remove-rule button (X)         |
 
 #### 3.1.2 Unlabeled Form Inputs
 
-| File | Line | Input |
-|------|------|-------|
-| `composer-bar.tsx` | 566-571 | Post title input |
-| `composer-bar.tsx` | 659-663 | Poll question input |
+| File               | Line    | Input                             |
+| ------------------ | ------- | --------------------------------- |
+| `composer-bar.tsx` | 566-571 | Post title input                  |
+| `composer-bar.tsx` | 659-663 | Poll question input               |
 | `composer-bar.tsx` | 671-679 | Poll option inputs (dynamic list) |
-| `composer-bar.tsx` | 694-698 | Poll end-date input |
-| `composer-bar.tsx` | 788-793 | Link URL input |
-| `library.$id.tsx` | 237-239 | Library note title input |
+| `composer-bar.tsx` | 694-698 | Poll end-date input               |
+| `composer-bar.tsx` | 788-793 | Link URL input                    |
+| `library.$id.tsx`  | 237-239 | Library note title input          |
 
 #### 3.1.3 Multiple `<nav>` Without Distinguishing Labels
 
@@ -195,6 +200,7 @@ Active state is tracked via CSS class but `aria-current="page"` is never set.
 **File:** `ui/progress.tsx:11-22` — The `Progress` component doesn't forward `aria-label` or `aria-valuetext`.
 
 **Usages without accessible descriptions:**
+
 - `dashboard.tsx:352,617`
 - `project-header.tsx:333-338`
 
@@ -215,13 +221,13 @@ Active state is tracked via CSS class but `aria-current="page"` is never set.
 
 ### 3.2 Unbounded Database Queries
 
-| Hook | File | Issue |
-|------|------|-------|
-| `useDiscussions` | `use-projects.ts:364` | Fetches all discussions + all reply bodies just to count them |
-| `useMilestones` | `use-projects.ts` | Fetches all milestones, no limit |
-| `useProjectActivity` | `use-projects.ts:726` | Fetches all activity, no limit |
-| `useOpenRoles` | `use-projects.ts` | Fetches all open roles, no limit |
-| `useProjectNeeds` | `use-projects.ts` | Fetches all needs, no limit |
+| Hook                 | File                  | Issue                                                         |
+| -------------------- | --------------------- | ------------------------------------------------------------- |
+| `useDiscussions`     | `use-projects.ts:364` | Fetches all discussions + all reply bodies just to count them |
+| `useMilestones`      | `use-projects.ts`     | Fetches all milestones, no limit                              |
+| `useProjectActivity` | `use-projects.ts:726` | Fetches all activity, no limit                                |
+| `useOpenRoles`       | `use-projects.ts`     | Fetches all open roles, no limit                              |
+| `useProjectNeeds`    | `use-projects.ts`     | Fetches all needs, no limit                                   |
 
 **Action:** Add pagination or limits. For reply counts, use `select("discussion_id", { count: "exact" })` instead of fetching all bodies.
 
@@ -234,6 +240,7 @@ Active state is tracked via CSS class but `aria-current="page"` is never set.
 Forms use `toast.error()` for validation errors. Toasts auto-dismiss, aren't associated with fields, and screen readers may not announce them.
 
 **Affected:**
+
 - `signup.tsx:60,65`
 - `login.tsx:73`
 - `reset-password.tsx:82,86`
@@ -254,6 +261,7 @@ Forms use `toast.error()` for validation errors. Toasts auto-dismiss, aren't ass
 ### 3.7 Inconsistent Error Handling Across Hooks
 
 Some hooks catch `42P01` (table not found) and return empty arrays, while others let the error propagate:
+
 - `useMyProjects()` catches `42P01` → returns `[]`
 - `useMilestones()` does NOT catch `42P01` → throws
 - `useInfinitePosts()` catches table-not-found → returns empty
@@ -263,6 +271,7 @@ Some hooks catch `42P01` (table not found) and return empty arrays, while others
 ### 3.8 Redundant `getUser()` Calls in Mutations
 
 Multiple mutation hooks call `supabase.auth.getUser()` to get `userId` even though it's already available from `useCurrentUser()` or React Query context:
+
 - `useCreateProjectUpdate()`
 - `useCreateDiscussion()`
 - `useCreateDiscussionReply()`
@@ -331,6 +340,7 @@ All 9 suppressions are deliberate (avoiding re-runs on state changes) with inlin
 ### 4.6 Duplicated Supabase Client Code
 
 `isNewSupabaseApiKey` and `createSupabaseFetch` are identically copy-pasted across 3 files:
+
 - `integrations/supabase/client.ts:5-29`
 - `integrations/supabase/client.server.ts:8-32`
 - `integrations/supabase/auth-middleware.ts:8-32`
@@ -348,11 +358,11 @@ Marked "automatically generated" — likely a Lovable codegen constraint. A fix 
 
 ### 4.9 Fire-and-Forget Error Swallowing
 
-| File | Line | What's swallowed |
-|------|------|-----------------|
-| `dashboard.tsx:261` | `checkAndAwardAchievements().catch(() => {})` | Achievement failures |
-| `workspace-grid.tsx:202` | `saveRef.current(payload).catch(() => {})` | Layout save failures |
-| `use-current-user.ts:110-115` | `safeQuery()` catches all errors silently | Any Supabase query failure |
+| File                          | Line                                          | What's swallowed           |
+| ----------------------------- | --------------------------------------------- | -------------------------- |
+| `dashboard.tsx:261`           | `checkAndAwardAchievements().catch(() => {})` | Achievement failures       |
+| `workspace-grid.tsx:202`      | `saveRef.current(payload).catch(() => {})`    | Layout save failures       |
+| `use-current-user.ts:110-115` | `safeQuery()` catches all errors silently     | Any Supabase query failure |
 
 ---
 
@@ -367,6 +377,7 @@ Marked "automatically generated" — likely a Lovable codegen constraint. A fix 
 ### What NEEDS Tests (by priority)
 
 **Critical — data mutation hooks with no safety net:**
+
 - `use-connections.ts`
 - `use-follow.ts`
 - `use-messages.ts`
@@ -376,6 +387,7 @@ Marked "automatically generated" — likely a Lovable codegen constraint. A fix 
 - `use-sessions.ts`
 
 **High — flagship views:**
+
 - `project-header.tsx`
 - `project-readme.tsx` + `readme-editor.tsx`
 - `project-open-roles.tsx`
@@ -384,6 +396,7 @@ Marked "automatically generated" — likely a Lovable codegen constraint. A fix 
 - `profile-overview-tab.tsx`
 
 **Infrastructure:**
+
 - Extract `createFakeSupabase()` into `tests/helpers/fake-supabase.ts` (currently copy-pasted across 4+ test files)
 - Add `vitest --coverage` for actual line/branch coverage numbers
 
@@ -393,44 +406,44 @@ Marked "automatically generated" — likely a Lovable codegen constraint. A fix 
 
 ### Immediate (Before Any Public Exposure)
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Rotate `.env` secrets + verify git history | 15 min | Security |
-| 2 | Fix `useUnreadCounts` unbounded fetch | 1 hr | Performance |
-| 3 | Add retry/home to 6 error component stubs | 1 hr | UX |
-| 4 | Add `loading="lazy" decoding="async"` to all images | 1 hr | Performance |
-| 5 | Add `aria-label` to 7 icon-only buttons | 1 hr | Accessibility |
-| 6 | Add `aria-label`/`id` to 6 unlabeled inputs | 1 hr | Accessibility |
+| #   | Item                                                | Effort | Impact        |
+| --- | --------------------------------------------------- | ------ | ------------- |
+| 1   | Rotate `.env` secrets + verify git history          | 15 min | Security      |
+| 2   | Fix `useUnreadCounts` unbounded fetch               | 1 hr   | Performance   |
+| 3   | Add retry/home to 6 error component stubs           | 1 hr   | UX            |
+| 4   | Add `loading="lazy" decoding="async"` to all images | 1 hr   | Performance   |
+| 5   | Add `aria-label` to 7 icon-only buttons             | 1 hr   | Accessibility |
+| 6   | Add `aria-label`/`id` to 6 unlabeled inputs         | 1 hr   | Accessibility |
 
 ### Short-Term (This Sprint)
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 7 | Lazy-load project page tabs | 2-3 hr | Performance |
-| 8 | Move dashboard under `_authenticated/` | 2-3 hr | Maintainability |
-| 9 | Add `aria-current="page"` to sidebar links | 30 min | Accessibility |
-| 10 | Add `aria-label` to 5+ `<nav>` elements | 30 min | Accessibility |
-| 11 | Replace N+1 profile lookups with joins | 3-4 hr | Performance |
-| 12 | Add inline form validation (not just toasts) | 3-4 hr | UX/Accessibility |
-| 13 | Remove `d3-force` unused dependency | 5 min | Bundle |
-| 14 | Add pagination to unbounded queries | 2-3 hr | Performance |
-| 15 | Standardize `42P01` error handling | 1 hr | Consistency |
+| #   | Item                                         | Effort | Impact           |
+| --- | -------------------------------------------- | ------ | ---------------- |
+| 7   | Lazy-load project page tabs                  | 2-3 hr | Performance      |
+| 8   | Move dashboard under `_authenticated/`       | 2-3 hr | Maintainability  |
+| 9   | Add `aria-current="page"` to sidebar links   | 30 min | Accessibility    |
+| 10  | Add `aria-label` to 5+ `<nav>` elements      | 30 min | Accessibility    |
+| 11  | Replace N+1 profile lookups with joins       | 3-4 hr | Performance      |
+| 12  | Add inline form validation (not just toasts) | 3-4 hr | UX/Accessibility |
+| 13  | Remove `d3-force` unused dependency          | 5 min  | Bundle           |
+| 14  | Add pagination to unbounded queries          | 2-3 hr | Performance      |
+| 15  | Standardize `42P01` error handling           | 1 hr   | Consistency      |
 
 ### Medium-Term (Before v1.0)
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 16 | Replace `as unknown as` casts with Zod validation | 4-6 hr | Type Safety |
-| 17 | Add tests for mutation hooks (5 hooks) | 4-6 hr | Reliability |
-| 18 | Split `use-community-spaces.ts` into sub-hooks | 2-3 hr | Maintainability |
-| 19 | Replace native `confirm()` with styled dialog | 1 hr | UX |
-| 20 | Add `width`/`height` to all `<img>` tags | 1 hr | CLS |
-| 21 | Add `aria-hidden="true"` to decorative SVGs | 30 min | Accessibility |
-| 22 | Add `aria-valuetext` to progress bars | 30 min | Accessibility |
-| 23 | Add `role="menu"` to availability dropdown | 1 hr | Accessibility |
-| 24 | Reduce redundant `getUser()` in mutations | 1 hr | Performance |
-| 25 | Add composite database indexes | 1 hr | Performance |
+| #   | Item                                              | Effort | Impact          |
+| --- | ------------------------------------------------- | ------ | --------------- |
+| 16  | Replace `as unknown as` casts with Zod validation | 4-6 hr | Type Safety     |
+| 17  | Add tests for mutation hooks (5 hooks)            | 4-6 hr | Reliability     |
+| 18  | Split `use-community-spaces.ts` into sub-hooks    | 2-3 hr | Maintainability |
+| 19  | Replace native `confirm()` with styled dialog     | 1 hr   | UX              |
+| 20  | Add `width`/`height` to all `<img>` tags          | 1 hr   | CLS             |
+| 21  | Add `aria-hidden="true"` to decorative SVGs       | 30 min | Accessibility   |
+| 22  | Add `aria-valuetext` to progress bars             | 30 min | Accessibility   |
+| 23  | Add `role="menu"` to availability dropdown        | 1 hr   | Accessibility   |
+| 24  | Reduce redundant `getUser()` in mutations         | 1 hr   | Performance     |
+| 25  | Add composite database indexes                    | 1 hr   | Performance     |
 
 ---
 
-*Generated by full site audit on August 19, 2026.*
+_Generated by full site audit on August 19, 2026._

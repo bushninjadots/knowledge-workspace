@@ -22,9 +22,11 @@
 ### Task 1: Add new session mutations
 
 **Files:**
+
 - Modify: `src/hooks/use-sessions.ts` — add three new mutations
 
 **Interfaces:**
+
 - Produces: `useSetSessionAvailability()`, `useCancelSessionRequest(id)`, `useSendSessionRequest(fromUserId, toUserId, data)`
 
 - [x] **Step 1: Add `useSetSessionAvailability` mutation**
@@ -36,7 +38,9 @@ export function useSetSessionAvailability() {
   const userId = me?.userId;
 
   return useMutation({
-    mutationFn: async (slots: { day_of_week: number; start_time: string; end_time: string; status: string }[]) => {
+    mutationFn: async (
+      slots: { day_of_week: number; start_time: string; end_time: string; status: string }[],
+    ) => {
       const { error: delError } = await sb
         .from("session_availability")
         .delete()
@@ -47,7 +51,13 @@ export function useSetSessionAvailability() {
       if (slots.length > 0) {
         const { error: insError } = await sb
           .from("session_availability")
-          .insert(slots.map((s) => ({ ...s, profile_id: userId, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })));
+          .insert(
+            slots.map((s) => ({
+              ...s,
+              profile_id: userId,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            })),
+          );
 
         if (insError) throw insError;
       }
@@ -136,9 +146,11 @@ git commit -m "feat: add set-availability, cancel-request, send-request session 
 ### Task 2: Availability Editor Dialog
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/availability-settings.tsx`
 
 **Interfaces:**
+
 - Consumes: `useSetSessionAvailability()` from Task 1
 - Uses: `useSessionAvailability()` (already exists)
 
@@ -148,10 +160,22 @@ Add to `availability-settings.tsx`:
 
 ```tsx
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSetSessionAvailability } from "@/hooks/use-sessions";
 ```
@@ -168,7 +192,13 @@ interface SlotInput {
   status: "available" | "unavailable" | "tentative";
 }
 
-function AvailabilityEditorDialog({ availability, onSaved }: { availability: Availability[]; onSaved: () => void }) {
+function AvailabilityEditorDialog({
+  availability,
+  onSaved,
+}: {
+  availability: Availability[];
+  onSaved: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [slots, setSlots] = useState<SlotInput[]>(() =>
     availability.map((a) => ({
@@ -176,12 +206,15 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
       start_time: a.start_time.slice(0, 5),
       end_time: a.end_time.slice(0, 5),
       status: a.status as SlotInput["status"],
-    }))
+    })),
   );
   const setAvailability = useSetSessionAvailability();
 
   const addSlot = (day: number) => {
-    setSlots((prev) => [...prev, { day_of_week: day, start_time: "09:00", end_time: "10:00", status: "available" }]);
+    setSlots((prev) => [
+      ...prev,
+      { day_of_week: day, start_time: "09:00", end_time: "10:00", status: "available" },
+    ]);
   };
 
   const removeSlot = (index: number) => {
@@ -215,7 +248,9 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">Edit Availability</Button>
+        <Button variant="outline" size="sm">
+          Edit Availability
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
@@ -255,7 +290,12 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
                         <option value="tentative">Maybe</option>
                         <option value="unavailable">Busy</option>
                       </select>
-                      <button onClick={() => removeSlot(globalIdx)} className="text-muted-foreground hover:text-destructive">&times;</button>
+                      <button
+                        onClick={() => removeSlot(globalIdx)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        &times;
+                      </button>
                     </div>
                   );
                 })}
@@ -268,9 +308,13 @@ function AvailabilityEditorDialog({ availability, onSaved }: { availability: Ava
             </div>
           ))}
         </div>
-        {hasOverlaps && <p className="text-xs text-destructive">Some slots overlap — fix before saving</p>}
+        {hasOverlaps && (
+          <p className="text-xs text-destructive">Some slots overlap — fix before saving</p>
+        )}
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={setAvailability.isPending}>
             {setAvailability.isPending ? "Saving..." : "Save"}
           </Button>
@@ -304,12 +348,14 @@ git commit -m "feat: add availability editor dialog"
 ### Task 3: Profile Sessions Tab + Request Button
 
 **Files:**
+
 - Modify: `src/hooks/use-sessions.ts` — make `useSessionStats` accept optional `userId`
 - Modify: `src/components/tethyr/profile/profile-sessions-tab.tsx`
 - Create: `src/components/tethyr/sessions/request-session-dialog.tsx`
 - Modify: `src/components/tethyr/profile/profile-layout.tsx`
 
 **Interfaces:**
+
 - Consumes: `useSessionStats(userId)`, `useSendSessionRequest()` from Task 1
 
 - [x] **Step 1: Modify `useSessionStats` to accept optional userId**
@@ -336,10 +382,22 @@ Replace the hardcoded `0` values with `useSessionStats(userId)`:
 
 ```tsx
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSendSessionRequest } from "@/hooks/use-sessions";
 
@@ -349,7 +407,11 @@ interface RequestSessionDialogProps {
   hasPendingRequest: boolean;
 }
 
-export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }: RequestSessionDialogProps) {
+export function RequestSessionDialog({
+  toUserId,
+  toUserName,
+  hasPendingRequest,
+}: RequestSessionDialogProps) {
   const [open, setOpen] = useState(false);
   const [sessionType, setSessionType] = useState("");
   const [message, setMessage] = useState("");
@@ -366,7 +428,7 @@ export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }
           setSessionType("");
         },
         onError: () => toast.error("Failed to send request"),
-      }
+      },
     );
   };
 
@@ -408,7 +470,9 @@ export function RequestSessionDialog({ toUserId, toUserName, hasPendingRequest }
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={sendRequest.isPending}>
               {sendRequest.isPending ? "Sending..." : "Send Request"}
             </Button>
@@ -431,18 +495,18 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 
 // Inside the profile actions area (only when viewing another user):
 const { data: requests } = useSessionRequests();
-const hasPendingRequest = requests?.some(
-  (r) => r.to_user_id === userId && r.status === "pending"
-);
+const hasPendingRequest = requests?.some((r) => r.to_user_id === userId && r.status === "pending");
 
 // Don't render on own profile
-{!isOwnProfile && (
-  <RequestSessionDialog
-    toUserId={userId}
-    toUserName={displayName}
-    hasPendingRequest={hasPendingRequest}
-  />
-)}
+{
+  !isOwnProfile && (
+    <RequestSessionDialog
+      toUserId={userId}
+      toUserName={displayName}
+      hasPendingRequest={hasPendingRequest}
+    />
+  );
+}
 ```
 
 - [x] **Step 5: Run typecheck**
@@ -462,12 +526,14 @@ git commit -m "feat: wire profile sessions stats, add request session dialog"
 ### Task 4: Session List Filtering
 
 **Files:**
+
 - Create: `src/components/tethyr/sessions/session-filters.tsx`
 - Modify: `src/components/tethyr/sessions/sessions-layout.tsx` — own filter state, pass to children
 - Modify: `src/components/tethyr/sessions/upcoming-sessions.tsx` — accept filtered sessions
 - Modify: `src/components/tethyr/sessions/session-history.tsx` — accept filtered sessions
 
 **Interfaces:**
+
 - Produces: `<SessionFilters filters={filters} onChange={setFilters} />` shared component
 
 - [x] **Step 1: Create session-filters.tsx**
@@ -475,7 +541,13 @@ git commit -m "feat: wire profile sessions stats, add request session dialog"
 ```tsx
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 export interface SessionFiltersState {
@@ -512,7 +584,12 @@ export function SessionFilters({ filters, onChange }: SessionFiltersProps) {
         </SelectContent>
       </Select>
       {(filters.search || filters.type) && (
-        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => onChange({ search: "", type: "" })}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs"
+          onClick={() => onChange({ search: "", type: "" })}
+        >
           Clear
         </Button>
       )}
@@ -529,14 +606,18 @@ Add filter state and filtering logic:
 // In SessionsLayout
 const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
 
-const filterSessions = useCallback((sessions: SessionWithParticipants[] | undefined) => {
-  if (!sessions) return sessions;
-  return sessions.filter((s) => {
-    if (filters.search && !s.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
-    if (filters.type && filters.type !== "all" && s.session_type !== filters.type) return false;
-    return true;
-  });
-}, [filters]);
+const filterSessions = useCallback(
+  (sessions: SessionWithParticipants[] | undefined) => {
+    if (!sessions) return sessions;
+    return sessions.filter((s) => {
+      if (filters.search && !s.title.toLowerCase().includes(filters.search.toLowerCase()))
+        return false;
+      if (filters.type && filters.type !== "all" && s.session_type !== filters.type) return false;
+      return true;
+    });
+  },
+  [filters],
+);
 
 // In the Upcoming tab section, pass filterSessions(upcomingSessions) instead of upcomingSessions
 // In the History tab section, pass filterSessions(historySessions) instead of historySessions
@@ -570,10 +651,12 @@ git commit -m "feat: add session list filtering by title and type"
 ### Task 5: Request Flow Polish
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/session-requests.tsx`
 - Hook `useCancelSessionRequest`, `useRespondToRequest` (already exists, needs toast wiring)
 
 **Interfaces:**
+
 - Consumes: `useCancelSessionRequest()` from Task 1
 - Modifies: `useRespondToRequest` — add toast onSuccess/onError (this is in the existing component, not the hook)
 
@@ -601,7 +684,7 @@ const cancelRequest = useCancelSessionRequest();
   className="text-destructive hover:text-destructive"
 >
   Cancel
-</Button>
+</Button>;
 ```
 
 - [x] **Step 2: Add toast feedback to accept/decline**
@@ -615,7 +698,7 @@ respondToRequest.mutate(
   {
     onSuccess: () => toast.success("Request accepted"),
     onError: () => toast.error("Failed to accept request"),
-  }
+  },
 );
 
 // Decline
@@ -624,7 +707,7 @@ respondToRequest.mutate(
   {
     onSuccess: () => toast.success("Request declined"),
     onError: () => toast.error("Failed to decline request"),
-  }
+  },
 );
 ```
 

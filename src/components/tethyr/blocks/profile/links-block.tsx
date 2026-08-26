@@ -21,7 +21,8 @@ function ProfileLinksBlock({ context }: BlockProps) {
       const { data: d } = await supabase
         .from("profiles")
         .select("portfolio_links, social_links")
-        .eq("id", profileId).maybeSingle();
+        .eq("id", profileId)
+        .maybeSingle();
       return d as unknown as LinksData | null;
     },
     enabled: !!profileId,
@@ -29,13 +30,17 @@ function ProfileLinksBlock({ context }: BlockProps) {
 
   if (isLoading) return <Skeleton className="h-16 w-full rounded-xl" />;
   if (!data) {
-    if (context.isEditing) return <BlockEmptyState label="Links" detail="Links will appear here when added." />;
+    if (context.isEditing)
+      return <BlockEmptyState label="Links" detail="Links will appear here when added." />;
     return null;
   }
   const portfolio = data.portfolio_links ?? [];
   const social = Object.entries(data.social_links ?? {}).filter(([, v]) => !!v);
   if (portfolio.length === 0 && social.length === 0) {
-    if (context.isEditing) return <BlockEmptyState label="Links" detail="Add portfolio and social links to your profile." />;
+    if (context.isEditing)
+      return (
+        <BlockEmptyState label="Links" detail="Add portfolio and social links to your profile." />
+      );
     return null;
   }
 
@@ -44,14 +49,24 @@ function ProfileLinksBlock({ context }: BlockProps) {
       <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Links</h4>
       <div className="flex flex-wrap gap-2">
         {portfolio.map((link) => (
-          <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors">
+          <a
+            key={link.url}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors"
+          >
             <ExternalLink className="h-3 w-3" /> {link.label}
           </a>
         ))}
         {social.map(([platform, url]) => (
-          <a key={platform} href={url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors">
+          <a
+            key={platform}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors"
+          >
             <LinkIcon className="h-3 w-3" /> {platform}
           </a>
         ))}
@@ -61,8 +76,12 @@ function ProfileLinksBlock({ context }: BlockProps) {
 }
 
 registerBlock({
-  type: "profile-links", category: "people", label: "Links",
+  type: "profile-links",
+  category: "people",
+  label: "Links",
   description: "Portfolio and social links.",
-  icon: "ExternalLink", defaults: {}, component: ProfileLinksBlock,
+  icon: "ExternalLink",
+  defaults: {},
+  component: ProfileLinksBlock,
 });
 export { ProfileLinksBlock };

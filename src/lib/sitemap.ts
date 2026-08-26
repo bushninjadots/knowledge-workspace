@@ -25,10 +25,11 @@ function normalizeOrigin(value: string | undefined) {
 function publicOrigin(requestOrigin: string) {
   const configuredOrigin = normalizeOrigin(process.env.VITE_PUBLIC_SITE_URL);
   if (configuredOrigin) return configuredOrigin;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("VITE_PUBLIC_SITE_URL must be configured in production");
-  }
-  return requestOrigin.replace(/\/+$/, "");
+  // Fall back to the request origin so a missing/blank VITE_PUBLIC_SITE_URL
+  // degrades to per-request absolute URLs instead of a hard 500 on every
+  // SEO endpoint (sitemap.xml / robots.txt).
+  if (requestOrigin) return requestOrigin.replace(/\/+$/, "");
+  throw new Error("VITE_PUBLIC_SITE_URL must be configured in production");
 }
 
 function entryXml(origin: string, entry: SitemapEntry) {

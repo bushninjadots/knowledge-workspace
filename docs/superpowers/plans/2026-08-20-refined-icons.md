@@ -22,9 +22,11 @@
 ## Task 1: Create achievement icon components
 
 **Files:**
+
 - Create: `src/components/tethyr/icons/achievements.tsx`
 
 **Interfaces:**
+
 - Produces: `ACHIEVEMENT_ICONS` map (`Record<string, React.ComponentType<IconProps>>`), 24 named exports (`IconFirstProject`, `IconFirstMilestone`, etc.)
 
 - [ ] **Step 1: Create the icons directory and file**
@@ -415,10 +417,12 @@ git commit -m "feat: add 24 custom achievement badge icons"
 ## Task 2: Wire achievement icons into achievements component
 
 **Files:**
+
 - Modify: `src/components/tethyr/achievements.tsx:1-72`
 - Modify: `src/lib/reputation.ts:50-56` (change `icon` field type)
 
 **Interfaces:**
+
 - Consumes: `ACHIEVEMENT_ICONS` map from `src/components/tethyr/icons/achievements.tsx`
 - Produces: Updated `AchievementIcon` component that uses custom icons
 
@@ -467,7 +471,9 @@ import { Award } from "lucide-react"; // keep Award for fallback only
 
 // UPDATE AchievementIcon (lines 61-72):
 function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm" | "md" }) {
-  const Icon = ACHIEVEMENT_ICONS[def.type] ?? (() => <Award className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />);
+  const Icon =
+    ACHIEVEMENT_ICONS[def.type] ??
+    (() => <Award className={size === "sm" ? "h-3 w-3" : "h-5 w-5"} />);
   return (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full ${def.color} ${
@@ -502,15 +508,18 @@ git commit -m "feat: wire custom achievement icons into badge rendering"
 ## Task 3: Refine pillar icons
 
 **Files:**
+
 - Modify: `src/components/tethyr/icons-system.tsx`
 
 **Interfaces:**
+
 - Consumes: (none)
 - Produces: Updated `IconLearn`, `IconTeach`, `IconConnect`, `IconGrow`, and compact variants
 
 - [ ] **Step 1: Rewrite pillar icons with refined geometry**
 
 Update each icon in `icons-system.tsx` to use:
+
 - Consistent `strokeWidth="1.5"` (currently 2)
 - `fill="none"` on all stroke-based paths
 - Tighter proportions
@@ -539,11 +548,13 @@ git commit -m "feat: refine pillar icon geometry and stroke consistency"
 ## Task 4: Add favicon SVG + PWA manifest
 
 **Files:**
+
 - Create: `public/favicon.svg`
 - Create: `public/site.webmanifest`
 - Modify: `src/routes/__root.tsx:114-122` (add link tags)
 
 **Interfaces:**
+
 - Consumes: LogoInfinity design (infinity mark with green/purple gradient)
 - Produces: SVG favicon, PWA manifest, link tags in root layout
 
@@ -628,6 +639,7 @@ Expected: BUILD SUCCESS
 - [ ] **Step 4: Visual check**
 
 Open the app in browser and verify:
+
 - Achievement badges show custom icons (not Lucide)
 - Favicon shows infinity mark
 - Nav pillar icons look refined

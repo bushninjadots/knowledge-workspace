@@ -41,12 +41,12 @@ ExplorePage
 
 ## Motion (framer-motion springs)
 
-| Action | Stiffness | Damping |
-|---|---|---|
-| Index change (scroll/nav) | 300 | 30 |
-| Hover on non-active card | 400 | 25 |
-| Opening overlay | 200 | 25 |
-| Closing overlay | 150 | 20 |
+| Action                    | Stiffness | Damping |
+| ------------------------- | --------- | ------- |
+| Index change (scroll/nav) | 300       | 30      |
+| Hover on non-active card  | 400       | 25      |
+| Opening overlay           | 200       | 25      |
+| Closing overlay           | 150       | 20      |
 
 ### Entrance Sequence (on mount, per card)
 
@@ -59,6 +59,7 @@ Back-to-front layering: background layer → title → ring/status → avatars �
 ## Cover Visuals
 
 Priority order for cover display:
+
 1. User-uploaded cover image
 2. Hash-based animated gradient using project category color influence
 3. Category-default gradient
@@ -68,6 +69,7 @@ The animated gradient uses CSS `@property` or framer-motion animated values to s
 ### Spine (non-active cards)
 
 Each non-active card shows its side as a "spine" with:
+
 - Category icon (Lucide icon based on project category)
 - Project title (rotated or stacked vertically, truncated)
 - Color strip (category-based accent color, ~4px wide)
@@ -76,16 +78,17 @@ Each non-active card shows its side as a "spine" with:
 
 ## Status Indicators
 
-| Indicator | Condition | Visual |
-|---|---|---|
-| Trending glow | High recent activity | `box-shadow` with brand green glow, pulsing |
-| Own-project edge | `userId === currentUser.id` | Left border accent strip + small "You" pill |
-| Contributed bookmark | User is contributor | Bookmark ribbon in top-right corner |
-| Invited pulse | User has pending invite | Gentle pulse animation on a ring/icon |
+| Indicator            | Condition                   | Visual                                      |
+| -------------------- | --------------------------- | ------------------------------------------- |
+| Trending glow        | High recent activity        | `box-shadow` with brand green glow, pulsing |
+| Own-project edge     | `userId === currentUser.id` | Left border accent strip + small "You" pill |
+| Contributed bookmark | User is contributor         | Bookmark ribbon in top-right corner         |
+| Invited pulse        | User has pending invite     | Gentle pulse animation on a ring/icon       |
 
 ## Overlay (Project Detail Panel)
 
 When a card is clicked:
+
 1. The clicked cover morphs via `layoutId` to become the overlay header
 2. Full-viewport overlay appears with `backdrop-filter: blur(16px)` frosted glass
 3. Close button (X) in top-right corner
@@ -96,6 +99,7 @@ When a card is clicked:
 ## Responsive / Mobile
 
 Below `md` breakpoint:
+
 - Horizontal shelf collapses to a vertical card stack
 - Cards display full front-face (no perspective/rotateY)
 - Swipe gesture to dismiss or navigate between cards

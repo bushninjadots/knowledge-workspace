@@ -56,9 +56,9 @@ npx sentry-cli sourcemaps upload .output/public --org your-org --project tethyr
 
 ## Environment Variables Needed in Production
 
-| Variable | Where | Value |
-|----------|-------|-------|
-| `VITE_SENTRY_DSN` | Hosting platform | `https://e4fac3a97165c75c056bc2efd6b6b725@o4511944457453568.ingest.de.sentry.io/4511944471150672` |
-| `SITE_URL` | Supabase edge function secrets | `https://your-production-domain.com` |
-| `VITE_SUPABASE_URL` | Hosting platform | Your Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Hosting platform | Your Supabase publishable key |
+| Variable                        | Where                          | Value                                                                                             |
+| ------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `VITE_SENTRY_DSN`               | Hosting platform               | `https://e4fac3a97165c75c056bc2efd6b6b725@o4511944457453568.ingest.de.sentry.io/4511944471150672` |
+| `SITE_URL`                      | Supabase edge function secrets | `https://your-production-domain.com`                                                              |
+| `VITE_SUPABASE_URL`             | Hosting platform               | Your Supabase project URL                                                                         |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Hosting platform               | Your Supabase publishable key                                                                     |

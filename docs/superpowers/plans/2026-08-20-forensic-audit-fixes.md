@@ -22,10 +22,12 @@
 ## Task 1: Add Sentry Error Tracking
 
 **Files:**
+
 - Create: `src/lib/sentry.ts`
 - Modify: `src/routes/__root.tsx`
 
 **Interfaces:**
+
 - Produces: `initSentry()` function called once at app root
 
 - [ ] **Step 1: Install Sentry**
@@ -88,6 +90,7 @@ Note: Check if the existing `ErrorPage` component at `src/components/tethyr/erro
 - [ ] **Step 5: Add env var placeholder**
 
 Add to `.env.example`:
+
 ```
 VITE_SENTRY_DSN=
 ```
@@ -107,12 +110,14 @@ git commit -m "feat: add Sentry error tracking"
 ## Task 2: Create Legal Pages
 
 **Files:**
+
 - Create: `src/routes/privacy.tsx`
 - Create: `src/routes/terms.tsx`
 - Modify: `src/components/tethyr/footer.tsx`
 - Modify: `src/routes/signup.tsx`
 
 **Interfaces:**
+
 - Produces: `/privacy` and `/terms` routes, linked from footer and signup
 
 - [ ] **Step 1: Create privacy policy page**
@@ -154,9 +159,9 @@ function PrivacyPolicy() {
         <section>
           <h2 className="font-display text-xl font-semibold">3. Information Sharing</h2>
           <p className="mt-2 text-muted-foreground">
-            We do not sell your personal information. We may share information with service providers
-            who assist in operating the platform (e.g., hosting, authentication), and when required
-            by law or to protect the safety of our users.
+            We do not sell your personal information. We may share information with service
+            providers who assist in operating the platform (e.g., hosting, authentication), and when
+            required by law or to protect the safety of our users.
           </p>
         </section>
 
@@ -181,25 +186,24 @@ function PrivacyPolicy() {
         <section>
           <h2 className="font-display text-xl font-semibold">6. Cookies</h2>
           <p className="mt-2 text-muted-foreground">
-            Tethyr uses essential cookies for authentication and session management. We do not
-            use third-party advertising cookies or tracking pixels.
+            Tethyr uses essential cookies for authentication and session management. We do not use
+            third-party advertising cookies or tracking pixels.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">7. Changes to This Policy</h2>
           <p className="mt-2 text-muted-foreground">
-            We may update this privacy policy from time to time. We will notify you of any
-            material changes by posting the new policy on this page and updating the "Last
-            updated" date.
+            We may update this privacy policy from time to time. We will notify you of any material
+            changes by posting the new policy on this page and updating the "Last updated" date.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">8. Contact Us</h2>
           <p className="mt-2 text-muted-foreground">
-            If you have questions about this privacy policy, please contact us through the
-            Tethyr platform or at the email associated with your account.
+            If you have questions about this privacy policy, please contact us through the Tethyr
+            platform or at the email associated with your account.
           </p>
         </section>
       </div>
@@ -229,68 +233,68 @@ function TermsOfService() {
         <section>
           <h2 className="font-display text-xl font-semibold">1. Acceptance of Terms</h2>
           <p className="mt-2 text-muted-foreground">
-            By accessing or using Tethyr, you agree to be bound by these Terms of Service.
-            If you do not agree, do not use the platform.
+            By accessing or using Tethyr, you agree to be bound by these Terms of Service. If you do
+            not agree, do not use the platform.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">2. Account Responsibilities</h2>
           <p className="mt-2 text-muted-foreground">
-            You are responsible for maintaining the security of your account and for all
-            activities that occur under your account. You must provide accurate and complete
-            information when creating your account.
+            You are responsible for maintaining the security of your account and for all activities
+            that occur under your account. You must provide accurate and complete information when
+            creating your account.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">3. User Content</h2>
           <p className="mt-2 text-muted-foreground">
-            You retain ownership of all content you post on Tethyr. By posting content, you
-            grant Tethyr a non-exclusive license to display, distribute, and promote your
-            content on the platform.
+            You retain ownership of all content you post on Tethyr. By posting content, you grant
+            Tethyr a non-exclusive license to display, distribute, and promote your content on the
+            platform.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">4. Community Standards</h2>
           <p className="mt-2 text-muted-foreground">
-            You agree to interact respectfully with other users, not to harass, spam, or
-            impersonate others, and not to post content that is illegal, harmful, or violates
-            the rights of others.
+            You agree to interact respectfully with other users, not to harass, spam, or impersonate
+            others, and not to post content that is illegal, harmful, or violates the rights of
+            others.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">5. Intellectual Property</h2>
           <p className="mt-2 text-muted-foreground">
-            Tethyr and its original content, features, and functionality are owned by Tethyr
-            and are protected by copyright, trademark, and other intellectual property laws.
+            Tethyr and its original content, features, and functionality are owned by Tethyr and are
+            protected by copyright, trademark, and other intellectual property laws.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">6. Termination</h2>
           <p className="mt-2 text-muted-foreground">
-            We may suspend or terminate your account at any time for conduct that violates
-            these terms or is harmful to other users, the platform, or third parties.
+            We may suspend or terminate your account at any time for conduct that violates these
+            terms or is harmful to other users, the platform, or third parties.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">7. Limitation of Liability</h2>
           <p className="mt-2 text-muted-foreground">
-            Tethyr is provided "as is" without warranties of any kind. We shall not be liable
-            for any indirect, incidental, special, consequential, or punitive damages resulting
-            from your use of the platform.
+            Tethyr is provided "as is" without warranties of any kind. We shall not be liable for
+            any indirect, incidental, special, consequential, or punitive damages resulting from
+            your use of the platform.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold">8. Changes to Terms</h2>
           <p className="mt-2 text-muted-foreground">
-            We reserve the right to modify these terms at any time. Continued use of the
-            platform after changes constitutes acceptance of the new terms.
+            We reserve the right to modify these terms at any time. Continued use of the platform
+            after changes constitutes acceptance of the new terms.
           </p>
         </section>
       </div>
@@ -355,18 +359,21 @@ git commit -m "feat: add privacy policy and terms of service pages"
 ## Task 3: Fix Terminology Drift
 
 **Files:**
+
 - Modify: `src/components/tethyr/community/skill-hub.tsx` (or wherever `teachers`/`learners` labels appear)
 - Modify: `src/components/tethyr/profile-sections.tsx`
 - Modify: `src/components/tethyr/landing/how-it-works.tsx`
 - Modify: `src/components/tethyr/community/post-card.tsx`
 
 **Interfaces:**
+
 - Consumes: existing skill terminology patterns
 - Produces: consistent "Skills I share" / "Skills I'm growing" terminology
 
 - [ ] **Step 1: Find all terminology instances**
 
 Run:
+
 ```bash
 grep -rn "teachers\|learners\|teach\|learn\|Growing" src/ --include="*.tsx" --include="*.ts" | grep -v "node_modules" | grep -v ".test." | grep -v "use-current-user" | grep -v "workspace-layouts" | grep -v "activity-timeline" | grep -v "studio-direction"
 ```
@@ -381,6 +388,7 @@ Change "teachers" count label to "sharing" or "teachers" (keep if it's a count l
 Change "Growing" tab label — keep as "Growing" since it's the most current terminology.
 
 The key fix is: wherever the UI says "teachers" or "learners" as a section header or filter label, change to:
+
 - "Teachers" → "Sharing" (or keep as "teachers" if it's a count)
 - "Learners" → "Growing" (or keep as "learners" if it's a count)
 
@@ -395,6 +403,7 @@ In `src/components/tethyr/profile-sections.tsx`, find the activity timeline entr
 ```
 
 Or use the more natural:
+
 ```typescript
 "Added {skill} to teaching" → "Started sharing {skill}"
 "Started learning {skill}" → "Started growing {skill}"
@@ -432,11 +441,13 @@ git commit -m "fix: standardize skill terminology to share/grow"
 ## Task 4: Add Post-Signup Welcome Modal
 
 **Files:**
+
 - Create: `src/components/tethyr/welcome-modal.tsx`
 - Modify: `src/routes/_authenticated/dashboard.tsx`
 - Modify: `src/routes/signup.tsx`
 
 **Interfaces:**
+
 - Produces: `<WelcomeModal>` component shown once after first signup
 - Consumes: localStorage for dismissal state, TanStack Router for navigation
 
@@ -479,15 +490,20 @@ export function WelcomeModal() {
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) handleDismiss();
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             Welcome to Tethyr, {user.display_name?.split(" ")[0] ?? "creator"}!
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            You're part of a community of people known by what they build.
-            Here's how to get started.
+            You're part of a community of people known by what they build. Here's how to get
+            started.
           </DialogDescription>
         </DialogHeader>
 
@@ -497,7 +513,9 @@ export function WelcomeModal() {
               <span className="text-lg">🎨</span>
               <div className="text-left">
                 <p className="font-medium">Add your skills</p>
-                <p className="text-xs text-muted-foreground">Share what you teach and what you're growing</p>
+                <p className="text-xs text-muted-foreground">
+                  Share what you teach and what you're growing
+                </p>
               </div>
             </Button>
           </Link>
@@ -507,7 +525,9 @@ export function WelcomeModal() {
               <span className="text-lg">🔍</span>
               <div className="text-left">
                 <p className="font-medium">Explore the community</p>
-                <p className="text-xs text-muted-foreground">Find projects and people to collaborate with</p>
+                <p className="text-xs text-muted-foreground">
+                  Find projects and people to collaborate with
+                </p>
               </div>
             </Button>
           </Link>
@@ -517,13 +537,19 @@ export function WelcomeModal() {
               <span className="text-lg">💬</span>
               <div className="text-left">
                 <p className="font-medium">Join the conversation</p>
-                <p className="text-xs text-muted-foreground">Ask questions, share work, find collaborators</p>
+                <p className="text-xs text-muted-foreground">
+                  Ask questions, share work, find collaborators
+                </p>
               </div>
             </Button>
           </Link>
         </div>
 
-        <Button variant="ghost" className="mt-2 w-full text-muted-foreground" onClick={handleDismiss}>
+        <Button
+          variant="ghost"
+          className="mt-2 w-full text-muted-foreground"
+          onClick={handleDismiss}
+        >
           I'll explore on my own
         </Button>
       </DialogContent>

@@ -11,13 +11,7 @@
 export type BlockType = string;
 
 /** Category groups for the block picker and library browsing. */
-export type BlockCategory =
-  | "content"
-  | "media"
-  | "project"
-  | "people"
-  | "community"
-  | "utility";
+export type BlockCategory = "content" | "media" | "project" | "people" | "community" | "utility";
 
 // ---------------------------------------------------------------------------
 // Block Configuration
@@ -96,12 +90,7 @@ export type LayoutType =
   | "custom";
 
 export type SectionLayoutType =
-  | "full"
-  | "two_column"
-  | "three_column"
-  | "sidebar_left"
-  | "sidebar_right"
-  | "feature";
+  "full" | "two_column" | "three_column" | "sidebar_left" | "sidebar_right" | "feature";
 
 /** A single block instance within a layout section. */
 export interface LayoutBlockInstance {
@@ -267,13 +256,3 @@ export interface LineageNode {
   parentId: string;
   depth: number;
 }
-
-// ---------------------------------------------------------------------------
-// Defaults (internal — not exported)
-// ---------------------------------------------------------------------------
-
-const DEFAULT_LAYOUT: PageLayout = {
-  sections: [],
-};
-
-const DEFAULT_THEME_TOKENS: ThemeTokens = {};

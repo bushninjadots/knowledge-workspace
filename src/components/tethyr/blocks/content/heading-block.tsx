@@ -3,7 +3,6 @@
 // In edit mode it becomes an editable input. Registers as "heading".
 
 import { useCallback } from "react";
-import { Heading } from "lucide-react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 

@@ -24,6 +24,7 @@
 ### Task 1: Migration + type updates
 
 **Files:**
+
 - Create: `supabase/migrations/20260821090000_library_content_format_github.sql`
 - Modify: `src/integrations/supabase/types.ts` (library_items Row/Insert/Update, ~lines 639-696)
 - Modify: `src/hooks/use-library.ts` (LibraryItem type ~line 8, useUpdateItem input ~line 227)
@@ -31,6 +32,7 @@
 - Test: `src/lib/github-source.test.ts`
 
 **Interfaces:**
+
 - Produces: `type GithubSource = { repo: string; path: string; branch: string | null; synced_at: string | null; sha: string | null }`
 - Produces: `parseGithubSource(raw: unknown): GithubSource | null`
 - Produces: `LibraryItem.content_format: "html" | "markdown"`, `LibraryItem.github_source: GithubSource | null`
@@ -151,16 +153,21 @@ ALTER TABLE public.library_items
 In `src/integrations/supabase/types.ts`, inside `library_items` (Row at ~line 640, Insert ~line 659, Update ~line 678), add to **all three** blocks (alphabetical position):
 
 Row:
+
 ```ts
-          content_format: string
-          github_source: Json | null
+content_format: string;
+github_source: Json | null;
 ```
+
 Insert:
+
 ```ts
           content_format?: string
           github_source?: Json | null
 ```
+
 Update:
+
 ```ts
           content_format?: string
           github_source?: Json | null
@@ -173,11 +180,13 @@ Update:
 In `src/hooks/use-library.ts`:
 
 Add import at top (with the other local imports):
+
 ```ts
 import { parseGithubSource, type GithubSource } from "@/lib/github-source";
 ```
 
 Extend `LibraryItem` (~line 8):
+
 ```ts
 export type LibraryItem = {
   id: string;
@@ -203,6 +212,7 @@ export type LibraryItem = {
 ```
 
 Extend the `useUpdateItem` mutation input (~line 227) with two fields:
+
 ```ts
     mutationFn: async (input: {
       id: string;
@@ -222,13 +232,13 @@ Extend the `useUpdateItem` mutation input (~line 227) with two fields:
 In `useLibraryItem`'s queryFn, after building the return object (~line 193), normalize the JSONB column so consumers always see a validated shape:
 
 ```ts
-      return {
-        ...item,
-        tags,
-        collection,
-        content_format: item.content_format === "markdown" ? "markdown" : "html",
-        github_source: parseGithubSource(item.github_source),
-      } as LibraryItemWithTags;
+return {
+  ...item,
+  tags,
+  collection,
+  content_format: item.content_format === "markdown" ? "markdown" : "html",
+  github_source: parseGithubSource(item.github_source),
+} as LibraryItemWithTags;
 ```
 
 (replacing the existing `return { ...item, tags, collection } as LibraryItemWithTags;`)
@@ -252,10 +262,12 @@ git commit -m "feat(library): content_format + github_source columns and shared 
 ### Task 2: Syntax highlighting languages + code language options
 
 **Files:**
+
 - Modify: `src/lib/lowlight.ts` (full rewrite)
 - Test: `src/lib/lowlight.test.ts` (new)
 
 **Interfaces:**
+
 - Produces: default export `lowlight` (unchanged contract for editors)
 - Produces: `CODE_LANGUAGE_OPTIONS: { value: string; label: string }[]` — canonical values match registered lowlight names/aliases exactly; first entry `{ value: "none", label: "Plain text" }` meaning "clear the language".
 
@@ -269,19 +281,33 @@ import lowlight, { CODE_LANGUAGE_OPTIONS } from "./lowlight";
 
 describe("lowlight registry", () => {
   const languages = [
-    "javascript", "js", "jsx",
-    "typescript", "ts", "tsx",
-    "python", "py",
+    "javascript",
+    "js",
+    "jsx",
+    "typescript",
+    "ts",
+    "tsx",
+    "python",
+    "py",
     "java",
-    "c", "cpp", "csharp", "cs",
-    "go", "golang",
+    "c",
+    "cpp",
+    "csharp",
+    "cs",
+    "go",
+    "golang",
     "rust",
     "php",
     "ruby",
     "sql",
-    "bash", "sh", "shell", "zsh",
-    "yaml", "yml",
-    "xml", "html",
+    "bash",
+    "sh",
+    "shell",
+    "zsh",
+    "yaml",
+    "yml",
+    "xml",
+    "html",
     "css",
     "json",
   ];
@@ -305,9 +331,23 @@ describe("CODE_LANGUAGE_OPTIONS", () => {
   it("covers the ten most common languages plus the rest of the set", () => {
     const values = CODE_LANGUAGE_OPTIONS.map((o) => o.value);
     for (const required of [
-      "javascript", "typescript", "python", "java", "c",
-      "cpp", "csharp", "go", "rust", "php",
-      "ruby", "sql", "bash", "yaml", "html", "css", "json",
+      "javascript",
+      "typescript",
+      "python",
+      "java",
+      "c",
+      "cpp",
+      "csharp",
+      "go",
+      "rust",
+      "php",
+      "ruby",
+      "sql",
+      "bash",
+      "yaml",
+      "html",
+      "css",
+      "json",
     ]) {
       expect(values).toContain(required);
     }
@@ -431,18 +471,20 @@ git commit -m "feat(editor): highlight 10 most common languages + expose picker 
 ### Task 3: Format-aware excerpts
 
 **Files:**
+
 - Create: `src/lib/library-excerpt.ts`
 - Test: `src/lib/library-excerpt.test.ts`
 - Modify: `src/components/tethyr/library/item-card.tsx` (getExcerpt ~lines 50-55, usage ~line 70)
 
 **Interfaces:**
+
 - Produces: `getItemExcerpt(content: string, format: "html" | "markdown"): string` — max 120 chars + ellipsis.
 
 - [ ] **Step 1: Write the failing test**
 
 Create `src/lib/library-excerpt.test.ts`:
 
-```ts
+````ts
 import { describe, it, expect } from "vitest";
 import { getItemExcerpt } from "./library-excerpt";
 
@@ -457,9 +499,7 @@ describe("getItemExcerpt", () => {
   });
 
   it("flattens markdown links and images to their text/src", () => {
-    expect(getItemExcerpt("See [docs](https://x.y) now", "markdown")).toBe(
-      "See docs now",
-    );
+    expect(getItemExcerpt("See [docs](https://x.y) now", "markdown")).toBe("See docs now");
     expect(getItemExcerpt("![logo](img.png)", "markdown")).toBe("logo");
   });
 
@@ -481,7 +521,7 @@ describe("getItemExcerpt", () => {
     expect(getItemExcerpt("", "markdown")).toBe("");
   });
 });
-```
+````
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -492,7 +532,7 @@ Expected: FAIL — module missing.
 
 Create `src/lib/library-excerpt.ts`:
 
-```ts
+````ts
 // Card excerpts for library items. HTML items strip tags; Markdown items get
 // their syntax markers flattened so cards read like prose either way.
 
@@ -532,7 +572,7 @@ export function getItemExcerpt(content: string, format: "html" | "markdown"): st
   if (!content) return "";
   return truncate(format === "markdown" ? markdownToText(content) : htmlToText(content));
 }
-```
+````
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -546,10 +586,11 @@ In `src/components/tethyr/library/item-card.tsx`:
 Delete the local `getExcerpt` function (~lines 50-56) and replace its call site (~line 70):
 
 ```ts
-  const excerpt = getItemExcerpt(item.content, item.content_format ?? "html");
+const excerpt = getItemExcerpt(item.content, item.content_format ?? "html");
 ```
 
 Add import:
+
 ```ts
 import { getItemExcerpt } from "@/lib/library-excerpt";
 ```
@@ -571,10 +612,12 @@ git commit -m "feat(library): format-aware card excerpts"
 ### Task 4: fetchRepoFile in shared GitHub helpers
 
 **Files:**
+
 - Modify: `src/lib/github.ts` (add after `fetchRepoReadme`, ~line 123)
 - Test: `src/lib/github.test.ts` (add describe block)
 
 **Interfaces:**
+
 - Produces: `type RepoFileResult = { text: string | null; sha: string | null; notFound: boolean; rateLimited: boolean; unauthorized: boolean }`
 - Produces: `fetchRepoFile(fullName: string, path: string, ref?: string, token?: string): Promise<RepoFileResult>`
 
@@ -725,7 +768,8 @@ export async function fetchRepoFile(
   } catch {
     res = null;
   }
-  if (!res) return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: false };
+  if (!res)
+    return { text: null, sha: null, notFound: false, rateLimited: false, unauthorized: false };
   if (res.status === 404)
     return { text: null, sha: null, notFound: true, rateLimited: false, unauthorized: false };
   if (res.status === 401)
@@ -738,7 +782,13 @@ export async function fetchRepoFile(
   try {
     const json = (await res.json()) as { content?: string; encoding?: string; sha?: string };
     if (json.encoding !== "base64" || typeof json.content !== "string")
-      return { text: null, sha: json.sha ?? null, notFound: false, rateLimited: false, unauthorized: false };
+      return {
+        text: null,
+        sha: json.sha ?? null,
+        notFound: false,
+        rateLimited: false,
+        unauthorized: false,
+      };
     const text = decodeBase64Utf8(json.content);
     const binary = text.includes("\u0000");
     return {
@@ -773,9 +823,11 @@ git commit -m "feat(github): fetchRepoFile with sha + binary detection"
 ### Task 5: Server functions — link metadata fetch + sync
 
 **Files:**
+
 - Modify: `src/lib/github-server.ts` (append at end)
 
 **Interfaces:**
+
 - Consumes: `fetchRepoFile` from Task 4, `getStoredToken` (already in file).
 - Produces: `fetchRepoFileServer({ fullName, path, ref? }): Promise<RepoFileResult>` (POST, auth-required)
 - Produces: `syncLibraryItemFromGithub({ itemId }): Promise<SyncResult>` where
@@ -783,7 +835,17 @@ git commit -m "feat(github): fetchRepoFile with sha + binary detection"
 ```ts
 type SyncResult =
   | { ok: true; updated: boolean; source: GithubSource }
-  | { ok: false; reason: "not_linked" | "forbidden" | "not_found" | "rate_limited" | "unauthorized" | "binary" | "network" };
+  | {
+      ok: false;
+      reason:
+        | "not_linked"
+        | "forbidden"
+        | "not_found"
+        | "rate_limited"
+        | "unauthorized"
+        | "binary"
+        | "network";
+    };
 ```
 
 - Produces: `linkLibraryItemGithub({ itemId, repo, path, branch }): Promise<{ ok: boolean; reason?: "forbidden" }>`
@@ -841,7 +903,8 @@ export const linkLibraryItemGithub = createServerFn({ method: "POST" })
       .select("id, user_id")
       .eq("id", data.itemId)
       .maybeSingle();
-    if (!item || item.user_id !== context.userId) return { ok: false as const, reason: "forbidden" as const };
+    if (!item || item.user_id !== context.userId)
+      return { ok: false as const, reason: "forbidden" as const };
 
     const source: GithubSource = {
       repo: data.repo,
@@ -869,7 +932,8 @@ export const unlinkLibraryItemGithub = createServerFn({ method: "POST" })
       .select("id, user_id")
       .eq("id", data.itemId)
       .maybeSingle();
-    if (!item || item.user_id !== context.userId) return { ok: false as const, reason: "forbidden" as const };
+    if (!item || item.user_id !== context.userId)
+      return { ok: false as const, reason: "forbidden" as const };
 
     const { error } = await supabaseAdmin
       .from("library_items")
@@ -913,7 +977,12 @@ export const syncLibraryItemFromGithub = createServerFn({ method: "POST" })
     if (!source) return { ok: false, reason: "not_linked" };
 
     const token = await getStoredToken(context.userId);
-    const result = await fetchRepoFile(source.repo, source.path, source.branch ?? undefined, token ?? undefined);
+    const result = await fetchRepoFile(
+      source.repo,
+      source.path,
+      source.branch ?? undefined,
+      token ?? undefined,
+    );
     if (result.unauthorized) return { ok: false, reason: "unauthorized" };
     if (result.rateLimited) return { ok: false, reason: "rate_limited" };
     if (result.notFound) return { ok: false, reason: "not_found" };
@@ -951,11 +1020,13 @@ git commit -m "feat(library): server functions to link/unlink/sync GitHub files"
 ### Task 6: Format-aware NoteEditor + code-block language picker
 
 **Files:**
+
 - Modify: `src/components/tethyr/library/note-editor.tsx`
 - Create: `src/lib/content-format.ts`
 - Test: `src/lib/content-format.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CODE_LANGUAGE_OPTIONS` (Task 2), `@tiptap/markdown` (installed).
 - Produces: `NoteEditor({ content, onChange, editable?, format?: "html" | "markdown" })` — when `format="markdown"` the editor reads/writes Markdown strings; default `"html"` preserves current behavior.
 - Produces: `htmlToMarkdown(html: string): string`, `markdownToHtml(md: string): string` in `src/lib/content-format.ts`.
@@ -964,13 +1035,15 @@ git commit -m "feat(library): server functions to link/unlink/sync GitHub files"
 
 Create `src/lib/content-format.test.ts`:
 
-```ts
+````ts
 import { describe, it, expect } from "vitest";
 import { htmlToMarkdown, markdownToHtml } from "./content-format";
 
 describe("htmlToMarkdown", () => {
   it("converts headings, emphasis, and links", () => {
-    const md = htmlToMarkdown("<h1>Title</h1><p>Some <strong>bold</strong> <a href=\"https://x.y\">link</a></p>");
+    const md = htmlToMarkdown(
+      '<h1>Title</h1><p>Some <strong>bold</strong> <a href="https://x.y">link</a></p>',
+    );
     expect(md).toContain("# Title");
     expect(md).toContain("**bold**");
     expect(md).toContain("[link](https://x.y)");
@@ -997,7 +1070,7 @@ describe("markdownToHtml", () => {
     expect(roundTripped).toMatch(/<li>one<\/li>/);
   });
 });
-```
+````
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -1097,90 +1170,91 @@ export function NoteEditor({
 3. In `useEditor`: add `immediatelyRender: false,` as the first option (SSR/Suspense-safe, matches ReadmeEditor), conditionally include the Markdown extension, and switch the serializer:
 
 ```ts
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false,
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: "text-brand-green underline" },
-      }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      ExternalImage,
-      SignedImage,
-      Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
-      ...(format === "markdown" ? [Markdown] : []),
-    ],
-    content,
-    ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
-    editable,
-    editorProps: {
-      attributes: {
-        class: "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
-      },
+const editor = useEditor({
+  immediatelyRender: false,
+  extensions: [
+    StarterKit.configure({
+      codeBlock: false,
+    }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: { class: "text-brand-green underline" },
+    }),
+    TaskList,
+    TaskItem.configure({ nested: true }),
+    CodeBlockLowlight.configure({ lowlight }),
+    Table.configure({ resizable: true }),
+    TableRow,
+    TableCell,
+    TableHeader,
+    ExternalImage,
+    SignedImage,
+    Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
+    ...(format === "markdown" ? [Markdown] : []),
+  ],
+  content,
+  ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
+  editable,
+  editorProps: {
+    attributes: {
+      class: "prose-custom focus:outline-none min-h-[60vh] px-4 py-6 text-sm leading-relaxed",
     },
-    onUpdate: ({ editor: e }) => {
-      if (!onChange) return;
-      onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
-    },
-  });
+  },
+  onUpdate: ({ editor: e }) => {
+    if (!onChange) return;
+    onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
+  },
+});
 ```
 
 4. External-content sync effect — make it format-aware:
 
 ```ts
-  useEffect(() => {
-    if (!editor) return;
-    const current = format === "markdown" ? editor.getMarkdown() : editor.getHTML();
-    if (content !== current) {
-      editor.commands.setContent(content, {
-        ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
-        emitUpdate: false,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
+useEffect(() => {
+  if (!editor) return;
+  const current = format === "markdown" ? editor.getMarkdown() : editor.getHTML();
+  if (content !== current) {
+    editor.commands.setContent(content, {
+      ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
+      emitUpdate: false,
+    });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [content]);
 ```
 
 5. Add the language picker to `Toolbar`. Inside the `Toolbar` component (after the `addTable` helper), add:
 
 ```tsx
-  const activeLanguage =
-    (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
+const activeLanguage = (editor.getAttributes("codeBlock").language as string | undefined) ?? "";
 ```
 
 and render this select right after the Code block ToolbarButton (still inside the same flex group, before the following `<Separator>`):
 
 ```tsx
-      {editor.isActive("codeBlock") && (
-        <select
-          value={activeLanguage === "" ? "none" : activeLanguage}
-          onChange={(e) => {
-            const next = e.target.value;
-            editor
-              .chain()
-              .focus()
-              .setCodeBlockLanguage(next === "none" ? null : next)
-              .run();
-          }}
-          aria-label="Code block language"
-          className="h-8 rounded-lg border border-border/50 bg-background px-2 text-xs text-foreground outline-none"
-        >
-          {CODE_LANGUAGE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      )}
+{
+  editor.isActive("codeBlock") && (
+    <select
+      value={activeLanguage === "" ? "none" : activeLanguage}
+      onChange={(e) => {
+        const next = e.target.value;
+        editor
+          .chain()
+          .focus()
+          .setCodeBlockLanguage(next === "none" ? null : next)
+          .run();
+      }}
+      aria-label="Code block language"
+      className="h-8 rounded-lg border border-border/50 bg-background px-2 text-xs text-foreground outline-none"
+    >
+      {CODE_LANGUAGE_OPTIONS.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
 ```
 
 - [ ] **Step 6: Verify and commit**
@@ -1198,10 +1272,12 @@ git commit -m "feat(library): format-aware NoteEditor with code-block language p
 ### Task 7: Route integration — real modes, safe preview, GitHub link UI
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/library.$id.tsx`
 - Create: `src/components/tethyr/library/github-link-dialog.tsx`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1-6 (`content_format`, `parseGithubSource`, converters, `listGithubRepos`, `fetchRepoFileServer`, `linkLibraryItemGithub`, `unlinkLibraryItemGithub`, `syncLibraryItemFromGithub`, `SyncResult`).
 - Consumes: `useCurrentUser()` → `{ userId }`; `useQueryClient` from `@tanstack/react-query`; `libraryKeys.item(id)` from `@/hooks/use-library` (verify exact export name before use — it is used by `useUpdateItem`'s onSuccess).
 
@@ -1278,8 +1354,8 @@ export function GithubLinkDialog({
         <DialogHeader>
           <DialogTitle>Link GitHub file</DialogTitle>
           <DialogDescription>
-            Pick one of your repositories and the file to pull from. Nothing changes until you
-            press “Sync from GitHub”.
+            Pick one of your repositories and the file to pull from. Nothing changes until you press
+            “Sync from GitHub”.
           </DialogDescription>
         </DialogHeader>
 
@@ -1364,10 +1440,7 @@ import { Markdown as ReactMarkdown } from "react-markdown"; // alias to avoid cl
 import remarkGfm from "remark-gfm";
 import { Github, RefreshCw, Unlink } from "lucide-react";
 import { libraryKeys } from "@/hooks/use-library"; // verify named export; adjust to actual
-import {
-  syncLibraryItemFromGithub,
-  unlinkLibraryItemGithub,
-} from "@/lib/github-server";
+import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
 import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
 import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
 ```
@@ -1375,42 +1448,42 @@ import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
 3. State/mode wiring inside `LibraryItemPage`:
 
 ```ts
-  const queryClient = useQueryClient();
-  const [workspaceMode, setWorkspaceMode] = useState<"docs" | "code">("docs");
-  const [ghDialogOpen, setGhDialogOpen] = useState(false);
+const queryClient = useQueryClient();
+const [workspaceMode, setWorkspaceMode] = useState<"docs" | "code">("docs");
+const [ghDialogOpen, setGhDialogOpen] = useState(false);
 
-  // Sync local state when item loads
-  useEffect(() => {
-    if (item) {
-      setTitle(item.title);
-      setContent(item.content);
-      setProjectId(item.project_id ?? null);
-      setWorkspaceMode(item.content_format === "markdown" ? "code" : "docs");
-      setHasChanges(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id]);
+// Sync local state when item loads
+useEffect(() => {
+  if (item) {
+    setTitle(item.title);
+    setContent(item.content);
+    setProjectId(item.project_id ?? null);
+    setWorkspaceMode(item.content_format === "markdown" ? "code" : "docs");
+    setHasChanges(false);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [item?.id]);
 ```
 
 Mode switching with explicit conversion (replaces the bare `setWorkspaceMode` calls in the toggle buttons):
 
 ```ts
-  function handleModeSwitch(target: "docs" | "code") {
-    if (target === workspaceMode) return;
-    const currentFormat = workspaceMode === "code" ? "markdown" : "html";
-    const targetFormat = target === "code" ? "markdown" : "html";
-    if (currentFormat !== targetFormat && content.trim()) {
-      const confirmed = window.confirm(
-        target === "code"
-          ? "Convert this doc to Markdown? Rich-text formatting is translated as faithfully as possible."
-          : "Convert this Markdown into rich text?",
-      );
-      if (!confirmed) return;
-      setContent(target === "code" ? htmlToMarkdown(content) : markdownToHtml(content));
-    }
-    setWorkspaceMode(target);
-    setHasChanges(true);
+function handleModeSwitch(target: "docs" | "code") {
+  if (target === workspaceMode) return;
+  const currentFormat = workspaceMode === "code" ? "markdown" : "html";
+  const targetFormat = target === "code" ? "markdown" : "html";
+  if (currentFormat !== targetFormat && content.trim()) {
+    const confirmed = window.confirm(
+      target === "code"
+        ? "Convert this doc to Markdown? Rich-text formatting is translated as faithfully as possible."
+        : "Convert this Markdown into rich text?",
+    );
+    if (!confirmed) return;
+    setContent(target === "code" ? htmlToMarkdown(content) : markdownToHtml(content));
   }
+  setWorkspaceMode(target);
+  setHasChanges(true);
+}
 ```
 
 Toggle buttons call `handleModeSwitch("docs")` / `handleModeSwitch("code")`.
@@ -1418,50 +1491,52 @@ Toggle buttons call `handleModeSwitch("docs")` / `handleModeSwitch("code")`.
 4. Save includes the format:
 
 ```ts
-  function handleSave() {
-    if (!item) return;
-    updateItem.mutate(
-      {
-        id: item.id,
-        title,
-        content,
-        project_id: projectId,
-        content_format: workspaceMode === "code" ? "markdown" : "html",
+function handleSave() {
+  if (!item) return;
+  updateItem.mutate(
+    {
+      id: item.id,
+      title,
+      content,
+      project_id: projectId,
+      content_format: workspaceMode === "code" ? "markdown" : "html",
+    },
+    {
+      onSuccess: () => {
+        setHasChanges(false);
+        toast.success("Saved");
       },
-      {
-        onSuccess: () => {
-          setHasChanges(false);
-          toast.success("Saved");
-        },
-        onError: (err) => {
-          toast.error(friendlyError(err, "Save failed"));
-        },
+      onError: (err) => {
+        toast.error(friendlyError(err, "Save failed"));
       },
-    );
-  }
+    },
+  );
+}
 ```
 
 5. Preview becomes format-aware and sanitized (replaces the `preview ?` article):
 
 ```tsx
-            {preview ? (
-              workspaceMode === "code" ? (
-                <article className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-                </article>
-              ) : (
-                <article
-                  className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
-                />
-              )
-            ) : (
-              <NoteEditor
-                content={content}
-                onChange={handleContentChange}
-                format={workspaceMode === "code" ? "markdown" : "html"}
-              />
-            )}
+{
+  preview ? (
+    workspaceMode === "code" ? (
+      <article className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </article>
+    ) : (
+      <article
+        className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+      />
+    )
+  ) : (
+    <NoteEditor
+      content={content}
+      onChange={handleContentChange}
+      format={workspaceMode === "code" ? "markdown" : "html"}
+    />
+  );
+}
 ```
 
 6. Editor description text reflects the mode (the banner copy stays as-is otherwise).
@@ -1469,118 +1544,128 @@ Toggle buttons call `handleModeSwitch("docs")` / `handleModeSwitch("code")`.
 7. GitHub section — replace the old info box with (rendered for note/document types):
 
 ```tsx
-        {(item.type === "note" || item.type === "document") && isOwner && (
-          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs">
-            <Github className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            {item.github_source ? (
-              <>
-                <span className="font-medium text-foreground">
-                  {item.github_source.repo}/{item.github_source.path}
-                </span>
-                {item.github_source.branch && (
-                  <span className="text-muted-foreground">· {item.github_source.branch}</span>
-                )}
-                <span className="text-muted-foreground">
-                  ·{" "}
-                  {item.github_source.synced_at
-                    ? `Synced ${new Date(item.github_source.synced_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
-                    : "Not synced yet"}
-                </span>
-                <span className="flex-1" />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1.5 text-xs"
-                  disabled={syncGithub.isPending}
-                  onClick={() => {
-                    if (hasChanges && !window.confirm("Syncing replaces your unsaved edits with the GitHub version. Continue?")) return;
-                    syncGithub.mutate(item.id);
-                  }}
-                >
-                  {syncGithub.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
-                  )}
-                  Sync from GitHub
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 gap-1.5 text-xs text-muted-foreground"
-                  disabled={unlinkGithub.isPending}
-                  onClick={() => unlinkGithub.mutate(item.id)}
-                >
-                  <Unlink className="h-3 w-3" />
-                  Unlink
-                </Button>
-              </>
-            ) : (
-              <>
-                <span className="text-muted-foreground">
-                  Pull updates from a file in your GitHub repository — always on your terms.
-                </span>
-                <span className="flex-1" />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1.5 text-xs"
-                  onClick={() => setGhDialogOpen(true)}
-                >
-                  <Github className="h-3 w-3" />
-                  Link GitHub file
-                </Button>
-              </>
-            )}
-          </div>
-        )}
-        {(item.type === "note" || item.type === "document") && (
-          <GithubLinkDialog
-            open={ghDialogOpen}
-            onOpenChange={setGhDialogOpen}
-            itemId={item.id}
-            onLinked={() => {
-              queryClient.invalidateQueries({ queryKey: libraryKeys.item(item.id) });
-              toast.success("GitHub file linked");
+{
+  (item.type === "note" || item.type === "document") && isOwner && (
+    <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs">
+      <Github className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      {item.github_source ? (
+        <>
+          <span className="font-medium text-foreground">
+            {item.github_source.repo}/{item.github_source.path}
+          </span>
+          {item.github_source.branch && (
+            <span className="text-muted-foreground">· {item.github_source.branch}</span>
+          )}
+          <span className="text-muted-foreground">
+            ·{" "}
+            {item.github_source.synced_at
+              ? `Synced ${new Date(item.github_source.synced_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+              : "Not synced yet"}
+          </span>
+          <span className="flex-1" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            disabled={syncGithub.isPending}
+            onClick={() => {
+              if (
+                hasChanges &&
+                !window.confirm(
+                  "Syncing replaces your unsaved edits with the GitHub version. Continue?",
+                )
+              )
+                return;
+              syncGithub.mutate(item.id);
             }}
-          />
-        )}
+          >
+            {syncGithub.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+            Sync from GitHub
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1.5 text-xs text-muted-foreground"
+            disabled={unlinkGithub.isPending}
+            onClick={() => unlinkGithub.mutate(item.id)}
+          >
+            <Unlink className="h-3 w-3" />
+            Unlink
+          </Button>
+        </>
+      ) : (
+        <>
+          <span className="text-muted-foreground">
+            Pull updates from a file in your GitHub repository — always on your terms.
+          </span>
+          <span className="flex-1" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() => setGhDialogOpen(true)}
+          >
+            <Github className="h-3 w-3" />
+            Link GitHub file
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+{
+  (item.type === "note" || item.type === "document") && (
+    <GithubLinkDialog
+      open={ghDialogOpen}
+      onOpenChange={setGhDialogOpen}
+      itemId={item.id}
+      onLinked={() => {
+        queryClient.invalidateQueries({ queryKey: libraryKeys.item(item.id) });
+        toast.success("GitHub file linked");
+      }}
+    />
+  );
+}
 ```
 
 with the mutations defined near the top of the component:
 
 ```ts
-  const isOwner = !!me?.userId && item?.user_id === me.userId;
+const isOwner = !!me?.userId && item?.user_id === me.userId;
 
-  const syncGithub = useMutation({
-    mutationFn: (itemId: string) => syncLibraryItemFromGithub({ data: { itemId } }),
-    onSuccess: (result) => {
-      if (result.ok) {
-        queryClient.invalidateQueries({ queryKey: libraryKeys.item(id) });
-        toast.success(result.updated ? "Synced from GitHub" : "Already up to date");
-        setHasChanges(false);
-      } else {
-        const messages: Record<string, string> = {
-          not_found: "File not found in that repo — check the path/branch.",
-          rate_limited: "GitHub rate limit hit — try again in a few minutes.",
-          unauthorized: "GitHub rejected the saved token — reconnect it in your profile.",
-          binary: "That file looks binary — link a text/Markdown file instead.",
-          not_linked: "This item has no GitHub file linked.",
-          forbidden: "Only the owner can sync this item.",
-          network: "Couldn't reach GitHub — try again.",
-        };
-        toast.error(messages[result.reason] ?? "Sync failed");
-      }
-    },
-  });
-
-  const unlinkGithub = useMutation({
-    mutationFn: (itemId: string) => unlinkLibraryItemGithub({ data: { itemId } }),
-    onSuccess: () => {
+const syncGithub = useMutation({
+  mutationFn: (itemId: string) => syncLibraryItemFromGithub({ data: { itemId } }),
+  onSuccess: (result) => {
+    if (result.ok) {
       queryClient.invalidateQueries({ queryKey: libraryKeys.item(id) });
-      toast.success("GitHub link removed");
-    },
-  });
+      toast.success(result.updated ? "Synced from GitHub" : "Already up to date");
+      setHasChanges(false);
+    } else {
+      const messages: Record<string, string> = {
+        not_found: "File not found in that repo — check the path/branch.",
+        rate_limited: "GitHub rate limit hit — try again in a few minutes.",
+        unauthorized: "GitHub rejected the saved token — reconnect it in your profile.",
+        binary: "That file looks binary — link a text/Markdown file instead.",
+        not_linked: "This item has no GitHub file linked.",
+        forbidden: "Only the owner can sync this item.",
+        network: "Couldn't reach GitHub — try again.",
+      };
+      toast.error(messages[result.reason] ?? "Sync failed");
+    }
+  },
+});
+
+const unlinkGithub = useMutation({
+  mutationFn: (itemId: string) => unlinkLibraryItemGithub({ data: { itemId } }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: libraryKeys.item(id) });
+    toast.success("GitHub link removed");
+  },
+});
 ```
 
 Import `useMutation` alongside `useQueryClient` from `@tanstack/react-query`.

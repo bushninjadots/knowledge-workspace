@@ -12,10 +12,15 @@ const SECURITY_HEADERS: Record<string, string> = {
     "base-uri 'self'",
     "object-src 'none'",
     `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+    // Sentry Replay uses a blob: worker for session recording; without
+    // worker-src the browser falls back to script-src and blocks it.
+    "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https: http://localhost:54321 http://127.0.0.1:54321",
-    "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co https://raw.githubusercontent.com https://api.github.com",
+    // *.ingest.sentry.io + regional ingest hosts: without these, CSP silently
+    // blocks every Sentry envelope and error tracking is dead in production.
+    "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co https://raw.githubusercontent.com https://api.github.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
     "frame-ancestors 'none'",
   ].join("; "),
 };

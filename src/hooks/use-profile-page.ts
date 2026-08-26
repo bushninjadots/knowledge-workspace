@@ -6,8 +6,11 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { usePage, invalidatePage } from "@/hooks/use-page";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
+
+type LayoutsSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
 
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -22,7 +25,12 @@ interface UseProfilePageOptions {
  * user is the owner, creates one with the default profile layout.
  */
 export function useProfilePage({ profileId, isOwner }: UseProfilePageOptions) {
-  const { data: page, isLoading, isError, refetch } = usePage({
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = usePage({
     ownerId: profileId,
     ownerType: "profile",
   });
@@ -42,12 +50,12 @@ async function autoCreatePage(profileId: string, qc: ReturnType<typeof useQueryC
   try {
     const defaultLayout = createDefaultProfileLayout();
     const me = (await supabase.auth.getUser()).data.user;
-    const { data: layoutData, error: layoutError } = await (supabase as any)
+    const { data: layoutData, error: layoutError } = await supabase
       .from("layouts")
       .insert({
         name: "Default Profile",
         type: "standard",
-        sections: defaultLayout.sections as unknown as Record<string, unknown>[],
+        sections: defaultLayout.sections as unknown as LayoutsSectionsJson,
         is_template: false,
         created_by: me?.id ?? profileId,
       })
@@ -59,16 +67,14 @@ async function autoCreatePage(profileId: string, qc: ReturnType<typeof useQueryC
       return;
     }
 
-    const { error: pageError } = await (supabase as any)
-      .from("pages")
-      .insert({
-        owner_id: profileId,
-        owner_type: "profile",
-        layout_id: layoutData.id,
-        theme_id: DEFAULT_THEME_ID,
-        status: "published",
-        published_at: new Date().toISOString(),
-      });
+    const { error: pageError } = await supabase.from("pages").insert({
+      owner_id: profileId,
+      owner_type: "profile",
+      layout_id: layoutData.id,
+      theme_id: DEFAULT_THEME_ID,
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
 
     if (pageError) {
       console.warn("Failed to create profile page", pageError);

@@ -18,7 +18,8 @@ function ProfileToolsBlock({ context }: BlockProps) {
       const { data: d } = await supabase
         .from("profiles")
         .select("favourite_tools, software_stack")
-        .eq("id", profileId).maybeSingle();
+        .eq("id", profileId)
+        .maybeSingle();
       return d as unknown as ToolsData | null;
     },
     enabled: !!profileId,
@@ -26,13 +27,22 @@ function ProfileToolsBlock({ context }: BlockProps) {
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
   if (!data) {
-    if (context.isEditing) return <BlockEmptyState label="Tools & Stack" detail="Tools will appear here when added to your profile." />;
+    if (context.isEditing)
+      return (
+        <BlockEmptyState
+          label="Tools & Stack"
+          detail="Tools will appear here when added to your profile."
+        />
+      );
     return null;
   }
   const tools = data.favourite_tools ?? [];
   const stack = data.software_stack ?? [];
   if (tools.length === 0 && stack.length === 0) {
-    if (context.isEditing) return <BlockEmptyState label="Tools & Stack" detail="Add tools and software to your profile." />;
+    if (context.isEditing)
+      return (
+        <BlockEmptyState label="Tools & Stack" detail="Add tools and software to your profile." />
+      );
     return null;
   }
 
@@ -45,7 +55,12 @@ function ProfileToolsBlock({ context }: BlockProps) {
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {tools.map((t) => (
-              <span key={t} className="rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-xs text-muted-foreground">{t}</span>
+              <span
+                key={t}
+                className="rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {t}
+              </span>
             ))}
           </div>
         </div>
@@ -57,7 +72,12 @@ function ProfileToolsBlock({ context }: BlockProps) {
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {stack.map((t) => (
-              <span key={t} className="rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-xs text-muted-foreground">{t}</span>
+              <span
+                key={t}
+                className="rounded-full border border-border bg-surface-sunken px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {t}
+              </span>
             ))}
           </div>
         </div>
@@ -67,8 +87,12 @@ function ProfileToolsBlock({ context }: BlockProps) {
 }
 
 registerBlock({
-  type: "profile-tools", category: "people", label: "Tools & Stack",
+  type: "profile-tools",
+  category: "people",
+  label: "Tools & Stack",
   description: "Favourite tools and software stack.",
-  icon: "Wrench", defaults: {}, component: ProfileToolsBlock,
+  icon: "Wrench",
+  defaults: {},
+  component: ProfileToolsBlock,
 });
 export { ProfileToolsBlock };

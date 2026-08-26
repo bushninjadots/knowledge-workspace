@@ -4,11 +4,14 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import type { PageLayout, PageOwnerType, PageStatus, ThemeTokens } from "@/lib/page-blocks";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { invalidatePage } from "@/hooks/use-page";
 
-const DEFAULT_LAYOUT_ID = "00000000-0000-0000-0000-000000000002";
+/** The jsonb `sections` column on layouts — cast target for LayoutSection[]. */
+type LayoutSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
+
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
 interface CreatePageParams {
@@ -47,11 +50,11 @@ export function useCreatePage() {
       // the explicit userId; fall back to auth.uid() so RLS allows future updates.
       const sections = defaultLayout?.sections ?? createDefaultProfileLayout().sections;
       const effectiveUserId = userId ?? (await supabase.auth.getUser())?.data.user?.id ?? ownerId;
-      const { data: layoutData, error: layoutError } = await (supabase as any)
+      const { data: layoutData, error: layoutError } = await supabase
         .from("layouts")
         .insert({
           name: `Page for ${ownerType}`,
-          sections: sections as unknown as Record<string, unknown>[],
+          sections: sections as unknown as LayoutSectionsJson,
           is_template: false,
           created_by: effectiveUserId,
         })
@@ -60,7 +63,7 @@ export function useCreatePage() {
 
       if (layoutError || !layoutData) throw layoutError ?? new Error("Failed to create layout");
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("pages")
         .insert({
           owner_id: ownerId,
@@ -90,9 +93,9 @@ export function useUpdatePageLayout() {
 
   return useMutation({
     mutationFn: async ({ layoutId, layout }: UpdateLayoutParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("layouts")
-        .update({ sections: layout.sections as unknown as Record<string, unknown>[] })
+        .update({ sections: layout.sections as unknown as LayoutSectionsJson })
         .eq("id", layoutId);
 
       if (error) throw error;
@@ -113,10 +116,7 @@ export function useUpdatePageTheme() {
 
   return useMutation({
     mutationFn: async ({ pageId, themeId }: UpdateThemeParams) => {
-      const { error } = await (supabase as any)
-        .from("pages")
-        .update({ theme_id: themeId })
-        .eq("id", pageId);
+      const { error } = await supabase.from("pages").update({ theme_id: themeId }).eq("id", pageId);
 
       if (error) throw error;
     },
@@ -136,7 +136,7 @@ export function usePublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("pages")
         .update({
           status: "published" as PageStatus,
@@ -160,7 +160,7 @@ export function useUnpublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("pages")
         .update({ status: "draft" as PageStatus, published_at: null })
         .eq("id", pageId);
@@ -181,10 +181,16 @@ export function useUpdateThemeOverrides() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ pageId, overrides }: { pageId: string; overrides: ThemeTokens | null }) => {
-      const { error } = await (supabase as any)
+    mutationFn: async ({
+      pageId,
+      overrides,
+    }: {
+      pageId: string;
+      overrides: ThemeTokens | null;
+    }) => {
+      const { error } = await supabase
         .from("pages")
-        .update({ theme_overrides: overrides })
+        .update({ theme_overrides: overrides as unknown as Json })
         .eq("id", pageId);
 
       if (error) throw error;

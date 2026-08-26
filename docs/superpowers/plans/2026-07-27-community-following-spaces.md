@@ -26,6 +26,7 @@
 ### Task 1: Database migration — `follows` table
 
 **Files:**
+
 - Create: `supabase/migrations/20260727000000_add_follows_table.sql`
 
 - [x] **Step 1: Create the migration file**
@@ -77,9 +78,11 @@ git commit -m "feat(db): add follows table for one-way follow relationships"
 ### Task 2: Follow hooks
 
 **Files:**
+
 - Create: `src/hooks/use-follow.ts`
 
 **Interfaces:**
+
 - Consumes: `supabase` client from `@/integrations/supabase/client`
 - Produces: `useFollowStatus`, `useFollowers`, `useFollowing`, `useFollowUser`, `useUnfollowUser`, `useFollowingFeed`
 
@@ -246,7 +249,10 @@ export function useFollowingFeed() {
         .eq("follower_id", me.user.id);
 
       if (followError) {
-        if (followError.message?.includes("Could not find the table") || followError.code === "42P01") {
+        if (
+          followError.message?.includes("Could not find the table") ||
+          followError.code === "42P01"
+        ) {
           return [] as PostWithAuthor[];
         }
         throw followError;
@@ -264,7 +270,10 @@ export function useFollowingFeed() {
         .limit(50);
 
       if (postsError) {
-        if (postsError.message?.includes("Could not find the table") || postsError.code === "42P01") {
+        if (
+          postsError.message?.includes("Could not find the table") ||
+          postsError.code === "42P01"
+        ) {
           return [] as PostWithAuthor[];
         }
         throw postsError;
@@ -294,7 +303,10 @@ export function useFollowingFeed() {
 
       const myActions = actions.filter((a) => a.user_id === me.user.id);
 
-      const statsMap = new Map<string, { likes: number; helpful: number; saves: number; offers: number }>();
+      const statsMap = new Map<
+        string,
+        { likes: number; helpful: number; saves: number; offers: number }
+      >();
       for (const a of actions) {
         if (!statsMap.has(a.post_id)) {
           statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
@@ -341,9 +353,11 @@ git commit -m "feat(hooks): add follow/unfollow hooks and following feed query"
 ### Task 3: FollowButton component
 
 **Files:**
+
 - Create: `src/components/tethyr/follow-button.tsx`
 
 **Interfaces:**
+
 - Consumes: `useFollowStatus`, `useFollowUser`, `useUnfollowUser` from `@/hooks/use-follow`
 - Produces: `FollowButton` component (imported by PostCard, profile pages)
 
@@ -435,9 +449,11 @@ git commit -m "feat(ui): add FollowButton component with hover-to-unfollow"
 ### Task 4: Wire FollowButton into PostCard
 
 **Files:**
+
 - Modify: `src/components/tethyr/community/post-card.tsx`
 
 **Interfaces:**
+
 - Consumes: `FollowButton` from `@/components/tethyr/follow-button`
 - Produces: No new exports — modifies existing PostCard rendering
 
@@ -457,9 +473,7 @@ In the `PostCard` component, find the `<div className="flex shrink-0 items-cente
 <div className="flex shrink-0 items-center gap-2">
   {!isOwner && <FollowButton targetUserId={post.author_id} size="sm" />}
   {isOwner && (
-    <div className="flex items-center gap-1">
-      {/* ...existing edit/delete buttons... */}
-    </div>
+    <div className="flex items-center gap-1">{/* ...existing edit/delete buttons... */}</div>
   )}
 </div>
 ```
@@ -481,10 +495,12 @@ git commit -m "feat(ui): add FollowButton to community post cards"
 ### Task 5: Wire FollowButton into profile pages
 
 **Files:**
+
 - Modify: `src/routes/u.$handle.tsx` (public profile)
 - Modify: `src/components/tethyr/profile/profile-layout.tsx` (authenticated profile)
 
 **Interfaces:**
+
 - Consumes: `FollowButton` from `@/components/tethyr/follow-button`
 
 - [x] **Step 1: Add FollowButton to public profile (`u.$handle.tsx`)**
@@ -500,10 +516,7 @@ Find the action buttons section (around line 291, the `<div className="flex item
 ```tsx
 <div className="flex items-center gap-2">
   <FollowButton targetUserId={profile.id} />
-  <ConnectButton
-    targetId={profile.id}
-    targetName={profile.display_name ?? profile.handle}
-  />
+  <ConnectButton targetId={profile.id} targetName={profile.display_name ?? profile.handle} />
 </div>
 ```
 
@@ -518,23 +531,25 @@ import { FollowButton } from "@/components/tethyr/follow-button";
 Find the ACTION BUTTONS section for public profiles (around line 233, the `{!isOwnProfile && (` block). Add FollowButton alongside the existing Message/Connect/Collaborate buttons:
 
 ```tsx
-{!isOwnProfile && (
-  <div className="mt-4 flex flex-wrap gap-2">
-    <FollowButton targetUserId={userId} />
-    <Button size="sm" className="rounded-full">
-      <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-      Message
-    </Button>
-    <Button size="sm" variant="outline" className="rounded-full">
-      <Users className="mr-1.5 h-3.5 w-3.5" />
-      Connect
-    </Button>
-    <Button size="sm" variant="outline" className="rounded-full">
-      <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-      Collaborate
-    </Button>
-  </div>
-)}
+{
+  !isOwnProfile && (
+    <div className="mt-4 flex flex-wrap gap-2">
+      <FollowButton targetUserId={userId} />
+      <Button size="sm" className="rounded-full">
+        <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+        Message
+      </Button>
+      <Button size="sm" variant="outline" className="rounded-full">
+        <Users className="mr-1.5 h-3.5 w-3.5" />
+        Connect
+      </Button>
+      <Button size="sm" variant="outline" className="rounded-full">
+        <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+        Collaborate
+      </Button>
+    </div>
+  );
+}
 ```
 
 - [x] **Step 3: Run typecheck**
@@ -554,9 +569,11 @@ git commit -m "feat(ui): add FollowButton to profile pages"
 ### Task 6: Activate Following tab in community page
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/community.tsx`
 
 **Interfaces:**
+
 - Consumes: `useFollowingFeed` from `@/hooks/use-follow`
 
 - [x] **Step 1: Add import**
@@ -696,6 +713,7 @@ git commit --allow-empty -m "checkpoint: Phase 1 — Following system complete"
 ### Task 7: Database migration — `community_spaces` + `community_space_members`
 
 **Files:**
+
 - Create: `supabase/migrations/20260727100000_add_community_spaces.sql`
 
 - [x] **Step 1: Create the migration file**
@@ -824,9 +842,11 @@ git commit -m "feat(db): add community_spaces, space_members tables and post int
 ### Task 8: Community spaces hooks
 
 **Files:**
+
 - Create: `src/hooks/use-community-spaces.ts`
 
 **Interfaces:**
+
 - Consumes: `supabase` client from `@/integrations/supabase/client`
 - Produces: All space-related hooks listed below
 
@@ -964,7 +984,7 @@ export function useCommunitySpace(slug: string) {
           .eq("space_id", space.id)
           .eq("user_id", me.user.id)
           .maybeSingle();
-        myRole = membership?.role as SpaceMemberRole ?? null;
+        myRole = (membership?.role as SpaceMemberRole) ?? null;
       }
 
       return {
@@ -1145,7 +1165,7 @@ export function useSpaceMembers(spaceId: string) {
 
       return (members ?? []).map((m: SpaceMember): SpaceMember => ({
         ...m,
-        profile: profileMap.get(m.user_id) as SpaceMember["profile"] ?? {
+        profile: (profileMap.get(m.user_id) as SpaceMember["profile"]) ?? {
           display_name: "Unknown",
           handle: "unknown",
           avatar_url: null,
@@ -1262,10 +1282,15 @@ export function useCommunitySpacePosts(spaceId: string) {
         .in("post_id", postIds);
       const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const myActions = actions.filter((a) => a.user_id === user?.id);
 
-      const statsMap = new Map<string, { likes: number; helpful: number; saves: number; offers: number }>();
+      const statsMap = new Map<
+        string,
+        { likes: number; helpful: number; saves: number; offers: number }
+      >();
       for (const a of actions) {
         if (!statsMap.has(a.post_id)) {
           statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
@@ -1313,9 +1338,11 @@ git commit -m "feat(hooks): add community spaces hooks (CRUD, members, posts)"
 ### Task 9: CommunityCard component
 
 **Files:**
+
 - Create: `src/components/tethyr/community/community-card.tsx`
 
 **Interfaces:**
+
 - Consumes: `useJoinSpace`, `useLeaveSpace` from `@/hooks/use-community-spaces`, `CommunitySpace` type
 - Produces: `CommunityCard` component
 
@@ -1417,9 +1444,11 @@ git commit -m "feat(ui): add CommunityCard component with join/leave"
 ### Task 10: CreateSpaceDialog component
 
 **Files:**
+
 - Create: `src/components/tethyr/community/create-space-dialog.tsx`
 
 **Interfaces:**
+
 - Consumes: `useCreateSpace` from `@/hooks/use-community-spaces`
 - Produces: `CreateSpaceDialog` component
 
@@ -1532,9 +1561,11 @@ git commit -m "feat(ui): add CreateSpaceDialog for community creation"
 ### Task 11: Wire Communities tab in community page
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/community.tsx`
 
 **Interfaces:**
+
 - Consumes: `useCommunitySpaces` from `@/hooks/use-community-spaces`, `CommunityCard`, `CreateSpaceDialog`
 
 - [x] **Step 1: Add imports**
@@ -1637,9 +1668,11 @@ git commit -m "feat(community): wire Communities tab with real spaces grid and c
 ### Task 12: SpaceHeader component for space detail view
 
 **Files:**
+
 - Create: `src/components/tethyr/community/space-header.tsx`
 
 **Interfaces:**
+
 - Consumes: `useCommunitySpace`, `useLeaveSpace`, `useSpaceMembers` from `@/hooks/use-community-spaces`
 - Produces: `SpaceHeader` component
 
@@ -1754,9 +1787,11 @@ git commit -m "feat(ui): add SpaceHeader for community space detail view"
 ### Task 13: SpaceSettingsDialog component
 
 **Files:**
+
 - Create: `src/components/tethyr/community/space-settings-dialog.tsx`
 
 **Interfaces:**
+
 - Consumes: `useUpdateSpace`, `useDeleteSpace`, `useSpaceMembers`, `useUpdateMemberRole`, `useRemoveMember` from `@/hooks/use-community-spaces`
 - Produces: `SpaceSettingsDialog` component
 
@@ -1975,10 +2010,12 @@ git commit -m "feat(ui): add SpaceSettingsDialog for space moderation"
 ### Task 14: Wire space filtering into community page
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/community.tsx`
 - Modify: `src/lib/community-data.ts`
 
 **Interfaces:**
+
 - Consumes: `useCommunitySpaces`, `useCommunitySpacePosts`, `SpaceHeader`, `SpaceSettingsDialog`
 
 - [x] **Step 1: Add state for active space**
@@ -1988,14 +2025,20 @@ Inside `CommunityPage`, add:
 ```typescript
 const [activeSpaceSlug, setActiveSpaceSlug] = useState<string | null>(null);
 const { data: activeSpace } = useCommunitySpace(activeSpaceSlug ?? "");
-const { data: spacePosts = [], isLoading: isLoadingSpacePosts } = useCommunitySpacePosts(activeSpace?.id ?? "");
+const { data: spacePosts = [], isLoading: isLoadingSpacePosts } = useCommunitySpacePosts(
+  activeSpace?.id ?? "",
+);
 const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false);
 ```
 
 Add imports for the new hooks and components at the top:
 
 ```typescript
-import { useCommunitySpaces, useCommunitySpace, useCommunitySpacePosts } from "@/hooks/use-community-spaces";
+import {
+  useCommunitySpaces,
+  useCommunitySpace,
+  useCommunitySpacePosts,
+} from "@/hooks/use-community-spaces";
 import { SpaceHeader } from "@/components/tethyr/community/space-header";
 import { SpaceSettingsDialog } from "@/components/tethyr/community/space-settings-dialog";
 ```
@@ -2045,25 +2088,29 @@ Remove the `<Link>` wrapper and replace with `<button>` since we're handling nav
 Before the main feed render block, add a check for active space:
 
 ```tsx
-{activeSpace && (
-  <SpaceHeader
-    slug={activeSpaceSlug!}
-    onBack={() => setActiveSpaceSlug(null)}
-    onOpenSettings={() => setSpaceSettingsOpen(true)}
-  />
-)}
+{
+  activeSpace && (
+    <SpaceHeader
+      slug={activeSpaceSlug!}
+      onBack={() => setActiveSpaceSlug(null)}
+      onOpenSettings={() => setSpaceSettingsOpen(true)}
+    />
+  );
+}
 
-{activeSpace && spaceSettingsOpen && (
-  <SpaceSettingsDialog
-    space={activeSpace}
-    open={spaceSettingsOpen}
-    onOpenChange={setSpaceSettingsOpen}
-    onDeleted={() => {
-      setActiveSpaceSlug(null);
-      setSpaceSettingsOpen(false);
-    }}
-  />
-)}
+{
+  activeSpace && spaceSettingsOpen && (
+    <SpaceSettingsDialog
+      space={activeSpace}
+      open={spaceSettingsOpen}
+      onOpenChange={setSpaceSettingsOpen}
+      onDeleted={() => {
+        setActiveSpaceSlug(null);
+        setSpaceSettingsOpen(false);
+      }}
+    />
+  );
+}
 ```
 
 - [x] **Step 4: Override feed when viewing a space**
@@ -2077,7 +2124,17 @@ const feed = useMemo(() => {
 
   let list = posts;
   // ... existing filter logic ...
-}, [posts, nav, effectiveTypeFilter, focusFilter, savedIds, searchQuery, sortMode, activeSpace, spacePosts]);
+}, [
+  posts,
+  nav,
+  effectiveTypeFilter,
+  focusFilter,
+  savedIds,
+  searchQuery,
+  sortMode,
+  activeSpace,
+  spacePosts,
+]);
 ```
 
 - [x] **Step 5: Update ComposerBar to pass space_id**
@@ -2157,9 +2214,11 @@ git commit -m "feat(community): wire space filtering, settings, and space-aware 
 ### Task 15: Add space chip to PostCard
 
 **Files:**
+
 - Modify: `src/components/tethyr/community/post-card.tsx`
 
 **Interfaces:**
+
 - Consumes: `space_id` from `PostRow` (new field)
 
 - [x] **Step 1: Add space chip to PostCard header**
@@ -2227,9 +2286,9 @@ git commit --allow-empty -m "checkpoint: Phase 2 — Community Spaces complete"
 
 ## Summary
 
-| Phase | Tasks | New Files | Modified Files |
-|-------|-------|-----------|----------------|
-| Phase 1 | 6 tasks | `use-follow.ts`, `follow-button.tsx` | `post-card.tsx`, `u.$handle.tsx`, `profile-layout.tsx`, `community.tsx` |
+| Phase   | Tasks   | New Files                                                                                                                   | Modified Files                                                                                                      |
+| ------- | ------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 | 6 tasks | `use-follow.ts`, `follow-button.tsx`                                                                                        | `post-card.tsx`, `u.$handle.tsx`, `profile-layout.tsx`, `community.tsx`                                             |
 | Phase 2 | 9 tasks | `use-community-spaces.ts`, `community-card.tsx`, `create-space-dialog.tsx`, `space-header.tsx`, `space-settings-dialog.tsx` | `community.tsx`, `community-card.tsx`, `composer-bar.tsx`, `use-community.ts`, `community-data.ts`, `post-card.tsx` |
 
 **Total:** 15 tasks, 6 new files, 8 modified files, 2 database migrations.

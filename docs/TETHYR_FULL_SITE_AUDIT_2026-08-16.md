@@ -31,7 +31,7 @@ These can expose internal table/column/RLS details. Recommend a friendly, non-te
 
 ### G3 — Authenticated `head` is client-rendered only — Informational
 
-`_authenticated/route.tsx` sets `ssr: false`, so SSR HTML for `/explore`, `/community`, etc. always shows the root marketing title/description. Every authenticated route *does* define its own `title` (verified), and they are `noindex` via `robotsMeta()`, so this is acceptable. Not a defect; recorded so future SEO work isn't surprised by it.
+`_authenticated/route.tsx` sets `ssr: false`, so SSR HTML for `/explore`, `/community`, etc. always shows the root marketing title/description. Every authenticated route _does_ define its own `title` (verified), and they are `noindex` via `robotsMeta()`, so this is acceptable. Not a defect; recorded so future SEO work isn't surprised by it.
 
 ### G4 — Pervasive `supabase as any` — Low (known)
 
@@ -132,17 +132,17 @@ Most data queries use `(supabase as any)`. Already tracked in `TETHYR_IMPLEMENTA
 
 ## 4. Priority order
 
-| # | Finding | Severity | Where |
-|---|---------|----------|-------|
-| 1 | Unlabelled icon-only controls (library editor, mobile skill tabs) | High | `/library/:id`, `/skills/:slug` |
-| 2 | Raw `error.message` leaks in error components | Medium | 11 routes (G2) |
-| 3 | Public profile terminology drift ("Studios"/"Currently learning") | Medium | `/u/:handle` |
-| 4 | Canonical links silently dropped without `VITE_PUBLIC_SITE_URL` | Medium | `src/lib/seo.ts` |
-| 5 | Project page title = raw UUID, not project name | Medium | `/projects/:id` |
-| 6 | `/library/:id` missing page title | Medium | `/library/:id` |
-| 7 | Landing TBT 940ms | Medium | `/` |
-| 8 | Generic titles on challenge/session detail | Low | `challenges/:id`, `sessions/:id` |
-| 9 | Bare-text loading states | Low | `/projects/:id`, `/u/:handle` |
-| 10 | Minor radius/typography/gradient deviations | Low | `/u/:handle`, `/profile` |
+| #   | Finding                                                           | Severity | Where                            |
+| --- | ----------------------------------------------------------------- | -------- | -------------------------------- |
+| 1   | Unlabelled icon-only controls (library editor, mobile skill tabs) | High     | `/library/:id`, `/skills/:slug`  |
+| 2   | Raw `error.message` leaks in error components                     | Medium   | 11 routes (G2)                   |
+| 3   | Public profile terminology drift ("Studios"/"Currently learning") | Medium   | `/u/:handle`                     |
+| 4   | Canonical links silently dropped without `VITE_PUBLIC_SITE_URL`   | Medium   | `src/lib/seo.ts`                 |
+| 5   | Project page title = raw UUID, not project name                   | Medium   | `/projects/:id`                  |
+| 6   | `/library/:id` missing page title                                 | Medium   | `/library/:id`                   |
+| 7   | Landing TBT 940ms                                                 | Medium   | `/`                              |
+| 8   | Generic titles on challenge/session detail                        | Low      | `challenges/:id`, `sessions/:id` |
+| 9   | Bare-text loading states                                          | Low      | `/projects/:id`, `/u/:handle`    |
+| 10  | Minor radius/typography/gradient deviations                       | Low      | `/u/:handle`, `/profile`         |
 
 No Critical findings were identified. The core loop surfaces (landing, project workspace, studio, explore) are coherent and match the product definition.

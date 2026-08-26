@@ -21,10 +21,10 @@ A page represents a renderable public or private surface (profile or project).
 ```typescript
 interface Page {
   id: string;
-  owner_id: string;          // profile or project owner
+  owner_id: string; // profile or project owner
   owner_type: "profile" | "project";
-  layout_id: string;          // reference to active layout
-  theme_id: string;           // reference to active theme
+  layout_id: string; // reference to active layout
+  theme_id: string; // reference to active theme
   status: "draft" | "published";
   published_at: string | null;
   created_at: string;
@@ -41,12 +41,21 @@ interface Layout {
   id: string;
   name: string;
   description: string | null;
-  type: "standard" | "minimal" | "full_width" | "centered" | "sidebar" |
-        "documentation" | "portfolio" | "magazine" | "dashboard" |
-        "landing_page" | "custom";
+  type:
+    | "standard"
+    | "minimal"
+    | "full_width"
+    | "centered"
+    | "sidebar"
+    | "documentation"
+    | "portfolio"
+    | "magazine"
+    | "dashboard"
+    | "landing_page"
+    | "custom";
   sections: LayoutSection[];
-  is_template: boolean;       // can it be used as a starting point?
-  created_by: string;         // user who created this layout
+  is_template: boolean; // can it be used as a starting point?
+  created_by: string; // user who created this layout
   created_at: string;
   updated_at: string;
 }
@@ -54,15 +63,16 @@ interface Layout {
 interface LayoutSection {
   id: string;
   position: number;
-  layout_type: "full" | "two_column" | "three_column" | "sidebar_left" | "sidebar_right" | "feature";
+  layout_type:
+    "full" | "two_column" | "three_column" | "sidebar_left" | "sidebar_right" | "feature";
   blocks: LayoutBlock[];
 }
 
 interface LayoutBlock {
   id: string;
-  block_type: string;         // references BlockDefinition.type
-  position: number;           // within section
-  config: Record<string, unknown>;  // block-specific configuration
+  block_type: string; // references BlockDefinition.type
+  position: number; // within section
+  config: Record<string, unknown>; // block-specific configuration
   visibility: "visible" | "hidden";
 }
 ```
@@ -73,19 +83,19 @@ A block definition is the registered type contract — what the block is, what i
 
 ```typescript
 interface BlockDefinition {
-  type: string;               // unique key, e.g. "text", "heading", "roadmap"
+  type: string; // unique key, e.g. "text", "heading", "roadmap"
   category: "content" | "media" | "project" | "people" | "community" | "utility";
-  label: string;              // human-readable name
+  label: string; // human-readable name
   description: string;
-  icon: string;               // icon identifier
-  defaults: Record<string, unknown>;  // default config
-  schema: BlockConfigSchema;  // JSON Schema or validation shape for config
-  component: React.ComponentType<BlockProps>;  // registered renderer
+  icon: string; // icon identifier
+  defaults: Record<string, unknown>; // default config
+  schema: BlockConfigSchema; // JSON Schema or validation shape for config
+  component: React.ComponentType<BlockProps>; // registered renderer
 }
 
 interface BlockProps {
   config: Record<string, unknown>;
-  context: BlockContext;      // page owner, auth state, etc.
+  context: BlockContext; // page owner, auth state, etc.
   isEditing: boolean;
 }
 ```
@@ -137,10 +147,10 @@ interface Template {
   name: string;
   description: string | null;
   creator_id: string;
-  layout: Layout;              // the structural blueprint
-  theme_id: string | null;     // optional associated theme
+  layout: Layout; // the structural blueprint
+  theme_id: string | null; // optional associated theme
   preview_image: string | null;
-  categories: string[];        // e.g. ["developer", "portfolio"]
+  categories: string[]; // e.g. ["developer", "portfolio"]
   tags: string[];
   is_published: boolean;
   usage_count: number;
@@ -159,15 +169,15 @@ A fork records lineage: who forked what, from where.
 interface Fork {
   id: string;
   original_template_id: string;
-  parent_template_id: string | null;  // immediate ancestor (for remix chains)
+  parent_template_id: string | null; // immediate ancestor (for remix chains)
   forked_by: string;
   forked_at: string;
-  is_independent: boolean;     // true if fork has diverged from original
+  is_independent: boolean; // true if fork has diverged from original
 }
 
 interface TemplateLineage {
   root_template_id: string;
-  chain: Fork[];               // ordered from original to current
+  chain: Fork[]; // ordered from original to current
 }
 ```
 
@@ -329,12 +339,14 @@ The migration should be additive — existing data is not destroyed, it is repre
 ## 5. Template Safety Rules
 
 ### What templates CAN contain
+
 - Layout structure (sections, block positions, column arrangements)
 - Theme reference or theme tokens
 - Default block configurations (e.g., "this section should be a two-column layout")
 - Metadata (name, description, categories, tags)
 
 ### What templates MUST NOT contain
+
 - User-specific content (project data, profile text, names, contact info)
 - Private project identifiers
 - Private member lists
@@ -343,6 +355,7 @@ The migration should be additive — existing data is not destroyed, it is repre
 - Authentication tokens or secrets
 
 ### Enforcement
+
 - Template serialization strips content fields from blocks when publishing
 - Template application fills block config defaults from the template, then hydrates with the user's own data
 - Permissions enforced at the database row level through RLS policies

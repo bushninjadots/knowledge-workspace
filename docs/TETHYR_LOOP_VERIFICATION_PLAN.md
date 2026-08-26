@@ -69,7 +69,7 @@ Goal: remove the five-products-at-once diffusion.
 
 **Exit condition:** the dashboard, Studio, and project pages feel like one
 surface answering one sequence of questions, with Sessions/Library/Messages
-reachable *through* work.
+reachable _through_ work.
 
 ## Phase 4 — Cold-start
 
@@ -135,7 +135,7 @@ ways to make their first contribution without dead ends.
   remain the only tabbed secondary tools at the bottom:
 
   `README/identity → Current work → Need help now → People → Conversation
-  → Credits (evidence) → [Files | Activity]`
+→ Credits (evidence) → [Files | Activity]`
 
 - Preserved deep links: `?tab=people` and `?tab=discussions` (used by role-app
   notifications, Explore, and the dashboard) now scroll to the inline sections;
@@ -189,7 +189,7 @@ ways to make their first contribution without dead ends.
     first technical tutorial, fix one accessibility issue, build a tiny CLI
     tool, two-minute project update.
   - Guard trigger `enforce_curated_starter`: only the curator can mark a
-    challenge as a starter (insert *or* relabel), so users can't spoof the
+    challenge as a starter (insert _or_ relabel), so users can't spoof the
     curated label.
 - UI:
   - **Start here** section on the Challenges page — clearly labeled

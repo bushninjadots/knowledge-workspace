@@ -27,10 +27,19 @@ interface StudioCanvasProps {
 }
 
 export function StudioCanvas({
-  page, pageData, pageLoading, pageError,
-  selectedBlockId, onSelectBlock,
-  onRemoveBlock, onToggleVisibility, onMoveBlock,
-  onAddBlock, onUpdateBlockConfig, onReorderBlocks, onRefetch,
+  page,
+  pageData,
+  pageLoading,
+  pageError,
+  selectedBlockId,
+  onSelectBlock,
+  onRemoveBlock,
+  onToggleVisibility,
+  onMoveBlock,
+  onAddBlock,
+  onUpdateBlockConfig,
+  onReorderBlocks,
+  onRefetch,
 }: StudioCanvasProps) {
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
 
@@ -51,19 +60,17 @@ export function StudioCanvas({
     setDragOverBlockId(blockId);
   }, []);
 
-  const handleDrop = useCallback((
-    e: React.DragEvent,
-    sectionId: string,
-    targetBlockId: string,
-    targetIndex: number,
-  ) => {
-    e.preventDefault();
-    const draggedBlockId = e.dataTransfer.getData("text/plain");
-    if (draggedBlockId && draggedBlockId !== targetBlockId) {
-      onReorderBlocks(sectionId, draggedBlockId, targetIndex);
-    }
-    setDragOverBlockId(null);
-  }, [onReorderBlocks]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent, sectionId: string, targetBlockId: string, targetIndex: number) => {
+      e.preventDefault();
+      const draggedBlockId = e.dataTransfer.getData("text/plain");
+      if (draggedBlockId && draggedBlockId !== targetBlockId) {
+        onReorderBlocks(sectionId, draggedBlockId, targetIndex);
+      }
+      setDragOverBlockId(null);
+    },
+    [onReorderBlocks],
+  );
   if (pageLoading) {
     return (
       <div className="space-y-4 p-8">
@@ -106,10 +113,11 @@ export function StudioCanvas({
         <div className="max-w-xs text-center">
           <p className="text-sm text-foreground font-medium">Your page is empty</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Add blocks from the left sidebar to start building your {page.type === "profile" ? "studio" : "project"} page.
+            Add blocks from the left sidebar to start building your{" "}
+            {page.type === "profile" ? "studio" : "project"} page.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-            {(["text", "heading", "project-hero", "project-status"]).map((type) => (
+            {["text", "heading", "project-hero", "project-status"].map((type) => (
               <button
                 key={type}
                 type="button"
@@ -138,7 +146,14 @@ export function StudioCanvas({
             const isDragOver = dragOverBlockId === block.id;
 
             const blockWidth = (block.config?.width as string) ?? "full";
-            const widthClass = blockWidth === "2/3" ? "w-2/3" : blockWidth === "1/2" ? "w-1/2" : blockWidth === "1/3" ? "w-1/3" : "w-full";
+            const widthClass =
+              blockWidth === "2/3"
+                ? "w-2/3"
+                : blockWidth === "1/2"
+                  ? "w-1/2"
+                  : blockWidth === "1/3"
+                    ? "w-1/3"
+                    : "w-full";
 
             return (
               <div
@@ -180,9 +195,20 @@ export function StudioCanvas({
                       type="button"
                       className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
                       aria-label="Move up"
-                      onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, "up"); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMoveBlock(block.id, "up");
+                      }}
                     >
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 15l-6-6-6 6"/></svg>
+                      <svg
+                        className="h-3 w-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M18 15l-6-6-6 6" />
+                      </svg>
                     </button>
                   )}
                   {!isLast && (
@@ -190,9 +216,20 @@ export function StudioCanvas({
                       type="button"
                       className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
                       aria-label="Move down"
-                      onClick={(e) => { e.stopPropagation(); onMoveBlock(block.id, "down"); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMoveBlock(block.id, "down");
+                      }}
                     >
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+                      <svg
+                        className="h-3 w-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
                     </button>
                   )}
                   <span className="h-3 w-px bg-border/40" />
@@ -200,7 +237,10 @@ export function StudioCanvas({
                     type="button"
                     className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-foreground"
                     aria-label={isHidden ? "Show block" : "Hide block"}
-                    onClick={(e) => { e.stopPropagation(); onToggleVisibility(block.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleVisibility(block.id);
+                    }}
                   >
                     {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                   </button>
@@ -208,7 +248,10 @@ export function StudioCanvas({
                     type="button"
                     className="pointer-events-auto rounded p-1 text-muted-foreground hover:text-red-400"
                     aria-label="Remove block"
-                    onClick={(e) => { e.stopPropagation(); onRemoveBlock(block.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveBlock(block.id);
+                    }}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -266,7 +309,8 @@ export function StudioCanvas({
 // ── Single block renderer ────────────────────────────────────────────────────
 
 function SingleBlockRenderer({
-  block, context,
+  block,
+  context,
 }: {
   block: LayoutBlockInstance;
   context: BlockContext;

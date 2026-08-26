@@ -46,12 +46,14 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 ## Components
 
 ### `ProjectPage` (route component)
+
 - Route: `/projects/$id`
 - Data fetching: existing `useQuery` for project, contributors, skills, cover/avatar signed URLs
 - Sub-queries: `useMilestones`, `useProjectUpdates`, `useDiscussions`, `useOpenRoles`, `useProjectCommunityPostCount`
 - Renders Shell → Hero → ContentSplit → CommunityPosts → Footer
 
 ### `ProjectHero`
+
 - **Props:** `project`, `coverSigned`, `creator`, `avatarSigned`, `accent`
 - Full viewport (`h-screen`), minimal `60vh` on mobile
 - Cover image: full-bleed `<img>` with `object-cover`, scaled up 110% with `scale` transform tied to scroll via framer-motion `useScroll` + `useTransform` (parallax: 0 → -20px offset over scroll range)
@@ -66,11 +68,13 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - `prefers-reduced-motion`: no parallax, no scroll-driven transforms
 
 ### `ProjectContentSplit`
+
 - **Props:** `project`, `contributors`, `skills`, `milestones`, `updates`, `discussions`, `openRoles`, `avatarSigned`, `isOwner`, `isContributor`, `communityPosts`
 - Two-column grid: `grid-cols-[1fr_280px]` on desktop, single column on mobile
 - Wraps in a `<section>` with `id` anchors for each section
 
 ### `ProjectSidebar`
+
 - Sticky: `sticky top-20 self-start`
 - Sections:
   - **Status card** — colored pill + progress
@@ -85,6 +89,7 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - Sections collapse under accordion headers when viewport < 900px (mobile + tablet)
 
 ### `ProjectMainContent`
+
 - Single scroll column, `space-y-16` between sections
 - Each section gets a `section` element with:
   - `id` attribute for scroll-spy and anchor links
@@ -105,6 +110,7 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 9. **Community Posts** — Existing `ProjectCommunityPosts`
 
 ### `JoinProjectModal`
+
 - **Props:** `projectId`, `openRoles`, `isOwner`, `isContributor`, `onClose`
 - Dialog/vaul drawer with:
   - Role selection (pre-selected if coming from an Open Role)
@@ -114,6 +120,7 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - Integrates with existing contributor request flow (or creates one if missing)
 
 ### `ScrollSpyNav`
+
 - Thin vertical indicator on the left edge of main content
 - Renders section dots/numbers, highlights the one in view
 - Clickable: scrolls to the corresponding `section` id
@@ -121,22 +128,26 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - Hidden on mobile
 
 ### `Shell`
+
 - Already exists as a wrapper in the current page
 - Updates: sticky header uses backdrop-blur, subtle border, animated on scroll (adds shadow when scrolled past hero)
 
 ## Data Flow
 
 ### Query Dependencies
+
 - Project ID from route params
 - `useQuery("project-detail", id)` — fetches project row + contributors + skills in one loader
 - Cover URL resolved to signed URL inside loader (existing pattern)
 - Separated queries: `useMilestones(id)`, `useProjectUpdates(id)`, `useDiscussions(id)`, `useOpenRoles(id)`, `useProjectCommunityPostCount(id)` (all existing)
 
 ### New Data Requirements
+
 - `project.goals` — if the DB doesn't have this column yet, extend `projects` table with a `goals` JSONB column `[{ icon: string, title: string, description: string }]`
 - Join flow — requires `project_join_requests` table or similar (or reuse existing contributor request flow). If neither exists, placeholder the modal with a "coming soon" state
 
 ### Loading / Error / Empty
+
 - **Loading:** Skeleton hero (full-width) + two-column skeleton with pulsing blobs
 - **Error:** Inline error banner with retry button
 - **Empty sections:** Each section shows a tasteful empty state matching the section's icon/theme
@@ -144,11 +155,11 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 
 ## Responsive
 
-| Breakpoint | Layout |
-|---|---|
-| > 1024px | Hero + two-column sidebar/main |
+| Breakpoint | Layout                                                                |
+| ---------- | --------------------------------------------------------------------- |
+| > 1024px   | Hero + two-column sidebar/main                                        |
 | 768–1024px | Hero + stacked (sidebar collapses to accordion sections in main flow) |
-| < 768px | Hero at 60vh, single column, buttons stack vertically, no scroll-spy |
+| < 768px    | Hero at 60vh, single column, buttons stack vertically, no scroll-spy  |
 
 ## Accessibility
 
@@ -172,6 +183,7 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 ## File Changes
 
 ### New Files
+
 - `src/components/tethyr/project/project-hero.tsx` — Full-bleed hero with parallax/gradient/overlay
 - `src/components/tethyr/project/project-content-split.tsx` — Two-column layout orchestrator
 - `src/components/tethyr/project/project-sidebar.tsx` — Sticky sidebar with meta/skills/roles/join CTA
@@ -181,6 +193,7 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - `src/hooks/use-project-scroll-spy.ts` — IntersectionObserver hook for active section tracking
 
 ### Modified Files
+
 - `src/routes/projects.$id.tsx` — Swap tab-based layout for hero + split layout, keep data loading
 - `src/components/tethyr/project/project-timeline.tsx` — Add compact vertical variant for sidebar
 - `src/components/tethyr/project/project-milestones.tsx` — Verify compatibility with inline rendering (not tab-scoped)
@@ -188,5 +201,6 @@ Full-viewport hero → two-column layout (sticky sidebar + scrollable main conte
 - `src/styles.css` — Add any new scroll-driven or parallax keyframes if needed
 
 ### Potentially New DB
+
 - `goals` column on `projects` table (JSONB) — optional, can be deferred if column doesn't exist
 - `project_join_requests` table — optional, can be placeholder UI if flow not implemented

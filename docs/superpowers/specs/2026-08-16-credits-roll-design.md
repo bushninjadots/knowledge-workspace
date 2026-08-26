@@ -6,8 +6,9 @@
 > **Status (2026-08-18): implemented** — project, Studio, and team Credits rolls
 > shipped (`lib/credits.ts`, `use-credits.ts`, `project-credits.tsx`,
 > `profile-credits.tsx`). The evidence trail is compiled from `project_activity`
-> + `project_contributors` rather than a `reputation_events` view, which is still
-> a future enhancement.
+>
+> - `project_contributors` rather than a `reputation_events` view, which is still
+>   a future enhancement.
 
 ---
 
@@ -17,7 +18,7 @@ Every film ends with a credits roll — the names of everyone who made it. Tethy
 projects should end the same way.
 
 A **Credits roll** is a single, auto-compiled, scrollable list of everyone who
-built a project and *what they actually did*. It is the moment where the loop
+built a project and _what they actually did_. It is the moment where the loop
 closes: `Build → Contribute → Become known` rendered as one surface.
 
 The key idea: **the Credits roll is not new data. It is a rendering layer on
@@ -63,14 +64,14 @@ you're trusted" becomes a linkable list of the concrete things you shipped.
 
 A credit is a single line built from an evidence event:
 
-| Field | Source | Notes |
-|---|---|---|
-| `profile_id` / name | event actor | dedupe + group by person |
-| `role` | project_contributors.role, team_members.role, or event type | creator / lead / core / mentor / contributor |
-| `credit_text` | event → human sentence | e.g. "Created the project" |
-| `evidence_link` | event's project/resource id | links to the milestone, file, session, need, challenge |
-| `occurred_at` | event timestamp | orders the roll chronologically |
-| `weight` | reputation delta on the event | powers tier math, not displayed as a score |
+| Field               | Source                                                      | Notes                                                  |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| `profile_id` / name | event actor                                                 | dedupe + group by person                               |
+| `role`              | project_contributors.role, team_members.role, or event type | creator / lead / core / mentor / contributor           |
+| `credit_text`       | event → human sentence                                      | e.g. "Created the project"                             |
+| `evidence_link`     | event's project/resource id                                 | links to the milestone, file, session, need, challenge |
+| `occurred_at`       | event timestamp                                             | orders the roll chronologically                        |
+| `weight`            | reputation delta on the event                               | powers tier math, not displayed as a score             |
 
 ### Evidence sources (existing tables)
 

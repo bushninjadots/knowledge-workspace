@@ -21,9 +21,11 @@
 ### Task 1: Enhance GlobalSearch component
 
 **Files:**
+
 - Modify: `src/components/tethyr/global-search.tsx`
 
 **Interfaces:**
+
 - Exports: `GlobalSearch(props: { variant: 'inline' | 'dialog'; open?: boolean; onOpenChange?: (open: boolean) => void; className?: string })`
 
 - [x] **Step 1: Add `variant`, `open`, `onOpenChange` props + dialog variant wrapper**
@@ -34,7 +36,15 @@ Replace the existing props type and component with this:
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, User, GraduationCap, FolderOpen, BookOpen, MessageSquare, Clock } from "lucide-react";
+import {
+  Search,
+  User,
+  GraduationCap,
+  FolderOpen,
+  BookOpen,
+  MessageSquare,
+  Clock,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,7 +120,14 @@ export function GlobalSearch({
 
   // Keyboard navigation
   function totalResults(): number {
-    return profileHits.length + skillHits.length + projectHits.length + libraryHits.length + postHits.length + sessionHits.length;
+    return (
+      profileHits.length +
+      skillHits.length +
+      projectHits.length +
+      libraryHits.length +
+      postHits.length +
+      sessionHits.length
+    );
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -135,12 +152,44 @@ export function GlobalSearch({
   function activateItem(index: number) {
     let offset = 0;
     const allHits = [
-      ...profileHits.map((h) => ({ type: "profile" as const, data: h, to: () => h.handle ? ({ to: "/u/$handle" as const, params: { handle: h.handle } }) : null })),
-      ...skillHits.map((h) => ({ type: "skill" as const, data: h, to: () => ({ to: "/skills/$slug" as const, params: { slug: h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") } }) })),
-      ...projectHits.map((h) => ({ type: "project" as const, data: h, to: () => ({ to: "/explore" as const }) })),
-      ...libraryHits.map((h) => ({ type: "library" as const, data: h, to: () => ({ to: "/library/$id" as const, params: { id: h.id } }) })),
-      ...postHits.map((h) => ({ type: "post" as const, data: h, to: () => ({ to: "/community" as const }) })),
-      ...sessionHits.map((h) => ({ type: "session" as const, data: h, to: () => ({ to: "/sessions/$id" as const, params: { id: h.id } }) })),
+      ...profileHits.map((h) => ({
+        type: "profile" as const,
+        data: h,
+        to: () => (h.handle ? { to: "/u/$handle" as const, params: { handle: h.handle } } : null),
+      })),
+      ...skillHits.map((h) => ({
+        type: "skill" as const,
+        data: h,
+        to: () => ({
+          to: "/skills/$slug" as const,
+          params: {
+            slug: h.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, ""),
+          },
+        }),
+      })),
+      ...projectHits.map((h) => ({
+        type: "project" as const,
+        data: h,
+        to: () => ({ to: "/explore" as const }),
+      })),
+      ...libraryHits.map((h) => ({
+        type: "library" as const,
+        data: h,
+        to: () => ({ to: "/library/$id" as const, params: { id: h.id } }),
+      })),
+      ...postHits.map((h) => ({
+        type: "post" as const,
+        data: h,
+        to: () => ({ to: "/community" as const }),
+      })),
+      ...sessionHits.map((h) => ({
+        type: "session" as const,
+        data: h,
+        to: () => ({ to: "/sessions/$id" as const, params: { id: h.id } }),
+      })),
     ];
     const hit = allHits[index];
     if (!hit) return;
@@ -168,7 +217,9 @@ export function GlobalSearch({
       const { data, error } = await supabase
         .from("profiles")
         .select("id, handle, display_name, category, creator_title")
-        .or(`display_name.ilike.${like},handle.ilike.${like},category.ilike.${like},creator_title.ilike.${like}`)
+        .or(
+          `display_name.ilike.${like},handle.ilike.${like},category.ilike.${like},creator_title.ilike.${like}`,
+        )
         .limit(4);
       if (error) throw error;
       return (data ?? []) as ProfileHit[];
@@ -261,8 +312,22 @@ export function GlobalSearch({
   const postHits = posts.data ?? [];
   const sessionHits = sessions.data ?? [];
 
-  const isLoading = profiles.isLoading || skills.isLoading || projects.isLoading || libraryItems.isLoading || posts.isLoading || sessions.isLoading;
-  const noResults = enabled && !isLoading && profileHits.length === 0 && skillHits.length === 0 && projectHits.length === 0 && libraryHits.length === 0 && postHits.length === 0 && sessionHits.length === 0;
+  const isLoading =
+    profiles.isLoading ||
+    skills.isLoading ||
+    projects.isLoading ||
+    libraryItems.isLoading ||
+    posts.isLoading ||
+    sessions.isLoading;
+  const noResults =
+    enabled &&
+    !isLoading &&
+    profileHits.length === 0 &&
+    skillHits.length === 0 &&
+    projectHits.length === 0 &&
+    libraryHits.length === 0 &&
+    postHits.length === 0 &&
+    sessionHits.length === 0;
 
   // Track which section each item belongs to for keyboard nav
   function flatItems() {
@@ -310,7 +375,10 @@ export function GlobalSearch({
 
     function sectionHeader(label: string) {
       return (
-        <p key={`header-${label}`} className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+        <p
+          key={`header-${label}`}
+          className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
+        >
           {label}
         </p>
       );
@@ -334,7 +402,7 @@ export function GlobalSearch({
                 {[p.creator_title, p.category].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -354,7 +422,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{s.name}</p>
               <p className="truncate text-xs text-muted-foreground">{s.category}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -376,7 +444,7 @@ export function GlobalSearch({
                 {p.description?.slice(0, 80) || "—"}
               </p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -396,7 +464,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{l.title}</p>
               <p className="truncate text-xs text-muted-foreground">{l.type}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -416,7 +484,7 @@ export function GlobalSearch({
               <p className="truncate text-sm">{p.title}</p>
               <p className="truncate text-xs text-muted-foreground">{p.type}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
@@ -436,14 +504,16 @@ export function GlobalSearch({
               <p className="truncate text-sm">{s.title}</p>
               <p className="truncate text-xs text-muted-foreground">{s.session_type || "—"}</p>
             </div>
-          </button>
+          </button>,
         );
       });
     }
 
     if (isLoading) {
       items.push(
-        <p key="loading" className="px-3 py-2 text-xs text-muted-foreground">Searching…</p>
+        <p key="loading" className="px-3 py-2 text-xs text-muted-foreground">
+          Searching…
+        </p>,
       );
     }
 
@@ -451,7 +521,7 @@ export function GlobalSearch({
       items.push(
         <p key="no-results" className="px-3 py-4 text-center text-sm text-muted-foreground">
           No results for "{debounced}".
-        </p>
+        </p>,
       );
     }
 
@@ -507,7 +577,9 @@ export function GlobalSearch({
           />
         </div>
         <div className="max-h-[60vh] overflow-y-auto px-1 pb-2">
-          {enabled ? renderResults() : (
+          {enabled ? (
+            renderResults()
+          ) : (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
               Search people, skills, projects, library items, community posts, and sessions…
             </p>
@@ -536,6 +608,7 @@ git commit -m "feat: enhance GlobalSearch with 6 data sources, keyboard nav, var
 ### Task 2: Mount GlobalSearch in DashboardSidebar
 
 **Files:**
+
 - Modify: `src/components/tethyr/dashboard-sidebar.tsx`
 
 - [x] **Step 1: Replace the dead button with GlobalSearch inline variant**
@@ -546,9 +619,9 @@ Replace the search button block (lines 62-75) with:
 import { GlobalSearch } from "./global-search";
 
 // Inside the component, replace the button section:
-      <div className="mt-3">
-        <GlobalSearch variant="inline" />
-      </div>
+<div className="mt-3">
+  <GlobalSearch variant="inline" />
+</div>;
 ```
 
 And remove the `Search` import from lucide-react (but keep the other imports).
@@ -570,11 +643,13 @@ git commit -m "feat: mount GlobalSearch in DashboardSidebar"
 ### Task 3: Replace MobileSearch with GlobalSearch dialog in AuthenticatedShell
 
 **Files:**
+
 - Modify: `src/components/tethyr/authenticated-shell.tsx`
 
 - [x] **Step 1: Remove MobileSearch component and replace with GlobalSearch dialog**
 
 Add import:
+
 ```tsx
 import { GlobalSearch } from "./global-search";
 ```
@@ -582,8 +657,9 @@ import { GlobalSearch } from "./global-search";
 Remove the entire `MobileSearch` function (lines 13-141), and the unused imports: `Input`, `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `useQuery`, `supabase`, `User`, `GraduationCap`.
 
 Replace the `<MobileSearch open={searchOpen} onOpenChange={setSearchOpen} />` at the bottom with:
+
 ```tsx
-      <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+<GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
 ```
 
 - [x] **Step 2: Verify the file compiles**

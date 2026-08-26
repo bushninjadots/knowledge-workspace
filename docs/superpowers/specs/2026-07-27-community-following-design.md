@@ -38,24 +38,24 @@ CREATE INDEX idx_follows_follower ON public.follows(follower_id);
 
 **RLS policies:**
 
-| Policy | Operation | Rule |
-|--------|-----------|------|
-| Users see their own follows | SELECT | `auth.uid() = follower_id OR auth.uid() = following_id` |
-| Users can follow | INSERT | `auth.uid() = follower_id` |
-| Users can unfollow | DELETE | `auth.uid() = follower_id` |
+| Policy                      | Operation | Rule                                                    |
+| --------------------------- | --------- | ------------------------------------------------------- |
+| Users see their own follows | SELECT    | `auth.uid() = follower_id OR auth.uid() = following_id` |
+| Users can follow            | INSERT    | `auth.uid() = follower_id`                              |
+| Users can unfollow          | DELETE    | `auth.uid() = follower_id`                              |
 
 No UPDATE policy needed — follows are binary (exists or doesn't).
 
 ### Hooks (`src/hooks/use-follow.ts`)
 
-| Hook | Type | Purpose |
-|------|------|---------|
-| `useFollowStatus(targetUserId)` | Query | Returns `{ isFollowing: boolean }` for the current user → target |
-| `useFollowers(userId)` | Query | Returns list of followers for a user (for profile follower count) |
-| `useFollowing(userId)` | Query | Returns list of users someone follows (for profile following count) |
-| `useFollowUser()` | Mutation | Inserts a follow row. Optimistic update. Invalidates follow status + feed. |
-| `useUnfollowUser()` | Mutation | Deletes a follow row. Optimistic update. Invalidates follow status + feed. |
-| `useFollowingFeed()` | Query | Fetches posts where `author_id` is in the user's following list. Joins profiles + action stats (reuses `usePosts` join pattern). |
+| Hook                            | Type     | Purpose                                                                                                                          |
+| ------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `useFollowStatus(targetUserId)` | Query    | Returns `{ isFollowing: boolean }` for the current user → target                                                                 |
+| `useFollowers(userId)`          | Query    | Returns list of followers for a user (for profile follower count)                                                                |
+| `useFollowing(userId)`          | Query    | Returns list of users someone follows (for profile following count)                                                              |
+| `useFollowUser()`               | Mutation | Inserts a follow row. Optimistic update. Invalidates follow status + feed.                                                       |
+| `useUnfollowUser()`             | Mutation | Deletes a follow row. Optimistic update. Invalidates follow status + feed.                                                       |
+| `useFollowingFeed()`            | Query    | Fetches posts where `author_id` is in the user's following list. Joins profiles + action stats (reuses `usePosts` join pattern). |
 
 Query keys: `["follow-status", targetUserId]`, `["followers", userId]`, `["following", userId]`, `["following-feed"]`.
 
@@ -126,14 +126,14 @@ CREATE INDEX idx_space_members_user ON public.community_space_members(user_id);
 
 **RLS policies:**
 
-| Policy | Operation | Rule |
-|--------|-----------|------|
-| Spaces are public | SELECT | `true` |
-| Authenticated users can create spaces | INSERT | `auth.uid() = created_by` |
-| Only creator can update/delete | UPDATE/DELETE | `auth.uid() = created_by` |
-| Members can see member list | SELECT on members | User is a member of the space |
-| Users can join/leave | INSERT/DELETE on members | `auth.uid() = user_id` |
-| Owners/mods can manage members | UPDATE/DELETE on members | User has role `owner` or `moderator` in the space |
+| Policy                                | Operation                | Rule                                              |
+| ------------------------------------- | ------------------------ | ------------------------------------------------- |
+| Spaces are public                     | SELECT                   | `true`                                            |
+| Authenticated users can create spaces | INSERT                   | `auth.uid() = created_by`                         |
+| Only creator can update/delete        | UPDATE/DELETE            | `auth.uid() = created_by`                         |
+| Members can see member list           | SELECT on members        | User is a member of the space                     |
+| Users can join/leave                  | INSERT/DELETE on members | `auth.uid() = user_id`                            |
+| Owners/mods can manage members        | UPDATE/DELETE on members | User has role `owner` or `moderator` in the space |
 
 ### Post Integration
 
@@ -152,20 +152,20 @@ CREATE INDEX idx_posts_space_pinned ON public.posts(space_id, is_pinned) WHERE i
 
 ### Hooks (`src/hooks/use-community-spaces.ts`)
 
-| Hook | Type | Purpose |
-|------|------|---------|
-| `useCommunitySpaces()` | Query | List all spaces with member counts |
-| `useCommunitySpace(slug)` | Query | Single space with current user's membership/role |
-| `useCreateSpace()` | Mutation | Creates a space, auto-adds creator as owner |
-| `useUpdateSpace()` | Mutation | Updates name/description (owner only) |
-| `useDeleteSpace()` | Mutation | Deletes space (owner only) |
-| `useJoinSpace()` | Mutation | Adds current user as member |
-| `useLeaveSpace()` | Mutation | Removes current user from members |
-| `useSpaceMembers(spaceId)` | Query | Member list with roles and profiles |
-| `useUpdateMemberRole()` | Mutation | Promotes/demotes members (owner only) |
-| `useRemoveMember()` | Mutation | Removes a member (owner/mod only) |
-| `usePinPost()` | Mutation | Pins a post to a space (toggles `is_pinned` boolean on the posts table, scoped to the space; only owner/mod can pin) |
-| `useCommunitySpacePosts(spaceId)` | Query | Posts filtered by space_id, with pinned posts first |
+| Hook                              | Type     | Purpose                                                                                                              |
+| --------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useCommunitySpaces()`            | Query    | List all spaces with member counts                                                                                   |
+| `useCommunitySpace(slug)`         | Query    | Single space with current user's membership/role                                                                     |
+| `useCreateSpace()`                | Mutation | Creates a space, auto-adds creator as owner                                                                          |
+| `useUpdateSpace()`                | Mutation | Updates name/description (owner only)                                                                                |
+| `useDeleteSpace()`                | Mutation | Deletes space (owner only)                                                                                           |
+| `useJoinSpace()`                  | Mutation | Adds current user as member                                                                                          |
+| `useLeaveSpace()`                 | Mutation | Removes current user from members                                                                                    |
+| `useSpaceMembers(spaceId)`        | Query    | Member list with roles and profiles                                                                                  |
+| `useUpdateMemberRole()`           | Mutation | Promotes/demotes members (owner only)                                                                                |
+| `useRemoveMember()`               | Mutation | Removes a member (owner/mod only)                                                                                    |
+| `usePinPost()`                    | Mutation | Pins a post to a space (toggles `is_pinned` boolean on the posts table, scoped to the space; only owner/mod can pin) |
+| `useCommunitySpacePosts(spaceId)` | Query    | Posts filtered by space_id, with pinned posts first                                                                  |
 
 ### Components
 

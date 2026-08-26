@@ -7,11 +7,19 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Monitor, Tablet, Smartphone,
-  Eye, Save, Send,
-  PanelLeftClose, PanelLeftOpen,
-  PanelRightClose, PanelRightOpen,
-  AlertTriangle, CheckCircle2, Loader2,
+  Monitor,
+  Tablet,
+  Smartphone,
+  Eye,
+  Save,
+  Send,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,20 +28,29 @@ import { friendlyError } from "@/lib/error-message";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
 import {
-  useCreatePage, useUpdatePageLayout, usePublishPage, useUnpublishPage,
+  useCreatePage,
+  useUpdatePageLayout,
+  usePublishPage,
+  useUnpublishPage,
   useUpdateThemeOverrides,
 } from "@/hooks/use-page-editor";
-import { usePage, invalidatePage } from "@/hooks/use-page";
+import { usePage } from "@/hooks/use-page";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
-import { createBlockInstance, getBlock, getAllBlocks } from "@/lib/block-registry";
+import { createBlockInstance, getBlock } from "@/lib/block-registry";
 import { useQueryClient } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
-import type { PageLayout, PageOwnerType } from "@/lib/page-blocks";
+import type {
+  LayoutSection,
+  PageData,
+  PageLayout,
+  PageOwnerType,
+  ThemeTokens,
+} from "@/lib/page-blocks";
 
 export type StudioPage = {
   id: string;
@@ -56,8 +73,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // ── Page selection ────────────────────────────────────────────────────
   const [activePage, setActivePage] = useState<StudioPage | null>(() => {
-    if (profile) return { id: profile.id, handle: profile.handle ?? undefined, title: profile.display_name ?? "My Studio", type: "profile" };
-    if (projects.length > 0) return { id: projects[0].id, title: projects[0].title, type: "project" };
+    if (profile)
+      return {
+        id: profile.id,
+        handle: profile.handle ?? undefined,
+        title: profile.display_name ?? "My Studio",
+        type: "profile",
+      };
+    if (projects.length > 0)
+      return { id: projects[0].id, title: projects[0].title, type: "project" };
     return null;
   });
 
@@ -69,13 +93,24 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const ensuringRef = useRef(false);
 
   // ── Query data ────────────────────────────────────────────────────────
-  const { data: pageData, isLoading: pageLoading, isError: pageError, refetch: refetchPage, error: pageFetchError } = usePage({
+  const {
+    data: pageData,
+    isLoading: pageLoading,
+    isError: pageError,
+    refetch: refetchPage,
+    error: pageFetchError,
+  } = usePage({
     ownerId: activePage?.id ?? "",
     ownerType: (activePage?.type ?? "project") as PageOwnerType,
   });
 
-  const { data: themeCatalog = [], isLoading: themesLoading } = useThemeCatalog();
-  const { data: publicTemplates = [], isLoading: templatesLoading, isError: templatesError, error: templateFetchError } = usePublicTemplates({ sort: "popular" });
+  const { data: themeCatalog = [] } = useThemeCatalog();
+  const {
+    data: publicTemplates = [],
+    isLoading: templatesLoading,
+    isError: templatesError,
+    error: templateFetchError,
+  } = usePublicTemplates({ sort: "popular" });
 
   // Block registry diagnostic
   const [blockCount, setBlockCount] = useState(0);
@@ -85,7 +120,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       const count = getAllBlocks().length;
       setBlockCount(count);
       if (count === 0) {
-        console.error("[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty");
+        console.error(
+          "[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty",
+        );
         toast.error("Block system not loaded. Refresh the page.");
       } else {
         console.log(`[Studio] ✅ ${count} blocks registered`);
@@ -115,11 +152,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (!pageLoading && !pageData && activePage && !createPage.isPending && !ensuringRef.current) {
       ensuringRef.current = true;
-      console.log(`[Studio] No page found for ${activePage.type}/${activePage.id} — auto-creating with default layout`);
+      console.log(
+        `[Studio] No page found for ${activePage.type}/${activePage.id} — auto-creating with default layout`,
+      );
       toast.info(`Creating default ${activePage.type} page...`);
-      const layout = activePage.type === "profile"
-        ? createDefaultProfileLayout()
-        : createDefaultProjectLayout();
+      const layout =
+        activePage.type === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
       createPage.mutate(
         { ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout },
         {
@@ -155,7 +193,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
 
   // ── Layout helpers ────────────────────────────────────────────────────
-  const layout: PageLayout = pageData?.layout ?? { sections: [] };
+  // Stabilize the empty-layout identity so callbacks depending on `layout`
+  // don't re-create on every render when no page is loaded.
+  const layout = useMemo<PageLayout>(() => pageData?.layout ?? { sections: [] }, [pageData]);
   const isPublished = pageData?.status === "published";
 
   const writeLayout = useCallback(
@@ -165,7 +205,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         toast.error("No page loaded yet. Wait for the page to finish loading.");
         return;
       }
-      console.log(`[Studio] writeLayout → pageId=${pageData.id} layoutId=${pageData.layoutId} sections=${newLayout.sections.length}`);
+      console.log(
+        `[Studio] writeLayout → pageId=${pageData.id} layoutId=${pageData.layoutId} sections=${newLayout.sections.length}`,
+      );
       updateLayout.mutate(
         { pageId: pageData.id, layoutId: pageData.layoutId, layout: newLayout },
         {
@@ -188,20 +230,24 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
     (blockType: string) => {
-      console.log(`[Studio] handleAddBlock type="${blockType}" pageData=${pageData?.id ?? "null"} blockCount=${blockCount}`);
+      console.log(
+        `[Studio] handleAddBlock type="${blockType}" pageData=${pageData?.id ?? "null"} blockCount=${blockCount}`,
+      );
       if (!pageData) {
         toast.error("Page not loaded yet. Wait a moment.");
         return;
       }
-      const inst = createBlockInstance(blockType as any);
+      const inst = createBlockInstance(blockType);
       if (!inst) {
         console.warn(`[Studio] ❌ createBlockInstance returned null for "${blockType}"`);
-        toast.error(`Block type "${blockType}" not registered. Total blocks: ${blockCount}. Try refreshing.`);
+        toast.error(
+          `Block type "${blockType}" not registered. Total blocks: ${blockCount}. Try refreshing.`,
+        );
         return;
       }
       console.log(`[Studio] ✅ Block instance created:`, inst.type);
       const existing = pageData?.layout?.sections ?? [];
-      const sections = existing.map((s: any) => ({ ...s, blocks: [...s.blocks] }));
+      const sections = existing.map((s: LayoutSection) => ({ ...s, blocks: [...s.blocks] }));
       let last = sections[sections.length - 1];
       if (!last) {
         last = { id: `sect_${Date.now()}`, position: 0, layout: "full", blocks: [] };
@@ -219,7 +265,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       writeLayout({ sections });
       setSelectedBlockId(newBlock.id);
     },
-    [layout, writeLayout, pageData, blockCount],
+    [writeLayout, pageData, blockCount],
   );
 
   // ── Remove block ──────────────────────────────────────────────────────
@@ -239,9 +285,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     (blockId: string) => {
       const sections = layout.sections.map((s) => ({
         ...s,
-        blocks: s.blocks.map((b) =>
-          b.id === blockId ? { ...b, visible: !b.visible } : b,
-        ),
+        blocks: s.blocks.map((b) => (b.id === blockId ? { ...b, visible: !b.visible } : b)),
       }));
       writeLayout({ sections });
     },
@@ -299,8 +343,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // ── Update theme overrides ──────────────────────────────────────────
   const handleUpdateThemeOverrides = useCallback(
-    (overrides: any) => {
-      if (!pageData) { toast.error("No page loaded"); return; }
+    (overrides: ThemeTokens | null) => {
+      if (!pageData) {
+        toast.error("No page loaded");
+        return;
+      }
       console.log(`[Studio] Saving theme overrides to page ${pageData.id}`);
       updateThemeOverrides.mutate(
         { pageId: pageData.id, overrides },
@@ -322,7 +369,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // ── Publish / Save Draft / Preview ────────────────────────────────────
   const handlePublish = useCallback(async () => {
-    if (!pageData) { toast.error("No page to publish"); return; }
+    if (!pageData) {
+      toast.error("No page to publish");
+      return;
+    }
     try {
       await publishPage.mutateAsync({ pageId: pageData.id });
       toast.success("Published — visible to everyone");
@@ -355,7 +405,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
-      if (!pageData) { toast.error("No page loaded"); return; }
+      if (!pageData) {
+        toast.error("No page loaded");
+        return;
+      }
       console.log(`[Studio] Applying theme ${themeId} to page ${pageData.id}`);
       updateTheme.mutate(
         { pageId: pageData.id, themeId },
@@ -378,13 +431,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply template ────────────────────────────────────────────────────
   const handleApplyTemplate = useCallback(
     (templateId: string) => {
-      if (!pageData || !activePage) { toast.error("No page loaded"); return; }
+      if (!pageData || !activePage) {
+        toast.error("No page loaded");
+        return;
+      }
       console.log(`[Studio] Applying template ${templateId} to page ${pageData.id}`);
       toast.info("Applying template...");
       applyTemplate.mutate(
         {
-          templateId, pageId: pageData.id, layoutId: pageData.layoutId,
-          ownerId: activePage.id, ownerType: activePage.type,
+          templateId,
+          pageId: pageData.id,
+          layoutId: pageData.layoutId,
+          ownerId: activePage.id,
+          ownerType: activePage.type,
         },
         {
           onSuccess: () => {
@@ -405,8 +464,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Save as template ──────────────────────────────────────────────────
   const handleSaveAsTemplate = useCallback(
     (name: string, options?: { description?: string; category?: string }) => {
-      if (!pageData) { toast.error("No page to save"); return; }
-      if (!name.trim()) { toast.error("Enter a template name"); return; }
+      if (!pageData) {
+        toast.error("No page to save");
+        return;
+      }
+      if (!name.trim()) {
+        toast.error("Enter a template name");
+        return;
+      }
       console.log(`[Studio] Saving template "${name}" from layout ${pageData.layoutId}`);
       saveAsTemplate.mutate(
         { layoutId: pageData.layoutId, name, ...options },
@@ -418,7 +483,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           },
           onError: (err) => {
             console.error("[Studio] ❌ Save template error:", err);
-            toast.error(friendlyError(err, "Failed to save template. Make sure you own this layout."));
+            toast.error(
+              friendlyError(err, "Failed to save template. Make sure you own this layout."),
+            );
           },
         },
       );
@@ -429,7 +496,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Re-seed templates ────────────────────────────────────────────────
   const handleReseed = useCallback(async () => {
     try {
-      const { data, error } = await (supabase as any).rpc("reseed_default_templates");
+      const { error } = await supabase.rpc("reseed_default_templates");
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["templates"] });
       toast.success("Templates refreshed");
@@ -467,15 +534,20 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Device class ──────────────────────────────────────────────────────
   const deviceClass = useMemo(() => {
     switch (devicePreview) {
-      case "mobile": return "max-w-[375px]";
-      case "tablet": return "max-w-[768px]";
-      default: return "max-w-full";
+      case "mobile":
+        return "max-w-[375px]";
+      case "tablet":
+        return "max-w-[768px]";
+      default:
+        return "max-w-full";
     }
   }, [devicePreview]);
 
   // ── Blocks for canvas/inspector ───────────────────────────────────────
   const blocks = layout.sections.flatMap((s) => s.blocks);
-  const selectedBlock = selectedBlockId ? blocks.find((b) => b.id === selectedBlockId) ?? null : null;
+  const selectedBlock = selectedBlockId
+    ? (blocks.find((b) => b.id === selectedBlockId) ?? null)
+    : null;
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -492,7 +564,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             onChange={(e) => {
               const [type, id] = e.target.value.split(":");
               if (type === "profile" && profile) {
-                handleSelectPage({ id: profile.id, handle: profile.handle ?? undefined, title: profile.display_name ?? "My Studio", type: "profile" });
+                handleSelectPage({
+                  id: profile.id,
+                  handle: profile.handle ?? undefined,
+                  title: profile.display_name ?? "My Studio",
+                  type: "profile",
+                });
               } else {
                 const proj = projects.find((p) => p.id === id);
                 if (proj) handleSelectPage({ id: proj.id, title: proj.title, type: "project" });
@@ -522,11 +599,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                 type="button"
                 onClick={() => setDevicePreview(key)}
                 className={`rounded px-2 py-1 transition-colors ${
-                  devicePreview === key ? "bg-surface-elevated text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  devicePreview === key
+                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 aria-label={`${key} preview`}
               >
-                {key === "desktop" ? <Monitor className="h-3.5 w-3.5" /> : key === "tablet" ? <Tablet className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                {key === "desktop" ? (
+                  <Monitor className="h-3.5 w-3.5" />
+                ) : key === "tablet" ? (
+                  <Tablet className="h-3.5 w-3.5" />
+                ) : (
+                  <Smartphone className="h-3.5 w-3.5" />
+                )}
               </button>
             ))}
           </div>
@@ -534,7 +619,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
           {isPublished ? (
-            <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={handleUnpublish}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleUnpublish}
+            >
               Unpublish
             </Button>
           ) : (
@@ -542,11 +632,22 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               <Save className="h-3.5 w-3.5" /> Draft
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={handlePreview}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-[11px]"
+            onClick={handlePreview}
+          >
             <Eye className="h-3.5 w-3.5" /> Preview
           </Button>
           {!isPublished && (
-            <Button variant="default" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={handlePublish} disabled={publishPage.isPending}>
+            <Button
+              variant="default"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handlePublish}
+              disabled={publishPage.isPending}
+            >
               <Send className="h-3.5 w-3.5" /> {publishPage.isPending ? "Publishing…" : "Publish"}
             </Button>
           )}
@@ -650,7 +751,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
       {/* ── Status bar ───────────────────────────────────────────────────── */}
       <StatusBar
-        userId={userId}
         pageLoading={pageLoading}
         pageError={pageError}
         pageFetchError={pageFetchError as Error | null}
@@ -670,7 +770,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           className="pointer-events-auto rounded-md border border-border/40 bg-surface-elevated p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={leftOpen ? "Close sidebar" : "Open sidebar"}
         >
-          {leftOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
+          {leftOpen ? (
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          ) : (
+            <PanelLeftOpen className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
       <div className="pointer-events-none fixed bottom-10 right-4 z-40 flex gap-2">
@@ -680,7 +784,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           className="pointer-events-auto rounded-md border border-border/40 bg-surface-elevated p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={rightOpen ? "Close inspector" : "Open inspector"}
         >
-          {rightOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+          {rightOpen ? (
+            <PanelRightClose className="h-3.5 w-3.5" />
+          ) : (
+            <PanelRightOpen className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
     </div>
@@ -691,14 +799,20 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 // Shows real-time diagnostic info: auth, page state, block count, templates.
 
 function StatusBar({
-  userId, pageLoading, pageError, pageFetchError, pageData, blockCount,
-  templatesLoading, templatesError, templateCount, createPending,
+  pageLoading,
+  pageError,
+  pageFetchError,
+  pageData,
+  blockCount,
+  templatesLoading,
+  templatesError,
+  templateCount,
+  createPending,
 }: {
-  userId: string;
   pageLoading: boolean;
   pageError: boolean;
   pageFetchError: Error | null;
-  pageData: { id: string; layout?: { sections: any[] }; status: string; themeId: string } | null | undefined;
+  pageData: PageData | null | undefined;
   blockCount: number;
   templatesLoading: boolean;
   templatesError: boolean;
@@ -706,7 +820,11 @@ function StatusBar({
   createPending: boolean;
 }) {
   const sectionCount = pageData?.layout?.sections?.length ?? 0;
-  const blockInstanceCount = pageData?.layout?.sections?.reduce((sum: number, s: any) => sum + (s.blocks?.length ?? 0), 0) ?? 0;
+  const blockInstanceCount =
+    pageData?.layout?.sections?.reduce(
+      (sum: number, s: LayoutSection) => sum + (s.blocks?.length ?? 0),
+      0,
+    ) ?? 0;
 
   return (
     <div className="h-8 shrink-0 border-t border-border/20 bg-surface-elevated/20 px-4 flex items-center gap-4 text-[10px] text-muted-foreground">
@@ -743,7 +861,11 @@ function StatusBar({
 
       {/* Blocks */}
       <span className={`flex items-center gap-1 ${blockCount === 0 ? "text-red-400" : ""}`}>
-        {blockCount === 0 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
+        {blockCount === 0 ? (
+          <AlertTriangle className="h-3 w-3" />
+        ) : (
+          <CheckCircle2 className="h-3 w-3 text-green-500" />
+        )}
         {blockCount} blocks
       </span>
 
@@ -752,11 +874,13 @@ function StatusBar({
       {/* Templates */}
       {templatesLoading ? (
         <span className="flex items-center gap-1">
-          <Loader2 className="h-3 w-3 animate-spin" />Loading templates...
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Loading templates...
         </span>
       ) : templatesError ? (
         <span className="flex items-center gap-1 text-red-400">
-          <AlertTriangle className="h-3 w-3" />Template error
+          <AlertTriangle className="h-3 w-3" />
+          Template error
         </span>
       ) : (
         <span className="flex items-center gap-1">
@@ -769,7 +893,10 @@ function StatusBar({
       {pageData && (
         <>
           <span className="text-border/40">|</span>
-          <span className="text-muted-foreground/40 font-mono truncate max-w-[200px]" title={pageData.id}>
+          <span
+            className="text-muted-foreground/40 font-mono truncate max-w-[200px]"
+            title={pageData.id}
+          >
             {pageData.id.slice(0, 8)}…
           </span>
         </>

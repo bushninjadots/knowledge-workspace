@@ -22,7 +22,9 @@ function registry(): BlockRegistry {
 export function registerBlock(def: BlockDefinition): void {
   const reg = registry();
   if (reg.has(def.type)) {
-    console.warn(`[BlockRegistry] Block type "${def.type}" already registered — skipping duplicate`);
+    console.warn(
+      `[BlockRegistry] Block type "${def.type}" already registered — skipping duplicate`,
+    );
     return;
   }
   reg.set(def.type, def);

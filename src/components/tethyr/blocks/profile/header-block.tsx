@@ -32,7 +32,9 @@ function ProfileHeaderBlock({ context }: BlockProps) {
       if (!profileId) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("id, display_name, handle, creator_title, avatar_url, category, country, timezone, languages, reputation_score")
+        .select(
+          "id, display_name, handle, creator_title, avatar_url, category, country, timezone, languages, reputation_score",
+        )
         .eq("id", profileId)
         .maybeSingle();
       return data as unknown as ProfileHeaderData | null;

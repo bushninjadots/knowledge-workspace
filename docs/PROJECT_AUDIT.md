@@ -17,21 +17,22 @@ have been remediated in this pass.
 
 ## Baseline Results (before fixes)
 
-| Check | Before | After |
-|---|---|---|
-| `tsc --noEmit` | ✅ 0 errors | ✅ 0 errors |
-| `vitest run` | ✅ 33/33 | ✅ 33/33 |
-| `npm run build` | ✅ | ✅ |
-| Route smoke test | ✅ | ✅ |
-| `eslint .` | ❌ 577 problems (486 errors / 91 warnings) | ✅ 0 errors / 83 warnings |
-| `npm audit` | ❌ 5 vulns (3 high) | ⚠️ 1 low (esbuild, dev-only) |
-| `bun audit` | ❌ 17 vulns (12 high) | ⚠️ 1 low (esbuild, dev-only) |
+| Check            | Before                                     | After                        |
+| ---------------- | ------------------------------------------ | ---------------------------- |
+| `tsc --noEmit`   | ✅ 0 errors                                | ✅ 0 errors                  |
+| `vitest run`     | ✅ 33/33                                   | ✅ 33/33                     |
+| `npm run build`  | ✅                                         | ✅                           |
+| Route smoke test | ✅                                         | ✅                           |
+| `eslint .`       | ❌ 577 problems (486 errors / 91 warnings) | ✅ 0 errors / 83 warnings    |
+| `npm audit`      | ❌ 5 vulns (3 high)                        | ⚠️ 1 low (esbuild, dev-only) |
+| `bun audit`      | ❌ 17 vulns (12 high)                      | ⚠️ 1 low (esbuild, dev-only) |
 
 ---
 
 ## Remediated (this pass)
 
 ### 1. Lint debt eliminated
+
 - **486 Prettier formatting errors** auto-fixed via `eslint . --fix`. Lint now passes with
   0 errors; only `no-explicit-any` / react-hooks warnings remain.
 - The repo had drifted from its own formatter (`.prettierrc`), meaning CI lint was red.
@@ -42,6 +43,7 @@ have been remediated in this pass.
   build output are now deterministic regardless of package manager.
 
 ### 2. Dependency vulnerabilities resolved + refreshed
+
 - `npm audit fix`: postcss 8.5.15→8.5.26, js-yaml 4.1.1→4.3.1, nanoid 3.3.11/12→3.3.18.
   **All 3 high-severity advisories cleared.**
 - bun.lock was stale (frozen-lockfile workflow). Full re-resolve: **17 vulns → 1 low**
@@ -53,7 +55,9 @@ have been remediated in this pass.
 - `bunfig.toml` supply-chain guard (`frozenLockfile`, `minimumReleaseAge`) untouched.
 
 ### 3. CI hardened (`.github/workflows/ci.yml`)
+
 Added to the existing typecheck/lint/test/build pipeline:
+
 - **Route smoke test** (`npm run smoke`) via `oven-sh/setup-bun` — boots the dev server
   and asserts public routes + 404 + client-auth boundary.
 - **Dependency audit** — `npm audit --audit-level=moderate` (tolerates the known low).
@@ -63,8 +67,10 @@ Added to the existing typecheck/lint/test/build pipeline:
   shipped with RLS verified only manually.
 
 ### 4. Typed-client refactor started
+
 The full generated `Database` type (2,727 lines) exists but ~110 `(supabase as any)`
 casts bypassed it. Converted to the typed client (verified by `tsc`):
+
 - `src/hooks/use-follow.ts`
 - `src/hooks/use-signed-url.ts`
 - `src/hooks/use-project-repos.ts`
@@ -77,6 +83,7 @@ casts bypassed it. Converted to the typed client (verified by `tsc`):
 ## Remaining tracked debt
 
 ### High
+
 - **~95 remaining `(supabase as any)` casts** across ~25 files (`use-projects.ts`,
   `use-sessions.ts`, `use-community.ts`, `use-community-spaces.ts`, `use-challenges.ts`,
   `use-notifications.ts`, `dashboard.tsx`, `explore.tsx`, `u.$handle.tsx`,
@@ -85,6 +92,7 @@ casts bypassed it. Converted to the typed client (verified by `tsc`):
   (`supabase gen types`) so new tables/columns are covered.
 
 ### Medium
+
 - **Test coverage is thin for ~50k LOC.** Only 5 test files / 33 tests. No tests for the
   largest surfaces (explore, dashboard, community, sessions, skills, messages, library,
   notifications, auth flows). Coverage provider not installed — add `@vitest/coverage-v8`
@@ -94,6 +102,7 @@ casts bypassed it. Converted to the typed client (verified by `tsc`):
   hooks/selectors for testability.
 
 ### Low / Process
+
 - **CSP uses `'unsafe-inline' 'unsafe-eval'`** for `script-src` (Vite/Tiptap necessity) and
   broad `img-src https:` / `connect-src *.supabase.co`. Tighten before launch.
 - **3 open critical UX items** (see `docs/UX_AUDIT.md`): no "Create Project" button in the

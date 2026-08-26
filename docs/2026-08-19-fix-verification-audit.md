@@ -23,19 +23,19 @@ All green:
 
 ## 2. Resolved — verified in current source
 
-| Prior finding | Severity | Status |
-| ------------- | -------- | ------ |
-| 2.7 Dashboard layout duplication | High | **Resolved** — `/dashboard` moved under `_authenticated`; `AuthenticatedDashboardLayout` duplication removed (0 remaining refs). |
-| 2.4 N+1 profile hydration (7 hooks) | High | **Resolved** — embedded `profiles!…` selects now in `use-projects.ts` (3), `use-community.ts` (2), `use-connections.ts` (1). |
-| 2.2 Lazy-load project page tabs | High | **Resolved** — 12+ heavy components now `React.lazy()` (ProjectNeeds, ProjectCredits, ProjectFilesExplorer, ProjectActivityTab, MilestonesTimeline, ProjectPeopleTab, ProjectDiscussions, ProjectCommunityPosts, ProjectJoinModal, CreateChallengeDialog, ScheduleSessionWizard, ProjectSearchDialog). |
-| 2.6 Error component stubs | High | **Resolved** — login verified live with "Try again" + "Go home"; remaining routes follow the same pattern. |
-| 2.5 Unused `d3-force` dependency | High | **Resolved** — removed from `package.json`. |
-| 3.9 Split `use-community-spaces.ts` (1292 lines) | Medium | **Resolved** — 8 focused sub-hooks: `use-space-{chat,join-requests,members,read-state,reports,settings,typing}.ts` + `community-space-types.ts`. |
-| 3.2 Unbounded project queries | Medium | **Resolved** — limits added: `useMilestones` 100, `useDiscussions` 50, `useOpenRoles` 20, `useProjectNeeds` 30, `useProjectActivity` 100. |
-| 3.4 Toast-only form validation | Medium | **Resolved** — signup/login/reset-password now have inline `fieldErrors` with `aria-invalid` + `aria-describedby` (verified in source and rendered DOM). |
-| 3.5 Native `confirm()` in `connections.tsx:142` | Medium | **Partially resolved** — replaced with styled Dialog in `connections.tsx`, but **4 other `confirm()` calls remain** (see O3). |
-| 4.3 Non-null `Map.get()!` assertions (8) | Low | **Resolved** — 0 remaining in source. |
-| Test infra: shared `createFakeSupabase` | — | **Resolved** — `tests/helpers/fake-supabase.ts`, used by 4+ test files. |
+| Prior finding                                    | Severity | Status                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2.7 Dashboard layout duplication                 | High     | **Resolved** — `/dashboard` moved under `_authenticated`; `AuthenticatedDashboardLayout` duplication removed (0 remaining refs).                                                                                                                                                                       |
+| 2.4 N+1 profile hydration (7 hooks)              | High     | **Resolved** — embedded `profiles!…` selects now in `use-projects.ts` (3), `use-community.ts` (2), `use-connections.ts` (1).                                                                                                                                                                           |
+| 2.2 Lazy-load project page tabs                  | High     | **Resolved** — 12+ heavy components now `React.lazy()` (ProjectNeeds, ProjectCredits, ProjectFilesExplorer, ProjectActivityTab, MilestonesTimeline, ProjectPeopleTab, ProjectDiscussions, ProjectCommunityPosts, ProjectJoinModal, CreateChallengeDialog, ScheduleSessionWizard, ProjectSearchDialog). |
+| 2.6 Error component stubs                        | High     | **Resolved** — login verified live with "Try again" + "Go home"; remaining routes follow the same pattern.                                                                                                                                                                                             |
+| 2.5 Unused `d3-force` dependency                 | High     | **Resolved** — removed from `package.json`.                                                                                                                                                                                                                                                            |
+| 3.9 Split `use-community-spaces.ts` (1292 lines) | Medium   | **Resolved** — 8 focused sub-hooks: `use-space-{chat,join-requests,members,read-state,reports,settings,typing}.ts` + `community-space-types.ts`.                                                                                                                                                       |
+| 3.2 Unbounded project queries                    | Medium   | **Resolved** — limits added: `useMilestones` 100, `useDiscussions` 50, `useOpenRoles` 20, `useProjectNeeds` 30, `useProjectActivity` 100.                                                                                                                                                              |
+| 3.4 Toast-only form validation                   | Medium   | **Resolved** — signup/login/reset-password now have inline `fieldErrors` with `aria-invalid` + `aria-describedby` (verified in source and rendered DOM).                                                                                                                                               |
+| 3.5 Native `confirm()` in `connections.tsx:142`  | Medium   | **Partially resolved** — replaced with styled Dialog in `connections.tsx`, but **4 other `confirm()` calls remain** (see O3).                                                                                                                                                                          |
+| 4.3 Non-null `Map.get()!` assertions (8)         | Low      | **Resolved** — 0 remaining in source.                                                                                                                                                                                                                                                                  |
+| Test infra: shared `createFakeSupabase`          | —        | **Resolved** — `tests/helpers/fake-supabase.ts`, used by 4+ test files.                                                                                                                                                                                                                                |
 
 ---
 
@@ -57,12 +57,12 @@ Down from 36, but still 27 (24 in production code). Hot spots: `use-challenges.t
 
 ### O4 — Remaining native `confirm()` dialogs — **Medium**
 
-| File | Line | Text |
-|------|------|------|
-| `connections-card.tsx` | 161 | "Withdraw request?" |
-| `connect-button.tsx` | 104 | "Remove this connection?" |
-| `connect-button.tsx` | 162 | "Withdraw your connection request?" |
-| `profile-sections.tsx` | 1057 | "Delete this project?" |
+| File                   | Line | Text                                |
+| ---------------------- | ---- | ----------------------------------- |
+| `connections-card.tsx` | 161  | "Withdraw request?"                 |
+| `connect-button.tsx`   | 104  | "Remove this connection?"           |
+| `connect-button.tsx`   | 162  | "Withdraw your connection request?" |
+| `profile-sections.tsx` | 1057 | "Delete this project?"              |
 
 Same fix as the one already applied to `connections.tsx`.
 
@@ -116,69 +116,78 @@ Performance 75–77 driven entirely by Total Blocking Time (score 18–25); LCP 
 
 ### Immediate
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Fix `useContributorCount` → `.select("profile_id", …)` | 5 min | Bug (400s on every landing load) |
-| 2 | Fix `useUnreadCounts` unbounded fetch (O1) | 1 hr | Performance (Critical, unfixed) |
+| #   | Item                                                   | Effort | Impact                           |
+| --- | ------------------------------------------------------ | ------ | -------------------------------- |
+| 1   | Fix `useContributorCount` → `.select("profile_id", …)` | 5 min  | Bug (400s on every landing load) |
+| 2   | Fix `useUnreadCounts` unbounded fetch (O1)             | 1 hr   | Performance (Critical, unfixed)  |
 
 ### Short-term
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 3 | Replace 4 remaining `confirm()` calls with styled Dialog (O4) | 1 hr | UX consistency |
-| 4 | Add `loading="lazy"` to 31 `<img>` tags (O3) | 1 hr | Performance |
-| 5 | Prefetch landing featured-projects to kill hydration mismatch (N2) | 1 hr | Correctness/a11y |
-| 6 | Add keyboard nav + roles to availability dropdown (O7) | 1 hr | Accessibility |
-| 7 | Add `aria-hidden` to empty-state SVGs (O6) | 30 min | Accessibility |
+| #   | Item                                                               | Effort | Impact           |
+| --- | ------------------------------------------------------------------ | ------ | ---------------- |
+| 3   | Replace 4 remaining `confirm()` calls with styled Dialog (O4)      | 1 hr   | UX consistency   |
+| 4   | Add `loading="lazy"` to 31 `<img>` tags (O3)                       | 1 hr   | Performance      |
+| 5   | Prefetch landing featured-projects to kill hydration mismatch (N2) | 1 hr   | Correctness/a11y |
+| 6   | Add keyboard nav + roles to availability dropdown (O7)             | 1 hr   | Accessibility    |
+| 7   | Add `aria-hidden` to empty-state SVGs (O6)                         | 30 min | Accessibility    |
 
 ### Medium-term
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 8 | Reduce redundant `getUser()` in mutations (O5) | 1 hr | Performance |
-| 9 | DB `GROUP BY` for `useNotificationsByCategory` (O8) | 1 hr | Performance |
-| 10 | Replace remaining 24 `as unknown as` casts with runtime shape checks (O2) | 4-6 hr | Type safety |
+| #   | Item                                                                      | Effort | Impact      |
+| --- | ------------------------------------------------------------------------- | ------ | ----------- |
+| 8   | Reduce redundant `getUser()` in mutations (O5)                            | 1 hr   | Performance |
+| 9   | DB `GROUP BY` for `useNotificationsByCategory` (O8)                       | 1 hr   | Performance |
+| 10  | Replace remaining 24 `as unknown as` casts with runtime shape checks (O2) | 4-6 hr | Type safety |
 
 ---
 
 ## 6. Follow-up fixes (same day) — implemented & verified
 
 ### 6.1 Landing page speed / smoothness
+
 - Below-fold landing sections now **prefetch in the route loader** (`src/routes/index.tsx`), and `router.tsx` **dehydrates/hydrates the React Query cache** between server and client. Content streams with the SSR HTML instead of flashing skeletons, the client skips refetching, and the previous hydration-mismatch on repeat visits is gone.
 - **Root cause of the old mismatch:** signed storage URLs are generated per render (different tokens every time), so server HTML and the hydrated client could never agree. `fetchFeaturedProjects` now returns raw storage paths and both `featured-projects.tsx` and `featured-hero-card.tsx` resolve them client-side via the existing `useSignedStorageUrl` pattern (same as avatars).
 - **Measured:** console errors 1 → **0** on the landing page; Lighthouse **CLS 0.052 → 0.001** (score 99 → 100), Best Practices 92 → 96. Performance still reads 75 in dev due to Total Blocking Time (~650 ms) — dev-server hydration cost, not a regression.
 
 ### 6.2 Lazy loading on images
+
 - **28/32 `<img>` tags now carry `loading="lazy" decoding="async"`** (was 1/32). The remaining 4 are above-the-fold banners/hero covers, intentionally eager with `decoding="async"` for LCP.
 
 ### 6.3 Unsafe casts reduced 27 → 12
+
 - Replaced `as unknown as` casts with typed selects (`.select<"…", Row>`) in `landing/data.tsx`, `use-community.ts`, `use-challenges.ts`, `explore.tsx`, `u.$handle.tsx`.
 - Typed the profile maps (`Map<string, TargetType>`) in `use-follow.ts`, `use-projects.ts`, `use-community-spaces.ts`, `use-challenges.ts`, `project-role-applications.tsx`, dropping the casts and surfacing real profile fields instead of "Unknown" fallbacks.
 - Remaining 9 production casts are deliberate: dynamic column-string retries (`use-current-user.ts`), JSONB blob boundaries (`use-public-studio-layout.ts`), and the fallback-column project-detail query (`projects.$id.tsx`).
 
 ### 6.4 Browser-verified dialogs (logged in as seed user)
+
 - Dashboard `connections-card` withdraw dialog, page `connections.tsx` withdraw dialog, `connect-button` "Remove connection?", and the nested "Delete this project?" dialog in `profile-sections.tsx` all open correctly. Messages page (unread-count RPC) renders with 0 console errors.
 
 ## 7. Production-readiness pass — SEO engine, mock data, perf & a11y
 
 ### 7.1 SEO engine
+
 - **Standardized metadata API** (`src/lib/seo.ts`): `SITE` config, `seoMeta({ path, title, description, type, noindex, image })` producing the title template (auto "— Tethyr" suffix), description, canonical, full OpenGraph + Twitter card set, and `jsonLd(...)` for structured data. Applied to `/`, `/community`, `/explore`, `/dashboard`, and `/skills/$slug`.
 - **JSON-LD** via the router's native `"script:ld+json"` head meta (verified in SSR HTML): `Organization` + `WebSite` on the root page, `ItemList` on Community and Explore, `Course` on each `/skills/$slug` page.
 - **`sitemap.ts` / `robots.ts`**: kept DB-driven (dynamic profiles/projects/skills), added `lastmod` to the root entry, and derived robots.txt disallows from a single shared `NO_INDEX_PATHS` constant that also drives the `X-Robots-Tag` header in `server.ts` (one list to keep in sync).
 
 ### 7.2 Mock data & state architecture
+
 - New `src/data/mocks/` with strictly-typed catalogs: `availability.ts` (status options incl. labels/icons/badge classes), `catalog.ts` (`PROJECT_CATEGORIES` — deduped the copy that existed in both `explore.tsx` and `project-shelf-header.tsx` — plus `OPPORTUNITY_NEED_CHIPS`, `NEED_LABEL`, `NEED_BADGE`, `STAGE_RANK`), and `community-nav.ts` (`COMMUNITY_NAV_GROUPS` + `CommunityNavId`, re-exported from the sidebar for compat).
 - Spaces, chats, and skill lists were already DB-driven (no inline mock arrays in components) — the extracted catalogs are the display/config constants that did live in components.
 
 ### 7.3 Performance & a11y
+
 - **Code splitting**: `GlobalSearch` (six-source search UI) and `NotificationDropdown` are now `React.lazy` in `authenticated-shell.tsx` + `dashboard-sidebar.tsx`, and `SpaceChatComposer` in `community-feed.tsx` — all with lightweight fallbacks so the shell doesn't shift.
 - **CLS polish**: added explicit `width`/`height` to 18 `<img>` tags (avatars, covers, banners, post images, previews) that lacked them. Editor content images (Tiptap) left untouched — their boxes are content-defined.
 - **a11y**: `global-search.tsx` gained combobox/listbox semantics (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete`, `aria-activedescendant`, `role="option"` rows, `role="presentation"` group headers) plus a visually-hidden `DialogTitle` (Radix was warning). Availability selector: `aria-haspopup="listbox"` + `aria-expanded` + `aria-selected` options. Filter chips (explore categories/needs/sort, shelf categories, skill filters) now carry `aria-pressed`; the "×" remove-filter button got an `aria-label`.
 
 ### 7.4 Bug found & fixed live: Explore Opportunities/Needs silently empty
+
 - Both `project_open_roles` and `project_needs` queries on `/explore` were 300ing with **PGRST201 (ambiguous embedding)**: `projects.profiles` resolves to both the direct FK and the `project_contributors` m2m path. Every Opportunities-tab load failed silently and rendered the empty state. Fixed by disambiguating to `profiles!projects_profile_id_fkey` in both selects — the tab now shows needs and roles. (Pre-existing; the default Projects tab masked it.)
 
 ### 7.5 Validation
+
 - typecheck ✅, lint ✅, 160/160 tests ✅. Browser-verified: landing JSON-LD/OG/robots/sitemap in SSR HTML, per-route titles/descriptions/robots after hydration, search combobox + keyboard nav, notifications dropdown, Explore Opportunities tab with needs + chips. Lighthouse: A11y 98, Best Practices 96, SEO 92, CLS 0.001, LCP 0.2 s (dev-mode TBT ~680 ms caps Performance).
 
-*Updated August 19, 2026 after the production-readiness pass.*
+_Updated August 19, 2026 after the production-readiness pass._

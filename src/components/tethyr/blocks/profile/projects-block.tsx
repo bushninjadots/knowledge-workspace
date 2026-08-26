@@ -4,7 +4,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
-import { Folder, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { registerBlock } from "@/lib/block-registry";
@@ -24,10 +23,15 @@ type ProjectRow = {
 };
 
 const ROLE_LABEL: Record<string, string> = {
-  creator: "Creator", mentor: "Mentor", contributor: "Contributor",
+  creator: "Creator",
+  mentor: "Mentor",
+  contributor: "Contributor",
 };
 const STATUS_LABEL: Record<string, string> = {
-  planning: "Planning", active: "Active", paused: "Paused", completed: "Completed",
+  planning: "Planning",
+  active: "Active",
+  paused: "Paused",
+  completed: "Completed",
 };
 
 function ProfileProjectsBlock({ context }: BlockProps) {
@@ -39,7 +43,9 @@ function ProfileProjectsBlock({ context }: BlockProps) {
       if (!profileId) return [];
       const { data } = await supabase
         .from("project_contributors")
-        .select("project_id, role, projects(id, title, description, status, progress_percent, cover_url)")
+        .select(
+          "project_id, role, projects(id, title, description, status, progress_percent, cover_url)",
+        )
         .eq("profile_id", profileId)
         .limit(6);
       return (data ?? []) as unknown as ProjectRow[];
@@ -51,7 +57,9 @@ function ProfileProjectsBlock({ context }: BlockProps) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-6 w-32" />
-        {[1, 2].map((i) => (<Skeleton key={i} className="h-20 w-full rounded-xl" />))}
+        {[1, 2].map((i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+        ))}
       </div>
     );
   }

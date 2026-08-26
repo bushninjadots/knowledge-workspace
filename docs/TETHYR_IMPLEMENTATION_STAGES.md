@@ -130,6 +130,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 **Not changed:** existing routes, existing hooks, existing components, existing styles.
 
 **Files created (Phase 2 + Phase 3):**
+
 - `src/lib/page-blocks.ts` — core type system
 - `src/lib/block-registry.ts` — module-level block registry
 - `src/lib/block-registry.test.ts` — 10 registry tests
@@ -207,6 +208,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 **Not changed:** existing identity header (avatar + name in Shell), StudioDirection, PublicStudioWorkspace — blocks coexist alongside.
 
 **Files created (Phase 4):**
+
 - `src/components/tethyr/blocks/profile/header-block.tsx`
 - `src/components/tethyr/blocks/profile/skills-block.tsx`
 - `src/components/tethyr/blocks/profile/projects-block.tsx`
@@ -227,11 +229,13 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - [x] Wired into profile route (`u.$handle.tsx` wrapped in `EditModeProvider`).
 
 **Files created:**
+
 - `src/components/tethyr/page/edit-mode-context.tsx`
 - `src/components/tethyr/page/editor-toolbar.tsx`
 - `src/components/tethyr/page/sortable-block.tsx`
 
 **Files modified:**
+
 - `src/components/tethyr/page/page-shell.tsx` — integrated editor toolbar + layout/config mutations.
 - `src/components/tethyr/page/page-layout.tsx` — edit-mode blocks get move/remove/drag-drop/configure controls.
 - `src/components/tethyr/page/index.ts` — barrel updated.
@@ -251,10 +255,12 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - [x] Public templates browse route at `/templates`.
 
 **Files created:**
+
 - `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useSaveAsTemplate`, `useApplyTemplate`, `useUnpublishTemplate`.
 - `src/routes/_authenticated/templates.tsx` — public template gallery.
 
 **Files modified:**
+
 - `src/lib/page-blocks.ts` — added `TemplateData`, `TemplateCategory` types.
 - `src/components/tethyr/page/editor-toolbar.tsx` — save/apply template actions.
 - `src/components/tethyr/page/page-shell.tsx` — passes ownerId/ownerType to EditorToolbar.
@@ -272,11 +278,13 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - [x] `description` and `category` columns on `layouts` for template metadata.
 
 **Files created:**
+
 - `src/routes/_authenticated/templates.$id.tsx` — template detail page.
 - `src/components/tethyr/templates/made-with-tethyr.tsx` — attribution badge.
 - `supabase/migrations/20260823100000_template_library.sql` — usage_count, description, category columns + increment RPC.
 
 **Files modified:**
+
 - `src/routes/_authenticated/templates.tsx` — search, category filter, sort, usage count, link to detail.
 - `src/lib/page-blocks.ts` — added `category` to `TemplateData`.
 - `src/hooks/use-templates.ts` — reads new columns, `usePublicTemplates` accepts search/category/sort.
@@ -295,10 +303,12 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 - [x] Template versioning architecture ready — forks naturally create independent branches.
 
 **Files created:**
+
 - `supabase/migrations/20260823110000_fork_system.sql` — forks table, fork_count column, increment_fork_count RPC, get_layout_lineage RPC.
 - `src/hooks/use-fork.ts` — `useForkLayout`, `useRemixLayout`, `useLineage`, `useForkCount`.
 
 **Files modified:**
+
 - `src/lib/page-blocks.ts` — added `ForkData`, `LineageNode`, `forkCount` to `TemplateData`.
 - `src/hooks/use-templates.ts` — maps `fork_count`, queries include `fork_count`.
 - `src/routes/_authenticated/templates.$id.tsx` — fork/remix buttons, lineage display, fork count.
@@ -307,6 +317,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 **Validation:** typecheck passes, 369 tests pass, production build passes, migration pushed to remote.
 
 **The fork flow:**
+
 ```
 User visits /templates/$id → clicks "Fork layout"
   → sections copied to new layout owned by user
@@ -317,6 +328,7 @@ User visits /templates/$id → clicks "Fork layout"
 ```
 
 **The remix flow:**
+
 ```
 User visits /templates/$id → clicks "Remix" → enters name
   → fork happens (same as above)
@@ -335,11 +347,13 @@ User visits /templates/$id → clicks "Remix" → enters name
 - [x] Theme catalog hook — `useThemeCatalog` lists all themes with pre-computed preview vars.
 
 **Files created:**
+
 - `supabase/migrations/20260823120000_theme_catalog.sql` — 13 built-in themes.
 - `src/hooks/use-theme-catalog.ts` — `useThemeCatalog`, `useCurrentThemeInfo`.
 - `src/components/tethyr/page/theme-picker.tsx` — theme picker panel with mini previews.
 
 **Files modified:**
+
 - `src/lib/theme-tokens.ts` — rewritten: direct `--background` / `--foreground` / `--radius-lg` etc. instead of `--tethyr-theme-*` prefix.
 - `src/lib/theme-tokens.test.ts` — tests updated for new direct-CSS-var approach (372 passing).
 - `src/components/tethyr/page/editor-toolbar.tsx` — added Palette button → ThemePicker.
@@ -348,6 +362,7 @@ User visits /templates/$id → clicks "Remix" → enters name
 **Validation:** typecheck passes, 372 tests pass, production build passes, migration pushed to remote.
 
 **How themes work:**
+
 ```
 User opens editor → clicks "Theme" → sees 13 theme preview cards
 → clicks one → page backgrounds/foregrounds/borders/radii/fonts update instantly
@@ -366,6 +381,7 @@ User opens editor → clicks "Theme" → sees 13 theme preview cards
 - [x] Reversible — `migrated_pages` table tracks all backfilled records for audit/rollback.
 
 **Files created:**
+
 - `supabase/migrations/20260823130000_backfill_pages.sql` — PL/pgSQL backfill: iterates projects/profiles without pages, creates layouts with populated block configs (README content → about block, bio → profile-bio block), creates pages, tracks in `migrated_pages`.
 
 **Files modified:** none (SQL only).
@@ -373,6 +389,7 @@ User opens editor → clicks "Theme" → sees 13 theme preview cards
 **Validation:** typecheck passes, 372 tests pass, production build passes, migration pushed to remote.
 
 **What changed for users:**
+
 - **Before:** Only project/profile owners saw blocks (auto-created on first visit). Non-owners saw nothing.
 - **After:** Every existing project and profile now has a published page with blocks. Non-owners immediately see the block-based presentation.
 - **New projects/profiles:** Auto-creation via hooks continues to work — same flow as before.
@@ -389,9 +406,11 @@ User opens editor → clicks "Theme" → sees 13 theme preview cards
 - [x] Consistency — all blocks follow same registration pattern, same props interface, same edit/view split. All routes use EditModeProvider wrapping. EditorToolbar appears on both profile and project pages.
 
 **Files created:**
+
 - `src/components/tethyr/blocks/block-empty-state.tsx` — shared edit-mode placeholder.
 
 **Files modified:**
+
 - `src/components/tethyr/page/editor-toolbar.tsx` — `role="toolbar"`, `aria-label`, `aria-live`, better mobile wrap.
 - `src/components/tethyr/page/page-shell.tsx` — `role="region"`, `aria-label`, `role="status"` on empty states.
 - `src/components/tethyr/page/sortable-block.tsx` — `aria-label` on drag handle, sr-only block type labels.

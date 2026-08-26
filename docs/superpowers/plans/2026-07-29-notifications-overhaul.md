@@ -20,9 +20,11 @@
 ### Task 1: Make NotificationCard clickable, remove dead actions
 
 **Files:**
+
 - Modify: `src/components/tethyr/notifications/notification-card.tsx`
 
 **Interfaces:**
+
 - Exports: `NotificationCard(props: { notification: Notification; onNavigate?: (notification: Notification) => void })`
 - Consumes: `Notification` type from `@/hooks/use-notifications`
 - Consumes: `useMarkAsRead`, `useArchiveNotification`, `useDeleteNotification` hooks
@@ -67,24 +69,22 @@ import {
 import { useRespondConnection } from "@/hooks/use-connections";
 import type { Notification, NotificationType } from "@/hooks/use-notifications";
 
-const NOTIFICATION_CONFIG: Record<
-  NotificationType,
-  { icon: typeof MessageCircle; color: string }
-> = {
-  message: { icon: MessageCircle, color: "text-blue-400" },
-  connection_request: { icon: UserPlus, color: "text-green-400" },
-  connection_accepted: { icon: CheckCircle, color: "text-green-400" },
-  session_invite: { icon: CalendarPlus, color: "text-purple-400" },
-  session_update: { icon: CalendarClock, color: "text-purple-400" },
-  comment: { icon: MessageSquare, color: "text-blue-400" },
-  mention: { icon: AtSign, color: "text-orange-400" },
-  endorsement: { icon: Star, color: "text-yellow-400" },
-  achievement: { icon: Trophy, color: "text-amber-400" },
-  project_invite: { icon: FolderPlus, color: "text-green-400" },
-  project_join: { icon: Users, color: "text-green-400" },
-  project_post: { icon: MessageSquare, color: "text-blue-400" },
-  follow: { icon: Heart, color: "text-pink-400" },
-};
+const NOTIFICATION_CONFIG: Record<NotificationType, { icon: typeof MessageCircle; color: string }> =
+  {
+    message: { icon: MessageCircle, color: "text-blue-400" },
+    connection_request: { icon: UserPlus, color: "text-green-400" },
+    connection_accepted: { icon: CheckCircle, color: "text-green-400" },
+    session_invite: { icon: CalendarPlus, color: "text-purple-400" },
+    session_update: { icon: CalendarClock, color: "text-purple-400" },
+    comment: { icon: MessageSquare, color: "text-blue-400" },
+    mention: { icon: AtSign, color: "text-orange-400" },
+    endorsement: { icon: Star, color: "text-yellow-400" },
+    achievement: { icon: Trophy, color: "text-amber-400" },
+    project_invite: { icon: FolderPlus, color: "text-green-400" },
+    project_join: { icon: Users, color: "text-green-400" },
+    project_post: { icon: MessageSquare, color: "text-blue-400" },
+    follow: { icon: Heart, color: "text-pink-400" },
+  };
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -178,9 +178,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
             {timeAgo(notification.created_at)}
           </span>
           {!hasEntity && !isConnectionRequest && (
-            <span className="text-[11px] text-muted-foreground/40 italic">
-              No longer available
-            </span>
+            <span className="text-[11px] text-muted-foreground/40 italic">No longer available</span>
           )}
           {isConnectionRequest && notification.entity_id && (
             <div className="ml-auto flex gap-1">
@@ -188,7 +186,10 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[11px] text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                onClick={(e) => { e.stopPropagation(); handleAccept(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAccept();
+                }}
               >
                 <UserCheck className="mr-1 h-3 w-3" />
                 Accept
@@ -197,7 +198,10 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                onClick={(e) => { e.stopPropagation(); handleDecline(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDecline();
+                }}
               >
                 <UserX className="mr-1 h-3 w-3" />
                 Decline
@@ -260,6 +264,7 @@ git commit -m "feat: make NotificationCard clickable, remove dead action buttons
 ### Task 2: Update NotificationFeed to pass onNavigate
 
 **Files:**
+
 - Modify: `src/components/tethyr/notifications/notification-feed.tsx`
 
 - [x] **Step 1: Rename `onAction` to `onNavigate` in feed props and usage**
@@ -278,6 +283,7 @@ export function NotificationFeed({ notifications, isLoading, onNavigate }: Notif
 ```
 
 Replace the card rendering line:
+
 ```tsx
 <NotificationCard key={n.id} notification={n} onNavigate={onNavigate} />
 ```
@@ -294,6 +300,7 @@ git commit -m "feat: rename onAction to onNavigate in NotificationFeed"
 ### Task 3: Add tabs and navigation handler to notifications page
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/notifications.tsx`
 
 - [x] **Step 1: Rewrite the notifications page with tabs + navigation handler**
@@ -427,18 +434,10 @@ function NotificationsPage() {
           />
         </aside>
         <main className="min-w-0 flex-1">
-          <Tabs
-            value={activeCategory}
-            onValueChange={setActiveCategory}
-            className="mb-6"
-          >
+          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
             <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
               {TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="whitespace-nowrap text-xs"
-                >
+                <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
                   {tab.label}
                 </TabsTrigger>
               ))}

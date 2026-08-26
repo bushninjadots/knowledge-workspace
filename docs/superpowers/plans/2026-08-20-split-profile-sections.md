@@ -20,18 +20,18 @@
 
 ## File Structure
 
-| New File | Components | Lines |
-|----------|-----------|-------|
-| `profile/types.ts` | All type definitions, constants, `PROFILE_ICONS` | ~130 |
-| `profile/badges.tsx` | `ExperienceBadge`, `VerificationBadge` | ~35 |
-| `profile/section-card.tsx` | `SectionCard`, `Field` | ~40 |
-| `profile/banner-strip.tsx` | `BannerStrip` | ~200 |
-| `profile/chip-list-card.tsx` | `ChipListCard` | ~130 |
-| `profile/projects-card.tsx` | `ProjectsCard` | ~250 |
-| `profile/project-library-add-dialog.tsx` | `ProjectLibraryAddDialog` | ~150 |
-| `profile/project-dialog.tsx` | `ProjectDialog`, `Toggle`, creation steps | ~610 |
-| `profile/timeline-card.tsx` | `TimelineCard` | ~100 |
-| `profile/index.ts` | Barrel re-exports | ~20 |
+| New File                                 | Components                                       | Lines |
+| ---------------------------------------- | ------------------------------------------------ | ----- |
+| `profile/types.ts`                       | All type definitions, constants, `PROFILE_ICONS` | ~130  |
+| `profile/badges.tsx`                     | `ExperienceBadge`, `VerificationBadge`           | ~35   |
+| `profile/section-card.tsx`               | `SectionCard`, `Field`                           | ~40   |
+| `profile/banner-strip.tsx`               | `BannerStrip`                                    | ~200  |
+| `profile/chip-list-card.tsx`             | `ChipListCard`                                   | ~130  |
+| `profile/projects-card.tsx`              | `ProjectsCard`                                   | ~250  |
+| `profile/project-library-add-dialog.tsx` | `ProjectLibraryAddDialog`                        | ~150  |
+| `profile/project-dialog.tsx`             | `ProjectDialog`, `Toggle`, creation steps        | ~610  |
+| `profile/timeline-card.tsx`              | `TimelineCard`                                   | ~100  |
+| `profile/index.ts`                       | Barrel re-exports                                | ~20   |
 
 ## Consumer Files (no changes needed — barrel handles it)
 
@@ -52,9 +52,11 @@
 ## Task 1: Create types.ts
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/types.ts`
 
 Extract from profile-sections.tsx:
+
 - `ProjectStatus` type + `PROJECT_STATUS_LABEL` + `PROJECT_STATUS_STYLE` (lines 68-84)
 - `VERIFICATION_LABEL` + `VERIFICATION_STYLE` (lines 86-98)
 - `EXPERIENCE_LABEL` (lines 100-105)
@@ -70,6 +72,7 @@ Imports needed: `Github`, `Globe`, `Sparkles` from lucide-react; `SkillVerificat
 ## Task 2: Create badges.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/badges.tsx`
 
 Extract: `ExperienceBadge` (lines 107-113), `VerificationBadge` (lines 115-140)
@@ -79,6 +82,7 @@ Imports: `Trophy`, `Check` from lucide-react; types from `./types`; `safeHref` f
 ## Task 3: Create section-card.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/section-card.tsx`
 
 Extract: `SectionCard` (lines 145-172), `Field` (lines 174-181)
@@ -88,6 +92,7 @@ Imports: `Pencil` from lucide-react; `Button` from `@/components/ui/button`; `La
 ## Task 4: Create banner-strip.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/banner-strip.tsx`
 
 Extract: `BannerStrip` (lines 188-382)
@@ -99,6 +104,7 @@ Internal constants: `QUICK_EMOJI`, `BANNER_CAPTION_MAX`
 ## Task 5: Create chip-list-card.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/chip-list-card.tsx`
 
 Extract: `ChipListCard` (lines 385-509)
@@ -108,6 +114,7 @@ Imports: `useEffect`, `useState` from react; `Plus`, `X` from lucide-react; `toa
 ## Task 6: Create projects-card.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/projects-card.tsx`
 
 Extract: `ProjectsCard` (lines 546-788)
@@ -117,6 +124,7 @@ Imports: `useState` from react; `Link`, `useNavigate` from `@tanstack/react-rout
 ## Task 7: Create project-library-add-dialog.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/project-library-add-dialog.tsx`
 
 Extract: `ProjectLibraryAddDialog` (lines 790-934)
@@ -126,6 +134,7 @@ Imports: `useRef`, `useState` from react; `UploadCloud` from lucide-react; `toas
 ## Task 8: Create project-dialog.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/project-dialog.tsx`
 
 Extract: `ProjectDialog` (lines 944-1549), `Toggle` (lines 1551-1583)
@@ -137,6 +146,7 @@ Internal: `PROJECT_STATUSES` constant
 ## Task 9: Create timeline-card.tsx
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/timeline-card.tsx`
 
 Extract: `TimelineCard` (lines 1638-1683)
@@ -148,9 +158,11 @@ Internal: `KIND_META` constant
 ## Task 10: Create barrel index.ts
 
 **Files:**
+
 - Create: `src/components/tethyr/profile/index.ts`
 
 Re-export everything from all modules:
+
 - `export type { ProjectStatus, ProjectRow, ProjectSkill, ActivityRow } from './types'`
 - `export { PROJECT_STATUS_LABEL, PROJECT_STATUS_STYLE, VERIFICATION_LABEL, VERIFICATION_STYLE, EXPERIENCE_LABEL, PROJECT_LINK_KEYS, PROJECT_CREATION_STEPS, canContinueProjectCreation, PROFILE_ICONS } from './types'`
 - `export { ExperienceBadge, VerificationBadge } from './badges'`
@@ -166,15 +178,18 @@ Note: `Field` and `Toggle` are NOT re-exported (they were not exported from the 
 ## Task 11: Delete original + update barrel path
 
 **Files:**
+
 - Delete: `src/components/tethyr/profile-sections.tsx`
 - Modify: `src/components/tethyr/profile/index.ts` (if needed)
 
 Wait — actually the barrel IS `profile/index.ts`. Consumers currently import from `@/components/tethyr/profile-sections`. We have two options:
 
 **Option A (recommended):** Keep `profile-sections.tsx` as a thin barrel that re-exports from `./profile/`:
+
 ```ts
-export * from './profile'
+export * from "./profile";
 ```
+
 This means zero consumer changes.
 
 **Option B:** Update all 14 consumer files to import from `@/components/tethyr/profile`.

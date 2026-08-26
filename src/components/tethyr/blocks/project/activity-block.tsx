@@ -71,10 +71,7 @@ function ProjectActivityBlock({ context }: BlockProps) {
       <h3 className="mb-3 text-sm font-medium text-foreground">Recent activity</h3>
       <div className="space-y-1">
         {activity.slice(0, 10).map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm"
-          >
+          <div key={item.id} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm">
             <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">
               {KIND_LABEL[item.kind] ?? item.kind.replace(/_/g, " ")}

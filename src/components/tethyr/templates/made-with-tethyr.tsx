@@ -14,11 +14,7 @@ interface MadeWithTethyrProps {
   creatorHandle?: string | null;
 }
 
-export function MadeWithTethyr({
-  templateName,
-  templateId,
-  creatorHandle,
-}: MadeWithTethyrProps) {
+export function MadeWithTethyr({ templateName, templateId, creatorHandle }: MadeWithTethyrProps) {
   return (
     <div className="mt-6 flex items-center justify-center gap-1 text-[11px] text-muted-foreground/60">
       <span>Made with</span>

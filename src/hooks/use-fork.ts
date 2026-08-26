@@ -12,7 +12,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import type { ForkData, LineageNode, LayoutSection } from "@/lib/page-blocks";
+import type { Database } from "@/integrations/supabase/types";
+import type { LineageNode, LayoutSection } from "@/lib/page-blocks";
+
+type LayoutsSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
@@ -21,11 +24,14 @@ export function useLineage(layoutId: string) {
   return useQuery({
     queryKey: ["lineage", layoutId],
     queryFn: async (): Promise<LineageNode[]> => {
-      const { data, error } = await (supabase as any)
-        .rpc("get_layout_lineage", { start_id: layoutId });
+      const { data, error } = await supabase.rpc("get_layout_lineage", { start_id: layoutId });
 
       if (error) throw error;
-      return (data ?? []) as LineageNode[];
+      return (data ?? []).map((n) => ({
+        layoutId: n.layout_id,
+        parentId: n.parent_id,
+        depth: n.depth,
+      }));
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!layoutId,
@@ -37,7 +43,7 @@ export function useForkCount(layoutId: string) {
   return useQuery({
     queryKey: ["forks", "count", layoutId],
     queryFn: async (): Promise<number> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("layouts")
         .select("fork_count")
         .eq("id", layoutId)
@@ -71,7 +77,7 @@ export function useForkLayout() {
   return useMutation({
     mutationFn: async ({ parentLayoutId, name }: ForkLayoutParams): Promise<ForkResult> => {
       // 1. Fetch the parent layout's sections and metadata.
-      const { data: parent, error: fetchErr } = await (supabase as any)
+      const { data: parent, error: fetchErr } = await supabase
         .from("layouts")
         .select("sections, name, theme_id")
         .eq("id", parentLayoutId)
@@ -79,24 +85,25 @@ export function useForkLayout() {
 
       if (fetchErr) throw fetchErr;
 
-      const sections: LayoutSection[] = (parent?.sections ?? []).map(
-        (s: LayoutSection) => ({
-          ...s,
-          blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
-        }),
-      );
+      const sections: LayoutSection[] = (
+        (parent?.sections ?? []) as unknown as LayoutSection[]
+      ).map((s: LayoutSection) => ({
+        ...s,
+        blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
+      }));
 
       // 2. Create a new layout with the copied sections.
       //    Set created_by so the user owns the fork and can edit it.
       const forkName = name ?? `Fork of ${parent?.name ?? "layout"}`;
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id ?? null;
-      const { data: child, error: insertErr } = await (supabase as any)
+      const userId = userData?.user?.id;
+      if (!userId) throw new Error("You must be signed in to fork a layout.");
+      const { data: child, error: insertErr } = await supabase
         .from("layouts")
         .insert({
           name: forkName,
           type: "custom",
-          sections,
+          sections: sections as unknown as LayoutsSectionsJson,
           theme_id: parent?.theme_id ?? null,
           is_template: false,
           created_by: userId,
@@ -109,11 +116,12 @@ export function useForkLayout() {
       const childLayoutId: string = child.id;
 
       // 3. Record the fork relationship.
-      const { data: fork, error: forkErr } = await (supabase as any)
+      const { data: fork, error: forkErr } = await supabase
         .from("forks")
         .insert({
           parent_layout_id: parentLayoutId,
           child_layout_id: childLayoutId,
+          creator_id: userId,
         })
         .select("id")
         .single();
@@ -121,11 +129,11 @@ export function useForkLayout() {
       if (forkErr) throw forkErr;
 
       // 4. Bump the parent's fork count.
-      await (supabase as any)
-        .rpc("increment_fork_count", { layout_id: parentLayoutId })
-        .catch(() => {
-          // Non-critical — don't fail the whole operation.
-        });
+      try {
+        await supabase.rpc("increment_fork_count", { layout_id: parentLayoutId });
+      } catch {
+        // Non-critical — don't fail the whole operation.
+      }
 
       return { newLayoutId: childLayoutId, forkId: fork.id };
     },
@@ -163,7 +171,7 @@ export function useRemixLayout() {
       });
 
       // 2. Mark the child as a template.
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("layouts")
         .update({
           is_template: true,

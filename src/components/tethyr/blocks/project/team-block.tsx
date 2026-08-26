@@ -3,7 +3,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileLink } from "@/components/tethyr/profile-link";
@@ -72,15 +71,17 @@ function ProjectTeamBlock({ context }: BlockProps) {
   return (
     <div>
       <h3 className="mb-3 text-sm font-medium text-foreground">
-        Team{" "}
-        <span className="text-muted-foreground">({contributors.length})</span>
+        Team <span className="text-muted-foreground">({contributors.length})</span>
       </h3>
       <div className="grid gap-2 sm:grid-cols-2">
         {contributors.map((c) => {
           const profile = c.profiles;
           const initial = (profile?.display_name ?? profile?.handle ?? "?").charAt(0).toUpperCase();
           return (
-            <div key={c.profile_id} className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5">
+            <div
+              key={c.profile_id}
+              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profile?.avatar_url ?? undefined} />
                 <AvatarFallback className="text-xs">{initial}</AvatarFallback>

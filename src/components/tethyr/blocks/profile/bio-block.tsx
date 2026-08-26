@@ -3,7 +3,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -51,14 +50,20 @@ function ProfileBioBlock({ context }: BlockProps) {
     <div className="space-y-3">
       {hasBio && (
         <div>
-          <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">About</h4>
+          <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            About
+          </h4>
           <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{data.bio}</p>
         </div>
       )}
       {hasGoals && (
         <div>
-          <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Learning goals</h4>
-          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{data.learning_goals}</p>
+          <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Learning goals
+          </h4>
+          <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {data.learning_goals}
+          </p>
         </div>
       )}
     </div>

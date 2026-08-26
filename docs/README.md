@@ -19,16 +19,16 @@ If a change should alter product direction or a binding rule, update the appropr
 
 ## Canonical References
 
-| Document                                               | Owns                                                                             |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| [`TETHYR_PRODUCT.md`](./TETHYR_PRODUCT.md)             | Product identity, loop, pillars, objects, and product decisions                  |
-| [`TETHYR_DESIGN.md`](./TETHYR_DESIGN.md)               | Visual character, composition intent, and aesthetic reasoning                    |
-| [`TETHYR_DESIGN_SYSTEM.md`](./TETHYR_DESIGN_SYSTEM.md) | Surfaces, typography, spacing, states, responsiveness, and component reuse       |
-| [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md)           | Required analysis, design review, implementation review, and validation workflow |
-| [`TETHYR_ARCHITECTURE.md`](./TETHYR_ARCHITECTURE.md)   | Route, component, data, server, security, and documentation ownership            |
-| [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md)               | Major redesign specification — block system, templates, fork/remix, phases |
-| [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) | Redesign data model, component ownership, and migration strategy          |
-| [`../AGENTS.md`](../AGENTS.md)                         | Binding constitution and project-wide agent guardrails                           |
+| Document                                                               | Owns                                                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`TETHYR_PRODUCT.md`](./TETHYR_PRODUCT.md)                             | Product identity, loop, pillars, objects, and product decisions                  |
+| [`TETHYR_DESIGN.md`](./TETHYR_DESIGN.md)                               | Visual character, composition intent, and aesthetic reasoning                    |
+| [`TETHYR_DESIGN_SYSTEM.md`](./TETHYR_DESIGN_SYSTEM.md)                 | Surfaces, typography, spacing, states, responsiveness, and component reuse       |
+| [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md)                           | Required analysis, design review, implementation review, and validation workflow |
+| [`TETHYR_ARCHITECTURE.md`](./TETHYR_ARCHITECTURE.md)                   | Route, component, data, server, security, and documentation ownership            |
+| [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md)                 | Major redesign specification — block system, templates, fork/remix, phases       |
+| [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) | Redesign data model, component ownership, and migration strategy                 |
+| [`../AGENTS.md`](../AGENTS.md)                                         | Binding constitution and project-wide agent guardrails                           |
 
 ## Context Documents
 
@@ -43,6 +43,7 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`PROJECT_AUDIT.md`](./PROJECT_AUDIT.md) — broader project audit
 - [`UX_FULL_REVIEW_2026-08-20.md`](./UX_FULL_REVIEW_2026-08-20.md) — full user-flow review (2026-08-20); findings with same-day resolution status
 - [`UI_UX_AUDIT_AND_FIXES.md`](./UI_UX_AUDIT_AND_FIXES.md) — remediation history
+- [`FULL_SITE_AUDIT_2026-08-26.md`](./FULL_SITE_AUDIT_2026-08-26.md) — full-stack site audit (2026-08-26): P0 production crash (Sentry double-init), stored XSS in block renderers, CSP gaps, bundle budget, lint debt, DB drift, and healthy-surface verification
 - [`superpowers/specs/`](./superpowers/specs/) — feature design specifications
 - [`superpowers/plans/`](./superpowers/plans/) — feature execution plans
 

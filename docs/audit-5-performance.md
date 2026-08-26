@@ -8,12 +8,12 @@
 
 ## Summary Table
 
-| Severity | Count | Key Theme |
-|----------|-------|-----------|
-| P0 | 3 | Unbounded Supabase queries that will degrade as data grows |
-| P1 | 5 | Heavy client chunks (lowlight 480KB, main 418KB), missing lazy loading |
-| P2 | 4 | Missing limits on social-graph queries, duplicated hydration logic |
-| P3 | 3 | Minor optimization opportunities |
+| Severity | Count | Key Theme                                                              |
+| -------- | ----- | ---------------------------------------------------------------------- |
+| P0       | 3     | Unbounded Supabase queries that will degrade as data grows             |
+| P1       | 5     | Heavy client chunks (lowlight 480KB, main 418KB), missing lazy loading |
+| P2       | 4     | Missing limits on social-graph queries, duplicated hydration logic     |
+| P3       | 3     | Minor optimization opportunities                                       |
 
 ---
 
@@ -25,6 +25,7 @@
 **Issue:** The projects query in `fetchCurrentUser()` has no `.limit()`. Every authenticated page load fetches the user's entire project list.
 **Impact:** Users with 50+ projects load all project data (including full `*` columns: gallery arrays, resources arrays, links objects) on every page navigation. This blocks the current-user query waterfall.
 **Evidence:**
+
 ```ts
 supabase
   .from("projects")
@@ -33,6 +34,7 @@ supabase
   .order("is_featured", { ascending: false })
   .order("created_at", { ascending: false }),
 ```
+
 **Recommendation:** Add `.limit(50)` and consider selecting only the columns needed for the shelf display (id, title, description, status, stage, cover_url, is_featured) instead of `*`.
 
 ### [P0] useMyProjects fetches ALL user projects without limit
@@ -41,6 +43,7 @@ supabase
 **Issue:** Same as above — `useMyProjects()` fetches every project the user owns with no limit.
 **Impact:** Project picker dropdowns and dashboard shelves grow linearly with user's project count.
 **Evidence:**
+
 ```ts
 const { data, error } = await sb
   .from("projects")
@@ -48,6 +51,7 @@ const { data, error } = await sb
   .eq("profile_id", user.id)
   .order("updated_at", { ascending: false });
 ```
+
 **Recommendation:** Add `.limit(50)` and paginate if needed. The project picker only shows ~10 items.
 
 ### [P0] useCommunitySpaces fetches ALL spaces without limit
@@ -56,12 +60,14 @@ const { data, error } = await sb
 **Issue:** Fetches every community space in the database. As spaces grow, this query returns unbounded data.
 **Impact:** The community page load time scales linearly with total space count. Each space also triggers RPC calls for member counts and membership lookups.
 **Evidence:**
+
 ```ts
 const { data: spaces, error } = await sb
   .from("community_spaces")
   .select("*")
   .order("created_at", { ascending: false });
 ```
+
 **Recommendation:** Add `.limit(100)` and implement cursor-based pagination for the spaces list. Consider a server-side aggregate endpoint for member counts.
 
 ---
@@ -98,9 +104,11 @@ const { data: spaces, error } = await sb
 **Issue:** `WorkspaceGrid` imports `react-grid-layout` (a heavy dependency with CSS) and is imported eagerly in the dashboard route, not lazy-loaded. The dashboard is the first page authenticated users see.
 **Impact:** The entire react-grid-layout library and its CSS are loaded on dashboard mount, even though the grid is only one module among many on the dashboard.
 **Evidence:**
+
 ```tsx
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 ```
+
 **Recommendation:** Lazy-load `WorkspaceGrid` since it's below the fold and only renders when the user scrolls to the workspace section.
 
 ### [P1] framer-motion imported in 7+ components without code splitting
@@ -109,12 +117,14 @@ import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 **Issue:** framer-motion (~384KB) is imported directly in `section-reveal.tsx`, `project-shelf.tsx` (5 sub-files), `landing/data.tsx`, and `cover-gradient.tsx`. While some are lazy-loaded via route-level splitting, the `section-reveal` component is imported eagerly in the landing page and project page.
 **Impact:** The framer-motion runtime is pulled into the main bundle via `section-reveal.tsx` which is imported eagerly in `index.tsx` (landing page).
 **Evidence:**
+
 ```tsx
 // src/routes/index.tsx
 import { SectionReveal } from "@/components/tethyr/section-reveal";
 // src/components/tethyr/section-reveal.tsx
 import { motion, useReducedMotion } from "framer-motion";
 ```
+
 **Recommendation:** Lazy-load `SectionReveal` or extract the `useReducedMotion` check into a tiny wrapper that defers the framer-motion import. Since `SectionReveal` wraps lazy-loaded sections, it should itself be lazy.
 
 ---
@@ -127,6 +137,7 @@ import { motion, useReducedMotion } from "framer-motion";
 **Issue:** Both `useFollowers()` and `useFollowing()` fetch all rows without a `.limit()`.
 **Impact:** Popular users with thousands of followers/following generate large responses. The profile page loads all of them at once.
 **Evidence:**
+
 ```ts
 const { data, error } = await sb
   .from("follows")
@@ -135,6 +146,7 @@ const { data, error } = await sb
   .order("created_at", { ascending: false });
 // No .limit()
 ```
+
 **Recommendation:** Add `.limit(200)` and implement "load more" pagination for the followers/following lists.
 
 ### [P2] useConnections fetches ALL connections without limit
@@ -143,6 +155,7 @@ const { data, error } = await sb
 **Issue:** `fetchConnections()` loads every connection row for the user with no limit.
 **Impact:** Users with many connections (500+) will see slow dashboard loads as the connections query blocks.
 **Evidence:**
+
 ```ts
 const { data, error } = await supabase
   .from("connections")
@@ -150,6 +163,7 @@ const { data, error } = await supabase
   .order("created_at", { ascending: false });
 // No .limit()
 ```
+
 **Recommendation:** Add `.limit(200)` for the dashboard view. The connections list can paginate.
 
 ### [P2] useSessions fetches ALL sessions without limit
@@ -158,6 +172,7 @@ const { data, error } = await supabase
 **Issue:** `fetchSessionsForUser()` returns all sessions (past and future) for the user with no limit.
 **Impact:** Users with many sessions generate large responses. The sessions page load time grows linearly.
 **Evidence:**
+
 ```ts
 const { data, error } = await sb
   .from("sessions")
@@ -166,6 +181,7 @@ const { data, error } = await sb
   .order("starts_at", { ascending: true });
 // No .limit()
 ```
+
 **Recommendation:** Add `.limit(100)`. Separate past/future queries so each can be independently bounded.
 
 ### [P2] Post hydration logic duplicated 4 times

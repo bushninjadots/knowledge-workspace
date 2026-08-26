@@ -20,11 +20,13 @@
 - TypeScript strict, no `any` in new code
 
 ---
+
 **Note:** `project_shelf_styles.css` may need to be looked up explicitly during implementation and its import added in the explore route, depending on the final implementation path.
 
 ### Task 1: Install framer-motion & create file structure
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `src/components/tethyr/project-shelf/`
 - Create: `src/components/tethyr/project-shelf/project-shelf.tsx`
@@ -34,6 +36,7 @@
 - Create: `src/lib/category-colors.ts`
 
 **Interfaces:**
+
 - Consumes: (nothing yet)
 - Produces: Empty component shells, category utility
 
@@ -54,9 +57,7 @@ mkdir -p src/components/tethyr/project-shelf
 Write `src/lib/category-colors.ts`:
 
 ```typescript
-import {
-  Palette, Code, Video, Camera, Music, Pen, Megaphone, type LucideIcon
-} from "lucide-react";
+import { Palette, Code, Video, Camera, Music, Pen, Megaphone, type LucideIcon } from "lucide-react";
 
 export const CATEGORY_ICON: Record<string, LucideIcon> = {
   Design: Palette,
@@ -101,7 +102,15 @@ interface ProjectShelfProps {
   setCategory: (v: string) => void;
 }
 
-export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category, setCategory }: ProjectShelfProps) {
+export function ProjectShelf({
+  projects,
+  meId,
+  contributorIds,
+  q,
+  setQ,
+  category,
+  setCategory,
+}: ProjectShelfProps) {
   return null; // placeholder
 }
 ```
@@ -109,7 +118,13 @@ export function ProjectShelf({ projects, meId, contributorIds, q, setQ, category
 `project-shelf-header.tsx`:
 
 ```typescript
-export function ProjectShelfHeader({ q, setQ, category, setCategory, count }: {
+export function ProjectShelfHeader({
+  q,
+  setQ,
+  category,
+  setCategory,
+  count,
+}: {
   q: string;
   setQ: (v: string) => void;
   category: string;
@@ -123,7 +138,13 @@ export function ProjectShelfHeader({ q, setQ, category, setCategory, count }: {
 `project-shelf-cover.tsx`:
 
 ```typescript
-export function ProjectShelfCover({ project, index, activeIndex, meId, isContributor }: {
+export function ProjectShelfCover({
+  project,
+  index,
+  activeIndex,
+  meId,
+  isContributor,
+}: {
   project: ProjectRow;
   index: number;
   activeIndex: number;
@@ -137,7 +158,10 @@ export function ProjectShelfCover({ project, index, activeIndex, meId, isContrib
 `project-shelf-overlay.tsx`:
 
 ```typescript
-export function ProjectShelfOverlay({ project, onClose }: {
+export function ProjectShelfOverlay({
+  project,
+  onClose,
+}: {
   project: ProjectRow | null;
   onClose: () => void;
 }) {
@@ -157,9 +181,11 @@ git commit -m "feat: install framer-motion, scaffold project-shelf components"
 ### Task 2: Build category cover gradient generation
 
 **Files:**
+
 - Create: `src/components/tethyr/project-shelf/cover-gradient.tsx`
 
 **Interfaces:**
+
 - Consumes: `inferCategory`, `CATEGORY_COLORS` from `src/lib/category-colors.ts`
 - Produces: `<AnimatedCoverGradient category={string} />` component
 
@@ -231,9 +257,11 @@ git commit -m "feat: add animated cover gradient component"
 ### Task 3: Build ProjectShelfCover
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf-cover.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectRow` (from explore route), `meId`, `isContributor`, `activeIndex`, `index`
 - Consumes: `CoverGradient`, `ProgressBar` from `./cover-gradient`
 - Consumes: `CATEGORY_ICON`, `inferCategory` from `@/lib/category-colors`
@@ -377,9 +405,11 @@ git commit -m "feat: build ProjectShelfCover with perspective transforms"
 ### Task 4: Build ProjectShelfHeader
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf-header.tsx`
 
 **Interfaces:**
+
 - Consumes: `q`, `setQ`, `category`, `setCategory`, `count`
 - Produces: Search bar + filter chips with AnimatePresence on result count
 
@@ -474,9 +504,11 @@ git commit -m "feat: build ProjectShelfHeader with search/filter"
 ### Task 5: Build ProjectShelf container
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectShelfCover`, `ProjectShelfHeader`, `ProjectShelfOverlay`
 - Consumes: `ProjectRow[]`, `meId`, `contributorIds`
 - Produces: Shelf with `perspective(1200px)`, active index tracking, keyboard navigation, AnimatePresence exit/enter
@@ -609,9 +641,11 @@ git commit -m "feat: build ProjectShelf container with navigation"
 ### Task 6: Build ProjectShelfOverlay
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf-overlay.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectRow | null`, `onClose`
 - Consumes: `CoverGradient` from `./cover-gradient`
 - Consumes: `CATEGORY_ICON`, `inferCategory` from `@/lib/category-colors`
@@ -770,9 +804,11 @@ git commit -m "feat: build ProjectShelfOverlay with layoutId morph"
 ### Task 7: Wire the explore page
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/explore.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProjectShelf` from `@/components/tethyr/project-shelf/project-shelf`
 - Consumes: `useCurrentUser` (existing)
 - Consumes: `supabase` (existing)
@@ -783,11 +819,13 @@ git commit -m "feat: build ProjectShelfOverlay with layoutId morph"
 Add `profile_id` to the Supabase select in the existing query:
 
 Old line 91:
+
 ```
 "id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
 ```
 
 New:
+
 ```
 "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles(id, handle, display_name, creator_title, avatar_url)",
 ```
@@ -798,7 +836,10 @@ New:
 const { data: contributors } = await supabase
   .from("project_contributors")
   .select("project_id")
-  .in("project_id", (data ?? []).map((p) => p.id))
+  .in(
+    "project_id",
+    (data ?? []).map((p) => p.id),
+  )
   .eq("profile_id", meId ?? "");
 ```
 
@@ -858,6 +899,7 @@ git commit -m "feat: wire ProjectShelf into explore page"
 ### Task 8: A11y pass & reduced-motion support
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf-cover.tsx`
 - Modify: `src/components/tethyr/project-shelf/project-shelf.tsx`
 - Modify: `src/components/tethyr/project-shelf/project-shelf-overlay.tsx`
@@ -891,6 +933,7 @@ In `project-shelf-cover.tsx`, accept a `prefersReducedMotion` prop and use `{ du
 - [x] **Step 3: Add focus management**
 
 In `project-shelf.tsx`:
+
 - When overlay opens, save the currently focused element
 - When overlay closes, restore focus to the triggering card
 - Add `aria-activedescendant` pointing to the active card
@@ -911,6 +954,7 @@ git commit -m "fix: a11y pass - reduced motion, focus management, keyboard nav"
 ### Task 9: Responsive / mobile adaptation
 
 **Files:**
+
 - Modify: `src/components/tethyr/project-shelf/project-shelf.tsx`
 - Modify: `src/components/tethyr/project-shelf/project-shelf-cover.tsx`
 
@@ -932,6 +976,7 @@ useEffect(() => {
 - [x] **Step 2: Mobile layout switch**
 
 When `isMobile`:
+
 - Shelf becomes a vertical scrollable stack (not horizontal)
 - No perspective/rotateY transforms - full face cards
 - Cards are stacked vertically with gap

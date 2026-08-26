@@ -71,21 +71,27 @@ These must remain conceptually separate.
 ## Block Types (Extensible)
 
 ### Content
+
 - Text, Heading, Markdown, Quote, Divider
 
 ### Media
+
 - Image, Gallery, Video, Embed
 
 ### Project
+
 - Project status, Statistics, Roadmap, Timeline, Tech stack, Releases, Changelog, Files, File explorer, Tasks, Kanban
 
 ### People
+
 - Team members, Contributors, Profile links, Testimonials
 
 ### Community
+
 - Activity, Discussions, Comments, Events
 
 ### Utility
+
 - Button, Link, Badge, Table, Progress
 
 The architecture must make it possible to add future block types without rewriting the page system.
@@ -275,6 +281,7 @@ CONTENT + STRUCTURE + STYLE + THEME
 ```
 
 Do not tightly couple these:
+
 - A project can change its theme without rebuilding its content.
 - A user can change its layout without losing content.
 - A template can be shared without exposing private project data.
@@ -367,38 +374,49 @@ This should become part of Tethyr's culture.
 **DO NOT rewrite the entire application in one enormous change.**
 
 ### Phase 1 — Full Audit (current)
+
 - Inspect the entire existing Tethyr codebase
 - Report: current architecture, profile/project architecture, dashboard, design system, reusable components, data models, APIs, current problems, duplicate components, dead code, migration risks, recommended architecture
 - Do NOT begin major implementation yet
 
 ### Phase 2 — Page / Block Foundation
+
 - Create the underlying Page, Layout, Block, Theme, Draft, Publish architecture
 
 ### Phase 3 — Project Space
+
 - Build the new customizable Project Space
 
 ### Phase 4 — Personal Profile
+
 - Build the customizable personal profile
 
 ### Phase 5 — Visual Editor
+
 - Build the customization experience
 
 ### Phase 6 — Template System
+
 - Build reusable layouts
 
 ### Phase 7 — Template Library
+
 - Build community discovery
 
 ### Phase 8 — Fork / Remix
+
 - Build layout lineage and remixing
 
 ### Phase 9 — Themes
+
 - Expand the theme system
 
 ### Phase 10 — Migration
+
 - Move existing Tethyr projects/profiles into the new architecture
 
 ### Phase 11 — Polish
+
 - Audit mobile, accessibility, performance, UX, empty states, loading states, error states, permissions, security, consistency
 
 ---
@@ -416,45 +434,59 @@ Do not declare a feature complete simply because it renders.
 The redesign succeeds when:
 
 ### Identity
+
 A user's Tethyr profile feels personal.
 
 ### Projects
+
 A Tethyr project feels like a destination rather than a dashboard.
 
 ### Creativity
+
 Two projects can look completely different.
 
 ### Simplicity
+
 A non-designer can create something beautiful.
 
 ### Power
+
 An advanced user can meaningfully customize their space.
 
 ### Community
+
 People can discover layouts created by other people.
 
 ### Templates
+
 Layouts can be reused.
 
 ### Forking
+
 Layouts can be forked.
 
 ### Remixing
+
 Forks can be modified and republished.
 
 ### Attribution
+
 Creators receive appropriate credit.
 
 ### Evolution
+
 Templates can have versions.
 
 ### Safety
+
 Private project data never leaks through templates.
 
 ### Performance
+
 Public pages remain fast.
 
 ### Architecture
+
 Content, layout, theme and project data remain properly separated.
 
 ---
@@ -474,6 +506,7 @@ Content, layout, theme and project data remain properly separated.
 Do NOT immediately start rewriting the application.
 
 First:
+
 1. Inspect the complete codebase
 2. Understand the current architecture
 3. Understand what Tethyr already does

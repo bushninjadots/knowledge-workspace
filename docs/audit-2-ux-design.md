@@ -8,12 +8,12 @@
 
 ## Summary
 
-| Severity | Count |
-|----------|-------|
-| P0 (critical) | 0 |
-| P1 (significant) | 5 |
-| P2 (moderate) | 8 |
-| P3 (minor) | 6 |
+| Severity         | Count |
+| ---------------- | ----- |
+| P0 (critical)    | 0     |
+| P1 (significant) | 5     |
+| P2 (moderate)    | 8     |
+| P3 (minor)       | 6     |
 
 ---
 
@@ -24,7 +24,7 @@
 **Location:** `src/routes/index.tsx:250`
 
 ```html
-<div className="... rounded-[2.5rem] border border-border/60 bg-surface ...">
+<div className="... rounded-[2.5rem] border border-border/60 bg-surface ..."></div>
 ```
 
 The design system defines 4 radius tokens: `rounded-md` → `rounded-lg` → `rounded-xl` → `rounded-full`. A `2.5rem` radius (~40px) exists nowhere in the scale and creates a visual mismatch — the element floats between a card and a pill.
@@ -38,7 +38,7 @@ The design system defines 4 radius tokens: `rounded-md` → `rounded-lg` → `ro
 **Location:** `src/components/tethyr/team/team-page.tsx:281`
 
 ```html
-<div className="... rounded-2xl border card-border bg-surface ...">
+<div className="... rounded-2xl border card-border bg-surface ..."></div>
 ```
 
 Avatars are `rounded-full` everywhere else (user avatars, team icons in feeds, nav). A 20×20 avatar with `rounded-2xl` reads as a rounded square, which is the wrong shape for a face/icon.
@@ -50,6 +50,7 @@ Avatars are `rounded-full` everywhere else (user avatars, team icons in feeds, n
 ### 3. Excessive `shadow-2xl` / `shadow-xl` on overlays and dropdowns
 
 **Locations:**
+
 - `src/components/tethyr/global-search.tsx:559` — `shadow-2xl backdrop-blur-xl`
 - `src/components/tethyr/project-shelf/project-shelf-overlay.tsx:142` — `shadow-2xl`
 - `src/components/tethyr/project/project-join-modal.tsx:58` — `shadow-2xl`
@@ -65,6 +66,7 @@ TETHYR_DESIGN_SYSTEM states: "No shadows on cards." The `shadow-2xl` class produ
 ### 4. `font-title` used inconsistently — heading font appears in 8 places, `font-display` used everywhere else
 
 **Locations with `font-title`:**
+
 - `src/routes/_authenticated/challenges.tsx:246, 272`
 - `src/components/tethyr/empty-state.tsx:300`
 - `src/components/tethyr/community/post-card.tsx:445`
@@ -82,6 +84,7 @@ Every other heading in the app uses `font-display`. `font-title` and `font-displ
 ### 5. Inline error components duplicate error page markup — not using shared ErrorComponent
 
 **Locations:**
+
 - `src/routes/_authenticated/community.tsx:48-63`
 - `src/routes/_authenticated/messages.tsx:31-56`
 
@@ -118,7 +121,7 @@ Raw `<button>` and `<a>` elements with hand-written Tailwind classes instead of 
 **Location:** `src/components/tethyr/profile/github-connect.tsx:245`
 
 ```html
-<div className="... bg-[#24292e] text-white ...">
+<div className="... bg-[#24292e] text-white ..."></div>
 ```
 
 This is a brand color (GitHub's), which is the one acceptable case for hardcoded colors. However, the pattern is fragile — if the hex is ever referenced elsewhere, it should be a token. Document this as an intentional exception or move to a CSS variable.
@@ -132,7 +135,7 @@ This is a brand color (GitHub's), which is the one acceptable case for hardcoded
 **Location:** `src/routes/_authenticated/messages.tsx:368`
 
 ```html
-<div className="... shadow-sm ...">
+<div className="... shadow-sm ..."></div>
 ```
 
 TETHYR_DESIGN_SYSTEM says "No shadows on cards." The input bar is not a card but is a surface-level element. `shadow-sm` is subtle enough to be acceptable, but should be consistent — other inputs don't use `shadow-sm`.
@@ -259,17 +262,17 @@ Other `Button` usages use `rounded-md` or `rounded-lg`. The `rounded-full` on `C
 
 ## Recommended Actions
 
-| Priority | Action | Effort |
-|----------|--------|--------|
-| P1 | Replace `rounded-[2.5rem]` → `rounded-xl` on landing CTA | 5 min |
-| P1 | Replace `rounded-2xl` → `rounded-full` on team avatar | 5 min |
-| P1 | Replace `shadow-2xl` → `shadow-lg` on custom overlays (3 places) | 10 min |
-| P1 | Replace `font-title` → `font-display` everywhere (8 places) | 15 min |
-| P1 | Remove inline `errorComponent` from community and messages routes | 15 min |
-| P2 | Audit `backdrop-blur` — remove from non-essential surfaces | 30 min |
-| P2 | Replace inline `<button>` with `<Button>` in error components | 10 min |
-| P2 | Add `#24292e` as a CSS variable or document as brand exception | 5 min |
-| P2 | Remove `shadow-sm` from message input bar | 2 min |
-| P2 | Standardize two-column grid breakpoints to `sm:grid-cols-2` | 10 min |
-| P3 | Remove `rounded-full` from CreateProjectButton or document | 5 min |
-| P3 | Remove `shadow-glow-green` or document as brand exception | 5 min |
+| Priority | Action                                                            | Effort |
+| -------- | ----------------------------------------------------------------- | ------ |
+| P1       | Replace `rounded-[2.5rem]` → `rounded-xl` on landing CTA          | 5 min  |
+| P1       | Replace `rounded-2xl` → `rounded-full` on team avatar             | 5 min  |
+| P1       | Replace `shadow-2xl` → `shadow-lg` on custom overlays (3 places)  | 10 min |
+| P1       | Replace `font-title` → `font-display` everywhere (8 places)       | 15 min |
+| P1       | Remove inline `errorComponent` from community and messages routes | 15 min |
+| P2       | Audit `backdrop-blur` — remove from non-essential surfaces        | 30 min |
+| P2       | Replace inline `<button>` with `<Button>` in error components     | 10 min |
+| P2       | Add `#24292e` as a CSS variable or document as brand exception    | 5 min  |
+| P2       | Remove `shadow-sm` from message input bar                         | 2 min  |
+| P2       | Standardize two-column grid breakpoints to `sm:grid-cols-2`       | 10 min |
+| P3       | Remove `rounded-full` from CreateProjectButton or document        | 5 min  |
+| P3       | Remove `shadow-glow-green` or document as brand exception         | 5 min  |

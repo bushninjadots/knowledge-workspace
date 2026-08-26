@@ -19,6 +19,7 @@ New component `CreateChallengeDialog` that opens from a button on the community 
 **Trigger:** "Create Challenge" button in the challenges tab header area.
 
 **Dialog fields:**
+
 - Title (required, text input)
 - Description (required, textarea)
 - Type (required, select: Skill / Project / Learning)
@@ -29,11 +30,13 @@ New component `CreateChallengeDialog` that opens from a button on the community 
 - Max Participants (optional, number input)
 
 **Interaction:**
+
 - Validation: title and description required
 - On save: calls `useCreateChallenge()`, shows toast on success/error, closes dialog, refreshes challenge list
 - Loading: save button shows spinner during mutation
 
 **Error handling:**
+
 - Supabase errors toast to user
 - Dialog stays open on failure
 
@@ -50,16 +53,19 @@ The notification system has no triggers for challenge events. Challenge join/com
 New migration adding two notification triggers.
 
 **New notification types** (added to existing `notification_type` enum):
+
 - `challenge_join` — user joined a challenge
 - `challenge_complete` — user completed a challenge
 
 **Trigger: `notify_challenge_join`** (AFTER INSERT on `challenge_participants`)
+
 - Recipient: challenge creator (`challenges.created_by`)
 - Actor: the user who joined
 - Message: "{actor_name} joined your challenge {challenge_title}"
 - Metadata: `{ challenge_id, challenge_title }`
 
 **Trigger: `notify_challenge_complete`** (AFTER UPDATE on `challenge_participants`, when status changes to 'completed')
+
 - Recipient: challenge creator
 - Actor: the user who completed
 - Message: "{actor_name} completed your challenge {challenge_title}"
@@ -82,6 +88,7 @@ New migration adding a trigger function `trg_reputation_challenge_completed`.
 **Pattern:** Follows the existing `trg_reputation_*` pattern in `20260722130000_phase4_reputation.sql` — uses `public.log_contribution()` helper.
 
 **Points:**
+
 - Challenge completion: **+15 points** per challenge (comparable to project published's +10)
 - Category: `"challenges"`, action: `"challenge_completed"`
 - Metadata: `{ challenge_id, challenge_title }`
@@ -103,7 +110,7 @@ Enhance the existing progress section in `challenges.$id.tsx`:
 - **Progress bar:** Replace the text "33%" with a visual progress bar component (using shadcn Progress)
 - **Steps:** Add a simple 3-step checklist that the user works through:
   1. "Start working" (auto-marked when joining) → status `joined`
-  2. "In progress" (user clicks to mark) → status `in_progress`  
+  2. "In progress" (user clicks to mark) → status `in_progress`
   3. "Completed" (user clicks to mark with optional notes) → status `completed`
 - Each step shows a check icon when completed, radio/button to mark the next step
 - **Completion flow:** Keep the existing congratulations message, add a small reputation badge showing "+15 reputation" when completed
@@ -115,23 +122,23 @@ This replaces the current "Mark Completed" button with a stepped flow that gives
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/components/tethyr/community/create-challenge-dialog.tsx` | **New** — create challenge dialog |
-| `src/routes/_authenticated/community.tsx` | Add "Create Challenge" button + dialog trigger in challenges tab |
-| `src/routes/_authenticated/notifications.tsx` | Add `challenge_join`, `challenge_complete` cases to `useNotificationNavigator` |
-| `src/routes/_authenticated/challenges.$id.tsx` | Enhanced progress section with 3-step flow, progress bar, reputation badge |
-| `supabase/migrations/20260729000000_challenge_notifications.sql` | **New** — notification types + triggers for challenge events |
-| `supabase/migrations/20260729000001_challenge_reputation.sql` | **New** — reputation trigger for challenge completion |
+| File                                                             | Change                                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/components/tethyr/community/create-challenge-dialog.tsx`    | **New** — create challenge dialog                                              |
+| `src/routes/_authenticated/community.tsx`                        | Add "Create Challenge" button + dialog trigger in challenges tab               |
+| `src/routes/_authenticated/notifications.tsx`                    | Add `challenge_join`, `challenge_complete` cases to `useNotificationNavigator` |
+| `src/routes/_authenticated/challenges.$id.tsx`                   | Enhanced progress section with 3-step flow, progress bar, reputation badge     |
+| `supabase/migrations/20260729000000_challenge_notifications.sql` | **New** — notification types + triggers for challenge events                   |
+| `supabase/migrations/20260729000001_challenge_reputation.sql`    | **New** — reputation trigger for challenge completion                          |
 
 ## New/Modified DB Objects
 
-| Object | Type | Description |
-|--------|------|-------------|
-| `challenge_join` | notification_type enum value | Join event notification |
-| `challenge_complete` | notification_type enum value | Complete event notification |
-| `notify_challenge_event()` | trigger function | Inserts notification for challenge join/complete |
-| `trg_reputation_challenge_completed()` | trigger function | Awards +15 reputation on challenge completion |
+| Object                                 | Type                         | Description                                      |
+| -------------------------------------- | ---------------------------- | ------------------------------------------------ |
+| `challenge_join`                       | notification_type enum value | Join event notification                          |
+| `challenge_complete`                   | notification_type enum value | Complete event notification                      |
+| `notify_challenge_event()`             | trigger function             | Inserts notification for challenge join/complete |
+| `trg_reputation_challenge_completed()` | trigger function             | Awards +15 reputation on challenge completion    |
 
 ## New Hooks / Exports
 

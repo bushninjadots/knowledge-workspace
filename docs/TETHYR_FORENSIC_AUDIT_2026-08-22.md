@@ -53,19 +53,19 @@ Use the existing Project and Workspace patterns as the product’s structural re
 
 Scores reflect the current source and documentation, not an aspirational redesign.
 
-| Area | Score | Reason |
-|---|---:|---|
-| Product identity | 8/10 | Product definition, naming, and primary loop are strong; some surfaces still read as generic feed/dashboard patterns. |
-| Visual identity | 6/10 | Tokens are restrained and recognizable, but landing and several feature surfaces still use older rounded/card/gradient treatments. |
-| UX consistency | 7/10 | Shared primitives, URL-driven tabs, workspace ownership, and state boundaries are good; several local patterns still compete. |
-| Information hierarchy | 7/10 | Project and Studio are strong; Explore, Challenges, Sessions, and Community can still present too many equal-weight controls/surfaces. |
-| Project experience | 8/10 | README, workbench, current work, people, conversation, and evidence are present and logically ordered. |
-| Collaboration experience | 7/10 | Roles, applications, connections, messages, sessions, challenges, and project context connect; some flows still need broader end-to-end verification. |
-| Navigation | 7/10 | Major duplicates were addressed; Community has its own rail/nav and global notification category ownership still needs a final model. |
-| Responsive design | 7/10 | Mobile-specific navigation and WorkspaceGrid composition exist; authenticated browser verification across all major surfaces is not current evidence in this stage. |
-| Accessibility | 7/10 | Strong foundations: labels on auth forms, skip link, focus tests, ARIA tabs, semantic lists in key flows. Residual unlabeled/weakly modeled controls remain. |
-| Technical architecture | 8/10 | Ownership boundaries, query conventions, lazy loading, security hardening, and test infrastructure are strong; some monolithic/data-boundary remnants remain. |
-| Product logic | 8/10 | The core loop is coherent and many previously identified dead ends are closed; category overlap and incomplete secondary flows remain. |
+| Area                     | Score | Reason                                                                                                                                                              |
+| ------------------------ | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product identity         |  8/10 | Product definition, naming, and primary loop are strong; some surfaces still read as generic feed/dashboard patterns.                                               |
+| Visual identity          |  6/10 | Tokens are restrained and recognizable, but landing and several feature surfaces still use older rounded/card/gradient treatments.                                  |
+| UX consistency           |  7/10 | Shared primitives, URL-driven tabs, workspace ownership, and state boundaries are good; several local patterns still compete.                                       |
+| Information hierarchy    |  7/10 | Project and Studio are strong; Explore, Challenges, Sessions, and Community can still present too many equal-weight controls/surfaces.                              |
+| Project experience       |  8/10 | README, workbench, current work, people, conversation, and evidence are present and logically ordered.                                                              |
+| Collaboration experience |  7/10 | Roles, applications, connections, messages, sessions, challenges, and project context connect; some flows still need broader end-to-end verification.               |
+| Navigation               |  7/10 | Major duplicates were addressed; Community has its own rail/nav and global notification category ownership still needs a final model.                               |
+| Responsive design        |  7/10 | Mobile-specific navigation and WorkspaceGrid composition exist; authenticated browser verification across all major surfaces is not current evidence in this stage. |
+| Accessibility            |  7/10 | Strong foundations: labels on auth forms, skip link, focus tests, ARIA tabs, semantic lists in key flows. Residual unlabeled/weakly modeled controls remain.        |
+| Technical architecture   |  8/10 | Ownership boundaries, query conventions, lazy loading, security hardening, and test infrastructure are strong; some monolithic/data-boundary remnants remain.       |
+| Product logic            |  8/10 | The core loop is coherent and many previously identified dead ends are closed; category overlap and incomplete secondary flows remain.                              |
 
 ## 3. Page-by-Page Audit
 

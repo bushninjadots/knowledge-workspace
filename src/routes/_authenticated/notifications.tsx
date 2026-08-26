@@ -9,7 +9,6 @@ import type { Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
 import { getNotificationDestination } from "@/lib/notification-destinations";
 import {
-  TYPE_CATEGORY,
   NOTIFICATION_CATEGORY_VIEWS,
   typesForNotificationView,
   isNotificationMuted,

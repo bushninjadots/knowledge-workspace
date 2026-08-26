@@ -22,10 +22,12 @@
 ### Task 1: Notification + Reputation DB Migrations
 
 **Files:**
+
 - Create: `supabase/migrations/20260729000000_challenge_notifications.sql`
 - Create: `supabase/migrations/20260729000001_challenge_reputation.sql`
 
 **Interfaces:**
+
 - Produces: `notification_type` enum values `challenge_join`, `challenge_complete`; `notify_challenge_event()` trigger function; `trg_reputation_challenge_completed()` trigger function
 
 - [x] **Step 1: Create challenge notifications migration**
@@ -174,10 +176,12 @@ git commit -m "feat: add challenge notification and reputation triggers"
 ### Task 2: Create Challenge Dialog
 
 **Files:**
+
 - Create: `src/components/tethyr/community/create-challenge-dialog.tsx`
 - Modify: `src/routes/_authenticated/community.tsx`
 
 **Interfaces:**
+
 - Consumes: `useCreateChallenge()` from `@/hooks/use-challenges`
 
 - [x] **Step 1: Create the dialog component**
@@ -186,11 +190,23 @@ git commit -m "feat: add challenge notification and reputation triggers"
 
 ```tsx
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useCreateChallenge } from "@/hooks/use-challenges";
 
@@ -207,15 +223,26 @@ export function CreateChallengeDialog() {
   const create = useCreateChallenge();
 
   const handleSubmit = () => {
-    if (!title.trim()) { toast.error("Title is required"); return; }
-    if (!description.trim()) { toast.error("Description is required"); return; }
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (!description.trim()) {
+      toast.error("Description is required");
+      return;
+    }
 
     create.mutate(
       {
         title: title.trim(),
         description: description.trim(),
         type: type as any,
-        skills: skills ? skills.split(",").map((s) => s.trim()).filter(Boolean) : [],
+        skills: skills
+          ? skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
         difficulty: difficulty as any,
         start_date: startDate || null,
         end_date: endDate || null,
@@ -248,10 +275,17 @@ export function CreateChallengeDialog() {
         </DialogHeader>
         <div className="space-y-4">
           <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          <Textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="skill">Skill</SelectItem>
                 <SelectItem value="project">Project</SelectItem>
@@ -259,7 +293,9 @@ export function CreateChallengeDialog() {
               </SelectContent>
             </Select>
             <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="beginner">Beginner</SelectItem>
                 <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -267,7 +303,11 @@ export function CreateChallengeDialog() {
               </SelectContent>
             </Select>
           </div>
-          <Input placeholder="Skills (comma-separated)" value={skills} onChange={(e) => setSkills(e.target.value)} />
+          <Input
+            placeholder="Skills (comma-separated)"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Start date</label>
@@ -278,9 +318,17 @@ export function CreateChallengeDialog() {
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
-          <Input placeholder="Max participants (optional)" type="number" min="1" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} />
+          <Input
+            placeholder="Max participants (optional)"
+            type="number"
+            min="1"
+            value={maxParticipants}
+            onChange={(e) => setMaxParticipants(e.target.value)}
+          />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={create.isPending}>
               {create.isPending ? "Creating..." : "Create"}
             </Button>
@@ -304,7 +352,7 @@ import { CreateChallengeDialog } from "@/components/tethyr/community/create-chal
 <div className="flex items-center justify-between mb-4">
   <h2 className="text-lg font-semibold">Challenges</h2>
   <CreateChallengeDialog />
-</div>
+</div>;
 ```
 
 - [x] **Step 3: Run typecheck**
@@ -324,9 +372,11 @@ git commit -m "feat: add create challenge dialog"
 ### Task 3: Progress UX Enhancement
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/challenges.$id.tsx`
 
 **Interfaces:**
+
 - Consumes: `useUpdateChallengeProgress()` from `@/hooks/use-challenges`
 
 - [x] **Step 1: Read the existing challenge detail page**
@@ -413,9 +463,11 @@ git commit -m "feat: enhance challenge progress UX with step flow and reputation
 ### Task 4: Update Notification Navigator
 
 **Files:**
+
 - Modify: `src/routes/_authenticated/notifications.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1's new notification type enum values (must run after Task 1 or notifications page will crash on unknown type)
 
 - [x] **Step 1: Add challenge cases to useNotificationNavigator**

@@ -3,7 +3,7 @@
 // system renders end-to-end without depending on the database.
 // Access at /dev — no auth required (dev only).
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 // Import all block categories so they register themselves.
@@ -11,7 +11,6 @@ import "@/components/tethyr/blocks/content";
 import "@/components/tethyr/blocks/project";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useTheme } from "@/hooks/use-theme";
-import { themeTokensToStyle } from "@/lib/theme-tokens";
 import type { PageLayout, BlockContext } from "@/lib/page-blocks";
 
 /** Sample layout exercising every content block type. */
@@ -39,7 +38,13 @@ const SAMPLE_LAYOUT: PageLayout = {
           },
           visible: true,
         },
-        { id: "div-1", type: "divider", position: 2, config: { label: "Content Blocks" }, visible: true },
+        {
+          id: "div-1",
+          type: "divider",
+          position: 2,
+          config: { label: "Content Blocks" },
+          visible: true,
+        },
       ],
     },
     {
@@ -95,7 +100,7 @@ const SAMPLE_LAYOUT: PageLayout = {
           position: 1,
           config: {
             content:
-              "# This is rendered from markdown\n\nMarkdown blocks support **bold**, *italic*, `inline code`, and [links](https://tethyr.app).\n\n## Features\n\n- Bullet lists\n- Nested content\n- Code blocks\n\n```ts\nconst greeting = \"Hello, Tethyr!\";\n```\n\n> Blockquotes work too.\n\n---\n\nThis is **really** useful for READMEs and project descriptions.",
+              '# This is rendered from markdown\n\nMarkdown blocks support **bold**, *italic*, `inline code`, and [links](https://tethyr.app).\n\n## Features\n\n- Bullet lists\n- Nested content\n- Code blocks\n\n```ts\nconst greeting = "Hello, Tethyr!";\n```\n\n> Blockquotes work too.\n\n---\n\nThis is **really** useful for READMEs and project descriptions.',
           },
           visible: true,
         },
@@ -143,7 +148,13 @@ const SAMPLE_LAYOUT: PageLayout = {
       position: 4,
       layout: "full",
       blocks: [
-        { id: "div-end", type: "divider", position: 0, config: { label: "End of Demo" }, visible: true },
+        {
+          id: "div-end",
+          type: "divider",
+          position: 0,
+          config: { label: "End of Demo" },
+          visible: true,
+        },
         {
           id: "closing-text",
           type: "text",
@@ -177,6 +188,11 @@ function DevPreviewPage() {
   const { data: themeVars = {} } = useTheme(null);
   const style = useMemo(() => ({ ...themeVars }) as React.CSSProperties, [themeVars]);
 
+  // Dev-only preview — never expose it in production builds.
+  if (import.meta.env.PROD) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
@@ -185,8 +201,8 @@ function DevPreviewPage() {
             🧪 Dev Preview — Block System Phase 2 Verification
           </p>
           <p className="mt-1 text-xs text-caution-foreground/70">
-            This page bypasses the database and renders directly from a sample layout.
-            Remove this route before production.
+            This page bypasses the database and renders directly from a sample layout. Remove this
+            route before production.
           </p>
         </div>
 

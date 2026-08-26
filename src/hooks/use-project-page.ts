@@ -6,9 +6,11 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { usePage, invalidatePage } from "@/hooks/use-page";
 import { createDefaultProjectLayout } from "@/lib/default-layouts";
-import type { PageData } from "@/lib/page-blocks";
+
+type LayoutsSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
 
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -23,7 +25,12 @@ interface UseProjectPageOptions {
  * user is the owner, creates one with the default project layout.
  */
 export function useProjectPage({ projectId, isOwner }: UseProjectPageOptions) {
-  const { data: page, isLoading, isError, refetch } = usePage({
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = usePage({
     ownerId: projectId,
     ownerType: "project",
   });
@@ -43,12 +50,12 @@ async function autoCreatePage(projectId: string, qc: ReturnType<typeof useQueryC
   try {
     // 1. Create a layout with the default project sections.
     const defaultLayout = createDefaultProjectLayout();
-    const { data: layoutData, error: layoutError } = await (supabase as any)
+    const { data: layoutData, error: layoutError } = await supabase
       .from("layouts")
       .insert({
         name: "Default Project",
         type: "standard",
-        sections: defaultLayout.sections as unknown as Record<string, unknown>[],
+        sections: defaultLayout.sections as unknown as LayoutsSectionsJson,
         is_template: false,
         created_by: (await supabase.auth.getUser()).data.user?.id ?? null,
       })
@@ -61,16 +68,14 @@ async function autoCreatePage(projectId: string, qc: ReturnType<typeof useQueryC
     }
 
     // 2. Create the page referencing that layout.
-    const { error: pageError } = await (supabase as any)
-      .from("pages")
-      .insert({
-        owner_id: projectId,
-        owner_type: "project",
-        layout_id: layoutData.id,
-        theme_id: DEFAULT_THEME_ID,
-        status: "published",
-        published_at: new Date().toISOString(),
-      });
+    const { error: pageError } = await supabase.from("pages").insert({
+      owner_id: projectId,
+      owner_type: "project",
+      layout_id: layoutData.id,
+      theme_id: DEFAULT_THEME_ID,
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
 
     if (pageError) {
       console.warn("Failed to create project page", pageError);

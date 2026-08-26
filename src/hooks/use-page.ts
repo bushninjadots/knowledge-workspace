@@ -5,15 +5,16 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import type { PageData, PageLayout, PageOwnerType, ThemeTokens } from "@/lib/page-blocks";
 
 interface PageRow {
   id: string;
   owner_id: string;
-  owner_type: PageOwnerType;
-  layout_id: string;
+  owner_type: string;
+  layout_id: string | null;
   theme_id: string | null;
-  theme_overrides: ThemeTokens | null;
+  theme_overrides: Json | null;
   status: string;
   published_at: string | null;
   created_at: string;
@@ -21,11 +22,11 @@ interface PageRow {
 }
 
 interface LayoutRow {
-  sections: PageLayout["sections"];
+  sections: Json;
 }
 
 interface ThemeRow {
-  tokens: ThemeTokens;
+  tokens: Json;
 }
 
 interface FetchPageParams {
@@ -41,13 +42,11 @@ interface FetchPageParams {
  * or create one).
  */
 export function usePage({ ownerId, ownerType }: FetchPageParams) {
-  const qc = useQueryClient();
-
   return useQuery({
     queryKey: ["page", ownerType, ownerId],
     queryFn: async (): Promise<PageData | null> => {
       // Query 1: Get the page record.
-      const { data: row, error } = await (supabase as any)
+      const { data: row, error } = await supabase
         .from("pages")
         .select(
           "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, status, published_at, created_at, updated_at",
@@ -62,35 +61,37 @@ export function usePage({ ownerId, ownerType }: FetchPageParams) {
       const pageRow = row as unknown as PageRow;
 
       // Query 2: Get the layout sections.
-      const { data: layoutRow } = await (supabase as any)
+      const { data: layoutRow } = await supabase
         .from("layouts")
         .select("sections")
-        .eq("id", pageRow.layout_id)
+        .eq("id", pageRow.layout_id ?? "")
         .maybeSingle();
 
       const layout: PageLayout = {
-        sections: (layoutRow as unknown as LayoutRow | null)?.sections ?? [],
+        sections: ((layoutRow as unknown as LayoutRow | null)?.sections ??
+          []) as unknown as PageLayout["sections"],
       };
 
       // Query 3: Get the theme tokens (optional — null means use default).
       let theme: ThemeTokens | null = null;
       if (pageRow.theme_id) {
-        const { data: themeRow } = await (supabase as any)
+        const { data: themeRow } = await supabase
           .from("themes")
           .select("tokens")
           .eq("id", pageRow.theme_id)
           .maybeSingle();
         // Merge theme_overrides on top of base theme tokens so user
-      // customizations (radius, colors, typography) take precedence.
-      const overrides = (pageRow as any).theme_overrides as ThemeTokens | null;
-      theme = overrides ? { ...((themeRow as unknown as ThemeRow | null)?.tokens ?? {} as ThemeTokens), ...overrides } : theme;
+        // customizations (radius, colors, typography) take precedence.
+        const baseTokens = (themeRow as unknown as ThemeRow | null)?.tokens ?? {};
+        const overrides = (pageRow.theme_overrides ?? {}) as ThemeTokens;
+        theme = { ...(baseTokens as ThemeTokens), ...overrides };
       }
 
       return {
         id: pageRow.id,
         ownerId: pageRow.owner_id,
-        ownerType: pageRow.owner_type,
-        layoutId: pageRow.layout_id,
+        ownerType: pageRow.owner_type as PageOwnerType,
+        layoutId: pageRow.layout_id ?? "",
         themeId: pageRow.theme_id ?? "",
         status: pageRow.status as PageData["status"],
         publishedAt: pageRow.published_at,
@@ -109,6 +110,10 @@ export function usePage({ ownerId, ownerType }: FetchPageParams) {
  * Invalidate the page query so it refetches after a mutation (publish, layout
  * change, etc.).
  */
-export function invalidatePage(qc: ReturnType<typeof useQueryClient>, ownerId: string, ownerType: PageOwnerType) {
+export function invalidatePage(
+  qc: ReturnType<typeof useQueryClient>,
+  ownerId: string,
+  ownerType: PageOwnerType,
+) {
   qc.invalidateQueries({ queryKey: ["page", ownerType, ownerId] });
 }

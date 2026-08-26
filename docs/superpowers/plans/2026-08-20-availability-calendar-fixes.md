@@ -20,15 +20,18 @@
 ## Task 1: Fix availability stale callback bug
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/availability-settings.tsx`
 
 **Interfaces:**
+
 - Consumes: `useSessionAvailability()` hook (returns availability data + refetch)
 - Produces: availability data refreshes after save
 
 - [ ] **Step 1: Read the file and understand the callback chain**
 
 Read `src/components/tethyr/sessions/availability-settings.tsx` to understand:
+
 - How `AvailabilityEditorDialog` is rendered (lines ~170-215)
 - The `onSaved` prop being passed as `() => {}`
 - How `useSessionAvailability()` works and what refetch it provides
@@ -58,16 +61,19 @@ git commit -m "fix: availability settings refresh after save"
 ## Task 2: Add timezone selector to availability editor
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/availability-settings.tsx`
 - Modify: `src/components/tethyr/sessions/sessions-calendar.tsx` (for display)
 
 **Interfaces:**
+
 - Consumes: `useSessionAvailability()` (returns timezone from DB)
 - Produces: timezone dropdown in the availability editor, timezone display in calendar
 
 - [ ] **Step 1: Create a timezone utility**
 
 Check if a timezone list or utility already exists in the codebase:
+
 ```bash
 grep -rn "timezone\|TimeZone\|tz" src/lib/ --include="*.ts" | head -20
 ```
@@ -135,7 +141,7 @@ const [timezone, setTimezone] = useState(getUserTimezone());
       ))}
     </SelectContent>
   </Select>
-</div>
+</div>;
 ```
 
 - [ ] **Step 3: Save timezone to DB**
@@ -161,9 +167,7 @@ Check the `session_availability` table schema to confirm it has a `timezone` col
 In `sessions-calendar.tsx`, add a small timezone badge in the day/week view header:
 
 ```tsx
-<span className="text-xs text-muted-foreground">
-  {timezone.replace(/_/g, " ")}
-</span>
+<span className="text-xs text-muted-foreground">{timezone.replace(/_/g, " ")}</span>
 ```
 
 - [ ] **Step 5: Typecheck and commit**
@@ -181,15 +185,18 @@ git commit -m "feat: add timezone selector to availability editor"
 ## Task 3: Calendar — add duration visualization
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/sessions-calendar.tsx`
 
 **Interfaces:**
+
 - Consumes: `SessionWithParticipants[]` (has `starts_at`, `ends_at` or `duration_minutes`)
 - Produces: session cards that span multiple hour slots
 
 - [ ] **Step 1: Read the calendar component**
 
 Read `src/components/tethyr/sessions/sessions-calendar.tsx` to understand:
+
 - How sessions are currently rendered in day view (lines ~118-151)
 - How `CalendarEventCard` is structured
 - The hour grid layout
@@ -197,6 +204,7 @@ Read `src/components/tethyr/sessions/sessions-calendar.tsx` to understand:
 - [ ] **Step 2: Calculate session duration and position**
 
 In the day view, for each session:
+
 1. Parse `starts_at` to get the start hour and minute
 2. If `ends_at` exists, parse it to get end hour/minute. Otherwise, use `duration_minutes` from the session (default 60).
 3. Calculate: `topOffset = (startHour - 6) * 60 + startMinute` (grid starts at 6 AM)
@@ -251,10 +259,12 @@ git commit -m "feat: calendar session cards show duration"
 ## Task 4: Calendar — show availability slots
 
 **Files:**
+
 - Modify: `src/components/tethyr/sessions/sessions-calendar.tsx`
 - Modify: `src/components/tethyr/sessions/sessions-layout.tsx`
 
 **Interfaces:**
+
 - Consumes: `useSessionAvailability()` (weekly time slots)
 - Produces: gray availability blocks in the calendar grid
 
@@ -294,20 +304,22 @@ const daySlots = availability?.filter((slot) => {
 });
 
 // Render as background blocks
-{daySlots?.map((slot, i) => {
-  const [startH, startM] = slot.start_time.split(":").map(Number);
-  const [endH, endM] = slot.end_time.split(":").map(Number);
-  const top = ((startH - 6) * 60 + startM) * (ROW_HEIGHT / 60);
-  const height = ((endH - startH) * 60 + (endM - startM)) * (ROW_HEIGHT / 60);
+{
+  daySlots?.map((slot, i) => {
+    const [startH, startM] = slot.start_time.split(":").map(Number);
+    const [endH, endM] = slot.end_time.split(":").map(Number);
+    const top = ((startH - 6) * 60 + startM) * (ROW_HEIGHT / 60);
+    const height = ((endH - startH) * 60 + (endM - startM)) * (ROW_HEIGHT / 60);
 
-  return (
-    <div
-      key={i}
-      className="absolute left-0 right-0 bg-muted/30 rounded"
-      style={{ top: `${top}px`, height: `${height}px` }}
-    />
-  );
-})}
+    return (
+      <div
+        key={i}
+        className="absolute left-0 right-0 bg-muted/30 rounded"
+        style={{ top: `${top}px`, height: `${height}px` }}
+      />
+    );
+  });
+}
 ```
 
 - [ ] **Step 4: Render in week view**
