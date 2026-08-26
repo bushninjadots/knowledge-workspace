@@ -1021,6 +1021,25 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             {updateLayout.isPending ? "Saving…" : dirty ? "Save" : "Saved"}
           </Button>
 
+          {/* Status badge */}
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${
+              isPublished
+                ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+                : "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
+            }`}
+            title={
+              isPublished
+                ? "This page is live and visible to everyone"
+                : "Draft — only you can see this page"
+            }
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${isPublished ? "bg-emerald-500" : "bg-amber-500"}`}
+            />
+            {isPublished ? "Published" : "Draft"}
+          </span>
+
           {isPublished ? (
             <Button
               variant="ghost"

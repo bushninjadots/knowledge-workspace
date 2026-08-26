@@ -4,7 +4,7 @@
 // grid layouts with column boundaries, per-column add buttons, and
 // empty section states. Width control is handled by the inspector.
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   GripVertical,
   Trash2,
@@ -14,13 +14,25 @@ import {
   ArrowDown,
   Copy,
   Columns2,
+  Search,
+  X,
 } from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getBlock } from "@/lib/block-registry";
+import { getBlock, getAllBlocks } from "@/lib/block-registry";
+import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
 import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  content: "Text & Media",
+  media: "Media",
+  project: "Project",
+  people: "People & Profile",
+  community: "Community",
+  utility: "Layout & Utility",
+};
 
 interface StudioCanvasProps {
   page: StudioPage;
@@ -95,6 +107,7 @@ export function StudioCanvas({
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<"block" | "section" | null>(null);
+  const [showBlockPicker, setShowBlockPicker] = useState(false);
 
   // ── Block drag handlers ───────────────────────────────────────────────
   const handleBlockDragStart = useCallback((e: React.DragEvent, blockId: string) => {
@@ -337,13 +350,14 @@ export function StudioCanvas({
                   handleBlockDrop,
                   onSelectBlock,
                   onAddBlock,
+                  () => setShowBlockPicker(true),
                   devicePreview,
                 )}
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 p-2 pt-4">
                 {section.blocks.length === 0 ? (
-                  <EmptySection onAddBlock={onAddBlock} />
+                  <EmptySection onAdd={() => setShowBlockPicker(true)} />
                 ) : (
                   section.blocks.map((block, idx) => (
                     <BlockCard
@@ -369,7 +383,7 @@ export function StudioCanvas({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onAddBlock("text");
+                      setShowBlockPicker(true);
                     }}
                     className="flex basis-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
@@ -401,6 +415,11 @@ export function StudioCanvas({
         <Plus className="h-4 w-4" />
         Add section
       </button>
+
+      {/* Block picker modal */}
+      {showBlockPicker && (
+        <BlockPickerModal onSelect={onAddBlock} onClose={() => setShowBlockPicker(false)} />
+      )}
     </div>
   );
 }
@@ -427,6 +446,7 @@ function renderGridBlocks(
   ) => void,
   onSelect: (blockId: string) => void,
   onAddBlock: (blockType: string) => void,
+  onShowPicker: () => void,
   devicePreview?: "desktop" | "tablet" | "mobile",
 ) {
   // Group blocks by column
@@ -464,7 +484,7 @@ function renderGridBlocks(
           {/* Blocks in this column */}
           <div className="space-y-2">
             {colBlocks.length === 0 ? (
-              <EmptyColumn colIdx={colIdx} onAddBlock={onAddBlock} />
+              <EmptyColumn colIdx={colIdx} onAdd={onShowPicker} />
             ) : (
               colBlocks.map((block, idx) => (
                 <BlockCard
@@ -491,7 +511,7 @@ function renderGridBlocks(
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onAddBlock("text");
+                onShowPicker();
               }}
               className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/20 py-1.5 text-[9px] text-muted-foreground/40 transition-colors hover:border-border/40 hover:text-muted-foreground"
             >
@@ -656,7 +676,7 @@ function BlockCard({
 
 // ── Empty States ─────────────────────────────────────────────────────────────
 
-function EmptySection({ onAddBlock }: { onAddBlock: (type: string) => void }) {
+function EmptySection({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/30 py-6 text-center">
       <p className="text-[10px] text-muted-foreground/50 mb-2">Empty section</p>
@@ -664,7 +684,7 @@ function EmptySection({ onAddBlock }: { onAddBlock: (type: string) => void }) {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onAddBlock("text");
+          onAdd();
         }}
         className="flex items-center gap-1 rounded-md bg-surface/40 px-3 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
       >
@@ -675,13 +695,7 @@ function EmptySection({ onAddBlock }: { onAddBlock: (type: string) => void }) {
   );
 }
 
-function EmptyColumn({
-  colIdx: _colIdx,
-  onAddBlock,
-}: {
-  colIdx: number;
-  onAddBlock: (type: string) => void;
-}) {
+function EmptyColumn({ colIdx: _colIdx, onAdd }: { colIdx: number; onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/20 py-4 text-center min-h-[60px]">
       <p className="text-[9px] text-muted-foreground/30 mb-1">Empty</p>
@@ -689,13 +703,135 @@ function EmptyColumn({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onAddBlock("text");
+          onAdd();
         }}
         className="flex items-center gap-0.5 text-[9px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
       >
         <Plus className="h-2.5 w-2.5" />
         Add
       </button>
+    </div>
+  );
+}
+
+// ── Block Picker Modal ────────────────────────────────────────────────────────
+// Inline modal that shows all available blocks grouped by category with search.
+
+function BlockPickerModal({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (type: string) => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  const blocks = getAllBlocks();
+  const filtered = search
+    ? blocks.filter(
+        (b) =>
+          b.label.toLowerCase().includes(search.toLowerCase()) ||
+          b.type.toLowerCase().includes(search.toLowerCase()) ||
+          b.description.toLowerCase().includes(search.toLowerCase()),
+      )
+    : blocks;
+
+  const grouped = new Map<string, BlockDefinition[]>();
+  for (const b of filtered) {
+    const list = grouped.get(b.category) ?? [];
+    list.push(b);
+    grouped.set(b.category, list);
+  }
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
+    >
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-md rounded-xl border border-border/30 bg-surface-elevated shadow-xl">
+        {/* Header */}
+        <div className="flex items-center gap-2 border-b border-border/20 px-4 py-3">
+          <Plus className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Add block</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-auto rounded p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="border-b border-border/20 px-4 py-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search blocks..."
+              className="w-full rounded-md border border-border/30 bg-surface/40 py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+
+        {/* Block list */}
+        <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
+          {[...grouped.entries()].map(([category, items]) => (
+            <div key={category} className="mb-3 last:mb-0">
+              <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                {CATEGORY_LABELS[category] ?? category}
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {items.map((block) => (
+                  <button
+                    key={block.type}
+                    type="button"
+                    onClick={() => {
+                      onSelect(block.type);
+                      onClose();
+                    }}
+                    className="flex items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface/60"
+                  >
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface/60 text-muted-foreground">
+                      <Plus className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">{block.label}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {block.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">No blocks found</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
