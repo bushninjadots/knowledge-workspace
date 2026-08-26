@@ -48,6 +48,7 @@ import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
 import { type SectionPreset } from "./section-presets";
 import type {
+  LayoutBlockInstance,
   LayoutSection,
   PageData,
   PageLayout,
@@ -576,6 +577,18 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         blocks: s.blocks.map((b) =>
           b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
         ),
+      }));
+      applyDraft({ sections });
+    },
+    [draftLayout, applyDraft],
+  );
+
+  // ── Update block instance (column, span, etc.) ─────────────────────
+  const handleUpdateBlock = useCallback(
+    (blockId: string, updates: Partial<LayoutBlockInstance>) => {
+      const sections = draftLayout.sections.map((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) => (b.id === blockId ? { ...b, ...updates } : b)),
       }));
       applyDraft({ sections });
     },
@@ -1129,6 +1142,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onMoveSection={handleMoveSection}
               onDuplicateSection={handleDuplicateSection}
               onUpdateBlockConfig={handleUpdateBlockConfig}
+              onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
               currentOverrides={draftOverrides ?? pageData?.theme ?? null}

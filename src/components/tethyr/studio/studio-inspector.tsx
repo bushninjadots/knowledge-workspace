@@ -37,6 +37,7 @@ interface StudioInspectorProps {
   onMoveSection: (sectionId: string, direction: "up" | "down") => void;
   onDuplicateSection: (sectionId: string) => void;
   onUpdateBlockConfig?: (blockId: string, config: Record<string, unknown>) => void;
+  onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
   currentOverrides?: ThemeTokens | null;
@@ -62,6 +63,7 @@ export function StudioInspector({
   onMoveSection,
   onDuplicateSection,
   onUpdateBlockConfig,
+  onUpdateBlock,
   onUpdateSectionLayout,
   onUpdateThemeOverrides,
   currentOverrides,
@@ -76,7 +78,9 @@ export function StudioInspector({
           <BlockInspector
             block={selectedBlock}
             def={selectedBlockDef}
+            sectionLayout={selectedSection?.layout}
             onUpdateConfig={onUpdateBlockConfig}
+            onUpdateBlock={onUpdateBlock}
             onRemove={onRemoveBlock}
             onMove={onMoveBlock}
           />
@@ -142,13 +146,17 @@ export function StudioInspector({
 function BlockInspector({
   block,
   def,
+  sectionLayout,
   onUpdateConfig,
+  onUpdateBlock,
   onRemove,
   onMove,
 }: {
   block: LayoutBlockInstance;
   def: BlockDefinition | undefined;
+  sectionLayout?: SectionLayoutType;
   onUpdateConfig?: (blockId: string, config: Record<string, unknown>) => void;
+  onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onRemove: (blockId: string) => void;
   onMove: (blockId: string, direction: "up" | "down") => void;
 }) {
@@ -339,6 +347,67 @@ function BlockInspector({
           })}
         </div>
       </div>
+
+      {/* Column placement — only shown in multi-column sections */}
+      {sectionLayout && sectionLayout !== "full" && (
+        <div>
+          <SectionLabel>Placement</SectionLabel>
+          <div className="mt-1.5 space-y-2">
+            {/* Column */}
+            <div>
+              <label className="mb-1 block text-[10px] text-muted-foreground">Column</label>
+              <div className="flex gap-1">
+                {["Auto", "1", "2", "3"]
+                  .slice(0, sectionLayout === "three_column" ? 4 : 3)
+                  .map((label) => {
+                    const value = label === "Auto" ? -1 : parseInt(label) - 1;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() =>
+                          onUpdateBlock?.(block.id, { column: value === -1 ? undefined : value })
+                        }
+                        className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+                          (block.column == null && value === -1) || block.column === value
+                            ? "bg-primary/15 text-primary"
+                            : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+            {/* Span */}
+            <div>
+              <label className="mb-1 block text-[10px] text-muted-foreground">Span</label>
+              <div className="flex gap-1">
+                {["1", "2", "3"].slice(0, sectionLayout === "three_column" ? 3 : 2).map((label) => {
+                  const value = parseInt(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() =>
+                        onUpdateBlock?.(block.id, { span: value === 1 ? undefined : value })
+                      }
+                      className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+                        (block.span == null && value === 1) || block.span === value
+                          ? "bg-primary/15 text-primary"
+                          : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {value === 1 ? "1 col" : `${value} cols`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div>

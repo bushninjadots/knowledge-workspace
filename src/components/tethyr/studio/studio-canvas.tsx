@@ -3,26 +3,12 @@
 // click areas. Width control is handled exclusively by the inspector.
 
 import { useState, useCallback } from "react";
-import {
-  GripVertical,
-  Trash2,
-  Eye,
-  EyeOff,
-  Plus,
-  ArrowUp,
-  ArrowDown,
-  Copy,
-} from "lucide-react";
+import { GripVertical, Trash2, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Copy } from "lucide-react";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
-import type {
-  BlockContext,
-  PageData,
-  PageLayout,
-  LayoutBlockInstance,
-} from "@/lib/page-blocks";
+import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
 
 interface StudioCanvasProps {
   page: StudioPage;
@@ -49,6 +35,16 @@ interface StudioCanvasProps {
   onRefetch: () => void;
   devicePreview?: "desktop" | "tablet" | "mobile";
 }
+
+/** Tailwind grid classes for section layouts in the Studio canvas. */
+const CANVAS_GRID: Record<string, string> = {
+  full: "",
+  two_column: "grid grid-cols-2 gap-3",
+  three_column: "grid grid-cols-3 gap-3",
+  sidebar_left: "grid grid-cols-[220px_1fr] gap-3",
+  sidebar_right: "grid grid-cols-[1fr_220px] gap-3",
+  feature: "grid grid-cols-2 gap-3",
+};
 
 export function StudioCanvas({
   page,
@@ -257,139 +253,176 @@ export function StudioCanvas({
               </div>
             )}
 
-            <div className="space-y-2 p-2">
-              {section.blocks.map((block, idx) => {
-                const isSelected = selectedBlockId === block.id;
-                const isHidden = block.visible === false;
-                const isDragOver = dragOverBlockId === block.id;
+            {/* Section blocks container — grid or stack based on layout */}
+            {(() => {
+              const sectionGrid = CANVAS_GRID[section.layout] ?? "";
+              const isMultiColumn = sectionGrid !== "";
+              const forceSingle =
+                devicePreview === "mobile" ||
+                (devicePreview === "tablet" && section.layout === "three_column");
+              const containerClass = forceSingle
+                ? "space-y-2"
+                : isMultiColumn
+                  ? sectionGrid
+                  : "space-y-2";
 
-                const blockWidth = (block.config?.width as string) ?? "full";
-                // On mobile preview, force all blocks to full width
-                const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
-                const widthClass = mobileOverride
-                  ? "w-full"
-                  : blockWidth === "2/3"
-                    ? "w-2/3"
-                    : blockWidth === "1/2"
-                      ? "w-1/2"
-                      : blockWidth === "1/3"
-                        ? "w-1/3"
-                        : blockWidth === "auto"
-                          ? "w-auto"
-                          : "w-full";
+              return (
+                <div className={`${containerClass} p-2`}>
+                  {section.blocks.map((block, idx) => {
+                    const isSelected = selectedBlockId === block.id;
+                    const isHidden = block.visible === false;
+                    const isDragOver = dragOverBlockId === block.id;
 
-                return (
-                  <div
-                    key={block.id}
-                    className={`group/block relative rounded-md transition-all ${widthClass} ${
-                      isSelected
-                        ? "ring-2 ring-primary/30 bg-primary/[0.03]"
-                        : isDragOver
-                          ? "ring-2 ring-primary/20 bg-primary/[0.05]"
-                          : "ring-1 ring-transparent hover:ring-border/20"
-                    } ${isDragOver ? "scale-[1.01]" : ""}`}
-                    draggable
-                    onDragStart={(e) => handleBlockDragStart(e, block.id)}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={(e) => handleBlockDragOver(e, block.id)}
-                    onDragLeave={() => setDragOverBlockId(null)}
-                    onDrop={(e) => handleBlockDrop(e, section.id, block.id, idx)}
+                    const blockWidth = (block.config?.width as string) ?? "full";
+                    // On mobile preview, force all blocks to full width
+                    const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
+                    const widthClass = mobileOverride
+                      ? "w-full"
+                      : isMultiColumn
+                        ? "" // In grid mode, width is controlled by grid placement
+                        : blockWidth === "2/3"
+                          ? "w-2/3"
+                          : blockWidth === "1/2"
+                            ? "w-1/2"
+                            : blockWidth === "1/3"
+                              ? "w-1/3"
+                              : blockWidth === "auto"
+                                ? "w-auto"
+                                : "w-full";
+
+                    // Column/span placement for multi-column sections
+                    const gridStyle: React.CSSProperties = {};
+                    if (isMultiColumn && !forceSingle) {
+                      if (block.span && block.span > 1) {
+                        gridStyle.gridColumn = `span ${Math.min(block.span, section.layout === "three_column" ? 3 : 2)}`;
+                      } else if (block.column != null && block.column >= 0) {
+                        gridStyle.gridColumn = `${block.column + 1} / span 1`;
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={block.id}
+                        style={gridStyle}
+                        className={`group/block relative rounded-md transition-all ${widthClass} ${
+                          isSelected
+                            ? "ring-2 ring-primary/30 bg-primary/[0.03]"
+                            : isDragOver
+                              ? "ring-2 ring-primary/20 bg-primary/[0.05]"
+                              : "ring-1 ring-transparent hover:ring-border/20"
+                        } ${isDragOver ? "scale-[1.01]" : ""}`}
+                        draggable
+                        onDragStart={(e) => handleBlockDragStart(e, block.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleBlockDragOver(e, block.id)}
+                        onDragLeave={() => setDragOverBlockId(null)}
+                        onDrop={(e) => handleBlockDrop(e, section.id, block.id, idx)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectBlock(block.id);
+                        }}
+                      >
+                        {/* Block content */}
+                        <div className={isHidden ? "opacity-30" : ""}>
+                          <SingleBlockRenderer
+                            block={block}
+                            context={blockContext}
+                            devicePreview={devicePreview}
+                          />
+                        </div>
+
+                        {/* Floating toolbar — shown only when this block is selected */}
+                        {isSelected && (
+                          <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
+                            <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
+                              {getBlockLabel(block)}
+                            </span>
+                            <span className="h-3.5 w-px bg-border/40" />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onMoveBlock(block.id, "up");
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-foreground"
+                              aria-label="Move up"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onMoveBlock(block.id, "down");
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-foreground"
+                              aria-label="Move down"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDuplicateBlock(block.id);
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-foreground"
+                              aria-label="Duplicate"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleVisibility(block.id);
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-foreground"
+                              aria-label={isHidden ? "Show block" : "Hide block"}
+                            >
+                              {isHidden ? (
+                                <EyeOff className="h-3 w-3" />
+                              ) : (
+                                <Eye className="h-3 w-3" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveBlock(block.id);
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-red-400"
+                              aria-label="Delete block"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Selected indicator — left border accent */}
+                        {isSelected && (
+                          <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Add block button at bottom of section */}
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelectBlock(block.id);
+                      onAddBlock("text");
                     }}
+                    className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
-                    {/* Block content */}
-                    <div className={isHidden ? "opacity-30" : ""}>
-                      <SingleBlockRenderer block={block} context={blockContext} devicePreview={devicePreview} />
-                    </div>
-
-                    {/* Floating toolbar — shown only when this block is selected */}
-                    {isSelected && (
-                      <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
-                        <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
-                          {getBlockLabel(block)}
-                        </span>
-                        <span className="h-3.5 w-px bg-border/40" />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMoveBlock(block.id, "up");
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-foreground"
-                          aria-label="Move up"
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onMoveBlock(block.id, "down");
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-foreground"
-                          aria-label="Move down"
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDuplicateBlock(block.id);
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-foreground"
-                          aria-label="Duplicate"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleVisibility(block.id);
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-foreground"
-                          aria-label={isHidden ? "Show block" : "Hide block"}
-                        >
-                          {isHidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveBlock(block.id);
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-red-400"
-                          aria-label="Delete block"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Selected indicator — left border accent */}
-                    {isSelected && (
-                      <div className="absolute left-0 top-0 h-full w-0.5 rounded-l-md bg-primary/40" />
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Add block button at bottom of section */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddBlock("text");
-                }}
-                className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
-              >
-                <Plus className="h-3 w-3" />
-                Add block
-              </button>
-            </div>
+                    <Plus className="h-3 w-3" />
+                    Add block
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         );
       })}

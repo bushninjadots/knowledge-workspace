@@ -124,6 +124,17 @@ export interface LayoutBlockInstance {
   config: BlockConfig;
   /** Whether the block is visible (can be toggled without deleting). */
   visible: boolean;
+  /**
+   * Column assignment within a multi-column section.
+   * -1 or undefined = auto-flow (default). 0 = first column, 1 = second, etc.
+   * Only meaningful when the section layout is two_column, three_column, etc.
+   */
+  column?: number;
+  /**
+   * How many columns this block spans. Default 1.
+   * E.g. span 2 in a two_column section = full width.
+   */
+  span?: number;
 }
 
 /** A section groups blocks into a column arrangement. */
