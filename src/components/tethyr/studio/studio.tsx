@@ -1159,7 +1159,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             <StudioInspector
               selectionType={selectionType}
               selectedBlock={selectedBlock}
-              selectedBlockDef={selectedBlockId ? getBlock(selectedBlockId) : undefined}
+              selectedBlockDef={selectedBlock ? getBlock(selectedBlock.type) : undefined}
               selectedSection={selectedSection}
               pageData={pageData}
               isPublished={isPublished}
@@ -1177,6 +1177,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               currentOverrides={draftOverrides ?? pageData?.theme ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
+              onSelectBlock={handleSelectBlock}
               onRefetch={refetchPage}
             />
           )}

@@ -14,7 +14,7 @@ type EvidenceItem = {
   created_at: string;
 };
 
-function ProfileGalleryBlock({ context }: BlockProps) {
+function ProfileGalleryBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["profile-gallery-block", profileId],
@@ -82,9 +82,11 @@ function ProfileGalleryBlock({ context }: BlockProps) {
                 )}
               </div>
             )}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <p className="text-[10px] text-white truncate">{item.title}</p>
-            </div>
+            {config.showCaptions !== false && (
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-[10px] text-white truncate">{item.title}</p>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -97,7 +99,8 @@ registerBlock({
   label: "Gallery",
   description: "Images and videos shared as evidence.",
   icon: "Image",
-  defaults: {},
+  defaults: { showCaptions: true },
+  fields: [{ key: "showCaptions", label: "Show captions on hover", type: "toggle" }],
   component: ProfileGalleryBlock,
 });
 export { ProfileGalleryBlock };

@@ -14,7 +14,7 @@ type DiscussionRow = {
   profiles: { display_name: string | null; handle: string | null } | null;
 };
 
-function ProjectDiscussionsBlock({ context }: BlockProps) {
+function ProjectDiscussionsBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-discussions-block", projectId],
@@ -49,7 +49,9 @@ function ProjectDiscussionsBlock({ context }: BlockProps) {
               {new Date(d.created_at).toLocaleDateString()}
             </div>
             <h5 className="text-sm font-medium flex items-center gap-1.5">{d.title}</h5>
-            {d.body && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{d.body}</p>}
+            {d.body && config.showPreviews !== false && (
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{d.body}</p>
+            )}
           </div>
         ))}
       </div>
@@ -62,7 +64,11 @@ registerBlock({
   label: "Discussions",
   description: "Project discussions and conversations.",
   icon: "MessageSquare",
-  defaults: {},
+  defaults: { showPreviews: true, showAuthors: true },
+  fields: [
+    { key: "showPreviews", label: "Show message previews", type: "toggle" },
+    { key: "showAuthors", label: "Show authors", type: "toggle" },
+  ],
   component: ProjectDiscussionsBlock,
 });
 export { ProjectDiscussionsBlock };

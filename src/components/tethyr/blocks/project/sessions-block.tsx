@@ -14,7 +14,7 @@ type SessionRow = {
   session_type: string | null;
 };
 
-function ProjectSessionsBlock({ context }: BlockProps) {
+function ProjectSessionsBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-sessions-block", projectId],
@@ -48,20 +48,22 @@ function ProjectSessionsBlock({ context }: BlockProps) {
             <div className="flex items-center gap-2 min-w-0">
               <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="text-sm font-medium truncate">{s.title}</span>
-              {s.session_type && (
+              {s.session_type && config.showType !== false && (
                 <span className="text-[10px] text-muted-foreground uppercase">
                   {s.session_type.replace(/_/g, " ")}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
-              {s.starts_at && (
+              {s.starts_at && config.showDates !== false && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {new Date(s.starts_at).toLocaleDateString()}
                 </span>
               )}
-              {s.ends_at && <span>– {new Date(s.ends_at).toLocaleDateString()}</span>}
+              {s.ends_at && config.showDates !== false && (
+                <span>– {new Date(s.ends_at).toLocaleDateString()}</span>
+              )}
             </div>
           </div>
         ))}
@@ -75,7 +77,11 @@ registerBlock({
   label: "Sessions",
   description: "Scheduled work sessions for this project.",
   icon: "Calendar",
-  defaults: {},
+  defaults: { showType: true, showDates: true },
+  fields: [
+    { key: "showType", label: "Show session type", type: "toggle" },
+    { key: "showDates", label: "Show dates", type: "toggle" },
+  ],
   component: ProjectSessionsBlock,
 });
 export { ProjectSessionsBlock };

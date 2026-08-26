@@ -20,7 +20,7 @@ const STATUS_ICON: Record<string, typeof CheckCircle> = {
   pending: Circle,
 };
 
-function ProjectMilestonesBlock({ context }: BlockProps) {
+function ProjectMilestonesBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -61,13 +61,13 @@ function ProjectMilestonesBlock({ context }: BlockProps) {
                   />
                   <span className="text-sm font-medium">{m.title}</span>
                 </div>
-                {m.due_date && (
+                {m.due_date && config.showDueDates !== false && (
                   <span className="text-[10px] text-muted-foreground">
                     {new Date(m.due_date).toLocaleDateString()}
                   </span>
                 )}
               </div>
-              {m.description && (
+              {m.description && config.showDescriptions !== false && (
                 <p className="mt-1 text-xs text-muted-foreground">{m.description}</p>
               )}
             </div>
@@ -84,7 +84,11 @@ registerBlock({
   label: "Milestones",
   description: "Project milestones with status and progress.",
   icon: "Milestone",
-  defaults: {},
+  defaults: { showDescriptions: true, showDueDates: true },
+  fields: [
+    { key: "showDescriptions", label: "Show descriptions", type: "toggle" },
+    { key: "showDueDates", label: "Show due dates", type: "toggle" },
+  ],
   component: ProjectMilestonesBlock,
 });
 export { ProjectMilestonesBlock };

@@ -26,7 +26,7 @@ const ROLE_LABEL: Record<string, string> = {
   contributor: "Contributor",
 };
 
-function ProjectTeamBlock({ context }: BlockProps) {
+function ProjectTeamBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data: contributors, isLoading } = useQuery({
@@ -82,10 +82,12 @@ function ProjectTeamBlock({ context }: BlockProps) {
               key={c.profile_id}
               className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar_url ?? undefined} />
-                <AvatarFallback className="text-xs">{initial}</AvatarFallback>
-              </Avatar>
+              {config.showAvatars !== false && (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">{initial}</AvatarFallback>
+                </Avatar>
+              )}
               <div className="min-w-0 flex-1">
                 <ProfileLink
                   handle={profile?.handle ?? null}
@@ -93,7 +95,9 @@ function ProjectTeamBlock({ context }: BlockProps) {
                 >
                   {profile?.display_name ?? profile?.handle ?? "Unnamed"}
                 </ProfileLink>
-                <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role] ?? c.role}</p>
+                {config.showRoles !== false && (
+                  <p className="text-xs text-muted-foreground">{ROLE_LABEL[c.role] ?? c.role}</p>
+                )}
               </div>
             </div>
           );
@@ -109,7 +113,11 @@ registerBlock({
   label: "Team",
   description: "The project's contributors — creator, mentors, and contributors.",
   icon: "Users",
-  defaults: {},
+  defaults: { showRoles: true, showAvatars: true },
+  fields: [
+    { key: "showRoles", label: "Show roles", type: "toggle" },
+    { key: "showAvatars", label: "Show avatars", type: "toggle" },
+  ],
   component: ProjectTeamBlock,
 });
 

@@ -82,9 +82,7 @@ registerBlock({
   description: "Portfolio and social links.",
   icon: "ExternalLink",
   defaults: { showCategories: true },
-  fields: [
-    { key: "showCategories", label: "Show category headers", type: "toggle" },
-  ],
+  fields: [{ key: "showCategories", label: "Show category headers", type: "toggle" }],
   component: ProfileLinksBlock,
 });
 export { ProfileLinksBlock };

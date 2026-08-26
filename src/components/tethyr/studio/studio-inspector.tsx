@@ -43,6 +43,7 @@ interface StudioInspectorProps {
   currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
   currentThemeId?: string | null;
+  onSelectBlock?: (blockId: string) => void;
   onRefetch: () => void;
 }
 
@@ -69,6 +70,7 @@ export function StudioInspector({
   currentOverrides,
   themes = [],
   currentThemeId,
+  onSelectBlock,
 }: StudioInspectorProps) {
   return (
     <div className="flex h-full flex-col">
@@ -91,6 +93,7 @@ export function StudioInspector({
             onRemove={onRemoveSection}
             onMove={onMoveSection}
             onDuplicate={onDuplicateSection}
+            onSelectBlock={onSelectBlock}
           />
         ) : (
           <PageInspector
@@ -452,12 +455,14 @@ function SectionInspector({
   onRemove,
   onMove,
   onDuplicate,
+  onSelectBlock,
 }: {
   section: LayoutSection;
   onUpdateLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onRemove: (sectionId: string) => void;
   onMove: (sectionId: string, direction: "up" | "down") => void;
   onDuplicate: (sectionId: string) => void;
+  onSelectBlock?: (blockId: string) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -497,15 +502,17 @@ function SectionInspector({
           {section.blocks.map((block) => {
             const blockDef = getBlock(block.type);
             return (
-              <div
+              <button
                 key={block.id}
-                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px] transition-colors ${
+                type="button"
+                onClick={() => onSelectBlock?.(block.id)}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-left transition-colors hover:bg-surface/60 ${
                   block.visible === false ? "opacity-40 text-muted-foreground" : "text-foreground"
                 }`}
               >
                 <span className="truncate">{blockDef?.label ?? block.type}</span>
                 {block.visible === false && <EyeOff className="h-2.5 w-2.5 shrink-0" />}
-              </div>
+              </button>
             );
           })}
           {section.blocks.length === 0 && (

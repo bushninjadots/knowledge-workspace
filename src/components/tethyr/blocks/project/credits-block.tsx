@@ -6,7 +6,7 @@ import { useProjectCredits } from "@/hooks/use-credits";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
-function ProjectCreditsBlock({ context }: BlockProps) {
+function ProjectCreditsBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   // Credits are derived from the project's evidence trail (project_activity +
   // contributors) — the same source the project page's Credits roll uses.
@@ -40,7 +40,7 @@ function ProjectCreditsBlock({ context }: BlockProps) {
                 </ProfileLink>
                 <p className="text-xs text-muted-foreground">
                   {c.role}
-                  {c.credit_text ? ` — ${c.credit_text}` : ""}
+                  {c.credit_text && config.showCreditText !== false ? ` — ${c.credit_text}` : ""}
                 </p>
               </div>
             </div>
@@ -56,7 +56,8 @@ registerBlock({
   label: "Credits",
   description: "People credited for contributions to this project.",
   icon: "Heart",
-  defaults: {},
+  defaults: { showCreditText: true },
+  fields: [{ key: "showCreditText", label: "Show credit descriptions", type: "toggle" }],
   component: ProjectCreditsBlock,
 });
 export { ProjectCreditsBlock };

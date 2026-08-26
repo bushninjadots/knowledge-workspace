@@ -19,7 +19,7 @@ type DirData = {
   active_project: { id: string; title: string } | null;
 };
 
-function ProfileDirectionBlock({ context }: BlockProps) {
+function ProfileDirectionBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["profile-direction-block", profileId],
@@ -72,7 +72,7 @@ function ProfileDirectionBlock({ context }: BlockProps) {
   }
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      {data.active_project && (
+      {data.active_project && config.showProject !== false && (
         <Link
           to="/projects/$id"
           params={{ id: data.active_project.id }}
@@ -88,7 +88,7 @@ function ProfileDirectionBlock({ context }: BlockProps) {
           </p>
         </Link>
       )}
-      {data.availability && (
+      {data.availability && config.showAvailability !== false && (
         <div className="rounded-lg border border-border bg-surface p-3">
           <Users className="h-4 w-4 text-muted-foreground mb-1" />
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
@@ -99,7 +99,7 @@ function ProfileDirectionBlock({ context }: BlockProps) {
           </p>
         </div>
       )}
-      {data.learning_goals && (
+      {data.learning_goals && config.showGoals !== false && (
         <div className="rounded-lg border border-border bg-surface p-3">
           <Compass className="h-4 w-4 text-muted-foreground mb-1" />
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
@@ -117,7 +117,12 @@ registerBlock({
   label: "Direction",
   description: "Availability, learning goals, and active project.",
   icon: "Compass",
-  defaults: {},
+  defaults: { showProject: true, showAvailability: true, showGoals: true },
+  fields: [
+    { key: "showProject", label: "Show active project", type: "toggle" },
+    { key: "showAvailability", label: "Show availability", type: "toggle" },
+    { key: "showGoals", label: "Show learning goals", type: "toggle" },
+  ],
   component: ProfileDirectionBlock,
 });
 export { ProfileDirectionBlock };

@@ -66,7 +66,12 @@ registerBlock({
   icon: "FileText",
   defaults: { content: "" },
   fields: [
-    { key: "content", label: "Markdown content", type: "textarea", placeholder: "Write markdown..." },
+    {
+      key: "content",
+      label: "Markdown content",
+      type: "textarea",
+      placeholder: "Write markdown...",
+    },
   ],
   component: MarkdownBlock,
 });

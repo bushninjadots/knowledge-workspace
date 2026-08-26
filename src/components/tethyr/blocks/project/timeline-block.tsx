@@ -25,7 +25,7 @@ const KIND_LABELS: Record<string, string> = {
   challenge_completed: "Challenge completed",
 };
 
-function ProjectTimelineBlock({ context }: BlockProps) {
+function ProjectTimelineBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-timeline-block", projectId],
@@ -64,9 +64,11 @@ function ProjectTimelineBlock({ context }: BlockProps) {
               <span>{timeAgo(item.created_at)}</span>
             </div>
             <p className="text-sm font-medium text-foreground">{item.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {KIND_LABELS[item.kind] ?? item.kind.replace(/_/g, " ")}
-            </p>
+            {config.showKind !== false && (
+              <p className="text-xs text-muted-foreground">
+                {KIND_LABELS[item.kind] ?? item.kind.replace(/_/g, " ")}
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -79,7 +81,11 @@ registerBlock({
   label: "Timeline",
   description: "Chronological history of everything that happened in this project.",
   icon: "Clock",
-  defaults: {},
+  defaults: { showKind: true, showTimestamps: true },
+  fields: [
+    { key: "showKind", label: "Show event type", type: "toggle" },
+    { key: "showTimestamps", label: "Show timestamps", type: "toggle" },
+  ],
   component: ProjectTimelineBlock,
 });
 export { ProjectTimelineBlock };

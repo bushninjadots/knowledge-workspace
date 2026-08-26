@@ -15,7 +15,7 @@ type AchieveRow = {
   awarded_at: string;
 };
 
-function ProfileAchievementsBlock({ context }: BlockProps) {
+function ProfileAchievementsBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["profile-achievements-block", profileId],
@@ -66,10 +66,14 @@ function ProfileAchievementsBlock({ context }: BlockProps) {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium">{a.title}</p>
-              {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
-              <p className="text-[10px] text-muted-foreground mt-1">
-                {new Date(a.awarded_at).toLocaleDateString()}
-              </p>
+              {a.description && config.showDescription !== false && (
+                <p className="text-xs text-muted-foreground">{a.description}</p>
+              )}
+              {config.showDate !== false && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {new Date(a.awarded_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -83,7 +87,11 @@ registerBlock({
   label: "Achievements",
   description: "Badges, trophies, and milestones earned.",
   icon: "Award",
-  defaults: {},
+  defaults: { showDescription: true, showDate: true },
+  fields: [
+    { key: "showDescription", label: "Show descriptions", type: "toggle" },
+    { key: "showDate", label: "Show dates", type: "toggle" },
+  ],
   component: ProfileAchievementsBlock,
 });
 export { ProfileAchievementsBlock };

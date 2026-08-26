@@ -15,7 +15,7 @@ type EvidenceRow = {
   created_at: string;
 };
 
-function ProjectEvidenceBlock({ context }: BlockProps) {
+function ProjectEvidenceBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-evidence-block", projectId],
@@ -72,7 +72,7 @@ function ProjectEvidenceBlock({ context }: BlockProps) {
             )}
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{e.title}</p>
-              {e.description && (
+              {e.description && config.showDescriptions !== false && (
                 <p className="text-xs text-muted-foreground line-clamp-1">{e.description}</p>
               )}
             </div>
@@ -88,7 +88,8 @@ registerBlock({
   label: "Evidence",
   description: "Demonstrations and proof of work.",
   icon: "Camera",
-  defaults: {},
+  defaults: { showDescriptions: true },
+  fields: [{ key: "showDescriptions", label: "Show descriptions", type: "toggle" }],
   component: ProjectEvidenceBlock,
 });
 export { ProjectEvidenceBlock };

@@ -26,7 +26,7 @@ const KIND_LABEL: Record<string, string> = {
   project_created: "created the project",
 };
 
-function ProjectActivityBlock({ context }: BlockProps) {
+function ProjectActivityBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data: activity, isLoading } = useQuery({
@@ -70,7 +70,7 @@ function ProjectActivityBlock({ context }: BlockProps) {
     <div>
       <h3 className="mb-3 text-sm font-medium text-foreground">Recent activity</h3>
       <div className="space-y-1">
-        {activity.slice(0, 10).map((item) => (
+        {activity.slice(0, config.limit ? Number(config.limit) : 10).map((item) => (
           <div key={item.id} className="flex items-center gap-3 rounded-md px-3 py-2 text-sm">
             <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="text-muted-foreground">
@@ -92,7 +92,8 @@ registerBlock({
   label: "Activity",
   description: "A chronological feed of recent project activity.",
   icon: "Clock",
-  defaults: {},
+  defaults: { showTimestamps: true },
+  fields: [{ key: "showTimestamps", label: "Show timestamps", type: "toggle" }],
   component: ProjectActivityBlock,
 });
 

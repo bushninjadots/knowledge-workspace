@@ -8,7 +8,7 @@ import type { BlockProps } from "@/lib/page-blocks";
 
 type NeedRow = { id: string; title: string; note: string | null; is_filled: boolean };
 
-function ProjectNeedsBlock({ context }: BlockProps) {
+function ProjectNeedsBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-needs-block", projectId],
@@ -47,7 +47,7 @@ function ProjectNeedsBlock({ context }: BlockProps) {
               <Lightbulb className="h-4 w-4 text-muted-foreground shrink-0" />
             )}
             <span className="text-foreground">{n.title}</span>
-            {n.note && (
+            {n.note && config.showNotes !== false && (
               <span className="text-muted-foreground text-xs ml-auto truncate max-w-[200px]">
                 {n.note}
               </span>
@@ -64,7 +64,11 @@ registerBlock({
   label: "Needs",
   description: "What the project needs — skills, help, feedback.",
   icon: "Lightbulb",
-  defaults: {},
+  defaults: { showNotes: true, showFilled: true },
+  fields: [
+    { key: "showNotes", label: "Show notes", type: "toggle" },
+    { key: "showFilled", label: "Show filled needs", type: "toggle" },
+  ],
   component: ProjectNeedsBlock,
 });
 export { ProjectNeedsBlock };

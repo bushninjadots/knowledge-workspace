@@ -14,7 +14,7 @@ type RoleRow = {
   is_filled: boolean;
 };
 
-function ProjectRolesBlock({ context }: BlockProps) {
+function ProjectRolesBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["project-roles-block", projectId],
@@ -49,10 +49,10 @@ function ProjectRolesBlock({ context }: BlockProps) {
               <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-sm font-medium">{r.title}</span>
             </div>
-            {r.skills && r.skills.length > 0 && (
+            {r.skills && r.skills.length > 0 && config.showSkills !== false && (
               <p className="mt-1 text-[11px] text-muted-foreground">{r.skills.join(" · ")}</p>
             )}
-            {r.description && (
+            {r.description && config.showDescriptions !== false && (
               <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{r.description}</p>
             )}
           </div>
@@ -67,7 +67,11 @@ registerBlock({
   label: "Open Roles",
   description: "Roles the project is looking to fill.",
   icon: "Briefcase",
-  defaults: {},
+  defaults: { showSkills: true, showDescriptions: true },
+  fields: [
+    { key: "showSkills", label: "Show required skills", type: "toggle" },
+    { key: "showDescriptions", label: "Show descriptions", type: "toggle" },
+  ],
   component: ProjectRolesBlock,
 });
 export { ProjectRolesBlock };

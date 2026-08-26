@@ -8,7 +8,7 @@ import type { BlockProps } from "@/lib/page-blocks";
 
 type FileRow = { name: string; size: number; uploaded_at: string };
 
-function ProjectFilesBlock({ context }: BlockProps) {
+function ProjectFilesBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -58,7 +58,9 @@ function ProjectFilesBlock({ context }: BlockProps) {
           <div key={f.name} className="flex items-center gap-3 px-3 py-2 text-xs">
             <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span className="flex-1 truncate font-medium text-foreground">{f.name}</span>
-            <span className="text-muted-foreground tabular-nums">{fmtSize(f.size ?? 0)}</span>
+            {config.showSizes !== false && (
+              <span className="text-muted-foreground tabular-nums">{fmtSize(f.size ?? 0)}</span>
+            )}
           </div>
         ))}
       </div>
@@ -72,7 +74,8 @@ registerBlock({
   label: "Files",
   description: "Uploaded project files.",
   icon: "FileText",
-  defaults: {},
+  defaults: { showSizes: true },
+  fields: [{ key: "showSizes", label: "Show file sizes", type: "toggle" }],
   component: ProjectFilesBlock,
 });
 export { ProjectFilesBlock };

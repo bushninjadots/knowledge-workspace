@@ -13,7 +13,7 @@ type RepoRow = {
   metadata: { full_name?: string; stargazers_count?: number } | null;
 };
 
-function ProjectReposBlock({ context }: BlockProps) {
+function ProjectReposBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -57,10 +57,14 @@ function ProjectReposBlock({ context }: BlockProps) {
               <div className="min-w-0 flex items-center gap-2">
                 <GitBranch className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
-                <span className="text-[10px] text-muted-foreground uppercase">{repo.provider}</span>
+                {config.showProvider !== false && (
+                  <span className="text-[10px] text-muted-foreground uppercase">
+                    {repo.provider}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                {repo.metadata?.stargazers_count != null && (
+                {repo.metadata?.stargazers_count != null && config.showStars !== false && (
                   <span className="flex items-center gap-1">
                     <Star className="h-3 w-3" />
                     {repo.metadata.stargazers_count}
@@ -82,7 +86,11 @@ registerBlock({
   label: "Repositories",
   description: "Connected git repositories.",
   icon: "GitBranch",
-  defaults: {},
+  defaults: { showStars: true, showProvider: true },
+  fields: [
+    { key: "showStars", label: "Show star counts", type: "toggle" },
+    { key: "showProvider", label: "Show provider badge", type: "toggle" },
+  ],
   component: ProjectReposBlock,
 });
 export { ProjectReposBlock };

@@ -9,6 +9,7 @@ import {
   GripVertical,
   Trash2,
   EyeOff,
+  Eye,
   Plus,
   ArrowUp,
   ArrowDown,
@@ -226,22 +227,17 @@ export function StudioCanvas({
             Add a section to start building your {page.type === "profile" ? "studio" : "project"}{" "}
             page.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-            {["text", "heading", "project-hero", "project-status"].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddBlock(type);
-                }}
-                className="rounded-md border border-border/30 bg-surface/40 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors"
-              >
-                <Plus className="mr-1 inline h-3 w-3" />
-                {type.replace("-block", "").replace(/-/g, " ")}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowBlockPicker(true);
+            }}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-4 py-2 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add your first block
+          </button>
         </div>
       </div>
     );
@@ -682,7 +678,7 @@ function BlockCard({
             className="rounded p-1 text-muted-foreground hover:text-foreground"
             aria-label={isHidden ? "Show block" : "Hide block"}
           >
-            {isHidden ? <EyeOff className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            {isHidden ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
           </button>
         </div>
       )}

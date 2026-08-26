@@ -8,7 +8,7 @@ import type { BlockProps } from "@/lib/page-blocks";
 
 type ToolsData = { favourite_tools: string[]; software_stack: string[] };
 
-function ProfileToolsBlock({ context }: BlockProps) {
+function ProfileToolsBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -36,8 +36,8 @@ function ProfileToolsBlock({ context }: BlockProps) {
       );
     return null;
   }
-  const tools = data.favourite_tools ?? [];
-  const stack = data.software_stack ?? [];
+  const tools = config.showFavourites === false ? [] : (data.favourite_tools ?? []);
+  const stack = config.showStack === false ? [] : (data.software_stack ?? []);
   if (tools.length === 0 && stack.length === 0) {
     if (context.isEditing)
       return (
@@ -92,7 +92,11 @@ registerBlock({
   label: "Tools & Stack",
   description: "Favourite tools and software stack.",
   icon: "Wrench",
-  defaults: {},
+  defaults: { showFavourites: true, showStack: true },
+  fields: [
+    { key: "showFavourites", label: "Show favourite tools", type: "toggle" },
+    { key: "showStack", label: "Show software stack", type: "toggle" },
+  ],
   component: ProfileToolsBlock,
 });
 export { ProfileToolsBlock };
