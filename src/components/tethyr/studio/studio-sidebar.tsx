@@ -599,7 +599,7 @@ function TemplatePreviewCard({
               className="rounded-sm transition-all"
               style={{
                 height: isLong ? "6px" : "4px",
-                width: isLong ? "100%" : `${60 + Math.random() * 40}%`,
+                width: isLong ? "100%" : `${60 + ((i * 7 + 3) % 40)}%`,
                 backgroundColor: color,
                 opacity: 0.6,
               }}
