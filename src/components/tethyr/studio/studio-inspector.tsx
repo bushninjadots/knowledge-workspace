@@ -7,7 +7,7 @@
 // Never exposes raw config keys, CSS variables, or JSON to the user.
 
 import { useCallback, useState } from "react";
-import { EyeOff, ArrowUp, ArrowDown, Trash2, Send, Globe, Copy } from "lucide-react";
+import { EyeOff, ArrowUp, ArrowDown, Trash2, Copy } from "lucide-react";
 import type {
   LayoutBlockInstance,
   PageData,
@@ -28,9 +28,6 @@ interface StudioInspectorProps {
   selectedBlockDef: BlockDefinition | undefined;
   selectedSection: LayoutSection | null;
   pageData: PageData | undefined | null;
-  isPublished: boolean;
-  onPublish: () => void;
-  onUnpublish: () => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onRemoveBlock: (blockId: string) => void;
   onRemoveSection: (sectionId: string) => void;
@@ -55,9 +52,6 @@ export function StudioInspector({
   selectedBlockDef,
   selectedSection,
   pageData,
-  isPublished,
-  onPublish,
-  onUnpublish,
   onMoveBlock,
   onRemoveBlock,
   onRemoveSection,
@@ -103,41 +97,6 @@ export function StudioInspector({
             currentOverrides={currentOverrides}
             onUpdateThemeOverrides={onUpdateThemeOverrides}
           />
-        )}
-      </div>
-
-      {/* ── Publish status ──────────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-border/20 px-3 py-3">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${isPublished ? "bg-green-500" : "bg-amber-500"}`}
-          />
-          <span className="text-[11px] font-medium text-foreground">
-            {isPublished ? "Published" : "Draft"}
-          </span>
-        </div>
-        {isPublished ? (
-          <button
-            type="button"
-            onClick={onUnpublish}
-            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-border/30 bg-surface/30 px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            <EyeOff className="h-3 w-3" /> Unpublish
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onPublish}
-            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/20"
-          >
-            <Send className="h-3 w-3" /> Publish now
-          </button>
-        )}
-        {isPublished && (
-          <p className="mt-1.5 text-[10px] text-muted-foreground/60">
-            <Globe className="mr-0.5 inline h-2.5 w-2.5" />
-            Visible to everyone
-          </p>
         )}
       </div>
     </div>

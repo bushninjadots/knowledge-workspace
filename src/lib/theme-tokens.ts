@@ -139,3 +139,20 @@ export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
   const vars = themeTokensToVars(tokens);
   return vars as unknown as React.CSSProperties;
 }
+
+/** Recursively merge `overrides` over `base`. Plain objects merge key-by-key;
+ * arrays and primitives are replaced by the override value. */
+export function deepMergeTokens<T>(base: T, overrides: T): T {
+  if (isPlainObject(base) && isPlainObject(overrides)) {
+    const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
+    for (const [key, value] of Object.entries(overrides)) {
+      out[key] = deepMergeTokens((base as Record<string, unknown>)[key], value);
+    }
+    return out as T;
+  }
+  return overrides === undefined ? base : overrides;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}

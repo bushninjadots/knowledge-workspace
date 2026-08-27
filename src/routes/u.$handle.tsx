@@ -1,7 +1,7 @@
 // Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -33,7 +33,6 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections } from "@/hooks/use-connections";
 import { ReputationBreakdown } from "@/components/tethyr/reputation-display";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
-import { usePublicStudioLayout } from "@/hooks/use-public-studio-layout";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
@@ -286,7 +285,6 @@ function PublicProfileRoute() {
       )?.id ?? null
     );
   }, [connections, meId, data?.profile?.id]);
-  const publicLayout = usePublicStudioLayout(data?.profile.id ?? null);
 
   useEffect(() => {
     const profileId = data?.profile?.id;
@@ -313,6 +311,25 @@ function PublicProfileRoute() {
 
   const isOwner = !!(meId && data?.profile && meId === data.profile.id);
   const canViewPreview = !!previewMode && isOwner;
+
+  // Owner previews render the exact Studio draft: the same sessionStorage
+  // sheet private previews read, so Public preview matches the canvas. When no
+  // sheet is present (deep link, reload), PageShell falls back to the DB.
+  const [studioPreview, setStudioPreview] = useState<{
+    layout: import("@/lib/page-blocks").PageLayout;
+    theme: import("@/lib/page-blocks").ThemeTokens | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!canViewPreview) return;
+    try {
+      const raw = sessionStorage.getItem(
+        `tethyr:studio-preview:profile:${data?.profile?.id ?? ""}`,
+      );
+      setStudioPreview(raw ? JSON.parse(raw) : null);
+    } catch {
+      setStudioPreview(null);
+    }
+  }, [canViewPreview, data?.profile?.id]);
 
   const { page: profilePage } = useProfilePage({
     profileId: data?.profile?.id ?? "",
@@ -499,9 +516,10 @@ function PublicProfileRoute() {
             ownerId={profile.id}
             ownerType="profile"
             isOwner={isOwner}
-            hideEditor
             previewDraft={canViewPreview}
             previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
+            previewLayout={studioPreview?.layout}
+            previewTheme={studioPreview?.theme ?? undefined}
             onBackToStudio={() =>
               previewFromStudio ? window.history.back() : (window.location.href = "/studio")
             }
@@ -518,8 +536,6 @@ function PublicProfileRoute() {
             teachSkills={teachSkills}
             learnSkills={learnSkills}
             contributedProjects={contributedProjects}
-            layoutStorage={publicLayout}
-            canCustomize={false}
             endorsePending={endorse.isPending}
             onEndorse={(skill) => {
               if (!meId) return;

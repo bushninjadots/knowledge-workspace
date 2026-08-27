@@ -189,19 +189,23 @@ function ProjectPage() {
       ? searchParams.preview
       : null;
   const privatePreview = previewMode === "private";
+  const inStudioPreview = previewMode === "private" || previewMode === "public";
   const [studioPreview, setStudioPreview] = useState<{
     layout: import("@/lib/page-blocks").PageLayout;
     theme: import("@/lib/page-blocks").ThemeTokens | null;
   } | null>(null);
   useEffect(() => {
-    if (!privatePreview) return;
+    // Both Private and Public previews render the exact Studio draft, so both
+    // read the same sessionStorage sheet the Studio writes before navigating.
+    if (!inStudioPreview) return;
     try {
       const raw = sessionStorage.getItem(`tethyr:studio-preview:project:${id}`);
       if (raw) setStudioPreview(JSON.parse(raw));
+      else setStudioPreview(null);
     } catch {
       setStudioPreview(null);
     }
-  }, [id, privatePreview]);
+  }, [id, inStudioPreview]);
   const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
@@ -465,7 +469,7 @@ function ProjectPage() {
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
   const canViewPrivatePreview = privatePreview && isOwner;
-  const canViewPublicPreview = previewMode === "public";
+  const canViewPublicPreview = previewMode === "public" && isOwner;
   const previewFromStudio = searchParams.from === "studio";
 
   // Fetch or auto-create the project's page (block-based presentation).
@@ -634,7 +638,6 @@ function ProjectPage() {
             ownerId={id}
             ownerType="project"
             isOwner={isOwner}
-            hideEditor
             previewDraft={canViewPrivatePreview || canViewPublicPreview}
             previewMode={previewMode ?? undefined}
             previewLayout={studioPreview?.layout}

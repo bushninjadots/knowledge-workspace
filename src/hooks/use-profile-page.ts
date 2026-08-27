@@ -81,8 +81,9 @@ async function autoCreatePage(profileId: string, qc: ReturnType<typeof useQueryC
       owner_type: "profile",
       layout_id: layoutData.id,
       theme_id: DEFAULT_THEME_ID,
-      status: "published",
-      published_at: new Date().toISOString(),
+      // Auto-provisioned pages start as drafts — only an explicit Publish in
+      // the Studio makes them public, matching the Studio's own useCreatePage.
+      status: "draft",
     });
 
     if (pageError) {

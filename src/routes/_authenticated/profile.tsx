@@ -63,14 +63,13 @@ function ProfilePage() {
     from?: string;
   };
   const previewMode = previewParam === "private" || previewParam === "public" ? previewParam : null;
-  const privatePreview = previewMode === "private";
   const [studioPreview, setStudioPreview] = useState<{
     layout: import("@/lib/page-blocks").PageLayout;
     theme: import("@/lib/page-blocks").ThemeTokens | null;
   } | null>(null);
 
   useEffect(() => {
-    if (!privatePreview) return;
+    if (!previewMode) return;
     try {
       const raw = sessionStorage.getItem(
         `tethyr:studio-preview:profile:${profileQuery.data?.userId ?? ""}`,
@@ -79,7 +78,7 @@ function ProfilePage() {
     } catch {
       setStudioPreview(null);
     }
-  }, [privatePreview, profileQuery.data?.userId]);
+  }, [previewMode, profileQuery.data?.userId]);
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
 
@@ -137,28 +136,8 @@ function ProfilePage() {
   if (previewMode) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
-          <div>
-            {" "}
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-              {previewMode === "private" ? "Private preview" : "Public preview"}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {previewMode === "private"
-                ? "Only you can see this saved Studio draft."
-                : "This is how the saved draft will appear to visitors."}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              previewFrom === "studio" ? window.history.back() : (window.location.href = "/studio")
-            }
-          >
-            Back to Studio
-          </Button>
-        </div>
+        {/* PageShell renders the canonical preview banner (label + Back to
+            Studio); a route-level duplicate would double up the chrome. */}
         <EditModeProvider>
           <PageShell
             ownerId={userId}
@@ -166,7 +145,6 @@ function ProfilePage() {
             isOwner
             previewDraft
             previewMode={previewMode}
-            hideEditor
             previewLayout={studioPreview?.layout}
             previewTheme={studioPreview?.theme ?? undefined}
             previewData={{ profile }}

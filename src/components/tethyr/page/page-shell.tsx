@@ -3,26 +3,23 @@
 // Fetches the page data (layout + theme), applies the theme tokens as CSS
 // custom properties, and renders the layout with blocks.
 //
-// When `isOwner` is true, the editor toolbar is shown (customize button or
-// full edit controls via EditModeProvider). Layout changes are persisted
-// through usePageEditor mutations.
+// Purely presentational: all editing lives in the Creativity Studio (/studio),
+// so this shell never renders edit controls of its own.
 //
 // States handled:
 //   • Loading — skeleton pulse
-//   • No page yet — empty state with "create page" action (owner only)
+//   • No page yet — owner-only "setting up" message
 //   • Error — friendly error with retry
 //   • Published/draft — resolved page with layout
-//   • Editing — blocks get move/remove/configure controls
 
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
-import { useCreatePage, useUpdatePageLayout } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
-import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 
@@ -33,8 +30,6 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
-  /** Hide the in-page editor toolbar (when editing is done through /studio). */
-  hideEditor?: boolean;
   /** Render the owner's draft instead of requiring a published page. */
   previewDraft?: boolean;
   /** Optional layout supplied by Studio for an exact local preview. */
@@ -53,7 +48,6 @@ export function PageShell({
   ownerId,
   ownerType,
   isOwner,
-  hideEditor,
   previewDraft,
   previewLayout,
   previewTheme,
@@ -69,11 +63,11 @@ export function PageShell({
   } = usePage({
     ownerId,
     ownerType,
-    includeDraft: previewDraft && isOwner,
+    // Owners always see their draft (even unpublished) on their own surfaces;
+    // non-owners may only request a published page (or an explicit preview).
+    includeDraft: isOwner || previewDraft,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
-  const createPage = useCreatePage();
-  const updateLayout = useUpdatePageLayout();
   const { isEditing } = useEditMode();
 
   // Diagnostic: log whether blocks are registered (once per mount).
@@ -107,49 +101,20 @@ export function PageShell({
     [ownerId, ownerType, page?.id, previewData, isOwner, isEditing, previewMode],
   );
 
-  // Merge theme CSS vars with any user-provided style.
+  // The effective theme is the persisted page theme layered with any preview
+  // draft theme from Studio (the preview sheet already carries the full theme).
+  const effectiveTheme = useMemo(
+    () => deepMergeTokens(page?.theme ?? {}, previewTheme ?? {}),
+    [page?.theme, previewTheme],
+  );
+
+  // Merge theme CSS vars with any user-provided style. Base theme vars are
+  // applied FIRST so customizations (radius, colors, draft previews) always
+  // win — previously the base tokens were spread last and clobbered the page.
   const containerStyle = useMemo(() => {
-    const base = themeTokensToStyle(previewTheme ?? page?.theme ?? {});
-    return { ...base, ...themeVars } as React.CSSProperties;
-  }, [page?.theme, previewTheme, themeVars]);
-
-  // ── Layout change handler (persists to DB) ─────────────────────────────
-  const handleLayoutChange = useCallback(
-    (newLayout: PageLayout) => {
-      if (!page) return;
-      updateLayout.mutate({
-        pageId: page.id,
-        layoutId: page.layoutId,
-        layout: newLayout,
-      });
-    },
-    [page, updateLayout],
-  );
-
-  // ── Block config change handler ────────────────────────────────────────
-  const handleBlockConfigChange = useCallback(
-    (blockId: string, config: Record<string, unknown>) => {
-      if (!page || !page.layout) return;
-      const sections = page.layout.sections.map((s) => ({
-        ...s,
-        blocks: s.blocks.map((b) =>
-          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
-        ),
-      }));
-      handleLayoutChange({ sections });
-    },
-    [page, handleLayoutChange],
-  );
-
-  const createdRef = useRef(false);
-
-  // Auto-create the page on first render when owner and no page exists.
-  useEffect(() => {
-    if (!page && isOwner && !isLoading && !createPage.isPending && !createdRef.current) {
-      createdRef.current = true;
-      createPage.mutate({ ownerId, ownerType });
-    }
-  }, [page, isOwner, isLoading, createPage, ownerId, ownerType]);
+    const merged = themeTokensToStyle(effectiveTheme);
+    return { ...themeVars, ...merged } as React.CSSProperties;
+  }, [themeVars, effectiveTheme]);
 
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
@@ -182,8 +147,11 @@ export function PageShell({
       return (
         <div className="py-12 text-center">
           <p className="text-sm text-muted-foreground">
-            {createPage.isPending ? "Preparing your page…" : "Setting up your page layout…"}
+            You don't have a page yet — build it in the Creativity Studio.
           </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link to="/studio">Open in Creativity Studio</Link>
+          </Button>
         </div>
       );
     }
@@ -204,17 +172,6 @@ export function PageShell({
   // ── Rendered page ────────────────────────────────────────────────────
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
-      {/* Editor toolbar — only shown on surfaces that own their editing
-          (not when editing is handled through /studio). */}
-      {isOwner && !hideEditor && (
-        <EditorToolbar
-          page={page}
-          onRefresh={() => refetch()}
-          ownerId={ownerId}
-          ownerType={ownerType}
-        />
-      )}
-
       <div
         style={containerStyle}
         data-page-id={page.id}
@@ -254,7 +211,7 @@ export function PageShell({
                   Your page is empty.
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Use Add block above to start building.
+                  Add a block to start building your page.
                 </p>
               </div>
             ) : (
@@ -263,13 +220,6 @@ export function PageShell({
               </p>
             )}
           </div>
-        ) : isOwner && !previewMode ? (
-          <PageLayoutRenderer
-            layout={layout}
-            context={blockContext}
-            onLayoutChange={handleLayoutChange}
-            onBlockConfigChange={handleBlockConfigChange}
-          />
         ) : (
           <PageLayoutRenderer layout={layout} context={blockContext} />
         )}

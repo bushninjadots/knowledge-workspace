@@ -18,8 +18,8 @@ import { Button } from "@/components/ui/button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
-import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { PROFILE_LAYOUT_PRESETS, PROFILE_MODULES } from "@/lib/workspace-layouts";
+import { PageShell } from "@/components/tethyr/page/page-shell";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
   Dialog,
@@ -50,6 +50,14 @@ import type { ProjectRow } from "@/components/tethyr/profile-sections";
 export type Skill = { id: string; slug: string; name: string; category: string };
 
 export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
+
+const MANAGE_TABS: { id: Tab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "skills", label: "Skills" },
+  { id: "projects", label: "Projects" },
+  { id: "communities", label: "Communities" },
+  { id: "activity", label: "Activity" },
+];
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {
   website: Globe,
@@ -94,7 +102,7 @@ export function ProfileLayout({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [bgOpen, setBgOpen] = useState(false);
-  const [customizing, setCustomizing] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const palette = useUserPalette(bannerSigned);
 
   const accentStyle = {
@@ -264,54 +272,59 @@ export function ProfileLayout({
               Work that makes you recognizable
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Put the projects, skills, and contributions you want people to remember within reach.
+              This is the page visitors see — push a highlighted project, add evidence, or refine
+              how you come across. You arrange every block in the Creativity Studio.
             </p>
           </div>
-          {isOwnProfile && profile?.handle && (
-            <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
-              <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                View public Studio
-              </Link>
-            </Button>
+          {isOwnProfile && (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              {profile?.handle && (
+                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+                  <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                    View public Studio
+                  </Link>
+                </Button>
+              )}
+              <Button asChild size="sm">
+                <Link to="/studio">
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Open in Creativity Studio
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
-            {customizing && isOwnProfile && (
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-3">
-                <div>
-                  <p className="section-label">Private Studio layout</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    This changes your private view only. Your public Studio has its own arrangement.
-                  </p>
-                </div>
-                {profile?.handle && (
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                      Preview public Studio
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
+            {/* Live owner view of the real profile page */}
+            <PageShell ownerId={userId} ownerType="profile" isOwner previewDraft />
 
-            <WorkspaceGrid
-              page="profile"
-              userId={userId}
-              modules={PROFILE_MODULES}
-              layoutPresets={PROFILE_LAYOUT_PRESETS}
-              canCustomize={isOwnProfile}
-              defaultCustomizing={customizing}
-              showModuleTitles={false}
-              showCustomizeBar={false}
-              showPresetPicker
-              showSectionNav
-              workspaceLabel="Studio"
-              customizing={customizing}
-              onCustomizingChange={setCustomizing}
-              renderModule={(id) => tabContent[id as Tab] ?? null}
-            />
+            {/* Management surfaces (no grid) */}
+            <div className="mt-10 border-t border-border/60 pt-6">
+              <p className="section-label">Manage your Studio</p>
+              <h3 className="mt-1 font-display text-lg font-semibold">
+                Skills, projects, and community
+              </h3>
+              <Tabs
+                value={activeTab}
+                onValueChange={(v) => setActiveTab(v as Tab)}
+                className="mt-4"
+              >
+                <TabsList className="gap-4 overflow-x-auto">
+                  {MANAGE_TABS.map((tab) => (
+                    <TabsTrigger key={tab.id} value={tab.id}>
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {MANAGE_TABS.map((tab) => (
+                  <TabsContent key={tab.id} value={tab.id}>
+                    {tabContent[tab.id]}
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
           </div>
 
           <ProfileSidebar profile={profile} />

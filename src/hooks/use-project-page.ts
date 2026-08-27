@@ -82,8 +82,7 @@ async function autoCreatePage(projectId: string, qc: ReturnType<typeof useQueryC
       owner_type: "project",
       layout_id: layoutData.id,
       theme_id: DEFAULT_THEME_ID,
-      status: "published",
-      published_at: new Date().toISOString(),
+      status: "draft",
     });
 
     if (pageError) {

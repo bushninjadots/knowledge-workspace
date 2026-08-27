@@ -20,13 +20,9 @@ import {
   VerificationBadge,
 } from "@/components/tethyr/profile-sections";
 import type { SkillExperienceLevel, SkillVerificationLevel } from "@/hooks/use-current-user";
-import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
-import { Button } from "@/components/ui/button";
-import { useUpdateEvidenceShelf, type EvidenceShelfItem } from "@/hooks/use-project-loop";
 import { useStudioCredits } from "@/hooks/use-credits";
 import { timeAgo } from "@/lib/time";
-import { PUBLIC_STUDIO_MODULES, PUBLIC_STUDIO_PRESETS } from "@/lib/workspace-layouts";
-import type { LayoutStorage } from "@/hooks/use-layout-preferences";
+import type { EvidenceShelfItem } from "@/hooks/use-project-loop";
 
 export type PublicStudioProfile = {
   id: string;
@@ -75,8 +71,6 @@ type Props = {
   teachSkills: PublicStudioSkill[];
   learnSkills: PublicStudioGrowingSkill[];
   contributedProjects: PublicStudioProject[];
-  layoutStorage: LayoutStorage;
-  canCustomize: boolean;
   onEndorse: (skill: PublicStudioSkill) => void;
   endorsePending: boolean;
 };
@@ -88,8 +82,6 @@ export function PublicStudioWorkspace({
   teachSkills,
   learnSkills,
   contributedProjects,
-  layoutStorage,
-  canCustomize,
   onEndorse,
   endorsePending,
 }: Props) {
@@ -102,24 +94,8 @@ export function PublicStudioWorkspace({
     [contributedProjects],
   );
   const featuredProject = builtProjects[0] ?? contributedProjects[0] ?? null;
-  const updateShelf = useUpdateEvidenceShelf();
   const { data: credits = [], isLoading: creditsLoading } = useStudioCredits(profileId);
   const shelf = useMemo(() => profile.evidence_shelf ?? [], [profile.evidence_shelf]);
-  const featureLatestProject = useCallback(() => {
-    if (!featuredProject || shelf.some((item) => item.project_id === featuredProject.id)) return;
-    updateShelf.mutate({
-      profileId,
-      items: [
-        ...shelf,
-        {
-          project_id: featuredProject.id,
-          title: featuredProject.title,
-          note: "Featured from my current Studio work.",
-          kind: "project",
-        },
-      ],
-    });
-  }, [featuredProject, profileId, shelf, updateShelf]);
 
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
@@ -230,20 +206,7 @@ export function PublicStudioWorkspace({
               icon={<Sparkles className="h-4 w-4" />}
             >
               {shelf.length === 0 ? (
-                <div className="space-y-2">
-                  <EmptyCopy>Curate a small set of project evidence here.</EmptyCopy>
-                  {canCustomize && featuredProject && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={featureLatestProject}
-                      disabled={updateShelf.isPending}
-                    >
-                      {updateShelf.isPending ? "Featuring…" : "Feature current project"}
-                    </Button>
-                  )}
-                </div>
+                <EmptyCopy>Curate a small set of project evidence here.</EmptyCopy>
               ) : (
                 <div className="space-y-2">
                   {shelf.slice(0, 6).map((item) => (
@@ -259,19 +222,6 @@ export function PublicStudioWorkspace({
                       )}
                     </Link>
                   ))}
-                  {canCustomize &&
-                    featuredProject &&
-                    !shelf.some((item) => item.project_id === featuredProject.id) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={featureLatestProject}
-                        disabled={updateShelf.isPending}
-                      >
-                        Feature current project
-                      </Button>
-                    )}
                 </div>
               )}
             </SectionCard>
@@ -446,9 +396,6 @@ export function PublicStudioWorkspace({
       contributedProjects,
       endorsePending,
       featuredProject,
-      canCustomize,
-      featureLatestProject,
-      updateShelf.isPending,
       joinedProjects,
       learnSkills,
       meId,
@@ -461,6 +408,17 @@ export function PublicStudioWorkspace({
       creditsLoading,
     ],
   );
+
+  const moduleIds = [
+    "featured-work",
+    "contributions",
+    "evidence-shelf",
+    "activity",
+    "skills-share",
+    "skills-growing",
+    "links",
+    "about",
+  ];
 
   return (
     <section aria-labelledby="public-studio-work-heading" className="space-y-4">
@@ -475,19 +433,12 @@ export function PublicStudioWorkspace({
           </p>
         </div>
       </div>
-      <WorkspaceGrid
-        page="profile"
-        userId={profileId}
-        modules={PUBLIC_STUDIO_MODULES}
-        canCustomize={false}
-        layoutStorage={layoutStorage}
-        layoutPresets={PUBLIC_STUDIO_PRESETS}
-        showModuleTitles={false}
-        showPresetPicker={false}
-        showSectionNav
-        workspaceLabel="public Studio"
-        renderModule={renderModule}
-      />
+      <div className="space-y-6">
+        {moduleIds.map((id) => {
+          const node = renderModule(id);
+          return node ? <div key={id}>{node}</div> : null;
+        })}
+      </div>
     </section>
   );
 }

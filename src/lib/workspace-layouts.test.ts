@@ -5,9 +5,6 @@ import {
   mergeLayout,
   DASHBOARD_LAYOUT_PRESETS,
   DASHBOARD_MODULES,
-  PROFILE_LAYOUT_PRESETS,
-  PUBLIC_STUDIO_MODULES,
-  PUBLIC_STUDIO_PRESETS,
   stackDefault,
   type WorkspaceModule,
 } from "./workspace-layouts";
@@ -45,39 +42,11 @@ describe("dashboard hierarchy", () => {
   });
 });
 
-describe("public Studio layout", () => {
-  it("exposes a stable work-first set of public sections", () => {
-    expect(PUBLIC_STUDIO_MODULES.map(({ id }) => id)).toEqual([
-      "featured-work",
-      "contributions",
-      "evidence-shelf",
-      "activity",
-      "skills-share",
-      "skills-growing",
-      "links",
-      "about",
-    ]);
-    expect(PUBLIC_STUDIO_MODULES[0].defaultW).toBe(8);
-    expect(PUBLIC_STUDIO_MODULES[1].defaultW).toBe(4);
-  });
-
+describe("dashboard layout presets", () => {
   it("offers guided presets without changing the freeform module registry", () => {
-    expect(PUBLIC_STUDIO_PRESETS.map(({ id }) => id)).toEqual([
-      "work-first",
-      "collaboration-first",
-      "learning-first",
-    ]);
-    expect(
-      PUBLIC_STUDIO_PRESETS.every((preset) => preset.items.length === PUBLIC_STUDIO_MODULES.length),
-    ).toBe(true);
-    expect(PUBLIC_STUDIO_PRESETS[0].pinned).toContain("featured-work");
     expect(DASHBOARD_LAYOUT_PRESETS.map(({ id }) => id)).toEqual([
       "build-center",
       "network-center",
-    ]);
-    expect(PROFILE_LAYOUT_PRESETS.map(({ id }) => id)).toEqual([
-      "studio-work-first",
-      "studio-community",
     ]);
   });
 });

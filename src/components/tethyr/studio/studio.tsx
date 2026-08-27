@@ -42,7 +42,7 @@ import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock } from "@/lib/block-registry";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
@@ -175,6 +175,26 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     error: templateFetchError,
   } = usePublicTemplates({ sort: "popular" });
 
+  // Active-owner data for data-driven blocks (project-hero, project-status,
+  // …) so they resolve inside the editor instead of showing a loading or
+  // empty state. Matches the `previewData` shape the preview routes pass.
+  const { data: activeOwnerData } = useQuery({
+    queryKey: ["studio-page-owner-data", activePage?.type ?? "", activePage?.id ?? ""],
+    queryFn: async () => {
+      if (activePage?.type !== "project" || !activePage.id) return undefined;
+      const select =
+        "id, title, description, status, stage, progress_percent, cover_url, tags, looking_for_collaborators, looking_for_feedback";
+      const { data, error } = await supabase
+        .from("projects")
+        .select(select)
+        .eq("id", activePage.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? { project: data } : undefined;
+    },
+    enabled: !!activePage && activePage.type === "project",
+  });
+
   // Block registry diagnostic
   const [blockCount, setBlockCount] = useState(0);
   useEffect(() => {
@@ -275,12 +295,26 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // Apply an edit to the draft: update the layout, push the previous state
   // onto the undo stack (truncating any redo tail), and mark dirty.
   const applyDraft = useCallback((newLayout: PageLayout) => {
-    setDraftLayout(newLayout);
+    // Normalize positions here, once, so every mutation (move, add, duplicate,
+    // reorder, template apply) stays consistent. Renderers sort sections and
+    // blocks by `position` — without reindexing, drag/move sequences would
+    // render a stale order after a refetch.
+    const normalized: PageLayout = {
+      sections: newLayout.sections.map((section, i) => ({
+        ...section,
+        position: i,
+        blocks: [...section.blocks].map((block, j): LayoutBlockInstance => ({
+          ...block,
+          position: j,
+        })),
+      })),
+    };
+    setDraftLayout(normalized);
     setDirty(true);
     dirtyRef.current = true;
     // Truncate redo tail, then push the new snapshot.
     const next = historyRef.current.slice(0, historyIndexRef.current + 1);
-    next.push(newLayout);
+    next.push(normalized);
     // Cap history at 100 entries.
     if (next.length > 100) next.shift();
     historyRef.current = next;
@@ -712,30 +746,40 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [pageData, unpublishPage, refetchPage]);
 
-  // Preview routes load from the database, so persist the working copy first.
-  // Without this, unsaved Studio edits appear to disappear when a preview opens.
+  // Persist the working copy when it has unsaved edits, and always hand the
+  // exact draft (layout + theme) to the preview route via sessionStorage.
+  // Every preview surface — Private and Public for both profiles and projects —
+  // reads this same payload, so a preview always renders exactly what the
+  // Studio canvas shows, even when the draft is unchanged since the last save.
   const saveBeforePreview = useCallback(async () => {
-    if (!pageData || !dirtyRef.current) return true;
+    if (!pageData) return true;
     try {
-      await updateLayout.mutateAsync({
-        pageId: pageData.id,
-        layoutId: pageData.layoutId,
-        layout: draftLayout,
-      });
-      if (overridesDirtyRef.current && draftOverrides != null) {
-        await updateThemeOverrides.mutateAsync({ pageId: pageData.id, overrides: draftOverrides });
-        overridesDirtyRef.current = false;
+      if (dirtyRef.current) {
+        await updateLayout.mutateAsync({
+          pageId: pageData.id,
+          layoutId: pageData.layoutId,
+          layout: draftLayout,
+        });
+        if (overridesDirtyRef.current && draftOverrides != null) {
+          await updateThemeOverrides.mutateAsync({
+            pageId: pageData.id,
+            overrides: draftOverrides,
+          });
+          overridesDirtyRef.current = false;
+        }
+        setDirty(false);
+        dirtyRef.current = false;
+        savedLayoutRef.current = draftLayout;
+        savedOverridesRef.current = draftOverrides ?? null;
       }
-      setDirty(false);
-      dirtyRef.current = false;
-      savedLayoutRef.current = draftLayout;
-      savedOverridesRef.current = draftOverrides ?? null;
       if (typeof window !== "undefined") {
+        // Carry the full effective theme (base tokens merged with the manual
+        // overrides) so previews never fall back to a partial token set.
         sessionStorage.setItem(
           `tethyr:studio-preview:${activePage?.type}:${activePage?.id}`,
           JSON.stringify({
             layout: draftLayout,
-            theme: draftOverrides,
+            theme: draftOverrides ?? pageData.theme ?? null,
             pageId: pageData.id,
             ownerId: activePage?.id ?? "",
             ownerType: activePage?.type ?? "project",
@@ -1255,6 +1299,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     page={activePage}
                     pageData={pageData}
                     layout={draftLayout}
+                    contextData={activeOwnerData}
                     pageLoading={pageLoading}
                     pageError={pageError}
                     selectionType={selectionType}
@@ -1305,9 +1350,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               selectedBlockDef={selectedBlock ? getBlock(selectedBlock.type) : undefined}
               selectedSection={selectedSection}
               pageData={pageData}
-              isPublished={isPublished}
-              onPublish={handlePublish}
-              onUnpublish={handleUnpublish}
               onMoveBlock={handleMoveBlock}
               onRemoveBlock={handleRemoveBlock}
               onRemoveSection={handleRemoveSection}

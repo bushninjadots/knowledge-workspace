@@ -14,17 +14,16 @@ import {
   ArrowUp,
   ArrowDown,
   Copy,
-  Columns2,
   Search,
   X,
 } from "lucide-react";
-import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
+import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBlock, getAllBlocks } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
-import type { BlockContext, PageData, PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
+import type { BlockContext, PageData, LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
 
 const CATEGORY_LABELS: Record<string, string> = {
   content: "Text & Media",
@@ -39,6 +38,8 @@ interface StudioCanvasProps {
   page: StudioPage;
   pageData: PageData | undefined | null;
   layout: PageLayout;
+  /** Active-owner data shared by data-driven blocks (e.g. { project }). */
+  contextData?: Record<string, unknown>;
   pageLoading: boolean;
   pageError: boolean;
   selectionType: SelectionType;
@@ -84,6 +85,7 @@ export function StudioCanvas({
   page,
   pageData,
   layout,
+  contextData,
   pageLoading,
   pageError,
   selectionType: _selectionType,
@@ -237,6 +239,7 @@ export function StudioCanvas({
     ownerId: pageData?.ownerId ?? page.id,
     ownerType: pageData?.ownerType ?? (page.type === "profile" ? "profile" : "project"),
     pageId: pageData?.id ?? `draft:${page.type}:${page.id}`,
+    data: contextData,
     isEditing: true,
   };
 
@@ -327,38 +330,7 @@ export function StudioCanvas({
                 className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm"
                 onClick={(e) => e.stopPropagation()}
               >
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const LAYOUT_CYCLE = [
-                      "full",
-                      "two_column",
-                      "three_column",
-                      "sidebar_left",
-                      "sidebar_right",
-                      "feature",
-                    ] as const;
-                    const currentIdx = LAYOUT_CYCLE.indexOf(
-                      section.layout as (typeof LAYOUT_CYCLE)[number],
-                    );
-                    // If current layout isn't in cycle (shouldn't happen), start from full
-                    const nextLayout =
-                      LAYOUT_CYCLE[
-                        ((currentIdx === -1 ? 0 : currentIdx) + 1) % LAYOUT_CYCLE.length
-                      ];
-                    onLayoutChange({
-                      ...layout,
-                      sections: layout.sections.map((s) =>
-                        s.id === section.id ? { ...s, layout: nextLayout } : s,
-                      ),
-                    });
-                  }}
-                  className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                  title={`Layout: ${section.layout.replace(/_/g, " ")} (click to cycle)`}
-                >
-                  <Columns2 className="h-3 w-3" />
-                </button>
+                {/* Section layout is configured in the inspector */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -680,7 +652,6 @@ function BlockCard({
         <SingleBlockRenderer
           block={block}
           context={blockContext}
-          devicePreview={devicePreview}
           onConfigChange={(config) => onConfigChange(block.id, config)}
         />
       </div>
@@ -913,23 +884,18 @@ function BlockPickerModal({
 function SingleBlockRenderer({
   block,
   context,
-  devicePreview,
   onConfigChange,
 }: {
   block: LayoutBlockInstance;
   context: BlockContext;
-  devicePreview?: "desktop" | "tablet" | "mobile";
   onConfigChange?: (config: Record<string, unknown>) => void;
 }) {
-  const layout: PageLayout = {
-    sections: [{ id: "single", position: 0, layout: "full", blocks: [block] }],
-  };
   return (
-    <PageLayoutRenderer
-      layout={layout}
+    <BlockRenderer
+      type={block.type}
+      config={block.config}
       context={context}
-      devicePreview={devicePreview}
-      onBlockConfigChange={onConfigChange ? (_bid, config) => onConfigChange(config) : undefined}
+      onChange={onConfigChange}
     />
   );
 }

@@ -6,6 +6,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { deepMergeTokens } from "@/lib/theme-tokens";
 import type { PageData, PageLayout, PageOwnerType, ThemeTokens } from "@/lib/page-blocks";
 
 interface PageRow {
@@ -84,11 +85,12 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
           .select("tokens")
           .eq("id", pageRow.theme_id)
           .maybeSingle();
-        // Merge theme_overrides on top of base theme tokens so user
-        // customizations (radius, colors, typography) take precedence.
+        // Deep-merge theme_overrides on top of base theme tokens so partial
+        // customizations (a radius change, a single font) layer onto the theme
+        // instead of replacing whole groups and dropping sibling tokens.
         const baseTokens = (themeRow as unknown as ThemeRow | null)?.tokens ?? {};
         const overrides = (pageRow.theme_overrides ?? {}) as ThemeTokens;
-        theme = { ...(baseTokens as ThemeTokens), ...overrides };
+        theme = deepMergeTokens(baseTokens as ThemeTokens, overrides);
       }
 
       return {
