@@ -61,6 +61,8 @@ interface StudioCanvasProps {
   onDuplicateBlock: (blockId: string) => void;
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onPlaceBlock: (blockId: string, sectionId: string, column: number) => void;
+  onPlaceSection?: (sectionId: string, row: number, column: number) => void;
+  compositionColumns?: number;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
   devicePreview?: "desktop" | "tablet" | "mobile";
@@ -110,6 +112,8 @@ export function StudioCanvas({
   onDuplicateBlock,
   onReorderBlocks,
   onPlaceBlock,
+  onPlaceSection,
+  compositionColumns = 1,
   onLayoutChange,
   onRefetch,
   devicePreview,
@@ -285,7 +289,12 @@ export function StudioCanvas({
 
   return (
     <div
-      className="flex flex-col"
+      className={compositionColumns > 1 ? "grid grid-cols-1 gap-6 md:grid-cols-2" : "flex flex-col"}
+      style={
+        compositionColumns > 2 && devicePreview !== "tablet" && devicePreview !== "mobile"
+          ? { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }
+          : undefined
+      }
       onClick={onSelectPage}
       data-studio-canvas="private-draft"
       aria-label={`${page.type === "profile" ? "Private Studio" : "Private project"} draft canvas`}
@@ -312,6 +321,18 @@ export function StudioCanvas({
         return (
           <div
             key={section.id}
+            style={
+              compositionColumns > 1 && devicePreview !== "mobile"
+                ? {
+                    gridColumnStart: Math.min(
+                      (section.gridColumn ?? sectionIdx % compositionColumns) + 1,
+                      devicePreview === "tablet" ? 2 : compositionColumns,
+                    ),
+                    gridRowStart:
+                      (section.gridRow ?? Math.floor(sectionIdx / compositionColumns)) + 1,
+                  }
+                : undefined
+            }
             className={`group/section relative rounded-lg py-4 first:pt-0 last:pb-0 transition-all ${
               isSectionSelected
                 ? "ring-2 ring-primary/25 bg-primary/[0.02]"
@@ -333,6 +354,30 @@ export function StudioCanvas({
               }
             }}
           >
+            {compositionColumns > 1 && onPlaceSection && (
+              <div className="mb-2 flex items-center justify-end gap-1">
+                {Array.from({ length: compositionColumns }, (_, column) => (
+                  <button
+                    key={column}
+                    type="button"
+                    aria-label={`Place section ${sectionIdx + 1} in column ${column + 1}`}
+                    aria-pressed={section.gridColumn === column}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlaceSection(
+                        section.id,
+                        section.gridRow ?? Math.floor(sectionIdx / compositionColumns),
+                        column,
+                      );
+                    }}
+                    className="rounded-md bg-surface-elevated/70 px-1.5 py-1 text-[9px] text-muted-foreground hover:text-foreground"
+                  >
+                    {column + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Section drag handle */}
             <div className="pointer-events-none absolute -left-1 top-2 z-20 opacity-0 group-hover/section:opacity-100 transition-opacity">
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing pointer-events-auto" />
@@ -380,6 +425,8 @@ export function StudioCanvas({
                   dragOverBlockId,
                   dragType,
                   onPlaceBlock,
+                  onPlaceSection,
+                  compositionColumns,
                   handleBlockDragStart,
                   handleDragEnd,
                   handleBlockDragOver,
@@ -453,7 +500,7 @@ export function StudioCanvas({
             layout: "full",
           });
         }}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border/30 py-6 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        className={`flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border/30 py-6 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary ${compositionColumns > 1 ? "col-span-full" : ""}`}
       >
         <Plus className="h-4 w-4" />
         Add section
@@ -489,6 +536,8 @@ function renderGridBlocks(
   dragOverBlockId: string | null,
   dragType: string | null,
   onPlaceBlock: (blockId: string, sectionId: string, column: number) => void,
+  onPlaceSection: ((sectionId: string, row: number, column: number) => void) | undefined,
+  compositionColumns: number,
   onDragStart: (e: React.DragEvent, blockId: string) => void,
   onDragEnd: (e: React.DragEvent) => void,
   onDragOver: (e: React.DragEvent, blockId: string) => void,

@@ -37,6 +37,8 @@ interface StudioInspectorProps {
   onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onUpdateComposition?: (columns: number) => void;
+  compositionColumns?: number;
+  onPlaceSection?: (sectionId: string, row: number, column: number) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
   currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
@@ -62,6 +64,8 @@ export function StudioInspector({
   onUpdateBlock,
   onUpdateSectionLayout,
   onUpdateComposition,
+  compositionColumns = 1,
+  onPlaceSection,
   onUpdateThemeOverrides,
   currentOverrides,
   themes = [],
@@ -87,6 +91,8 @@ export function StudioInspector({
             section={selectedSection}
             onUpdateLayout={onUpdateSectionLayout}
             onUpdateComposition={onUpdateComposition}
+            compositionColumns={compositionColumns}
+            onPlaceSection={onPlaceSection}
             onRemove={onRemoveSection}
             onMove={onMoveSection}
             onDuplicate={onDuplicateSection}
@@ -426,10 +432,14 @@ function SectionInspector({
   onDuplicate,
   onSelectBlock,
   onUpdateComposition,
+  compositionColumns,
+  onPlaceSection,
 }: {
   section: LayoutSection;
   onUpdateLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onUpdateComposition?: (columns: number) => void;
+  compositionColumns: number;
+  onPlaceSection?: (sectionId: string, row: number, column: number) => void;
   onRemove: (sectionId: string) => void;
   onMove: (sectionId: string, direction: "up" | "down") => void;
   onDuplicate: (sectionId: string) => void;
@@ -485,6 +495,69 @@ function SectionInspector({
           ))}
         </div>
       </div>
+
+      {compositionColumns > 1 && (
+        <div>
+          <SectionLabel>Position in row</SectionLabel>
+          <p className="mt-1 text-[10px] text-muted-foreground/70">
+            Swap this section into another slot. Empty slots become available as rows grow.
+          </p>
+          <div className="mt-1.5 grid grid-cols-3 gap-1">
+            {Array.from({ length: compositionColumns }, (_, column) => (
+              <button
+                key={column}
+                type="button"
+                aria-pressed={section.gridColumn === column}
+                onClick={() =>
+                  onPlaceSection?.(
+                    section.id,
+                    section.gridRow ?? Math.floor(section.position / compositionColumns),
+                    column,
+                  )
+                }
+                className={`rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
+                  section.gridColumn === column
+                    ? "bg-primary/15 text-primary"
+                    : "bg-surface/40 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                }`}
+              >
+                Column {column + 1}
+              </button>
+            ))}
+          </div>
+          <div className="mt-1.5 flex gap-1">
+            <button
+              type="button"
+              onClick={() =>
+                onPlaceSection?.(
+                  section.id,
+                  Math.max(
+                    0,
+                    (section.gridRow ?? Math.floor(section.position / compositionColumns)) - 1,
+                  ),
+                  section.gridColumn ?? section.position % compositionColumns,
+                )
+              }
+              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              Previous row
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onPlaceSection?.(
+                  section.id,
+                  (section.gridRow ?? Math.floor(section.position / compositionColumns)) + 1,
+                  section.gridColumn ?? section.position % compositionColumns,
+                )
+              }
+              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              Next row
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Block list */}
       <div>

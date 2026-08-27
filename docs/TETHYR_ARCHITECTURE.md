@@ -136,4 +136,4 @@ The block/page/template system is implemented and is now part of the active arch
 - `src/lib/` — block registry, page/layout types, layout normalization, theme application, validation, and migration helpers
 - `supabase/migrations/20260823000000_page_system_foundation.sql` and subsequent migrations — page, layout, theme, template, fork, and override persistence
 
-Top-level section composition currently supports one, two, or three sequential sections per row. Blocks can be assigned to columns within multi-column sections, and all multi-column compositions stack on narrow viewports.
+Top-level section composition supports one, two, or three sections per row, with explicit row/column slots for independent placement. Blocks can also be assigned to columns within multi-column sections, and all multi-column compositions stack on narrow viewports.

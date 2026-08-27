@@ -149,6 +149,10 @@ export interface LayoutSection {
   layout: SectionLayoutType;
   /** Blocks within this section, ordered by position. */
   blocks: LayoutBlockInstance[];
+  /** Optional explicit row for page-level section composition. */
+  gridRow?: number;
+  /** Optional explicit column for page-level section composition. */
+  gridColumn?: number;
 }
 
 /** Optional top-level section composition. Older layouts omit this field. */

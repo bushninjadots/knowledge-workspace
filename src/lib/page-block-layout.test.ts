@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PageLayout } from "@/lib/page-blocks";
-import { groupSections, normalizeComposition } from "./page-block-layout";
+import { groupSections, normalizeComposition, placeSection } from "./page-block-layout";
 
 const layout: PageLayout = {
   sections: [
@@ -31,5 +31,14 @@ describe("page section composition", () => {
   it("clamps invalid column counts and removes one-column metadata", () => {
     expect(normalizeComposition(layout, 0).composition).toBeUndefined();
     expect(normalizeComposition(layout, 8).composition?.columns).toBe(3);
+  });
+
+  it("swaps sections into independently selected slots", () => {
+    const composed = normalizeComposition(layout, 2);
+    const moved = placeSection(composed, "c", 0, 0);
+    expect(groupSections(moved).map((group) => group.map((section) => section.id))).toEqual([
+      ["c", "b"],
+      ["a"],
+    ]);
   });
 });

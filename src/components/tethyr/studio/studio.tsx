@@ -42,7 +42,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
-import { normalizeComposition } from "@/lib/page-block-layout";
+import { normalizeComposition, placeSection } from "@/lib/page-block-layout";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock, blockPageScope } from "@/lib/block-registry";
@@ -624,6 +624,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const handleUpdateComposition = useCallback(
     (columns: number) => {
       applyDraft(normalizeComposition(draftLayout, columns));
+    },
+    [draftLayout, applyDraft],
+  );
+
+  const handlePlaceSection = useCallback(
+    (sectionId: string, row: number, column: number) => {
+      if (!draftLayout.composition?.columns || draftLayout.composition.columns < 2) return;
+      applyDraft(placeSection(draftLayout, sectionId, row, column));
     },
     [draftLayout, applyDraft],
   );
@@ -1346,6 +1354,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}
                     onPlaceBlock={handlePlaceBlock}
+                    onPlaceSection={handlePlaceSection}
+                    compositionColumns={draftLayout.composition?.columns ?? 1}
                     onAddBlock={handleAddBlock}
                     onAddSection={handleAddSection}
                     onUpdateBlockConfig={handleUpdateBlockConfig}
@@ -1392,6 +1402,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateComposition={handleUpdateComposition}
+              compositionColumns={draftLayout.composition?.columns ?? 1}
+              onPlaceSection={handlePlaceSection}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
               currentOverrides={draftOverrides}
               themes={themeCatalog}
