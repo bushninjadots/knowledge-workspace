@@ -1401,7 +1401,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
-              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
+              currentOverrides={draftOverrides}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onSelectBlock={handleSelectBlock}
