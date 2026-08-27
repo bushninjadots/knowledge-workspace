@@ -34,8 +34,7 @@ additional_redirect_urls = [
 # redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
 
 [db.seed]
-# Loads both seed files during `supabase db reset` — the default test user
-# (seed.sql) plus the temporary demo community (seed_demo.sql). To drop the
-# demo data, remove "./seed_demo.sql" from this list and run `db reset`.
+# Loads the default user plus the complete seeded community during reset.
+# seed_demo.sql contains the community fixtures and uses the current Auth schema.
 enabled = true
-sql_paths = ["./seed.sql", "./seed_demo.sql", "./seed_community.sql"]
+sql_paths = ["./seed.sql", "./seed_demo.sql"]
