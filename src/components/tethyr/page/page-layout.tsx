@@ -15,6 +15,7 @@ import type {
   BlockContext,
   LayoutBlockInstance,
 } from "@/lib/page-blocks";
+import { groupSections } from "@/lib/page-block-layout";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -95,62 +96,78 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   devicePreview,
   applyBlockWidths = true,
 }: PageLayoutRendererProps) {
-  const sections = [...layout.sections].sort((a, b) => a.position - b.position);
-
   return (
     <div className="flex flex-col" data-page-layout>
-      {sections.map((section) => {
-        // Override grid classes based on device preview.
-        // Mobile: always single column. Tablet: max 2 columns.
-        let gridClass = SECTION_GRID[section.layout] ?? "";
-        if (devicePreview === "mobile") {
-          gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
-        } else if (devicePreview === "tablet") {
-          gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
-          gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
-        }
-        const blocks = section.blocks
-          .filter((b) => b.visible !== false)
-          .sort((a, b) => a.position - b.position);
+      {groupSections(layout).map((sectionGroup, groupIndex) => (
+        <div
+          key={`section-group-${groupIndex}`}
+          className={
+            layout.composition?.columns && layout.composition.columns > 1
+              ? "grid grid-cols-1 gap-6 md:grid-cols-2"
+              : ""
+          }
+          style={{
+            gridTemplateColumns:
+              layout.composition?.columns && layout.composition.columns > 2
+                ? "repeat(3, minmax(0, 1fr))"
+                : undefined,
+          }}
+          data-section-group
+        >
+          {sectionGroup.map((section) => {
+            // Override grid classes based on device preview.
+            // Mobile: always single column. Tablet: max 2 columns.
+            let gridClass = SECTION_GRID[section.layout] ?? "";
+            if (devicePreview === "mobile") {
+              gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
+            } else if (devicePreview === "tablet") {
+              gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
+              gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
+            }
+            const blocks = section.blocks
+              .filter((b) => b.visible !== false)
+              .sort((a, b) => a.position - b.position);
 
-        // The section is a real multi-column arrangement unless the device
-        // preview forced everything to a single column.
-        const colCount = COLUMN_COUNT[section.layout] ?? 1;
-        const forceSingle =
-          devicePreview === "mobile" ||
-          (devicePreview === "tablet" && section.layout === "three_column");
-        const useGrid = colCount > 1 && !forceSingle;
+            // The section is a real multi-column arrangement unless the device
+            // preview forced everything to a single column.
+            const colCount = COLUMN_COUNT[section.layout] ?? 1;
+            const forceSingle =
+              devicePreview === "mobile" ||
+              (devicePreview === "tablet" && section.layout === "three_column");
+            const useGrid = colCount > 1 && !forceSingle;
 
-        const renderBlock = (block: LayoutBlockInstance) => {
-          const widthWrap = applyBlockWidths
-            ? `min-w-0 ${blockWidthClass(block.config?.width, devicePreview)}`
-            : "min-w-0";
-          return (
-            <div key={block.id} className={widthWrap}>
-              <BlockRenderer type={block.type} config={block.config} context={context} />
-            </div>
-          );
-        };
+            const renderBlock = (block: LayoutBlockInstance) => {
+              const widthWrap = applyBlockWidths
+                ? `min-w-0 ${blockWidthClass(block.config?.width, devicePreview)}`
+                : "min-w-0";
+              return (
+                <div key={block.id} className={widthWrap}>
+                  <BlockRenderer type={block.type} config={block.config} context={context} />
+                </div>
+              );
+            };
 
-        return (
-          <section
-            key={section.id}
-            data-section-id={section.id}
-            data-section-layout={section.layout}
-            className="py-4 first:pt-0 last:pb-0"
-          >
-            <div className={gridClass}>
-              {useGrid
-                ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
-                    <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">
-                      {colBlocks.map((block) => renderBlock(block))}
-                    </div>
-                  ))
-                : blocks.map((block) => renderBlock(block))}
-            </div>
-          </section>
-        );
-      })}
+            return (
+              <section
+                key={section.id}
+                data-section-id={section.id}
+                data-section-layout={section.layout}
+                className="py-4 first:pt-0 last:pb-0"
+              >
+                <div className={gridClass}>
+                  {useGrid
+                    ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
+                        <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">
+                          {colBlocks.map((block) => renderBlock(block))}
+                        </div>
+                      ))
+                    : blocks.map((block) => renderBlock(block))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 });

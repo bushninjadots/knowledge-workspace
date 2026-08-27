@@ -36,6 +36,7 @@ interface StudioInspectorProps {
   onUpdateBlockConfig?: (blockId: string, config: Record<string, unknown>) => void;
   onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
+  onUpdateComposition?: (columns: number) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
   currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
@@ -60,6 +61,7 @@ export function StudioInspector({
   onUpdateBlockConfig,
   onUpdateBlock,
   onUpdateSectionLayout,
+  onUpdateComposition,
   onUpdateThemeOverrides,
   currentOverrides,
   themes = [],
@@ -84,6 +86,7 @@ export function StudioInspector({
           <SectionInspector
             section={selectedSection}
             onUpdateLayout={onUpdateSectionLayout}
+            onUpdateComposition={onUpdateComposition}
             onRemove={onRemoveSection}
             onMove={onMoveSection}
             onDuplicate={onDuplicateSection}
@@ -415,9 +418,11 @@ function SectionInspector({
   onMove,
   onDuplicate,
   onSelectBlock,
+  onUpdateComposition,
 }: {
   section: LayoutSection;
   onUpdateLayout?: (sectionId: string, layout: SectionLayoutType) => void;
+  onUpdateComposition?: (columns: number) => void;
   onRemove: (sectionId: string) => void;
   onMove: (sectionId: string, direction: "up" | "down") => void;
   onDuplicate: (sectionId: string) => void;
@@ -449,6 +454,26 @@ function SectionInspector({
               }`}
             >
               {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Page section arrangement */}
+      <div>
+        <SectionLabel>Sections across the page</SectionLabel>
+        <p className="mt-1 text-[10px] text-muted-foreground/70">
+          Place sections side by side on larger screens. They stack automatically on mobile.
+        </p>
+        <div className="mt-1.5 flex gap-1">
+          {[1, 2, 3].map((columns) => (
+            <button
+              key={columns}
+              type="button"
+              onClick={() => onUpdateComposition?.(columns)}
+              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+            >
+              {columns === 1 ? "One" : columns === 2 ? "Two" : "Three"}
             </button>
           ))}
         </div>

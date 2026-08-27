@@ -41,6 +41,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
+import { normalizeComposition } from "@/lib/page-block-layout";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock, blockPageScope } from "@/lib/block-registry";
@@ -309,6 +310,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     // blocks by `position` — without reindexing, drag/move sequences would
     // render a stale order after a refetch.
     const normalized: PageLayout = {
+      ...newLayout,
       sections: newLayout.sections.map((section, i) => ({
         ...section,
         position: i,
@@ -317,6 +319,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           position: j,
         })),
       })),
+      composition: newLayout.composition,
     };
     setDraftLayout(normalized);
     setDirty(true);
@@ -630,6 +633,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     (sectionId: string, layout: SectionLayoutType) => {
       const sections = draftLayout.sections.map((s) => (s.id === sectionId ? { ...s, layout } : s));
       applyDraft({ sections });
+    },
+    [draftLayout, applyDraft],
+  );
+
+  const handleUpdateComposition = useCallback(
+    (columns: number) => {
+      applyDraft(normalizeComposition(draftLayout, columns));
     },
     [draftLayout, applyDraft],
   );
@@ -1400,6 +1410,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateBlockConfig={handleUpdateBlockConfig}
               onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
+              onUpdateComposition={handleUpdateComposition}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
               currentOverrides={draftOverrides}
               themes={themeCatalog}

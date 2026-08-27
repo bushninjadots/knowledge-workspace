@@ -151,10 +151,18 @@ export interface LayoutSection {
   blocks: LayoutBlockInstance[];
 }
 
+/** Optional top-level section composition. Older layouts omit this field. */
+export interface PageComposition {
+  columns?: number;
+  gap?: string;
+}
+
 /** A complete page layout: an ordered list of sections. */
 export interface PageLayout {
   /** Ordered sections. */
   sections: LayoutSection[];
+  /** Optional side-by-side section composition, preserved across saves. */
+  composition?: PageComposition;
 }
 
 // ---------------------------------------------------------------------------
