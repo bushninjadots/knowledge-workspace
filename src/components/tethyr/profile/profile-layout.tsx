@@ -19,6 +19,7 @@ import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { PageShell } from "@/components/tethyr/page/page-shell";
+import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
@@ -298,7 +299,9 @@ export function ProfileLayout({
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
             {/* Live owner view of the real profile page */}
-            <PageShell ownerId={userId} ownerType="profile" isOwner previewDraft />
+            <EditModeProvider>
+              <PageShell ownerId={userId} ownerType="profile" isOwner previewDraft />
+            </EditModeProvider>
 
             {/* Management surfaces (no grid) */}
             <div className="mt-10 border-t border-border/60 pt-6">
