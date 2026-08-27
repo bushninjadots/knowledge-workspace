@@ -8,7 +8,6 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import "@/components/tethyr/blocks/register-all";
 import { ProfileOverviewTab } from "@/components/tethyr/profile/profile-overview-tab";
-import { ProfileSkillsTab } from "@/components/tethyr/profile/profile-skills-tab";
 import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects-tab";
 import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
 import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
@@ -223,15 +222,6 @@ function ProfilePage() {
         ),
         skills: (
           <div className="space-y-6">
-            <ProfileSkillsTab
-              profile={profile}
-              teachIds={teachIds}
-              teachMeta={teachMeta}
-              learnIds={learnIds}
-              skills={skills}
-              isOwnProfile={true}
-              userId={userId}
-            />
             <SkillEditingSection
               teachIds={teachIds}
               teachMeta={teachMeta}

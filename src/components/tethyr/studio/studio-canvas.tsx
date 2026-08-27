@@ -62,14 +62,16 @@ interface StudioCanvasProps {
   devicePreview?: "desktop" | "tablet" | "mobile";
 }
 
-/** Tailwind grid classes for section layouts in the Studio canvas. */
+/** Tailwind grid classes for section layouts in the Studio canvas — must match
+ * the page renderer (SECTION_GRID in page-layout.tsx) so the canvas is a true
+ * WYSIWYG of the real studio page. */
 const CANVAS_GRID: Record<string, string> = {
   full: "",
-  two_column: "grid grid-cols-2 gap-3",
-  three_column: "grid grid-cols-3 gap-3",
-  sidebar_left: "grid grid-cols-[220px_1fr] gap-3",
-  sidebar_right: "grid grid-cols-[1fr_220px] gap-3",
-  feature: "grid grid-cols-2 gap-3",
+  two_column: "grid grid-cols-1 md:grid-cols-2 gap-6",
+  three_column: "grid grid-cols-1 md:grid-cols-3 gap-6",
+  sidebar_left: "grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6",
+  sidebar_right: "grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6",
+  feature: "grid grid-cols-1 md:grid-cols-2 gap-6",
 };
 
 const COLUMN_COUNT: Record<string, number> = {
@@ -270,7 +272,7 @@ export function StudioCanvas({
 
   return (
     <div
-      className="space-y-3"
+      className="flex flex-col"
       onClick={onSelectPage}
       data-studio-canvas="private-draft"
       aria-label={`${page.type === "profile" ? "Private Studio" : "Private project"} draft canvas`}
@@ -278,7 +280,15 @@ export function StudioCanvas({
       {layout.sections.map((section, sectionIdx) => {
         const isSectionSelected = selectedSectionId === section.id;
         const isSectionDragOver = dragOverSectionId === section.id && dragType === "section";
-        const gridClass = CANVAS_GRID[section.layout] ?? "";
+        // Match the page renderer's device-preview grid overrides so the canvas
+        // composition mirrors the real studio page at every breakpoint.
+        let gridClass = CANVAS_GRID[section.layout] ?? "";
+        if (devicePreview === "mobile") {
+          gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
+        } else if (devicePreview === "tablet") {
+          gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
+          gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
+        }
         const isMultiColumn = gridClass !== "";
         const forceSingle =
           devicePreview === "mobile" ||
@@ -289,7 +299,7 @@ export function StudioCanvas({
         return (
           <div
             key={section.id}
-            className={`group/section relative rounded-lg transition-all ${
+            className={`group/section relative rounded-lg py-4 first:pt-0 last:pb-0 transition-all ${
               isSectionSelected
                 ? "ring-2 ring-primary/25 bg-primary/[0.02]"
                 : isSectionDragOver
@@ -347,7 +357,7 @@ export function StudioCanvas({
 
             {/* Blocks container */}
             {useGrid ? (
-              <div className={`${gridClass} p-2 pt-4`}>
+              <div className={gridClass}>
                 {renderGridBlocks(
                   section,
                   sectionIdx,
@@ -370,7 +380,7 @@ export function StudioCanvas({
                 )}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2 p-2 pt-4">
+              <div className="flex flex-col">
                 {section.blocks.length === 0 ? (
                   <EmptySection onAdd={() => setShowBlockPicker(true)} />
                 ) : (
@@ -404,7 +414,7 @@ export function StudioCanvas({
                       e.stopPropagation();
                       setShowBlockPicker(true);
                     }}
-                    className="flex basis-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
+                    className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
                     <Plus className="h-3 w-3" />
                     Add block
@@ -507,7 +517,7 @@ function renderGridBlocks(
           </div>
 
           {/* Blocks in this column */}
-          <div className="space-y-2">
+          <div className="space-y-6">
             {colBlocks.length === 0 ? (
               <EmptyColumn colIdx={colIdx} onAdd={onShowPicker} />
             ) : (

@@ -37,8 +37,10 @@ import {
   useUpdateThemeOverrides,
 } from "@/hooks/use-page-editor";
 import { usePage } from "@/hooks/use-page";
+import { useTheme } from "@/hooks/use-theme";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
+import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock } from "@/lib/block-registry";
@@ -168,6 +170,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   }, [pageData, resetDraft]);
 
   const { data: themeCatalog = [] } = useThemeCatalog();
+  // Base theme CSS vars for the active page — identical to PageShell so the
+  // canvas reflects exactly what the real studio page renders.
+  const { data: themeVars = {} } = useTheme(pageData?.themeId);
+  const canvasContainerStyle = useMemo(() => {
+    const effectiveTheme = deepMergeTokens(pageData?.theme ?? {}, draftOverrides ?? {});
+    return { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties;
+  }, [themeVars, pageData?.theme, draftOverrides]);
   const {
     data: publicTemplates = [],
     isLoading: templatesLoading,
@@ -1290,6 +1299,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
             <div
               className={`w-full ${deviceClass} transition-all duration-200`}
+              style={canvasContainerStyle}
               data-studio-preview="private-draft"
               aria-label={`${activePage?.type === "profile" ? "Private Studio" : "Private project"} draft preview`}
             >
