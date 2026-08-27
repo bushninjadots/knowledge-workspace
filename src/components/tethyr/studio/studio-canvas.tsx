@@ -195,21 +195,29 @@ export function StudioCanvas({
     [onUpdateBlockConfig],
   );
 
-  if (pageLoading) {
+  if (pageLoading && layout.sections.length === 0) {
     return (
-      <div className="space-y-4 p-8">
-        <Skeleton className="h-8 w-48" />
+      <div className="space-y-4 p-8" aria-busy="true" aria-label="Loading private draft">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+          Private draft
+        </p>
+        <p className="text-sm text-muted-foreground">Loading your private Studio draft…</p>
         <Skeleton className="h-48 w-full rounded-xl" />
         <Skeleton className="h-32 w-full rounded-xl" />
       </div>
     );
   }
 
-  if (pageError && !pageData) {
+  if (pageError && !pageData && layout.sections.length === 0) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">This page couldn't be loaded.</p>
+        <div className="max-w-sm text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            Private draft
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your private draft could not be loaded.
+          </p>
           <button
             type="button"
             onClick={() => onRefetch()}

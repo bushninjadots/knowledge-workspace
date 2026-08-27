@@ -120,7 +120,20 @@ function CommunityPage() {
 
   return (
     <div className="animate-room-enter min-h-screen bg-noise">
-      <div className="mx-auto flex max-w-[100rem] gap-6 p-4 md:p-8">
+      <div className="mx-auto max-w-[100rem] px-4 pt-4 md:px-8 md:pt-8">
+        <div className="mb-5 flex items-center justify-between gap-4 border-b border-border/50 pb-4 lg:hidden">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/70">
+              Tethyr
+            </p>
+            <p className="mt-1 text-sm font-medium text-foreground">
+              Build in public, with people.
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground">Community</span>
+        </div>
+      </div>
+      <div className="mx-auto flex max-w-[100rem] gap-6 px-4 pb-24 md:px-8 lg:pb-8">
         <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
 
         <div className="min-w-0 flex-1">

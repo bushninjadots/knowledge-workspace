@@ -30,7 +30,12 @@ function FilterBadge({ label, onRemove }: { label: string; onRemove: () => void 
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
       {label}
-      <button onClick={onRemove} className="ml-0.5 rounded-full p-0.5 hover:bg-surface-elevated">
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${label} filter`}
+        className="ml-0.5 rounded-full p-0.5 hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <X className="h-2.5 w-2.5" />
       </button>
     </span>
@@ -157,7 +162,7 @@ export const CommunityHeader = memo(function CommunityHeader({
         <button
           type="button"
           onClick={onOpenTrending}
-          className="flex min-h-11 items-center gap-2 rounded-xl border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground xl:hidden"
+          className="flex min-h-11 items-center gap-2 rounded-md border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
         >
           <SlidersHorizontal className="h-4 w-4" />
           Trending
@@ -174,7 +179,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search the community"
           placeholder="Search projects, skills, people, or ideas..."
-          className="h-10 rounded-xl border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+          className="h-10 rounded-md border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
         />
         {isSearching && (
           <button
@@ -209,6 +214,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           )}
           {activeFilterCount > 1 && (
             <button
+              type="button"
               onClick={() => {
                 onFocusFilterChange("all");
                 onMySkillsOnlyChange(false);
@@ -227,6 +233,8 @@ export const CommunityHeader = memo(function CommunityHeader({
           {/* Row 1: sort + my-skills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
             <button
+              type="button"
+              aria-pressed={mySkillsOnly}
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
               className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
                 mySkillsOnly
@@ -240,6 +248,8 @@ export const CommunityHeader = memo(function CommunityHeader({
             {SORT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
+                type="button"
+                aria-pressed={sortMode === opt.value}
                 onClick={() => onSortModeChange(opt.value)}
                 className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
                   sortMode === opt.value
@@ -255,6 +265,8 @@ export const CommunityHeader = memo(function CommunityHeader({
           {/* Row 2: focus chips */}
           <div className="flex flex-wrap gap-1.5">
             <button
+              type="button"
+              aria-pressed={focusFilter === "all"}
               onClick={() => onFocusFilterChange("all")}
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
                 focusFilter === "all"
@@ -267,6 +279,8 @@ export const CommunityHeader = memo(function CommunityHeader({
             {DISCOVERY_FILTERS.map((f) => (
               <button
                 key={f}
+                type="button"
+                aria-pressed={focusFilter === f}
                 onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
                 className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
                   focusFilter === f
@@ -285,6 +299,7 @@ export const CommunityHeader = memo(function CommunityHeader({
               <button
                 key={filter.value}
                 type="button"
+                aria-pressed={nav === filter.value}
                 onClick={() => onNavChange(filter.value)}
                 className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
                   nav === filter.value

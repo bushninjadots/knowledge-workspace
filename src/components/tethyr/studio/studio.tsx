@@ -106,6 +106,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // instantly — nothing touches the database until the user presses Save.
   // This replaces the old per-click mutation + refetch loop.
   const [draftLayout, setDraftLayout] = useState<PageLayout>({ sections: [] });
+  const [pageProvisioning, setPageProvisioning] = useState(false);
   const [draftOverrides, setDraftOverrides] = useState<ThemeTokens | null>(null);
   const [history, setHistory] = useState<PageLayout[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -209,6 +210,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (!pageLoading && !pageData && activePage && !createPage.isPending && !ensuringRef.current) {
       ensuringRef.current = true;
+      setPageProvisioning(true);
       toast.info(`Creating default ${activePage.type} page...`);
       const layout =
         activePage.type === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
@@ -216,11 +218,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         { ownerId: activePage.id, ownerType: activePage.type, userId, defaultLayout: layout },
         {
           onSuccess: () => {
+            setPageProvisioning(false);
             toast.success("Page created! You can now customize it.");
           },
           onError: (err) => {
+            setPageProvisioning(false);
+            ensuringRef.current = false;
             console.error("[Studio] ❌ Failed to auto-create page:", err);
-            toast.error(friendlyError(err, "Failed to create page"));
+            toast.error(
+              friendlyError(
+                err,
+                "Failed to create your private Studio page. Check your session and try again.",
+              ),
+            );
           },
         },
       );
@@ -245,6 +255,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // ── Layout helpers ────────────────────────────────────────────────────
   const isPublished = pageData?.status === "published";
+  const studioMode = "Private draft" as const;
+  const pageReady = !!pageData && !pageLoading && !pageProvisioning;
+  const pageStatusLabel = pageLoading
+    ? "Loading page"
+    : pageProvisioning
+      ? "Creating private draft"
+      : pageError && !pageData
+        ? "Page unavailable"
+        : pageData
+          ? isPublished
+            ? "Editing private draft · published version live"
+            : "Editing private draft · not published"
+          : "Preparing private draft";
 
   // Apply an edit to the draft: update the layout, push the previous state
   // onto the undo stack (truncating any redo tail), and mark dirty.
@@ -265,8 +288,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // Persist the draft (layout + theme overrides) to the database.
   const handleSave = useCallback(() => {
-    if (!pageData) {
-      toast.error("No page loaded yet. Wait for the page to finish loading.");
+    if (!pageReady) {
+      toast.info(
+        pageProvisioning
+          ? "Your private draft is still being created."
+          : pageError
+            ? "Your private draft could not be loaded. Try refreshing."
+            : "Your private draft is still loading.",
+      );
       return;
     }
     if (!dirtyRef.current) {
@@ -345,8 +374,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
     (blockType: string) => {
-      if (!pageData) {
-        toast.error("Page not loaded yet. Wait a moment.");
+      if (!pageReady) {
+        toast.info(
+          pageProvisioning
+            ? "Your private draft is still being created."
+            : "Your private draft is still loading.",
+        );
         return;
       }
       const inst = createBlockInstance(blockType);
@@ -446,8 +479,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Add section ──────────────────────────────────────────────────────
   const handleAddSection = useCallback(
     (preset: SectionPreset) => {
-      if (!pageData) {
-        toast.error("Page not loaded yet.");
+      if (!pageReady) {
+        toast.info(
+          pageProvisioning
+            ? "Your private draft is still being created."
+            : "Your private draft is still loading.",
+        );
         return;
       }
       const newBlocks = (preset.starterBlocks ?? []).map((sb, i) => {
@@ -993,19 +1030,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               </button>
             ))}
           </div>
-
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
-
           {/* The canvas always renders the selected owner's working copy. */}
           <span
             className="text-[9px] text-muted-foreground/60 select-none"
-            title="The canvas is your private working copy. Public preview shows only the published page."
+            title="Editing: private draft. Public preview shows only the published version."
+            data-studio-mode="private-draft"
           >
-            Private draft
+            {studioMode}
           </span>
-
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
-
           {/* Undo / Redo */}
           <div className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5">
             <button
@@ -1029,10 +1063,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               <Redo2 className="h-3.5 w-3.5" />
             </button>
           </div>
-
-          {/* Save with dirty indicator */}
+          {/* Save with dirty indicator */}{" "}
           <Button
             variant={dirty ? "outline" : "ghost"}
+            aria-label={`${dirty ? "Save private draft changes" : "Private draft saved"}`}
+
             size="sm"
             className={`h-7 gap-1.5 text-[11px] ${dirty ? "border-primary/40 text-primary" : ""}`}
             onClick={handleSave}
@@ -1048,8 +1083,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             <Save className="h-3.5 w-3.5" />
             {updateLayout.isPending ? "Saving…" : dirty ? "Save" : "Saved"}
           </Button>
-
-          {/* Status badge */}
+          {/* Status badge */}{" "}
+          <span className="sr-only" role="status" aria-live="polite">
+            {pageStatusLabel}
+          </span>
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${
               isPublished
@@ -1058,16 +1095,16 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             }`}
             title={
               isPublished
-                ? "This page is live and visible to everyone"
-                : "Draft — only you can see this page"
+                ? "Private draft is being edited. Published version is live and visible to everyone."
+                : "Private draft is being edited. It is not visible publicly until you publish."
             }
+            aria-label={pageStatusLabel}
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${isPublished ? "bg-emerald-500" : "bg-amber-500"}`}
             />
             {isPublished ? "Published" : "Draft"}
           </span>
-
           {isPublished ? (
             <Button
               variant="ghost"

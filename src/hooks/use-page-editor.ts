@@ -49,7 +49,17 @@ export function useCreatePage() {
       // Create a layout with the default sections. For created_by, prefer
       // the explicit userId; fall back to auth.uid() so RLS allows future updates.
       const sections = defaultLayout?.sections ?? createDefaultProfileLayout().sections;
-      const effectiveUserId = userId ?? (await supabase.auth.getUser())?.data.user?.id ?? ownerId;
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) {
+        throw authError ?? new Error("You must be signed in to create a Studio page");
+      }
+      // Always use the verified session identity for the RLS-protected layout
+      // insert. A caller-provided id is metadata only and must not decide
+      // ownership.
+      const effectiveUserId = authData.user.id;
+      if (userId && userId !== effectiveUserId) {
+        throw new Error("Your session does not match this Studio owner");
+      }
       const { data: layoutData, error: layoutError } = await supabase
         .from("layouts")
         .insert({

@@ -62,6 +62,7 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                       to={item.href}
                       onClick={onNavigate}
                       className={cn(rowClass, "no-underline")}
+                      aria-current={isActive ? "page" : undefined}
                       title={item.label}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -79,6 +80,7 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                       onNavigate?.();
                     }}
                     className={rowClass}
+                    aria-current={isActive ? "page" : undefined}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>

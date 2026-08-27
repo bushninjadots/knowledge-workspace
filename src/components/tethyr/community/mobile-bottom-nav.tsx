@@ -39,6 +39,8 @@ export function MobileBottomNav({
             return (
               <button
                 key={item.id}
+                type="button"
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => onSelect(item.id)}
                 className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
                   isActive
@@ -54,6 +56,7 @@ export function MobileBottomNav({
             );
           })}
           <button
+            type="button"
             onClick={onOpenSidebar}
             className="flex flex-1 flex-col items-center gap-1 py-3 text-xs text-muted-foreground transition-colors active:text-foreground"
           >
@@ -63,6 +66,7 @@ export function MobileBottomNav({
         </div>
         {/* Raised post action — anchored to the wrapper so it stays above the bar */}
         <button
+          type="button"
           onClick={onPost}
           aria-label="Write a post"
           title="Write a post"
