@@ -39,9 +39,9 @@ export function useProfilePage({
   } = usePage({
     ownerId: profileId,
     ownerType: "profile",
-    // Public profile routes remain published-only unless the owner explicitly
-    // opened a private/public preview from Studio.
-    includeDraft: isOwner || previewDraft,
+    // Public profile routes remain published-only. Draft access is explicit and
+    // is still protected by the route's owner check before it reaches here.
+    includeDraft: previewDraft || isOwner,
   });
   const qc = useQueryClient();
 

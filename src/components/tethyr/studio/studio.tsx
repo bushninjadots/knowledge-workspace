@@ -1096,7 +1096,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           {/* The canvas always renders the selected owner's working copy. */}
           <span
             className="text-[9px] text-muted-foreground/60 select-none"
-            title="Editing: private draft. Public preview shows only the published version."
+            title="Editing: private draft. Public preview renders the saved draft as a visitor."
             data-studio-mode="private-draft"
           >
             {studioMode}
