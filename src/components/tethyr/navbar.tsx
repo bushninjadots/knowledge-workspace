@@ -95,7 +95,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             <ThemeToggle />
             <button
               onClick={() => setOpen((v) => !v)}
-              className="rounded-full p-2 transition-colors hover:bg-surface md:hidden"
+              className="rounded-md p-2 transition-colors hover:bg-surface md:hidden"
               aria-label="Toggle menu"
               aria-expanded={open}
               aria-controls="mobile-menu"
@@ -114,7 +114,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             <Link
               to="/"
               onClick={() => setOpen(false)}
-              className="rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+              className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
             >
               Home
             </Link>
