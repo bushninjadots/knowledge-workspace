@@ -104,6 +104,11 @@ export function useCreateProjectContribution() {
     onSuccess: (_data, input) => {
       queryClient.invalidateQueries({ queryKey: ["project-activity", input.projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-detail", input.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-credits", input.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["studio-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["reputation-breakdown"] });
+      queryClient.invalidateQueries({ queryKey: ["contribution-log"] });
+      queryClient.invalidateQueries({ queryKey: ["public-profile"] });
       queryClient.invalidateQueries({ queryKey: PROJECT_RETURN_KEY });
     },
   });

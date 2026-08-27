@@ -24,7 +24,7 @@ import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
 import { DiscoverSkills } from "@/components/tethyr/discover-skills";
 import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
-import { WelcomeModal } from "@/components/tethyr/welcome-modal";
+import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
 const WorkspaceGrid = lazy(() =>
   import("@/components/tethyr/workspace/workspace-grid").then((m) => ({
     default: m.WorkspaceGrid,
@@ -590,7 +590,7 @@ function DashboardContent({
           <h2 id="dashboard-next-move-heading" className="sr-only">
             Your next move
           </h2>
-          <WelcomeModal />
+          <FirstSessionOnboarding data={data} />
           <DashboardWelcomeBanner
             bannerSigned={data?.bannerSigned ?? null}
             bannerCaption={data?.profile?.banner_caption ?? null}

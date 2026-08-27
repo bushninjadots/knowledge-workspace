@@ -671,6 +671,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [activePage, navigate]);
 
+  const handlePrivatePreview = useCallback(() => {
+    if (!activePage) return;
+    if (activePage.type === "profile") {
+      navigate({ to: "/profile", search: { preview: "private" } });
+    } else {
+      navigate({
+        to: "/projects/$id",
+        params: { id: activePage.id },
+        search: { preview: "private" },
+      });
+    }
+  }, [activePage, navigate]);
+
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
@@ -983,12 +996,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
-          {/* Public view indicator */}
+          {/* The canvas always renders the selected owner's working copy. */}
           <span
-            className="text-[9px] text-muted-foreground/40 select-none"
-            title="The canvas shows your page as visitors see it. Publish to make changes live."
+            className="text-[9px] text-muted-foreground/60 select-none"
+            title="The canvas is your private working copy. Public preview shows only the published page."
           >
-            Public view
+            Private draft
           </span>
 
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
@@ -1069,9 +1082,17 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             variant="ghost"
             size="sm"
             className="h-7 gap-1.5 text-[11px]"
+            onClick={handlePrivatePreview}
+          >
+            <Eye className="h-3.5 w-3.5" /> Private preview
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-[11px]"
             onClick={handlePreview}
           >
-            <Eye className="h-3.5 w-3.5" /> Preview
+            <Eye className="h-3.5 w-3.5" /> Public preview
           </Button>
           {!isPublished && (
             <Button
@@ -1120,7 +1141,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         {/* Center canvas */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
-            <div className={`w-full ${deviceClass} transition-all duration-200`}>
+            <div
+              className={`w-full ${deviceClass} transition-all duration-200`}
+              data-studio-preview="private-draft"
+              aria-label={`${activePage?.type === "profile" ? "Private Studio" : "Private project"} draft preview`}
+            >
               {activePage ? (
                 <EditModeProvider>
                   <StudioCanvas

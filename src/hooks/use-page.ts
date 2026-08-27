@@ -32,6 +32,8 @@ interface ThemeRow {
 interface FetchPageParams {
   ownerId: string;
   ownerType: PageOwnerType;
+  /** Drafts are only requested by an authenticated owner (RLS still protects them). */
+  includeDraft?: boolean;
 }
 
 /**
@@ -41,19 +43,21 @@ interface FetchPageParams {
  * Returns null when no page exists yet (the caller should render a default
  * or create one).
  */
-export function usePage({ ownerId, ownerType }: FetchPageParams) {
+export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageParams) {
   return useQuery({
-    queryKey: ["page", ownerType, ownerId],
+    queryKey: ["page", ownerType, ownerId, includeDraft ? "draft" : "published"],
     queryFn: async (): Promise<PageData | null> => {
       // Query 1: Get the page record.
-      const { data: row, error } = await supabase
+      const pageQuery = supabase
         .from("pages")
         .select(
           "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, status, published_at, created_at, updated_at",
         )
         .eq("owner_id", ownerId)
-        .eq("owner_type", ownerType)
-        .maybeSingle();
+        .eq("owner_type", ownerType);
+      const { data: row, error } = await (includeDraft
+        ? pageQuery.maybeSingle()
+        : pageQuery.eq("status", "published").maybeSingle());
 
       if (error) throw error;
       if (!row) return null;
@@ -116,4 +120,6 @@ export function invalidatePage(
   ownerType: PageOwnerType,
 ) {
   qc.invalidateQueries({ queryKey: ["page", ownerType, ownerId] });
+  qc.invalidateQueries({ queryKey: ["page", ownerType, ownerId, "draft"] });
+  qc.invalidateQueries({ queryKey: ["page", ownerType, ownerId, "published"] });
 }

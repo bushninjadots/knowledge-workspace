@@ -143,8 +143,10 @@ describe("useCreateProjectContribution", () => {
       data: { id: "activity-1" },
       error: null,
     }));
+    const queryClient = newQueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useCreateProjectContribution(), {
-      wrapper: makeWrapper(newQueryClient()),
+      wrapper: makeWrapper(queryClient),
     });
     await act(async () => {
       await result.current.mutateAsync({
@@ -170,6 +172,18 @@ describe("useCreateProjectContribution", () => {
       entry_kind: "contribution",
       prompt_id: null,
     });
+    expect(invalidateSpy.mock.calls.map(([filters]) => filters?.queryKey)).toEqual(
+      expect.arrayContaining([
+        ["project-activity", "project-1"],
+        ["project-detail", "project-1"],
+        ["project-credits", "project-1"],
+        ["studio-credits"],
+        ["reputation-breakdown"],
+        ["contribution-log"],
+        ["public-profile"],
+        ["project-return-changes"],
+      ]),
+    );
   });
 });
 

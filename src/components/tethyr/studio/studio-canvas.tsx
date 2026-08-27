@@ -205,7 +205,7 @@ export function StudioCanvas({
     );
   }
 
-  if (pageError || !pageData) {
+  if (pageError && !pageData) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="text-center">
@@ -222,10 +222,13 @@ export function StudioCanvas({
     );
   }
 
+  // Keep the private working canvas useful while a new page is being created.
+  // The parent owns the local draft, so it can render before the server page
+  // record is visible and then adopt the real page id once it arrives.
   const blockContext: BlockContext = {
-    ownerId: pageData.ownerId,
-    ownerType: pageData.ownerType,
-    pageId: pageData.id,
+    ownerId: pageData?.ownerId ?? page.id,
+    ownerType: pageData?.ownerType ?? (page.type === "profile" ? "profile" : "project"),
+    pageId: pageData?.id ?? `draft:${page.type}:${page.id}`,
     isEditing: true,
   };
 
@@ -255,7 +258,12 @@ export function StudioCanvas({
   }
 
   return (
-    <div className="space-y-3" onClick={onSelectPage}>
+    <div
+      className="space-y-3"
+      onClick={onSelectPage}
+      data-studio-canvas="private-draft"
+      aria-label={`${page.type === "profile" ? "Private Studio" : "Private project"} draft canvas`}
+    >
       {layout.sections.map((section, sectionIdx) => {
         const isSectionSelected = selectedSectionId === section.id;
         const isSectionDragOver = dragOverSectionId === section.id && dragType === "section";

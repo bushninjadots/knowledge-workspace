@@ -35,10 +35,27 @@ interface PageShellProps {
   isOwner: boolean;
   /** Hide the in-page editor toolbar (when editing is done through /studio). */
   hideEditor?: boolean;
+  /** Render the owner's draft instead of requiring a published page. */
+  previewDraft?: boolean;
 }
 
-export function PageShell({ ownerId, ownerType, isOwner, hideEditor }: PageShellProps) {
-  const { data: page, isLoading, isError, refetch } = usePage({ ownerId, ownerType });
+export function PageShell({
+  ownerId,
+  ownerType,
+  isOwner,
+  hideEditor,
+  previewDraft,
+}: PageShellProps) {
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = usePage({
+    ownerId,
+    ownerType,
+    includeDraft: previewDraft && isOwner,
+  });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
@@ -158,7 +175,11 @@ export function PageShell({ ownerId, ownerType, isOwner, hideEditor }: PageShell
   }
 
   // ── Unpublished (non-owner) ──────────────────────────────────────────
-  if (!isOwner && page.status !== "published") {
+  if (!previewDraft && page.status !== "published") {
+    return null;
+  }
+
+  if (previewDraft && !isOwner) {
     return null;
   }
 
@@ -182,6 +203,7 @@ export function PageShell({ ownerId, ownerType, isOwner, hideEditor }: PageShell
         style={containerStyle}
         data-page-id={page.id}
         data-page-status={page.status}
+        data-page-preview={previewDraft ? "private-draft" : "published"}
         role="region"
         aria-label={`${ownerType} page`}
       >

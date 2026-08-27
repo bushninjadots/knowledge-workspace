@@ -4,6 +4,9 @@ import { Wrench, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProfileLayout } from "@/components/tethyr/profile/profile-layout";
+import { PageShell } from "@/components/tethyr/page/page-shell";
+import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
+import "@/components/tethyr/blocks/register-all";
 import { ProfileOverviewTab } from "@/components/tethyr/profile/profile-overview-tab";
 import { ProfileSkillsTab } from "@/components/tethyr/profile/profile-skills-tab";
 import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects-tab";
@@ -50,9 +53,11 @@ function ProfilePage() {
 
   // Deep link from project repo sections: /profile?github=token scrolls to the
   // GitHub card with the token editor already open.
-  const { github: githubParam } = useSearch({ strict: false }) as {
+  const { github: githubParam, preview: previewParam } = useSearch({ strict: false }) as {
     github?: string;
+    preview?: string;
   };
+  const privatePreview = previewParam === "private";
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
 
@@ -106,6 +111,29 @@ function ProfilePage() {
     activity,
   } = profileQuery.data;
   const skills = skillsQuery.data ?? [];
+
+  if (privatePreview) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+              Private preview
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Only you can see this unpublished Studio draft.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+            Back to Studio
+          </Button>
+        </div>
+        <EditModeProvider>
+          <PageShell ownerId={userId} ownerType="profile" isOwner previewDraft hideEditor />
+        </EditModeProvider>
+      </div>
+    );
+  }
 
   return (
     <ProfileLayout

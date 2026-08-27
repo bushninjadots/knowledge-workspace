@@ -18,13 +18,19 @@ interface UseProjectPageOptions {
   projectId: string;
   /** Is the current user the project owner? */
   isOwner: boolean;
+  /** Explicit owner-only draft preview. */
+  previewDraft?: boolean;
 }
 
 /**
  * Fetch (or auto-create) the page for a project. If no page exists and the
  * user is the owner, creates one with the default project layout.
  */
-export function useProjectPage({ projectId, isOwner }: UseProjectPageOptions) {
+export function useProjectPage({
+  projectId,
+  isOwner,
+  previewDraft = false,
+}: UseProjectPageOptions) {
   const {
     data: page,
     isLoading,
@@ -33,6 +39,7 @@ export function useProjectPage({ projectId, isOwner }: UseProjectPageOptions) {
   } = usePage({
     ownerId: projectId,
     ownerType: "project",
+    includeDraft: previewDraft && isOwner,
   });
   const qc = useQueryClient();
 

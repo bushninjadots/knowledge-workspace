@@ -184,6 +184,7 @@ function ProjectPage() {
 
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const tabParam = searchParams.tab;
+  const privatePreview = searchParams.preview === "private";
   const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
@@ -446,9 +447,14 @@ function ProjectPage() {
   }, []);
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
+  const canViewPrivatePreview = privatePreview && isOwner;
 
   // Fetch or auto-create the project's page (block-based presentation).
-  const { page: projectPage } = useProjectPage({ projectId: id, isOwner });
+  const { page: projectPage } = useProjectPage({
+    projectId: id,
+    isOwner,
+    previewDraft: canViewPrivatePreview,
+  });
 
   // Apply page theme as CSS vars on the outer wrapper so the entire project
   // (header, workbench, pulse, blocks, README, tabs) gets themed.
@@ -603,7 +609,13 @@ function ProjectPage() {
           When blocks exist they ARE the page; legacy duplicate sections hide. */}
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <EditModeProvider>
-          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} hideEditor />
+          <PageShell
+            ownerId={id}
+            ownerType="project"
+            isOwner={isOwner}
+            hideEditor
+            previewDraft={canViewPrivatePreview}
+          />
         </EditModeProvider>
       </div>
 
