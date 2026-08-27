@@ -204,6 +204,7 @@ function BlockInspector({
                           value ? "bg-primary" : "bg-border"
                         }`}
                         role="switch"
+                        aria-label={field.label}
                         aria-checked={!!value}
                       >
                         <span
@@ -225,6 +226,7 @@ function BlockInspector({
                           <button
                             key={opt.value}
                             type="button"
+                            aria-pressed={String(value) === opt.value}
                             onClick={() => updateField(field.key, opt.value)}
                             className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
                               String(value) === opt.value
@@ -299,6 +301,7 @@ function BlockInspector({
               <button
                 key={value}
                 type="button"
+                aria-pressed={currentWidth === value}
                 onClick={() => setWidth(value)}
                 className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
                   currentWidth === value
@@ -330,6 +333,9 @@ function BlockInspector({
                       <button
                         key={label}
                         type="button"
+                        aria-pressed={
+                          (block.column == null && value === -1) || block.column === value
+                        }
                         onClick={() =>
                           onUpdateBlock?.(block.id, { column: value === -1 ? undefined : value })
                         }
@@ -355,6 +361,7 @@ function BlockInspector({
                     <button
                       key={label}
                       type="button"
+                      aria-pressed={(block.span == null && value === 1) || block.span === value}
                       onClick={() =>
                         onUpdateBlock?.(block.id, { span: value === 1 ? undefined : value })
                       }

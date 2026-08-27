@@ -101,6 +101,18 @@ def main() -> int:
                 page.wait_for_timeout(1000)
                 if "Private Studio layout" in page.inner_text("body"):
                     failures.append(("studio-customize", "Escape did not exit customize mode"))
+
+            # Page-backed Studio: the current editor must expose the block canvas,
+            # section controls, and preview device controls rather than only the
+            # legacy profile workspace.
+            page.goto(f"{BASE_URL}/studio", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(4000)
+            studio_body = page.inner_text("body")
+            for needle in ["Creativity Studio", "Add section", "Private draft"]:
+                if needle not in studio_body:
+                    failures.append(("page-studio", f"missing Studio control/content: {needle!r}"))
+            if page.get_by_role("button", name="Mobile").count() == 0:
+                failures.append(("page-studio", "missing mobile preview control"))
         except Exception as exc:  # noqa: BLE001
             failures.append(("studio-customize", str(exc)[:160]))
 
