@@ -68,6 +68,10 @@ export function PageShell({
     includeDraft: isOwner || previewDraft,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
+
+  // A Studio preview carries its draft theme in sessionStorage. Keep the
+  // preview container's base theme lookup independent from the draft payload;
+  // the payload is layered below and must not be replaced by a stale query.
   const { isEditing } = useEditMode();
 
   // Diagnostic: log whether blocks are registered (once per mount).
@@ -177,6 +181,7 @@ export function PageShell({
         style={containerStyle}
         data-page-id={page.id}
         data-page-status={page.status}
+        data-page-preview-source={previewLayout ? "studio-draft" : "database"}
         data-page-preview={
           previewMode
             ? `${previewMode}-preview`

@@ -528,14 +528,30 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const handleReorderBlocks = useCallback(
     (sectionId: string, blockId: string, targetIndex: number) => {
       const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
-      for (const section of sections) {
-        const idx = section.blocks.findIndex((b) => b.id === blockId);
-        if (idx === -1) continue;
-        const [moved] = section.blocks.splice(idx, 1);
-        const clampedTarget = Math.min(targetIndex, section.blocks.length);
-        section.blocks.splice(clampedTarget, 0, moved);
-        break;
-      }
+      const sourceSection = sections.find((s) => s.blocks.some((b) => b.id === blockId));
+      const targetSection = sections.find((s) => s.id === sectionId);
+      if (!sourceSection || !targetSection) return;
+      const sourceIndex = sourceSection.blocks.findIndex((b) => b.id === blockId);
+      const [moved] = sourceSection.blocks.splice(sourceIndex, 1);
+      if (!moved) return;
+      const clampedTarget = Math.min(Math.max(targetIndex, 0), targetSection.blocks.length);
+      targetSection.blocks.splice(clampedTarget, 0, { ...moved, column: undefined });
+      applyDraft({ sections });
+    },
+    [draftLayout, applyDraft],
+  );
+
+  const handlePlaceBlock = useCallback(
+    (blockId: string, targetSectionId: string, column: number) => {
+      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
+      const sourceSection = sections.find((s) => s.blocks.some((b) => b.id === blockId));
+      const targetSection = sections.find((s) => s.id === targetSectionId);
+      if (!sourceSection || !targetSection) return;
+      const sourceIndex = sourceSection.blocks.findIndex((b) => b.id === blockId);
+      const [moved] = sourceSection.blocks.splice(sourceIndex, 1);
+      if (!moved) return;
+      if (targetSection.layout === "full") targetSection.layout = "two_column";
+      targetSection.blocks.push({ ...moved, column });
       applyDraft({ sections });
     },
     [draftLayout, applyDraft],
@@ -800,7 +816,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           `tethyr:studio-preview:${activePage?.type}:${activePage?.id}`,
           JSON.stringify({
             layout: draftLayout,
-            theme: draftOverrides ?? pageData.theme ?? null,
+            theme: deepMergeTokens(pageData.theme ?? {}, draftOverrides ?? {}),
             pageId: pageData.id,
             ownerId: activePage?.id ?? "",
             ownerType: activePage?.type ?? "project",
@@ -855,8 +871,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
-      if (!pageData) {
-        toast.error("No page loaded");
+      if (!pageData || updateTheme.isPending) {
+        if (!pageData) toast.error("No page loaded");
         return;
       }
       updateTheme.mutate(
@@ -868,9 +884,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             const fresh = await refetchPage();
             const data = fresh?.data ?? pageData;
             if (data) {
-              setDraftOverrides(data.theme ?? null);
-              savedOverridesRef.current = data.theme ?? null;
+              setDraftOverrides(null);
+              savedOverridesRef.current = null;
               overridesDirtyRef.current = false;
+              savedLayoutRef.current = data.layout ?? { sections: [] };
+              setDirty(false);
+              dirtyRef.current = false;
             }
             toast.success("Theme applied");
           },
@@ -1335,6 +1354,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onToggleVisibility={handleToggleVisibility}
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}
+                    onPlaceBlock={handlePlaceBlock}
                     onAddBlock={handleAddBlock}
                     onAddSection={handleAddSection}
                     onUpdateBlockConfig={handleUpdateBlockConfig}

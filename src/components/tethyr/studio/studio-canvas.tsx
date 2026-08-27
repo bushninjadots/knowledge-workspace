@@ -60,6 +60,7 @@ interface StudioCanvasProps {
   onUpdateBlockConfig: (blockId: string, config: Record<string, unknown>) => void;
   onDuplicateBlock: (blockId: string) => void;
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
+  onPlaceBlock: (blockId: string, sectionId: string, column: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
   devicePreview?: "desktop" | "tablet" | "mobile";
@@ -108,6 +109,7 @@ export function StudioCanvas({
   onUpdateBlockConfig,
   onDuplicateBlock,
   onReorderBlocks,
+  onPlaceBlock,
   onLayoutChange,
   onRefetch,
   devicePreview,
@@ -377,6 +379,7 @@ export function StudioCanvas({
                   selectedBlockId,
                   dragOverBlockId,
                   dragType,
+                  onPlaceBlock,
                   handleBlockDragStart,
                   handleDragEnd,
                   handleBlockDragOver,
@@ -485,6 +488,7 @@ function renderGridBlocks(
   selectedBlockId: string | null,
   dragOverBlockId: string | null,
   dragType: string | null,
+  onPlaceBlock: (blockId: string, sectionId: string, column: number) => void,
   onDragStart: (e: React.DragEvent, blockId: string) => void,
   onDragEnd: (e: React.DragEvent) => void,
   onDragOver: (e: React.DragEvent, blockId: string) => void,
@@ -535,7 +539,24 @@ function renderGridBlocks(
           </div>
 
           {/* Blocks in this column */}
-          <div className="space-y-6">
+          <div
+            className="space-y-6 min-h-[72px]"
+            onDragOver={(e) => {
+              if (dragType === "block") {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "move";
+              }
+            }}
+            onDrop={(e) => {
+              const data = e.dataTransfer.getData("text/plain");
+              if (data.startsWith("block:")) {
+                e.preventDefault();
+                e.stopPropagation();
+                onPlaceBlock(data.slice("block:".length), section.id, colIdx);
+              }
+            }}
+          >
             {colBlocks.length === 0 ? (
               <EmptyColumn
                 colIdx={colIdx}
@@ -662,6 +683,10 @@ function BlockCard({
       onDragEnd={onDragEnd}
       onDragOver={(e) => onDragOver(e, block.id)}
       onDragLeave={() => {}}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       onDrop={(e) => onDrop(e, sectionId, block.id, idx)}
       onClick={(e) => {
         e.stopPropagation();

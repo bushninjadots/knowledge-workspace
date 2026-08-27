@@ -136,8 +136,59 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
  * React `style` prop.
  */
 export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
-  const vars = themeTokensToVars(tokens);
+  const vars = themeTokensToVars(ensureReadableTheme(tokens));
   return vars as unknown as React.CSSProperties;
+}
+
+/** Ensure theme tokens keep the basic foreground/surface relationships readable. */
+export function ensureReadableTheme(tokens: ThemeTokens): ThemeTokens {
+  const colors = tokens.colors;
+  if (!colors) return tokens;
+  const background = colors.background;
+  const foreground = colors.foreground;
+  const surface = colors.surface ?? background;
+  if (!background || !foreground || !surface) return tokens;
+  if (contrastRatio(background, foreground) >= 4.5 && contrastRatio(surface, foreground) >= 4.5) {
+    return tokens;
+  }
+  const darkBackground = relativeLuminance(background) < 0.45;
+  const readableForeground = darkBackground ? "#f8fafc" : "#111827";
+  return {
+    ...tokens,
+    colors: {
+      ...colors,
+      foreground: readableForeground,
+      "card-foreground": readableForeground,
+      surface: surface,
+      card: colors.card ?? surface,
+      "muted-foreground": darkBackground ? "#cbd5e1" : "#475569",
+      "primary-foreground": darkBackground ? "#0f172a" : "#ffffff",
+      "secondary-foreground": readableForeground,
+    },
+  };
+}
+
+function contrastRatio(first: string, second: string): number {
+  const a = relativeLuminance(first);
+  const b = relativeLuminance(second);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+function relativeLuminance(value: string): number {
+  const match = value.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!match) return 0.5;
+  const hex =
+    match[1].length === 3
+      ? match[1]
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : match[1];
+  const channels = [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255);
+  return channels.reduce((sum, channel, index) => {
+    const linear = channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    return sum + linear * [0.2126, 0.7152, 0.0722][index];
+  }, 0);
 }
 
 /** Recursively merge `overrides` over `base`. Plain objects merge key-by-key;

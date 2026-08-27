@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { themeTokensToVars, themeTokensToStyle } from "@/lib/theme-tokens";
+import { ensureReadableTheme, themeTokensToVars, themeTokensToStyle } from "@/lib/theme-tokens";
 import type { ThemeTokens } from "@/lib/page-blocks";
 
 describe("themeTokensToVars", () => {
@@ -95,6 +95,24 @@ describe("themeTokensToVars", () => {
     };
     const vars = themeTokensToVars(tokens);
     expect(Object.keys(vars).length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("ensureReadableTheme", () => {
+  it("repairs low-contrast light themes", () => {
+    const result = ensureReadableTheme({
+      colors: { background: "#ffffff", surface: "#ffffff", foreground: "#eeeeee" },
+    });
+    expect(result.colors?.foreground).toBe("#111827");
+    expect(result.colors?.["card-foreground"]).toBe("#111827");
+  });
+
+  it("repairs low-contrast dark themes", () => {
+    const result = ensureReadableTheme({
+      colors: { background: "#111111", surface: "#222222", foreground: "#333333" },
+    });
+    expect(result.colors?.foreground).toBe("#f8fafc");
+    expect(result.colors?.["muted-foreground"]).toBe("#cbd5e1");
   });
 });
 
