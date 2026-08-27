@@ -140,32 +140,61 @@ export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
   return vars as unknown as React.CSSProperties;
 }
 
-/** Ensure theme tokens keep the basic foreground/surface relationships readable. */
+/** Ensure theme tokens keep text, controls, and semantic accents readable. */
 export function ensureReadableTheme(tokens: ThemeTokens): ThemeTokens {
   const colors = tokens.colors;
   if (!colors) return tokens;
   const background = colors.background;
-  const foreground = colors.foreground;
-  const surface = colors.surface ?? background;
-  if (!background || !foreground || !surface) return tokens;
-  if (contrastRatio(background, foreground) >= 4.5 && contrastRatio(surface, foreground) >= 4.5) {
-    return tokens;
-  }
+  if (!background) return tokens;
   const darkBackground = relativeLuminance(background) < 0.45;
   const readableForeground = darkBackground ? "#f8fafc" : "#111827";
-  return {
-    ...tokens,
-    colors: {
-      ...colors,
-      foreground: readableForeground,
-      "card-foreground": readableForeground,
-      surface: surface,
-      card: colors.card ?? surface,
-      "muted-foreground": darkBackground ? "#cbd5e1" : "#475569",
-      "primary-foreground": darkBackground ? "#0f172a" : "#ffffff",
-      "secondary-foreground": readableForeground,
-    },
+  const surface = colors.surface ?? background;
+  const card = colors.card ?? surface;
+  const foreground = readableOn(background, colors.foreground, readableForeground);
+  const cardForeground = readableOn(card, colors["card-foreground"], readableForeground);
+  const mutedForeground = readableOn(
+    surface,
+    colors["muted-foreground"],
+    darkBackground ? "#cbd5e1" : "#475569",
+    4.5,
+  );
+  const primaryForeground = readableOn(
+    colors.primary ?? background,
+    colors["primary-foreground"],
+    readableForeground,
+  );
+  const secondaryForeground = readableOn(
+    colors.secondary ?? surface,
+    colors["secondary-foreground"],
+    readableForeground,
+  );
+  const semanticFallback = darkBackground ? "#f8fafc" : "#1f2937";
+  const nextColors = {
+    ...colors,
+    foreground,
+    "card-foreground": cardForeground,
+    surface,
+    card,
+    "muted-foreground": mutedForeground,
+    "primary-foreground": primaryForeground,
+    "secondary-foreground": secondaryForeground,
+    trust: readableOn(background, colors.trust, semanticFallback, 3),
+    learning: readableOn(background, colors.learning, semanticFallback, 3),
+    teaching: readableOn(background, colors.teaching, semanticFallback, 3),
+    ai: readableOn(background, colors.ai, semanticFallback, 3),
+    warning: readableOn(background, colors.warning, semanticFallback, 3),
   };
+  if (JSON.stringify(nextColors) === JSON.stringify(colors)) return tokens;
+  return { ...tokens, colors: nextColors };
+}
+
+function readableOn(
+  surface: string,
+  candidate: string | undefined,
+  fallback: string,
+  minimum = 4.5,
+): string {
+  return candidate && contrastRatio(surface, candidate) >= minimum ? candidate : fallback;
 }
 
 function contrastRatio(first: string, second: string): number {

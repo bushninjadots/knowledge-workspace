@@ -3,7 +3,13 @@ set -euo pipefail
 
 HOST="127.0.0.1"
 PORT="${TETHYR_SMOKE_PORT:-4173}"
+
+# Avoid false failures when another local Vite process already owns the port.
 BASE_URL="http://${HOST}:${PORT}"
+while curl -fsS "${BASE_URL}/" >/dev/null 2>&1; do
+  PORT=$((PORT + 1))
+  BASE_URL="http://${HOST}:${PORT}"
+done
 LOG_FILE="$(mktemp -t tethyr-smoke.XXXXXX.log)"
 SERVER_PID=""
 
@@ -16,7 +22,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bun run dev -- --host "${HOST}" --port "${PORT}" >"${LOG_FILE}" 2>&1 &
+pnpm exec vite dev --host "${HOST}" --port "${PORT}" >"${LOG_FILE}" 2>&1 &
 SERVER_PID=$!
 
 ready="false"

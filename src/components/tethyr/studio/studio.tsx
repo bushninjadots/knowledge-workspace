@@ -5,6 +5,7 @@
 // help users understand exactly what's happening.
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { getAllBlocks } from "@/lib/block-registry";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Monitor,
@@ -205,21 +206,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     enabled: !!activePage && activePage.type === "project",
   });
 
-  // Block registry diagnostic
-  const [blockCount, setBlockCount] = useState(0);
-  useEffect(() => {
-    // Dynamic import to avoid circular deps
-    import("@/lib/block-registry").then(({ getAllBlocks }) => {
-      const count = getAllBlocks().length;
-      setBlockCount(count);
-      if (count === 0) {
-        console.error(
-          "[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty",
-        );
-        toast.error("Block system not loaded. Refresh the page.");
-      }
-    });
-  }, []);
+  const blockCount = getAllBlocks().length;
 
   // Theme name lookup for template cards.
   const themeNames = useMemo(() => {
@@ -257,7 +244,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           onError: (err) => {
             setPageProvisioning(false);
             ensuringRef.current = false;
-            console.error("[Studio] ❌ Failed to auto-create page:", err);
             toast.error(
               friendlyError(
                 err,
@@ -281,7 +267,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (templatesLoading) return;
     if (templatesError) {
-      console.error("[Studio] ❌ Template fetch error:", templateFetchError);
       toast.error(friendlyError(templateFetchError, "Could not load templates"));
     }
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
@@ -443,7 +428,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       }
       const inst = createBlockInstance(blockType);
       if (!inst) {
-        console.warn(`[Studio] ❌ createBlockInstance returned null for "${blockType}"`);
         toast.error(
           `Block type "${blockType}" not registered. Total blocks: ${blockCount}. Try refreshing.`,
         );
@@ -904,7 +888,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             toast.success("Theme applied");
           },
           onError: (err) => {
-            console.error("[Studio] ❌ Theme apply error:", err);
             toast.error(friendlyError(err, "Failed to apply theme"));
           },
         },
@@ -942,7 +925,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             toast.success("Template applied — page updated");
           },
           onError: (err) => {
-            console.error("[Studio] ❌ Template apply error:", err);
             toast.error(friendlyError(err, "Failed to apply template"));
           },
         },
@@ -970,7 +952,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             qc.invalidateQueries({ queryKey: ["templates"] });
           },
           onError: (err) => {
-            console.error("[Studio] ❌ Save template error:", err);
             toast.error(
               friendlyError(err, "Failed to save template. Make sure you own this layout."),
             );

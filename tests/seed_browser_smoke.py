@@ -30,6 +30,10 @@ import time
 from playwright.sync_api import sync_playwright
 
 BASE_URL = (sys.argv[1] if len(sys.argv) > 1 else os.environ.get("TETHYR_BASE_URL", "http://localhost:8081")).rstrip("/")
+ALLOW_MUTATIONS = os.environ.get("TETHYR_ALLOW_SMOKE_MUTATIONS") == "1"
+
+if not ALLOW_MUTATIONS and not (BASE_URL.startswith("http://localhost:") or BASE_URL.startswith("http://127.0.0.1:")):
+    raise SystemExit("Refusing mutating browser smoke checks outside localhost; set TETHYR_ALLOW_SMOKE_MUTATIONS=1 to override.")
 EMAIL = os.environ.get("SMOKE_EMAIL", "test@tethyr.com")
 PASSWORD = os.environ.get("SMOKE_PASSWORD", "password123")
 
@@ -116,6 +120,11 @@ def main() -> int:
 
         # Crew creation (interactive): form a crew on the studio and confirm it
         # lands on the new team page with the creator seated as lead.
+        if not ALLOW_MUTATIONS:
+            browser.close()
+            print("  SKIP  mutating crew-create check (set TETHYR_ALLOW_SMOKE_MUTATIONS=1 to run)")
+            print(f"Seeded content smoke test — {BASE_URL}")
+            return _report(failures)
         crew_name = f"Crew {int(time.time() * 1000) % 1000000}"
         try:
             page.goto(f"{BASE_URL}/profile", wait_until="domcontentloaded", timeout=30000)

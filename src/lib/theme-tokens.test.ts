@@ -114,6 +114,23 @@ describe("ensureReadableTheme", () => {
     expect(result.colors?.foreground).toBe("#f8fafc");
     expect(result.colors?.["muted-foreground"]).toBe("#cbd5e1");
   });
+
+  it("repairs semantic accents against the page background", () => {
+    const result = ensureReadableTheme({
+      colors: {
+        background: "#ffffff",
+        foreground: "#111827",
+        trust: "#eeeeee",
+        learning: "#eeeeee",
+        teaching: "#eeeeee",
+        ai: "#eeeeee",
+        warning: "#eeeeee",
+      },
+    });
+    for (const key of ["trust", "learning", "teaching", "ai", "warning"] as const) {
+      expect(result.colors?.[key]).toBe("#1f2937");
+    }
+  });
 });
 
 describe("themeTokensToStyle", () => {

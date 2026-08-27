@@ -41,6 +41,9 @@ from playwright.sync_api import sync_playwright
 BASE_URL = (
     sys.argv[1] if len(sys.argv) > 1 else os.environ.get("TETHYR_BASE_URL", "http://localhost:8081")
 ).rstrip("/")
+
+if not (BASE_URL.startswith("http://localhost:") or BASE_URL.startswith("http://127.0.0.1:")):
+    raise SystemExit("Refusing mutating browser checks outside localhost.")
 OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "test@tethyr.com")
 APPLICANT_EMAIL = os.environ.get("APPLICANT_EMAIL", "maya@tethyr.dev")
 PASSWORD = os.environ.get("SMOKE_PASSWORD", "password123")

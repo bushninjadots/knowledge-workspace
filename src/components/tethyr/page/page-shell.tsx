@@ -12,7 +12,7 @@
 //   • Error — friendly error with retry
 //   • Published/draft — resolved page with layout
 
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -73,26 +73,6 @@ export function PageShell({
   // preview container's base theme lookup independent from the draft payload;
   // the payload is layered below and must not be replaced by a stale query.
   const { isEditing } = useEditMode();
-
-  // Diagnostic: log whether blocks are registered (once per mount).
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Dynamic import to avoid circular deps at module level.
-      import("@/lib/block-registry").then(({ getAllBlocks }) => {
-        const all = getAllBlocks();
-        console.log(
-          `[PageShell] ${ownerType}/${ownerId} | isOwner=${isOwner} | page=${page?.id ?? "null"} | sections=${page?.layout?.sections?.length ?? 0} | blocks_registered=${all.length}`,
-        );
-        if (all.length === 0) {
-          console.warn(
-            "[PageShell] ⚠ No blocks registered — block picker and renderer will be empty. Did you import 'register-all'?",
-          );
-        }
-      });
-    }
-    // Only run on mount or when page/owner type changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!page, ownerType]);
 
   const blockContext: BlockContext = useMemo(
     () => ({
