@@ -8,29 +8,19 @@ export type Json =
 
 export type Database = {
   graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
+    Tables: { [_ in never]: never }
+    Views: { [_ in never]: never }
     Functions: {
       graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }
         Returns: Json
       }
     }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    Enums: { [_ in never]: never }
+    CompositeTypes: { [_ in never]: never }
+  }
+  __InternalSupabase: {
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -938,6 +928,35 @@ export type Database = {
           },
         ]
       }
+      migrated_pages: {
+        Row: {
+          migrated_at: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Insert: {
+          migrated_at?: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Update: {
+          migrated_at?: string
+          owner_id?: string
+          owner_type?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migrated_pages_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_log: {
         Row: {
           action: string
@@ -1460,7 +1479,6 @@ export type Database = {
           available_days: string[]
           available_times: string[]
           avatar_url: string | null
-          evidence_shelf: Json
           background: Json | null
           banner_caption: string | null
           banner_url: string | null
@@ -1470,6 +1488,7 @@ export type Database = {
           created_at: string
           creator_title: string | null
           display_name: string | null
+          evidence_shelf: Json
           favorite_achievement: string | null
           favourite_tools: string[]
           handle: string | null
@@ -1494,7 +1513,6 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
-          evidence_shelf?: Json
           background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
@@ -1504,6 +1522,7 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          evidence_shelf?: Json
           favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
@@ -1528,7 +1547,6 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
-          evidence_shelf?: Json
           background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
@@ -1538,6 +1556,7 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          evidence_shelf?: Json
           favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
@@ -1556,6 +1575,104 @@ export type Database = {
           years_experience?: number | null
         }
         Relationships: []
+      }
+      project_recognitions: {
+        Row: {
+          created_at: string
+          giver_id: string
+          id: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          giver_id: string
+          id?: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          giver_id?: string
+          id?: string
+          kind?: string
+          project_activity_id?: string
+          project_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey"
+            columns: ["giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_visits: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_activity: {
         Row: {
@@ -1861,65 +1978,6 @@ export type Database = {
           },
         ]
       }
-      project_recognitions: {
-        Row: {
-          created_at: string
-          giver_id: string
-          id: string
-          kind: string
-          project_activity_id: string
-          project_id: string
-          recipient_id: string
-        }
-        Insert: {
-          created_at?: string
-          giver_id: string
-          id?: string
-          kind: string
-          project_activity_id: string
-          project_id: string
-          recipient_id: string
-        }
-        Update: {
-          created_at?: string
-          giver_id?: string
-          id?: string
-          kind?: string
-          project_activity_id?: string
-          project_id?: string
-          recipient_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_recognitions_project_activity_id_fkey"
-            columns: ["project_activity_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_recognitions_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_recognitions_giver_id_fkey"
-            columns: ["giver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_recognitions_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       project_repositories: {
         Row: {
           created_at: string
@@ -2081,39 +2139,6 @@ export type Database = {
           },
         ]
       }
-      project_visits: {
-        Row: {
-          last_seen_at: string
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          last_seen_at?: string
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          last_seen_at?: string
-          project_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_visits_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_visits_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       project_watchers: {
         Row: {
           created_at: string
@@ -2162,12 +2187,13 @@ export type Database = {
           looking_for_collaborators: boolean
           looking_for_feedback: boolean
           media: Json
-          profile_id: string
           presentation_preset: string
+          profile_id: string
           progress_percent: number
-          season: string
           readme: string | null
           resources: Json
+          visibility: string
+          season: string
           stage: Database["public"]["Enums"]["project_stage"]
           started_at: string
           status: Database["public"]["Enums"]["project_status"]
@@ -2176,7 +2202,6 @@ export type Database = {
           tools: Json | null
           updated_at: string
           uploaded_files: Json | null
-          visibility: string
           vision: string | null
         }
         Insert: {
@@ -2193,12 +2218,13 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
-          profile_id: string
           presentation_preset?: string
+          profile_id: string
           progress_percent?: number
-          season?: string
           readme?: string | null
           resources?: Json
+          visibility?: string
+          season?: string
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -2207,7 +2233,6 @@ export type Database = {
           tools?: Json | null
           updated_at?: string
           uploaded_files?: Json | null
-          visibility?: string
           vision?: string | null
         }
         Update: {
@@ -2224,12 +2249,13 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
-          profile_id?: string
           presentation_preset?: string
+          profile_id?: string
           progress_percent?: number
-          season?: string
           readme?: string | null
           resources?: Json
+          visibility?: string
+          season?: string
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -2238,7 +2264,6 @@ export type Database = {
           tools?: Json | null
           updated_at?: string
           uploaded_files?: Json | null
-          visibility?: string
           vision?: string | null
         }
         Relationships: [
@@ -3033,7 +3058,10 @@ export type Database = {
         }[]
       }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
-      increment_usage_count: { Args: { template_id: string }; Returns: undefined }
+      increment_usage_count: {
+        Args: { template_id: string }
+        Returns: undefined
+      }
       insert_notification: {
         Args: {
           p_actor_id: string
@@ -3047,9 +3075,16 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_project_visible: { Args: { project_id: string }; Returns: boolean }
+      is_allowed_storage_upload: {
+        Args: { p_bucket: string; p_metadata: Json; p_name: string }
+        Returns: boolean
+      }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_session_organizer: {
+        Args: { p_session_id: string; p_user_id?: string }
         Returns: boolean
       }
       is_session_participant: {
@@ -3087,6 +3122,7 @@ export type Database = {
         Returns: undefined
       }
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
+      posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -3098,7 +3134,10 @@ export type Database = {
       }
       unread_message_counts: {
         Args: never
-        Returns: { connection_id: string; unread_count: number }[]
+        Returns: {
+          connection_id: string
+          unread_count: number
+        }[]
       }
       vote_on_poll: {
         Args: { p_option_index: number; p_post_id: string }
@@ -3128,6 +3167,9 @@ export type Database = {
         | "helping_hand"
         | "conversation_starter"
         | "role_filler"
+        | "first_session"
+        | "session_teacher"
+        | "streak_4_weeks"
       availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
@@ -3308,9 +3350,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       achievement_type: [
@@ -3335,6 +3374,9 @@ export const Constants = {
         "helping_hand",
         "conversation_starter",
         "role_filler",
+        "first_session",
+        "session_teacher",
+        "streak_4_weeks",
       ],
       availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [
@@ -3400,4 +3442,3 @@ export const Constants = {
     },
   },
 } as const
-

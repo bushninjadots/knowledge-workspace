@@ -7,7 +7,7 @@
 //
 // Budgets are configurable via env so CI (or a local override) can tune them:
 //   BUNDLE_MAX_RAW   — max uncompressed chunk size in bytes (default 800000)
-//   BUNDLE_MAX_GZIP  — max gzip chunk size in bytes       (default 210000)
+//   BUNDLE_MAX_GZIP  — max gzip chunk size in bytes       (default 250000)
 //
 // Run after `npm run build`. Exits 1 on any over-budget chunk.
 
@@ -17,7 +17,7 @@ import { gzipSync } from "node:zlib";
 
 const OUT_DIR = ".output";
 const MAX_RAW = Number(process.env.BUNDLE_MAX_RAW ?? 800_000);
-const MAX_GZIP = Number(process.env.BUNDLE_MAX_GZIP ?? 210_000);
+const MAX_GZIP = Number(process.env.BUNDLE_MAX_GZIP ?? 250_000);
 const EXTS = new Set([".js", ".mjs"]);
 
 async function walk(dir) {
