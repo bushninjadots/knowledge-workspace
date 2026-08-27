@@ -238,6 +238,19 @@ function ProjectPage() {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  const openProjectActivity = useCallback(
+    (focus: "contribution" | "weekly" = "contribution") => {
+      setTab("activity", { scrollToTop: false });
+      setTimeout(() => {
+        scrollToSection("project-activity");
+        window.dispatchEvent(
+          new CustomEvent("tethyr:project-activity-focus", { detail: { focus } }),
+        );
+      }, 80);
+    },
+    [scrollToSection, setTab],
+  );
+
   const jumpToDiscussion = useCallback((discussionId: string) => {
     // Discussions are inline now, so jump straight to the thread.
     requestAnimationFrame(() => {
@@ -483,8 +496,7 @@ function ProjectPage() {
 
   const handleWorkbenchAction = (action: ProjectWorkbenchAction) => {
     if (action === "update") {
-      setTab("activity", { scrollToTop: false });
-      setTimeout(() => scrollToSection("project-activity"), 80);
+      openProjectActivity("contribution");
       return;
     }
     const sectionByAction: Partial<Record<ProjectWorkbenchAction, string>> = {

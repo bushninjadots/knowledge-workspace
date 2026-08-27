@@ -70,6 +70,13 @@ export function ProjectWorkbench({
     isOwner,
     isContributor,
   });
+  const actionSignals = getActionSignals({
+    gallery,
+    milestones,
+    openNeeds,
+    openRolesCount,
+    isContributor,
+  });
 
   const watch = () => {
     toggleWatch.mutate(
@@ -180,29 +187,13 @@ export function ProjectWorkbench({
           </label>
         )}
       </div>
-      <div className="mx-auto mt-3 flex max-w-7xl flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-        <WorkbenchSignal
-          icon={gallery.length > 0 ? CheckCircle2 : ImagePlus}
-          label={`${gallery.length} demonstration${gallery.length === 1 ? "" : "s"}`}
-        />
-        <WorkbenchSignal
-          icon={openNeeds > 0 ? Zap : CheckCircle2}
-          label={
-            openNeeds > 0 ? `${openNeeds} open need${openNeeds === 1 ? "" : "s"}` : "No open needs"
-          }
-        />
-        <WorkbenchSignal
-          icon={Users}
-          label={
-            openRolesCount > 0
-              ? `${openRolesCount} open role${openRolesCount === 1 ? "" : "s"}`
-              : "People in place"
-          }
-        />
-        <WorkbenchSignal
-          icon={MessageCircle}
-          label={isContributor ? "You can post an update" : "Follow the conversation"}
-        />
+      <div
+        className="mx-auto mt-3 flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground"
+        aria-label="Project loop status"
+      >
+        {actionSignals.map((signal) => (
+          <WorkbenchSignal key={signal.label} icon={signal.icon} label={signal.label} />
+        ))}
       </div>
     </section>
   );
@@ -215,6 +206,56 @@ function WorkbenchSignal({ icon: Icon, label }: { icon: LucideIcon; label: strin
       <span className="truncate">{label}</span>
     </span>
   );
+}
+
+type ActionSignal = { icon: LucideIcon; label: string };
+
+export function getActionSignals({
+  gallery,
+  milestones,
+  openNeeds,
+  openRolesCount,
+  isContributor,
+}: {
+  gallery: GalleryItem[];
+  milestones: MilestoneRow[];
+  openNeeds: number;
+  openRolesCount: number;
+  isContributor: boolean;
+}): ActionSignal[] {
+  const currentMilestone =
+    milestones.find((milestone) => milestone.status === "in_progress") ??
+    milestones.find((milestone) => milestone.status === "pending");
+
+  return [
+    {
+      icon: currentMilestone ? CheckCircle2 : Zap,
+      label: currentMilestone ? `Next: ${currentMilestone.title}` : "No next milestone",
+    },
+    {
+      icon: openNeeds > 0 ? Zap : CheckCircle2,
+      label:
+        openNeeds > 0 ? `${openNeeds} open need${openNeeds === 1 ? "" : "s"}` : "No open needs",
+    },
+    {
+      icon: openRolesCount > 0 ? Users : CheckCircle2,
+      label:
+        openRolesCount > 0
+          ? `${openRolesCount} open role${openRolesCount === 1 ? "" : "s"}`
+          : "People in place",
+    },
+    {
+      icon: gallery.length > 0 ? ImagePlus : Eye,
+      label:
+        gallery.length > 0
+          ? `${gallery.length} demonstration${gallery.length === 1 ? "" : "s"}`
+          : "No demonstrations yet",
+    },
+    {
+      icon: MessageCircle,
+      label: isContributor ? "You can add evidence" : "Follow the conversation",
+    },
+  ];
 }
 
 export function chooseNextAction({

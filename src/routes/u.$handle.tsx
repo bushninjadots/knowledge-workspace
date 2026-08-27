@@ -24,6 +24,7 @@ import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import { type SkillExperienceLevel, type SkillVerificationLevel } from "@/hooks/use-current-user";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useConnections } from "@/hooks/use-connections";
+import { ReputationBreakdown } from "@/components/tethyr/reputation-display";
 import { useEndorseSkill } from "@/hooks/use-skill-endorsements";
 import { usePublicStudioLayout } from "@/hooks/use-public-studio-layout";
 import { toast } from "sonner";
@@ -436,6 +437,17 @@ function PublicProfileRoute() {
                   </span>
                 )}
               </div>
+
+              {profile.reputation_score != null && profile.reputation_score > 0 && (
+                <div className="mt-4 max-w-xl border-l-2 border-brand-green/40 pl-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Reputation evidence
+                  </p>
+                  <div className="mt-2">
+                    <ReputationBreakdown profileId={profile.id} />
+                  </div>
+                </div>
+              )}
 
               {meId && meId !== profile.id && connectionId && (
                 <Link

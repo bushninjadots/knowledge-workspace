@@ -23,6 +23,8 @@ import type { SkillExperienceLevel, SkillVerificationLevel } from "@/hooks/use-c
 import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
 import { Button } from "@/components/ui/button";
 import { useUpdateEvidenceShelf, type EvidenceShelfItem } from "@/hooks/use-project-loop";
+import { useStudioCredits } from "@/hooks/use-credits";
+import { timeAgo } from "@/lib/time";
 import { PUBLIC_STUDIO_MODULES, PUBLIC_STUDIO_PRESETS } from "@/lib/workspace-layouts";
 import type { LayoutStorage } from "@/hooks/use-layout-preferences";
 
@@ -101,6 +103,7 @@ export function PublicStudioWorkspace({
   );
   const featuredProject = builtProjects[0] ?? contributedProjects[0] ?? null;
   const updateShelf = useUpdateEvidenceShelf();
+  const { data: credits = [], isLoading: creditsLoading } = useStudioCredits(profileId);
   const shelf = useMemo(() => profile.evidence_shelf ?? [], [profile.evidence_shelf]);
   const featureLatestProject = useCallback(() => {
     if (!featuredProject || shelf.some((item) => item.project_id === featuredProject.id)) return;
@@ -187,6 +190,33 @@ export function PublicStudioWorkspace({
                   {joinedProjects.length > 0 && (
                     <ContributionGroup label="Contributing to" projects={joinedProjects} />
                   )}
+                  {creditsLoading ? (
+                    <p className="text-xs text-muted-foreground">Loading contribution evidence…</p>
+                  ) : credits.length > 0 ? (
+                    <div className="border-t border-border/50 pt-4">
+                      <p className="mb-2 section-label">Latest evidence</p>
+                      <ul className="space-y-2">
+                        {credits.slice(0, 4).map((credit) => (
+                          <li
+                            key={`${credit.project_id}-${credit.at ?? credit.project_title}`}
+                            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs"
+                          >
+                            <Link
+                              to="/projects/$id"
+                              params={{ id: credit.project_id }}
+                              className="font-medium text-foreground underline-offset-2 hover:text-primary hover:underline"
+                            >
+                              {credit.project_title}
+                            </Link>
+                            <span className="text-muted-foreground">
+                              {credit.credit_text}
+                              {credit.at ? ` · ${timeAgo(credit.at)}` : ""}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </SectionCard>
@@ -427,6 +457,8 @@ export function PublicStudioWorkspace({
       profileId,
       shelf,
       teachSkills,
+      credits,
+      creditsLoading,
     ],
   );
 

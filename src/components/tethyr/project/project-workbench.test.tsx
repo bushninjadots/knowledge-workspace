@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { chooseNextAction, ProjectWorkbench } from "./project-workbench";
+import { chooseNextAction, getActionSignals, ProjectWorkbench } from "./project-workbench";
 import {
   canContinueProjectCreation,
   PROJECT_CREATION_STEPS,
@@ -81,6 +81,61 @@ describe("Project Workbench", () => {
     });
 
     expect(next).toMatchObject({ action: "demonstrations", cta: "Add demonstration" });
+  });
+
+  it("summarizes the project loop in a stable order", () => {
+    const signals = getActionSignals({
+      gallery: [{ url: "https://example.com/demo.gif", type: "image" }],
+      milestones: [
+        {
+          id: "milestone-1",
+          project_id: "project-1",
+          title: "Prototype",
+          description: null,
+          status: "in_progress",
+          position: 0,
+          due_date: null,
+          created_at: "2026-01-01T00:00:00Z",
+          updated_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+      openNeeds: 1,
+      openRolesCount: 2,
+      isContributor: true,
+    });
+
+    expect(signals.map((signal) => signal.label)).toEqual([
+      "Next: Prototype",
+      "1 open need",
+      "2 open roles",
+      "1 demonstration",
+      "You can add evidence",
+    ]);
+  });
+
+  it("uses a pending milestone when work has not started", () => {
+    const signals = getActionSignals({
+      gallery: [],
+      milestones: [
+        {
+          id: "milestone-1",
+          project_id: "project-1",
+          title: "Research",
+          description: null,
+          status: "pending",
+          position: 0,
+          due_date: null,
+          created_at: "2026-01-01T00:00:00Z",
+          updated_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+      openNeeds: 0,
+      openRolesCount: 0,
+      isContributor: false,
+    });
+
+    expect(signals[0].label).toBe("Next: Research");
+    expect(signals[3].label).toBe("No demonstrations yet");
   });
 
   it("prioritizes collaboration for a visitor when roles are open", () => {

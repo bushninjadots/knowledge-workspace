@@ -267,6 +267,24 @@ export function ProjectActivityTab({
   const [githubSyncLabel, setGithubSyncLabel] = useState<string | null>(null);
 
   useEffect(() => {
+    const focusContribution = (event: Event) => {
+      const focus = (event as CustomEvent<{ focus?: "contribution" | "weekly" }>).detail?.focus;
+      setWeeklyPrompt(focus === "weekly");
+      setShowPost(false);
+      setShowContribution(true);
+      setTitle(focus === "weekly" ? "What moved this project forward?" : "");
+      window.setTimeout(
+        () =>
+          document.querySelector<HTMLInputElement>("[aria-label='Contribution title']")?.focus(),
+        0,
+      );
+    };
+
+    window.addEventListener("tethyr:project-activity-focus", focusContribution);
+    return () => window.removeEventListener("tethyr:project-activity-focus", focusContribution);
+  }, []);
+
+  useEffect(() => {
     if (!openWeeklyPrompt) return;
     setWeeklyPrompt(true);
     setShowContribution(true);
