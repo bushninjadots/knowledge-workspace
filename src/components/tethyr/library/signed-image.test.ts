@@ -13,7 +13,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 function makeEditor(content: string) {
   return new Editor({
-    extensions: [StarterKit.configure({ codeBlock: false }), SignedImage],
+    extensions: [StarterKit.configure({ codeBlock: false }), SignedImage] as never[],
     content,
   });
 }

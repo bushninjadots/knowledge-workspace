@@ -35,6 +35,7 @@ const SEASON_LABEL: Record<string, string> = {
 
 function ProjectStatusBlock({ context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
+  const previewData = context.data?.project as StatusData | undefined;
 
   const { data, isLoading } = useQuery({
     queryKey: ["project-status", projectId],
@@ -50,8 +51,9 @@ function ProjectStatusBlock({ context }: BlockProps) {
     enabled: !!projectId,
   });
 
-  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
-  if (!data) {
+  const resolvedData = previewData ?? data;
+  if (isLoading && !resolvedData) return <Skeleton className="h-20 w-full rounded-xl" />;
+  if (!resolvedData) {
     if (context.isEditing)
       return (
         <BlockEmptyState
@@ -69,44 +71,44 @@ function ProjectStatusBlock({ context }: BlockProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Status</span>
           <Badge variant="secondary" className="text-xs">
-            {STATUS_LABEL[data.status] ?? data.status}
+            {STATUS_LABEL[resolvedData.status] ?? resolvedData.status}
           </Badge>
         </div>
 
         {/* Stage */}
-        {data.stage && (
+        {resolvedData.stage && (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Stage</span>
-            <span className="text-xs text-foreground">{data.stage}</span>
+            <span className="text-xs text-foreground">{resolvedData.stage}</span>
           </div>
         )}
 
         {/* Season */}
-        {data.season && (
+        {resolvedData.season && (
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs text-foreground">
-              {SEASON_LABEL[data.season] ?? data.season}
+              {SEASON_LABEL[resolvedData.season] ?? resolvedData.season}
             </span>
           </div>
         )}
       </div>
 
       {/* Progress */}
-      {data.progress_percent > 0 && (
+      {resolvedData.progress_percent > 0 && (
         <div className="mt-3 flex items-center gap-3">
-          <Progress value={data.progress_percent} className="h-1.5 flex-1" />
+          <Progress value={resolvedData.progress_percent} className="h-1.5 flex-1" />
           <span className="text-xs tabular-nums text-muted-foreground">
-            {data.progress_percent}%
+            {resolvedData.progress_percent}%
           </span>
         </div>
       )}
 
       {/* Tools */}
-      {data.tools && data.tools.length > 0 && (
+      {resolvedData.tools && resolvedData.tools.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-          {data.tools.map((tool) => (
+          {resolvedData.tools.map((tool) => (
             <span
               key={tool}
               className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] text-muted-foreground"

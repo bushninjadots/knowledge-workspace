@@ -18,13 +18,19 @@ interface UseProfilePageOptions {
   profileId: string;
   /** Is the current user the profile owner? */
   isOwner: boolean;
+  /** Explicit owner-only draft preview. */
+  previewDraft?: boolean;
 }
 
 /**
  * Fetch (or auto-create) the page for a profile. If no page exists and the
  * user is the owner, creates one with the default profile layout.
  */
-export function useProfilePage({ profileId, isOwner }: UseProfilePageOptions) {
+export function useProfilePage({
+  profileId,
+  isOwner,
+  previewDraft = false,
+}: UseProfilePageOptions) {
   const {
     data: page,
     isLoading,
@@ -33,6 +39,9 @@ export function useProfilePage({ profileId, isOwner }: UseProfilePageOptions) {
   } = usePage({
     ownerId: profileId,
     ownerType: "profile",
+    // Public profile routes remain published-only unless the owner explicitly
+    // opened a private/public preview from Studio.
+    includeDraft: isOwner || previewDraft,
   });
   const qc = useQueryClient();
 

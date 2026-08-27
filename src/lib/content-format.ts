@@ -36,9 +36,9 @@ function conversionExtensions() {
 }
 
 export function htmlToMarkdown(html: string): string {
-  const editor = new Editor({ extensions: conversionExtensions(), content: html });
+  const editor = new Editor({ extensions: conversionExtensions() as never[], content: html });
   try {
-    return editor.getMarkdown();
+    return (editor as Editor & { getMarkdown: () => string }).getMarkdown();
   } finally {
     editor.destroy();
   }
@@ -46,9 +46,14 @@ export function htmlToMarkdown(html: string): string {
 
 export function markdownToHtml(markdown: string): string {
   const editor = new Editor({
-    extensions: conversionExtensions(),
+    extensions: conversionExtensions() as never[],
     content: markdown,
+  });
+  (
+    editor as Editor & { commands: { setContent: (value: string, options?: unknown) => boolean } }
+  ).commands.setContent(markdown, {
     contentType: "markdown",
+    emitUpdate: false,
   });
   try {
     return editor.getHTML();

@@ -286,7 +286,7 @@ export function ReadmeEditor({
       ExternalImage,
       Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
       Markdown,
-    ],
+    ] as never[],
     content,
     contentType: "markdown",
     editorProps: {

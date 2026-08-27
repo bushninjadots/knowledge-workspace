@@ -71,7 +71,11 @@ export function useCreatePage() {
         .select("id")
         .single();
 
-      if (layoutError || !layoutData) throw layoutError ?? new Error("Failed to create layout");
+      if (layoutError || !layoutData) {
+        throw new Error(
+          `Studio layout creation failed: ${layoutError?.message ?? "no layout was returned"}`,
+        );
+      }
 
       const { data, error } = await supabase
         .from("pages")
@@ -85,7 +89,10 @@ export function useCreatePage() {
         .select("id")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Studio page creation failed: ${error.message}`);
+      }
+      if (!data) throw new Error("Studio page creation failed: no page was returned");
       return { pageId: data.id };
     },
     onSuccess: (_data, vars) => {

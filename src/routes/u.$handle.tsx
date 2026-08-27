@@ -2,7 +2,14 @@
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
 import { useEffect, useMemo } from "react";
-import { createFileRoute, notFound, useParams, useNavigate, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  notFound,
+  useParams,
+  useNavigate,
+  Link,
+  useSearch,
+} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +96,7 @@ type ProjectLite = {
 };
 
 export const Route = createFileRoute("/u/$handle")({
+  validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
   head: ({ params }) => ({
     meta: [
       { title: `@${params.handle} — Tethyr` },
@@ -257,6 +265,11 @@ function PublicProfileRoute() {
 
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
   const { data: me } = useCurrentUser();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const previewMode =
+    searchParams.preview === "private" || searchParams.preview === "public"
+      ? searchParams.preview
+      : null;
   const meId = me?.userId ?? null;
   const { data: connections = [] } = useConnections();
   const endorse = useEndorseSkill();
@@ -297,9 +310,13 @@ function PublicProfileRoute() {
     };
   }, [data?.profile?.id, handle, queryClient]);
 
+  const isOwner = !!(meId && data?.profile && meId === data.profile.id);
+  const canViewPreview = !!previewMode && isOwner;
+
   const { page: profilePage } = useProfilePage({
     profileId: data?.profile?.id ?? "",
-    isOwner: meId === data?.profile?.id,
+    isOwner,
+    previewDraft: canViewPreview,
   });
 
   const pageThemeStyle = useMemo(
@@ -308,7 +325,6 @@ function PublicProfileRoute() {
   );
 
   const blocksArePage = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
-  const isOwner = !!(meId && data?.profile && meId === data.profile.id);
 
   if (isLoading) {
     return (
@@ -478,7 +494,16 @@ function PublicProfileRoute() {
 
         {/* Block-based page presentation */}
         <EditModeProvider>
-          <PageShell ownerId={profile.id} ownerType="profile" isOwner={isOwner} hideEditor />
+          <PageShell
+            ownerId={profile.id}
+            ownerType="profile"
+            isOwner={isOwner}
+            hideEditor
+            previewDraft={canViewPreview}
+            previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
+            onBackToStudio={() => window.history.back()}
+            previewData={{ profile }}
+          />
         </EditModeProvider>
 
         {/* Legacy workspace — hidden when blocks are the page */}

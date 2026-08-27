@@ -37,6 +37,16 @@ interface PageShellProps {
   hideEditor?: boolean;
   /** Render the owner's draft instead of requiring a published page. */
   previewDraft?: boolean;
+  /** Optional layout supplied by Studio for an exact local preview. */
+  previewLayout?: PageLayout;
+  /** Optional theme supplied by Studio for an exact local preview. */
+  previewTheme?: import("@/lib/page-blocks").ThemeTokens;
+  /** Already-loaded owner data, shared by every block during previews. */
+  previewData?: Record<string, unknown>;
+  /** Rendered-page framing for owner-only draft previews. */
+  previewMode?: "private" | "public";
+  /** Callback used by preview chrome to return to the builder. */
+  onBackToStudio?: () => void;
 }
 
 export function PageShell({
@@ -45,6 +55,11 @@ export function PageShell({
   isOwner,
   hideEditor,
   previewDraft,
+  previewLayout,
+  previewTheme,
+  previewData,
+  previewMode,
+  onBackToStudio,
 }: PageShellProps) {
   const {
     data: page,
@@ -86,16 +101,17 @@ export function PageShell({
       ownerId,
       ownerType,
       pageId: page?.id ?? "",
-      isEditing: isOwner && isEditing,
+      data: previewData,
+      isEditing: isOwner && isEditing && !previewMode,
     }),
-    [ownerId, ownerType, page?.id, isOwner, isEditing],
+    [ownerId, ownerType, page?.id, previewData, isOwner, isEditing, previewMode],
   );
 
   // Merge theme CSS vars with any user-provided style.
   const containerStyle = useMemo(() => {
-    const base = themeTokensToStyle(page?.theme ?? {});
+    const base = themeTokensToStyle(previewTheme ?? page?.theme ?? {});
     return { ...base, ...themeVars } as React.CSSProperties;
-  }, [page?.theme, themeVars]);
+  }, [page?.theme, previewTheme, themeVars]);
 
   // ── Layout change handler (persists to DB) ─────────────────────────────
   const handleLayoutChange = useCallback(
@@ -183,7 +199,7 @@ export function PageShell({
     return null;
   }
 
-  const layout: PageLayout = page.layout ?? { sections: [] };
+  const layout: PageLayout = previewLayout ?? page.layout ?? { sections: [] };
 
   // ── Rendered page ────────────────────────────────────────────────────
   return (
@@ -203,10 +219,33 @@ export function PageShell({
         style={containerStyle}
         data-page-id={page.id}
         data-page-status={page.status}
-        data-page-preview={previewDraft ? "private-draft" : "published"}
+        data-page-preview={
+          previewMode ? `${previewMode}-preview` : previewDraft ? "private-draft" : "published"
+        }
         role="region"
         aria-label={`${ownerType} page`}
       >
+        {previewMode && (
+          <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                {previewMode === "private" ? "Private preview" : "Public preview"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {previewMode === "private"
+                  ? "Only you can see this saved draft."
+                  : "This is how the saved draft will appear to visitors."}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBackToStudio ?? (() => window.history.back())}
+            >
+              ← Back to Studio
+            </Button>
+          </div>
+        )}
         {layout.sections.length === 0 ? (
           <div className="flex min-h-[20vh] items-center justify-center px-4">
             {isOwner && isEditing ? (
@@ -224,7 +263,7 @@ export function PageShell({
               </p>
             )}
           </div>
-        ) : isOwner ? (
+        ) : isOwner && !previewMode ? (
           <PageLayoutRenderer
             layout={layout}
             context={blockContext}

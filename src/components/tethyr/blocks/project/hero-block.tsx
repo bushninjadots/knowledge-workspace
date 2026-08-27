@@ -43,6 +43,7 @@ const STAGE_LABEL: Record<string, string> = {
 
 function ProjectHeroBlock({ config, context }: BlockProps) {
   const projectId = context.ownerType === "project" ? context.ownerId : null;
+  const previewProject = context.data?.project as ProjectHeroData | undefined;
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project-hero", projectId],
@@ -61,20 +62,22 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
     enabled: !!projectId,
   });
 
+  const resolvedProject = previewProject ?? project;
+
   const bannerStyle = useMemo(() => {
-    if (!project?.cover_url) return {};
+    if (!resolvedProject?.cover_url) return {};
     return {
-      backgroundImage: `url(${project.cover_url})`,
+      backgroundImage: `url(${resolvedProject.cover_url})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
-  }, [project?.cover_url]);
+  }, [resolvedProject?.cover_url]);
 
   const showDescription = config.showDescription !== false;
   const showProgress = config.showProgress !== false;
   const showTags = config.showTags !== false;
 
-  if (isLoading) {
+  if (isLoading && !previewProject) {
     return (
       <div className="space-y-4 py-4">
         <Skeleton className="h-10 w-64" />
@@ -84,7 +87,7 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
     );
   }
 
-  if (!project) {
+  if (!resolvedProject) {
     if (context.isEditing) {
       return (
         <BlockEmptyState label="Project Hero" detail="Project data is loading or not available." />
@@ -96,31 +99,31 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>
       {/* Overlay for readability when banner image is present */}
-      {project.cover_url && <div className="absolute inset-0 bg-background/90" />}
+      {resolvedProject.cover_url && <div className="absolute inset-0 bg-background/90" />}
 
       <div className="relative px-6 py-8 sm:px-8 sm:py-12">
         {/* Title */}
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          {project.title}
+          {resolvedProject.title}
         </h1>
 
         {/* Status + Stage badges */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="text-xs">
-            {STATUS_LABEL[project.status] ?? project.status}
+            {STATUS_LABEL[resolvedProject.status] ?? resolvedProject.status}
           </Badge>
-          {project.stage && (
+          {resolvedProject.stage && (
             <Badge variant="outline" className="text-xs">
               <MapPin className="mr-1 h-3 w-3" />
-              {STAGE_LABEL[project.stage] ?? project.stage}
+              {STAGE_LABEL[resolvedProject.stage] ?? resolvedProject.stage}
             </Badge>
           )}
-          {project.looking_for_collaborators && (
+          {resolvedProject.looking_for_collaborators && (
             <Badge variant="secondary" className="text-xs bg-learning-subtle text-learning">
               Looking for collaborators
             </Badge>
           )}
-          {project.looking_for_feedback && (
+          {resolvedProject.looking_for_feedback && (
             <Badge variant="secondary" className="text-xs bg-teaching-subtle text-teaching">
               Open to feedback
             </Badge>
@@ -128,26 +131,26 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
         </div>
 
         {/* Description */}
-        {showDescription && project.description && (
+        {showDescription && resolvedProject.description && (
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {project.description}
+            {resolvedProject.description}
           </p>
         )}
 
         {/* Progress bar */}
-        {showProgress && project.progress_percent > 0 && (
+        {showProgress && resolvedProject.progress_percent > 0 && (
           <div className="mt-4 flex max-w-sm items-center gap-3">
-            <Progress value={project.progress_percent} className="h-2 flex-1" />
+            <Progress value={resolvedProject.progress_percent} className="h-2 flex-1" />
             <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {project.progress_percent}%
+              {resolvedProject.progress_percent}%
             </span>
           </div>
         )}
 
         {/* Tags */}
-        {showTags && project.tags.length > 0 && (
+        {showTags && resolvedProject.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {project.tags.map((tag) => (
+            {resolvedProject.tags.map((tag) => (
               <span
                 key={tag}
                 className="rounded-full border border-border bg-surface-sunken px-2 py-0.5 text-[11px] text-muted-foreground"

@@ -296,7 +296,7 @@ export function NoteEditor({
         SignedImage,
         Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
         ...(format === "markdown" ? [Markdown] : []),
-      ],
+      ] as never[],
       content,
       ...(format === "markdown" ? { contentType: "markdown" as const } : {}),
       editable,
@@ -307,7 +307,11 @@ export function NoteEditor({
       },
       onUpdate: ({ editor: e }) => {
         if (!onChange) return;
-        onChange(format === "markdown" ? e.getMarkdown() : e.getHTML());
+        onChange(
+          format === "markdown"
+            ? (e as typeof e & { getMarkdown: () => string }).getMarkdown()
+            : e.getHTML(),
+        );
       },
     },
     [format],

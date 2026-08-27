@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { Wrench, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,22 @@ function ProfilePage() {
     github?: string;
     preview?: string;
   };
-  const privatePreview = previewParam === "private";
+  const previewMode = previewParam === "private" || previewParam === "public" ? previewParam : null;
+  const privatePreview = previewMode === "private";
+  const [studioPreview, setStudioPreview] = useState<{
+    layout: import("@/lib/page-blocks").PageLayout;
+    theme: import("@/lib/page-blocks").ThemeTokens | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!privatePreview) return;
+    try {
+      const raw = sessionStorage.getItem("tethyr:studio-preview");
+      if (raw) setStudioPreview(JSON.parse(raw));
+    } catch {
+      setStudioPreview(null);
+    }
+  }, [privatePreview]);
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
 
@@ -112,16 +127,19 @@ function ProfilePage() {
   } = profileQuery.data;
   const skills = skillsQuery.data ?? [];
 
-  if (privatePreview) {
+  if (previewMode) {
     return (
       <div className="min-h-screen bg-background">
         <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
           <div>
+            {" "}
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-              Private preview
+              {previewMode === "private" ? "Private preview" : "Public preview"}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Only you can see this unpublished Studio draft.
+              {previewMode === "private"
+                ? "Only you can see this saved Studio draft."
+                : "This is how the saved draft will appear to visitors."}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => window.history.back()}>
@@ -129,7 +147,17 @@ function ProfilePage() {
           </Button>
         </div>
         <EditModeProvider>
-          <PageShell ownerId={userId} ownerType="profile" isOwner previewDraft hideEditor />
+          <PageShell
+            ownerId={userId}
+            ownerType="profile"
+            isOwner
+            previewDraft
+            previewMode={previewMode}
+            hideEditor
+            previewLayout={studioPreview?.layout}
+            previewTheme={studioPreview?.theme ?? undefined}
+            onBackToStudio={() => window.history.back()}
+          />
         </EditModeProvider>
       </div>
     );

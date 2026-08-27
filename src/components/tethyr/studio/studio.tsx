@@ -152,6 +152,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   } = usePage({
     ownerId: activePage?.id ?? "",
     ownerType: (activePage?.type ?? "project") as PageOwnerType,
+    // Studio is an authenticated owner surface: it must load the draft rather
+    // than treating an existing unpublished page as missing.
+    includeDraft: true,
   });
 
   // When a page loads or the page selection changes, adopt the server layout
@@ -330,7 +333,17 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         },
       },
     );
-  }, [pageData, draftLayout, draftOverrides, updateLayout, updateThemeOverrides, refetchPage]);
+  }, [
+    pageData,
+    draftLayout,
+    draftOverrides,
+    updateLayout,
+    updateThemeOverrides,
+    refetchPage,
+    pageError,
+    pageProvisioning,
+    pageReady,
+  ]);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
@@ -410,7 +423,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       setSelectionType("block");
       setSelectedBlockId(newBlock.id);
     },
-    [applyDraft, draftLayout, pageData, blockCount],
+    [applyDraft, draftLayout, pageReady, pageProvisioning, blockCount],
   );
 
   // ── Remove block ──────────────────────────────────────────────────────
@@ -510,7 +523,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       setSelectedBlockId(null);
       toast.success(`Added ${preset.label} section`);
     },
-    [applyDraft, draftLayout, pageData],
+    [applyDraft, draftLayout, pageReady, pageProvisioning],
   );
 
   // ── Remove section ──────────────────────────────────────────────────────
@@ -699,17 +712,66 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [pageData, unpublishPage, refetchPage]);
 
-  const handlePreview = useCallback(() => {
-    if (!activePage) return;
+  // Preview routes load from the database, so persist the working copy first.
+  // Without this, unsaved Studio edits appear to disappear when a preview opens.
+  const saveBeforePreview = useCallback(async () => {
+    if (!pageData || !dirtyRef.current) return true;
+    try {
+      await updateLayout.mutateAsync({
+        pageId: pageData.id,
+        layoutId: pageData.layoutId,
+        layout: draftLayout,
+      });
+      if (overridesDirtyRef.current && draftOverrides != null) {
+        await updateThemeOverrides.mutateAsync({ pageId: pageData.id, overrides: draftOverrides });
+        overridesDirtyRef.current = false;
+      }
+      setDirty(false);
+      dirtyRef.current = false;
+      savedLayoutRef.current = draftLayout;
+      savedOverridesRef.current = draftOverrides ?? null;
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "tethyr:studio-preview",
+          JSON.stringify({
+            layout: draftLayout,
+            theme: draftOverrides,
+            pageId: pageData.id,
+            ownerId: activePage?.id ?? "",
+            ownerType: activePage?.type ?? "project",
+          }),
+        );
+      }
+      return true;
+    } catch (err) {
+      toast.error(friendlyError(err, "Failed to save changes before preview"));
+      return false;
+    }
+  }, [
+    activePage?.id,
+    activePage?.type,
+    pageData,
+    draftLayout,
+    draftOverrides,
+    updateLayout,
+    updateThemeOverrides,
+  ]);
+
+  const handlePreview = useCallback(async () => {
+    if (!activePage || !pageReady || !(await saveBeforePreview())) return;
     if (activePage.type === "profile") {
       navigate({ to: "/u/$handle", params: { handle: activePage.handle ?? activePage.id } });
     } else {
-      navigate({ to: "/projects/$id", params: { id: activePage.id } });
+      navigate({
+        to: "/projects/$id",
+        params: { id: activePage.id },
+        search: { preview: "public" },
+      });
     }
-  }, [activePage, navigate]);
+  }, [activePage, navigate, pageReady, saveBeforePreview]);
 
-  const handlePrivatePreview = useCallback(() => {
-    if (!activePage) return;
+  const handlePrivatePreview = useCallback(async () => {
+    if (!activePage || !pageReady || !(await saveBeforePreview())) return;
     if (activePage.type === "profile") {
       navigate({ to: "/profile", search: { preview: "private" } });
     } else {
@@ -719,7 +781,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         search: { preview: "private" },
       });
     }
-  }, [activePage, navigate]);
+  }, [activePage, navigate, pageReady, saveBeforePreview]);
 
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(

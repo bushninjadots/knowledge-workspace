@@ -39,7 +39,9 @@ export function useProjectPage({
   } = usePage({
     ownerId: projectId,
     ownerType: "project",
-    includeDraft: previewDraft && isOwner,
+    // Owners need their existing draft so the auto-create path does not try
+    // to insert a duplicate page. RLS still limits draft visibility.
+    includeDraft: isOwner || previewDraft,
   });
   const qc = useQueryClient();
 

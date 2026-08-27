@@ -27,6 +27,8 @@ export type BlockConfig = Record<string, unknown>;
 export interface BlockContext {
   /** The page owner's user ID (profile owner or project owner). */
   ownerId: string;
+  /** Optional already-loaded owner data, used by previews to avoid duplicate loading states. */
+  data?: Record<string, unknown>;
   /** Either "profile" or "project". */
   ownerType: "profile" | "project";
   /** The page ID, useful for data hooks that scope to the page owner. */

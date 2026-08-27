@@ -184,7 +184,24 @@ function ProjectPage() {
 
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const tabParam = searchParams.tab;
-  const privatePreview = searchParams.preview === "private";
+  const previewMode =
+    searchParams.preview === "private" || searchParams.preview === "public"
+      ? searchParams.preview
+      : null;
+  const privatePreview = previewMode === "private";
+  const [studioPreview, setStudioPreview] = useState<{
+    layout: import("@/lib/page-blocks").PageLayout;
+    theme: import("@/lib/page-blocks").ThemeTokens | null;
+  } | null>(null);
+  useEffect(() => {
+    if (!privatePreview) return;
+    try {
+      const raw = sessionStorage.getItem("tethyr:studio-preview");
+      if (raw) setStudioPreview(JSON.parse(raw));
+    } catch {
+      setStudioPreview(null);
+    }
+  }, [privatePreview]);
   const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
@@ -448,12 +465,13 @@ function ProjectPage() {
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
   const canViewPrivatePreview = privatePreview && isOwner;
+  const canViewPublicPreview = previewMode === "public";
 
   // Fetch or auto-create the project's page (block-based presentation).
   const { page: projectPage } = useProjectPage({
     projectId: id,
     isOwner,
-    previewDraft: canViewPrivatePreview,
+    previewDraft: canViewPrivatePreview || canViewPublicPreview,
   });
 
   // Apply page theme as CSS vars on the outer wrapper so the entire project
@@ -614,7 +632,12 @@ function ProjectPage() {
             ownerType="project"
             isOwner={isOwner}
             hideEditor
-            previewDraft={canViewPrivatePreview}
+            previewDraft={canViewPrivatePreview || canViewPublicPreview}
+            previewMode={previewMode ?? undefined}
+            previewLayout={studioPreview?.layout}
+            previewTheme={studioPreview?.theme ?? undefined}
+            previewData={{ project }}
+            onBackToStudio={() => window.history.back()}
           />
         </EditModeProvider>
       </div>

@@ -89,6 +89,6 @@ export const SignedImage = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(SignedImageView);
+    return ReactNodeViewRenderer(SignedImageView) as never;
   },
 });
