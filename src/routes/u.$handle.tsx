@@ -266,6 +266,7 @@ function PublicProfileRoute() {
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
   const { data: me } = useCurrentUser();
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
+  const previewFromStudio = searchParams.from === "studio";
   const previewMode =
     searchParams.preview === "private" || searchParams.preview === "public"
       ? searchParams.preview
@@ -501,7 +502,9 @@ function PublicProfileRoute() {
             hideEditor
             previewDraft={canViewPreview}
             previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
-            onBackToStudio={() => window.history.back()}
+            onBackToStudio={() =>
+              previewFromStudio ? window.history.back() : (window.location.href = "/studio")
+            }
             previewData={{ profile }}
           />
         </EditModeProvider>

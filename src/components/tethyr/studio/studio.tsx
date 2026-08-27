@@ -732,7 +732,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       savedOverridesRef.current = draftOverrides ?? null;
       if (typeof window !== "undefined") {
         sessionStorage.setItem(
-          "tethyr:studio-preview",
+          `tethyr:studio-preview:${activePage?.type}:${activePage?.id}`,
           JSON.stringify({
             layout: draftLayout,
             theme: draftOverrides,
@@ -760,7 +760,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const handlePreview = useCallback(async () => {
     if (!activePage || !pageReady || !(await saveBeforePreview())) return;
     if (activePage.type === "profile") {
-      navigate({ to: "/u/$handle", params: { handle: activePage.handle ?? activePage.id } });
+      navigate({
+        to: "/u/$handle",
+        params: { handle: activePage.handle ?? activePage.id },
+        search: { preview: "public", from: "studio" },
+      });
     } else {
       navigate({
         to: "/projects/$id",
@@ -773,12 +777,12 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const handlePrivatePreview = useCallback(async () => {
     if (!activePage || !pageReady || !(await saveBeforePreview())) return;
     if (activePage.type === "profile") {
-      navigate({ to: "/profile", search: { preview: "private" } });
+      navigate({ to: "/profile", search: { preview: "private", from: "studio" } });
     } else {
       navigate({
         to: "/projects/$id",
         params: { id: activePage.id },
-        search: { preview: "private" },
+        search: { preview: "private", from: "studio" },
       });
     }
   }, [activePage, navigate, pageReady, saveBeforePreview]);

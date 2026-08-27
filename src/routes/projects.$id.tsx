@@ -196,12 +196,12 @@ function ProjectPage() {
   useEffect(() => {
     if (!privatePreview) return;
     try {
-      const raw = sessionStorage.getItem("tethyr:studio-preview");
+      const raw = sessionStorage.getItem(`tethyr:studio-preview:project:${id}`);
       if (raw) setStudioPreview(JSON.parse(raw));
     } catch {
       setStudioPreview(null);
     }
-  }, [privatePreview]);
+  }, [id, privatePreview]);
   const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
@@ -466,6 +466,7 @@ function ProjectPage() {
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
   const canViewPrivatePreview = privatePreview && isOwner;
   const canViewPublicPreview = previewMode === "public";
+  const previewFromStudio = searchParams.from === "studio";
 
   // Fetch or auto-create the project's page (block-based presentation).
   const { page: projectPage } = useProjectPage({
@@ -579,39 +580,41 @@ function ProjectPage() {
         />
       )}
 
-      <ProjectWorkbench
-        project={project}
-        gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
-        milestones={milestones}
-        openRoles={openRoles}
-        needs={needs}
-        isOwner={isOwner}
-        isContributor={isContributor}
-        canWatch={!!me?.userId && !isOwner}
-        onAction={handleWorkbenchAction}
-        onPresentationChange={(preset) => {
-          setPresentationSaveState("saving");
-          updatePresentation.mutate(
-            { projectId: id, presentationPreset: preset },
-            {
-              onSuccess: () => {
-                setPresentationSaveState("saved");
-                if (presentationResetTimer.current)
-                  window.clearTimeout(presentationResetTimer.current);
-                presentationResetTimer.current = window.setTimeout(
-                  () => setPresentationSaveState("idle"),
-                  2000,
-                );
+      {!previewMode && (
+        <ProjectWorkbench
+          project={project}
+          gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
+          milestones={milestones}
+          openRoles={openRoles}
+          needs={needs}
+          isOwner={isOwner}
+          isContributor={isContributor}
+          canWatch={!!me?.userId && !isOwner}
+          onAction={handleWorkbenchAction}
+          onPresentationChange={(preset) => {
+            setPresentationSaveState("saving");
+            updatePresentation.mutate(
+              { projectId: id, presentationPreset: preset },
+              {
+                onSuccess: () => {
+                  setPresentationSaveState("saved");
+                  if (presentationResetTimer.current)
+                    window.clearTimeout(presentationResetTimer.current);
+                  presentationResetTimer.current = window.setTimeout(
+                    () => setPresentationSaveState("idle"),
+                    2000,
+                  );
+                },
+                onError: () => setPresentationSaveState("error"),
               },
-              onError: () => setPresentationSaveState("error"),
-            },
-          );
-        }}
-        presentationSaveState={presentationSaveState}
-      />
+            );
+          }}
+          presentationSaveState={presentationSaveState}
+        />
+      )}
 
       {/* Legacy pulse — hidden when blocks render the page */}
-      {!blocksArePage && (
+      {!previewMode && !blocksArePage && (
         <ProjectPulse
           project={project}
           isOwner={isOwner}
@@ -637,13 +640,15 @@ function ProjectPage() {
             previewLayout={studioPreview?.layout}
             previewTheme={studioPreview?.theme ?? undefined}
             previewData={{ project }}
-            onBackToStudio={() => window.history.back()}
+            onBackToStudio={() =>
+              previewFromStudio ? window.history.back() : (window.location.href = "/studio")
+            }
           />
         </EditModeProvider>
       </div>
 
       {/* Legacy sections — only shown when blocks aren't the active page */}
-      {!blocksArePage && (
+      {!previewMode && !blocksArePage && (
         <div className="animate-room-enter min-h-screen bg-noise">
           <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
             <section aria-labelledby="project-homepage-heading" className="pt-6">

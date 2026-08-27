@@ -53,9 +53,14 @@ function ProfilePage() {
 
   // Deep link from project repo sections: /profile?github=token scrolls to the
   // GitHub card with the token editor already open.
-  const { github: githubParam, preview: previewParam } = useSearch({ strict: false }) as {
+  const {
+    github: githubParam,
+    preview: previewParam,
+    from: previewFrom,
+  } = useSearch({ strict: false }) as {
     github?: string;
     preview?: string;
+    from?: string;
   };
   const previewMode = previewParam === "private" || previewParam === "public" ? previewParam : null;
   const privatePreview = previewMode === "private";
@@ -67,12 +72,14 @@ function ProfilePage() {
   useEffect(() => {
     if (!privatePreview) return;
     try {
-      const raw = sessionStorage.getItem("tethyr:studio-preview");
+      const raw = sessionStorage.getItem(
+        `tethyr:studio-preview:profile:${profileQuery.data?.userId ?? ""}`,
+      );
       if (raw) setStudioPreview(JSON.parse(raw));
     } catch {
       setStudioPreview(null);
     }
-  }, [privatePreview]);
+  }, [privatePreview, profileQuery.data?.userId]);
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
 
@@ -142,7 +149,13 @@ function ProfilePage() {
                 : "This is how the saved draft will appear to visitors."}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              previewFrom === "studio" ? window.history.back() : (window.location.href = "/studio")
+            }
+          >
             Back to Studio
           </Button>
         </div>
@@ -156,7 +169,10 @@ function ProfilePage() {
             hideEditor
             previewLayout={studioPreview?.layout}
             previewTheme={studioPreview?.theme ?? undefined}
-            onBackToStudio={() => window.history.back()}
+            previewData={{ profile }}
+            onBackToStudio={() =>
+              previewFrom === "studio" ? window.history.back() : (window.location.href = "/studio")
+            }
           />
         </EditModeProvider>
       </div>

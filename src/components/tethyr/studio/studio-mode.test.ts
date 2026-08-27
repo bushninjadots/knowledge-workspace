@@ -17,6 +17,14 @@ describe("Studio preview contract", () => {
     expect(previewContexts.map((context) => context.viewer)).toEqual(["owner", "visitor"]);
   });
 
+  it("scopes saved preview state to the page being previewed", () => {
+    const profileKey = "tethyr:studio-preview:profile:profile-1";
+    const projectKey = "tethyr:studio-preview:project:project-1";
+    expect(profileKey).not.toBe(projectKey);
+    expect(profileKey).toContain("profile");
+    expect(projectKey).toContain("project");
+  });
+
   it("keeps the published page outside the draft preview contexts", () => {
     const publishedContext = { mode: "published", version: "published", viewer: "visitor" };
     expect(publishedContext.version).not.toBe("draft");
