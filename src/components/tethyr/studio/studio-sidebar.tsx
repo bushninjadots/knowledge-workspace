@@ -19,7 +19,7 @@ import {
   Layout,
   Rows2,
 } from "lucide-react";
-import { getAllBlocks } from "@/lib/block-registry";
+import { getBlocksForPageType, blockPageScope } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage } from "./studio";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
@@ -131,7 +131,11 @@ export function StudioSidebar({
       {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
         {activeTab === "pages" && (
-          <BuildPanel onAddBlock={onAddBlock} onAddSection={onAddSection} />
+          <BuildPanel
+            pageType={activePage?.type ?? "project"}
+            onAddBlock={onAddBlock}
+            onAddSection={onAddSection}
+          />
         )}
         {activeTab === "templates" && (
           <TemplatesPanel
@@ -167,14 +171,22 @@ export function StudioSidebar({
 // Section presets at the top, then the block library grouped by category.
 
 function BuildPanel({
+  pageType,
   onAddBlock,
   onAddSection,
 }: {
+  pageType: "profile" | "project";
   onAddBlock: (type: string) => void;
   onAddSection: (preset: SectionPreset) => void;
 }) {
   const [search, setSearch] = useState("");
-  const blocks = getAllBlocks();
+  const blocks = getBlocksForPageType(pageType);
+  const sectionPresets = SECTION_PRESETS.filter((preset) =>
+    (preset.starterBlocks ?? []).every(
+      (starter) =>
+        blockPageScope(starter.type) === "both" || blockPageScope(starter.type) === pageType,
+    ),
+  );
 
   const filtered = search
     ? blocks.filter(
@@ -198,7 +210,7 @@ function BuildPanel({
         Add Section
       </p>
       <div className="mb-5 grid grid-cols-2 gap-1.5">
-        {SECTION_PRESETS.map((preset) => {
+        {sectionPresets.map((preset) => {
           const Icon = PRESET_ICONS[preset.icon] ?? Square;
           return (
             <button

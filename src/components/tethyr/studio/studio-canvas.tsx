@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getBlock, getAllBlocks } from "@/lib/block-registry";
+import { getBlock, getBlocksForPageType } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
@@ -34,9 +34,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   utility: "Layout & Utility",
 };
 
+/** Where an added block should land (section + optional grid column). */
+export type BlockAddTarget = { sectionId: string; column?: number };
+
 interface StudioCanvasProps {
   page: StudioPage;
-  pageData: PageData | undefined | null;
+  pageData: PageData | null | undefined;
   layout: PageLayout;
   /** Active-owner data shared by data-driven blocks (e.g. { project }). */
   contextData?: Record<string, unknown>;
@@ -52,7 +55,7 @@ interface StudioCanvasProps {
   onRemoveSection: (sectionId: string) => void;
   onToggleVisibility: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
-  onAddBlock: (blockType: string) => void;
+  onAddBlock: (blockType: string, target?: BlockAddTarget) => void;
   onAddSection: (preset: SectionPreset) => void;
   onUpdateBlockConfig: (blockId: string, config: Record<string, unknown>) => void;
   onDuplicateBlock: (blockId: string) => void;
@@ -113,6 +116,14 @@ export function StudioCanvas({
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<"block" | "section" | null>(null);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const pickerTargetRef = useRef<BlockAddTarget | null>(null);
+
+  // Open the block picker targeting a specific section (and grid column when
+  // the add control lives inside one). Falls back to the last section.
+  const openBlockPicker = useCallback((sectionId?: string, column?: number) => {
+    pickerTargetRef.current = sectionId ? { sectionId, column } : null;
+    setShowBlockPicker(true);
+  }, []);
 
   // ── Block drag handlers ───────────────────────────────────────────────
   const handleBlockDragStart = useCallback((e: React.DragEvent, blockId: string) => {
@@ -258,7 +269,7 @@ export function StudioCanvas({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setShowBlockPicker(true);
+              openBlockPicker();
             }}
             className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-4 py-2 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
           >
@@ -371,7 +382,7 @@ export function StudioCanvas({
                   handleBlockDragOver,
                   handleBlockDrop,
                   onSelectBlock,
-                  () => setShowBlockPicker(true),
+                  openBlockPicker,
                   onMoveBlock,
                   onDuplicateBlock,
                   onToggleVisibility,
@@ -382,7 +393,7 @@ export function StudioCanvas({
             ) : (
               <div className="flex flex-col">
                 {section.blocks.length === 0 ? (
-                  <EmptySection onAdd={() => setShowBlockPicker(true)} />
+                  <EmptySection onAdd={() => openBlockPicker(section.id)} />
                 ) : (
                   section.blocks.map((block, idx) => (
                     <BlockCard
@@ -412,7 +423,7 @@ export function StudioCanvas({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowBlockPicker(true);
+                      openBlockPicker(section.id);
                     }}
                     className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
@@ -447,7 +458,14 @@ export function StudioCanvas({
 
       {/* Block picker modal */}
       {showBlockPicker && (
-        <BlockPickerModal onSelect={onAddBlock} onClose={() => setShowBlockPicker(false)} />
+        <BlockPickerModal
+          pageType={page.type}
+          onSelect={(type) => onAddBlock(type, pickerTargetRef.current ?? undefined)}
+          onClose={() => {
+            pickerTargetRef.current = null;
+            setShowBlockPicker(false);
+          }}
+        />
       )}
     </div>
   );
@@ -477,7 +495,7 @@ function renderGridBlocks(
     targetIndex: number,
   ) => void,
   onSelect: (blockId: string) => void,
-  onShowPicker: () => void,
+  onShowPicker: (sectionId: string, column: number) => void,
   onMoveBlock: (blockId: string, direction: "up" | "down") => void,
   onDuplicateBlock: (blockId: string) => void,
   onToggleVisibility: (blockId: string) => void,
@@ -519,7 +537,12 @@ function renderGridBlocks(
           {/* Blocks in this column */}
           <div className="space-y-6">
             {colBlocks.length === 0 ? (
-              <EmptyColumn colIdx={colIdx} onAdd={onShowPicker} />
+              <EmptyColumn
+                colIdx={colIdx}
+                sectionId={section.id}
+                colCount={colCount}
+                onAdd={onShowPicker}
+              />
             ) : (
               colBlocks.map((block, idx) => (
                 <BlockCard
@@ -550,7 +573,7 @@ function renderGridBlocks(
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onShowPicker();
+                onShowPicker(section.id, colIdx);
               }}
               className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/20 py-1.5 text-[9px] text-muted-foreground/40 transition-colors hover:border-border/40 hover:text-muted-foreground"
             >
@@ -749,7 +772,17 @@ function EmptySection({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function EmptyColumn({ colIdx: _colIdx, onAdd }: { colIdx: number; onAdd: () => void }) {
+function EmptyColumn({
+  colIdx: _colIdx,
+  sectionId,
+  colCount,
+  onAdd,
+}: {
+  colIdx: number;
+  sectionId: string;
+  colCount: number;
+  onAdd: (sectionId: string, column: number) => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/20 py-4 text-center min-h-[60px]">
       <p className="text-[9px] text-muted-foreground/30 mb-1">Empty</p>
@@ -757,7 +790,7 @@ function EmptyColumn({ colIdx: _colIdx, onAdd }: { colIdx: number; onAdd: () => 
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onAdd();
+          onAdd(sectionId, colCount > 1 ? _colIdx : 0);
         }}
         className="flex items-center gap-0.5 text-[9px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
       >
@@ -771,9 +804,11 @@ function EmptyColumn({ colIdx: _colIdx, onAdd }: { colIdx: number; onAdd: () => 
 // ── Block Picker Modal ────────────────────────────────────────────────────────
 
 function BlockPickerModal({
+  pageType,
   onSelect,
   onClose,
 }: {
+  pageType: "profile" | "project";
   onSelect: (type: string) => void;
   onClose: () => void;
 }) {
@@ -793,7 +828,7 @@ function BlockPickerModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const blocks = getAllBlocks();
+  const blocks = getBlocksForPageType(pageType);
   const filtered = search
     ? blocks.filter(
         (b) =>

@@ -43,10 +43,10 @@ import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
-import { createBlockInstance, getBlock } from "@/lib/block-registry";
+import { createBlockInstance, getBlock, blockPageScope } from "@/lib/block-registry";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
-import { StudioCanvas } from "./studio-canvas";
+import { StudioCanvas, type BlockAddTarget } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
 import { type SectionPreset } from "./section-presets";
 import type {
@@ -429,7 +429,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
-    (blockType: string) => {
+    (blockType: string, target?: BlockAddTarget) => {
       if (!pageReady) {
         toast.info(
           pageProvisioning
@@ -448,19 +448,28 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       }
       const existing = draftLayout.sections;
       const sections = existing.map((s: LayoutSection) => ({ ...s, blocks: [...s.blocks] }));
-      let last = sections[sections.length - 1];
+      const targetSection = target ? sections.find((s) => s.id === target.sectionId) : undefined;
+      let last = targetSection
+        ? { ...targetSection, blocks: [...targetSection.blocks] }
+        : sections[sections.length - 1];
       if (!last) {
         last = { id: `sect_${Date.now()}`, position: 0, layout: "full", blocks: [] };
         sections.push(last);
       }
+      const col = targetSection ? target?.column : undefined;
+      const colBlocks = col != null ? last.blocks.filter((b) => b.column === col) : last.blocks;
       const newBlock = {
         id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         type: inst.type,
-        position: last.blocks.length,
+        position: colBlocks.length,
         config: { ...inst.config } as Record<string, unknown>,
         visible: true,
+        ...(col != null ? { column: col } : {}),
       };
-      sections[sections.length - 1] = { ...last, blocks: [...last.blocks, newBlock] };
+      const targetIndex = targetSection
+        ? sections.findIndex((s) => s.id === targetSection.id)
+        : sections.length - 1;
+      sections[targetIndex] = { ...last, blocks: [...last.blocks, newBlock] };
       toast.success(`Added ${inst.type.replace(/-/g, " ")}`);
       applyDraft({ sections });
       setSelectionType("block");
@@ -543,16 +552,19 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         );
         return;
       }
-      const newBlocks = (preset.starterBlocks ?? []).map((sb, i) => {
-        const inst = createBlockInstance(sb.type);
-        return {
-          id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-          type: sb.type,
-          position: i,
-          config: { ...(inst?.config ?? {}), ...(sb.config ?? {}) } as Record<string, unknown>,
-          visible: true,
-        };
-      });
+      const pageType = activePage?.type === "profile" ? "profile" : "project";
+      const newBlocks = (preset.starterBlocks ?? [])
+        .filter((sb) => blockPageScope(sb.type) === "both" || blockPageScope(sb.type) === pageType)
+        .map((sb, i) => {
+          const inst = createBlockInstance(sb.type);
+          return {
+            id: `blk_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            type: sb.type,
+            position: i,
+            config: { ...(inst?.config ?? {}), ...(sb.config ?? {}) } as Record<string, unknown>,
+            visible: true,
+          };
+        });
       const newSection: LayoutSection = {
         id: `sect_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         position: draftLayout.sections.length,
@@ -566,7 +578,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       setSelectedBlockId(null);
       toast.success(`Added ${preset.label} section`);
     },
-    [applyDraft, draftLayout, pageReady, pageProvisioning],
+    [applyDraft, draftLayout, pageReady, pageProvisioning, activePage],
   );
 
   // ── Remove section ──────────────────────────────────────────────────────

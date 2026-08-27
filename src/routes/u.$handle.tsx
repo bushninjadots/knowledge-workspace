@@ -385,117 +385,119 @@ function PublicProfileRoute() {
       pageThemeStyle={pageThemeStyle}
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
-        {/* Identity card */}
-        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <BannerStrip
-            bannerSigned={bannerSigned}
-            bannerCaption={profile.banner_caption ?? null}
-            overlay={publicBackground?.bannerOverlay ?? "soft"}
-            captionPosition={publicBackground?.bannerCaptionPosition ?? "right"}
-            userId={profile.id}
-            onChange={() => {}}
-            readonly
-            showCaption
-          />
+        {/* Identity card — hidden when blocks are the page */}
+        {!blocksArePage && (
+          <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
+            <BannerStrip
+              bannerSigned={bannerSigned}
+              bannerCaption={profile.banner_caption ?? null}
+              overlay={publicBackground?.bannerOverlay ?? "soft"}
+              captionPosition={publicBackground?.bannerCaptionPosition ?? "right"}
+              userId={profile.id}
+              onChange={() => {}}
+              readonly
+              showCaption
+            />
 
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <div className="relative shrink-0 -mt-16 sm:-mt-20">
-              <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
-                {avatarSigned ? (
-                  <img
-                    src={avatarSigned}
-                    alt={`${profile.display_name ?? "Member"} avatar`}
-                    width="128"
-                    height="128"
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
-                    {initial}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h1 className="break-words font-display text-2xl font-semibold sm:text-3xl">
-                      {profile.display_name || "Untitled member"}
-                    </h1>
-                    <FavoriteBadge type={profile.favorite_achievement} />
-                  </div>
-                  {profile.creator_title && (
-                    <p className="mt-0.5 break-words text-sm text-foreground/80">
-                      {profile.creator_title}
-                    </p>
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+              <div className="relative shrink-0 -mt-16 sm:-mt-20">
+                <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-brand ring-4 ring-surface ring-offset-2 ring-offset-surface/50 sm:h-32 sm:w-32">
+                  {avatarSigned ? (
+                    <img
+                      src={avatarSigned}
+                      alt={`${profile.display_name ?? "Member"} avatar`}
+                      width="128"
+                      height="128"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
+                      {initial}
+                    </div>
                   )}
-                  <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FollowButton targetUserId={profile.id} />
-                  <ConnectButton
-                    targetId={profile.id}
-                    targetName={profile.display_name ?? profile.handle}
-                  />
                 </div>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                {profile.category && (
-                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
-                    {profile.category}
-                  </span>
-                )}
-                {profile.country && (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" /> {profile.country}
-                  </span>
-                )}
-                {profile.timezone && (
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" /> {profile.timezone}
-                  </span>
-                )}
-                {languages.length > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <Languages className="h-3.5 w-3.5" /> {languages.join(", ")}
-                  </span>
-                )}
-                {profile.reputation_score != null && profile.reputation_score > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2.5 py-0.5 text-brand-green">
-                    <Sparkles className="h-3 w-3" /> {profile.reputation_score} rep
-                  </span>
-                )}
-              </div>
-
-              {profile.reputation_score != null && profile.reputation_score > 0 && (
-                <div className="mt-4 max-w-xl border-l-2 border-brand-green/40 pl-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Reputation evidence
-                  </p>
-                  <div className="mt-2">
-                    <ReputationBreakdown profileId={profile.id} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h1 className="break-words font-display text-2xl font-semibold sm:text-3xl">
+                        {profile.display_name || "Untitled member"}
+                      </h1>
+                      <FavoriteBadge type={profile.favorite_achievement} />
+                    </div>
+                    {profile.creator_title && (
+                      <p className="mt-0.5 break-words text-sm text-foreground/80">
+                        {profile.creator_title}
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FollowButton targetUserId={profile.id} />
+                    <ConnectButton
+                      targetId={profile.id}
+                      targetName={profile.display_name ?? profile.handle}
+                    />
                   </div>
                 </div>
-              )}
 
-              {meId && meId !== profile.id && connectionId && (
-                <Link
-                  to="/messages"
-                  search={{ c: connectionId }}
-                  className="transition-lift mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Start a conversation
-                </Link>
-              )}
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                  {profile.category && (
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
+                      {profile.category}
+                    </span>
+                  )}
+                  {profile.country && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" /> {profile.country}
+                    </span>
+                  )}
+                  {profile.timezone && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" /> {profile.timezone}
+                    </span>
+                  )}
+                  {languages.length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <Languages className="h-3.5 w-3.5" /> {languages.join(", ")}
+                    </span>
+                  )}
+                  {profile.reputation_score != null && profile.reputation_score > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2.5 py-0.5 text-brand-green">
+                      <Sparkles className="h-3 w-3" /> {profile.reputation_score} rep
+                    </span>
+                  )}
+                </div>
+
+                {profile.reputation_score != null && profile.reputation_score > 0 && (
+                  <div className="mt-4 max-w-xl border-l-2 border-brand-green/40 pl-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Reputation evidence
+                    </p>
+                    <div className="mt-2">
+                      <ReputationBreakdown profileId={profile.id} />
+                    </div>
+                  </div>
+                )}
+
+                {meId && meId !== profile.id && connectionId && (
+                  <Link
+                    to="/messages"
+                    search={{ c: connectionId }}
+                    className="transition-lift mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-2 text-sm text-primary hover:bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Start a conversation
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Legacy direction — hidden when blocks are the page */}
         {!blocksArePage && (

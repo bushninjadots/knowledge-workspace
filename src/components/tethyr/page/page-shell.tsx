@@ -158,8 +158,9 @@ export function PageShell({
     return null;
   }
 
-  // ── Unpublished (non-owner) ──────────────────────────────────────────
-  if (!previewDraft && page.status !== "published") {
+  // ── Unpublished (non-owner only) ─────────────────────────────────────
+  // Owners always see their own page (published or draft) at its public URL.
+  if (!isOwner && !previewDraft && page.status !== "published") {
     return null;
   }
 
@@ -177,7 +178,11 @@ export function PageShell({
         data-page-id={page.id}
         data-page-status={page.status}
         data-page-preview={
-          previewMode ? `${previewMode}-preview` : previewDraft ? "private-draft" : "published"
+          previewMode
+            ? `${previewMode}-preview`
+            : previewDraft || (isOwner && page.status !== "published")
+              ? "private-draft"
+              : "published"
         }
         role="region"
         aria-label={`${ownerType} page`}

@@ -533,12 +533,11 @@ function PageInspector({
     ? ({ ...baseTokens, ...currentOverrides } as Record<string, string>)
     : (baseTokens as Record<string, string>);
 
-  const getRadiusValue = (cssVar: string, fallback: string) => {
-    const key = cssVar.replace("--", "");
-    return tokens[key] ?? fallback;
-  };
-
-  const currentRadiusLg = parseInt(getRadiusValue("--radius-lg", "12px")) || 12;
+  const currentRadiusLg =
+    parseInt(
+      (tokens as { borders?: { radius?: Record<string, string> } }).borders?.radius?.lg ?? "12px",
+      10,
+    ) || 12;
 
   const setRadius = useCallback(
     (size: number) => {
