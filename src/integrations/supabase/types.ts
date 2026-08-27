@@ -341,6 +341,42 @@ export type Database = {
           },
         ]
       }
+      connected_accounts: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          provider: string
+          provider_id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider: string
+          provider_id: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          provider_id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           addressee_id: string
@@ -492,6 +528,101 @@ export type Database = {
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forks: {
+        Row: {
+          child_layout_id: string
+          creator_id: string
+          forked_at: string
+          id: string
+          parent_layout_id: string
+        }
+        Insert: {
+          child_layout_id: string
+          creator_id: string
+          forked_at?: string
+          id?: string
+          parent_layout_id: string
+        }
+        Update: {
+          child_layout_id?: string
+          creator_id?: string
+          forked_at?: string
+          id?: string
+          parent_layout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forks_child_layout_id_fkey"
+            columns: ["child_layout_id"]
+            isOneToOne: true
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forks_parent_layout_id_fkey"
+            columns: ["parent_layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      layouts: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fork_count: number
+          id: string
+          is_template: boolean
+          name: string
+          sections: Json
+          theme_id: string | null
+          type: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fork_count?: number
+          id?: string
+          is_template?: boolean
+          name: string
+          sections?: Json
+          theme_id?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fork_count?: number
+          id?: string
+          is_template?: boolean
+          name?: string
+          sections?: Json
+          theme_id?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "layouts_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
             referencedColumns: ["id"]
           },
         ]
@@ -784,6 +915,35 @@ export type Database = {
           },
         ]
       }
+      migrated_pages: {
+        Row: {
+          migrated_at: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Insert: {
+          migrated_at?: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Update: {
+          migrated_at?: string
+          owner_id?: string
+          owner_type?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migrated_pages_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_log: {
         Row: {
           action: string
@@ -885,6 +1045,60 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string
+          id: string
+          layout_id: string | null
+          owner_id: string
+          owner_type: string
+          published_at: string | null
+          status: string
+          theme_id: string | null
+          theme_overrides: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          layout_id?: string | null
+          owner_id: string
+          owner_type: string
+          published_at?: string | null
+          status?: string
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layout_id?: string | null
+          owner_id?: string
+          owner_type?: string
+          published_at?: string | null
+          status?: string
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pages_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
             referencedColumns: ["id"]
           },
         ]
@@ -1348,6 +1562,47 @@ export type Database = {
           years_experience?: number | null
         }
         Relationships: []
+      }
+      project_activity: {
+        Row: {
+          actor_id: string | null
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json | null
+          project_id: string
+          title: string
+        }
+        Insert: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json | null
+          project_id: string
+          title: string
+        }
+        Update: {
+          actor_id?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activity_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_contributors: {
         Row: {
@@ -2519,6 +2774,36 @@ export type Database = {
           },
         ]
       }
+      themes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          tokens: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement: Database["public"]["Enums"]["achievement_type"]
@@ -2547,6 +2832,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_github_tokens: {
+        Row: {
+          created_at: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_layout_preferences: {
         Row: {
@@ -2627,6 +2933,19 @@ export type Database = {
           p_project_id: string
           p_role_id: string
         }
+        Returns: undefined
+      }
+      get_layout_lineage: {
+        Args: { start_id: string }
+        Returns: {
+          depth: number
+          layout_id: string
+          parent_id: string
+        }[]
+      }
+      increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
+      increment_usage_count: {
+        Args: { template_id: string }
         Returns: undefined
       }
       insert_notification: {
