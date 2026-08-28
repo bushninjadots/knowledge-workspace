@@ -25,6 +25,8 @@ interface UpdateLayoutParams {
   pageId: string;
   layout: PageLayout;
   layoutId: string;
+  ownerId?: string;
+  ownerType?: PageOwnerType;
 }
 
 interface UpdateThemeParams {
@@ -110,17 +112,23 @@ export function useUpdatePageLayout() {
 
   return useMutation({
     mutationFn: async ({ layoutId, layout }: UpdateLayoutParams) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("layouts")
         .update({ sections: layout.sections as unknown as LayoutSectionsJson })
-        .eq("id", layoutId);
+        .eq("id", layoutId)
+        .select("id")
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        throw new Error("Studio could not save this layout. It may no longer belong to your page.");
+      }
     },
-    onSuccess: () => {
-      // Invalidate all page queries since we don't know the owner from here.
-      // The caller can also invalidate more specifically.
+    onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["page"] });
+      if (vars.ownerId && vars.ownerType) {
+        qc.invalidateQueries({ queryKey: ["page", vars.ownerType, vars.ownerId] });
+      }
     },
   });
 }
@@ -133,7 +141,13 @@ export function useUpdatePageTheme() {
 
   return useMutation({
     mutationFn: async ({ pageId, themeId }: UpdateThemeParams) => {
-      const { error } = await supabase.from("pages").update({ theme_id: themeId }).eq("id", pageId);
+      // Switching the base theme must clear stale per-page overrides so the
+      // new theme's own tokens take effect (previously frozen colors/radius/
+      // fonts from a previous theme silently won over the newly applied theme).
+      const { error } = await supabase
+        .from("pages")
+        .update({ theme_id: themeId, theme_overrides: null as unknown as Json })
+        .eq("id", pageId);
 
       if (error) throw error;
     },

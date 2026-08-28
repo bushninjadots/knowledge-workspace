@@ -56,6 +56,24 @@ describe("blockMarkdownToHtml", () => {
     expect(html).not.toContain("ftp:");
   });
 
+  it("blocks unsafe schemes with whitespace and mixed casing", () => {
+    const html = blockMarkdownToHtml(
+      "[one]( JavaScript:alert(1)) [two](java\nscript:alert(1)) [three](data:text/html,payload)",
+    );
+    expect(html).not.toContain("<a ");
+    expect(html).not.toMatch(/javascript:/i);
+    expect(html).not.toContain("data:");
+  });
+
+  it("escapes image alt text and rejects image attribute injection", () => {
+    const html = blockMarkdownToHtml("![alt](https://tethyr.app/image.png)");
+    const injectedHtml = blockMarkdownToHtml(
+      '![alt](https://tethyr.app/image.png" onerror="alert(1))',
+    );
+    expect(html).toContain('<img src="https://tethyr.app/image.png"');
+    expect(injectedHtml).not.toContain('onerror="');
+  });
+
   it("escapes quotes in visible markdown text", () => {
     const html = blockMarkdownToHtml("Say \"hello\" and 'welcome'.");
     expect(html).toContain("&quot;hello&quot;");

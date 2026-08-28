@@ -12,7 +12,7 @@
 //   • Error — friendly error with retry
 //   • Published/draft — resolved page with layout
 
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,9 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
-  /** Render the owner's draft instead of requiring a published page. */
+  /** Which lifecycle state this route should render. Public routes never opt into drafts. */
+  renderState?: "draft" | "published";
+  /** Backwards-compatible alias for owner-only draft previews. */
   previewDraft?: boolean;
   /** Optional layout supplied by Studio for an exact local preview. */
   previewLayout?: PageLayout;
@@ -48,6 +50,7 @@ export function PageShell({
   ownerId,
   ownerType,
   isOwner,
+  renderState,
   previewDraft,
   previewLayout,
   previewTheme,
@@ -63,32 +66,12 @@ export function PageShell({
   } = usePage({
     ownerId,
     ownerType,
-    // Owners always see their draft (even unpublished) on their own surfaces;
-    // non-owners may only request a published page (or an explicit preview).
-    includeDraft: isOwner || previewDraft,
+    // Draft access is explicit. A normal public route must remain published-only,
+    // even when the viewer happens to be the owner.
+    includeDraft: renderState === "draft" || previewDraft === true,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const { isEditing } = useEditMode();
-
-  // Diagnostic: log whether blocks are registered (once per mount).
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Dynamic import to avoid circular deps at module level.
-      import("@/lib/block-registry").then(({ getAllBlocks }) => {
-        const all = getAllBlocks();
-        console.log(
-          `[PageShell] ${ownerType}/${ownerId} | isOwner=${isOwner} | page=${page?.id ?? "null"} | sections=${page?.layout?.sections?.length ?? 0} | blocks_registered=${all.length}`,
-        );
-        if (all.length === 0) {
-          console.warn(
-            "[PageShell] ⚠ No blocks registered — block picker and renderer will be empty. Did you import 'register-all'?",
-          );
-        }
-      });
-    }
-    // Only run on mount or when page/owner type changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!page, ownerType]);
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -160,11 +143,12 @@ export function PageShell({
 
   // ── Unpublished (non-owner only) ─────────────────────────────────────
   // Owners always see their own page (published or draft) at its public URL.
-  if (!isOwner && !previewDraft && page.status !== "published") {
+  const wantsDraft = renderState === "draft" || previewDraft === true;
+  if (!wantsDraft && page.status !== "published") {
     return null;
   }
 
-  if (previewDraft && !isOwner) {
+  if (wantsDraft && !isOwner) {
     return null;
   }
 
@@ -179,11 +163,7 @@ export function PageShell({
         data-page-id={page.id}
         data-page-status={page.status}
         data-page-preview={
-          previewMode
-            ? `${previewMode}-preview`
-            : previewDraft || (isOwner && page.status !== "published")
-              ? "private-draft"
-              : "published"
+          previewMode ? `${previewMode}-preview` : wantsDraft ? "private-draft" : "published"
         }
         role="region"
         aria-label={`${ownerType} page`}

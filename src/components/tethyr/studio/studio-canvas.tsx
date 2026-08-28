@@ -18,6 +18,14 @@ import {
   X,
 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
+import {
+  blockWidthClass,
+  effectiveColumnCount,
+  gridClassForSection,
+  groupBlocksByColumn,
+  usesMultiColumnGrid,
+} from "@/components/tethyr/page/page-composition";
+import type { DevicePreview } from "@/components/tethyr/page/page-composition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getBlock, getBlocksForPageType } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
@@ -62,31 +70,8 @@ interface StudioCanvasProps {
   onReorderBlocks: (sectionId: string, blockId: string, targetIndex: number) => void;
   onLayoutChange: (layout: PageLayout) => void;
   onRefetch: () => void;
-  devicePreview?: "desktop" | "tablet" | "mobile";
+  devicePreview?: DevicePreview;
 }
-
-/** Tailwind grid classes for section layouts in the Studio canvas — must match
- * the page renderer (SECTION_GRID in page-layout.tsx) so the canvas is a true
- * WYSIWYG of the real studio page. */
-const CANVAS_GRID: Record<string, string> = {
-  full: "",
-  two_column: "grid grid-cols-1 md:grid-cols-2 gap-6",
-  three_column: "grid grid-cols-1 md:grid-cols-3 gap-6",
-  sidebar_left: "grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6",
-  sidebar_right: "grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6",
-  feature: "grid grid-cols-1 md:grid-cols-2 gap-6",
-  side_by_side: "grid grid-cols-1 md:grid-cols-2 gap-6",
-};
-
-const COLUMN_COUNT: Record<string, number> = {
-  full: 1,
-  two_column: 2,
-  three_column: 3,
-  sidebar_left: 2,
-  sidebar_right: 2,
-  feature: 2,
-  side_by_side: 2,
-};
 
 export function StudioCanvas({
   page,
@@ -293,21 +278,12 @@ export function StudioCanvas({
       {layout.sections.map((section, sectionIdx) => {
         const isSectionSelected = selectedSectionId === section.id;
         const isSectionDragOver = dragOverSectionId === section.id && dragType === "section";
-        // Match the page renderer's device-preview grid overrides so the canvas
-        // composition mirrors the real studio page at every breakpoint.
-        let gridClass = CANVAS_GRID[section.layout] ?? "";
-        if (devicePreview === "mobile") {
-          gridClass = gridClass.replace(/md:grid-cols-\S+/g, "grid-cols-1");
-        } else if (devicePreview === "tablet") {
-          gridClass = gridClass.replace(/md:grid-cols-3/g, "md:grid-cols-2");
-          gridClass = gridClass.replace(/md:grid-cols-\[\S+\]/g, "md:grid-cols-2");
-        }
-        const isMultiColumn = gridClass !== "";
-        const forceSingle =
-          devicePreview === "mobile" ||
-          (devicePreview === "tablet" && section.layout === "three_column");
-        const colCount = forceSingle ? 1 : (COLUMN_COUNT[section.layout] ?? 1);
-        const useGrid = isMultiColumn && !forceSingle;
+        // Grid mapping and device-preview overrides come from the shared
+        // page-composition module so the canvas mirrors the hosted page.
+        const gridClass = gridClassForSection(section.layout, devicePreview);
+        const isMultiColumn = usesMultiColumnGrid(section.layout, devicePreview);
+        const colCount = effectiveColumnCount(section.layout, devicePreview);
+        const useGrid = isMultiColumn && colCount > 1;
 
         return (
           <div
@@ -503,25 +479,11 @@ function renderGridBlocks(
   onDuplicateBlock: (blockId: string) => void,
   onToggleVisibility: (blockId: string) => void,
   onConfigChange: (blockId: string, config: Record<string, unknown>) => void,
-  devicePreview?: "desktop" | "tablet" | "mobile",
+  devicePreview?: DevicePreview,
 ) {
-  // Group blocks by column
-  const columns: LayoutBlockInstance[][] = Array.from({ length: colCount }, () => []);
-  const unassigned: LayoutBlockInstance[] = [];
-
-  for (const block of section.blocks) {
-    const col = block.column;
-    if (col != null && col >= 0 && col < colCount) {
-      columns[col].push(block);
-    } else {
-      unassigned.push(block);
-    }
-  }
-
-  // Distribute unassigned blocks round-robin into columns
-  for (let i = 0; i < unassigned.length; i++) {
-    columns[i % colCount].push(unassigned[i]);
-  }
+  // Group blocks by column using the shared composition rule (assign explicit
+  // column, round-robin the rest) so the canvas matches the hosted page.
+  const columns = groupBlocksByColumn(section.blocks, colCount);
 
   return (
     <>
@@ -618,7 +580,7 @@ function BlockCard({
   blockContext: BlockContext;
   isSelected: boolean;
   isDragOver: boolean;
-  devicePreview?: "desktop" | "tablet" | "mobile";
+  devicePreview?: DevicePreview;
   onDragStart: (e: React.DragEvent, blockId: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent, blockId: string) => void;
@@ -635,19 +597,8 @@ function BlockCard({
   onConfigChange: (blockId: string, config: Record<string, unknown>) => void;
 }) {
   const isHidden = block.visible === false;
-  const blockWidth = (block.config?.width as string) ?? "full";
-  const mobileOverride = devicePreview === "mobile" || devicePreview === "tablet";
-  const widthClass = mobileOverride
-    ? "w-full"
-    : blockWidth === "2/3"
-      ? "w-2/3"
-      : blockWidth === "1/2"
-        ? "w-1/2"
-        : blockWidth === "1/3"
-          ? "w-1/3"
-          : blockWidth === "auto"
-            ? "w-auto"
-            : "w-full";
+  const widthClass = blockWidthClass(block.config?.width, devicePreview);
+  const widthLabel = (block.config?.width as string | undefined) ?? "full";
 
   const blockDef = getBlock(block.type);
 
@@ -676,9 +627,9 @@ function BlockCard({
         <span className="rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
           {blockDef?.label ?? block.type}
         </span>
-        {blockWidth !== "full" && (
+        {widthLabel !== "full" && (
           <span className="rounded bg-primary/10 px-1 py-0.5 text-[7px] font-medium text-primary/70 border border-primary/15">
-            {blockWidth}
+            {widthLabel}
           </span>
         )}
       </div>

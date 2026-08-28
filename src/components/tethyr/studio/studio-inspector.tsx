@@ -162,7 +162,9 @@ function BlockInspector({
           <SectionLabel>Content</SectionLabel>
           <div className="mt-1.5 space-y-3">
             {fields.map((field) => {
-              const value = block.config?.[field.key];
+              const rawValue = block.config?.[field.key];
+              const value =
+                field.type === "toggle" ? (rawValue ?? def?.defaults?.[field.key]) : rawValue;
               switch (field.type) {
                 case "text":
                   return (

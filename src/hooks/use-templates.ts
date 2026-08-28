@@ -11,7 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import type { TemplateData, LayoutSection } from "@/lib/page-blocks";
 import { invalidatePage } from "@/hooks/use-page";
 
@@ -283,9 +283,14 @@ export function useApplyTemplate() {
 
       if (updateErr) throw updateErr;
 
-      // 3. Apply the template's theme to the page if it has one.
+      // 3. Apply the template's theme to the page if it has one. Clear stale
+      // per-page overrides so the template's theme renders itself, not leftover
+      // customizations from whatever theme was active before.
       if (template?.theme_id) {
-        await supabase.from("pages").update({ theme_id: template.theme_id }).eq("id", pageId);
+        await supabase
+          .from("pages")
+          .update({ theme_id: template.theme_id, theme_overrides: null as unknown as Json })
+          .eq("id", pageId);
       }
 
       // 4. Bump template usage count.

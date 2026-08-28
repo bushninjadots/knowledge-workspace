@@ -521,6 +521,7 @@ function PublicProfileRoute() {
               ownerId={profile.id}
               ownerType="profile"
               isOwner={isOwner}
+              renderState={canViewPreview ? "draft" : "published"}
               previewDraft={canViewPreview}
               previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
               previewLayout={studioPreview?.layout}
@@ -533,7 +534,7 @@ function PublicProfileRoute() {
           </EditModeProvider>
         ) : null}
 
-        {showLegacyPublicView && (
+        {showLegacyPublicView && !canViewPreview && (
           <PublicStudioWorkspace
             profile={profile}
             profileId={profile.id}

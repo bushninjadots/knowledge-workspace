@@ -28,13 +28,6 @@ export function registerBlock(def: BlockDefinition): void {
     return;
   }
   reg.set(def.type, def);
-  if (typeof window !== "undefined") {
-    // Diagnostic: log first registration and every 10th thereafter
-    const count = reg.size;
-    if (count === 1 || count % 10 === 0) {
-      console.log(`[BlockRegistry] ${count} blocks registered (latest: "${def.type}")`);
-    }
-  }
 }
 
 /**

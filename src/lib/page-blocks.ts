@@ -234,6 +234,8 @@ export interface PageData {
   layout: PageLayout;
   /** Joined theme tokens. */
   theme: ThemeTokens | null;
+  /** Raw persisted theme override deltas (unmerged), or null if none. */
+  themeOverrides: ThemeTokens | null;
 }
 
 // ---------------------------------------------------------------------------

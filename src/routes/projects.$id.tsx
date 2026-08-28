@@ -582,7 +582,7 @@ function ProjectPage() {
         />
       )}
 
-      {!previewMode && (
+      {!inStudioPreview && (
         <ProjectWorkbench
           project={project}
           gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
@@ -616,7 +616,7 @@ function ProjectPage() {
       )}
 
       {/* Legacy pulse — hidden when blocks render the page */}
-      {!previewMode && !blocksArePage && (
+      {!inStudioPreview && !blocksArePage && (
         <ProjectPulse
           project={project}
           isOwner={isOwner}
@@ -636,6 +636,7 @@ function ProjectPage() {
             ownerId={id}
             ownerType="project"
             isOwner={isOwner}
+            renderState={inStudioPreview ? "draft" : "published"}
             previewDraft={canViewPrivatePreview || canViewPublicPreview}
             previewMode={previewMode ?? undefined}
             previewLayout={studioPreview?.layout}
@@ -648,8 +649,10 @@ function ProjectPage() {
         </EditModeProvider>
       </div>
 
-      {/* Legacy sections — only shown when blocks aren't the active page */}
-      {!previewMode && !blocksArePage && (
+      {/* Legacy sections remain available only as the data-backed fallback for
+          pages that have not yet received a canonical layout. Preview routes
+          always show the canonical renderer and never mount the legacy tree. */}
+      {!inStudioPreview && !blocksArePage && (
         <div className="animate-room-enter min-h-screen bg-noise">
           <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
             <section aria-labelledby="project-homepage-heading" className="pt-6">

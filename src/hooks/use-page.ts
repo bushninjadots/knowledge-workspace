@@ -105,6 +105,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         updatedAt: pageRow.updated_at,
         layout,
         theme,
+        themeOverrides: pageRow.theme_overrides ? (pageRow.theme_overrides as ThemeTokens) : null,
       };
     },
     staleTime: 0, // Never serve stale page data — mutations must reflect immediately.

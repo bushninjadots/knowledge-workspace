@@ -141,6 +141,7 @@ function ProfilePage() {
             ownerId={userId}
             ownerType="profile"
             isOwner
+            renderState="draft"
             previewDraft
             previewMode={previewMode}
             previewLayout={studioPreview?.layout}

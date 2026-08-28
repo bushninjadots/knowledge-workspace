@@ -174,7 +174,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     if (!pageData) return;
     if (draftOwnerRef.current !== pageData.id) {
       draftOwnerRef.current = pageData.id;
-      resetDraft(pageData.layout ?? { sections: [] }, pageData.theme ?? null);
+      resetDraft(pageData.layout ?? { sections: [] }, pageData.themeOverrides ?? null);
     }
   }, [pageData, resetDraft]);
 
@@ -376,7 +376,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       return;
     }
     updateLayout.mutate(
-      { pageId: pageData.id, layoutId: pageData.layoutId, layout: draftLayout },
+      {
+        pageId: pageData.id,
+        layoutId: pageData.layoutId,
+        layout: draftLayout,
+        ownerId: activePage?.id,
+        ownerType: activePage?.type,
+      },
       {
         onSuccess: async () => {
           // Save theme overrides after layout save succeeds (not in parallel).
@@ -945,15 +951,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         { pageId: pageData.id, themeId },
         {
           onSuccess: async () => {
-            // Adopt the fresh merged theme so the theme editor and dirty
-            // detection track the newly applied theme, not the stale draft.
-            const fresh = await refetchPage();
-            const data = fresh?.data ?? pageData;
-            if (data) {
-              setDraftOverrides(data.theme ?? null);
-              savedOverridesRef.current = data.theme ?? null;
-              overridesDirtyRef.current = false;
-            }
+            // Switching themes clears stale per-page overrides (see
+            // useUpdatePageTheme), so discard any in-memory draft overrides
+            // too — the canvas must render the freshly applied theme, not a
+            // leftover customization layer.
+            await refetchPage();
+            setDraftOverrides(null);
+            savedOverridesRef.current = null;
+            overridesDirtyRef.current = false;
             toast.success("Theme applied");
           },
           onError: (err) => {
@@ -1446,7 +1451,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
               onApplyThemeOverrides={handleApplyThemeOverrides}
-              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
+              currentOverrides={draftOverrides ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onSelectBlock={handleSelectBlock}
@@ -1560,7 +1565,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
               onApplyThemeOverrides={handleApplyThemeOverrides}
-              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
+              currentOverrides={draftOverrides ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onSelectBlock={handleSelectBlock}
