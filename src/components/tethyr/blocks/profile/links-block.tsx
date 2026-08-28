@@ -4,6 +4,7 @@ import { ExternalLink, LinkIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
+import { safeHref } from "@/lib/validators";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type LinksData = {
@@ -51,7 +52,7 @@ function ProfileLinksBlock({ context }: BlockProps) {
         {portfolio.map((link) => (
           <a
             key={link.url}
-            href={link.url}
+            href={safeHref(link.url)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors"
@@ -62,7 +63,7 @@ function ProfileLinksBlock({ context }: BlockProps) {
         {social.map(([platform, url]) => (
           <a
             key={platform}
-            href={url}
+            href={safeHref(url)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground hover:bg-surface-elevated transition-colors"

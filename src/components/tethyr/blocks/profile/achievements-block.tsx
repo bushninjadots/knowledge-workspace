@@ -4,6 +4,7 @@ import { Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { ACHIEVEMENTS, type AchievementType } from "@/lib/reputation";
+import { ACHIEVEMENT_ICONS } from "@/components/tethyr/icons/achievements";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -29,11 +30,12 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
         .order("awarded_at", { ascending: false })
         .limit(12);
       return ((d ?? []) as { achievement: AchievementType; awarded_at: string }[]).map((a, i) => {
-        const def = ACHIEVEMENTS.find((x) => x.type === a.achievement);
+        const type = String(a.achievement).trim().toLowerCase() as AchievementType;
+        const def = ACHIEVEMENTS.find((x) => x.type === type);
         return {
           id: `${profileId}-${i}`,
-          type: a.achievement,
-          title: def?.label ?? a.achievement,
+          type,
+          title: def?.label ?? type,
           description: def?.description ?? null,
           awarded_at: a.awarded_at,
         };
@@ -62,7 +64,10 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
             className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3"
           >
             <div className="mt-0.5 rounded-full bg-trust-subtle p-1.5">
-              <Award className="h-4 w-4 text-trust" />
+              {(() => {
+                const Icon = ACHIEVEMENT_ICONS[a.type] ?? Award;
+                return <Icon className="h-4 w-4 text-trust" aria-hidden="true" />;
+              })()}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium">{a.title}</p>

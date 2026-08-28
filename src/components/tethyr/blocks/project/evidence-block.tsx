@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
+import { safeHref } from "@/lib/validators";
 
 type EvidenceRow = {
   id: string;
@@ -58,7 +59,7 @@ function ProjectEvidenceBlock({ config, context }: BlockProps) {
         {data.map((e) => (
           <a
             key={e.id}
-            href={e.url ?? "#"}
+            href={safeHref(e.url)}
             target={e.url ? "_blank" : undefined}
             rel="noopener noreferrer"
             className="flex items-start gap-2 rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated"

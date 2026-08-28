@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Clock, Languages, Sparkles } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { isSafeUrl } from "@/lib/validators";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -43,9 +45,12 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const { data: avatarSigned } = useSignedStorageUrl("avatars", data?.avatar_url);
+  const { data: bannerSigned } = useSignedStorageUrl("banners", data?.banner_url);
+
   if (isLoading) {
     return (
-      <div className="flex items-center gap-5 bg-surface/40 p-5 rounded-xl">
+      <div className="flex items-center gap-5 rounded-xl bg-surface/40 p-5">
         <Skeleton className="h-20 w-20 rounded-full" />
         <div className="space-y-2">
           <Skeleton className="h-7 w-48" />
@@ -57,6 +62,9 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   }
 
   if (!data) return null;
+  const customBanner =
+    typeof config.bannerUrl === "string" && isSafeUrl(config.bannerUrl) ? config.bannerUrl : null;
+  const bannerSrc = customBanner ?? bannerSigned;
   const initial = (data.display_name ?? data.handle ?? "?").charAt(0).toUpperCase();
   const showTitle = config.showTitle !== false;
   const showHandle = config.showHandle !== false;
@@ -66,24 +74,15 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-surface/40">
-      {showBanner &&
-        (typeof config.bannerUrl === "string" && config.bannerUrl
-          ? config.bannerUrl
-          : data.banner_url) && (
-          <img
-            src={
-              (typeof config.bannerUrl === "string" && config.bannerUrl) || data.banner_url || ""
-            }
-            alt=""
-            className="h-32 w-full object-cover"
-          />
-        )}
+      {showBanner && bannerSrc && (
+        <img src={bannerSrc} alt="" className="h-32 w-full object-cover" />
+      )}
       <div className="p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           {/* Avatar */}
           <div className="shrink-0">
             <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-              <AvatarImage src={data.avatar_url ?? undefined} />
+              <AvatarImage src={avatarSigned ?? undefined} alt="" />
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
           </div>

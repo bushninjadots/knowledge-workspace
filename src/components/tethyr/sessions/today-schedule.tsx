@@ -1,6 +1,7 @@
 import { Clock, Video, ExternalLink } from "lucide-react";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
+import { safeHref } from "@/lib/validators";
 
 function formatTime(iso: string | null) {
   if (!iso) return "--:--";
@@ -91,7 +92,7 @@ function SessionCard({
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         {session.meeting_url && (
           <a
-            href={session.meeting_url}
+            href={safeHref(session.meeting_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-lg bg-brand-green/10 p-2 text-brand-green transition-colors hover:bg-brand-green/20"

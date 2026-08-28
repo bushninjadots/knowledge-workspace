@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
+import { safeHref } from "@/lib/validators";
 
 type RepoRow = {
   id: string;
@@ -49,7 +50,7 @@ function ProjectReposBlock({ config, context }: BlockProps) {
           return (
             <a
               key={repo.id}
-              href={repo.url}
+              href={safeHref(repo.url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated"

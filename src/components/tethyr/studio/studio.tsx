@@ -873,7 +873,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           `tethyr:studio-preview:${activePage?.type}:${activePage?.id}`,
           JSON.stringify({
             layout: draftLayout,
-            theme: draftOverrides ?? pageData.theme ?? null,
+            theme: deepMergeTokens(pageData.theme ?? {}, draftOverrides ?? {}),
             pageId: pageData.id,
             ownerId: activePage?.id ?? "",
             ownerType: activePage?.type ?? "project",

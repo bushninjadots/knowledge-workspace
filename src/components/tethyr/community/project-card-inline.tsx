@@ -4,6 +4,7 @@ import { ExternalLink, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectSnapshot } from "@/hooks/use-community";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { safeHref } from "@/lib/validators";
 
 const sb = supabase;
 
@@ -103,7 +104,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
 
   if (isExternal && snapshot?.url) {
     return (
-      <a href={snapshot.url} target="_blank" rel="noreferrer" className={cardClass}>
+      <a href={safeHref(snapshot.url)} target="_blank" rel="noreferrer" className={cardClass}>
         {content}
       </a>
     );

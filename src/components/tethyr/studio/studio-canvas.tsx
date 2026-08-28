@@ -325,6 +325,7 @@ export function StudioCanvas({
             onDragOver={(e) => handleSectionDragOver(e, section.id)}
             onDragLeave={() => setDragOverSectionId(null)}
             onDrop={(e) => handleSectionDrop(e, section.id)}
+            style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
             onClick={(e) => {
               // Only select section if clicking the section container itself,
               // not any child element (block, button, toolbar, etc.)

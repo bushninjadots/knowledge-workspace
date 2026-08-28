@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -64,17 +65,18 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   });
 
   const resolvedProject = previewProject ?? project;
+  const { data: coverSigned } = useSignedStorageUrl("project-media", resolvedProject?.cover_url);
   const showBanner = config.showBanner !== false;
   const showOwner = config.showOwner !== false;
 
   const bannerStyle = useMemo(() => {
-    if (!showBanner || !resolvedProject?.cover_url) return {};
+    if (!showBanner || !coverSigned) return {};
     return {
-      backgroundImage: `url(${resolvedProject.cover_url})`,
+      backgroundImage: `url(${coverSigned})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
-  }, [resolvedProject?.cover_url, showBanner]);
+  }, [coverSigned, showBanner]);
 
   const showDescription = config.showDescription !== false;
   const showProgress = config.showProgress !== false;
@@ -101,9 +103,7 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>
       {/* Overlay for readability when banner image is present */}
-      {showBanner && resolvedProject.cover_url && (
-        <div className="absolute inset-0 bg-background/90" />
-      )}
+      {showBanner && coverSigned && <div className="absolute inset-0 bg-background/90" />}
 
       <div className="relative px-6 py-8 sm:px-8 sm:py-12">
         {showOwner && typeof context.data?.ownerAvatarUrl === "string" && (

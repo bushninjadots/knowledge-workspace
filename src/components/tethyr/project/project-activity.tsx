@@ -36,6 +36,7 @@ import {
 import { syncGithubProjectActivity } from "@/lib/github-server";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
 import { timeAgo } from "@/lib/time";
+import { safeHref } from "@/lib/validators";
 import type { ProjectFile } from "./project-files";
 
 type ActivityItem = {
@@ -597,7 +598,7 @@ export function ProjectActivityTab({
                     )}
                     {item.kind === "github" && typeof item.metadata?.url === "string" && (
                       <a
-                        href={item.metadata.url}
+                        href={safeHref(item.metadata.url as string)}
                         target="_blank"
                         rel="noreferrer"
                         className="mt-1.5 inline-flex text-[11px] text-primary underline-offset-2 hover:underline"

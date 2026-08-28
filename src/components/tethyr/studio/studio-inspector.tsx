@@ -19,6 +19,7 @@ import type { BlockDefinition } from "@/lib/page-blocks";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
 import type { SelectionType } from "./studio";
 import { getBlock } from "@/lib/block-registry";
+import { deepMergeTokens } from "@/lib/theme-tokens";
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -534,10 +535,8 @@ function PageInspector({
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
-  const baseTokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
-  const tokens = currentOverrides
-    ? ({ ...baseTokens, ...currentOverrides } as Record<string, string>)
-    : (baseTokens as Record<string, string>);
+  const baseTokens = (pageData?.theme ?? {}) as ThemeTokens;
+  const tokens = deepMergeTokens(baseTokens, currentOverrides ?? {});
 
   const currentRadiusLg =
     parseInt(
@@ -562,6 +561,33 @@ function PageInspector({
         },
       };
       onUpdateThemeOverrides(newOverrides);
+    },
+    [currentOverrides, onUpdateThemeOverrides],
+  );
+
+  const updateColor = useCallback(
+    (key: string, value: string) => {
+      if (!onUpdateThemeOverrides || /[;<>{}]/.test(value)) return;
+      onUpdateThemeOverrides({
+        ...(currentOverrides ?? {}),
+        colors: {
+          ...(currentOverrides?.colors ?? {}),
+          [key]: value,
+        },
+      });
+    },
+    [currentOverrides, onUpdateThemeOverrides],
+  );
+
+  const updateFont = useCallback(
+    (key: "headingFont" | "bodyFont" | "monoFont", value: string) => {
+      onUpdateThemeOverrides?.({
+        ...(currentOverrides ?? {}),
+        typography: {
+          ...(currentOverrides?.typography ?? {}),
+          [key]: value,
+        },
+      });
     },
     [currentOverrides, onUpdateThemeOverrides],
   );
@@ -673,40 +699,69 @@ function PageInspector({
           {/* Colors */}
           <div>
             <SectionLabel>Colors</SectionLabel>
-            <div className="mt-1.5 space-y-1.5">
+            <div className="mt-1.5 space-y-2">
               {[
-                ["Background", "--background"],
-                ["Surface", "--surface"],
-                ["Foreground", "--foreground"],
-                ["Primary", "--primary"],
-                ["Border", "--border"],
-              ].map(([label, cssVar]) => (
-                <div key={cssVar} className="flex items-center gap-2">
-                  <div
-                    className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
-                    style={{ backgroundColor: `var(${cssVar})` }}
-                  />
-                  <span className="text-[10px] text-muted-foreground">{label}</span>
-                </div>
-              ))}
+                ["Background", "background"],
+                ["Surface", "surface"],
+                ["Foreground", "foreground"],
+                ["Primary", "primary"],
+                ["Border", "border"],
+              ].map(([label, key]) => {
+                const value = tokens.colors?.[key] ?? "";
+                return (
+                  <label key={key} className="flex items-center gap-2">
+                    <span
+                      className="h-4 w-4 shrink-0 rounded border border-border/40"
+                      style={{ backgroundColor: value || `var(--${key})` }}
+                    />
+                    <span className="w-16 shrink-0 text-[10px] text-muted-foreground">{label}</span>
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => updateColor(key, e.target.value)}
+                      placeholder={`var(--${key})`}
+                      aria-label={`${label} color`}
+                      className="min-w-0 flex-1 rounded-md border border-border/30 bg-surface/40 px-2 py-1 text-[10px] font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </label>
+                );
+              })}
             </div>
+            <p className="mt-1 text-[9px] text-muted-foreground/60">
+              Use a hex, rgb, or hsl value. Changes preview instantly and save with the draft.
+            </p>
           </div>
 
           {/* Typography */}
           <div>
             <SectionLabel>Typography</SectionLabel>
-            <div className="mt-1.5 space-y-1">
+            <div className="mt-1.5 space-y-2">
               {[
-                ["Display", tokens["font-display"] ?? "var(--font-display)"],
-                ["Body", tokens["font-sans"] ?? "var(--font-sans)"],
-                ["Mono", tokens["font-mono"] ?? "var(--font-mono)"],
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">{label}</span>
-                  <span className="text-[9px] text-muted-foreground/40 font-mono truncate max-w-[120px]">
-                    {value}
-                  </span>
-                </div>
+                ["Display", "headingFont", tokens.typography?.headingFont ?? ""],
+                ["Body", "bodyFont", tokens.typography?.bodyFont ?? ""],
+                ["Mono", "monoFont", tokens.typography?.monoFont ?? ""],
+              ].map(([label, key, value]) => (
+                <label key={key} className="flex items-center justify-between gap-2">
+                  <span className="w-16 shrink-0 text-[10px] text-muted-foreground">{label}</span>
+                  <select
+                    value={value}
+                    onChange={(e) =>
+                      updateFont(key as "headingFont" | "bodyFont" | "monoFont", e.target.value)
+                    }
+                    aria-label={`${label} font`}
+                    className="min-w-0 flex-1 rounded-md border border-border/30 bg-surface/40 px-2 py-1 text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Theme default</option>
+                    <option value="Inter, ui-sans-serif, system-ui, sans-serif">Inter</option>
+                    <option value="Space Grotesk, ui-sans-serif, system-ui, sans-serif">
+                      Space Grotesk
+                    </option>
+                    <option value="JetBrains Mono, ui-monospace, SFMono-Regular, monospace">
+                      JetBrains Mono
+                    </option>
+                    <option value="ui-sans-serif, system-ui, sans-serif">System sans</option>
+                  </select>
+                </label>
               ))}
             </div>
           </div>

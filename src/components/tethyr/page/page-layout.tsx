@@ -124,11 +124,13 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         const useGrid = colCount > 1 && !forceSingle;
 
         const renderBlock = (block: LayoutBlockInstance) => {
+          const span = Math.max(1, Math.min(block.span ?? 1, colCount));
           const widthWrap = applyBlockWidths
             ? `min-w-0 ${blockWidthClass(block.config?.width, devicePreview)}`
             : "min-w-0";
+          const spanClass = useGrid && span > 1 ? `md:col-span-${span}` : "";
           return (
-            <div key={block.id} className={widthWrap}>
+            <div key={block.id} className={`${widthWrap} ${spanClass}`}>
               <BlockRenderer type={block.type} config={block.config} context={context} />
             </div>
           );
@@ -140,6 +142,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             data-section-id={section.id}
             data-section-layout={section.layout}
             className="py-4 first:pt-0 last:pb-0"
+            style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
           >
             <div className={gridClass}>
               {useGrid

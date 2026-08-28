@@ -18,6 +18,7 @@ import type { DiscoverableSkill } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { safeHref } from "@/lib/validators";
 
 function RailCard({
   title,
@@ -216,7 +217,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
             {resources.map((resource, index) => (
               <a
                 key={`${resource.projectId}-${index}`}
-                href={resource.url}
+                href={safeHref(resource.url)}
                 target="_blank"
                 rel="noreferrer"
                 className="group block rounded-lg px-2 py-2 transition-colors hover:bg-surface-elevated/60"

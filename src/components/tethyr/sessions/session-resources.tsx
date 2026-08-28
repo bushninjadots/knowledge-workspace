@@ -5,6 +5,7 @@ import { useAddSessionResource, useDeleteSessionResource } from "@/hooks/use-ses
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { safeHref } from "@/lib/validators";
 
 type SessionResource = {
   id: string;
@@ -152,7 +153,7 @@ export function SessionResources({
                 </div>
                 {resource.url && (
                   <a
-                    href={resource.url}
+                    href={safeHref(resource.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate text-xs text-primary hover:underline"

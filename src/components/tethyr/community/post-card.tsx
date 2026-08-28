@@ -53,6 +53,7 @@ import {
   type PostWithAuthor,
 } from "@/lib/community-data";
 import { toast } from "sonner";
+import { safeHref } from "@/lib/validators";
 import { friendlyError } from "@/lib/error-message";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { useAddComment, useReportPost, useVotePoll, type PollData } from "@/hooks/use-community";
@@ -452,7 +453,7 @@ export function PostCard({
       )}
       {post.link_url && (
         <a
-          href={post.link_url}
+          href={safeHref(post.link_url)}
           target="_blank"
           rel="noopener noreferrer"
           className="group mt-2 flex items-center gap-3 rounded-xl border card-border bg-background/40 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"

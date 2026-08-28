@@ -24,6 +24,7 @@ import {
   type ProjectRepo,
 } from "@/hooks/use-project-repos";
 import { timeAgo } from "@/lib/time";
+import { safeHref } from "@/lib/validators";
 
 function RepoCard({
   repo,
@@ -48,7 +49,7 @@ function RepoCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <a
-            href={repo.url}
+            href={safeHref(repo.url)}
             target="_blank"
             rel="noreferrer"
             className="truncate text-sm font-semibold hover:text-primary hover:underline"

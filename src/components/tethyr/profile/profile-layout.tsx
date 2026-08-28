@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
-import { validateImageFile } from "@/lib/validators";
+import { safeHref, validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
@@ -449,7 +449,7 @@ function ProfileSidebar({ profile }: { profile: Profile | null }) {
               return (
                 <a
                   key={key}
-                  href={url}
+                  href={safeHref(url)}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-surface-sunken hover:text-foreground"
