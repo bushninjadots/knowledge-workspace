@@ -2090,6 +2090,7 @@ export type Database = {
           tools: Json | null
           updated_at: string
           uploaded_files: Json | null
+          visibility: string
           vision: string | null
         }
         Insert: {
@@ -2120,6 +2121,7 @@ export type Database = {
           tools?: Json | null
           updated_at?: string
           uploaded_files?: Json | null
+          visibility?: string
           vision?: string | null
         }
         Update: {
@@ -2150,6 +2152,7 @@ export type Database = {
           tools?: Json | null
           updated_at?: string
           uploaded_files?: Json | null
+          visibility?: string
           vision?: string | null
         }
         Relationships: [
@@ -2965,6 +2968,7 @@ export type Database = {
         Args: { p_bucket: string; p_metadata: Json; p_name: string }
         Returns: boolean
       }
+      is_project_visible: { Args: { project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
