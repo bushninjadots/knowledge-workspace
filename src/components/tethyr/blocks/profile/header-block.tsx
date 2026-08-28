@@ -73,15 +73,25 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showBanner = config.showBanner !== false;
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-surface/40">
+    <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
       {showBanner && bannerSrc && (
-        <img src={bannerSrc} alt="" className="h-32 w-full object-cover" />
+        <img
+          src={bannerSrc}
+          alt=""
+          width="1200"
+          height="400"
+          loading="eager"
+          decoding="async"
+          className="h-44 w-full object-cover sm:h-64"
+        />
       )}
-      <div className="p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
+        <div
+          className={`flex flex-col gap-4 sm:flex-row sm:items-end ${bannerSrc && showBanner ? "-mt-12" : "pt-6"}`}
+        >
           {/* Avatar */}
           <div className="shrink-0">
-            <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
+            <Avatar className="h-24 w-24 border-4 border-surface sm:h-32 sm:w-32">
               <AvatarImage src={avatarSigned ?? undefined} alt="" />
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
@@ -89,9 +99,9 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
           {/* Identity */}
           <div className="min-w-0 flex-1">
-            <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
+            <h1 className="font-display text-2xl font-semibold text-foreground sm:text-4xl">
               {data.display_name || "Untitled"}
-            </h2>
+            </h1>
             {showTitle && data.creator_title && (
               <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
             )}

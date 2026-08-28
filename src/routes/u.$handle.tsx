@@ -513,24 +513,26 @@ function PublicProfileRoute() {
           />
         )}
 
-        {/* Block-based page presentation */}
-        <EditModeProvider>
-          <PageShell
-            ownerId={profile.id}
-            ownerType="profile"
-            isOwner={isOwner}
-            previewDraft={canViewPreview}
-            previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
-            previewLayout={studioPreview?.layout}
-            previewTheme={studioPreview?.theme ?? undefined}
-            onBackToStudio={() =>
-              previewFromStudio ? window.history.back() : (window.location.href = "/studio")
-            }
-            previewData={{ profile }}
-          />
-        </EditModeProvider>
+        {/* Exactly one profile presentation is mounted: the chosen page layout,
+            or the legacy default until a page layout exists. */}
+        {blocksArePage || canViewPreview ? (
+          <EditModeProvider>
+            <PageShell
+              ownerId={profile.id}
+              ownerType="profile"
+              isOwner={isOwner}
+              previewDraft={canViewPreview}
+              previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
+              previewLayout={studioPreview?.layout}
+              previewTheme={studioPreview?.theme ?? undefined}
+              onBackToStudio={() =>
+                previewFromStudio ? window.history.back() : (window.location.href = "/studio")
+              }
+              previewData={{ profile }}
+            />
+          </EditModeProvider>
+        ) : null}
 
-        {/* Legacy workspace — hidden when blocks are the page */}
         {showLegacyPublicView && (
           <PublicStudioWorkspace
             profile={profile}
