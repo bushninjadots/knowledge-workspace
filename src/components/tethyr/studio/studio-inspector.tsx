@@ -37,6 +37,7 @@ interface StudioInspectorProps {
   onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
+  onApplyThemeOverrides?: (overrides: ThemeTokens) => void;
   currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
   currentThemeId?: string | null;
@@ -61,6 +62,7 @@ export function StudioInspector({
   onUpdateBlock,
   onUpdateSectionLayout,
   onUpdateThemeOverrides,
+  onApplyThemeOverrides,
   currentOverrides,
   themes = [],
   currentThemeId,
@@ -96,6 +98,7 @@ export function StudioInspector({
             currentThemeId={currentThemeId}
             currentOverrides={currentOverrides}
             onUpdateThemeOverrides={onUpdateThemeOverrides}
+            onApplyThemeOverrides={onApplyThemeOverrides}
           />
         )}
       </div>
@@ -519,12 +522,14 @@ function PageInspector({
   currentThemeId,
   currentOverrides,
   onUpdateThemeOverrides,
+  onApplyThemeOverrides,
 }: {
   pageData: PageData | undefined | null;
   themes: ThemeCatalogEntry[];
   currentThemeId?: string | null;
   currentOverrides?: ThemeTokens | null;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
+  onApplyThemeOverrides?: (overrides: ThemeTokens) => void;
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
@@ -620,6 +625,31 @@ function PageInspector({
 
       {showAdvanced && (
         <>
+          <div>
+            <SectionLabel>Quick adjustments</SectionLabel>
+            <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+              {[
+                { label: "More space", value: "spacious" },
+                { label: "Compact", value: "compact" },
+              ].map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() =>
+                    onApplyThemeOverrides?.({
+                      spacing: { section: preset.value === "spacious" ? "4rem" : "2rem" },
+                    })
+                  }
+                  className="rounded-md bg-surface/40 px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-[9px] text-muted-foreground/60">
+              Changes preview instantly and are saved with the draft.
+            </p>
+          </div>
           {/* Radius slider */}
           <div>
             <SectionLabel>

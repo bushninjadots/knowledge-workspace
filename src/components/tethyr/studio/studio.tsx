@@ -750,6 +750,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     overridesDirtyRef.current = true;
   }, []);
 
+  const handleApplyThemeOverrides = useCallback(
+    (overrides: ThemeTokens) => {
+      const merged = deepMergeTokens(draftOverrides ?? {}, overrides);
+      handleUpdateThemeOverrides(merged);
+      toast.success("Theme preview updated — save when ready");
+    },
+    [draftOverrides, handleUpdateThemeOverrides],
+  );
+
   // ── Publish / Save Draft / Preview ────────────────────────────────────
   const handlePublish = useCallback(async () => {
     if (!pageData) {
@@ -1428,6 +1437,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
+              onApplyThemeOverrides={handleApplyThemeOverrides}
               currentOverrides={draftOverrides ?? pageData?.theme ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
