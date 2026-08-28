@@ -183,7 +183,7 @@ function deriveContrastVars(vars: Record<string, string>): void {
   // Semantic hue tints must sit on the theme background, not on white.
   for (const hue of ["trust", "learning", "teaching", "ai", "warning", "caution"]) {
     setIf(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
-    setIf(`--${hue}-foreground`, `var(--${hue})`);
+    setIf(`--${hue}-foreground`, BG);
   }
 }
 
