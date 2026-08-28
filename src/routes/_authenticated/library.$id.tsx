@@ -32,9 +32,7 @@ import {
 } from "@/hooks/use-library";
 import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
 import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
-import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
 import { lazy, Suspense } from "react";
-
 const NoteEditor = lazy(() =>
   import("@/components/tethyr/library/note-editor").then((m) => ({ default: m.NoteEditor })),
 );
@@ -132,7 +130,9 @@ function LibraryItemPage() {
           : "Convert this Markdown into rich text?",
       );
       if (!confirmed) return;
-      setContent(target === "code" ? htmlToMarkdown(content) : markdownToHtml(content));
+      void import("@/lib/content-format").then(({ htmlToMarkdown, markdownToHtml }) => {
+        setContent(target === "code" ? htmlToMarkdown(content) : markdownToHtml(content));
+      });
     }
     setWorkspaceMode(target);
     setHasChanges(true);
