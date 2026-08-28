@@ -4,8 +4,8 @@
 // Includes a status bar showing auth, page, registry, and template state to
 // help users understand exactly what's happening.
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useState, useCallback, useMemo, useRef, useEffect, lazy } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Monitor,
   Tablet,
@@ -45,9 +45,17 @@ import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock, blockPageScope } from "@/lib/block-registry";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { StudioSidebar } from "./studio-sidebar";
-import { StudioCanvas, type BlockAddTarget } from "./studio-canvas";
-import { StudioInspector } from "./studio-inspector";
+import type { BlockAddTarget } from "./studio-canvas";
+
+const StudioSidebarLazy = lazy(() =>
+  import("./studio-sidebar").then((module) => ({ default: module.StudioSidebar })),
+);
+const StudioCanvasLazy = lazy(() =>
+  import("./studio-canvas").then((module) => ({ default: module.StudioCanvas })),
+);
+const StudioInspectorLazy = lazy(() =>
+  import("./studio-inspector").then((module) => ({ default: module.StudioInspector })),
+);
 import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
 import type {
   LayoutBlockInstance,
@@ -96,6 +104,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const [devicePreview, setDevicePreview] = useState<DevicePreview>("desktop");
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [mobilePanel, setMobilePanel] = useState<"sidebar" | "inspector" | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectionType, setSelectionType] = useState<SelectionType>("page");
@@ -1171,11 +1180,29 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       {/* ── Top toolbar ─────────────────────────────────────────────────── */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/30 bg-surface-elevated/30 px-4">
-        <div className="flex items-center gap-4">
-          <span className="font-display text-sm font-semibold tracking-tight text-foreground">
-            Creativity Studio
-          </span>
+      <header className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/30 bg-surface-elevated/30 px-3 py-2 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+          <Link
+            to="/profile"
+            className="shrink-0 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+            aria-label="Back to Your Studio"
+            title="Back to Your Studio"
+          >
+            ← <span className="hidden sm:inline">Your Studio</span>
+          </Link>
+          <span className="h-4 w-px bg-border/40" aria-hidden="true" />
+          <div className="min-w-0">
+            <span className="block font-display text-sm font-semibold tracking-tight text-foreground">
+              Creativity Studio
+            </span>
+            <span
+              className="block truncate text-[10px] text-muted-foreground"
+              title={`Editing ${activePage?.title ?? "page"}`}
+            >
+              Editing{" "}
+              {activePage?.type === "profile" ? "your profile page" : (activePage?.title ?? "page")}
+            </span>
+          </div>
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
           <label className="sr-only" htmlFor="studio-page-select">
@@ -1215,7 +1242,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
         <div className="flex items-center gap-2">
           {/* Device preview */}
-          <div className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5">
+          <div
+            className="flex items-center rounded-md border border-border/30 bg-surface/50 p-0.5"
+            aria-label="Preview device"
+          >
+            <span className="sr-only">Preview device</span>
             {(["desktop", "tablet", "mobile"] as const).map((key) => (
               <button
                 key={key}
@@ -1337,7 +1368,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             className="h-7 gap-1.5 text-[11px]"
             onClick={handlePreview}
           >
-            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Public </span>Preview
+            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Public </span>
+            Preview
           </Button>
           {!isPublished && (
             <Button
@@ -1354,7 +1386,75 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       </header>
 
       {/* ── Three-column body ────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Mobile panel scrim and focused panel */}
+        {mobilePanel && (
+          <button
+            type="button"
+            aria-label="Close Studio panel"
+            className="fixed inset-0 z-40 bg-background/40 lg:hidden"
+            onClick={() => setMobilePanel(null)}
+          />
+        )}
+        {mobilePanel === "sidebar" && (
+          <div className="fixed inset-y-0 left-0 z-50 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto border-r border-border/40 bg-background shadow-lg lg:hidden">
+            <StudioSidebarLazy
+              activePage={activePage}
+              activeTab={sidebarTab}
+              onTabChange={setSidebarTab}
+              onAddBlock={(type) => {
+                handleAddBlock(type);
+                setMobilePanel(null);
+              }}
+              onAddSection={(preset) => {
+                handleAddSection(preset);
+                setMobilePanel(null);
+              }}
+              onApplyRecipe={(recipeId) => {
+                handleApplyRecipe(recipeId);
+                setMobilePanel(null);
+              }}
+              onApplyTemplate={handleApplyTemplate}
+              onForkTemplate={handleForkTemplate}
+              onApplyTheme={handleApplyTheme}
+              onSaveAsTemplate={handleSaveAsTemplate}
+              onReseed={handleReseed}
+              themeNames={themeNames}
+              templates={publicTemplates}
+              templatesLoading={templatesLoading}
+              templatesError={templatesError}
+              themes={themeCatalog}
+              currentThemeId={pageData?.themeId ?? null}
+            />
+          </div>
+        )}
+        {mobilePanel === "inspector" && (
+          <div className="fixed inset-y-0 right-0 z-50 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto border-l border-border/40 bg-background shadow-lg lg:hidden">
+            <StudioInspectorLazy
+              selectionType={selectionType}
+              selectedBlock={selectedBlock}
+              selectedBlockDef={selectedBlock ? getBlock(selectedBlock.type) : undefined}
+              selectedSection={selectedSection}
+              pageData={pageData}
+              onMoveBlock={handleMoveBlock}
+              onRemoveBlock={handleRemoveBlock}
+              onRemoveSection={handleRemoveSection}
+              onMoveSection={handleMoveSection}
+              onDuplicateSection={handleDuplicateSection}
+              onUpdateBlockConfig={handleUpdateBlockConfig}
+              onUpdateBlock={handleUpdateBlock}
+              onUpdateSectionLayout={handleUpdateSectionLayout}
+              onUpdateThemeOverrides={handleUpdateThemeOverrides}
+              onApplyThemeOverrides={handleApplyThemeOverrides}
+              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
+              themes={themeCatalog}
+              currentThemeId={pageData?.themeId ?? null}
+              onSelectBlock={handleSelectBlock}
+              onRefetch={refetchPage}
+            />
+          </div>
+        )}
+
         {/* Left sidebar */}
         <div
           className={`shrink-0 overflow-y-auto border-r border-border/30 bg-surface-elevated/10 transition-all duration-200 ${
@@ -1362,7 +1462,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           }`}
         >
           {leftOpen && (
-            <StudioSidebar
+            <StudioSidebarLazy
               activePage={activePage}
               activeTab={sidebarTab}
               onTabChange={setSidebarTab}
@@ -1395,7 +1495,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             >
               {activePage ? (
                 <EditModeProvider>
-                  <StudioCanvas
+                  <StudioCanvasLazy
                     page={activePage}
                     pageData={pageData}
                     layout={draftLayout}
@@ -1444,7 +1544,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           }`}
         >
           {rightOpen && (
-            <StudioInspector
+            <StudioInspectorLazy
               selectionType={selectionType}
               selectedBlock={selectedBlock}
               selectedBlockDef={selectedBlock ? getBlock(selectedBlock.type) : undefined}
@@ -1469,8 +1569,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           )}
         </div>
       </div>
-
-      {/* ── Status bar ───────────────────────────────────────────────────── */}
       <StatusBar
         pageLoading={pageLoading}
         pageError={pageError}
@@ -1489,7 +1587,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       <div className="pointer-events-none fixed bottom-10 left-4 z-40 flex gap-2">
         <button
           type="button"
-          onClick={() => setLeftOpen(!leftOpen)}
+          onClick={() => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+              setMobilePanel((current) => (current === "sidebar" ? null : "sidebar"));
+            } else {
+              setLeftOpen(!leftOpen);
+            }
+          }}
           className="pointer-events-auto rounded-md border border-border/40 bg-surface-elevated p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={leftOpen ? "Close sidebar" : "Open sidebar"}
         >
@@ -1503,7 +1607,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       <div className="pointer-events-none fixed bottom-10 right-4 z-40 flex gap-2">
         <button
           type="button"
-          onClick={() => setRightOpen(!rightOpen)}
+          onClick={() => {
+            if (window.matchMedia("(max-width: 1023px)").matches) {
+              setMobilePanel((current) => (current === "inspector" ? null : "inspector"));
+            } else {
+              setRightOpen(!rightOpen);
+            }
+          }}
           className="pointer-events-auto rounded-md border border-border/40 bg-surface-elevated p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={rightOpen ? "Close inspector" : "Open inspector"}
         >
