@@ -497,6 +497,9 @@ export function PostCard({
               height="400"
               loading="lazy"
               decoding="async"
+              onError={(event) => {
+                event.currentTarget.hidden = true;
+              }}
               className={`w-full rounded-lg border border-border/60 object-cover ${
                 post.images!.length === 1 ? "aspect-video" : "aspect-square"
               }`}

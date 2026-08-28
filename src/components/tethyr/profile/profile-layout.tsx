@@ -169,7 +169,12 @@ export function ProfileLayout({
                   <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                     <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                   </div>
-                  <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105">
+                  <button
+                    type="button"
+                    aria-label="Change avatar"
+                    title="Change avatar"
+                    className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105"
+                  >
                     <Camera className="h-4 w-4" />
                   </button>
                 </DragDropFileInput>
@@ -397,7 +402,7 @@ function CompletenessRing({ value }: { value: number }) {
   const gradientId = "completeness-ring";
   return (
     <div className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
-      <div className="relative h-20 w-20">
+      <div className="relative h-20 w-20" role="img" aria-label={`Profile completeness: ${value}%`}>
         <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="hsl(var(--border))" strokeWidth="6" fill="none" />
           <circle
