@@ -48,7 +48,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { StudioSidebar } from "./studio-sidebar";
 import { StudioCanvas, type BlockAddTarget } from "./studio-canvas";
 import { StudioInspector } from "./studio-inspector";
-import { type SectionPreset } from "./section-presets";
+import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
 import type {
   LayoutBlockInstance,
   LayoutSection,
@@ -539,6 +539,52 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       applyDraft({ sections });
     },
     [draftLayout, applyDraft],
+  );
+
+  // ── Guided recipes ───────────────────────────────────────────────────
+  const handleApplyRecipe = useCallback(
+    (recipeId: string) => {
+      const recipeSections: Record<string, SectionPreset[]> = {
+        showcase: [
+          SECTION_PRESETS.find((p) => p.id === "hero")!,
+          SECTION_PRESETS.find((p) => p.id === "one-column")!,
+        ],
+        collaborate: [
+          SECTION_PRESETS.find((p) => p.id === "hero")!,
+          SECTION_PRESETS.find((p) => p.id === "two-columns")!,
+        ],
+        document: [
+          SECTION_PRESETS.find((p) => p.id === "one-column")!,
+          SECTION_PRESETS.find((p) => p.id === "two-row")!,
+        ],
+      };
+      const presets = recipeSections[recipeId];
+      if (!presets?.length || !pageReady) return;
+      const sections = presets.map((preset, index) => ({
+        id: `sect_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 6)}`,
+        position: index,
+        layout: preset.layout,
+        blocks: (preset.starterBlocks ?? []).map((starter, blockIndex) => {
+          const instance = createBlockInstance(starter.type);
+          return {
+            id: `blk_${Date.now()}_${index}_${blockIndex}`,
+            type: starter.type,
+            position: blockIndex,
+            config: { ...(instance?.config ?? {}), ...(starter.config ?? {}) } as Record<
+              string,
+              unknown
+            >,
+            visible: true,
+          };
+        }),
+      }));
+      applyDraft({ sections });
+      setSelectionType("page");
+      setSelectedBlockId(null);
+      setSelectedSectionId(null);
+      toast.success("Starting layout added — make it yours");
+    },
+    [applyDraft, pageReady],
   );
 
   // ── Add section ──────────────────────────────────────────────────────
@@ -1164,7 +1210,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
           {/* The canvas always renders the selected owner's working copy. */}
           <span
-            className="text-[9px] text-muted-foreground/60 select-none"
+            className="hidden text-[9px] text-muted-foreground/60 select-none sm:inline"
             title="Editing: private draft. Public preview renders the saved draft as a visitor."
             data-studio-mode="private-draft"
           >
@@ -1219,7 +1265,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             {pageStatusLabel}
           </span>
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium ${
+            className={`hidden items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium sm:inline-flex ${
               isPublished
                 ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
                 : "bg-amber-500/10 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400"
@@ -1249,7 +1295,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1.5 text-[11px]"
+            className="hidden h-7 gap-1.5 text-[11px] md:inline-flex"
             onClick={handlePrivatePreview}
           >
             <Eye className="h-3.5 w-3.5" /> Private preview
@@ -1260,7 +1306,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             className="h-7 gap-1.5 text-[11px]"
             onClick={handlePreview}
           >
-            <Eye className="h-3.5 w-3.5" /> Public preview
+            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Public </span>Preview
           </Button>
           {!isPublished && (
             <Button
@@ -1291,6 +1337,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onTabChange={setSidebarTab}
               onAddBlock={handleAddBlock}
               onAddSection={handleAddSection}
+              onApplyRecipe={handleApplyRecipe}
               onApplyTemplate={handleApplyTemplate}
               onForkTemplate={handleForkTemplate}
               onApplyTheme={handleApplyTheme}

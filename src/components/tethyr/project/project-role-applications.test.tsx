@@ -96,7 +96,7 @@ describe("ApplyToRoleButton", () => {
     await userEvent.click(again);
 
     await userEvent.type(
-      screen.getByPlaceholderText(/why'd you like to join/i),
+      screen.getByPlaceholderText(/what would you contribute/i),
       "I have the skills for this",
     );
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
@@ -145,7 +145,7 @@ describe("ApplyToRoleButton", () => {
     renderButton();
 
     await userEvent.click(await screen.findByRole("button", { name: /^apply$/i }));
-    await userEvent.type(screen.getByPlaceholderText(/why'd you like to join/i), "Let's build");
+    await userEvent.type(screen.getByPlaceholderText(/what would you contribute/i), "Let's build");
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() => {

@@ -80,6 +80,7 @@ export function ApplyToRoleButton({
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
+  const [showGuidance, setShowGuidance] = useState(false);
   // Optimistic flip after submitting so the button doesn't flicker while caches refetch.
   const [localStatus, setLocalStatus] = useState<string | null | undefined>(undefined);
 
@@ -152,6 +153,7 @@ export function ApplyToRoleButton({
       setLocalStatus("pending");
       setShowForm(false);
       setMessage("");
+      setShowGuidance(false);
       toast.success("Application submitted");
     },
     onError: (err: Error) => {
@@ -216,12 +218,34 @@ export function ApplyToRoleButton({
 
   if (showForm) {
     return (
-      <div className="mt-2 space-y-2">
+      <div className="mt-2 space-y-2 rounded-lg border border-border/40 bg-surface/20 p-3">
+        <div>
+          <p className="text-xs font-medium text-foreground">Join this project</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            Share what you would bring, what you want to learn, and any work that helps the owner
+            understand your contribution.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowGuidance(!showGuidance)}
+          className="text-left text-[11px] text-primary hover:underline"
+        >
+          {showGuidance ? "Hide application guidance" : "What makes a useful application?"}
+        </button>
+        {showGuidance && (
+          <ul className="list-disc space-y-1 pl-4 text-[10px] text-muted-foreground">
+            <li>Name the part of the project you want to help with.</li>
+            <li>Link to relevant work from your Studio if useful.</li>
+            <li>Be clear about your availability and expectations.</li>
+          </ul>
+        )}
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Why'd you like to join? (optional)"
-          rows={2}
+          placeholder="What would you contribute, and why is this project a good fit?"
+          rows={4}
+          aria-label="Application message"
           className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs outline-none focus:border-primary resize-none"
         />
         <div className="flex gap-2">

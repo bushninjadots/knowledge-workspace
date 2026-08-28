@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   Search,
   Plus,
+  Sparkles,
   LayoutTemplate,
   Palette,
   FileText,
@@ -27,6 +28,20 @@ import type { LayoutSection, TemplateData } from "@/lib/page-blocks";
 import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
 
 type SidebarTab = "pages" | "templates" | "themes";
+
+const RECIPES = [
+  { id: "showcase", label: "Showcase my work", description: "Lead with projects and proof" },
+  {
+    id: "collaborate",
+    label: "Find collaborators",
+    description: "Make your direction and needs clear",
+  },
+  {
+    id: "document",
+    label: "Document a project",
+    description: "Tell the story from idea to evidence",
+  },
+] as const;
 
 const TABS: { key: SidebarTab; icon: React.FC<{ className?: string }>; label: string }[] = [
   { key: "pages", icon: FileText, label: "Build" },
@@ -70,6 +85,7 @@ interface StudioSidebarProps {
   onTabChange: (tab: string) => void;
   onAddBlock: (blockType: string) => void;
   onAddSection: (preset: SectionPreset) => void;
+  onApplyRecipe?: (recipeId: string) => void;
   onApplyTemplate: (templateId: string) => void;
   onForkTemplate: (templateId: string) => void;
   onApplyTheme: (themeId: string) => void;
@@ -100,6 +116,7 @@ export function StudioSidebar({
   templatesError,
   themes,
   currentThemeId,
+  onApplyRecipe,
 }: StudioSidebarProps) {
   return (
     <div className="flex h-full flex-col">
@@ -135,6 +152,7 @@ export function StudioSidebar({
             pageType={activePage?.type ?? "project"}
             onAddBlock={onAddBlock}
             onAddSection={onAddSection}
+            onApplyRecipe={onApplyRecipe}
           />
         )}
         {activeTab === "templates" && (
@@ -174,10 +192,12 @@ function BuildPanel({
   pageType,
   onAddBlock,
   onAddSection,
+  onApplyRecipe,
 }: {
   pageType: "profile" | "project";
   onAddBlock: (type: string) => void;
   onAddSection: (preset: SectionPreset) => void;
+  onApplyRecipe?: (recipeId: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const blocks = getBlocksForPageType(pageType);
@@ -205,6 +225,32 @@ function BuildPanel({
 
   return (
     <div className="px-3 py-4">
+      <div className="mb-5">
+        <div className="mb-2 flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Start with a direction
+          </p>
+        </div>
+        <p className="mb-2 text-[10px] leading-relaxed text-muted-foreground/70">
+          Choose a starting point. Your content stays yours, and every section remains editable.
+        </p>
+        <div className="space-y-1">
+          {RECIPES.map((recipe) => (
+            <button
+              key={recipe.id}
+              type="button"
+              onClick={() => onApplyRecipe?.(recipe.id)}
+              className="w-full rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-elevated/50"
+            >
+              <span className="block text-[11px] font-medium text-foreground">{recipe.label}</span>
+              <span className="block text-[10px] text-muted-foreground/60">
+                {recipe.description}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
       {/* ── Section presets ──────────────────────────────────────────────── */}
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Add Section
