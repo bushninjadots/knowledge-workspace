@@ -5,7 +5,6 @@
 // help users understand exactly what's happening.
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { getAllBlocks } from "@/lib/block-registry";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Monitor,
@@ -42,7 +41,6 @@ import { useTheme } from "@/hooks/use-theme";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
-import { normalizeComposition, placeSection } from "@/lib/page-block-layout";
 import { usePublicTemplates, useApplyTemplate, useSaveAsTemplate } from "@/hooks/use-templates";
 import { useForkLayout } from "@/hooks/use-fork";
 import { createBlockInstance, getBlock, blockPageScope } from "@/lib/block-registry";
@@ -206,7 +204,21 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     enabled: !!activePage && activePage.type === "project",
   });
 
-  const blockCount = getAllBlocks().length;
+  // Block registry diagnostic
+  const [blockCount, setBlockCount] = useState(0);
+  useEffect(() => {
+    // Dynamic import to avoid circular deps
+    import("@/lib/block-registry").then(({ getAllBlocks }) => {
+      const count = getAllBlocks().length;
+      setBlockCount(count);
+      if (count === 0) {
+        console.error(
+          "[Studio] ⚠ ZERO blocks registered — block picker and renderer will be empty",
+        );
+        toast.error("Block system not loaded. Refresh the page.");
+      }
+    });
+  }, []);
 
   // Theme name lookup for template cards.
   const themeNames = useMemo(() => {
@@ -244,6 +256,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           onError: (err) => {
             setPageProvisioning(false);
             ensuringRef.current = false;
+            console.error("[Studio] ❌ Failed to auto-create page:", err);
             toast.error(
               friendlyError(
                 err,
@@ -267,6 +280,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   useEffect(() => {
     if (templatesLoading) return;
     if (templatesError) {
+      console.error("[Studio] ❌ Template fetch error:", templateFetchError);
       toast.error(friendlyError(templateFetchError, "Could not load templates"));
     }
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
@@ -295,7 +309,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     // blocks by `position` — without reindexing, drag/move sequences would
     // render a stale order after a refetch.
     const normalized: PageLayout = {
-      ...newLayout,
       sections: newLayout.sections.map((section, i) => ({
         ...section,
         position: i,
@@ -304,7 +317,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           position: j,
         })),
       })),
-      composition: newLayout.composition,
     };
     setDraftLayout(normalized);
     setDirty(true);
@@ -428,6 +440,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       }
       const inst = createBlockInstance(blockType);
       if (!inst) {
+        console.warn(`[Studio] ❌ createBlockInstance returned null for "${blockType}"`);
         toast.error(
           `Block type "${blockType}" not registered. Total blocks: ${blockCount}. Try refreshing.`,
         );
@@ -515,30 +528,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const handleReorderBlocks = useCallback(
     (sectionId: string, blockId: string, targetIndex: number) => {
       const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
-      const sourceSection = sections.find((s) => s.blocks.some((b) => b.id === blockId));
-      const targetSection = sections.find((s) => s.id === sectionId);
-      if (!sourceSection || !targetSection) return;
-      const sourceIndex = sourceSection.blocks.findIndex((b) => b.id === blockId);
-      const [moved] = sourceSection.blocks.splice(sourceIndex, 1);
-      if (!moved) return;
-      const clampedTarget = Math.min(Math.max(targetIndex, 0), targetSection.blocks.length);
-      targetSection.blocks.splice(clampedTarget, 0, { ...moved, column: undefined });
-      applyDraft({ sections });
-    },
-    [draftLayout, applyDraft],
-  );
-
-  const handlePlaceBlock = useCallback(
-    (blockId: string, targetSectionId: string, column: number) => {
-      const sections = draftLayout.sections.map((s) => ({ ...s, blocks: [...s.blocks] }));
-      const sourceSection = sections.find((s) => s.blocks.some((b) => b.id === blockId));
-      const targetSection = sections.find((s) => s.id === targetSectionId);
-      if (!sourceSection || !targetSection) return;
-      const sourceIndex = sourceSection.blocks.findIndex((b) => b.id === blockId);
-      const [moved] = sourceSection.blocks.splice(sourceIndex, 1);
-      if (!moved) return;
-      if (targetSection.layout === "full") targetSection.layout = "two_column";
-      targetSection.blocks.push({ ...moved, column });
+      for (const section of sections) {
+        const idx = section.blocks.findIndex((b) => b.id === blockId);
+        if (idx === -1) continue;
+        const [moved] = section.blocks.splice(idx, 1);
+        const clampedTarget = Math.min(targetIndex, section.blocks.length);
+        section.blocks.splice(clampedTarget, 0, moved);
+        break;
+      }
       applyDraft({ sections });
     },
     [draftLayout, applyDraft],
@@ -617,21 +614,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     (sectionId: string, layout: SectionLayoutType) => {
       const sections = draftLayout.sections.map((s) => (s.id === sectionId ? { ...s, layout } : s));
       applyDraft({ sections });
-    },
-    [draftLayout, applyDraft],
-  );
-
-  const handleUpdateComposition = useCallback(
-    (columns: number) => {
-      applyDraft(normalizeComposition(draftLayout, columns));
-    },
-    [draftLayout, applyDraft],
-  );
-
-  const handlePlaceSection = useCallback(
-    (sectionId: string, row: number, column: number) => {
-      if (!draftLayout.composition?.columns || draftLayout.composition.columns < 2) return;
-      applyDraft(placeSection(draftLayout, sectionId, row, column));
     },
     [draftLayout, applyDraft],
   );
@@ -818,7 +800,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           `tethyr:studio-preview:${activePage?.type}:${activePage?.id}`,
           JSON.stringify({
             layout: draftLayout,
-            theme: deepMergeTokens(pageData.theme ?? {}, draftOverrides ?? {}),
+            theme: draftOverrides ?? pageData.theme ?? null,
             pageId: pageData.id,
             ownerId: activePage?.id ?? "",
             ownerType: activePage?.type ?? "project",
@@ -873,8 +855,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
-      if (!pageData || updateTheme.isPending) {
-        if (!pageData) toast.error("No page loaded");
+      if (!pageData) {
+        toast.error("No page loaded");
         return;
       }
       updateTheme.mutate(
@@ -886,16 +868,14 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             const fresh = await refetchPage();
             const data = fresh?.data ?? pageData;
             if (data) {
-              setDraftOverrides(null);
-              savedOverridesRef.current = null;
+              setDraftOverrides(data.theme ?? null);
+              savedOverridesRef.current = data.theme ?? null;
               overridesDirtyRef.current = false;
-              savedLayoutRef.current = data.layout ?? { sections: [] };
-              setDirty(false);
-              dirtyRef.current = false;
             }
             toast.success("Theme applied");
           },
           onError: (err) => {
+            console.error("[Studio] ❌ Theme apply error:", err);
             toast.error(friendlyError(err, "Failed to apply theme"));
           },
         },
@@ -933,6 +913,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             toast.success("Template applied — page updated");
           },
           onError: (err) => {
+            console.error("[Studio] ❌ Template apply error:", err);
             toast.error(friendlyError(err, "Failed to apply template"));
           },
         },
@@ -960,6 +941,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             qc.invalidateQueries({ queryKey: ["templates"] });
           },
           onError: (err) => {
+            console.error("[Studio] ❌ Save template error:", err);
             toast.error(
               friendlyError(err, "Failed to save template. Make sure you own this layout."),
             );
@@ -1328,7 +1310,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
             <div
-              className={`w-full ${deviceClass} transition-all duration-200`}
+              className={`w-full ${deviceClass} bg-background font-sans text-foreground transition-all duration-200`}
               style={canvasContainerStyle}
               data-studio-preview="private-draft"
               aria-label={`${activePage?.type === "profile" ? "Private Studio" : "Private project"} draft preview`}
@@ -1353,9 +1335,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onToggleVisibility={handleToggleVisibility}
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}
-                    onPlaceBlock={handlePlaceBlock}
-                    onPlaceSection={handlePlaceSection}
-                    compositionColumns={draftLayout.composition?.columns ?? 1}
                     onAddBlock={handleAddBlock}
                     onAddSection={handleAddSection}
                     onUpdateBlockConfig={handleUpdateBlockConfig}
@@ -1401,11 +1380,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               onUpdateBlockConfig={handleUpdateBlockConfig}
               onUpdateBlock={handleUpdateBlock}
               onUpdateSectionLayout={handleUpdateSectionLayout}
-              onUpdateComposition={handleUpdateComposition}
-              compositionColumns={draftLayout.composition?.columns ?? 1}
-              onPlaceSection={handlePlaceSection}
               onUpdateThemeOverrides={handleUpdateThemeOverrides}
-              currentOverrides={draftOverrides}
+              currentOverrides={draftOverrides ?? pageData?.theme ?? null}
               themes={themeCatalog}
               currentThemeId={pageData?.themeId ?? null}
               onSelectBlock={handleSelectBlock}

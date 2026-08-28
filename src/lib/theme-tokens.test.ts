@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ensureReadableTheme, themeTokensToVars, themeTokensToStyle } from "@/lib/theme-tokens";
+import { themeTokensToVars, themeTokensToStyle } from "@/lib/theme-tokens";
 import type { ThemeTokens } from "@/lib/page-blocks";
 
 describe("themeTokensToVars", () => {
@@ -85,6 +85,46 @@ describe("themeTokensToVars", () => {
     expect(vars["--shadow-card"]).toBe("0 1px 3px rgba(0,0,0,0.1)");
   });
 
+  it("derives contrast tokens from a dark theme palette", () => {
+    const vars = themeTokensToVars({
+      colors: { background: "#0d0221", foreground: "#f0e6ff" },
+    });
+
+    expect(vars["--muted"]).toBe(
+      "color-mix(in oklab, #f0e6ff 8%, #0d0221)",
+    );
+    expect(vars["--muted-foreground"]).toBe(
+      "color-mix(in oklab, #f0e6ff 70%, #0d0221)",
+    );
+    expect(vars["--card"]).toBe("#0d0221");
+    expect(vars["--card-foreground"]).toBe("#f0e6ff");
+    expect(vars["--primary"]).toBe("#f0e6ff");
+    expect(vars["--primary-foreground"]).toBe("#0d0221");
+    expect(vars["--input"]).toBe(
+      "color-mix(in oklab, #f0e6ff 18%, #0d0221)",
+    );
+    expect(vars["--trust-subtle"]).toBe(
+      "color-mix(in oklab, var(--trust) 16%, #0d0221)",
+    );
+  });
+
+  it("preserves explicitly supplied contrast tokens", () => {
+    const vars = themeTokensToVars({
+      colors: {
+        background: "#111111",
+        foreground: "#eeeeee",
+        card: "#222222",
+        muted: "#333333",
+        primary: "#ff00aa",
+      },
+    });
+
+    expect(vars["--card"]).toBe("#222222");
+    expect(vars["--muted"]).toBe("#333333");
+    expect(vars["--primary"]).toBe("#ff00aa");
+    expect(vars["--primary-foreground"]).toBe("#111111");
+  });
+
   it("handles full token set with all categories", () => {
     const tokens: ThemeTokens = {
       colors: { background: "#000", foreground: "#fff" },
@@ -95,41 +135,6 @@ describe("themeTokensToVars", () => {
     };
     const vars = themeTokensToVars(tokens);
     expect(Object.keys(vars).length).toBeGreaterThanOrEqual(5);
-  });
-});
-
-describe("ensureReadableTheme", () => {
-  it("repairs low-contrast light themes", () => {
-    const result = ensureReadableTheme({
-      colors: { background: "#ffffff", surface: "#ffffff", foreground: "#eeeeee" },
-    });
-    expect(result.colors?.foreground).toBe("#111827");
-    expect(result.colors?.["card-foreground"]).toBe("#111827");
-  });
-
-  it("repairs low-contrast dark themes", () => {
-    const result = ensureReadableTheme({
-      colors: { background: "#111111", surface: "#222222", foreground: "#333333" },
-    });
-    expect(result.colors?.foreground).toBe("#f8fafc");
-    expect(result.colors?.["muted-foreground"]).toBe("#cbd5e1");
-  });
-
-  it("repairs semantic accents against the page background", () => {
-    const result = ensureReadableTheme({
-      colors: {
-        background: "#ffffff",
-        foreground: "#111827",
-        trust: "#eeeeee",
-        learning: "#eeeeee",
-        teaching: "#eeeeee",
-        ai: "#eeeeee",
-        warning: "#eeeeee",
-      },
-    });
-    for (const key of ["trust", "learning", "teaching", "ai", "warning"] as const) {
-      expect(result.colors?.[key]).toBe("#1f2937");
-    }
   });
 });
 

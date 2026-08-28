@@ -36,9 +36,6 @@ interface StudioInspectorProps {
   onUpdateBlockConfig?: (blockId: string, config: Record<string, unknown>) => void;
   onUpdateBlock?: (blockId: string, updates: Partial<LayoutBlockInstance>) => void;
   onUpdateSectionLayout?: (sectionId: string, layout: SectionLayoutType) => void;
-  onUpdateComposition?: (columns: number) => void;
-  compositionColumns?: number;
-  onPlaceSection?: (sectionId: string, row: number, column: number) => void;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
   currentOverrides?: ThemeTokens | null;
   themes?: ThemeCatalogEntry[];
@@ -63,9 +60,6 @@ export function StudioInspector({
   onUpdateBlockConfig,
   onUpdateBlock,
   onUpdateSectionLayout,
-  onUpdateComposition,
-  compositionColumns = 1,
-  onPlaceSection,
   onUpdateThemeOverrides,
   currentOverrides,
   themes = [],
@@ -90,9 +84,6 @@ export function StudioInspector({
           <SectionInspector
             section={selectedSection}
             onUpdateLayout={onUpdateSectionLayout}
-            onUpdateComposition={onUpdateComposition}
-            compositionColumns={compositionColumns}
-            onPlaceSection={onPlaceSection}
             onRemove={onRemoveSection}
             onMove={onMoveSection}
             onDuplicate={onDuplicateSection}
@@ -210,7 +201,6 @@ function BlockInspector({
                           value ? "bg-primary" : "bg-border"
                         }`}
                         role="switch"
-                        aria-label={field.label}
                         aria-checked={!!value}
                       >
                         <span
@@ -232,7 +222,6 @@ function BlockInspector({
                           <button
                             key={opt.value}
                             type="button"
-                            aria-pressed={String(value) === opt.value}
                             onClick={() => updateField(field.key, opt.value)}
                             className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
                               String(value) === opt.value
@@ -307,7 +296,6 @@ function BlockInspector({
               <button
                 key={value}
                 type="button"
-                aria-pressed={currentWidth === value}
                 onClick={() => setWidth(value)}
                 className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
                   currentWidth === value
@@ -339,9 +327,6 @@ function BlockInspector({
                       <button
                         key={label}
                         type="button"
-                        aria-pressed={
-                          (block.column == null && value === -1) || block.column === value
-                        }
                         onClick={() =>
                           onUpdateBlock?.(block.id, { column: value === -1 ? undefined : value })
                         }
@@ -367,7 +352,6 @@ function BlockInspector({
                     <button
                       key={label}
                       type="button"
-                      aria-pressed={(block.span == null && value === 1) || block.span === value}
                       onClick={() =>
                         onUpdateBlock?.(block.id, { span: value === 1 ? undefined : value })
                       }
@@ -431,15 +415,9 @@ function SectionInspector({
   onMove,
   onDuplicate,
   onSelectBlock,
-  onUpdateComposition,
-  compositionColumns,
-  onPlaceSection,
 }: {
   section: LayoutSection;
   onUpdateLayout?: (sectionId: string, layout: SectionLayoutType) => void;
-  onUpdateComposition?: (columns: number) => void;
-  compositionColumns: number;
-  onPlaceSection?: (sectionId: string, row: number, column: number) => void;
   onRemove: (sectionId: string) => void;
   onMove: (sectionId: string, direction: "up" | "down") => void;
   onDuplicate: (sectionId: string) => void;
@@ -475,89 +453,6 @@ function SectionInspector({
           ))}
         </div>
       </div>
-
-      {/* Page section arrangement */}
-      <div>
-        <SectionLabel>Sections across the page</SectionLabel>
-        <p className="mt-1 text-[10px] text-muted-foreground/70">
-          Place sections side by side on larger screens. They stack automatically on mobile.
-        </p>
-        <div className="mt-1.5 flex gap-1">
-          {[1, 2, 3].map((columns) => (
-            <button
-              key={columns}
-              type="button"
-              onClick={() => onUpdateComposition?.(columns)}
-              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-            >
-              {columns === 1 ? "One" : columns === 2 ? "Two" : "Three"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {compositionColumns > 1 && (
-        <div>
-          <SectionLabel>Position in row</SectionLabel>
-          <p className="mt-1 text-[10px] text-muted-foreground/70">
-            Swap this section into another slot. Empty slots become available as rows grow.
-          </p>
-          <div className="mt-1.5 grid grid-cols-3 gap-1">
-            {Array.from({ length: compositionColumns }, (_, column) => (
-              <button
-                key={column}
-                type="button"
-                aria-pressed={section.gridColumn === column}
-                onClick={() =>
-                  onPlaceSection?.(
-                    section.id,
-                    section.gridRow ?? Math.floor(section.position / compositionColumns),
-                    column,
-                  )
-                }
-                className={`rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
-                  section.gridColumn === column
-                    ? "bg-primary/15 text-primary"
-                    : "bg-surface/40 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
-                }`}
-              >
-                Column {column + 1}
-              </button>
-            ))}
-          </div>
-          <div className="mt-1.5 flex gap-1">
-            <button
-              type="button"
-              onClick={() =>
-                onPlaceSection?.(
-                  section.id,
-                  Math.max(
-                    0,
-                    (section.gridRow ?? Math.floor(section.position / compositionColumns)) - 1,
-                  ),
-                  section.gridColumn ?? section.position % compositionColumns,
-                )
-              }
-              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              Previous row
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onPlaceSection?.(
-                  section.id,
-                  (section.gridRow ?? Math.floor(section.position / compositionColumns)) + 1,
-                  section.gridColumn ?? section.position % compositionColumns,
-                )
-              }
-              className="flex-1 rounded-md bg-surface/40 px-2 py-1.5 text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              Next row
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Block list */}
       <div>

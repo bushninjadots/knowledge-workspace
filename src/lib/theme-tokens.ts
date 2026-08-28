@@ -66,6 +66,7 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
         vars[`--${key}`] = value;
       }
     }
+    deriveContrastVars(vars);
   }
 
   // ── Typography ────────────────────────────────────────────────────────
@@ -132,92 +133,67 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
 }
 
 /**
+ * Themes only declare a handful of colors (background, foreground, card…).
+ * Every other token would otherwise fall back to the app's light-mode value,
+ * which produces unreadable pairings on dark or tinted themes (grey-on-black
+ * secondary text, white-on-white borders, near-black primary buttons).
+ *
+ * This fills in every missing contrast-critical token by mixing the theme's
+ * own foreground and background, so any palette stays legible.
+ */
+function deriveContrastVars(vars: Record<string, string>): void {
+  const bg = vars["--background"];
+  const fg = vars["--foreground"];
+  // Only derive when the theme actually re-bases the surface or text color.
+  if (!bg && !fg) return;
+
+  const BG = bg ?? "var(--background)";
+  const FG = fg ?? "var(--foreground)";
+  const mix = (pct: number) => `color-mix(in oklab, ${FG} ${pct}%, ${BG})`;
+  const setIf = (key: string, value: string) => {
+    if (!vars[key]) vars[key] = value;
+  };
+
+  const card = vars["--card"] ?? BG;
+  setIf("--card", card);
+  setIf("--card-foreground", FG);
+  setIf("--popover", card);
+  setIf("--popover-foreground", FG);
+  setIf("--surface", card);
+  setIf("--surface-elevated", card);
+  setIf("--surface-sunken", mix(6));
+
+  setIf("--muted", mix(8));
+  setIf("--muted-foreground", mix(70));
+  setIf("--muted-foreground-subtle", mix(55));
+  setIf("--secondary", mix(8));
+  setIf("--secondary-foreground", FG);
+  setIf("--accent", mix(10));
+  setIf("--accent-foreground", FG);
+
+  setIf("--border", mix(18));
+  setIf("--border-strong", mix(32));
+  setIf("--input", vars["--border"]);
+
+  setIf("--primary", FG);
+  setIf("--primary-foreground", BG);
+  setIf("--ring", vars["--primary"]);
+  setIf("--destructive-foreground", BG);
+
+  // Semantic hue tints must sit on the theme background, not on white.
+  for (const hue of ["trust", "learning", "teaching", "ai", "warning", "caution"]) {
+    setIf(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
+    setIf(`--${hue}-foreground`, BG);
+  }
+}
+
+/**
  * Given a ThemeTokens object, return a CSS style object suitable for a
  * React `style` prop.
  */
 export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
-  const vars = themeTokensToVars(ensureReadableTheme(tokens));
+  const vars = themeTokensToVars(tokens);
   return vars as unknown as React.CSSProperties;
-}
-
-/** Ensure theme tokens keep text, controls, and semantic accents readable. */
-export function ensureReadableTheme(tokens: ThemeTokens): ThemeTokens {
-  const colors = tokens.colors;
-  if (!colors) return tokens;
-  const background = colors.background;
-  if (!background) return tokens;
-  const darkBackground = relativeLuminance(background) < 0.45;
-  const readableForeground = darkBackground ? "#f8fafc" : "#111827";
-  const surface = colors.surface ?? background;
-  const card = colors.card ?? surface;
-  const foreground = readableOn(background, colors.foreground, readableForeground);
-  const cardForeground = readableOn(card, colors["card-foreground"], readableForeground);
-  const mutedForeground = readableOn(
-    surface,
-    colors["muted-foreground"],
-    darkBackground ? "#cbd5e1" : "#475569",
-    4.5,
-  );
-  const primaryForeground = readableOn(
-    colors.primary ?? background,
-    colors["primary-foreground"],
-    readableForeground,
-  );
-  const secondaryForeground = readableOn(
-    colors.secondary ?? surface,
-    colors["secondary-foreground"],
-    readableForeground,
-  );
-  const semanticFallback = darkBackground ? "#f8fafc" : "#1f2937";
-  const nextColors = {
-    ...colors,
-    foreground,
-    "card-foreground": cardForeground,
-    surface,
-    card,
-    "muted-foreground": mutedForeground,
-    "primary-foreground": primaryForeground,
-    "secondary-foreground": secondaryForeground,
-    trust: readableOn(background, colors.trust, semanticFallback, 3),
-    learning: readableOn(background, colors.learning, semanticFallback, 3),
-    teaching: readableOn(background, colors.teaching, semanticFallback, 3),
-    ai: readableOn(background, colors.ai, semanticFallback, 3),
-    warning: readableOn(background, colors.warning, semanticFallback, 3),
-  };
-  if (JSON.stringify(nextColors) === JSON.stringify(colors)) return tokens;
-  return { ...tokens, colors: nextColors };
-}
-
-function readableOn(
-  surface: string,
-  candidate: string | undefined,
-  fallback: string,
-  minimum = 4.5,
-): string {
-  return candidate && contrastRatio(surface, candidate) >= minimum ? candidate : fallback;
-}
-
-function contrastRatio(first: string, second: string): number {
-  const a = relativeLuminance(first);
-  const b = relativeLuminance(second);
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-}
-
-function relativeLuminance(value: string): number {
-  const match = value.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (!match) return 0.5;
-  const hex =
-    match[1].length === 3
-      ? match[1]
-          .split("")
-          .map((char) => char + char)
-          .join("")
-      : match[1];
-  const channels = [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255);
-  return channels.reduce((sum, channel, index) => {
-    const linear = channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-    return sum + linear * [0.2126, 0.7152, 0.0722][index];
-  }, 0);
 }
 
 /** Recursively merge `overrides` over `base`. Plain objects merge key-by-key;
