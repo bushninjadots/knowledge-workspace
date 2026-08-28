@@ -141,10 +141,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             key={section.id}
             data-section-id={section.id}
             data-section-layout={section.layout}
-            className="py-4 first:pt-0 last:pb-0"
+            className="py-8 first:pt-0 last:pb-0 sm:py-10"
             style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
           >
-            <div className={gridClass}>
+            <div className={`${gridClass} [&>*]:min-w-0`}>
               {useGrid
                 ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
                     <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">

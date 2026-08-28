@@ -343,6 +343,7 @@ function PublicProfileRoute() {
   );
 
   const blocksArePage = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
+  const showLegacyPublicView = !blocksArePage;
 
   if (isLoading) {
     return (
@@ -386,7 +387,7 @@ function PublicProfileRoute() {
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
         {/* Identity card — hidden when blocks are the page */}
-        {!blocksArePage && (
+        {showLegacyPublicView && (
           <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -500,7 +501,7 @@ function PublicProfileRoute() {
         )}
 
         {/* Legacy direction — hidden when blocks are the page */}
-        {!blocksArePage && (
+        {showLegacyPublicView && (
           <StudioDirection
             projects={contributedProjects.map((project) => ({
               id: project.id,
@@ -530,7 +531,7 @@ function PublicProfileRoute() {
         </EditModeProvider>
 
         {/* Legacy workspace — hidden when blocks are the page */}
-        {!blocksArePage && (
+        {showLegacyPublicView && (
           <PublicStudioWorkspace
             profile={profile}
             profileId={profile.id}
