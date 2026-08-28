@@ -19,7 +19,6 @@ import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
   Dialog,
   DialogContent,
@@ -257,27 +256,18 @@ export function ProfileLayout({
           </div>
         </div>
 
-        <StudioDirection
-          projects={projects.map((project) => ({
-            id: project.id,
-            title: project.title,
-            status: project.status,
-          }))}
-          learningGoals={profile?.learning_goals}
-          availability={profile?.availability}
-          canEdit={isOwnProfile}
-        />
-
-        {/* STUDIO WORKSPACE + SIDEBAR */}
+        {/* Profile management only. Page composition lives exclusively in
+            Creativity Studio (/studio), so the private route never renders a
+            second copy of the public page canvas. */}
         <div className="flex flex-col items-start justify-between gap-4 border-b border-border/60 pb-4 sm:flex-row">
           <div>
             <p className="section-label">Your Studio</p>
             <h2 className="mt-1 font-display text-lg font-semibold">
-              Work that makes you recognizable
+              Manage your source information
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              This is the page visitors see — push a highlighted project, add evidence, or refine
-              how you come across. You arrange every block in the Creativity Studio.
+              This is the management view. Your chosen page layout is shown once in Creativity
+              Studio.
             </p>
           </div>
           {isOwnProfile && (

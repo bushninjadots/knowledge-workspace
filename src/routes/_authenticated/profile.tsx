@@ -7,7 +7,6 @@ import { ProfileLayout } from "@/components/tethyr/profile/profile-layout";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import "@/components/tethyr/blocks/register-all";
-import { ProfileOverviewTab } from "@/components/tethyr/profile/profile-overview-tab";
 import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects-tab";
 import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
 import { ProfileSessionsTab } from "@/components/tethyr/profile/profile-sessions-tab";
@@ -176,7 +175,6 @@ function ProfilePage() {
       tabContent={{
         overview: (
           <div className="space-y-6">
-            <ProfileOverviewTab profile={profile} userId={userId} isOwnProfile={true} />
             <AboutCard profile={profile} onChange={refresh} />
             <TextCard
               title="Sharing style"
