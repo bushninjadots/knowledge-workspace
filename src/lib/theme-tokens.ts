@@ -66,6 +66,7 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
         vars[`--${key}`] = value;
       }
     }
+    deriveContrastVars(vars);
   }
 
   // ── Typography ────────────────────────────────────────────────────────
@@ -129,6 +130,61 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
   }
 
   return vars;
+}
+
+/**
+ * Themes only declare a handful of colors (background, foreground, card…).
+ * Every other token would otherwise fall back to the app's light-mode value,
+ * which produces unreadable pairings on dark or tinted themes (grey-on-black
+ * secondary text, white-on-white borders, near-black primary buttons).
+ *
+ * This fills in every missing contrast-critical token by mixing the theme's
+ * own foreground and background, so any palette stays legible.
+ */
+function deriveContrastVars(vars: Record<string, string>): void {
+  const bg = vars["--background"];
+  const fg = vars["--foreground"];
+  // Only derive when the theme actually re-bases the surface or text color.
+  if (!bg && !fg) return;
+
+  const BG = bg ?? "var(--background)";
+  const FG = fg ?? "var(--foreground)";
+  const mix = (pct: number) => `color-mix(in oklab, ${FG} ${pct}%, ${BG})`;
+  const setIf = (key: string, value: string) => {
+    if (!vars[key]) vars[key] = value;
+  };
+
+  const card = vars["--card"] ?? BG;
+  setIf("--card", card);
+  setIf("--card-foreground", FG);
+  setIf("--popover", card);
+  setIf("--popover-foreground", FG);
+  setIf("--surface", card);
+  setIf("--surface-elevated", card);
+  setIf("--surface-sunken", mix(6));
+
+  setIf("--muted", mix(8));
+  setIf("--muted-foreground", mix(70));
+  setIf("--muted-foreground-subtle", mix(55));
+  setIf("--secondary", mix(8));
+  setIf("--secondary-foreground", FG);
+  setIf("--accent", mix(10));
+  setIf("--accent-foreground", FG);
+
+  setIf("--border", mix(18));
+  setIf("--border-strong", mix(32));
+  setIf("--input", vars["--border"]);
+
+  setIf("--primary", FG);
+  setIf("--primary-foreground", BG);
+  setIf("--ring", vars["--primary"]);
+  setIf("--destructive-foreground", BG);
+
+  // Semantic hue tints must sit on the theme background, not on white.
+  for (const hue of ["trust", "learning", "teaching", "ai", "warning", "caution"]) {
+    setIf(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
+    setIf(`--${hue}-foreground`, BG);
+  }
 }
 
 /**

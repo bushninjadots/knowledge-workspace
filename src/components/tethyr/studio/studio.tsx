@@ -1310,7 +1310,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
             <div
-              className={`w-full ${deviceClass} transition-all duration-200`}
+              className={`w-full ${deviceClass} bg-background font-sans text-foreground transition-all duration-200`}
               style={canvasContainerStyle}
               data-studio-preview="private-draft"
               aria-label={`${activePage?.type === "profile" ? "Private Studio" : "Private project"} draft preview`}
