@@ -266,7 +266,7 @@ export function ProfileLayout({
         />
 
         {/* STUDIO WORKSPACE + SIDEBAR */}
-        <div className="flex items-start justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="flex flex-col items-start justify-between gap-4 border-b border-border/60 pb-4 sm:flex-row">
           <div>
             <p className="section-label">Your Studio</p>
             <h2 className="mt-1 font-display text-lg font-semibold">
@@ -278,7 +278,7 @@ export function ProfileLayout({
             </p>
           </div>
           {isOwnProfile && (
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
               {profile?.handle && (
                 <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                   <Link to="/u/$handle" params={{ handle: profile.handle }}>
@@ -286,7 +286,7 @@ export function ProfileLayout({
                   </Link>
                 </Button>
               )}
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="flex-1 sm:flex-none">
                 <Link to="/studio">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                   Open in Creativity Studio

@@ -1178,7 +1178,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           </span>
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
 
+          <label className="sr-only" htmlFor="studio-page-select">
+            Page to edit
+          </label>
           <select
+            id="studio-page-select"
             value={`${activePage?.type}:${activePage?.id}`}
             onChange={(e) => {
               const [type, id] = e.target.value.split(":");
