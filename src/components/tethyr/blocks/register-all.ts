@@ -1,10 +1,9 @@
 // ── Block Registration Force-Load ────────────────────────────────────────────
-// Import this file wherever you need the block registry populated (studio route,
-// editor, page shell). Each import below triggers the module-level
-// registerBlock() call in the individual block file.
+// Import this file wherever a page renderer or editor needs the block registry.
+// Each side-effect import triggers registerBlock() in its block module.
 //
-// Barrel re-exports (export { X } from "./file") are NOT sufficient — Vite
-// tree-shakes them when nothing consumes the named export.
+// Barrel re-exports are intentionally avoided because Vite may tree-shake them
+// when no named export is consumed.
 
 import "./content/text-block";
 import "./content/heading-block";
@@ -26,7 +25,6 @@ import "./project/evidence-block";
 import "./project/sessions-block";
 import "./project/credits-block";
 import "./project/timeline-block";
-
 import "./profile/header-block";
 import "./profile/skills-block";
 import "./profile/projects-block";

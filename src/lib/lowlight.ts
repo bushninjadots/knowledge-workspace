@@ -12,6 +12,8 @@ import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import css from "highlight.js/lib/languages/css";
 import python from "highlight.js/lib/languages/python";
+import bash from "highlight.js/lib/languages/bash";
+import yaml from "highlight.js/lib/languages/yaml";
 import java from "highlight.js/lib/languages/java";
 import c from "highlight.js/lib/languages/c";
 import cpp from "highlight.js/lib/languages/cpp";
@@ -21,8 +23,6 @@ import rust from "highlight.js/lib/languages/rust";
 import php from "highlight.js/lib/languages/php";
 import ruby from "highlight.js/lib/languages/ruby";
 import sql from "highlight.js/lib/languages/sql";
-import bash from "highlight.js/lib/languages/bash";
-import yaml from "highlight.js/lib/languages/yaml";
 
 const lowlight = createLowlight({
   javascript,
@@ -54,8 +54,8 @@ lowlight.register("py", python);
 lowlight.register("sh", bash);
 lowlight.register("shell", bash);
 lowlight.register("zsh", bash);
-lowlight.register("golang", go);
 lowlight.register("yml", yaml);
+lowlight.register("golang", go);
 lowlight.register("cs", csharp);
 
 /**
