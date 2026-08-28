@@ -149,24 +149,16 @@ export interface LayoutSection {
   layout: SectionLayoutType;
   /** Blocks within this section, ordered by position. */
   blocks: LayoutBlockInstance[];
-  /** Optional explicit row for page-level section composition. */
+  /** Legacy page-level placement retained for backwards-compatible data reads. */
   gridRow?: number;
-  /** Optional explicit column for page-level section composition. */
+  /** Legacy page-level placement retained for backwards-compatible data reads. */
   gridColumn?: number;
-}
-
-/** Optional top-level section composition. Older layouts omit this field. */
-export interface PageComposition {
-  columns?: number;
-  gap?: string;
 }
 
 /** A complete page layout: an ordered list of sections. */
 export interface PageLayout {
   /** Ordered sections. */
   sections: LayoutSection[];
-  /** Optional side-by-side section composition, preserved across saves. */
-  composition?: PageComposition;
 }
 
 // ---------------------------------------------------------------------------

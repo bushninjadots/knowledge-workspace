@@ -18,10 +18,7 @@ export function brokeredPreviewStorage() {
   const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
   const projectId = onPreviewZone
     ? (host.match(
-        new RegExp(
-          "^(?:id-preview(?:-[a-z0-9]+)?|project)--(" + UUID + ")(?:-dev)?(?=\\\\.|$)",
-          "i",
-        ),
+        new RegExp("^(?:id-preview(?:-[a-z0-9]+)?|project)--(" + UUID + ")(?:-dev)?(?=\\.|$)", "i"),
       )?.[1] ?? host.match(new RegExp("^(" + UUID + ")(?=[.-])", "i"))?.[1])
     : undefined;
   const framed = window.parent && window.parent !== window;

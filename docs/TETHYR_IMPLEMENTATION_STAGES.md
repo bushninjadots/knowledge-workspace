@@ -8,7 +8,7 @@
 
 Implement the smallest change that improves coherence, trust, or the core collaboration loop. Each stage must be validated before the next stage begins. Do not add new top-level features while a higher-priority stage is incomplete.
 
-The redesign stages below were implemented incrementally after the Phase 1 audit. Stage 7 remains intentionally deferred because it requires usage evidence and, for several items, external-provider decisions.
+The redesign (Stages 8–18 below) must not begin until the existing Stage 7 deferred items are triaged and the Phase 1 redesign audit is approved.
 
 ## Stage 0 — Baseline and release safety
 
@@ -96,16 +96,18 @@ The redesign stages below were implemented incrementally after the Phase 1 audit
 
 These stages implement the block/page/template/fork system described in [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) and [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md).
 
-### Stage 8 — Redesign Phase 1: Full Audit ✅ DONE (2026-08-23)
+### Stage 8 — Redesign Phase 1: Full Audit
 
 **Goal:** understand the complete codebase and produce the architectural proposal.
 
-- [x] Inspected the route/component/hook/library ownership boundaries.
-- [x] Mapped profile/project surfaces against the block model.
-- [x] Identified preservation, migration, retirement, security, and data-boundary risks.
-- [x] Defined the page/block/template architecture and implementation gates.
-- [x] Recorded the result in `TETHYR_REDESIGN_AUDIT_2026-08-23.md` and `TETHYR_REDESIGN_ARCHITECTURE.md`.
-- [x] Approved implementation proceeded through Stages 9–18; current source and tests are now the implementation authority.
+- [ ] Inspect every route, component, hook, and library module.
+- [ ] Map current profile/project architecture against the proposed block model.
+- [ ] Identify what can be preserved, what needs to change, and what can be retired.
+- [ ] Identify architectural risks, migration risks, and data-boundary issues.
+- [ ] Design the page/block/template data architecture.
+- [ ] Explain how existing functionality (WorkspaceGrid, public Studio layout, dashboard priority flow, project page sections) connects to the new model.
+- [ ] Produce the phased implementation plan with gating criteria.
+- [ ] **Wait for approval before any code changes.**
 
 ### Stage 9 — Redesign Phase 2: Page / Block Foundation ✅ DONE (2026-08-23)
 
@@ -506,7 +508,6 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 ### 2026-08-26 — Creativity Studio Redesign: Phases 1–3 ✅ DONE
 
 **Phase 1 — Selection Model + Sections as First-Class:**
-
 - Page / Section / Block selection state with Escape to deselect
 - Sections are clickable and show selection outlines
 - "+ Add Section" sidebar button with visual preset picker (Blank, 1-Column, 2-Columns, 3-Columns, Hero, Two-Row)
@@ -516,7 +517,6 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Removed fake pointer-events-none resize handle (width control moved to inspector)
 
 **Phase 2 — Contextual Inspector:**
-
 - Inspector adapts to selection type:
   - Page: theme name, shape presets (Rounded/Angular/Sharp), Advanced toggle
   - Section: layout grid, block list, move/duplicate/delete actions
@@ -526,7 +526,6 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Removed raw config key display (no more Object.entries(config))
 
 **Phase 3 — Block Field Schemas:**
-
 - Added BlockField type to page-blocks.ts (text, textarea, toggle, select, image, color)
 - BlockDefinition now has optional `fields` array
 - Blocks with schemas: heading (text + size), text (textarea), divider (label), markdown (textarea), project-hero (3 toggles)
@@ -534,7 +533,6 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Section duplicate added to inspector actions
 
 **Files changed:**
-
 - `src/lib/page-blocks.ts` — BlockField type, fields property on BlockDefinition
 - `src/components/tethyr/studio/studio.tsx` — Selection state, section CRUD, duplicate handlers, Escape key
 - `src/components/tethyr/studio/studio-canvas.tsx` — Selection UI, section drag-reorder, floating toolbar, remove fake resize

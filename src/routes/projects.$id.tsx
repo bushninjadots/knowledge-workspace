@@ -86,8 +86,6 @@ const ProjectDiscussions = lazy(() =>
     default: m.ProjectDiscussions,
   })),
 );
-import { useProjectCommunityPostCount } from "@/components/tethyr/project/project-community-posts";
-
 const ProjectCommunityPosts = lazy(() =>
   import("@/components/tethyr/project/project-community-posts").then((m) => ({
     default: m.ProjectCommunityPosts,
@@ -455,7 +453,7 @@ function ProjectPage() {
   const { data: repos = [] } = useProjectRepos(id);
   const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: projectChallenges = [] } = useProjectChallenges(id);
-  const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
+  const communityPostCount = 0;
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
 

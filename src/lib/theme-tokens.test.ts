@@ -90,22 +90,14 @@ describe("themeTokensToVars", () => {
       colors: { background: "#0d0221", foreground: "#f0e6ff" },
     });
 
-    expect(vars["--muted"]).toBe(
-      "color-mix(in oklab, #f0e6ff 8%, #0d0221)",
-    );
-    expect(vars["--muted-foreground"]).toBe(
-      "color-mix(in oklab, #f0e6ff 70%, #0d0221)",
-    );
+    expect(vars["--muted"]).toBe("color-mix(in oklab, #f0e6ff 8%, #0d0221)");
+    expect(vars["--muted-foreground"]).toBe("color-mix(in oklab, #f0e6ff 70%, #0d0221)");
     expect(vars["--card"]).toBe("#0d0221");
     expect(vars["--card-foreground"]).toBe("#f0e6ff");
     expect(vars["--primary"]).toBe("#f0e6ff");
     expect(vars["--primary-foreground"]).toBe("#0d0221");
-    expect(vars["--input"]).toBe(
-      "color-mix(in oklab, #f0e6ff 18%, #0d0221)",
-    );
-    expect(vars["--trust-subtle"]).toBe(
-      "color-mix(in oklab, var(--trust) 16%, #0d0221)",
-    );
+    expect(vars["--input"]).toBe("color-mix(in oklab, #f0e6ff 18%, #0d0221)");
+    expect(vars["--trust-subtle"]).toBe("color-mix(in oklab, var(--trust) 16%, #0d0221)");
   });
 
   it("preserves explicitly supplied contrast tokens", () => {

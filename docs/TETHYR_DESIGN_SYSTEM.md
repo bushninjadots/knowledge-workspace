@@ -54,8 +54,6 @@ Do not invent arbitrary values for each component. If a layout needs unusual spa
 
 ## Typography
 
-Theme typography is limited to the font families already bundled or available as system fallbacks. Theme tokens may select `headingFont`, `bodyFont`, and `monoFont`; they do not fetch arbitrary remote fonts. If a selected family is unavailable, the declared fallback stack must preserve readable metrics and hierarchy.
-
 Typography should establish hierarchy before decoration:
 
 - One clear page title
@@ -112,7 +110,6 @@ Test long names, long project titles, empty states, and narrow widths.
 - Respect reduced-motion preferences.
 - Error and success messages should be announced or otherwise discoverable.
 - Preserve sufficient contrast in light and dark themes.
-- Theme semantic accents must remain distinguishable against their actual surface; do not rely on color alone for status meaning.
 
 ## Component Reuse
 

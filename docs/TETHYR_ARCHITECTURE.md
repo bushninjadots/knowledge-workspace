@@ -124,16 +124,15 @@ When documents disagree, prefer the binding constitution and current source, the
 
 Make the smallest change that improves coherence, trust, accessibility, maintainability, or the core collaboration loop. A local request is not permission to redesign unrelated routes or normalize the entire application.
 
-## Redesign Architecture (Implemented)
+## Redesign Architecture (Proposed)
 
-The block/page/template system is implemented and is now part of the active architecture. The redesign architecture document remains the detailed data-model reference; current source and tests are authoritative for behavior.
+The block/page/template system introduces new conceptual owners. These are documented in [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) and will be integrated into this architecture guide after Phase 1 audit is complete and the architecture is approved. Key proposed additions:
 
-- `src/components/tethyr/page/` — page shell, layout, section, block renderer, editor context, and editor controls
-- `src/components/tethyr/blocks/` — registered content, profile, project, people, media, and community blocks
-- `src/components/tethyr/studio/` — private Creativity Studio canvas, inspector, sidebar, and section composition controls
-- `src/components/tethyr/templates/` — template attribution and library presentation
-- `src/hooks/` — page, page-editor, theme, templates, fork, and profile/project page state
-- `src/lib/` — block registry, page/layout types, layout normalization, theme application, validation, and migration helpers
-- `supabase/migrations/20260823000000_page_system_foundation.sql` and subsequent migrations — page, layout, theme, template, fork, and override persistence
+- `src/components/tethyr/page/` — page shell, layout, section, block renderer, block registry
+- `src/components/tethyr/blocks/` — registered block components (content, media, project, people, community)
+- `src/components/tethyr/editor/` — customize bar, block picker, config panel, drag handle, publish controls
+- `src/components/tethyr/templates/` — template card, library, preview, fork button, lineage view
+- `src/hooks/` — use-page, use-page-editor, use-block-registry, use-templates, use-fork, use-theme
+- `src/lib/` — block-validation, layout-serializer, theme-applier, fork-lineage, page-migration
 
-Top-level section composition supports one, two, or three sections per row, with explicit row/column slots for independent placement. Blocks can also be assigned to columns within multi-column sections, and all multi-column compositions stack on narrow viewports.
+**Do not create these files during Phase 1 (audit).** They are documented here for architectural review only.

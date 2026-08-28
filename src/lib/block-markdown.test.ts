@@ -46,6 +46,22 @@ describe("blockMarkdownToHtml", () => {
     expect(html).toContain(">hover</p>");
   });
 
+  it("blocks non-http URL schemes", () => {
+    const html = blockMarkdownToHtml(
+      "[data](data:text/html,<script>alert(1)</script>) [vb](vbscript:alert(1)) [ftp](ftp://example.com/file)",
+    );
+    expect(html).not.toContain("<a ");
+    expect(html).not.toContain("data:");
+    expect(html).not.toContain("vbscript:");
+    expect(html).not.toContain("ftp:");
+  });
+
+  it("escapes quotes in visible markdown text", () => {
+    const html = blockMarkdownToHtml("Say \"hello\" and 'welcome'.");
+    expect(html).toContain("&quot;hello&quot;");
+    expect(html).toContain("&#39;welcome&#39;");
+  });
+
   it("keeps mailto and relative links", () => {
     const html = blockMarkdownToHtml(
       "[mail](mailto:hi@tethyr.app) [rel](../docs/readme) [#top](#top)",
