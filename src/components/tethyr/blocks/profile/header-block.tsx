@@ -16,6 +16,7 @@ type ProfileHeaderData = {
   handle: string | null;
   creator_title: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
   category: string | null;
   country: string | null;
   timezone: string | null;
@@ -33,7 +34,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
       const { data } = await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle, creator_title, avatar_url, category, country, timezone, languages, reputation_score",
+          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score",
         )
         .eq("id", profileId)
         .maybeSingle();
@@ -61,55 +62,70 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showHandle = config.showHandle !== false;
   const showLocation = config.showLocation !== false;
   const showReputation = config.showReputation !== false;
+  const showBanner = config.showBanner !== false;
 
   return (
-    <div className="bg-surface/40 p-5 rounded-xl">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        {/* Avatar */}
-        <div className="shrink-0">
-          <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
-            <AvatarImage src={data.avatar_url ?? undefined} />
-            <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
-          </Avatar>
-        </div>
+    <div className="relative overflow-hidden rounded-xl bg-surface/40">
+      {showBanner &&
+        (typeof config.bannerUrl === "string" && config.bannerUrl
+          ? config.bannerUrl
+          : data.banner_url) && (
+          <img
+            src={
+              (typeof config.bannerUrl === "string" && config.bannerUrl) || data.banner_url || ""
+            }
+            alt=""
+            className="h-32 w-full object-cover"
+          />
+        )}
+      <div className="p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          {/* Avatar */}
+          <div className="shrink-0">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
+              <AvatarImage src={data.avatar_url ?? undefined} />
+              <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
+            </Avatar>
+          </div>
 
-        {/* Identity */}
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
-            {data.display_name || "Untitled"}
-          </h2>
-          {showTitle && data.creator_title && (
-            <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
-          )}
-          {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
+          {/* Identity */}
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
+              {data.display_name || "Untitled"}
+            </h2>
+            {showTitle && data.creator_title && (
+              <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
+            )}
+            {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
 
-          {/* Metadata chips */}
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {data.category && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
-                {data.category}
-              </span>
-            )}
-            {showLocation && data.country && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" /> {data.country}
-              </span>
-            )}
-            {data.timezone && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> {data.timezone}
-              </span>
-            )}
-            {data.languages.length > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
-              </span>
-            )}
-            {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2.5 py-0.5 text-trust">
-                <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
-              </span>
-            )}
+            {/* Metadata chips */}
+            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {data.category && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
+                  {data.category}
+                </span>
+              )}
+              {showLocation && data.country && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" /> {data.country}
+                </span>
+              )}
+              {data.timezone && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> {data.timezone}
+                </span>
+              )}
+              {data.languages.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
+                </span>
+              )}
+              {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2.5 py-0.5 text-trust">
+                  <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -123,12 +139,21 @@ registerBlock({
   label: "Profile Header",
   description: "Avatar, name, handle, category, location, timezone, languages, and reputation.",
   icon: "User",
-  defaults: { showTitle: true, showHandle: true, showLocation: true, showReputation: true },
+  defaults: {
+    showTitle: true,
+    showHandle: true,
+    showLocation: true,
+    showReputation: true,
+    showBanner: true,
+    bannerUrl: "",
+  },
   fields: [
     { key: "showTitle", label: "Show title", type: "toggle" },
     { key: "showHandle", label: "Show handle", type: "toggle" },
     { key: "showLocation", label: "Show location", type: "toggle" },
     { key: "showReputation", label: "Show reputation", type: "toggle" },
+    { key: "showBanner", label: "Show banner image", type: "toggle" },
+    { key: "bannerUrl", label: "Banner image", type: "image", placeholder: "https://..." },
   ],
   component: ProfileHeaderBlock,
 });

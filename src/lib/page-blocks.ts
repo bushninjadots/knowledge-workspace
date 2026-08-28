@@ -112,7 +112,13 @@ export type LayoutType =
   | "custom";
 
 export type SectionLayoutType =
-  "full" | "two_column" | "three_column" | "sidebar_left" | "sidebar_right" | "feature";
+  | "full"
+  | "two_column"
+  | "three_column"
+  | "sidebar_left"
+  | "sidebar_right"
+  | "feature"
+  | "side_by_side";
 
 /** A single block instance within a layout section. */
 export interface LayoutBlockInstance {

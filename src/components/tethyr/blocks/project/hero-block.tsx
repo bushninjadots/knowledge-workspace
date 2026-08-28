@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,20 +64,21 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   });
 
   const resolvedProject = previewProject ?? project;
+  const showBanner = config.showBanner !== false;
+  const showOwner = config.showOwner !== false;
 
   const bannerStyle = useMemo(() => {
-    if (!resolvedProject?.cover_url) return {};
+    if (!showBanner || !resolvedProject?.cover_url) return {};
     return {
       backgroundImage: `url(${resolvedProject.cover_url})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
-  }, [resolvedProject?.cover_url]);
+  }, [resolvedProject?.cover_url, showBanner]);
 
   const showDescription = config.showDescription !== false;
   const showProgress = config.showProgress !== false;
   const showTags = config.showTags !== false;
-
   if (isLoading && !previewProject) {
     return (
       <div className="space-y-4 py-4">
@@ -99,9 +101,25 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
   return (
     <div className="relative overflow-hidden rounded-xl" style={bannerStyle}>
       {/* Overlay for readability when banner image is present */}
-      {resolvedProject.cover_url && <div className="absolute inset-0 bg-background/90" />}
+      {showBanner && resolvedProject.cover_url && (
+        <div className="absolute inset-0 bg-background/90" />
+      )}
 
       <div className="relative px-6 py-8 sm:px-8 sm:py-12">
+        {showOwner && typeof context.data?.ownerAvatarUrl === "string" && (
+          <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={context.data.ownerAvatarUrl} alt="" />
+              <AvatarFallback>◎</AvatarFallback>
+            </Avatar>
+            <span>
+              Built by{" "}
+              {typeof context.data?.ownerName === "string"
+                ? context.data.ownerName
+                : "the project team"}
+            </span>
+          </div>
+        )}
         {/* Title */}
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           {resolvedProject.title}
@@ -171,11 +189,19 @@ registerBlock({
   label: "Project Hero",
   description: "The project's identity banner — title, status, progress, and tags.",
   icon: "Layout",
-  defaults: { showDescription: true, showProgress: true, showTags: true },
+  defaults: {
+    showDescription: true,
+    showProgress: true,
+    showTags: true,
+    showBanner: true,
+    showOwner: true,
+  },
   fields: [
     { key: "showDescription", label: "Show description", type: "toggle" },
     { key: "showProgress", label: "Show progress bar", type: "toggle" },
     { key: "showTags", label: "Show tags", type: "toggle" },
+    { key: "showBanner", label: "Show banner image", type: "toggle" },
+    { key: "showOwner", label: "Show owner", type: "toggle" },
   ],
   containerless: true,
   component: ProjectHeroBlock,

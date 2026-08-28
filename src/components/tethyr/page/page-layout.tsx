@@ -37,6 +37,7 @@ const SECTION_GRID: Record<string, string> = {
   sidebar_left: "grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6",
   sidebar_right: "grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6",
   feature: "grid grid-cols-1 md:grid-cols-2 gap-6",
+  side_by_side: "grid grid-cols-1 md:grid-cols-2 gap-6",
 };
 
 /** Number of columns each section layout produces at desktop width. */
@@ -47,6 +48,7 @@ const COLUMN_COUNT: Record<string, number> = {
   sidebar_left: 2,
   sidebar_right: 2,
   feature: 2,
+  side_by_side: 2,
 };
 
 /** Width utilities for block `config.width` — same contract as the Studio canvas. */

@@ -409,6 +409,7 @@ const LAYOUT_OPTIONS: Array<{ label: string; value: SectionLayoutType }> = [
   { label: "Sidebar left", value: "sidebar_left" },
   { label: "Sidebar right", value: "sidebar_right" },
   { label: "Feature", value: "feature" },
+  { label: "Side by side", value: "side_by_side" },
 ];
 
 function SectionInspector({

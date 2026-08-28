@@ -190,18 +190,36 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   const { data: activeOwnerData } = useQuery({
     queryKey: ["studio-page-owner-data", activePage?.type ?? "", activePage?.id ?? ""],
     queryFn: async () => {
-      if (activePage?.type !== "project" || !activePage.id) return undefined;
-      const select =
-        "id, title, description, status, stage, progress_percent, cover_url, tags, looking_for_collaborators, looking_for_feedback";
-      const { data, error } = await supabase
-        .from("projects")
-        .select(select)
+      if (!activePage?.id) return undefined;
+      if (activePage.type === "project") {
+        const select =
+          "id, title, description, status, stage, progress_percent, cover_url, tags, looking_for_collaborators, looking_for_feedback";
+        const [{ data: project, error: projectError }, { data: owner }] = await Promise.all([
+          supabase.from("projects").select(select).eq("id", activePage.id).maybeSingle(),
+          supabase.from("projects").select("profile_id").eq("id", activePage.id).maybeSingle(),
+        ]);
+        if (projectError) throw projectError;
+        if (!project) return undefined;
+        let ownerData: Record<string, unknown> = {};
+        if (owner?.profile_id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, avatar_url")
+            .eq("id", owner.profile_id)
+            .maybeSingle();
+          ownerData = { ownerName: profile?.display_name, ownerAvatarUrl: profile?.avatar_url };
+        }
+        return { project, ...ownerData };
+      }
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, banner_url")
         .eq("id", activePage.id)
         .maybeSingle();
       if (error) throw error;
-      return data ? { project: data } : undefined;
+      return profile ? { profile } : undefined;
     },
-    enabled: !!activePage && activePage.type === "project",
+    enabled: !!activePage,
   });
 
   // Block registry diagnostic

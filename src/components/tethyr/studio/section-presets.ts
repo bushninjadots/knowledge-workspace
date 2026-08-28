@@ -33,6 +33,13 @@ export const SECTION_PRESETS: SectionPreset[] = [
     layout: "full",
   },
   {
+    id: "side-by-side",
+    label: "Side by side",
+    description: "Two sections that sit together",
+    icon: "Columns2",
+    layout: "side_by_side",
+  },
+  {
     id: "two-columns",
     label: "Two Columns",
     description: "Side-by-side layout",
