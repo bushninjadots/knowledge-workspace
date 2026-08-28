@@ -174,6 +174,7 @@ export function PageShell({
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
       <div
+        className="bg-background font-sans text-foreground"
         style={containerStyle}
         data-page-id={page.id}
         data-page-status={page.status}
