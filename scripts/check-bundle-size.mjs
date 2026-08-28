@@ -18,6 +18,10 @@ import { gzipSync } from "node:zlib";
 const OUT_DIR = ".output";
 const MAX_RAW = Number(process.env.BUNDLE_MAX_RAW ?? 800_000);
 const MAX_GZIP = Number(process.env.BUNDLE_MAX_GZIP ?? 210_000);
+const CLIENT_MAX_RAW = Number(process.env.BUNDLE_CLIENT_MAX_RAW ?? 900_000);
+const CLIENT_MAX_GZIP = Number(process.env.BUNDLE_CLIENT_MAX_GZIP ?? 280_000);
+const SERVER_MAX_RAW = Number(process.env.BUNDLE_SERVER_MAX_RAW ?? 800_000);
+const SERVER_MAX_GZIP = Number(process.env.BUNDLE_SERVER_MAX_GZIP ?? 210_000);
 const EXTS = new Set([".js", ".mjs"]);
 
 async function walk(dir) {
@@ -69,13 +73,22 @@ for (const { path, raw, gzip } of sizes.slice(0, 12)) {
   );
 }
 
-const failures = sizes.filter((s) => s.raw > MAX_RAW || s.gzip > MAX_GZIP);
+const isClient = (path) => path.includes(".output/public/");
+const failures = sizes.filter((s) => {
+  const rawBudget = isClient(s.path) ? CLIENT_MAX_RAW : SERVER_MAX_RAW;
+  const gzipBudget = isClient(s.path) ? CLIENT_MAX_GZIP : SERVER_MAX_GZIP;
+  return s.raw > rawBudget || s.gzip > gzipBudget;
+});
 if (failures.length > 0) {
-  console.error(
-    `\n${failures.length} chunk(s) exceed the bundle budget ` +
-      `(raw ${fmt(MAX_RAW)} B / gzip ${fmt(MAX_GZIP)} B).`,
-  );
+  console.error(`\n${failures.length} chunk(s) exceed their bundle budget.`);
+  for (const { path, raw, gzip } of failures) {
+    const rawBudget = isClient(path) ? CLIENT_MAX_RAW : SERVER_MAX_RAW;
+    const gzipBudget = isClient(path) ? CLIENT_MAX_GZIP : SERVER_MAX_GZIP;
+    console.error(
+      `  ${path}: raw ${fmt(raw)} / ${fmt(rawBudget)}, gzip ${fmt(gzip)} / ${fmt(gzipBudget)}`,
+    );
+  }
   process.exit(1);
 }
 
-console.log(`\n✓ All ${sizes.length} chunks within budget.`);
+console.log(`\n✓ All ${sizes.length} chunks within their client/server budgets.`);

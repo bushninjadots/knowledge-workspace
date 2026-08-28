@@ -33,7 +33,11 @@ import {
 import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
 import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
 import { htmlToMarkdown, markdownToHtml } from "@/lib/content-format";
-import { NoteEditor } from "@/components/tethyr/library/note-editor";
+import { lazy, Suspense } from "react";
+
+const NoteEditor = lazy(() =>
+  import("@/components/tethyr/library/note-editor").then((m) => ({ default: m.NoteEditor })),
+);
 import { LibraryContentLayout } from "@/components/tethyr/library/library-layout";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
@@ -370,11 +374,20 @@ function LibraryItemPage() {
                 />
               )
             ) : (
-              <NoteEditor
-                content={content}
-                onChange={handleContentChange}
-                format={workspaceMode === "code" ? "markdown" : "html"}
-              />
+              <Suspense
+                fallback={
+                  <div
+                    className="min-h-[60vh] animate-pulse bg-surface/30"
+                    aria-label="Loading editor"
+                  />
+                }
+              >
+                <NoteEditor
+                  content={content}
+                  onChange={handleContentChange}
+                  format={workspaceMode === "code" ? "markdown" : "html"}
+                />
+              </Suspense>
             )}
           </>
         )}
