@@ -66,6 +66,7 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
         vars[`--${key}`] = value;
       }
     }
+    deriveContrastVars(vars);
   }
 
   // ── Typography ────────────────────────────────────────────────────────
