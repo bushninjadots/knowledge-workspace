@@ -100,7 +100,7 @@ BEGIN
 
   RETURN cnt;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+REVOKE ALL ON FUNCTION public.reseed_default_templates() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.reseed_default_templates() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.reseed_default_templates() TO anon;
