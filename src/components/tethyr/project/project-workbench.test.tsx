@@ -149,7 +149,21 @@ describe("Project Workbench", () => {
       isContributor: false,
     });
 
-    expect(next).toMatchObject({ action: "people", cta: "See open roles" });
+    expect(next).toMatchObject({ action: "join", cta: "Apply for a role" });
+  });
+
+  it("directs feedback-seeking visitors to the conversation", () => {
+    const next = chooseNextAction({
+      project: makeProject({ readme: "# Story", looking_for_feedback: true }),
+      gallery: [{ url: "https://example.com/demo.gif", type: "image" }],
+      milestones: [],
+      openNeeds: 0,
+      openRolesCount: 0,
+      isOwner: false,
+      isContributor: false,
+    });
+
+    expect(next).toMatchObject({ action: "discussions", cta: "Offer feedback" });
   });
 
   it("exposes the presentation choice only to the owner", () => {

@@ -45,4 +45,6 @@ jobs:
       - run: supabase start
       - run: supabase db reset
       - run: supabase test db
+      # Security migrations and pgTAP coverage are mandatory for every DB change.
+      - run: supabase db lint
       - run: supabase stop --no-backup

@@ -177,8 +177,8 @@ export function CreateChallengeDialog({
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={create.isPending}>
-              {create.isPending ? "Creating..." : "Create"}
+            <Button onClick={handleSubmit} busy={create.isPending}>
+              Create challenge
             </Button>
           </div>
         </div>

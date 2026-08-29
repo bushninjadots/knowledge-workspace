@@ -5,6 +5,7 @@ import { timeAgo } from "@/lib/time";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAddComment, useUpdateComment } from "@/hooks/use-community";
 import type { CommentRow } from "@/lib/community-data";
+import { Button } from "@/components/ui/button";
 
 export function CommentThreadInline({
   postId,
@@ -186,19 +187,12 @@ function CommentEditor({
         className="w-full resize-y rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
       />
       <div className="flex gap-2">
-        <button
-          onClick={save}
-          disabled={!text.trim() || updateComment.isPending}
-          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
-        >
-          {updateComment.isPending ? "..." : "Save"}
-        </button>
-        <button
-          onClick={onCancel}
-          className="rounded-lg border border-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
+        <Button type="button" size="sm" onClick={save} busy={updateComment.isPending} disabled={!text.trim()}>
+          Save comment
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -243,13 +237,16 @@ function CommentComposer({
         autoFocus={autoFocus}
         className="flex-1 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
       />
-      <button
+      <Button
+        type="button"
+        size="sm"
         onClick={submitComment}
-        disabled={!newComment.trim() || addComment.isPending}
-        className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+        busy={addComment.isPending}
+        disabled={!newComment.trim()}
+        className="shrink-0"
       >
-        {addComment.isPending ? "..." : "Reply"}
-      </button>
+        {parentId ? "Reply" : "Comment"}
+      </Button>
     </div>
   );
 }

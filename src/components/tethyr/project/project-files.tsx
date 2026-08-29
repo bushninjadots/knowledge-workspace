@@ -22,6 +22,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { validateLibraryFile } from "@/lib/validators";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { Button } from "@/components/ui/button";
 
 const sb = supabase;
 
@@ -178,10 +179,13 @@ export function ProjectFilesSection({
           )}
         </h3>
         {isOwner && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            busy={uploading}
+            className="rounded-full"
           >
             {uploading ? (
               <>
@@ -192,7 +196,7 @@ export function ProjectFilesSection({
                 <Plus className="h-3 w-3" /> Upload files
               </>
             )}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -293,13 +297,17 @@ function FileRow({
           </a>
         )}
         {isOwner && (
-          <button
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
             onClick={onRemove}
-            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+            aria-label={`Remove ${file.name}`}
             title="Remove"
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
       </div>
     </div>

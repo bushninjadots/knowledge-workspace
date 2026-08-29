@@ -6,6 +6,7 @@ import { ProfileCredits } from "@/components/tethyr/profile/profile-credits";
 import { useCreateTeam, useMyTeams } from "@/hooks/use-teams";
 import { AchievementGrid } from "@/components/tethyr/achievements";
 import type { Profile } from "@/hooks/use-current-user";
+import { Button } from "@/components/ui/button";
 
 export function ProfileOverviewTab({
   profile,
@@ -72,13 +73,16 @@ function TeamsIBuildWith() {
         <Users className="h-4 w-4 text-muted-foreground" />
         <h3 className="text-sm font-semibold">Crews I build with</h3>
         {!showCreate && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowCreate(true)}
-            className="ml-auto inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-xs text-muted-foreground transition hover:text-foreground"
+            className="ml-auto rounded-full"
           >
             <Plus className="h-3 w-3" />
             Form a crew
-          </button>
+          </Button>
         )}
       </div>
 
@@ -91,19 +95,12 @@ function TeamsIBuildWith() {
             className="w-full max-w-xs rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
-          <button
-            onClick={handleCreate}
-            disabled={!name.trim()}
-            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
-          >
-            Create
-          </button>
-          <button
-            onClick={() => setShowCreate(false)}
-            className="rounded-md px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
-          >
+          <Button type="button" size="sm" onClick={handleCreate} busy={createTeam.isPending} disabled={!name.trim()}>
+            Create crew
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setShowCreate(false)}>
             Cancel
-          </button>
+          </Button>
         </div>
       )}
 

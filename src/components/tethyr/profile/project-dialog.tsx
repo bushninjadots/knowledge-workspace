@@ -612,7 +612,7 @@ export function ProjectDialog({
             Cancel
           </Button>
           {(project || creationStep === 2) && (
-            <Button onClick={save} disabled={saving} className={project ? "" : "ml-auto"}>
+            <Button onClick={save} busy={saving} className={project ? "" : "ml-auto"}>
               {saving ? "Saving…" : project ? "Save" : "Publish project"}
             </Button>
           )}

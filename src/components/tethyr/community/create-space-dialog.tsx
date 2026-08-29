@@ -191,8 +191,8 @@ export function CreateSpaceDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim() || createSpace.isPending}>
-              {createSpace.isPending ? "Creating..." : "Create space"}
+            <Button type="submit" busy={createSpace.isPending} disabled={!name.trim()}>
+              Create space
             </Button>
           </DialogFooter>
         </form>

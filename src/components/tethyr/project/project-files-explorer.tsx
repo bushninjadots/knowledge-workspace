@@ -22,6 +22,7 @@ import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { buildTree, type TreeNode, type TreeFile } from "@/lib/file-tree";
 import { getFileIconType, getFileType, formatFileSize, type ProjectFile } from "./project-files";
 import { ProjectReposSection } from "./project-repos";
+import { Button } from "@/components/ui/button";
 
 const sb = supabase;
 
@@ -40,9 +41,12 @@ function FolderRow({
 
   return (
     <div>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[13px] text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground"
+        aria-expanded={open}
+        className="h-auto w-full justify-start rounded-md px-2 py-1.5 text-left text-[13px] font-normal text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
         style={{ paddingLeft: `${8 + depth * 14}px` }}
       >
         {open ? (
@@ -56,7 +60,7 @@ function FolderRow({
           <Folder className="h-4 w-4 shrink-0 text-muted-foreground/70" />
         )}
         <span className="truncate font-medium">{node.name}</span>
-      </button>
+      </Button>
       {open && (
         <div>
           {[...node.children.values()]
@@ -341,13 +345,16 @@ export function ProjectFilesExplorer({
                 className="w-40 rounded-full border border-border/60 bg-background/50 py-1.5 pl-8 pr-7 text-xs text-foreground outline-none transition focus:border-primary/50 focus:bg-background sm:w-48"
               />
               {query && (
-                <button
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
                   onClick={() => setQuery("")}
                   aria-label="Clear file search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground/60 transition hover:text-foreground"
+                  className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
                 >
                   <X className="h-3 w-3" />
-                </button>
+                </Button>
               )}
             </label>
             <button

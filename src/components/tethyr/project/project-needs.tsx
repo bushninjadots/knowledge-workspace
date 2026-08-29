@@ -8,6 +8,7 @@ import {
   useFillProjectNeed,
 } from "@/hooks/use-projects";
 import { useSkillsCatalog } from "@/hooks/use-current-user";
+import { Button } from "@/components/ui/button";
 
 const URGENCY_META: Record<
   ProjectNeedRow["urgency"],
@@ -115,15 +116,17 @@ export function ProjectNeeds({
           </p>
         </div>
         {canManage && (
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowAdd((v) => !v)}
             aria-expanded={showAdd}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+            className="shrink-0 rounded-full"
           >
             <Plus className="h-3 w-3" />
             Add need
-          </button>
+          </Button>
         )}
       </div>
 
@@ -182,20 +185,12 @@ export function ProjectNeeds({
               ))}
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAdd(false)}
-                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-              >
+              <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!title.trim()}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
-              >
+              </Button>
+              <Button type="submit" size="sm" busy={createNeed.isPending} disabled={!title.trim()}>
                 Post need
-              </button>
+              </Button>
             </div>
           </div>
         </form>

@@ -533,6 +533,7 @@ function ProjectPage() {
       milestones: "project-current-work",
       people: "project-people",
       join: "project-people",
+      discussions: "project-discussions",
     };
     const sectionId = sectionByAction[action];
     if (sectionId) scrollToSection(sectionId);

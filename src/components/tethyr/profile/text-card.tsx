@@ -70,7 +70,7 @@ export function TextCard({
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} busy={saving}>
               {saving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>

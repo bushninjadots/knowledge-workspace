@@ -24,8 +24,8 @@ export function useProjectRepos(projectId: string) {
     queryKey: ["project-repos", projectId],
     queryFn: async (): Promise<ProjectRepo[]> => {
       const { data, error } = await sb
-        .from("project_repositories")
-        .select("*")
+        .from("project_repositories_public")
+        .select("id, project_id, url, provider, created_at, updated_at")
         .eq("project_id", projectId)
         .order("created_at", { ascending: true });
       if (error) throw error;

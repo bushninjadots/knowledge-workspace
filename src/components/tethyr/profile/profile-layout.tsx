@@ -578,7 +578,7 @@ function EditIdentityDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} busy={saving}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

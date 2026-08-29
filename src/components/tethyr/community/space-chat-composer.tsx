@@ -7,6 +7,7 @@ import type { CommunitySpace } from "@/hooks/use-community-spaces";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SpaceTypingUser } from "@/hooks/use-space-typing";
 import { friendlyError } from "@/lib/error-message";
+import { Button } from "@/components/ui/button";
 
 /**
  * Lightweight chat composer for a community space. Members who have joined can
@@ -91,16 +92,18 @@ export function SpaceChatComposer({
             <p className="text-[11px] text-muted-foreground">
               Enter to send · Shift+Enter for a new line
             </p>
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
               onClick={send}
-              disabled={!message.trim() || sending}
+              busy={sending}
+              disabled={!message.trim()}
               aria-label="Send message"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated active:scale-95 disabled:opacity-40"
             >
               <Send className="h-3.5 w-3.5" />
               Send
-            </button>
+            </Button>
           </div>
         </div>
       </div>

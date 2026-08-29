@@ -27,7 +27,14 @@ import {
 } from "@/lib/project-presentation";
 
 export type ProjectWorkbenchAction =
-  "demonstrations" | "readme" | "needs" | "milestones" | "update" | "people" | "join";
+  | "demonstrations"
+  | "readme"
+  | "needs"
+  | "milestones"
+  | "update"
+  | "people"
+  | "discussions"
+  | "join";
 
 export function ProjectWorkbench({
   project,
@@ -319,10 +326,18 @@ export function chooseNextAction({
   }
   if (openRolesCount > 0) {
     return {
-      action: "people",
+      action: "join",
       title: "Find where you could help",
       description: `${openRolesCount} open role${openRolesCount === 1 ? "" : "s"} connect this project to new collaborators.`,
-      cta: "See open roles",
+      cta: "Apply for a role",
+    };
+  }
+  if (project.looking_for_feedback) {
+    return {
+      action: "discussions",
+      title: "Help shape the direction",
+      description: "The builder is looking for feedback on this work.",
+      cta: "Offer feedback",
     };
   }
   return {

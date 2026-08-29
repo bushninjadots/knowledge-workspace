@@ -121,14 +121,11 @@ export function SessionResources({
             <Button
               size="sm"
               onClick={handleAdd}
-              disabled={!title.trim() || addResource.isPending}
+              busy={addResource.isPending}
+              disabled={!title.trim()}
               className="h-7 text-xs bg-brand-green text-background hover:bg-brand-green/90"
             >
-              {addResource.isPending ? (
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              ) : (
-                "Add Resource"
-              )}
+              Add resource
             </Button>
           </div>
         </div>
@@ -174,13 +171,17 @@ export function SessionResources({
                 </a>
               )}
               {isOrganizer && (
-                <button
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
                   onClick={() => handleDelete(resource.id)}
-                  disabled={deleteResource.isPending}
-                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-warning hover:text-warning"
+                  busy={deleteResource.isPending}
+                  aria-label={`Remove ${resource.title}`}
+                  className="text-muted-foreground hover:bg-warning hover:text-warning"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
           ))}

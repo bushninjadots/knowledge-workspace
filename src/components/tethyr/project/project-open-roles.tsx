@@ -9,6 +9,7 @@ import {
   useDeclineRoleApplication,
 } from "@/hooks/use-projects";
 import { ApplyToRoleButton, RoleApplicationsList } from "./project-role-applications";
+import { Button } from "@/components/ui/button";
 
 export function OpenRolesSection({
   roles,
@@ -66,13 +67,17 @@ export function OpenRolesSection({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Open Roles</h3>
         {isOwner && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-expanded={showAdd}
+            className="rounded-full"
           >
             <Plus className="h-3 w-3" />
             Add
-          </button>
+          </Button>
         )}
       </div>
 
@@ -97,19 +102,12 @@ export function OpenRolesSection({
             className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
           <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              disabled={!title.trim()}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
+            <Button type="button" size="sm" onClick={handleAdd} busy={createRole.isPending} disabled={!title.trim()}>
+              Save role
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -142,12 +140,17 @@ export function OpenRolesSection({
                   <ApplyToRoleButton roleId={r.id} projectId={projectId} isOwner={isOwner} />
                 </div>
                 {isOwner && (
-                  <button
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
                     onClick={() => handleDelete(r.id)}
-                    className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                    busy={deleteRole.isPending}
+                    aria-label={`Delete role ${r.title}`}
+                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-3 w-3" />
-                  </button>
+                  </Button>
                 )}
               </div>
               <RoleApplicationsList

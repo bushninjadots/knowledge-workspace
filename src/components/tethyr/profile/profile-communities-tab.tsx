@@ -179,7 +179,7 @@ export function ProfileCommunitiesTab() {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full text-[11px]"
-                          disabled={requestJoin.isPending}
+                          busy={requestJoin.isPending}
                           onClick={() => requestJoin.mutate({ spaceId: space.id })}
                         >
                           Request to join
@@ -189,7 +189,7 @@ export function ProfileCommunitiesTab() {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full text-[11px]"
-                          disabled={joinSpace.isPending}
+                          busy={joinSpace.isPending}
                           onClick={() => joinSpace.mutate(space.id)}
                         >
                           Join

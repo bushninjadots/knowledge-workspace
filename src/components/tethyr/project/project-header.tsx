@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Link as LinkIcon,
   Lock,
+  Globe2,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -162,15 +163,21 @@ export function ProjectHeader({
               >
                 {PROJECT_STATUS_LABEL[project.status]}
               </span>
-              {project.visibility === "private" && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
-                  title="Only the owner and contributors can view this project"
-                >
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                title={
+                  project.visibility === "private"
+                    ? "Only the owner and contributors can view this project"
+                    : "Anyone can discover this project"
+                }
+              >
+                {project.visibility === "private" ? (
                   <Lock className="h-3 w-3" />
-                  Private
-                </span>
-              )}
+                ) : (
+                  <Globe2 className="h-3 w-3" />
+                )}
+                {project.visibility === "private" ? "Private" : "Public"}
+              </span>
               {project.is_featured && (
                 <Trophy
                   className="h-4 w-4 shrink-0 text-primary"
@@ -353,6 +360,11 @@ export function ProjectHeader({
           <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
             {project.progress_percent}% complete
           </span>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span>{project.stage ?? "Planning"} stage</span>
+          {project.looking_for_collaborators && <span>· Seeking collaborators</span>}
+          {project.looking_for_feedback && <span>· Open to feedback</span>}
         </div>
       </div>
     </section>

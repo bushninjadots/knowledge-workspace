@@ -2945,7 +2945,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      project_repositories_public: {
+        Row: {
+          id: string
+          project_id: string
+          provider: string
+          url: string
+          created_at: string
+          updated_at: string
+        }
+        Relationships: []
+      }
+      project_repositories_safe: {
+        Row: {
+          id: string
+          project_id: string
+          provider: string
+          url: string
+          created_at: string
+          updated_at: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _create_trigger_if_table_exists: {

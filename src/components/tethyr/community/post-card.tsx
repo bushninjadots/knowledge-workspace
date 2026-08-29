@@ -746,8 +746,8 @@ function OfferHelpDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!message.trim() || addComment.isPending}>
-            {addComment.isPending ? "Sending…" : "Send offer"}
+          <Button onClick={submit} busy={addComment.isPending} disabled={!message.trim()}>
+            Send offer
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -847,9 +847,10 @@ function ReportPostDialog({
           <Button
             variant="destructive"
             onClick={submit}
-            disabled={!reason.trim() || reportPost.isPending}
+            busy={reportPost.isPending}
+            disabled={!reason.trim()}
           >
-            {reportPost.isPending ? "Reporting..." : "Submit report"}
+            Submit report
           </Button>
         </DialogFooter>
       </DialogContent>

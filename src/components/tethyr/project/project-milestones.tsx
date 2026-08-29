@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Clock, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { MilestoneRow } from "@/hooks/use-projects";
 import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-projects";
+import { Button } from "@/components/ui/button";
 
 const STATUS_ICON: Record<MilestoneRow["status"], typeof Circle> = {
   done: CheckCircle2,
@@ -92,13 +93,17 @@ export function MilestonesTimeline({
           )}
         </div>
         {isOwner && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-expanded={showAdd}
+            className="rounded-full"
           >
             <Plus className="h-3 w-3" />
             Add
-          </button>
+          </Button>
         )}
       </div>
 
@@ -119,19 +124,12 @@ export function MilestonesTimeline({
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
           <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              disabled={!title.trim()}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
+            <Button type="button" size="sm" onClick={handleAdd} busy={createMutation.isPending} disabled={!title.trim()}>
+              Save milestone
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -153,12 +151,17 @@ export function MilestonesTimeline({
             const Icon = STATUS_ICON[m.status];
             return (
               <div key={m.id} className="flex items-start gap-3">
-                <button
-                  onClick={() => (isOwner ? handleToggle(m) : undefined)}
-                  className={`mt-0.5 shrink-0 ${STATUS_STYLE[m.status]} ${isOwner ? "cursor-pointer hover:opacity-70" : ""}`}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => isOwner && handleToggle(m)}
+                  disabled={!isOwner || updateMutation.isPending}
+                  aria-label={`${m.status === "done" ? "Reopen" : "Complete"} milestone ${m.title}`}
+                  className={`mt-0.5 h-6 w-6 shrink-0 ${STATUS_STYLE[m.status]} ${isOwner ? "hover:opacity-70" : ""}`}
                 >
                   <Icon className="h-4 w-4" />
-                </button>
+                </Button>
                 <div className="min-w-0 flex-1">
                   <p
                     className={`text-sm ${m.status === "done" ? "text-muted-foreground line-through" : ""}`}
@@ -176,20 +179,29 @@ export function MilestonesTimeline({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {isOwner && m.status !== "done" && (
-                    <button
-                      onClick={() => handleAdvance(m)}
-                      className="rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground"
-                    >
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleAdvance(m)}
+                  busy={updateMutation.isPending}
+                  className="h-7 px-2 text-[11px] text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                >
                       {m.status === "pending" ? "Start" : "Complete"}
-                    </button>
+                    </Button>
                   )}
                   {isOwner && (
-                    <button
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
                       onClick={() => handleDelete(m.id)}
-                      className="rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                      busy={deleteMutation.isPending}
+                      aria-label={`Delete milestone ${m.title}`}
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="h-3 w-3" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

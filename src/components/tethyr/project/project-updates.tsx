@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import type { ProjectUpdateRow } from "@/hooks/use-projects";
 import { useCreateProjectUpdate, useDeleteProjectUpdate } from "@/hooks/use-projects";
 import { timeAgo } from "@/lib/time";
+import { Button } from "@/components/ui/button";
 
 export function ProjectUpdatesJournal({
   updates,
@@ -57,13 +58,17 @@ export function ProjectUpdatesJournal({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Development Journal</h3>
         {isContributor && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-expanded={showAdd}
+            className="rounded-full"
           >
             <Plus className="h-3 w-3" />
             New Update
-          </button>
+          </Button>
         )}
       </div>
 
@@ -92,19 +97,18 @@ export function ProjectUpdatesJournal({
             className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
           />
           <div className="flex gap-2">
-            <button
+            <Button
+              type="button"
+              size="sm"
               onClick={handleAdd}
+              busy={createMutation.isPending}
               disabled={!title.trim() || !body.trim()}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
             >
-              Post Update
-            </button>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
+              Post update
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -143,12 +147,17 @@ export function ProjectUpdatesJournal({
                     </div>
                   </div>
                   {isContributor && (
-                    <button
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
                       onClick={() => handleDelete(u.id)}
-                      className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                      busy={deleteMutation.isPending}
+                      aria-label={`Delete update ${u.title}`}
+                      className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="h-3 w-3" />
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <div className="prose-custom mt-2 text-sm text-foreground/90">

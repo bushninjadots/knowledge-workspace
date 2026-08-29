@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { GitBranch, ExternalLink, Star } from "lucide-react";
+import { GitBranch, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
@@ -11,7 +11,7 @@ type RepoRow = {
   id: string;
   provider: string;
   url: string;
-  metadata: { full_name?: string; stargazers_count?: number } | null;
+  metadata?: never;
 };
 
 function ProjectReposBlock({ config, context }: BlockProps) {
@@ -22,8 +22,8 @@ function ProjectReposBlock({ config, context }: BlockProps) {
     queryFn: async (): Promise<RepoRow[]> => {
       if (!projectId) return [];
       const { data: d } = await supabase
-        .from("project_repositories")
-        .select("id, provider, url, metadata")
+        .from("project_repositories_public")
+        .select("id, provider, url")
         .eq("project_id", projectId)
         .order("provider");
       return (d ?? []) as unknown as RepoRow[];
@@ -44,9 +44,7 @@ function ProjectReposBlock({ config, context }: BlockProps) {
       <div className="grid gap-2">
         {" "}
         {data.map((repo) => {
-          const displayName =
-            repo.metadata?.full_name ??
-            repo.url.replace("https://github.com/", "").replace(/\/$/, "");
+          const displayName = repo.url.replace("https://github.com/", "").replace(/\/$/, "");
           return (
             <a
               key={repo.id}
@@ -65,12 +63,6 @@ function ProjectReposBlock({ config, context }: BlockProps) {
                 )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                {repo.metadata?.stargazers_count != null && config.showStars !== false && (
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3" />
-                    {repo.metadata.stargazers_count}
-                  </span>
-                )}
                 <ExternalLink className="h-3 w-3" />
               </div>
             </a>

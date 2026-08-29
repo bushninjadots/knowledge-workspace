@@ -276,7 +276,7 @@ export function ProjectReposSection({
             className="flex-1 border-border/60"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
-          <Button size="sm" onClick={handleAdd} disabled={!url.trim() || addRepo.isPending}>
+          <Button size="sm" onClick={handleAdd} busy={addRepo.isPending} disabled={!url.trim()}>
             {addRepo.isPending ? "Adding…" : "Add"}
           </Button>
         </div>

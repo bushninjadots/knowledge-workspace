@@ -182,8 +182,8 @@ function AvailabilityEditorDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={setAvailability.isPending}>
-            {setAvailability.isPending ? "Saving..." : "Save"}
+          <Button onClick={handleSave} busy={setAvailability.isPending}>
+            Save availability
           </Button>
         </div>
       </DialogContent>

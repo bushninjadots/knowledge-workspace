@@ -37,6 +37,7 @@ import { syncGithubProjectActivity } from "@/lib/github-server";
 import type { ProjectRepo } from "@/hooks/use-project-repos";
 import { timeAgo } from "@/lib/time";
 import { safeHref } from "@/lib/validators";
+import { Button } from "@/components/ui/button";
 import type { ProjectFile } from "./project-files";
 
 type ActivityItem = {
@@ -410,45 +411,56 @@ export function ProjectActivityTab({
           <div className="flex flex-wrap items-center gap-2">
             {isContributor && !showPost && !showContribution && (
               <>
-                <button
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     setWeeklyPrompt(true);
                     setShowContribution(true);
                     setTitle("What moved this project forward?");
                   }}
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent-border,var(--border-strong))] px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                  className="rounded-full"
                 >
                   <Sparkles className="h-3 w-3" />
                   Weekly prompt
-                </button>
-                <button
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
                   onClick={() => setShowContribution(true)}
-                  className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                  className="rounded-full"
                 >
                   <Plus className="h-3 w-3" />
                   Add contribution
-                </button>
+                </Button>
               </>
             )}
             {isContributor && !showPost && !showContribution && (
-              <button
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
                 onClick={() => setShowPost(true)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                className="rounded-full"
               >
                 <Plus className="h-3 w-3" />
                 Post update
-              </button>
+              </Button>
             )}
             {isOwner && repos.some((repo) => repo.provider === "github") && (
-              <button
+              <Button
                 type="button"
+                size="sm"
+                variant="outline"
                 onClick={handleGithubSync}
-                disabled={syncingGithub}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                busy={syncingGithub}
+                className="rounded-full"
               >
                 <GitCommit className="h-3 w-3" />
                 {syncingGithub ? "Syncing GitHub…" : "Sync GitHub"}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -484,25 +496,27 @@ export function ProjectActivityTab({
               aria-label="Evidence link"
             />
             <div className="flex gap-2">
-              <button
+              <Button
                 type="button"
+                size="sm"
                 onClick={() => void handleContribution()}
-                disabled={!title.trim() || !body.trim() || posting}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background disabled:opacity-40"
+                busy={posting}
+                disabled={!title.trim() || !body.trim()}
               >
-                {posting && <Loader2 className="h-3 w-3 animate-spin" />}Save evidence
-              </button>
-              <button
+                Save evidence
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="ghost"
                 onClick={() => {
                   setShowContribution(false);
                   setWeeklyPrompt(false);
                 }}
-                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -523,21 +537,19 @@ export function ProjectActivityTab({
               className="w-full resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
             <div className="flex gap-2">
-              <button
+              <Button
+                type="button"
+                size="sm"
                 onClick={handlePost}
-                disabled={!title.trim() || !body.trim() || posting}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+                busy={posting}
+                disabled={!title.trim() || !body.trim()}
               >
-                {posting && <Loader2 className="h-3 w-3 animate-spin" />}
                 Post update
-              </button>
-              <button
-                onClick={() => setShowPost(false)}
-                className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-              >
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setShowPost(false)}>
                 <X className="h-3 w-3" />
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}

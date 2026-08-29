@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-projects";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { timeAgo } from "@/lib/time";
+import { Button } from "@/components/ui/button";
 
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
@@ -110,23 +111,32 @@ function DiscussionThread({
           </div>
         </div>
         {(discussion.author_id === me?.userId || isOwner) && (
-          <button
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
             onClick={handleDelete}
-            className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+            busy={deleteDiscussion.isPending}
+            aria-label={`Delete discussion ${discussion.title}`}
+            className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="h-3 w-3" />
-          </button>
+          </Button>
         )}
       </div>
 
-      <button
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
         onClick={() => setOpen(!open)}
-        className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+        aria-expanded={open}
+        className="mt-3 h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <MessageCircle className="h-3 w-3" />
         {discussion.reply_count ?? 0} {(discussion.reply_count ?? 0) === 1 ? "reply" : "replies"}
-      </button>
+      </Button>
 
       {open && (
         <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
@@ -158,13 +168,15 @@ function DiscussionThread({
                 className="flex-1 rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === "Enter" && handleReply()}
               />
-              <button
+              <Button
+                type="button"
+                size="sm"
                 onClick={handleReply}
+                busy={createReply.isPending}
                 disabled={!replyBody.trim()}
-                className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
               >
                 Reply
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -214,13 +226,17 @@ export function ProjectDiscussions({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground/80">Discussion</h3>
         {isContributor && (
-          <button
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-expanded={showAdd}
+            className="rounded-full"
           >
             <Plus className="h-3 w-3" />
             New Thread
-          </button>
+          </Button>
         )}
       </div>
 
@@ -253,19 +269,18 @@ export function ProjectDiscussions({
             className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
           />
           <div className="flex gap-2">
-            <button
+            <Button
+              type="button"
+              size="sm"
               onClick={handleAdd}
+              busy={createDiscussion.isPending}
               disabled={!title.trim() || !body.trim()}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
             >
-              Post
-            </button>
-            <button
-              onClick={() => setShowAdd(false)}
-              className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
+              Start discussion
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}

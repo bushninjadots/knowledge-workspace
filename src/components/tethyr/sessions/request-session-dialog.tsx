@@ -90,8 +90,8 @@ export function RequestSessionDialog({
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={sendRequest.isPending}>
-              {sendRequest.isPending ? "Sending..." : "Send Request"}
+            <Button onClick={handleSubmit} busy={sendRequest.isPending}>
+              Send request
             </Button>
           </div>
         </div>

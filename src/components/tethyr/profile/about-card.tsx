@@ -129,7 +129,7 @@ export function AboutCard({
             <Button variant="ghost" onClick={() => setEditing(false)}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} busy={saving}>
               {saving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>

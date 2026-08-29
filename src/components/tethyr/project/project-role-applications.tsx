@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
 const sb = supabase;
 
@@ -226,13 +227,15 @@ export function ApplyToRoleButton({
             understand your contribution.
           </p>
         </div>
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
           onClick={() => setShowGuidance(!showGuidance)}
-          className="text-left text-[11px] text-primary hover:underline"
+          className="h-auto justify-start p-0 text-[11px]"
         >
           {showGuidance ? "Hide application guidance" : "What makes a useful application?"}
-        </button>
+        </Button>
         {showGuidance && (
           <ul className="list-disc space-y-1 pl-4 text-[10px] text-muted-foreground">
             <li>Name the part of the project you want to help with.</li>
@@ -249,29 +252,25 @@ export function ApplyToRoleButton({
           className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs outline-none focus:border-primary resize-none"
         />
         <div className="flex gap-2">
-          <button
-            onClick={() => applyMutation.mutate()}
-            disabled={applyMutation.isPending}
-            className="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
-          >
+          <Button type="button" size="sm" onClick={() => applyMutation.mutate()} busy={applyMutation.isPending}>
             <Send className="h-3 w-3" />
-            {applyMutation.isPending ? "Sending…" : "Submit"}
-          </button>
-          <button
-            onClick={() => setShowForm(false)}
-            className="rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-          >
+            Submit application
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setShowForm(false)}>
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <button
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
       onClick={() => setShowForm(true)}
-      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+      className={`rounded-full ${
         wasDeclined
           ? "border-border/60 bg-background/40 text-muted-foreground hover:border-brand-purple/40 hover:text-brand-purple"
           : "border-brand-purple/40 bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20"
@@ -279,7 +278,7 @@ export function ApplyToRoleButton({
     >
       {wasDeclined ? <RotateCcw className="h-3 w-3" /> : <HandHeart className="h-3 w-3" />}
       {wasDeclined ? "Apply again" : "Apply"}
-    </button>
+    </Button>
   );
 }
 
