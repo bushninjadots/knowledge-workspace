@@ -1,0 +1,13 @@
+-- Security regression coverage for the site-wide public/private contracts.
+-- These checks belong in the pgTAP suite, not migration execution: hosted
+-- databases do not guarantee pgTAP is installed in the migration role.
+-- The corresponding assertions should be run by `supabase test db`.
+
+-- Required assertions:
+-- * anon has no SELECT privilege on public.migrated_pages
+-- * anon has no SELECT privilege on public.project_repositories
+-- * anon cannot EXECUTE reseed_default_templates()
+-- * anon cannot EXECUTE mark_space_read(uuid)
+-- * public.project_repositories_public contains only id, project_id, provider,
+--   url, created_at, and updated_at
+-- * challenge_participants has no world-readable SELECT policy
