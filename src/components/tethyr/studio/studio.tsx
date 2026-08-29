@@ -415,18 +415,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // Undo/redo restore a history snapshot. Mark the draft dirty only if the
   // restored state actually differs from what's persisted (so undoing back to
   // the saved state shows a clean "Saved" indicator instead of false "unsaved").
-  const syncDirtyAfterHistory = useCallback(
-    (layout: PageLayout) => {
-        const equal =
-        savedLayoutRef.current != null &&
-        JSON.stringify(layout) === JSON.stringify(savedLayoutRef.current) &&
-        JSON.stringify(draftOverrides ?? null) ===
-          JSON.stringify(savedOverridesRef.current ?? null);
-      dirtyRef.current = !equal;
-    },
-    [draftOverrides],
-  );
-
   const handleUndo = useCallback(() => {
     undo();
     dirtyRef.current = true;
