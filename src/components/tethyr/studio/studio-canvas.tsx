@@ -295,25 +295,28 @@ export function StudioCanvas({
                   ? "ring-2 ring-primary/20 bg-primary/[0.05]"
                   : "ring-1 ring-transparent hover:ring-border/20"
             }`}
-            draggable
-            onDragStart={(e) => handleSectionDragStart(e, section.id)}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleSectionDragOver(e, section.id)}
             onDragLeave={() => setDragOverSectionId(null)}
             onDrop={(e) => handleSectionDrop(e, section.id)}
             style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
+            data-section-id={section.id}
             onClick={(e) => {
-              // Only select section if clicking the section container itself,
-              // not any child element (block, button, toolbar, etc.)
-              if (e.target === e.currentTarget) {
-                onSelectSection(section.id);
-              }
+              if (e.target === e.currentTarget) onSelectSection(section.id);
             }}
           >
             {/* Section drag handle */}
-            <div className="pointer-events-none absolute -left-1 top-2 z-20 opacity-0 group-hover/section:opacity-100 transition-opacity">
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing pointer-events-auto" />
-            </div>
+            <button
+              type="button"
+              draggable
+              aria-label={`Move section ${sectionIdx + 1}`}
+              onDragStart={(e) => handleSectionDragStart(e, section.id)}
+              onDragEnd={handleDragEnd}
+              onClick={(e) => { e.stopPropagation(); onSelectSection(section.id); }}
+              className="absolute -left-1 top-2 z-20 rounded p-0.5 opacity-0 group-hover/section:opacity-100 focus-visible:opacity-100 transition-opacity"
+            >
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing" />
+            </button>
 
             {/* Section label — always visible */}
             <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium text-muted-foreground border border-border/20">
