@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
+import { CopyLinkIconButton } from "@/components/tethyr/copy-link-button";
 import { supabase } from "@/integrations/supabase/client";
 import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import { canonicalLinks } from "@/lib/seo";
@@ -438,6 +439,7 @@ function PublicProfileRoute() {
                     <p className="text-sm text-muted-foreground">@{profile.handle ?? "—"}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <CopyLinkIconButton />
                     <FollowButton targetUserId={profile.id} />
                     <ConnectButton
                       targetId={profile.id}

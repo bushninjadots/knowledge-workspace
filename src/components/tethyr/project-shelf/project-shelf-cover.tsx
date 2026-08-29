@@ -111,18 +111,20 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
           </p>
         )}
 
-        <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
-          {project.tags.slice(0, 4).map((t) => (
-            <span
-              key={t}
-              className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[11px] text-muted-foreground"
-            >
-              {t}
-            </span>
-          ))}
-          {project.tags.length > 4 && (
-            <span className="text-[11px] text-muted-foreground/50">+{project.tags.length - 4}</span>
-          )}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            {project.tags.slice(0, 4).map((t) => (
+              <span
+                key={t}
+                className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {t}
+              </span>
+            ))}
+            {project.tags.length > 4 && (
+              <span className="text-[11px] text-muted-foreground/50">+{project.tags.length - 4}</span>
+            )}
+          </div>
         </div>
       </div>
     </button>
