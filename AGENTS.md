@@ -139,3 +139,35 @@ When making changes to Tethyr, you MUST follow these rules:
 - **When in doubt, remove — don't add.**
 
 **Most importantly: Do not optimize for "more polished." Optimize for more Tethyr.**
+
+---
+
+## Base44 local setup
+
+The app is a TanStack Start (SSR) + Vite + React frontend backed by **Supabase** (postgres, auth, rest, storage, realtime). There is no separate backend service — the Supabase stack IS the backend.
+
+### Running it
+
+- Start command: `bash scripts/base44-start.sh` (recorded in `.base44/environment.json`).
+  It runs `npx supabase start` (brings up the full local Supabase stack and applies all 142 migrations + the demo seed on first init), captures the live API keys from `supabase status`, writes them to the gitignored `.env.supabase-runtime`, then runs `docker compose -f docker-compose.base44.yml up -d --build`.
+- The web service (`docker-compose.base44.yml`) runs the cloned source on `node:22` with `npm run dev` (Vite live reload), bind-mounted at `/app` with a named volume for `node_modules`. It maps host port `3000` → container `8080` (the Lovable Vite config forces port 8080 / host `::`).
+- No external/user secrets are required — Supabase runs locally and its keys are generated per instance by the CLI.
+
+### Supabase URL split (important)
+
+- **SSR** (runs inside the container) reaches Supabase via `SUPABASE_URL=http://host.docker.internal:54321` (host gateway).
+- **Browser** reaches Supabase via `VITE_SUPABASE_URL=https://54321-${BASE44_PUBLIC_HOST_SUFFIX}` (the platform's public per-port proxy). Both are reachable; the public URL hairpins back through the platform proxy.
+- The keys (`SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and the `VITE_` mirrors) come from `.env.supabase-runtime`, regenerated on every start.
+
+### Quirks / gotchas
+
+- **`vite.config.ts` sets `server.allowedHosts: true`.** The Base44 preview proxy forwards requests with an internal e2b Host header (e.g. `3000-<id>.e2b.app`) that cannot be derived from `BASE44_PUBLIC_HOST_SUFFIX`, so per-host allow-listing is impossible. `allowedHosts: true` is required for the preview to load. Dev-only; no effect on production builds.
+- **Migration `20260101000000_ensure_sandbox_exec_role.sql`** creates the `sandbox_exec` role when missing. Later migrations (`20260827154250+`) unconditionally `GRANT ... TO sandbox_exec`, a role that only pre-exists in Lovable's hosted environment; without this guard `supabase start` fails locally. The role is a no-op where it already exists.
+- **Migration `20260829100000_security_advisor_hardening.sql`** had its `project_repositories_safe` view column order corrected to `provider, url` (matching the original view) — Postgres rejects `CREATE OR REPLACE VIEW` that reorders/renames columns.
+- The Lovable Vite config (`@lovable.dev/vite-tanstack-config`) forces port 8080 and host `::`; do not try to change the port in `vite.config.ts` — map it in compose instead.
+
+### Verifying it works
+
+- `curl -H "Host: <any>" http://localhost:3000/` returns 200 with `<title>Build together, get known for what you make</title>`.
+- The SSR HTML contains real seeded data (e.g. `members:10`, featured project "Reverb").
+- Seed data: 10 profiles, 9 projects, 154 skills (from `supabase/seed.sql` + `supabase/seed_demo.sql`).

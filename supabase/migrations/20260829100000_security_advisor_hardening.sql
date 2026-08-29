@@ -61,7 +61,7 @@ CREATE POLICY "Project repositories are readable for visible projects"
 
 REVOKE SELECT ON public.project_repositories_safe FROM anon, authenticated;
 CREATE OR REPLACE VIEW public.project_repositories_safe AS
-SELECT id, project_id, url, provider, created_at, updated_at
+SELECT id, project_id, provider, url, created_at, updated_at
 FROM public.project_repositories;
 GRANT SELECT ON public.project_repositories_safe TO anon, authenticated;
 

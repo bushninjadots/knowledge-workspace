@@ -1,0 +1,27 @@
+# Base44 development environment for Tethyr.
+#
+# The Supabase stack is started separately by scripts/base44-start.sh via the
+# `supabase` CLI (it owns the full local stack: postgres, auth, rest, storage,
+# realtime, kong). This compose file only runs the app itself, from the cloned
+# source with live reload, and is fed the live Supabase keys through the
+# auto-generated .env.supabase-runtime file.
+services:
+  web:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - web_node_modules:/app/node_modules
+    ports:
+      - "3000:8080" # Lovable's vite config serves on 8080; preview expects 3000
+    env_file:
+      - ./.env.supabase-runtime
+    environment:
+      - VITE_PUBLIC_SITE_URL=https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # so SSR can reach Supabase on the host
+    command: sh -c "npm install --no-audit --no-fund --prefer-offline && npm run dev"
+    restart: unless-stopped
+
+volumes:
+  web_node_modules:

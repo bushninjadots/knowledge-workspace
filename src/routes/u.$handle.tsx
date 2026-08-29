@@ -521,8 +521,8 @@ function PublicProfileRoute() {
               ownerId={profile.id}
               ownerType="profile"
               isOwner={isOwner}
-              renderState={canViewPreview ? "draft" : "published"}
-              previewDraft={canViewPreview}
+              renderState={canViewPreview ? "draft" : isOwner ? "draft" : "published"}
+              previewDraft={canViewPreview || isOwner}
               previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
               previewLayout={studioPreview?.layout}
               previewTheme={studioPreview?.theme ?? undefined}

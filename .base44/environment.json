@@ -1,0 +1,6 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "bash scripts/base44-start.sh",
+  "secrets": []
+}

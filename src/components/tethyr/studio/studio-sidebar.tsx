@@ -26,10 +26,16 @@ import type { StudioPage } from "./studio";
 import type { ThemeCatalogEntry } from "@/hooks/use-theme-catalog";
 import type { LayoutSection, TemplateData } from "@/lib/page-blocks";
 import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
+import { AppearanceBackdrop } from "./appearance-backdrop";
 
 type SidebarTab = "pages" | "templates" | "themes";
 
 const RECIPES = [
+  {
+    id: "default",
+    label: "Default setup",
+    description: "Tethyr's standard layout — fully editable",
+  },
   { id: "showcase", label: "Showcase my work", description: "Lead with projects and proof" },
   {
     id: "collaborate",
@@ -528,6 +534,7 @@ function ThemesPanel({
 }) {
   return (
     <div className="px-3 py-4">
+      <AppearanceBackdrop />
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Themes
       </p>

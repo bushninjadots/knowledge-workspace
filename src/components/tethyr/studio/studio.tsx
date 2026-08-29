@@ -29,7 +29,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
-import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
+import {
+  createDefaultProfileLayout,
+  createDefaultProjectLayout,
+  createDirectionLayout,
+  type DirectionId,
+} from "@/lib/default-layouts";
 import {
   useCreatePage,
   useUpdatePageLayout,
@@ -57,7 +62,7 @@ const StudioCanvasLazy = lazy(() =>
 const StudioInspectorLazy = lazy(() =>
   import("./studio-inspector").then((module) => ({ default: module.StudioInspector })),
 );
-import { SECTION_PRESETS, type SectionPreset } from "./section-presets";
+import type { SectionPreset } from "./section-presets";
 import type {
   LayoutBlockInstance,
   LayoutSection,
@@ -542,47 +547,23 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Guided recipes ───────────────────────────────────────────────────
   const handleApplyRecipe = useCallback(
     (recipeId: string) => {
-      const recipeSections: Record<string, SectionPreset[]> = {
-        showcase: [
-          SECTION_PRESETS.find((p) => p.id === "hero")!,
-          SECTION_PRESETS.find((p) => p.id === "one-column")!,
-        ],
-        collaborate: [
-          SECTION_PRESETS.find((p) => p.id === "hero")!,
-          SECTION_PRESETS.find((p) => p.id === "two-columns")!,
-        ],
-        document: [
-          SECTION_PRESETS.find((p) => p.id === "one-column")!,
-          SECTION_PRESETS.find((p) => p.id === "two-row")!,
-        ],
-      };
-      const presets = recipeSections[recipeId];
-      if (!presets?.length || !pageReady) return;
-      const sections = presets.map((preset, index) => ({
-        id: `sect_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 6)}`,
-        position: index,
-        layout: preset.layout,
-        blocks: (preset.starterBlocks ?? []).map((starter, blockIndex) => {
-          const instance = createBlockInstance(starter.type);
-          return {
-            id: `blk_${Date.now()}_${index}_${blockIndex}`,
-            type: starter.type,
-            position: blockIndex,
-            config: { ...(instance?.config ?? {}), ...(starter.config ?? {}) } as Record<
-              string,
-              unknown
-            >,
-            visible: true,
-          };
-        }),
-      }));
-      applyDraft({ sections });
+      if (!pageReady) return;
+      const ownerType = (activePage?.type ?? "project") as PageOwnerType;
+      // "default" lays down Tethyr's standard layout (the same setup auto-created
+      // for new members) so it can be edited like any other starting point.
+      const layout =
+        recipeId === "default"
+          ? ownerType === "profile"
+            ? createDefaultProfileLayout()
+            : createDefaultProjectLayout()
+          : createDirectionLayout(recipeId as DirectionId, ownerType);
+      applyDraft(layout);
       setSelectionType("page");
       setSelectedBlockId(null);
       setSelectedSectionId(null);
       toast.success("Starting layout added — make it yours");
     },
-    [applyDraft, pageReady],
+    [applyDraft, pageReady, activePage],
   );
 
   // ── Add section ──────────────────────────────────────────────────────

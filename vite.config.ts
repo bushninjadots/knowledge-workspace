@@ -13,6 +13,10 @@ export default defineConfig({
     // below the default threshold; keep the warning focused on real client
     // regressions instead of repeating an unavoidable SSR vendor warning.
     build: { chunkSizeWarningLimit: 650 },
+    // Base44 serves the dev server through a proxy whose Host header is an
+    // internal hostname that can't be allow-listed ahead of time, so permit
+    // any host (dev only — this has no effect on production builds).
+    server: { allowedHosts: true },
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
