@@ -6,7 +6,6 @@ import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProfileLayout } from "@/components/tethyr/profile/profile-layout";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
-import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import "@/components/tethyr/blocks/register-all";
 import { ProfileProjectsTab } from "@/components/tethyr/profile/profile-projects-tab";
 import { ProfileActivityTab } from "@/components/tethyr/profile/profile-activity-tab";
@@ -62,7 +61,7 @@ function ProfilePage() {
     from?: string;
   };
   const previewMode = previewParam === "private" || previewParam === "public" ? previewParam : null;
-  const [studioView, setStudioView] = useState<"studio" | "default" | "manage">("studio");
+  const [studioView, setStudioView] = useState<"setup" | "custom">("setup");
   const [studioPreview, setStudioPreview] = useState<{
     layout: import("@/lib/page-blocks").PageLayout;
     theme: import("@/lib/page-blocks").ThemeTokens | null;
@@ -165,9 +164,8 @@ function ProfilePage() {
           <div className="inline-flex rounded-lg border border-border/60 bg-surface/50 p-0.5">
             {(
               [
-                { id: "studio", label: "My studio" },
-                { id: "default", label: "Default setup" },
-                { id: "manage", label: "Manage" },
+                { id: "setup", label: "Setup layout" },
+                { id: "custom", label: "Customized" },
               ] as const
             ).map((opt) => (
               <button
@@ -192,7 +190,7 @@ function ProfilePage() {
           </Button>
         </div>
       </div>
-      {studioView === "studio" ? (
+      {studioView === "custom" ? (
         <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
           <EditModeProvider>
             <PageShell
@@ -204,37 +202,60 @@ function ProfilePage() {
             />
           </EditModeProvider>
         </div>
-      ) : studioView === "default" ? (
+      ) : studioView === "setup" ? (
         <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/40 bg-surface/30 p-3">
             <div>
-              <p className="text-sm font-semibold text-foreground">Default setup</p>
+              <p className="text-sm font-semibold text-foreground">Setup layout</p>
               <p className="text-xs text-muted-foreground">
-                Tethyr&apos;s standard studio layout — a ready-made starting point you can build on.
+                The standard Studio layout with the same working sections and functions available in Manage.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => setStudioView("studio")}>
-                Use my custom version
-              </Button>
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm">
                 <Link to="/studio">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Open in Creativity Studio
+                  Customize in Studio
                 </Link>
               </Button>
             </div>
           </div>
-          <EditModeProvider>
-            <PageShell
-              ownerId={userId}
-              ownerType="profile"
-              isOwner
-              renderState="draft"
-              previewLayout={createDefaultProfileLayout()}
-              previewData={{ profile }}
-            />
-          </EditModeProvider>
+          <ProfileLayout
+            profile={profile}
+            avatarSigned={avatarSigned}
+            bannerSigned={bannerSigned}
+            background={background}
+            publicBackground={profile?.public_background ?? null}
+            userId={userId}
+            isOwnProfile={true}
+            teachIds={teachIds}
+            teachMeta={teachMeta}
+            learnIds={learnIds}
+            projects={projects}
+            coverUrls={coverUrls}
+            projectSkillIds={projectSkillIds}
+            skills={skills}
+            onChange={refresh}
+            tabContent={{
+              overview: (
+                <div className="space-y-6">
+                  <AboutCard profile={profile} onChange={refresh} />
+                  <TextCard title="Sharing style" field="teaching_style" value={profile?.teaching_style ?? ""} placeholder="How do you share? Hands-on, project-based, async reviews…" onChange={refresh} userId={userId} />
+                  <TextCard title="Growth goals" field="learning_goals" value={profile?.learning_goals ?? ""} placeholder="What do you want to unlock in the next 6 months?" onChange={refresh} userId={userId} />
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <ChipListCard title="Favourite tools" icon={<Wrench className="h-4 w-4" />} field="favourite_tools" values={profile?.favourite_tools ?? []} userId={userId} accent="green" placeholder="Figma, Notion, Runway…" onChange={refresh} />
+                    <ChipListCard title="Software stack" icon={<Layers className="h-4 w-4" />} field="software_stack" values={profile?.software_stack ?? []} userId={userId} accent="purple" placeholder="Photoshop, Blender, Ableton…" onChange={refresh} />
+                  </div>
+                  <LinksCard profile={profile} onChange={refresh} />
+                  <GitHubConnect autoOpenToken={focusGithubToken} />
+                </div>
+              ),
+              skills: <SkillEditingSection teachIds={teachIds} teachMeta={teachMeta} learnIds={learnIds} allSkills={skills} userId={userId} onChange={refresh} />,
+              projects: <ProfileProjectsTab projects={projects} coverUrls={coverUrls} userId={userId} skills={skills} projectSkillIds={projectSkillIds} onChange={refresh} />,
+              communities: <ProfileCommunitiesTab />,
+              activity: <><ProfileActivityTab userId={userId} activity={activity} /><ProfileSessionsTab userId={userId} isOwnProfile={true} /></>,
+            }}
+          />
         </div>
       ) : (
         <ProfileLayout

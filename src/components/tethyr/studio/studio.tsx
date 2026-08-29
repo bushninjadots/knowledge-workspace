@@ -853,19 +853,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [activePage, navigate, pageReady, saveBeforePreview]);
 
-  const handlePrivatePreview = useCallback(async () => {
-    if (!activePage || !pageReady || !(await saveBeforePreview())) return;
-    if (activePage.type === "profile") {
-      navigate({ to: "/profile", search: { preview: "private", from: "studio" } });
-    } else {
-      navigate({
-        to: "/projects/$id",
-        params: { id: activePage.id },
-        search: { preview: "private", from: "studio" },
-      });
-    }
-  }, [activePage, navigate, pageReady, saveBeforePreview]);
-
   // ── Apply theme ───────────────────────────────────────────────────────
   const handleApplyTheme = useCallback(
     (themeId: string) => {
@@ -1280,19 +1267,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="hidden h-7 gap-1.5 text-[11px] md:inline-flex"
-            onClick={handlePrivatePreview}
-          >
-            <Eye className="h-3.5 w-3.5" /> Private preview
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             className="h-7 gap-1.5 text-[11px]"
             onClick={handlePreview}
           >
-            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Public </span>
-            Preview
+            <Eye className="h-3.5 w-3.5" /> Preview
           </Button>
           {!isPublished && (
             <Button

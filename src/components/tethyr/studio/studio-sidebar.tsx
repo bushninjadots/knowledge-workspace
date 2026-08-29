@@ -33,8 +33,8 @@ type SidebarTab = "pages" | "templates" | "themes";
 const RECIPES = [
   {
     id: "default",
-    label: "Default setup",
-    description: "Tethyr's standard layout — fully editable",
+    label: "Setup layout",
+    description: "The standard layout used when a Studio page is created",
   },
   { id: "showcase", label: "Showcase my work", description: "Lead with projects and proof" },
   {
@@ -176,7 +176,7 @@ export function StudioSidebar({
         {activeTab === "themes" && (
           <ThemesPanel themes={themes} currentThemeId={currentThemeId} onApply={onApplyTheme} />
         )}
-        {activeTab === "settings" && <SettingsPanel activePage={activePage} />}
+
       </div>
 
       {/* ── Page info ───────────────────────────────────────────────────── */}
