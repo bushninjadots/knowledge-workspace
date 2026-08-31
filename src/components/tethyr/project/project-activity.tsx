@@ -16,7 +16,6 @@ import {
   Rocket,
   Plus,
   X,
-  Loader2,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";

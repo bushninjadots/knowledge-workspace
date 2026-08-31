@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, FileText, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { Link, FileText, Plus, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAddSessionResource, useDeleteSessionResource } from "@/hooks/use-sessions";
 import { Button } from "@/components/ui/button";

@@ -176,7 +176,6 @@ export function StudioSidebar({
         {activeTab === "themes" && (
           <ThemesPanel themes={themes} currentThemeId={currentThemeId} onApply={onApplyTheme} />
         )}
-
       </div>
 
       {/* ── Page info ───────────────────────────────────────────────────── */}
@@ -691,36 +690,6 @@ function TemplatePreviewCard({
           </span>
         )}
       </div>
-    </div>
-  );
-}
-
-// ── Settings Panel ───────────────────────────────────────────────────────────
-
-function SettingsPanel({ activePage }: { activePage: StudioPage | null }) {
-  return (
-    <div className="px-3 py-4">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Page Settings
-      </p>
-      {activePage ? (
-        <div className="space-y-2">
-          <div>
-            <p className="text-[10px] font-medium text-muted-foreground">Type</p>
-            <p className="text-xs text-foreground capitalize">{activePage.type}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium text-muted-foreground">Title</p>
-            <p className="text-xs text-foreground">{activePage.title}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium text-muted-foreground">ID</p>
-            <p className="text-[10px] text-muted-foreground break-all font-mono">{activePage.id}</p>
-          </div>
-        </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">No page selected.</p>
-      )}
     </div>
   );
 }

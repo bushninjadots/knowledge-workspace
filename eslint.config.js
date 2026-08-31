@@ -14,6 +14,7 @@ export default tseslint.config(
       "supabase/.temp/**",
       "supabase/.branches/**",
       "src/integrations/supabase/types.ts",
+      ".venv/**",
     ],
   },
   {

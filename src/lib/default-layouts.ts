@@ -153,60 +153,11 @@ const DIRECTION_BLUEPRINTS: Record<
  * quality as the default setup — oriented toward the chosen goal and the
  * page's owner type.
  */
-export function createDirectionLayout(direction: DirectionId, ownerType: "profile" | "project"): PageLayout {
+export function createDirectionLayout(
+  direction: DirectionId,
+  ownerType: "profile" | "project",
+): PageLayout {
   const blueprint = DIRECTION_BLUEPRINTS[ownerType][direction];
-    ownerType === "profile"
-      ? {
-          showcase: [
-            ["full", ["profile-header"]],
-            ["full", ["profile-projects"]],
-            ["full", ["profile-gallery"]],
-            ["two_column", ["profile-skills", "profile-experience"]],
-            ["full", ["profile-tools"]],
-            ["full", ["profile-links"]],
-          ],
-          collaborate: [
-            ["full", ["profile-header"]],
-            ["full", ["profile-direction"]],
-            ["two_column", ["profile-experience", "profile-skills"]],
-            ["full", ["profile-tools"]],
-            ["full", ["profile-bio"]],
-            ["full", ["profile-links"]],
-          ],
-          document: [
-            ["full", ["profile-header"]],
-            ["full", ["profile-bio"]],
-            ["full", ["profile-skills"]],
-            ["full", ["profile-projects"]],
-            ["full", ["profile-achievements"]],
-            ["full", ["profile-links"]],
-          ],
-        }[direction]
-      : {
-          showcase: [
-            ["full", ["project-hero"]],
-            ["two_column", ["project-status", "project-milestones"]],
-            ["full", ["project-evidence"]],
-            ["two_column", ["project-team", "project-roles"]],
-            ["full", ["project-repos"]],
-            ["full", ["project-credits"]],
-          ],
-          collaborate: [
-            ["full", ["project-hero"]],
-            ["full", ["project-needs"]],
-            ["two_column", ["project-roles", "project-team"]],
-            ["full", ["project-discussions"]],
-            ["full", ["project-sessions"]],
-          ],
-          document: [
-            ["full", ["project-hero"]],
-            ["full", ["project-status"]],
-            ["full", ["project-milestones"]],
-            ["full", ["project-timeline"]],
-            ["full", ["project-evidence"]],
-            ["full", ["project-activity"]],
-          ],
-        }[direction];
 
   return {
     sections: blueprint.map(([layout, blockTypes], index) => ({
