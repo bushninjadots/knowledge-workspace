@@ -122,7 +122,9 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
               </span>
             ))}
             {project.tags.length > 4 && (
-              <span className="text-[11px] text-muted-foreground/50">+{project.tags.length - 4}</span>
+              <span className="text-[11px] text-muted-foreground/50">
+                +{project.tags.length - 4}
+              </span>
             )}
           </div>
         </div>

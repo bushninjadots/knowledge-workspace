@@ -1,7 +1,9 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
-  "sideEffects": ["**/components/tethyr/blocks/**"],
+  "sideEffects": [
+    "**/components/tethyr/blocks/**"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite dev",

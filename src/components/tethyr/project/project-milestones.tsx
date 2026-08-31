@@ -124,7 +124,13 @@ export function MilestonesTimeline({
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={handleAdd} busy={createMutation.isPending} disabled={!title.trim()}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAdd}
+              busy={createMutation.isPending}
+              disabled={!title.trim()}
+            >
               Save milestone
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
@@ -179,14 +185,14 @@ export function MilestonesTimeline({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {isOwner && m.status !== "done" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleAdvance(m)}
-                  busy={updateMutation.isPending}
-                  className="h-7 px-2 text-[11px] text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
-                >
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleAdvance(m)}
+                      busy={updateMutation.isPending}
+                      className="h-7 px-2 text-[11px] text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
+                    >
                       {m.status === "pending" ? "Start" : "Complete"}
                     </Button>
                   )}

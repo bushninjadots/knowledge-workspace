@@ -44,7 +44,14 @@ export function CopyLinkIconButton() {
   };
 
   return (
-    <Button type="button" size="icon" variant="outline" onClick={copy} aria-label="Copy link" title="Copy link">
+    <Button
+      type="button"
+      size="icon"
+      variant="outline"
+      onClick={copy}
+      aria-label="Copy link"
+      title="Copy link"
+    >
       <Link2 className="h-4 w-4" aria-hidden="true" />
     </Button>
   );

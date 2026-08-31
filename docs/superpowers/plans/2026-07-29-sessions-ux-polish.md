@@ -49,15 +49,13 @@ export function useSetSessionAvailability() {
       if (delError) throw delError;
 
       if (slots.length > 0) {
-        const { error: insError } = await sb
-          .from("session_availability")
-          .insert(
-            slots.map((s) => ({
-              ...s,
-              profile_id: userId,
-              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            })),
-          );
+        const { error: insError } = await sb.from("session_availability").insert(
+          slots.map((s) => ({
+            ...s,
+            profile_id: userId,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          })),
+        );
 
         if (insError) throw insError;
       }

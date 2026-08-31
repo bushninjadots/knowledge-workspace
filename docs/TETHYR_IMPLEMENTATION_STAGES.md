@@ -508,6 +508,7 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 ### 2026-08-26 — Creativity Studio Redesign: Phases 1–3 ✅ DONE
 
 **Phase 1 — Selection Model + Sections as First-Class:**
+
 - Page / Section / Block selection state with Escape to deselect
 - Sections are clickable and show selection outlines
 - "+ Add Section" sidebar button with visual preset picker (Blank, 1-Column, 2-Columns, 3-Columns, Hero, Two-Row)
@@ -517,6 +518,7 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Removed fake pointer-events-none resize handle (width control moved to inspector)
 
 **Phase 2 — Contextual Inspector:**
+
 - Inspector adapts to selection type:
   - Page: theme name, shape presets (Rounded/Angular/Sharp), Advanced toggle
   - Section: layout grid, block list, move/duplicate/delete actions
@@ -526,6 +528,7 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Removed raw config key display (no more Object.entries(config))
 
 **Phase 3 — Block Field Schemas:**
+
 - Added BlockField type to page-blocks.ts (text, textarea, toggle, select, image, color)
 - BlockDefinition now has optional `fields` array
 - Blocks with schemas: heading (text + size), text (textarea), divider (label), markdown (textarea), project-hero (3 toggles)
@@ -533,6 +536,7 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - Section duplicate added to inspector actions
 
 **Files changed:**
+
 - `src/lib/page-blocks.ts` — BlockField type, fields property on BlockDefinition
 - `src/components/tethyr/studio/studio.tsx` — Selection state, section CRUD, duplicate handlers, Escape key
 - `src/components/tethyr/studio/studio-canvas.tsx` — Selection UI, section drag-reorder, floating toolbar, remove fake resize

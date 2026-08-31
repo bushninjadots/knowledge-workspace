@@ -8,7 +8,7 @@ import { useState, type CSSProperties } from "react";
 import { Wallpaper } from "lucide-react";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { backgroundStyle, type ProfileBackground } from "@/lib/background-themes";
+import { backgroundStyle } from "@/lib/background-themes";
 
 export function AppearanceBackdrop() {
   const { data: me, refresh } = useCurrentUser();
@@ -17,7 +17,10 @@ export function AppearanceBackdrop() {
   const bg = me?.background ?? null;
   const hasBg = !!bg && !!bg.mode;
   const swatchStyle: CSSProperties = hasBg
-    ? { ...backgroundStyle(bg, null), backgroundColor: backgroundStyle(bg, null).backgroundColor ?? "var(--background)" }
+    ? {
+        ...backgroundStyle(bg, null),
+        backgroundColor: backgroundStyle(bg, null).backgroundColor ?? "var(--background)",
+      }
     : { background: "var(--surface-elevated)" };
 
   return (
@@ -31,10 +34,7 @@ export function AppearanceBackdrop() {
         className="flex w-full items-center gap-2 rounded-md border border-border/20 bg-surface/20 px-2 py-2 text-left transition-colors hover:border-border/40 hover:bg-surface-elevated/50"
         title="Change appearance — backdrop behind your space"
       >
-        <span
-          className="h-5 w-5 shrink-0 rounded border border-border/40"
-          style={swatchStyle}
-        />
+        <span className="h-5 w-5 shrink-0 rounded border border-border/40" style={swatchStyle} />
         <span className="min-w-0">
           <span className="block truncate text-[11px] font-medium text-foreground">Backdrop</span>
           <span className="block truncate text-[10px] text-muted-foreground/60">

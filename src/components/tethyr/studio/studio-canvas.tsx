@@ -312,7 +312,10 @@ export function StudioCanvas({
               aria-label={`Move section ${sectionIdx + 1}`}
               onDragStart={(e) => handleSectionDragStart(e, section.id)}
               onDragEnd={handleDragEnd}
-              onClick={(e) => { e.stopPropagation(); onSelectSection(section.id); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectSection(section.id);
+              }}
               className="absolute -left-1 top-2 z-20 rounded p-0.5 opacity-0 group-hover/section:opacity-100 focus-visible:opacity-100 transition-opacity"
             >
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing" />

@@ -95,7 +95,13 @@ function TeamsIBuildWith() {
             className="w-full max-w-xs rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
-          <Button type="button" size="sm" onClick={handleCreate} busy={createTeam.isPending} disabled={!name.trim()}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleCreate}
+            busy={createTeam.isPending}
+            disabled={!name.trim()}
+          >
             Create crew
           </Button>
           <Button type="button" size="sm" variant="ghost" onClick={() => setShowCreate(false)}>

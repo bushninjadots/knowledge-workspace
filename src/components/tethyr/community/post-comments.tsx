@@ -187,7 +187,13 @@ function CommentEditor({
         className="w-full resize-y rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground focus:border-primary/50 focus:outline-none"
       />
       <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={save} busy={updateComment.isPending} disabled={!text.trim()}>
+        <Button
+          type="button"
+          size="sm"
+          onClick={save}
+          busy={updateComment.isPending}
+          disabled={!text.trim()}
+        >
           Save comment
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>

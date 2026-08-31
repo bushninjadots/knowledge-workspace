@@ -102,7 +102,13 @@ export function OpenRolesSection({
             className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
           <div className="flex gap-2">
-            <Button type="button" size="sm" onClick={handleAdd} busy={createRole.isPending} disabled={!title.trim()}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAdd}
+              busy={createRole.isPending}
+              disabled={!title.trim()}
+            >
               Save role
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>

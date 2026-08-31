@@ -208,7 +208,8 @@ function ProfilePage() {
             <div>
               <p className="text-sm font-semibold text-foreground">Setup layout</p>
               <p className="text-xs text-muted-foreground">
-                The standard Studio layout with the same working sections and functions available in Manage.
+                The standard Studio layout with the same working sections and functions available in
+                Manage.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -240,20 +241,75 @@ function ProfilePage() {
               overview: (
                 <div className="space-y-6">
                   <AboutCard profile={profile} onChange={refresh} />
-                  <TextCard title="Sharing style" field="teaching_style" value={profile?.teaching_style ?? ""} placeholder="How do you share? Hands-on, project-based, async reviews…" onChange={refresh} userId={userId} />
-                  <TextCard title="Growth goals" field="learning_goals" value={profile?.learning_goals ?? ""} placeholder="What do you want to unlock in the next 6 months?" onChange={refresh} userId={userId} />
+                  <TextCard
+                    title="Sharing style"
+                    field="teaching_style"
+                    value={profile?.teaching_style ?? ""}
+                    placeholder="How do you share? Hands-on, project-based, async reviews…"
+                    onChange={refresh}
+                    userId={userId}
+                  />
+                  <TextCard
+                    title="Growth goals"
+                    field="learning_goals"
+                    value={profile?.learning_goals ?? ""}
+                    placeholder="What do you want to unlock in the next 6 months?"
+                    onChange={refresh}
+                    userId={userId}
+                  />
                   <div className="grid gap-6 md:grid-cols-2">
-                    <ChipListCard title="Favourite tools" icon={<Wrench className="h-4 w-4" />} field="favourite_tools" values={profile?.favourite_tools ?? []} userId={userId} accent="green" placeholder="Figma, Notion, Runway…" onChange={refresh} />
-                    <ChipListCard title="Software stack" icon={<Layers className="h-4 w-4" />} field="software_stack" values={profile?.software_stack ?? []} userId={userId} accent="purple" placeholder="Photoshop, Blender, Ableton…" onChange={refresh} />
+                    <ChipListCard
+                      title="Favourite tools"
+                      icon={<Wrench className="h-4 w-4" />}
+                      field="favourite_tools"
+                      values={profile?.favourite_tools ?? []}
+                      userId={userId}
+                      accent="green"
+                      placeholder="Figma, Notion, Runway…"
+                      onChange={refresh}
+                    />
+                    <ChipListCard
+                      title="Software stack"
+                      icon={<Layers className="h-4 w-4" />}
+                      field="software_stack"
+                      values={profile?.software_stack ?? []}
+                      userId={userId}
+                      accent="purple"
+                      placeholder="Photoshop, Blender, Ableton…"
+                      onChange={refresh}
+                    />
                   </div>
                   <LinksCard profile={profile} onChange={refresh} />
                   <GitHubConnect autoOpenToken={focusGithubToken} />
                 </div>
               ),
-              skills: <SkillEditingSection teachIds={teachIds} teachMeta={teachMeta} learnIds={learnIds} allSkills={skills} userId={userId} onChange={refresh} />,
-              projects: <ProfileProjectsTab projects={projects} coverUrls={coverUrls} userId={userId} skills={skills} projectSkillIds={projectSkillIds} onChange={refresh} />,
+              skills: (
+                <SkillEditingSection
+                  teachIds={teachIds}
+                  teachMeta={teachMeta}
+                  learnIds={learnIds}
+                  allSkills={skills}
+                  userId={userId}
+                  onChange={refresh}
+                />
+              ),
+              projects: (
+                <ProfileProjectsTab
+                  projects={projects}
+                  coverUrls={coverUrls}
+                  userId={userId}
+                  skills={skills}
+                  projectSkillIds={projectSkillIds}
+                  onChange={refresh}
+                />
+              ),
               communities: <ProfileCommunitiesTab />,
-              activity: <><ProfileActivityTab userId={userId} activity={activity} /><ProfileSessionsTab userId={userId} isOwnProfile={true} /></>,
+              activity: (
+                <>
+                  <ProfileActivityTab userId={userId} activity={activity} />
+                  <ProfileSessionsTab userId={userId} isOwnProfile={true} />
+                </>
+              ),
             }}
           />
         </div>
@@ -261,99 +317,99 @@ function ProfilePage() {
         <ProfileLayout
           profile={profile}
           avatarSigned={avatarSigned}
-      bannerSigned={bannerSigned}
-      background={background}
-      publicBackground={profile?.public_background ?? null}
-      userId={userId}
-      isOwnProfile={true}
-      teachIds={teachIds}
-      teachMeta={teachMeta}
-      learnIds={learnIds}
-      projects={projects}
-      coverUrls={coverUrls}
-      projectSkillIds={projectSkillIds}
-      skills={skills}
-      onChange={refresh}
-      tabContent={{
-        overview: (
-          <div className="space-y-6">
-            <AboutCard profile={profile} onChange={refresh} />
-            <TextCard
-              title="Sharing style"
-              field="teaching_style"
-              value={profile?.teaching_style ?? ""}
-              placeholder="How do you share? Hands-on, project-based, async reviews…"
-              onChange={refresh}
-              userId={userId}
-            />
-            <TextCard
-              title="Growth goals"
-              field="learning_goals"
-              value={profile?.learning_goals ?? ""}
-              placeholder="What do you want to unlock in the next 6 months?"
-              onChange={refresh}
-              userId={userId}
-            />
-            <div className="grid gap-6 md:grid-cols-2">
-              <ChipListCard
-                title="Favourite tools"
-                icon={<Wrench className="h-4 w-4" />}
-                field="favourite_tools"
-                values={profile?.favourite_tools ?? []}
+          bannerSigned={bannerSigned}
+          background={background}
+          publicBackground={profile?.public_background ?? null}
+          userId={userId}
+          isOwnProfile={true}
+          teachIds={teachIds}
+          teachMeta={teachMeta}
+          learnIds={learnIds}
+          projects={projects}
+          coverUrls={coverUrls}
+          projectSkillIds={projectSkillIds}
+          skills={skills}
+          onChange={refresh}
+          tabContent={{
+            overview: (
+              <div className="space-y-6">
+                <AboutCard profile={profile} onChange={refresh} />
+                <TextCard
+                  title="Sharing style"
+                  field="teaching_style"
+                  value={profile?.teaching_style ?? ""}
+                  placeholder="How do you share? Hands-on, project-based, async reviews…"
+                  onChange={refresh}
+                  userId={userId}
+                />
+                <TextCard
+                  title="Growth goals"
+                  field="learning_goals"
+                  value={profile?.learning_goals ?? ""}
+                  placeholder="What do you want to unlock in the next 6 months?"
+                  onChange={refresh}
+                  userId={userId}
+                />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <ChipListCard
+                    title="Favourite tools"
+                    icon={<Wrench className="h-4 w-4" />}
+                    field="favourite_tools"
+                    values={profile?.favourite_tools ?? []}
+                    userId={userId}
+                    accent="green"
+                    placeholder="Figma, Notion, Runway…"
+                    onChange={refresh}
+                  />
+                  <ChipListCard
+                    title="Software stack"
+                    icon={<Layers className="h-4 w-4" />}
+                    field="software_stack"
+                    values={profile?.software_stack ?? []}
+                    userId={userId}
+                    accent="purple"
+                    placeholder="Photoshop, Blender, Ableton…"
+                    onChange={refresh}
+                  />
+                </div>
+                <LinksCard profile={profile} onChange={refresh} />
+                <GitHubConnect autoOpenToken={focusGithubToken} />
+              </div>
+            ),
+            skills: (
+              <div className="space-y-6">
+                <SkillEditingSection
+                  teachIds={teachIds}
+                  teachMeta={teachMeta}
+                  learnIds={learnIds}
+                  allSkills={skills}
+                  userId={userId}
+                  onChange={refresh}
+                />
+              </div>
+            ),
+            projects: (
+              <ProfileProjectsTab
+                projects={projects}
+                coverUrls={coverUrls}
                 userId={userId}
-                accent="green"
-                placeholder="Figma, Notion, Runway…"
+                skills={skills}
+                projectSkillIds={projectSkillIds}
                 onChange={refresh}
               />
-              <ChipListCard
-                title="Software stack"
-                icon={<Layers className="h-4 w-4" />}
-                field="software_stack"
-                values={profile?.software_stack ?? []}
-                userId={userId}
-                accent="purple"
-                placeholder="Photoshop, Blender, Ableton…"
-                onChange={refresh}
-              />
-            </div>
-            <LinksCard profile={profile} onChange={refresh} />
-            <GitHubConnect autoOpenToken={focusGithubToken} />
-          </div>
-        ),
-        skills: (
-          <div className="space-y-6">
-            <SkillEditingSection
-              teachIds={teachIds}
-              teachMeta={teachMeta}
-              learnIds={learnIds}
-              allSkills={skills}
-              userId={userId}
-              onChange={refresh}
-            />
-          </div>
-        ),
-        projects: (
-          <ProfileProjectsTab
-            projects={projects}
-            coverUrls={coverUrls}
-            userId={userId}
-            skills={skills}
-            projectSkillIds={projectSkillIds}
-            onChange={refresh}
-          />
-        ),
-        communities: (
-          <div className="space-y-6">
-            <ProfileCommunitiesTab />
-          </div>
-        ),
-        activity: (
-          <div className="space-y-6">
-            <ProfileActivityTab userId={userId} activity={activity} />
-            <ProfileSessionsTab userId={userId} isOwnProfile={true} />
-          </div>
-        ),
-      }}
+            ),
+            communities: (
+              <div className="space-y-6">
+                <ProfileCommunitiesTab />
+              </div>
+            ),
+            activity: (
+              <div className="space-y-6">
+                <ProfileActivityTab userId={userId} activity={activity} />
+                <ProfileSessionsTab userId={userId} isOwnProfile={true} />
+              </div>
+            ),
+          }}
         />
       )}
     </>

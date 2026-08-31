@@ -252,7 +252,12 @@ export function ApplyToRoleButton({
           className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs outline-none focus:border-primary resize-none"
         />
         <div className="flex gap-2">
-          <Button type="button" size="sm" onClick={() => applyMutation.mutate()} busy={applyMutation.isPending}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => applyMutation.mutate()}
+            busy={applyMutation.isPending}
+          >
             <Send className="h-3 w-3" />
             Submit application
           </Button>
