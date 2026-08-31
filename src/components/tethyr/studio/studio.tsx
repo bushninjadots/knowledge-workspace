@@ -145,15 +145,17 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // overrides only hit the DB on Save when this is true — otherwise a plain
   // layout save would persist the entire merged theme as overrides.
 
-
   // When a page loads or the page selection changes, adopt the server layout
   // as the fresh draft and reset the undo history.
-  const resetDraft = useCallback((layout: PageLayout, overrides: ThemeTokens | null = null) => {
-    resetDraftState(layout, overrides);
-    dirtyRef.current = false;
-    savedLayoutRef.current = layout;
-    savedOverridesRef.current = overrides;
-  }, []);
+  const resetDraft = useCallback(
+    (layout: PageLayout, overrides: ThemeTokens | null = null) => {
+      resetDraftState(layout, overrides);
+      dirtyRef.current = false;
+      savedLayoutRef.current = layout;
+      savedOverridesRef.current = overrides;
+    },
+    [resetDraftState],
+  );
 
   // Track which page the draft belongs to so we only reset on page change,
   // not on every refetch (refetches after save return the same layout).
@@ -336,24 +338,27 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   // Apply an edit to the draft: update the layout, push the previous state
   // onto the undo stack (truncating any redo tail), and mark dirty.
-  const applyDraft = useCallback((newLayout: PageLayout) => {
-    // Normalize positions here, once, so every mutation (move, add, duplicate,
-    // reorder, template apply) stays consistent. Renderers sort sections and
-    // blocks by `position` — without reindexing, drag/move sequences would
-    // render a stale order after a refetch.
-    const normalized: PageLayout = {
-      sections: newLayout.sections.map((section, i) => ({
-        ...section,
-        position: i,
-        blocks: [...section.blocks].map((block, j): LayoutBlockInstance => ({
-          ...block,
-          position: j,
+  const applyDraft = useCallback(
+    (newLayout: PageLayout) => {
+      // Normalize positions here, once, so every mutation (move, add, duplicate,
+      // reorder, template apply) stays consistent. Renderers sort sections and
+      // blocks by `position` — without reindexing, drag/move sequences would
+      // render a stale order after a refetch.
+      const normalized: PageLayout = {
+        sections: newLayout.sections.map((section, i) => ({
+          ...section,
+          position: i,
+          blocks: [...section.blocks].map((block, j): LayoutBlockInstance => ({
+            ...block,
+            position: j,
+          })),
         })),
-      })),
-    };
-    applyDraftState(normalized);
-    dirtyRef.current = true;
-  }, []);
+      };
+      applyDraftState(normalized);
+      dirtyRef.current = true;
+    },
+    [applyDraftState],
+  );
 
   // Persist the draft (layout + theme overrides) to the database.
   const handleSave = useCallback(() => {
@@ -415,6 +420,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     pageError,
     pageProvisioning,
     pageReady,
+    markSaved,
+    overridesDirtyRef,
+    activePage?.id,
+    activePage?.type,
   ]);
 
   // Undo/redo restore a history snapshot. Mark the draft dirty only if the
@@ -722,10 +731,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // ── Update theme overrides ──────────────────────────────────────────
   // Local-only: edits land in the draft and persist on Save, matching the
   // layout editing model instead of writing to the DB on every slider move.
-  const handleUpdateThemeOverrides = useCallback((overrides: ThemeTokens | null) => {
-    updateDraftOverrides(overrides);
-    dirtyRef.current = true;
-  }, []);
+  const handleUpdateThemeOverrides = useCallback(
+    (overrides: ThemeTokens | null) => {
+      updateDraftOverrides(overrides);
+      dirtyRef.current = true;
+    },
+    [updateDraftOverrides],
+  );
 
   const handleApplyThemeOverrides = useCallback(
     (overrides: ThemeTokens) => {
@@ -786,6 +798,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     updateThemeOverrides,
     refetchPage,
     qc,
+    markSaved,
+    overridesDirtyRef,
   ]);
 
   const handleUnpublish = useCallback(async () => {
@@ -826,15 +840,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       toast.error(friendlyError(err, "Failed to save changes before preview"));
       return false;
     }
-  }, [
-    activePage?.id,
-    activePage?.type,
-    pageData,
-    draftLayout,
-    draftOverrides,
-    updateLayout,
-    updateThemeOverrides,
-  ]);
+  }, [activePage?.id, activePage?.type, pageData, draftLayout, draftOverrides]);
 
   const handlePreview = useCallback(async () => {
     if (!activePage || !pageReady || !(await saveBeforePreview())) return;
@@ -863,15 +869,18 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       // Keep theme changes in the same draft workflow as layout changes.
       // The selected base theme is applied on Save/Publish by the existing
       // page mutation; this local preview clears incompatible overrides.
-      updateTheme.mutate({ pageId: pageData.id, themeId }, {
-        onSuccess: async () => {
-          await refetchPage();
-          updateDraftOverrides(null);
-          savedOverridesRef.current = null;
-          toast.success("Theme applied");
+      updateTheme.mutate(
+        { pageId: pageData.id, themeId },
+        {
+          onSuccess: async () => {
+            await refetchPage();
+            updateDraftOverrides(null);
+            savedOverridesRef.current = null;
+            toast.success("Theme applied");
+          },
+          onError: (err) => toast.error(friendlyError(err, "Failed to apply theme")),
         },
-        onError: (err) => toast.error(friendlyError(err, "Failed to apply theme")),
-      });
+      );
     },
     [pageData, updateTheme, refetchPage, updateDraftOverrides],
   );
