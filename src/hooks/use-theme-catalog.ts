@@ -19,8 +19,6 @@ export interface ThemeCatalogEntry {
   previewVars: Record<string, string>;
 }
 
-const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
-
 /** List all available themes for the picker. */
 export function useThemeCatalog() {
   return useQuery({
@@ -45,28 +43,6 @@ export function useThemeCatalog() {
           previewVars,
         };
       });
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-/** Quick token count for the currently applied theme (already fetched via useTheme). */
-export function useCurrentThemeInfo(themeId: string | null | undefined) {
-  const resolvedId = themeId || DEFAULT_THEME_ID;
-
-  return useQuery({
-    queryKey: ["themes", "info", resolvedId],
-    queryFn: async (): Promise<{ name: string; tokenCount: number } | null> => {
-      const { data, error } = await supabase
-        .from("themes")
-        .select("name, tokens")
-        .eq("id", resolvedId)
-        .maybeSingle();
-
-      if (error || !data) return null;
-
-      const vars = themeTokensToVars((data.tokens ?? {}) as ThemeTokens);
-      return { name: data.name, tokenCount: Object.keys(vars).length };
     },
     staleTime: 5 * 60 * 1000,
   });

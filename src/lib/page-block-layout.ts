@@ -1,12 +1,12 @@
 import type { LayoutSection, PageLayout } from "@/lib/page-blocks";
 
 /** Optional page-level composition metadata. Older layouts omit this field. */
-export type PageComposition = {
+type PageComposition = {
   columns?: number;
   gap?: string;
 };
 
-export type ComposedPageLayout = PageLayout & {
+type ComposedPageLayout = PageLayout & {
   composition?: PageComposition;
 };
 

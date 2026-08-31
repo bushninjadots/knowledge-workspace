@@ -32,25 +32,6 @@ type PostLite = {
   author?: { display_name: string | null; handle: string | null };
 };
 
-export function useProjectCommunityPostCount(projectId: string) {
-  return useQuery({
-    queryKey: ["project-community-post-count", projectId],
-    queryFn: async () => {
-      const { count, error } = await sb
-        .from("posts")
-        .select("id", { count: "exact", head: true })
-        .eq("project_id", projectId);
-      if (error) {
-        if (error.code === "42P01") return 0;
-        throw error;
-      }
-      return count ?? 0;
-    },
-    enabled: !!projectId,
-    staleTime: 30_000,
-  });
-}
-
 export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["project-community-posts", projectId],

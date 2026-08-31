@@ -56,7 +56,7 @@ export function getBlocksByCategory(category: string): BlockDefinition[] {
 }
 
 /** Page types that a block may be scoped to. */
-export type BlockPageScope = "profile" | "project";
+type BlockPageScope = "profile" | "project";
 
 /**
  * The page type a block is scoped to, derived from its type prefix:

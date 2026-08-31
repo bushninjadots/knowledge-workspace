@@ -1,6 +1,7 @@
 // ── Templates Hook ────────────────────────────────────────────────────────────
 // Templates are layouts with `is_template = true`. This module provides:
-//   • useMyTemplates — templates the current user has published.
+//   • useProjectReturnChanges — flag the "your changes" prompts for a returned project.
+//   • useUpdateProjectDirection — set a project's collaboration direction.
 //   • usePublicTemplates — browse all published templates (with search/filter).
 //   • useTemplate — fetch a single template by ID.
 //   • useSaveAsTemplate — mark an existing layout as a template.
@@ -100,24 +101,6 @@ export function usePublicTemplates(params: UsePublicTemplatesParams = {}) {
       }
 
       return rows;
-    },
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
-/** Fetch the current user's own templates. */
-export function useMyTemplates() {
-  return useQuery({
-    queryKey: ["templates", "mine"],
-    queryFn: async (): Promise<TemplateData[]> => {
-      const { data, error } = await supabase
-        .from("layouts")
-        .select(TEMPLATE_SELECT)
-        .eq("is_template", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []).map(mapLayoutRow);
     },
     staleTime: 2 * 60 * 1000,
   });

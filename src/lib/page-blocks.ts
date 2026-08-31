@@ -81,7 +81,7 @@ export interface BlockDefinition {
 }
 
 /** Describes a single editable field for a block in the Studio inspector. */
-export interface BlockField {
+interface BlockField {
   /** Config key this field reads/writes. */
   key: string;
   /** Human-readable label shown in the inspector. */
@@ -285,15 +285,6 @@ export type TemplateCategory =
 // ---------------------------------------------------------------------------
 // Fork / Remix Types
 // ---------------------------------------------------------------------------
-
-/** A fork record — the lineage link from parent layout to child layout. */
-export interface ForkData {
-  id: string;
-  parentLayoutId: string;
-  childLayoutId: string;
-  creatorId: string;
-  forkedAt: string;
-}
 
 /** A lineage node returned by get_layout_lineage. */
 export interface LineageNode {

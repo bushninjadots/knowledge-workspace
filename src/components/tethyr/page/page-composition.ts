@@ -11,7 +11,7 @@
 import type { LayoutBlockInstance, SectionLayoutType } from "@/lib/page-blocks";
 
 /** Tailwind grid classes for each section layout type. */
-export const SECTION_GRID: Record<string, string> = {
+const SECTION_GRID: Record<string, string> = {
   full: "",
   two_column: "grid grid-cols-1 md:grid-cols-2 gap-6",
   three_column: "grid grid-cols-1 md:grid-cols-3 gap-6",
@@ -22,7 +22,7 @@ export const SECTION_GRID: Record<string, string> = {
 };
 
 /** Number of columns each section layout produces at desktop width. */
-export const COLUMN_COUNT: Record<string, number> = {
+const COLUMN_COUNT: Record<string, number> = {
   full: 1,
   two_column: 2,
   three_column: 3,
@@ -33,7 +33,7 @@ export const COLUMN_COUNT: Record<string, number> = {
 };
 
 /** Width utilities for block `config.width`. */
-export const BLOCK_WIDTH_CLASS: Record<string, string> = {
+const BLOCK_WIDTH_CLASS: Record<string, string> = {
   full: "w-full",
   "2/3": "w-2/3",
   "1/2": "w-1/2",

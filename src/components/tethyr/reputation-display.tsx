@@ -1,6 +1,6 @@
 // Reputation display — shows score, tier, and category breakdown on profile cards.
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, TrendingUp } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getTier,
@@ -112,33 +112,6 @@ export function ReputationBreakdown({ profileId }: { profileId: string }) {
           </span>
         </div>
       ))}
-    </div>
-  );
-}
-
-export function ReputationCard({ profileId, score }: { profileId: string; score: number }) {
-  return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated">
-          <TrendingUp className="h-4 w-4 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-display text-lg font-semibold">Reputation</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Earned through contributions across Tethyr.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <ReputationScore score={score} size="lg" />
-        <ReputationTierBadge score={score} />
-      </div>
-
-      <div className="mt-5">
-        <ReputationBreakdown profileId={profileId} />
-      </div>
     </div>
   );
 }

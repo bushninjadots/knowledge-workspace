@@ -28,23 +28,6 @@ export type ProjectContributionInput = {
   promptId?: string | null;
 };
 
-export function useUpdateEvidenceShelf() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { profileId: string; items: EvidenceShelfItem[] }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ evidence_shelf: input.items.slice(0, 6) })
-        .eq("id", input.profileId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["public-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
-    },
-  });
-}
-
 export function useUpdateProjectDirection() {
   const queryClient = useQueryClient();
   return useMutation({

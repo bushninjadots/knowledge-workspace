@@ -137,38 +137,6 @@ export function useProjectTeams(projectId: string) {
   });
 }
 
-export function useMyTeams() {
-  return useQuery({
-    queryKey: MY_TEAMS_KEY,
-    queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await sb
-        .from("team_members")
-        .select("team_id, role, teams(id, name, slug)")
-        .eq("profile_id", user.id);
-      if (error) {
-        if (error.code === "42P01") return [];
-        throw error;
-      }
-      return (
-        (data ?? []) as {
-          team_id: string;
-          role: TeamRole;
-          teams: { id: string; name: string; slug: string };
-        }[]
-      ).map((r) => ({
-        role: r.role,
-        ...(r.teams ?? { id: r.team_id, name: "Untitled team", slug: "" }),
-      }));
-    },
-    staleTime: 30_000,
-  });
-}
-
 export function useMyTeamInvites() {
   return useQuery({
     queryKey: ["my-team-invites"],
