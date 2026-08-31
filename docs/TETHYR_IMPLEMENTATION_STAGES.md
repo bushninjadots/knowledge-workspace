@@ -550,3 +550,19 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - `src/components/tethyr/blocks/project/hero-block.tsx` — Fields schema
 
 **Verification:** typecheck clean, 380 unit tests pass, 21/21 e2e browser checks pass.
+
+### 2026-08-31 — Audit follow-up: Studio draft correctness + single verify gate
+
+**Studio draft closure safety (`useStudioDraft` refactor):**
+
+- All mutators (`reset`/`apply`/`undo`/`redo`/`markSaved`) now read live refs instead of render-closure state. Previously `apply()` read `historyIndex` from a closure, which could observe a stale index right after undo/redo and truncate the wrong redo tail (risk of lost edits); `markSaved()` also cloned from closure state.
+- All callbacks are now stable, eliminating every `react-hooks/exhaustive-deps` warning in `studio.tsx` (deps wired correctly, not suppressed). ESLint is now 0 errors / 0 warnings across the repo.
+- The theme-override save guard is unchanged: `overridesDirtyRef` stays false on layout-only edits and is only set by `updateOverrides`, so a plain layout save never re-persists the merged theme as overrides.
+- Added `src/hooks/use-studio-draft.test.ts` (6 tests) pinning the override-save guard, undo/redo staleness + redo-tail truncation, dirty reset to clean on undo-to-saved, and position normalization.
+- Also split the carried uncommitted diff into three focused commits (dead-code removal, Prettier pass, draft fix) so the committed baseline is Prettier-stable.
+
+**Single verify gate:**
+
+- New `npm run verify` runs the DB-free, fast gate: `typecheck` → `lint` → `test` → `prettier:check` → `check:unused`.
+- New `npm run verify:full` layers on the heavier gates: `build` → `check:bundle` → `smoke` (route smoke).
+- The unused-exports baseline was re-recorded to reflect current known debt (**206 tracked entries**). The 17 newly-absorbed entries are legacy profile/tab surfaces (`ProfileOverviewTab`, `ProfileSkillsTab`, `WelcomeModal`, `SaveProjectButton`, `CopyLinkButton`) and redesign composition helpers (`block-registry.BlockPageScope`, `page-composition.*`, `page-block-layout.*`, `page-blocks.BlockField`, `ForkData`, etc.). These are intentionally deferred for the Studio↔Profile convergence; `check:unused` still fails on any **future** addition. Shrink the baseline via `npm run check:unused -- --update-baseline` only after genuinely removing the debt.

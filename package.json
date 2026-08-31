@@ -9,13 +9,17 @@
     "dev": "vite dev",
     "build": "vite build",
     "check:bundle": "node scripts/check-bundle-size.mjs",
+    "check:unused": "node scripts/check-unused-exports.mjs",
+    "prettier:check": "prettier --check .",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
     "smoke": "bash tests/route_smoke.sh",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run prettier:check && npm run check:unused",
+    "verify:full": "npm run verify && npm run build && npm run check:bundle && npm run smoke"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
