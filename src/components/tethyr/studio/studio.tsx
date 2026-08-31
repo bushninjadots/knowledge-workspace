@@ -1118,8 +1118,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               className="block truncate text-[10px] text-muted-foreground"
               title={`Editing ${activePage?.title ?? "page"}`}
             >
-              Editing{" "}
-              {activePage?.type === "profile" ? "your profile page" : (activePage?.title ?? "page")}
+              {activePage?.type === "profile"
+                ? "your private Studio layout"
+                : (activePage?.title ?? "page")}
             </span>
           </div>
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
