@@ -566,3 +566,9 @@ Ran the remaining stages to completion (see checkboxes above for per-item status
 - New `npm run verify` runs the DB-free, fast gate: `typecheck` → `lint` → `test` → `prettier:check` → `check:unused`.
 - New `npm run verify:full` layers on the heavier gates: `build` → `check:bundle` → `smoke` (route smoke).
 - The unused-exports baseline was re-recorded to reflect current known debt (**206 tracked entries**). The 17 newly-absorbed entries are legacy profile/tab surfaces (`ProfileOverviewTab`, `ProfileSkillsTab`, `WelcomeModal`, `SaveProjectButton`, `CopyLinkButton`) and redesign composition helpers (`block-registry.BlockPageScope`, `page-composition.*`, `page-block-layout.*`, `page-blocks.BlockField`, `ForkData`, etc.). These are intentionally deferred for the Studio↔Profile convergence; `check:unused` still fails on any **future** addition. Shrink the baseline via `npm run check:unused -- --update-baseline` only after genuinely removing the debt.
+
+**Database health check (2026-08-31):**
+
+- `supabase migration list` — **all 146 migrations applied in order**; no local-only / remote-only / duplicate / conflict markers. No migration-version drift.
+- `supabase/tests/rls_regression.sql` (pgTAP) — **96 assertions pass, 0 failures** against the current local schema, including the 20260829× security-hardening migrations. (Suite has grown past the 71 documented in Stage 2.)
+- Schema-level `supabase db diff` could not complete in this environment due to a stale shadow-DB container holding the CLI's `:54320` port (an environment conflict, not Tethyr drift); re-run after `docker rm` of orphaned shadow DBs if a full schema diff is desired.
