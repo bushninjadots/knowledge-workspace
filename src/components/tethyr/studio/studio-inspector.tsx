@@ -533,7 +533,7 @@ const COLOR_FIELDS: Array<{ label: string; key: string }> = [
 /** Resolve any CSS color (oklch, var(), hsl) to a #rrggbb value the native
  * color input can display. Returns null until the browser has painted. */
 function resolveHex(value: string | undefined, fallbackVar: string): string {
-  if (!value && typeof window === "undefined") return "#000000";
+  if (typeof document === "undefined") return "#000000";
   const probe = document.createElement("span");
   probe.style.color = value && value.length > 0 ? value : `var(${fallbackVar})`;
   probe.style.display = "none";
@@ -562,7 +562,7 @@ function PageInspector({
   currentOverrides?: ThemeTokens | null;
   onUpdateThemeOverrides?: (overrides: ThemeTokens | null) => void;
 }) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
   const baseTokens = (pageData?.theme ?? {}) as ThemeTokens;
   const tokens = { ...baseTokens, ...(currentOverrides ?? {}) } as ThemeTokens;
