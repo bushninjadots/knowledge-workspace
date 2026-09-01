@@ -60,7 +60,7 @@ const groups = [
     label: "Account",
     items: [
       { to: "/profile", label: "Your Studio", icon: User },
-      { to: "/studio", label: "Creativity Studio", icon: Palette },
+      { to: "/studio", label: "Creation Studio", icon: Palette },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
