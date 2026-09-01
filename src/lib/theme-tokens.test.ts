@@ -138,4 +138,18 @@ describe("themeTokensToStyle", () => {
     const style = themeTokensToStyle(tokens);
     expect(style).toHaveProperty("--background", "#fff");
   });
+
+  it("sets color from foreground so inherited text adopts the theme", () => {
+    const tokens: ThemeTokens = {
+      colors: { background: "#1a1a2e", foreground: "#e0e0e0" },
+    };
+    const style = themeTokensToStyle(tokens);
+    expect(style).toHaveProperty("color", "#e0e0e0");
+  });
+
+  it("does not set color when no foreground is provided", () => {
+    const tokens: ThemeTokens = { colors: { background: "#fff" } };
+    const style = themeTokensToStyle(tokens);
+    expect(style).not.toHaveProperty("color");
+  });
 });

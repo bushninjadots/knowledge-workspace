@@ -193,6 +193,14 @@ function deriveContrastVars(vars: Record<string, string>): void {
  */
 export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
   const vars = themeTokensToVars(tokens);
+  const fg = vars["--foreground"];
+  if (typeof fg === "string" && fg.trim() !== "") {
+    // Inherited text must adopt the theme's foreground color, not the app
+    // default (which is dark ink). Elements with no explicit text color
+    // (project card titles, bio copy, direction note, achievement rows)
+    // would otherwise read dark-on-dark on dark/tinted themes.
+    (vars as Record<string, string>)["color"] = fg;
+  }
   return vars as unknown as React.CSSProperties;
 }
 
