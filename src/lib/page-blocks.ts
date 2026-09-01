@@ -3,6 +3,8 @@
 // These are the shared contracts that the registry, renderer, hooks, and
 // database schema all agree on.
 
+import type { StudioConfig } from "@/lib/studio-config";
+
 // ---------------------------------------------------------------------------
 // Block Types
 // ---------------------------------------------------------------------------
@@ -118,7 +120,12 @@ export type SectionLayoutType =
   | "sidebar_left"
   | "sidebar_right"
   | "feature"
-  | "side_by_side";
+  | "side_by_side"
+  | "featured_work"
+  | "asymmetric"
+  | "split"
+  | "image_lead"
+  | "compact_list";
 
 /** A responsive freeform frame. Coordinates are normalized to a 12-column canvas. */
 interface LayoutFrame {
@@ -259,6 +266,8 @@ export interface PageData {
   theme: ThemeTokens | null;
   /** Raw persisted theme override deltas (unmerged), or null if none. */
   themeOverrides: ThemeTokens | null;
+  /** Normalized StudioConfig (radius/typography/density/accent/personality). */
+  config: StudioConfig;
 }
 
 // ---------------------------------------------------------------------------

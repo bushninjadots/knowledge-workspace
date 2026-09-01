@@ -20,7 +20,12 @@ import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
 import { useCreatePage, useUpdatePageLayout } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
-import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
+import {
+  studioConfigToStyle,
+  studioConfigToThemeTokens,
+  DEFAULT_STUDIO_CONFIG,
+} from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
@@ -53,11 +58,20 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
     [ownerId, ownerType, page?.id, isOwner, isEditing],
   );
 
-  // Merge theme CSS vars with any user-provided style.
+  // Merge theme CSS vars with the studio-config treatments. Studio config is
+  // applied as token overrides (radius/typography/density scale) layered on top
+  // of the page theme, then direct CSS vars for accent + density gutters.
   const containerStyle = useMemo(() => {
-    const base = themeTokensToStyle(page?.theme ?? {});
-    return { ...base, ...themeVars } as React.CSSProperties;
-  }, [page?.theme, themeVars]);
+    const themeTokens = deepMergeTokens(
+      page?.theme ?? {},
+      studioConfigToThemeTokens(page?.config ?? DEFAULT_STUDIO_CONFIG),
+    );
+    const base = themeTokensToStyle(themeTokens);
+    const configStyle = studioConfigToStyle(
+      page?.config ?? DEFAULT_STUDIO_CONFIG,
+    ) as unknown as React.CSSProperties;
+    return { ...base, ...themeVars, ...configStyle } as React.CSSProperties;
+  }, [page?.theme, page?.config, themeVars]);
 
   // ── Layout change handler (persists to DB) ─────────────────────────────
   const handleLayoutChange = useCallback(

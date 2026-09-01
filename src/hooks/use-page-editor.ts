@@ -7,9 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { PageLayout, PageOwnerType, PageStatus } from "@/lib/page-blocks";
 import { invalidatePage } from "@/hooks/use-page";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
-import type { Database } from "@/integrations/supabase/types";
+import type { StudioConfig } from "@/lib/studio-config";
+import type { Database, Json } from "@/integrations/supabase/types";
 
-const DEFAULT_LAYOUT_ID = "00000000-0000-0000-0000-000000000002";
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
 type LayoutSections = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
@@ -28,6 +28,11 @@ interface UpdateLayoutParams {
 interface UpdateThemeParams {
   pageId: string;
   themeId: string | null;
+}
+
+interface UpdateConfigParams {
+  pageId: string;
+  config: StudioConfig;
 }
 
 interface PublishParams {
@@ -117,6 +122,28 @@ export function useUpdatePageTheme() {
       const { error } = await (supabase as any)
         .from("pages")
         .update({ theme_id: themeId })
+        .eq("id", pageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["page"] });
+    },
+  });
+}
+
+/**
+ * Update a page's StudioConfig (radius/typography/density/accent/personality).
+ * Replaces the entire config object.
+ */
+export function useUpdatePageConfig() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, config }: UpdateConfigParams) => {
+      const { error } = await (supabase as any)
+        .from("pages")
+        .update({ config: config as unknown as Json })
         .eq("id", pageId);
 
       if (error) throw error;

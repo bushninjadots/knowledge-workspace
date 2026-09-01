@@ -4,13 +4,33 @@
 // block picker, and template save/apply actions.
 
 import { useState, useMemo } from "react";
-import { Edit3, Palette, Plus, Send, X, Bookmark, GalleryHorizontalEnd, Eye } from "lucide-react";
+import {
+  Edit3,
+  Palette,
+  Plus,
+  Send,
+  X,
+  Bookmark,
+  GalleryHorizontalEnd,
+  Eye,
+  Layers,
+  SlidersHorizontal,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
-import { usePublishPage, useUnpublishPage, useUpdatePageLayout } from "@/hooks/use-page-editor";
+import {
+  usePublishPage,
+  useUnpublishPage,
+  useUpdatePageLayout,
+  useUpdatePageConfig,
+} from "@/hooks/use-page-editor";
 import { useSaveAsTemplate, useApplyTemplate, usePublicTemplates } from "@/hooks/use-templates";
 import { ThemePicker } from "@/components/tethyr/page/theme-picker";
+import { CompositionPicker } from "@/components/tethyr/studio/composition-picker";
+import { PersonalityPicker } from "@/components/tethyr/studio/personality-picker";
+import { AppearancePanel } from "@/components/tethyr/studio/appearance-panel";
 
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -64,11 +84,15 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const publishPage = usePublishPage();
   const unpublishPage = useUnpublishPage();
   const updateLayout = useUpdatePageLayout();
+  const updateConfig = useUpdatePageConfig();
   const saveAsTemplate = useSaveAsTemplate();
   const applyTemplate = useApplyTemplate();
   const { data: myTemplates = [] } = usePublicTemplates();
 
   const [showPicker, setShowPicker] = useState(false);
+  const [showComposition, setShowComposition] = useState(false);
+  const [showPersonality, setShowPersonality] = useState(false);
+  const [showAppearance, setShowAppearance] = useState(false);
   const [showTemplateName, setShowTemplateName] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [showApplyPanel, setShowApplyPanel] = useState(false);
@@ -211,6 +235,30 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-[11px]"
+            onClick={() => setShowComposition(!showComposition)}
+          >
+            <Layers className="h-3.5 w-3.5" /> Composition
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-[11px]"
+            onClick={() => setShowPersonality(!showPersonality)}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> Vibe
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-[11px]"
+            onClick={() => setShowAppearance(!showAppearance)}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" /> Appearance
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-[11px]"
             onClick={() => setShowThemePicker(!showThemePicker)}
           >
             <Palette className="h-3.5 w-3.5" /> Personalize
@@ -260,6 +308,35 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
       {showPicker && (
         <BlockPickerPanel onAdd={handleAddBlock} onClose={() => setShowPicker(false)} />
+      )}
+
+      {showComposition && (
+        <CompositionPicker
+          page={page}
+          onClose={() => setShowComposition(false)}
+          onApplied={onRefresh}
+        />
+      )}
+
+      {showPersonality && (
+        <PersonalityPicker
+          page={page}
+          onClose={() => setShowPersonality(false)}
+          onApplied={onRefresh}
+        />
+      )}
+
+      {showAppearance && (
+        <AppearancePanel
+          config={page.config}
+          onChange={(partial) =>
+            updateConfig.mutate({
+              pageId: page.id,
+              config: { ...page.config, ...partial },
+            })
+          }
+          onClose={() => setShowAppearance(false)}
+        />
       )}
 
       {/* Save as template dialog */}

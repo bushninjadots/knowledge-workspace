@@ -66,11 +66,74 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
     typeof config.bannerUrl === "string" && isSafeUrl(config.bannerUrl) ? config.bannerUrl : null;
   const bannerSrc = customBanner ?? bannerSigned;
   const initial = (data.display_name ?? data.handle ?? "?").charAt(0).toUpperCase();
+  const variant = typeof config.variant === "string" ? config.variant : "row";
+  const coverActive = variant === "cover" && config.showBanner !== false && !!bannerSrc;
   const showTitle = config.showTitle !== false;
   const showHandle = config.showHandle !== false;
   const showLocation = config.showLocation !== false;
   const showReputation = config.showReputation !== false;
   const showBanner = config.showBanner !== false;
+
+  const chips = (
+    <div
+      className={`flex flex-wrap gap-2 text-xs text-muted-foreground ${
+        coverActive ? "justify-start text-white/85" : variant === "stack" ? "justify-center" : ""
+      }`}
+    >
+      {data.category && (
+        <span
+          className={`rounded-full px-2.5 py-0.5 ${coverActive ? "bg-white/15 text-white" : "bg-primary/10 text-primary"}`}
+        >
+          {data.category}
+        </span>
+      )}
+      {showLocation && data.country && (
+        <span className="inline-flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5" /> {data.country}
+        </span>
+      )}
+      {data.timezone && (
+        <span className="inline-flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" /> {data.timezone}
+        </span>
+      )}
+      {data.languages.length > 0 && (
+        <span className="inline-flex items-center gap-1">
+          <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
+        </span>
+      )}
+      {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 ${
+            coverActive ? "bg-white/15 text-white" : "border border-trust/30 bg-trust/5 text-trust"
+          }`}
+        >
+          <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
+        </span>
+      )}
+    </div>
+  );
+
+  const identity = (
+    <>
+      <h1
+        className={`font-display text-2xl font-semibold text-foreground sm:text-4xl ${coverActive ? "text-white" : ""}`}
+      >
+        {data.display_name || "Untitled"}
+      </h1>
+      {showTitle && data.creator_title && (
+        <p className={`mt-0.5 text-sm ${coverActive ? "text-white/85" : "text-foreground/80"}`}>
+          {data.creator_title}
+        </p>
+      )}
+      {showHandle && (
+        <p className={`text-sm ${coverActive ? "text-white/75" : "text-muted-foreground"}`}>
+          @{data.handle ?? "—"}
+        </p>
+      )}
+      <div className="mt-3">{chips}</div>
+    </>
+  );
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
@@ -82,62 +145,41 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           height="400"
           loading="eager"
           decoding="async"
-          className="h-44 w-full object-cover sm:h-64"
+          className={
+            coverActive ? "h-72 w-full object-cover sm:h-96" : "h-44 w-full object-cover sm:h-64"
+          }
         />
       )}
-      <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
-        <div
-          className={`flex flex-col gap-4 sm:flex-row sm:items-end ${bannerSrc && showBanner ? "-mt-12" : "pt-6"}`}
-        >
-          {/* Avatar */}
-          <div className="shrink-0">
-            <Avatar className="h-24 w-24 border-4 border-surface sm:h-32 sm:w-32">
+
+      {coverActive ? (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-5 pt-20 sm:p-8 sm:pt-24">
+          <div className="flex flex-col gap-3">
+            <Avatar className="h-20 w-20 border-4 border-background/90 sm:h-28 sm:w-28">
               <AvatarImage src={avatarSigned ?? undefined} alt="" />
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
-          </div>
-
-          {/* Identity */}
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-2xl font-semibold text-foreground sm:text-4xl">
-              {data.display_name || "Untitled"}
-            </h1>
-            {showTitle && data.creator_title && (
-              <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
-            )}
-            {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
-
-            {/* Metadata chips */}
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              {data.category && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
-                  {data.category}
-                </span>
-              )}
-              {showLocation && data.country && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" /> {data.country}
-                </span>
-              )}
-              {data.timezone && (
-                <span className="inline-flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> {data.timezone}
-                </span>
-              )}
-              {data.languages.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
-                </span>
-              )}
-              {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2.5 py-0.5 text-trust">
-                  <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
-                </span>
-              )}
-            </div>
+            {identity}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
+          <div
+            className={
+              variant === "stack"
+                ? "flex flex-col items-center gap-4 pt-6 text-center"
+                : `flex flex-col gap-4 sm:flex-row sm:items-end ${bannerSrc ? "-mt-12" : "pt-6"}`
+            }
+          >
+            <div className="shrink-0">
+              <Avatar className="h-24 w-24 border-4 border-surface sm:h-32 sm:w-32">
+                <AvatarImage src={avatarSigned ?? undefined} alt="" />
+                <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
+              </Avatar>
+            </div>
+            <div className="min-w-0 flex-1">{identity}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -149,6 +191,7 @@ registerBlock({
   description: "Avatar, name, handle, category, location, timezone, languages, and reputation.",
   icon: "User",
   defaults: {
+    variant: "row",
     showTitle: true,
     showHandle: true,
     showLocation: true,
@@ -157,6 +200,16 @@ registerBlock({
     bannerUrl: "",
   },
   fields: [
+    {
+      key: "variant",
+      label: "Layout",
+      type: "select",
+      options: [
+        { value: "row", label: "Row" },
+        { value: "stack", label: "Stack" },
+        { value: "cover", label: "Cover" },
+      ],
+    },
     { key: "showTitle", label: "Show title", type: "toggle" },
     { key: "showHandle", label: "Show handle", type: "toggle" },
     { key: "showLocation", label: "Show location", type: "toggle" },

@@ -1074,6 +1074,7 @@ export type Database = {
       }
       pages: {
         Row: {
+          config: Json
           created_at: string
           id: string
           layout_id: string | null
@@ -1086,6 +1087,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1098,6 +1100,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1508,7 +1511,6 @@ export type Database = {
           notification_preferences: Json
           portfolio_links: Json
           public_background: Json | null
-          public_studio_layout: Json | null
           reputation_score: number
           social_links: Json
           software_stack: string[]
@@ -1543,7 +1545,6 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
-          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1578,7 +1579,6 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
-          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -3026,6 +3026,41 @@ export type Database = {
           pk_table_oid: unknown
         }
         Relationships: []
+      }
+      project_repositories_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_repositories_safe: {
         Row: {

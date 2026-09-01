@@ -182,6 +182,7 @@
   --card-border-color: var(--border);
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
+  --spacing-section: 4rem;
 
   /* Brand shorthand — used in inline SVGs, gradients, and Tailwind arbitrary values */
   --brand-green: var(--trust);
@@ -264,6 +265,7 @@
   --card-border-color: var(--border);
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
+  --spacing-section: 4rem;
 
   /* Brand shorthand — used in inline SVGs, gradients, and Tailwind arbitrary values */
   --brand-green: var(--trust);

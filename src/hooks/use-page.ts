@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
+import { normalizeStudioConfig } from "@/lib/studio-config";
 import type { PageData, PageLayout, PageOwnerType, ThemeTokens } from "@/lib/page-blocks";
 
 interface PageRow {
@@ -16,6 +17,7 @@ interface PageRow {
   layout_id: string | null;
   theme_id: string | null;
   theme_overrides: Json | null;
+  config: Json | null;
   status: string;
   published_at: string | null;
   created_at: string;
@@ -52,7 +54,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       const pageQuery = supabase
         .from("pages")
         .select(
-          "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, status, published_at, created_at, updated_at",
+          "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, config, status, published_at, created_at, updated_at",
         )
         .eq("owner_id", ownerId)
         .eq("owner_type", ownerType);
@@ -106,6 +108,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         layout,
         theme,
         themeOverrides: pageRow.theme_overrides ? (pageRow.theme_overrides as ThemeTokens) : null,
+        config: normalizeStudioConfig(pageRow.config),
       };
     },
     staleTime: 0, // Never serve stale page data — mutations must reflect immediately.

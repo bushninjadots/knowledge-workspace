@@ -9,6 +9,7 @@
 import { memo, useCallback, useState } from "react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
+import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,9 +22,11 @@ import {
 import type {
   PageLayout as PageLayoutType,
   BlockContext,
+  LayoutBlockInstance,
   LayoutSection,
   SectionLayoutType,
 } from "@/lib/page-blocks";
+import { getBlock } from "@/lib/block-registry";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -43,7 +46,23 @@ const SECTION_GRID: Record<SectionLayoutType, string> = {
   sidebar_right: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_minmax(180px,280px)]",
   feature: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]",
   side_by_side: "grid grid-cols-1 gap-8 md:grid-cols-2",
+  // Whitespace-led compositions for the Studio personality presets. Their
+  // rhythm comes from intentional asymmetry, so they skip the divider border.
+  featured_work: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]",
+  asymmetric: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.7fr)]",
+  split: "grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+  image_lead: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]",
+  compact_list: "",
 };
+
+/** Section layouts whose rhythm is length/whitespace-driven instead of boxy. */
+const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
+  "featured_work",
+  "asymmetric",
+  "split",
+  "image_lead",
+  "compact_list",
+]);
 
 /**
  * Renders the full page composition: sections → blocks.
@@ -59,6 +78,13 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
   const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
+  const [configuringBlockId, setConfiguringBlockId] = useState<string | null>(null);
+
+  // The block currently being configured (inspector target).
+  const configuredBlock: LayoutBlockInstance | undefined = configuringBlockId
+    ? sections.flatMap((s) => s.blocks).find((b) => b.id === configuringBlockId)
+    : undefined;
+  const configuredDefinition = configuredBlock ? getBlock(configuredBlock.type) : undefined;
 
   // ── Block actions ──────────────────────────────────────────────────────
   const handleMoveUp = useCallback(
@@ -150,12 +176,19 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           .filter((b) => b.visible !== false)
           .sort((a, b) => a.position - b.position);
 
+        const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
+
         return (
           <section
             key={section.id}
             data-section-id={section.id}
             data-section-layout={section.layout}
-            className="border-b border-border/35 py-8 first:pt-0 last:border-b-0 last:pb-0 sm:py-10"
+            className={[
+              "py-[var(--spacing-section)] first:pt-0",
+              isWhitespaceLed ? "" : "border-b border-border/35 last:border-b-0 last:pb-0",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(si, e)}
           >
@@ -171,9 +204,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                     onMoveUp={() => handleMoveUp(si, bi)}
                     onMoveDown={() => handleMoveDown(si, bi)}
                     onRemove={() => setRemovingBlockId(block.id)}
-                    onConfigure={() => {
-                      /* config is handled by onChange prop */
-                    }}
+                    onConfigure={() => setConfiguringBlockId(block.id)}
                     onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
                   />
                 ) : (
@@ -228,6 +259,20 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Inline block settings */}
+      {configuredBlock && configuredDefinition && (
+        <InlineInspector
+          block={configuredBlock}
+          definition={configuredDefinition}
+          onChange={(config) => onBlockConfigChange?.(configuredBlock.id, config)}
+          onRemove={() => {
+            setConfiguringBlockId(null);
+            setRemovingBlockId(configuredBlock.id);
+          }}
+          onClose={() => setConfiguringBlockId(null)}
+        />
+      )}
     </div>
   );
 });
