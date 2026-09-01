@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -255,21 +255,18 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string
-          last_read_at: string | null
           role: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Insert: {
           joined_at?: string
-          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Update: {
           joined_at?: string
-          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id?: string
           user_id?: string
@@ -1563,60 +1560,6 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           years_experience?: number | null
-        }
-        Relationships: []
-      }
-      project_recognitions: {
-        Row: {
-          created_at: string
-          giver_id: string
-          id: string
-          kind: string
-          project_activity_id: string
-          project_id: string
-          recipient_id: string
-        }
-        Insert: {
-          created_at?: string
-          giver_id: string
-          id?: string
-          kind: string
-          project_activity_id: string
-          project_id: string
-          recipient_id: string
-        }
-        Update: {
-          created_at?: string
-          giver_id?: string
-          id?: string
-          kind?: string
-          project_activity_id?: string
-          project_id?: string
-          recipient_id?: string
-        }
-        Relationships: []
-      }
-      project_visits: {
-        Row: {
-          created_at: string
-          id: string
-          last_seen_at: string
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          last_seen_at?: string
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          last_seen_at?: string
-          project_id?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -2945,28 +2888,7 @@ export type Database = {
       }
     }
     Views: {
-      project_repositories_public: {
-        Row: {
-          id: string
-          project_id: string
-          provider: string
-          url: string
-          created_at: string
-          updated_at: string
-        }
-        Relationships: []
-      }
-      project_repositories_safe: {
-        Row: {
-          id: string
-          project_id: string
-          provider: string
-          url: string
-          created_at: string
-          updated_at: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       _create_trigger_if_table_exists: {
