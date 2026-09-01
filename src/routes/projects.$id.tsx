@@ -182,28 +182,7 @@ function ProjectPage() {
 
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const tabParam = searchParams.tab;
-  const previewMode =
-    searchParams.preview === "private" || searchParams.preview === "public"
-      ? searchParams.preview
-      : null;
-  const privatePreview = previewMode === "private";
-  const inStudioPreview = previewMode === "private" || previewMode === "public";
-  const [studioPreview, setStudioPreview] = useState<{
-    layout: import("@/lib/page-blocks").PageLayout;
-    theme: import("@/lib/page-blocks").ThemeTokens | null;
-  } | null>(null);
-  useEffect(() => {
-    // Both Private and Public previews render the exact Studio draft, so both
-    // read the same sessionStorage sheet the Studio writes before navigating.
-    if (!inStudioPreview) return;
-    try {
-      const raw = sessionStorage.getItem(`tethyr:studio-preview:project:${id}`);
-      if (raw) setStudioPreview(JSON.parse(raw));
-      else setStudioPreview(null);
-    } catch {
-      setStudioPreview(null);
-    }
-  }, [id, inStudioPreview]);
+
   const [tab, setTabState] = useState<ProjectTab | null>(() => (isTab(tabParam) ? tabParam : null));
 
   // Keep the tab in sync with the URL (back/forward, deep links).
@@ -466,15 +445,12 @@ function ProjectPage() {
   }, []);
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
-  const canViewPrivatePreview = privatePreview && isOwner;
-  const canViewPublicPreview = previewMode === "public" && isOwner;
-  const previewFromStudio = searchParams.from === "studio";
+
 
   // Fetch or auto-create the project's page (block-based presentation).
   const { page: projectPage } = useProjectPage({
     projectId: id,
     isOwner,
-    previewDraft: canViewPrivatePreview || canViewPublicPreview,
   });
 
   // Apply page theme as CSS vars on the outer wrapper so the entire project
@@ -583,8 +559,7 @@ function ProjectPage() {
         />
       )}
 
-      {!inStudioPreview && (
-        <ProjectWorkbench
+      <ProjectWorkbench
           project={project}
           gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
           milestones={milestones}
@@ -614,10 +589,9 @@ function ProjectPage() {
           }}
           presentationSaveState={presentationSaveState}
         />
-      )}
 
       {/* Legacy pulse — hidden when blocks render the page */}
-      {!inStudioPreview && !blocksArePage && (
+      {!blocksArePage && (
         <ProjectPulse
           project={project}
           isOwner={isOwner}
@@ -637,15 +611,6 @@ function ProjectPage() {
             ownerId={id}
             ownerType="project"
             isOwner={isOwner}
-            renderState={inStudioPreview ? "draft" : "published"}
-            previewDraft={canViewPrivatePreview || canViewPublicPreview}
-            previewMode={previewMode ?? undefined}
-            previewLayout={studioPreview?.layout}
-            previewTheme={studioPreview?.theme ?? undefined}
-            previewData={{ project }}
-            onBackToStudio={() =>
-              previewFromStudio ? window.history.back() : (window.location.href = "/studio")
-            }
           />
         </EditModeProvider>
       </div>
@@ -653,7 +618,7 @@ function ProjectPage() {
       {/* Legacy sections remain available only as the data-backed fallback for
           pages that have not yet received a canonical layout. Preview routes
           always show the canonical renderer and never mount the legacy tree. */}
-      {!inStudioPreview && !blocksArePage && (
+      {!blocksArePage && (
         <div className="animate-room-enter min-h-screen bg-noise">
           <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
             <section aria-labelledby="project-homepage-heading" className="pt-6">

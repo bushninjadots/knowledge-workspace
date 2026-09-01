@@ -4,29 +4,25 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json } from "@/integrations/supabase/types";
-import type { PageLayout, PageOwnerType, PageStatus, ThemeTokens } from "@/lib/page-blocks";
-import { createDefaultProfileLayout } from "@/lib/default-layouts";
+import type { PageLayout, PageOwnerType, PageStatus } from "@/lib/page-blocks";
 import { invalidatePage } from "@/hooks/use-page";
+import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
+import type { Database } from "@/integrations/supabase/types";
 
-/** The jsonb `sections` column on layouts — cast target for LayoutSection[]. */
-type LayoutSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
-
+const DEFAULT_LAYOUT_ID = "00000000-0000-0000-0000-000000000002";
 const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
+
+type LayoutSections = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
 
 interface CreatePageParams {
   ownerId: string;
   ownerType: PageOwnerType;
-  userId?: string;
-  defaultLayout?: PageLayout;
 }
 
 interface UpdateLayoutParams {
   pageId: string;
   layout: PageLayout;
   layoutId: string;
-  ownerId?: string;
-  ownerType?: PageOwnerType;
 }
 
 interface UpdateThemeParams {
@@ -47,54 +43,36 @@ export function useCreatePage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ownerId, ownerType, userId, defaultLayout }: CreatePageParams) => {
-      // Create a layout with the default sections. For created_by, prefer
-      // the explicit userId; fall back to auth.uid() so RLS allows future updates.
-      const sections = defaultLayout?.sections ?? createDefaultProfileLayout().sections;
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData.user) {
-        throw authError ?? new Error("You must be signed in to create a Studio page");
-      }
-      // Always use the verified session identity for the RLS-protected layout
-      // insert. A caller-provided id is metadata only and must not decide
-      // ownership.
-      const effectiveUserId = authData.user.id;
-      if (userId && userId !== effectiveUserId) {
-        throw new Error("Your session does not match this Studio owner");
-      }
-      const { data: layoutData, error: layoutError } = await supabase
+    mutationFn: async ({ ownerId, ownerType }: CreatePageParams) => {
+      // Never point a new page at the shared empty layout. Create an owned
+      // layout so every Studio starts with real, renderable content.
+      const starterLayout = ownerType === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
+      const { data: layout, error: layoutError } = await (supabase as any)
         .from("layouts")
         .insert({
-          name: `Page for ${ownerType}`,
-          sections: sections as unknown as LayoutSectionsJson,
+          name: ownerType === "profile" ? "Default Studio" : "Default Project Space",
+          type: ownerType === "profile" ? "portfolio" : "standard",
+          sections: starterLayout.sections as unknown as LayoutSections,
           is_template: false,
-          created_by: effectiveUserId,
+          created_by: ownerId,
         })
         .select("id")
         .single();
+      if (layoutError || !layout) throw layoutError ?? new Error("Could not create layout");
 
-      if (layoutError || !layoutData) {
-        throw new Error(
-          `Studio layout creation failed: ${layoutError?.message ?? "no layout was returned"}`,
-        );
-      }
-
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("pages")
         .insert({
           owner_id: ownerId,
           owner_type: ownerType,
-          layout_id: layoutData.id,
+          layout_id: layout.id,
           theme_id: DEFAULT_THEME_ID,
           status: "draft",
         })
         .select("id")
         .single();
 
-      if (error) {
-        throw new Error(`Studio page creation failed: ${error.message}`);
-      }
-      if (!data) throw new Error("Studio page creation failed: no page was returned");
+      if (error) throw error;
       return { pageId: data.id };
     },
     onSuccess: (_data, vars) => {
@@ -112,23 +90,17 @@ export function useUpdatePageLayout() {
 
   return useMutation({
     mutationFn: async ({ layoutId, layout }: UpdateLayoutParams) => {
-      const { data, error } = await supabase
+      const { error } = await (supabase as any)
         .from("layouts")
-        .update({ sections: layout.sections as unknown as LayoutSectionsJson })
-        .eq("id", layoutId)
-        .select("id")
-        .maybeSingle();
+        .update({ sections: layout.sections as unknown as Record<string, unknown>[] })
+        .eq("id", layoutId);
 
       if (error) throw error;
-      if (!data) {
-        throw new Error("Studio could not save this layout. It may no longer belong to your page.");
-      }
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: () => {
+      // Invalidate all page queries since we don't know the owner from here.
+      // The caller can also invalidate more specifically.
       qc.invalidateQueries({ queryKey: ["page"] });
-      if (vars.ownerId && vars.ownerType) {
-        qc.invalidateQueries({ queryKey: ["page", vars.ownerType, vars.ownerId] });
-      }
     },
   });
 }
@@ -141,19 +113,15 @@ export function useUpdatePageTheme() {
 
   return useMutation({
     mutationFn: async ({ pageId, themeId }: UpdateThemeParams) => {
-      // Switching the base theme must clear stale per-page overrides so the
-      // new theme's own tokens take effect (previously frozen colors/radius/
-      // fonts from a previous theme silently won over the newly applied theme).
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("pages")
-        .update({ theme_id: themeId, theme_overrides: null as unknown as Json })
+        .update({ theme_id: themeId })
         .eq("id", pageId);
 
       if (error) throw error;
     },
-    onSuccess: (_data, vars) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["page"] });
-      qc.invalidateQueries({ queryKey: ["theme", vars.themeId] });
     },
   });
 }
@@ -167,7 +135,7 @@ export function usePublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("pages")
         .update({
           status: "published" as PageStatus,
@@ -191,37 +159,9 @@ export function useUnpublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("pages")
         .update({ status: "draft" as PageStatus, published_at: null })
-        .eq("id", pageId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["page"] });
-    },
-  });
-}
-
-/**
- * Save per-page theme token overrides (radius, colors, typography).
- * These merge on top of the base theme tokens at render time.
- */
-export function useUpdateThemeOverrides() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      pageId,
-      overrides,
-    }: {
-      pageId: string;
-      overrides: ThemeTokens | null;
-    }) => {
-      const { error } = await supabase
-        .from("pages")
-        .update({ theme_overrides: overrides as unknown as Json })
         .eq("id", pageId);
 
       if (error) throw error;

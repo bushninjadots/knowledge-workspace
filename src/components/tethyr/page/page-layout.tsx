@@ -3,156 +3,247 @@
 // arrangement (full, two_column, three_column, sidebar, feature).
 // Each section contains an ordered list of blocks.
 //
-// Purely presentational: blocks render through BlockRenderer with the shared
-// BlockContext. Arrangement (block width and assigned column) is honored so a
-// saved Studio layout renders identically here, in previews, and on the
-// published page. All editing lives exclusively in the Creation Studio.
+// In edit mode, blocks are wrapped in SortableBlock with move/remove controls
+// and drag-and-drop reordering.
 
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
+import { Plus } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
+import { SortableBlock } from "@/components/tethyr/page/sortable-block";
+import { Button } from "@/components/ui/button";
 import {
-  blockWidthClass,
-  effectiveColumnCount,
-  gridClassForSection,
-  groupBlocksByColumn,
-  usesMultiColumnGrid,
-  frameForDevice,
-  FREEFORM_COLUMNS,
-} from "@/components/tethyr/page/page-composition";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type {
   PageLayout as PageLayoutType,
   BlockContext,
   LayoutBlockInstance,
+  LayoutSection,
 } from "@/lib/page-blocks";
-import type { DevicePreview } from "@/components/tethyr/page/page-composition";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
   context: BlockContext;
-  /** When set, overrides responsive breakpoints to match the preview mode. */
-  devicePreview?: DevicePreview;
-  /**
-   * When true (default), each block honors its `config.width` arrangement and
-   * grid sections group blocks by their assigned `column`. The Studio canvas
-   * disables this because its BlockCard already applies width/placement chrome.
-   */
-  applyBlockWidths?: boolean;
+  /** Called when the layout changes (edit mode only). */
+  onLayoutChange?: (layout: PageLayoutType) => void;
+  /** Called when a block's config changes. */
+  onBlockConfigChange?: (blockId: string, config: Record<string, unknown>) => void;
 }
 
-/** Width utilities and grid mapping live in page-composition.ts (shared with
- * the Studio canvas) so the editor and the hosted page never drift apart. */
+/** Tailwind grid classes for each section layout type. */
+const SECTION_GRID: Record<string, string> = {
+  full: "",
+  two_column: "grid grid-cols-1 gap-8 md:grid-cols-2",
+  three_column: "grid grid-cols-1 gap-6 md:grid-cols-3",
+  sidebar_left: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(180px,280px)_minmax(0,1fr)]",
+  sidebar_right: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_minmax(180px,280px)]",
+  feature: "grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]",
+  side_by_side: "grid grid-cols-1 gap-8 md:grid-cols-2",
+};
 
 /**
  * Renders the full page composition: sections → blocks.
  * Memoised at the layout level so only changed sections re-render.
+ * In edit mode, each block gets move/remove/configure controls.
  */
 export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   layout,
   context,
-  devicePreview,
-  applyBlockWidths = true,
+  onLayoutChange,
+  onBlockConfigChange,
 }: PageLayoutRendererProps) {
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
-  return (
-    <div
-      className="flex flex-col"
-      data-page-layout
-      style={
-        sections.some((section) => frameForDevice(section.frames, devicePreview))
-          ? {
-              display: "grid",
-              gridTemplateColumns: `repeat(${FREEFORM_COLUMNS}, minmax(0, 1fr))`,
-              gridAutoRows: "minmax(2rem, auto)",
-              gap: "var(--spacing-section, 1rem)",
-            }
-          : undefined
+  const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
+
+  // ── Block actions ──────────────────────────────────────────────────────
+  const handleMoveUp = useCallback(
+    (sectionIdx: number, blockIdx: number) => {
+      if (!onLayoutChange || blockIdx === 0) return;
+      const newSections = cloneSections(layout);
+      const blocks = newSections[sectionIdx].blocks;
+      const temp = blocks[blockIdx];
+      blocks[blockIdx] = { ...blocks[blockIdx - 1], position: blocks[blockIdx].position };
+      blocks[blockIdx - 1] = { ...temp, position: blocks[blockIdx - 1].position };
+      reindex(blocks);
+      onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleMoveDown = useCallback(
+    (sectionIdx: number, blockIdx: number) => {
+      if (!onLayoutChange) return;
+      const newSections = cloneSections(layout);
+      const blocks = newSections[sectionIdx].blocks;
+      if (blockIdx >= blocks.length - 1) return;
+      const temp = blocks[blockIdx];
+      blocks[blockIdx] = { ...blocks[blockIdx + 1], position: blocks[blockIdx].position };
+      blocks[blockIdx + 1] = { ...temp, position: blocks[blockIdx + 1].position };
+      reindex(blocks);
+      onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleRemove = useCallback(
+    (sectionIdx: number, blockIdx: number) => {
+      if (!onLayoutChange) return;
+      const newSections = cloneSections(layout);
+      newSections[sectionIdx].blocks.splice(blockIdx, 1);
+      if (newSections[sectionIdx].blocks.length === 0) {
+        // Remove empty sections.
+        newSections.splice(sectionIdx, 1);
+      } else {
+        reindex(newSections[sectionIdx].blocks);
       }
-    >
-      {sections.map((section) => {
-        const sectionFrame = frameForDevice(section.frames, devicePreview);
-        const gridClass = gridClassForSection(section.layout, devicePreview);
+      onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleDrop = useCallback(
+    (sectionIdx: number, e: React.DragEvent) => {
+      if (!onLayoutChange) return;
+      e.preventDefault();
+      const blockId = e.dataTransfer.getData("text/plain");
+      if (!blockId) return;
+
+      // Find source block and section.
+      let srcSectionIdx = -1;
+      let srcBlockIdx = -1;
+      for (let si = 0; si < sections.length; si++) {
+        const bi = sections[si].blocks.findIndex((b) => b.id === blockId);
+        if (bi !== -1) {
+          srcSectionIdx = si;
+          srcBlockIdx = bi;
+          break;
+        }
+      }
+      if (srcBlockIdx === -1) return;
+
+      const newSections = cloneSections(layout);
+      const [moved] = newSections[srcSectionIdx].blocks.splice(srcBlockIdx, 1);
+      newSections[sectionIdx].blocks.push(moved);
+      if (newSections[srcSectionIdx].blocks.length === 0) {
+        newSections.splice(srcSectionIdx, 1);
+        if (sectionIdx > srcSectionIdx) sectionIdx--;
+      }
+      reindex(newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks);
+      onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange, sections],
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col" data-page-layout>
+      {sections.map((section, si) => {
+        const gridClass = SECTION_GRID[section.layout] ?? "";
         const blocks = section.blocks
           .filter((b) => b.visible !== false)
           .sort((a, b) => a.position - b.position);
 
-        // The section is a real multi-column arrangement unless the device
-        // preview forced everything to a single column.
-        const colCount = effectiveColumnCount(section.layout, devicePreview);
-        const useGrid = usesMultiColumnGrid(section.layout, devicePreview);
-        const freeformBlocks = blocks.some((block) => frameForDevice(block.frames, devicePreview));
-
-        const renderBlock = (block: LayoutBlockInstance) => {
-          const span = Math.max(1, Math.min(block.span ?? 1, colCount));
-          const widthWrap = applyBlockWidths
-            ? `min-w-0 ${blockWidthClass(block.config?.width, devicePreview)}`
-            : "min-w-0";
-          const spanClass = useGrid && span > 1 ? `md:col-span-${span}` : "";
-          const blockFrame = frameForDevice(block.frames, devicePreview);
-          return (
-            <div
-              key={block.id}
-              className={`${widthWrap} ${spanClass}`}
-              style={
-                blockFrame && freeformBlocks
-                  ? {
-                      gridColumn: `${blockFrame.x + 1} / span ${Math.max(1, Math.min(FREEFORM_COLUMNS, blockFrame.width))}`,
-                      gridRowStart: blockFrame.y + 1,
-                      minHeight: blockFrame.height ? `${blockFrame.height * 48}px` : undefined,
-                    }
-                  : undefined
-              }
-              data-freeform={blockFrame && freeformBlocks ? "true" : undefined}
-            >
-              <BlockRenderer type={block.type} config={block.config} context={context} />
-            </div>
-          );
-        };
-
         return (
           <section
             key={section.id}
-            style={
-              sectionFrame
-                ? {
-                    gridColumn: `${sectionFrame.x + 1} / span ${Math.max(1, Math.min(FREEFORM_COLUMNS, sectionFrame.width))}`,
-                    gridRowStart: sectionFrame.y + 1,
-                    marginLeft: `${(sectionFrame.x / FREEFORM_COLUMNS) * 100}%`,
-                    width: `${(sectionFrame.width / FREEFORM_COLUMNS) * 100}%`,
-                  }
-                : { paddingBlock: "var(--spacing-section, 1rem)" }
-            }
             data-section-id={section.id}
             data-section-layout={section.layout}
-            className="py-8 first:pt-0 last:pb-0 sm:py-10"
-            data-freeform={sectionFrame ? "true" : undefined}
+            className="border-b border-border/35 py-8 first:pt-0 last:border-b-0 last:pb-0 sm:py-10"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(si, e)}
           >
-            <div
-              className={`${gridClass} [&>*]:min-w-0`}
-              style={
-                freeformBlocks
-                  ? {
-                      display: "grid",
-                      gridTemplateColumns: `repeat(${FREEFORM_COLUMNS}, minmax(0, 1fr))`,
-                      gridAutoRows: "minmax(2rem, auto)",
-                      gap: "var(--spacing-section, 1rem)",
-                    }
-                  : undefined
-              }
-            >
-              {freeformBlocks
-                ? blocks.map((block) => renderBlock(block))
-                : useGrid
-                  ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
-                      <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">
-                        {colBlocks.map((block) => renderBlock(block))}
-                      </div>
-                    ))
-                  : blocks.map((block) => renderBlock(block))}
+            <div className={`${gridClass} content-safe`}>
+              {blocks.map((block, bi) =>
+                context.isEditing ? (
+                  <SortableBlock
+                    key={block.id}
+                    block={block}
+                    context={context}
+                    isFirst={bi === 0}
+                    isLast={bi === blocks.length - 1}
+                    onMoveUp={() => handleMoveUp(si, bi)}
+                    onMoveDown={() => handleMoveDown(si, bi)}
+                    onRemove={() => setRemovingBlockId(block.id)}
+                    onConfigure={() => {
+                      /* config is handled by onChange prop */
+                    }}
+                    onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
+                  />
+                ) : (
+                  <BlockRenderer
+                    key={block.id}
+                    type={block.type}
+                    config={block.config}
+                    context={context}
+                  />
+                ),
+              )}
             </div>
           </section>
         );
       })}
+
+      {/* Remove confirmation dialog */}
+      <Dialog
+        open={!!removingBlockId}
+        onOpenChange={(open) => {
+          if (!open) setRemovingBlockId(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove block?</DialogTitle>
+            <DialogDescription>
+              This removes the block from your page. Its content will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (!removingBlockId) return;
+                for (let si = 0; si < layout.sections.length; si++) {
+                  const bi = layout.sections[si].blocks.findIndex(
+                    (b) => b.id === removingBlockId,
+                  );
+                  if (bi !== -1) {
+                    handleRemove(si, bi);
+                    break;
+                  }
+                }
+                setRemovingBlockId(null);
+              }}
+            >
+              Remove
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setRemovingBlockId(null)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function cloneSections(layout: PageLayoutType): LayoutSection[] {
+  return layout.sections.map((s) => ({
+    ...s,
+    blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
+  }));
+}
+
+function reindex(blocks: { position: number }[]) {
+  blocks.forEach((b, i) => {
+    b.position = i;
+  });
+}

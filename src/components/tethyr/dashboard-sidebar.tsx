@@ -13,7 +13,6 @@ import {
   Swords,
   Link2,
   Settings,
-  Palette,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +59,6 @@ const groups = [
     label: "Account",
     items: [
       { to: "/profile", label: "Your Studio", icon: User },
-      { to: "/studio", label: "Creation Studio", icon: Palette },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },

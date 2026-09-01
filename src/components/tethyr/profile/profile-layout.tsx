@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { WorkspaceGrid } from "@/components/tethyr/workspace/workspace-grid";
+import { PROFILE_LAYOUT_PRESETS, PROFILE_MODULES } from "@/lib/workspace-layouts";
+import { StudioDirection } from "@/components/tethyr/profile/studio-direction";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +33,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
-import { safeHref, validateImageFile } from "@/lib/validators";
+import { validateImageFile } from "@/lib/validators";
 import { completenessPercent } from "@/lib/profile-completeness";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
@@ -48,14 +50,6 @@ import type { ProjectRow } from "@/components/tethyr/profile-sections";
 export type Skill = { id: string; slug: string; name: string; category: string };
 
 export type Tab = "overview" | "skills" | "projects" | "communities" | "activity";
-
-const MANAGE_TABS: { id: Tab; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "skills", label: "Skills" },
-  { id: "projects", label: "Projects" },
-  { id: "communities", label: "Communities" },
-  { id: "activity", label: "Activity" },
-];
 
 const SOCIAL_ICONS: Record<string, typeof Globe> = {
   website: Globe,
@@ -100,7 +94,7 @@ export function ProfileLayout({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [bgOpen, setBgOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [customizing, setCustomizing] = useState(false);
   const palette = useUserPalette(bannerSigned);
 
   const accentStyle = {
@@ -166,12 +160,7 @@ export function ProfileLayout({
                   <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
                     <AvatarContent avatarSigned={avatarSigned} name={profile?.display_name} />
                   </div>
-                  <button
-                    type="button"
-                    aria-label="Change avatar"
-                    title="Change avatar"
-                    className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105"
-                  >
+                  <button className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105">
                     <Camera className="h-4 w-4" />
                   </button>
                 </DragDropFileInput>
@@ -256,66 +245,73 @@ export function ProfileLayout({
           </div>
         </div>
 
-        {/* Profile management only. Page composition lives exclusively in
-            Creation Studio (/studio), so the private route never renders a
-            second copy of the public page canvas. */}
-        <div className="flex flex-col items-start justify-between gap-4 border-b border-border/60 pb-4 sm:flex-row">
+        <StudioDirection
+          projects={projects.map((project) => ({
+            id: project.id,
+            title: project.title,
+            status: project.status,
+          }))}
+          learningGoals={profile?.learning_goals}
+          availability={profile?.availability}
+          canEdit={isOwnProfile}
+        />
+
+        {/* STUDIO WORKSPACE + SIDEBAR */}
+        <div className="flex items-start justify-between gap-4 border-b border-border/60 pb-4">
           <div>
             <p className="section-label">Your Studio</p>
             <h2 className="mt-1 font-display text-lg font-semibold">
-              Manage your source information
+              Work that makes you recognizable
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              This is the management view. Your chosen page layout is shown once in Creativity
-              Studio.
+              Put the projects, skills, and contributions you want people to remember within reach.
             </p>
           </div>
-          {isOwnProfile && (
-            <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto">
-              {profile?.handle && (
-                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-                  <Link to="/u/$handle" params={{ handle: profile.handle }}>
-                    View public Studio
-                  </Link>
-                </Button>
-              )}
-              <Button asChild size="sm" className="flex-1 sm:flex-none">
-                <Link to="/studio">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Customize Your Studio
-                </Link>
-              </Button>
-            </div>
+          {isOwnProfile && profile?.handle && (
+            <Button asChild variant="ghost" size="sm" className="shrink-0 text-muted-foreground">
+              <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                View public Studio
+              </Link>
+            </Button>
           )}
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="min-w-0 flex-1">
-            {/* Management surfaces */}
-            <div className="mt-10 border-t border-border/60 pt-6">
-              <p className="section-label">Manage your Studio</p>
-              <h3 className="mt-1 font-display text-lg font-semibold">
-                Skills, projects, and community
-              </h3>
-              <Tabs
-                value={activeTab}
-                onValueChange={(v) => setActiveTab(v as Tab)}
-                className="mt-4"
-              >
-                <TabsList className="gap-4 overflow-x-auto">
-                  {MANAGE_TABS.map((tab) => (
-                    <TabsTrigger key={tab.id} value={tab.id}>
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                {MANAGE_TABS.map((tab) => (
-                  <TabsContent key={tab.id} value={tab.id}>
-                    {tabContent[tab.id]}
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </div>
+            {customizing && isOwnProfile && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-l-2 border-[var(--user-accent-border,var(--primary))] bg-surface-elevated/20 px-4 py-3">
+                <div>
+                  <p className="section-label">Private Studio layout</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    This changes your private view only. Your public Studio has its own arrangement.
+                  </p>
+                </div>
+                {profile?.handle && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/u/$handle" params={{ handle: profile.handle }}>
+                      Preview public Studio
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )}
+
+            <WorkspaceGrid
+              page="profile"
+              userId={userId}
+              modules={PROFILE_MODULES}
+              layoutPresets={PROFILE_LAYOUT_PRESETS}
+              canCustomize={isOwnProfile}
+              defaultCustomizing={customizing}
+              showModuleTitles={false}
+              showCustomizeBar={false}
+              showPresetPicker
+              showSectionNav
+              workspaceLabel="Studio"
+              customizing={customizing}
+              onCustomizingChange={setCustomizing}
+              renderModule={(id) => tabContent[id as Tab] ?? null}
+            />
           </div>
 
           <ProfileSidebar profile={profile} />
@@ -385,7 +381,7 @@ function CompletenessRing({ value }: { value: number }) {
   const gradientId = "completeness-ring";
   return (
     <div className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3">
-      <div className="relative h-20 w-20" role="img" aria-label={`Profile completeness: ${value}%`}>
+      <div className="relative h-20 w-20">
         <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
           <circle cx="40" cy="40" r={r} stroke="hsl(var(--border))" strokeWidth="6" fill="none" />
           <circle
@@ -437,7 +433,7 @@ function ProfileSidebar({ profile }: { profile: Profile | null }) {
               return (
                 <a
                   key={key}
-                  href={safeHref(url)}
+                  href={url}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-surface-sunken hover:text-foreground"
@@ -578,7 +574,7 @@ function EditIdentityDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={save} busy={saving}>
+          <Button onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

@@ -67,22 +67,16 @@ export function createDefaultProjectLayout(): PageLayout {
 
 /** Full default profile — every section that has data appears. */
 export function createDefaultProfileLayout(): PageLayout {
+  // The default is an editorial composition: identity first, then the work,
+  // with supporting context arranged around it instead of a long card stack.
   return {
     sections: [
       { id: nid(), position: 0, layout: "full", blocks: [blk("profile-header", 0)] },
-      { id: nid(), position: 1, layout: "full", blocks: [blk("profile-direction", 0)] },
-      { id: nid(), position: 2, layout: "full", blocks: [blk("profile-bio", 0)] },
-      {
-        id: nid(),
-        position: 3,
-        layout: "two_column",
-        blocks: [blk("profile-skills", 0), blk("profile-experience", 1)],
-      },
-      { id: nid(), position: 4, layout: "full", blocks: [blk("profile-tools", 0)] },
-      { id: nid(), position: 5, layout: "full", blocks: [blk("profile-projects", 0)] },
-      { id: nid(), position: 6, layout: "full", blocks: [blk("profile-links", 0)] },
-      { id: nid(), position: 7, layout: "full", blocks: [blk("profile-achievements", 0)] },
-      { id: nid(), position: 8, layout: "full", blocks: [blk("profile-gallery", 0)] },
+      { id: nid(), position: 1, layout: "feature", blocks: [blk("profile-projects", 0), blk("profile-direction", 1)] },
+      { id: nid(), position: 2, layout: "sidebar_right", blocks: [blk("profile-bio", 0), blk("profile-links", 1)] },
+      { id: nid(), position: 3, layout: "two_column", blocks: [blk("profile-skills", 0), blk("profile-experience", 1)] },
+      { id: nid(), position: 4, layout: "full", blocks: [blk("profile-gallery", 0)] },
+      { id: nid(), position: 5, layout: "two_column", blocks: [blk("profile-tools", 0), blk("profile-achievements", 1)] },
     ],
   };
 }

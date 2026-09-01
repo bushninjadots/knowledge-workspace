@@ -1,14 +1,13 @@
 // Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   createFileRoute,
   notFound,
   useParams,
   useNavigate,
   Link,
-  useSearch,
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Languages, MapPin, MessageCircle, Sparkles } from "lucide-react";
@@ -265,12 +264,6 @@ function PublicProfileRoute() {
 
   const bannerAccent = useDominantColor(data?.bannerSigned ?? null);
   const { data: me } = useCurrentUser();
-  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const previewFromStudio = searchParams.from === "studio";
-  const previewMode =
-    searchParams.preview === "private" || searchParams.preview === "public"
-      ? searchParams.preview
-      : null;
   const meId = me?.userId ?? null;
   const { data: connections = [] } = useConnections();
   const endorse = useEndorseSkill();
@@ -311,31 +304,10 @@ function PublicProfileRoute() {
   }, [data?.profile?.id, handle, queryClient]);
 
   const isOwner = !!(meId && data?.profile && meId === data.profile.id);
-  const canViewPreview = !!previewMode && isOwner;
-
-  // Owner previews render the exact Studio draft: the same sessionStorage
-  // sheet private previews read, so Public preview matches the canvas. When no
-  // sheet is present (deep link, reload), PageShell falls back to the DB.
-  const [studioPreview, setStudioPreview] = useState<{
-    layout: import("@/lib/page-blocks").PageLayout;
-    theme: import("@/lib/page-blocks").ThemeTokens | null;
-  } | null>(null);
-  useEffect(() => {
-    if (!canViewPreview) return;
-    try {
-      const raw = sessionStorage.getItem(
-        `tethyr:studio-preview:profile:${data?.profile?.id ?? ""}`,
-      );
-      setStudioPreview(raw ? JSON.parse(raw) : null);
-    } catch {
-      setStudioPreview(null);
-    }
-  }, [canViewPreview, data?.profile?.id]);
 
   const { page: profilePage } = useProfilePage({
     profileId: data?.profile?.id ?? "",
     isOwner,
-    previewDraft: canViewPreview,
   });
 
   const pageThemeStyle = useMemo(
@@ -387,6 +359,13 @@ function PublicProfileRoute() {
       pageThemeStyle={pageThemeStyle}
     >
       <div className="animate-room-enter mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-8">
+        <div className="border-b border-border/40 pb-4">
+          <p className="section-label">Personal creative space</p>
+          <h1 className="mt-1 font-display text-2xl font-semibold">Studio</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            A living collection of work, contribution, and direction — built to be explored.
+          </p>
+        </div>
         {/* Identity card — hidden when blocks are the page */}
         {showLegacyPublicView && (
           <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
@@ -517,26 +496,17 @@ function PublicProfileRoute() {
 
         {/* Exactly one profile presentation is mounted: the chosen page layout,
             or the legacy default until a page layout exists. */}
-        {blocksArePage || canViewPreview ? (
+        {blocksArePage ? (
           <EditModeProvider>
             <PageShell
               ownerId={profile.id}
               ownerType="profile"
               isOwner={isOwner}
-              renderState={canViewPreview ? "draft" : isOwner ? "draft" : "published"}
-              previewDraft={canViewPreview || isOwner}
-              previewMode={canViewPreview ? (previewMode ?? undefined) : undefined}
-              previewLayout={studioPreview?.layout}
-              previewTheme={studioPreview?.theme ?? undefined}
-              onBackToStudio={() =>
-                previewFromStudio ? window.history.back() : (window.location.href = "/studio")
-              }
-              previewData={{ profile }}
             />
           </EditModeProvider>
         ) : null}
 
-        {showLegacyPublicView && !canViewPreview && (
+        {showLegacyPublicView && (
           <PublicStudioWorkspace
             profile={profile}
             profileId={profile.id}

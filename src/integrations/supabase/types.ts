@@ -1508,6 +1508,7 @@ export type Database = {
           notification_preferences: Json
           portfolio_links: Json
           public_background: Json | null
+          public_studio_layout: Json | null
           reputation_score: number
           social_links: Json
           software_stack: string[]
@@ -1542,6 +1543,7 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
+          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1576,6 +1578,7 @@ export type Database = {
           notification_preferences?: Json
           portfolio_links?: Json
           public_background?: Json | null
+          public_studio_layout?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]

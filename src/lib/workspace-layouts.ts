@@ -1,9 +1,16 @@
 import {
+  BarChart as IconBarChart,
+  BookOpen as IconBookOpen,
+  Calendar as IconCalendar,
   Clock as IconClock,
+  Film as IconFilm,
   Folder as IconFolder,
+  GraduationCap as IconGraduationCap,
+  Link as IconLink,
   Sparkles as IconSparkles,
   Swords as IconSwords,
   Ticket as IconTicket,
+  UserRound as IconUserRound,
   Users as IconUsers,
   type LucideIcon,
 } from "lucide-react";
@@ -148,6 +155,163 @@ export const DASHBOARD_MODULES: WorkspaceModule[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Profile modules — the identity header + sidebar stay fixed; the content
+// area beneath is a workspace of modules.
+// ---------------------------------------------------------------------------
+
+export const PROFILE_MODULES: WorkspaceModule[] = [
+  {
+    id: "projects",
+    title: "Projects",
+    icon: IconSparkles,
+    defaultW: 12,
+    defaultH: 14,
+    minW: 6,
+    maxW: 12,
+    minH: 6,
+    maxH: 22,
+  },
+  {
+    id: "overview",
+    title: "Profile details",
+    icon: IconBarChart,
+    defaultW: 12,
+    defaultH: 18,
+    minW: 6,
+    maxW: 12,
+    minH: 8,
+    maxH: 28,
+  },
+  {
+    id: "skills",
+    title: "Skills",
+    icon: IconGraduationCap,
+    defaultW: 12,
+    defaultH: 14,
+    minW: 6,
+    maxW: 12,
+    minH: 6,
+    maxH: 22,
+  },
+  {
+    id: "communities",
+    title: "Community",
+    icon: IconUsers,
+    defaultW: 12,
+    defaultH: 10,
+    minW: 6,
+    maxW: 12,
+    minH: 4,
+    maxH: 16,
+  },
+  {
+    id: "activity",
+    title: "Contributions",
+    icon: IconCalendar,
+    defaultW: 12,
+    defaultH: 12,
+    minW: 6,
+    maxW: 12,
+    minH: 5,
+    maxH: 20,
+  },
+];
+
+// Public Studios use a separate registry and storage field. The identity
+// header remains fixed; these sections are the public story a person can
+// rearrange, resize, pin, or hide.
+export const PUBLIC_STUDIO_MODULES: WorkspaceModule[] = [
+  {
+    id: "featured-work",
+    title: "Featured work",
+    icon: IconSparkles,
+    defaultW: 8,
+    defaultH: 10,
+    minW: 4,
+    maxW: 12,
+    minH: 5,
+    maxH: 16,
+  },
+  {
+    id: "contributions",
+    title: "Contributions",
+    icon: IconFolder,
+    defaultW: 4,
+    defaultH: 10,
+    minW: 4,
+    maxW: 12,
+    minH: 5,
+    maxH: 18,
+  },
+  {
+    id: "evidence-shelf",
+    title: "Evidence shelf",
+    icon: IconFilm,
+    defaultW: 12,
+    defaultH: 10,
+    minW: 6,
+    maxW: 12,
+    minH: 5,
+    maxH: 16,
+  },
+  {
+    id: "activity",
+    title: "Contribution activity",
+    icon: IconCalendar,
+    defaultW: 12,
+    defaultH: 12,
+    minW: 6,
+    maxW: 12,
+    minH: 6,
+    maxH: 20,
+  },
+  {
+    id: "skills-share",
+    title: "Skills they share",
+    icon: IconGraduationCap,
+    defaultW: 7,
+    defaultH: 12,
+    minW: 4,
+    maxW: 12,
+    minH: 6,
+    maxH: 20,
+  },
+  {
+    id: "skills-growing",
+    title: "Skills they’re growing",
+    icon: IconBookOpen,
+    defaultW: 5,
+    defaultH: 8,
+    minW: 4,
+    maxW: 12,
+    minH: 4,
+    maxH: 16,
+  },
+  {
+    id: "links",
+    title: "Links",
+    icon: IconLink,
+    defaultW: 5,
+    defaultH: 8,
+    minW: 4,
+    maxW: 12,
+    minH: 4,
+    maxH: 16,
+  },
+  {
+    id: "about",
+    title: "About",
+    icon: IconUserRound,
+    defaultW: 7,
+    defaultH: 9,
+    minW: 4,
+    maxW: 12,
+    minH: 4,
+    maxH: 16,
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Default layout helpers
 // ---------------------------------------------------------------------------
 
@@ -231,6 +395,88 @@ export const DASHBOARD_LAYOUT_PRESETS: WorkspaceLayoutPreset[] = [
     id: "network-center",
     label: "Network center",
     description: "Make discovery and new collaborators more prominent.",
+  },
+];
+
+export const PROFILE_LAYOUT_PRESETS: WorkspaceLayoutPreset[] = [
+  {
+    ...createPreset(
+      PROFILE_MODULES,
+      {
+        projects: { x: 0, y: 0, w: 12, h: 14 },
+        overview: { x: 0, y: 15, w: 12, h: 18 },
+        skills: { x: 0, y: 34, w: 12, h: 14 },
+      },
+      ["projects"],
+    ),
+    id: "studio-work-first",
+    label: "Work first",
+    description: "Put your projects and contribution context before secondary detail.",
+  },
+  {
+    ...createPreset(
+      PROFILE_MODULES,
+      {
+        skills: { x: 0, y: 0, w: 12, h: 14 },
+        communities: { x: 0, y: 15, w: 12, h: 10 },
+        activity: { x: 0, y: 26, w: 12, h: 12 },
+      },
+      ["skills", "activity"],
+    ),
+    id: "studio-community",
+    label: "Community and evidence",
+    description: "Lead with skills, communities, and the work you have contributed.",
+  },
+];
+
+export const PUBLIC_STUDIO_PRESETS: WorkspaceLayoutPreset[] = [
+  {
+    ...createPreset(
+      PUBLIC_STUDIO_MODULES,
+      {
+        "featured-work": { x: 0, y: 0, w: 8, h: 10 },
+        contributions: { x: 8, y: 0, w: 4, h: 10 },
+        "evidence-shelf": { x: 0, y: 11, w: 12, h: 10 },
+        activity: { x: 0, y: 22, w: 12, h: 12 },
+      },
+      ["featured-work"],
+    ),
+    id: "work-first",
+    label: "Work first",
+    description: "Lead with the project you want people to remember.",
+  },
+  {
+    ...createPreset(
+      PUBLIC_STUDIO_MODULES,
+      {
+        "skills-share": { x: 0, y: 0, w: 7, h: 12 },
+        "featured-work": { x: 7, y: 0, w: 5, h: 10 },
+        contributions: { x: 7, y: 11, w: 5, h: 10 },
+        "evidence-shelf": { x: 0, y: 22, w: 12, h: 10 },
+        "skills-growing": { x: 0, y: 33, w: 6, h: 8 },
+        links: { x: 6, y: 13, w: 6, h: 8 },
+      },
+      ["skills-share"],
+    ),
+    id: "collaboration-first",
+    label: "Collaboration first",
+    description: "Make it obvious how people can work with you.",
+  },
+  {
+    ...createPreset(
+      PUBLIC_STUDIO_MODULES,
+      {
+        "featured-work": { x: 0, y: 0, w: 7, h: 10 },
+        "skills-growing": { x: 7, y: 0, w: 5, h: 8 },
+        about: { x: 7, y: 9, w: 5, h: 9 },
+        "evidence-shelf": { x: 0, y: 19, w: 12, h: 10 },
+        activity: { x: 0, y: 30, w: 12, h: 12 },
+      },
+      ["featured-work", "skills-growing"],
+    ),
+    id: "learning-first",
+    label: "Learning first",
+    description: "Lead with your direction, experiments, and progress.",
   },
 ];
 

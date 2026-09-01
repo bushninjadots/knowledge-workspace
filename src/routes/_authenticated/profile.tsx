@@ -1,4 +1,4 @@
-import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Sparkles,
@@ -13,7 +13,6 @@ import {
   Link2,
   Pencil,
   Loader2,
-  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,30 +80,9 @@ function ProfilePage() {
 
   const {
     github: githubParam,
-    preview: previewParam,
-    from: previewFrom,
   } = useSearch({ strict: false }) as {
     github?: string;
-    preview?: string;
-    from?: string;
   };
-  const previewMode = previewParam === "private" || previewParam === "public" ? previewParam : null;
-  const [studioPreview, setStudioPreview] = useState<{
-    layout: import("@/lib/page-blocks").PageLayout;
-    theme: import("@/lib/page-blocks").ThemeTokens | null;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!previewMode) return;
-    try {
-      const raw = sessionStorage.getItem(
-        `tethyr:studio-preview:profile:${profileQuery.data?.userId ?? ""}`,
-      );
-      if (raw) setStudioPreview(JSON.parse(raw));
-    } catch {
-      setStudioPreview(null);
-    }
-  }, [previewMode, profileQuery.data?.userId]);
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
 
@@ -143,29 +121,6 @@ function ProfilePage() {
 
   const { profile, userId, teachIds, teachMeta, learnIds, projects } = profileQuery.data;
 
-  if (previewMode) {
-    return (
-      <div className="min-h-screen bg-background">
-        <EditModeProvider>
-          <PageShell
-            ownerId={userId}
-            ownerType="profile"
-            isOwner
-            renderState="draft"
-            previewDraft
-            previewMode={previewMode}
-            previewLayout={studioPreview?.layout}
-            previewTheme={studioPreview?.theme ?? undefined}
-            previewData={{ profile }}
-            onBackToStudio={() =>
-              previewFrom === "studio" ? window.history.back() : (window.location.href = "/studio")
-            }
-          />
-        </EditModeProvider>
-      </div>
-    );
-  }
-
   const isComplete =
     setupCompletenessPercent({
       profile,
@@ -196,17 +151,15 @@ function ProfilePage() {
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Your profile Studio is the public space people discover. Use Creation Studio to shape
-            its layout, themes, and story.
-          </p>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/studio">
-              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Customize Your Studio
-            </Link>
-          </Button>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="section-label">Personal creative space</p>
+            <h1 className="mt-1 font-display text-2xl font-semibold">Your Studio</h1>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              One Studio system. Infinite personalities. Shape the space around the work you want to be known for.
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">Create → Customize → Personalize → Arrange → Preview → Publish</p>
         </div>
       </div>
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
@@ -215,8 +168,6 @@ function ProfilePage() {
             ownerId={userId}
             ownerType="profile"
             isOwner
-            renderState="draft"
-            previewData={{ profile }}
           />
         </EditModeProvider>
       </div>
@@ -587,14 +538,7 @@ function ProfileSetupForm({
               work with you.
             </p>
           </div>
-          {profile?.handle && (
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-              <Link to="/studio">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Customize in Creation Studio
-              </Link>
-            </Button>
-          )}
+
         </div>
 
         {/* IDENTITY FORM */}
@@ -966,13 +910,7 @@ function ProfileSetupForm({
               </>
             )}
           </Button>
-          <Button asChild variant="outline" size="lg" className="gap-2">
-            <Link to="/studio">
-              <Sparkles className="h-4 w-4" />
-              Customize layout
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+
         </div>
       </div>
 
