@@ -1,8 +1,7 @@
 // ── Personality Picker ───────────────────────────────────────────────────────
-// Applies a personality's look (appearance + accent) WITHOUT touching the
-// section arrangement. Composition (the layout) is applied destructively via
-// the CompositionPicker; this panel only restyles, so it is safe to switch at
-// any time. A confirm is shown only when it would replace another personality.
+// Applies a personality's visual tone (appearance + accent) WITHOUT touching
+// the section arrangement. Composition controls structure; Vibe controls the
+// look. A confirm is shown only when it would replace another vibe.
 
 import { useState } from "react";
 import { X } from "lucide-react";
@@ -15,11 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  applyStudioPersonality,
-  STUDIO_PERSONALITIES,
-  type StudioPersonality,
-} from "@/lib/studio-personalities";
+import { STUDIO_PERSONALITIES, type StudioPersonality } from "@/lib/studio-personalities";
 import type { PageData } from "@/lib/page-blocks";
 import { useUpdatePageConfig } from "@/hooks/use-page-editor";
 
@@ -34,13 +29,25 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
   const [confirming, setConfirming] = useState<StudioPersonality | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
-  const activeId = page.config.personalityId;
+  const activeId = page.config.vibeId;
 
   function apply(personality: StudioPersonality) {
-    const applied = applyStudioPersonality(personality);
     setApplyingId(personality.id);
     updateConfig.mutate(
-      { pageId: page.id, config: applied.config },
+      {
+        pageId: page.id,
+        config: {
+          ...page.config,
+          vibeId: personality.id,
+          // Preserve the legacy field for older readers; Composition remains independent.
+          personalityId: page.config.personalityId,
+          radius: personality.appearance.radius,
+          typography: personality.appearance.typography,
+          density: personality.appearance.density,
+          accentMode: personality.appearance.accentMode,
+          accentColor: personality.appearance.accentColor,
+        },
+      },
       {
         onSuccess: () => {
           setApplyingId(null);
@@ -72,12 +79,12 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
         <X className="h-3.5 w-3.5" />
       </Button>
       <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Personality
+        Vibe
       </h3>
       <p className="mb-3 text-[11px] text-muted-foreground">
-        Restyles your Studio — rhythm, type, and accent — without changing your arrangement.
+        Set the visual tone — rhythm, type, and accent — without changing your arrangement.
       </p>
-      <div className="flex flex-col gap-1.5">
+      <div className="grid gap-2 sm:grid-cols-2">
         {STUDIO_PERSONALITIES.map((personality) => {
           const isActive = personality.id === activeId;
           const isApplying = applyingId === personality.id;
@@ -97,6 +104,11 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
                 .filter(Boolean)
                 .join(" ")}
             >
+              <span className="mb-2 flex h-8 items-center gap-1" aria-hidden="true">
+                <span className="h-5 w-5 rounded-sm bg-[var(--user-accent,var(--trust))]/25" />
+                <span className="h-6 w-10 rounded-md border border-[var(--user-accent,var(--trust))]/35" />
+                <span className="h-3 w-3 rounded-full bg-[var(--user-accent,var(--trust))]" />
+              </span>
               <span className="font-medium text-foreground">
                 {personality.label}
                 {isActive ? " · Applied" : ""}
@@ -112,9 +124,9 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
       <Dialog open={!!confirming} onOpenChange={(open) => !open && setConfirming(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Switch personality?</DialogTitle>
+            <DialogTitle>Switch vibe?</DialogTitle>
             <DialogDescription>
-              This restyles your Studio with the {confirming?.label ?? ""} look. Your arrangement
+              This restyles your Studio with the {confirming?.label ?? ""} vibe. Your arrangement
               stays exactly as you left it.
             </DialogDescription>
           </DialogHeader>
@@ -127,7 +139,7 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
                 if (personality) apply(personality);
               }}
             >
-              Switch personality
+              Switch vibe
             </Button>
             <Button variant="outline" size="sm" onClick={() => setConfirming(null)}>
               Cancel

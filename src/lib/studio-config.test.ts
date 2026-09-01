@@ -20,6 +20,16 @@ describe("normalizeStudioConfig", () => {
     expect(normalizeStudioConfig(42)).toEqual(DEFAULT_STUDIO_CONFIG);
   });
 
+  it("uses independent ids when present and legacy personalityId as fallback", () => {
+    expect(
+      normalizeStudioConfig({
+        personalityId: "creative",
+        compositionId: "minimal",
+        vibeId: "artistic",
+      }),
+    ).toMatchObject({ compositionId: "minimal", vibeId: "artistic", personalityId: "creative" });
+  });
+
   it("keeps valid values and drops invalid ones to defaults", () => {
     const raw: Record<string, unknown> = {
       personalityId: "minimal",
@@ -30,6 +40,8 @@ describe("normalizeStudioConfig", () => {
       accentColor: "#123456",
     };
     expect(normalizeStudioConfig(raw)).toEqual({
+      compositionId: "minimal",
+      vibeId: "minimal",
       personalityId: "minimal",
       radius: "rounded",
       typography: DEFAULT_STUDIO_CONFIG.typography,
@@ -43,6 +55,8 @@ describe("normalizeStudioConfig", () => {
     const raw = { accentColor: "not-a-color", personalityId: "" };
     expect(normalizeStudioConfig(raw).accentColor).toBeNull();
     expect(normalizeStudioConfig(raw).personalityId).toBeNull();
+    expect(normalizeStudioConfig(raw).compositionId).toBeNull();
+    expect(normalizeStudioConfig(raw).vibeId).toBeNull();
   });
 });
 

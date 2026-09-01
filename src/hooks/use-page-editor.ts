@@ -39,6 +39,13 @@ interface PublishParams {
   pageId: string;
 }
 
+interface ApplyStudioCompositionParams {
+  pageId: string;
+  layoutId: string;
+  layout: PageLayout;
+  config: StudioConfig;
+}
+
 /**
  * Create a new page for an owner with the default empty layout and default
  * theme. Call this when a profile or project is first viewed and no page
@@ -111,6 +118,25 @@ export function useUpdatePageLayout() {
   });
 }
 
+/** Apply a composition and its related config as one database transaction. */
+export function useApplyStudioComposition() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, layoutId, layout, config }: ApplyStudioCompositionParams) => {
+      const { error } = await supabase.rpc("apply_studio_composition", {
+        p_page_id: pageId,
+        p_layout_id: layoutId,
+        p_sections: layout.sections as unknown as Json,
+        p_config: config as unknown as Json,
+        p_composition_id: config.compositionId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["page"] }),
+  });
+}
+
 /**
  * Change the theme associated with a page.
  */
@@ -143,7 +169,11 @@ export function useUpdatePageConfig() {
     mutationFn: async ({ pageId, config }: UpdateConfigParams) => {
       const { error } = await (supabase as any)
         .from("pages")
-        .update({ config: config as unknown as Json })
+        .update({
+          config: config as unknown as Json,
+          composition_id: config.compositionId,
+          vibe_id: config.vibeId,
+        })
         .eq("id", pageId);
 
       if (error) throw error;

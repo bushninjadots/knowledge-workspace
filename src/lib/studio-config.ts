@@ -24,7 +24,11 @@ export type Density = "compact" | "comfortable" | "spacious";
 export type AccentMode = "auto" | "person" | "none";
 
 export interface StudioConfig {
-  /** Active personality preset id (null = fully manual). */
+  /** Selected page structure preset (null = custom arrangement). */
+  compositionId: string | null;
+  /** Selected visual-tone preset (null = custom visual treatment). */
+  vibeId: string | null;
+  /** Legacy combined preset id, retained for backwards-compatible writes/reads. */
   personalityId: string | null;
   radius: RadiusTreatment;
   typography: TypographyTreatment;
@@ -35,6 +39,8 @@ export interface StudioConfig {
 }
 
 export const DEFAULT_STUDIO_CONFIG: StudioConfig = {
+  compositionId: null,
+  vibeId: null,
   personalityId: null,
   radius: "soft",
   typography: "modern",
@@ -89,11 +95,22 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_STUDIO_CONFIG };
 
   const value = raw as Record<string, unknown>;
+  const legacyId =
+    typeof value.personalityId === "string" && value.personalityId.length > 0
+      ? value.personalityId
+      : null;
+  const compositionId =
+    typeof value.compositionId === "string" && value.compositionId.length > 0
+      ? value.compositionId
+      : legacyId;
+  const vibeId =
+    typeof value.vibeId === "string" && value.vibeId.length > 0 ? value.vibeId : legacyId;
+
   return {
-    personalityId:
-      typeof value.personalityId === "string" && value.personalityId.length > 0
-        ? value.personalityId
-        : null,
+    compositionId,
+    vibeId,
+    // Kept populated for old consumers, but new UI reads the independent ids.
+    personalityId: legacyId,
     radius: isOneOf(RADIUS_VALUES)(value.radius) ? value.radius : DEFAULT_STUDIO_CONFIG.radius,
     typography: isOneOf(TYPOGRAPHY_VALUES)(value.typography)
       ? value.typography

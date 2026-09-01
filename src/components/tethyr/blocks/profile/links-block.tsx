@@ -12,7 +12,7 @@ type LinksData = {
   social_links: Record<string, string>;
 };
 
-function ProfileLinksBlock({ context }: BlockProps) {
+function ProfileLinksBlock({ context, config }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -45,9 +45,15 @@ function ProfileLinksBlock({ context }: BlockProps) {
     return null;
   }
 
+  const showCategories = config.showCategories !== false;
+
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Links</h4>
+      {showCategories && (
+        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Links
+        </h4>
+      )}
       <div className="flex flex-wrap gap-2">
         {portfolio.map((link) => (
           <a

@@ -50,15 +50,26 @@ export function SortableBlock({
       <div className="absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-md border border-card-border bg-surface-elevated px-1 py-0.5 opacity-0 shadow-sm transition-opacity group-hover/edit:opacity-100">
         <button
           type="button"
-          className="cursor-grab rounded p-0.5 text-muted-foreground hover:text-foreground"
+          className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
           title="Drag to reorder"
-          aria-label="Drag to reorder"
+          aria-label={`Drag ${block.type} block to reorder`}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" && !isFirst) {
+              e.preventDefault();
+              onMoveUp();
+            }
+            if (e.key === "ArrowDown" && !isLast) {
+              e.preventDefault();
+              onMoveDown();
+            }
+          }}
         >
           <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <button
           type="button"
-          className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+          aria-label={`Move ${block.type} block up`}
+          className="rounded p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
           onClick={onMoveUp}
           disabled={isFirst}
           title="Move up"
@@ -67,7 +78,8 @@ export function SortableBlock({
         </button>
         <button
           type="button"
-          className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+          aria-label={`Move ${block.type} block down`}
+          className="rounded p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
           onClick={onMoveDown}
           disabled={isLast}
           title="Move down"
@@ -76,7 +88,8 @@ export function SortableBlock({
         </button>
         <button
           type="button"
-          className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+          aria-label={`Configure ${block.type} block`}
+          className="rounded p-1 text-muted-foreground hover:text-foreground"
           onClick={onConfigure}
           title="Configure"
         >
@@ -84,7 +97,8 @@ export function SortableBlock({
         </button>
         <button
           type="button"
-          className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+          aria-label={`Remove ${block.type} block`}
+          className="rounded p-1 text-muted-foreground hover:text-destructive"
           onClick={onRemove}
           title="Remove"
         >

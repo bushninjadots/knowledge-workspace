@@ -3254,6 +3254,16 @@ export type Database = {
         Args: { template_id: string }
         Returns: undefined
       }
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string | null
+          p_config: Json
+          p_layout_id: string
+          p_page_id: string
+          p_sections: Json
+        }
+        Returns: undefined
+      }
       insert_notification: {
         Args: {
           p_actor_id: string

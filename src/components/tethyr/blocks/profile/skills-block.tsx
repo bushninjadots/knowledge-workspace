@@ -26,7 +26,7 @@ const VERIF_LABEL: Record<string, string> = {
   community_recognized: "Recognized",
 };
 
-function ProfileSkillsBlock({ context }: BlockProps) {
+function ProfileSkillsBlock({ context, config }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -68,14 +68,18 @@ function ProfileSkillsBlock({ context }: BlockProps) {
     return null;
   }
 
+  const showCategories = config.showCategories !== false;
+
   return (
-    <div className="bg-surface/40 p-4 rounded-lg">
+    <div className="space-y-4">
       {/* Skills I share */}
       {teach.length > 0 && (
-        <div className="mb-3">
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Skills I share
-          </h4>
+        <div>
+          {showCategories && (
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Skills I share
+            </h4>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {teach.map((row) => {
               const skill = row.skills;
@@ -97,9 +101,11 @@ function ProfileSkillsBlock({ context }: BlockProps) {
       {/* Skills I'm growing */}
       {learn.length > 0 && (
         <div>
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Skills I'm growing
-          </h4>
+          {showCategories && (
+            <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Skills I'm growing
+            </h4>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {learn.map((row) => {
               const skill = row.skills;

@@ -64,7 +64,7 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
         {data.map((item) => (
           <div
             key={item.id}
-            className="relative aspect-square rounded-lg border border-border bg-surface-sunken overflow-hidden group"
+            className="group relative aspect-square overflow-hidden rounded-lg bg-surface-sunken"
           >
             {item.url ? (
               <img
@@ -83,7 +83,7 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
               </div>
             )}
             {config.showCaptions !== false && (
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
                 <p className="text-[10px] text-white truncate">{item.title}</p>
               </div>
             )}

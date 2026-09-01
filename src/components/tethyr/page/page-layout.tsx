@@ -79,6 +79,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
 
   const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
   const [configuringBlockId, setConfiguringBlockId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ sectionIdx: number; blockIdx: number } | null>(
+    null,
+  );
 
   // The block currently being configured (inspector target).
   const configuredBlock: LayoutBlockInstance | undefined = configuringBlockId
@@ -127,6 +130,37 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       } else {
         reindex(newSections[sectionIdx].blocks);
       }
+      onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleBlockDrop = useCallback(
+    (sectionIdx: number, blockIdx: number, e: React.DragEvent) => {
+      if (!onLayoutChange) return;
+      e.preventDefault();
+      const blockId = e.dataTransfer.getData("text/plain");
+      if (!blockId) return;
+      const newSections = cloneSections(layout);
+      let sourceSectionIdx = -1;
+      let sourceBlockIdx = -1;
+      for (let si = 0; si < newSections.length; si++) {
+        const index = newSections[si].blocks.findIndex((block) => block.id === blockId);
+        if (index >= 0) {
+          sourceSectionIdx = si;
+          sourceBlockIdx = index;
+          break;
+        }
+      }
+      if (sourceSectionIdx < 0) return;
+      const [moved] = newSections[sourceSectionIdx].blocks.splice(sourceBlockIdx, 1);
+      if (sourceSectionIdx === sectionIdx && sourceBlockIdx < blockIdx) blockIdx--;
+      newSections[sectionIdx].blocks.splice(blockIdx, 0, moved);
+      reindex(newSections[sectionIdx].blocks);
+      if (newSections[sourceSectionIdx].blocks.length === 0 && sourceSectionIdx !== sectionIdx) {
+        newSections.splice(sourceSectionIdx, 1);
+      }
+      setDropTarget(null);
       onLayoutChange({ sections: newSections });
     },
     [layout, onLayoutChange],
@@ -193,28 +227,54 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             onDrop={(e) => handleDrop(si, e)}
           >
             <div className={`${gridClass} content-safe`}>
-              {blocks.map((block, bi) =>
-                context.isEditing ? (
-                  <SortableBlock
-                    key={block.id}
-                    block={block}
-                    context={context}
-                    isFirst={bi === 0}
-                    isLast={bi === blocks.length - 1}
-                    onMoveUp={() => handleMoveUp(si, bi)}
-                    onMoveDown={() => handleMoveDown(si, bi)}
-                    onRemove={() => setRemovingBlockId(block.id)}
-                    onConfigure={() => setConfiguringBlockId(block.id)}
-                    onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
-                  />
-                ) : (
-                  <BlockRenderer
-                    key={block.id}
-                    type={block.type}
-                    config={block.config}
-                    context={context}
-                  />
-                ),
+              {blocks.map((block, bi) => (
+                <div
+                  key={`drop-${block.id}`}
+                  className={[
+                    "contents",
+                    dropTarget?.sectionIdx === si && dropTarget.blockIdx === bi
+                      ? "[&>div]:border-t-2 [&>div]:border-[var(--user-accent,var(--trust))]"
+                      : "",
+                  ].join(" ")}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDropTarget({ sectionIdx: si, blockIdx: bi });
+                  }}
+                  onDrop={(event) => handleBlockDrop(si, bi, event)}
+                >
+                  {context.isEditing ? (
+                    <SortableBlock
+                      block={block}
+                      context={context}
+                      isFirst={bi === 0}
+                      isLast={bi === blocks.length - 1}
+                      onMoveUp={() => handleMoveUp(si, bi)}
+                      onMoveDown={() => handleMoveDown(si, bi)}
+                      onRemove={() => setRemovingBlockId(block.id)}
+                      onConfigure={() => setConfiguringBlockId(block.id)}
+                      onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
+                    />
+                  ) : (
+                    <BlockRenderer type={block.type} config={block.config} context={context} />
+                  )}
+                </div>
+              ))}
+              {/* Empty tail drop target makes moving a block to the end explicit. */}
+              {context.isEditing && blocks.length > 0 && (
+                <div
+                  className={[
+                    "min-h-3 rounded-sm border border-dashed border-transparent transition-colors",
+                    dropTarget?.sectionIdx === si && dropTarget.blockIdx === blocks.length
+                      ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
+                      : "",
+                  ].join(" ")}
+                  aria-label={`Drop at end of section ${si + 1}`}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDropTarget({ sectionIdx: si, blockIdx: blocks.length });
+                  }}
+                  onDrop={(event) => handleBlockDrop(si, blocks.length, event)}
+                />
               )}
             </div>
           </section>

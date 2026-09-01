@@ -57,11 +57,11 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
   return (
     <div>
       <h4 className="mb-3 text-sm font-medium text-foreground">Achievements ({data.length})</h4>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-3">
         {data.map((a) => (
           <div
             key={a.id}
-            className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3"
+            className="flex min-w-44 flex-1 items-start gap-3 border-l-2 border-trust/40 pl-3"
           >
             <div className="mt-0.5 rounded-full bg-trust-subtle p-1.5">
               {(() => {

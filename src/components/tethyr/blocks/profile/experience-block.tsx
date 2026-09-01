@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
@@ -8,7 +8,6 @@ import type { BlockProps } from "@/lib/page-blocks";
 
 type ExpData = {
   years_experience: number | null;
-  creator_title: string | null;
   teaching_style: string | null;
 };
 
@@ -21,7 +20,7 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
       if (!profileId) return null;
       const { data: d } = await supabase
         .from("profiles")
-        .select("years_experience, creator_title, teaching_style")
+        .select("years_experience, teaching_style")
         .eq("id", profileId)
         .maybeSingle();
       return d as unknown as ExpData | null;
@@ -35,13 +34,11 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
       return <BlockEmptyState label="Experience" detail="Experience details will appear here." />;
     return null;
   }
-  const showRole = config.showRole !== false;
   const showYears = config.showYears !== false;
   const showStyle = config.showTeachingStyle !== false;
   const hasExp = showYears && data.years_experience != null;
-  const hasTitle = showRole && !!data.creator_title;
   const hasStyle = showStyle && !!data.teaching_style;
-  if (!hasExp && !hasTitle && !hasStyle) {
+  if (!hasExp && !hasStyle) {
     if (context.isEditing)
       return (
         <BlockEmptyState label="Experience" detail="Add experience details to your profile." />
@@ -55,15 +52,6 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
         Experience
       </h4>
       <div className="grid gap-3 sm:grid-cols-2">
-        {hasTitle && (
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3">
-            <Briefcase className="h-4 w-4 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Role</p>
-              <p className="text-sm font-medium">{data.creator_title}</p>
-            </div>
-          </div>
-        )}
         {hasExp && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3">
             <Star className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -87,11 +75,10 @@ registerBlock({
   type: "profile-experience",
   category: "people",
   label: "Experience",
-  description: "Years of experience, role, and teaching style.",
+  description: "Years of experience and teaching style.",
   icon: "Briefcase",
-  defaults: { showRole: true, showYears: true, showTeachingStyle: true },
+  defaults: { showYears: true, showTeachingStyle: true },
   fields: [
-    { key: "showRole", label: "Show role", type: "toggle" },
     { key: "showYears", label: "Show years of experience", type: "toggle" },
     { key: "showTeachingStyle", label: "Show teaching style", type: "toggle" },
   ],

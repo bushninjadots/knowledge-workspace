@@ -97,6 +97,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [templateName, setTemplateName] = useState("");
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
 
   const isPublished = page?.status === "published";
 
@@ -121,9 +122,16 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     const reindexed = last.blocks.map((b, i) => ({ ...b, position: i + 1 }));
     newBlock.position = reindexed.length;
     sections[sections.length - 1] = { ...last, blocks: [...reindexed, newBlock] };
+    setLastAction("saving");
     updateLayout.mutate(
       { pageId: page.id, layoutId: page.layoutId, layout: { sections } },
-      { onSuccess: () => onRefresh() },
+      {
+        onSuccess: () => {
+          setLastAction("saved");
+          onRefresh();
+        },
+        onError: () => setLastAction("error"),
+      },
     );
   }
 
@@ -218,6 +226,15 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
         <div className="flex flex-wrap items-center gap-1.5">
           <div className="mr-2 flex items-center gap-2">
             <span className="text-[11px] font-medium text-foreground">Customizing</span>
+            <span className="text-[10px] text-muted-foreground" role="status" aria-live="polite">
+              {lastAction === "saving"
+                ? "Saving…"
+                : lastAction === "saved"
+                  ? "Saved"
+                  : lastAction === "error"
+                    ? "Save failed"
+                    : ""}
+            </span>
             <span className="text-[11px] text-muted-foreground" aria-live="polite">
               {isPublished ? "Published" : "Draft"}
             </span>
@@ -261,7 +278,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowThemePicker(!showThemePicker)}
           >
-            <Palette className="h-3.5 w-3.5" /> Personalize
+            <Palette className="h-3.5 w-3.5" /> Theme
           </Button>
           <Button
             variant="ghost"
@@ -269,7 +286,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowApplyPanel(!showApplyPanel)}
           >
-            <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Layouts
+            <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Templates
           </Button>
           <Button
             variant="ghost"
@@ -329,12 +346,22 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       {showAppearance && (
         <AppearancePanel
           config={page.config}
-          onChange={(partial) =>
-            updateConfig.mutate({
-              pageId: page.id,
-              config: { ...page.config, ...partial },
-            })
-          }
+          onChange={(partial) => {
+            setLastAction("saving");
+            updateConfig.mutate(
+              {
+                pageId: page.id,
+                config: { ...page.config, ...partial },
+              },
+              {
+                onSuccess: () => {
+                  setLastAction("saved");
+                  onRefresh();
+                },
+                onError: () => setLastAction("error"),
+              },
+            );
+          }}
           onClose={() => setShowAppearance(false)}
         />
       )}

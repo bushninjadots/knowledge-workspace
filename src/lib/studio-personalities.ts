@@ -49,6 +49,8 @@ export function applyStudioPersonality(personality: StudioPersonality): AppliedP
   return {
     layout: personality.composition(),
     config: {
+      compositionId: personality.id,
+      vibeId: personality.id,
       personalityId: personality.id,
       ...personality.appearance,
       accentColor: personality.appearance.accentColor ?? null,

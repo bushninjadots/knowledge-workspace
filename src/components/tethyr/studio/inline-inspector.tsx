@@ -44,7 +44,7 @@ export function InlineInspector({
     <div
       role="dialog"
       aria-label={`${definition.label} settings`}
-      className="fixed right-3 top-24 z-50 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-card-border bg-surface-elevated px-4 py-3 shadow-xl"
+      className="fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto rounded-xl border border-card-border bg-surface-elevated px-4 py-3 shadow-xl sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-24 sm:w-72 sm:max-h-[70vh]"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
