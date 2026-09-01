@@ -418,6 +418,101 @@ export type Database = {
           },
         ]
       }
+      forks: {
+        Row: {
+          child_layout_id: string
+          creator_id: string
+          forked_at: string
+          id: string
+          parent_layout_id: string
+        }
+        Insert: {
+          child_layout_id: string
+          creator_id: string
+          forked_at?: string
+          id?: string
+          parent_layout_id: string
+        }
+        Update: {
+          child_layout_id?: string
+          creator_id?: string
+          forked_at?: string
+          id?: string
+          parent_layout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forks_child_layout_id_fkey"
+            columns: ["child_layout_id"]
+            isOneToOne: true
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forks_parent_layout_id_fkey"
+            columns: ["parent_layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      layouts: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fork_count: number
+          id: string
+          is_template: boolean
+          name: string
+          sections: Json
+          theme_id: string | null
+          type: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fork_count?: number
+          id?: string
+          is_template?: boolean
+          name: string
+          sections?: Json
+          theme_id?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fork_count?: number
+          id?: string
+          is_template?: boolean
+          name?: string
+          sections?: Json
+          theme_id?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "layouts_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_collections: {
         Row: {
           color: string | null
@@ -736,6 +831,60 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string
+          id: string
+          layout_id: string | null
+          owner_id: string
+          owner_type: string
+          published_at: string | null
+          status: string
+          theme_id: string | null
+          theme_overrides: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          layout_id?: string | null
+          owner_id: string
+          owner_type: string
+          published_at?: string | null
+          status?: string
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layout_id?: string | null
+          owner_id?: string
+          owner_type?: string
+          published_at?: string | null
+          status?: string
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "layouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pages_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
             referencedColumns: ["id"]
           },
         ]
@@ -1922,6 +2071,36 @@ export type Database = {
         }
         Relationships: []
       }
+      themes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          tokens: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          tokens?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement: Database["public"]["Enums"]["achievement_type"]
@@ -1956,6 +2135,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
+      increment_usage_count: {
+        Args: { template_id: string }
+        Returns: undefined
+      }
       insert_notification: {
         Args: {
           p_actor_id: string
@@ -1994,6 +2178,14 @@ export type Database = {
           p_profile_id: string
         }
         Returns: undefined
+      }
+      reseed_default_templates: { Args: never; Returns: number }
+      unread_message_counts: {
+        Args: never
+        Returns: {
+          connection_id: string
+          unread_count: number
+        }[]
       }
     }
     Enums: {
