@@ -1280,7 +1280,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
         <div
-          className={`shrink-0 overflow-y-auto border-r border-border/30 bg-surface-elevated/10 transition-all duration-200 ${
+          className={`shrink-0 overflow-y-auto border-r border-border bg-surface-elevated transition-all duration-200 ${
             leftOpen ? "w-60" : "w-0 overflow-hidden border-r-0"
           }`}
         >
@@ -1308,9 +1308,9 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
         {/* Center canvas */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex flex-1 justify-center overflow-y-auto bg-noise p-6">
+          <div className="flex flex-1 justify-center overflow-y-auto bg-surface-sunken p-6">
             <div
-              className={`w-full ${deviceClass} bg-background font-sans text-foreground transition-all duration-200`}
+              className={`h-fit w-full overflow-hidden rounded-lg border border-border shadow-sm ${deviceClass} bg-background font-sans text-foreground transition-all duration-200`}
               style={canvasContainerStyle}
               data-studio-preview="private-draft"
               aria-label={`${activePage?.type === "profile" ? "Private Studio" : "Private project"} draft preview`}
@@ -1361,8 +1361,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
         {/* Right inspector */}
         <div
-          className={`shrink-0 overflow-y-auto border-l border-border/30 bg-surface-elevated/10 transition-all duration-200 ${
-            rightOpen ? "w-64" : "w-0 overflow-hidden border-l-0"
+          className={`shrink-0 overflow-y-auto border-l border-border bg-surface-elevated transition-all duration-200 ${
+            rightOpen ? "w-72" : "w-0 overflow-hidden border-l-0"
           }`}
         >
           {rightOpen && (
