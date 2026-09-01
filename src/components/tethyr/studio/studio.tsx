@@ -1403,7 +1403,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <div className="max-w-sm text-center">
             <h2 className="font-display text-lg font-semibold">Your Studio starts here</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Create a profile or project first, then shape its Studio with content, templates, and appearance.
+              Create a profile or project first, then shape its Studio with content, templates, and
+              appearance.
             </p>
             <Button className="mt-4" onClick={handleCreateProject}>
               Open project setup

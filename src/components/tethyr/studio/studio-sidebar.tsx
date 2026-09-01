@@ -126,7 +126,10 @@ export function StudioSidebar({
   return (
     <div className="flex h-full flex-col">
       {/* ── Tab navigation ──────────────────────────────────────────────── */}
-      <nav className="shrink-0 border-b border-border/20 px-3 pt-3" aria-label="Creation Studio tools">
+      <nav
+        className="shrink-0 border-b border-border/20 px-3 pt-3"
+        aria-label="Creation Studio tools"
+      >
         <div className="flex flex-col gap-0.5" role="tablist" aria-label="Creation Studio tools">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -154,7 +157,12 @@ export function StudioSidebar({
       </nav>
 
       {/* ── Tab content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto" role="tabpanel" id={`studio-panel-${activeTab}`} aria-label={`${TABS.find((tab) => tab.key === activeTab)?.label ?? "Studio"} tools`}>
+      <div
+        className="flex-1 overflow-y-auto"
+        role="tabpanel"
+        id={`studio-panel-${activeTab}`}
+        aria-label={`${TABS.find((tab) => tab.key === activeTab)?.label ?? "Studio"} tools`}
+      >
         {activeTab === "pages" && (
           <BuildPanel
             pageType={activePage?.type ?? "project"}
