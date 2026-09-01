@@ -204,7 +204,7 @@ function BlockInspector({
                         aria-checked={!!value}
                       >
                         <span
-                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
                             value ? "left-[18px]" : "left-0.5"
                           }`}
                         />
@@ -265,7 +265,7 @@ function BlockInspector({
                         type="color"
                         value={typeof value === "string" ? value : "#000000"}
                         onChange={(e) => updateField(field.key, e.target.value)}
-                        className="h-6 w-6 cursor-pointer rounded border border-border/30"
+                        className="h-6 w-6 cursor-pointer rounded border border-border"
                       />
                     </div>
                   );
