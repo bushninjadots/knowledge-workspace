@@ -18,8 +18,8 @@ interface PageRow {
   theme_id: string | null;
   theme_overrides: Json | null;
   config: Json | null;
-  composition_id: string | null;
-  vibe_id: string | null;
+  composition_id?: string | null;
+  vibe_id?: string | null;
   status: string;
   published_at: string | null;
   created_at: string;
@@ -56,14 +56,31 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       const pageQuery = supabase
         .from("pages")
         .select(
-          "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, config, composition_id, vibe_id, status, published_at, created_at, updated_at",
+          "id, owner_id, owner_type, layout_id, theme_id, theme_overrides, config, status, published_at, created_at, updated_at",
         )
         .eq("owner_id", ownerId)
         .eq("owner_type", ownerType);
-      const { data: row, error } = await (includeDraft
+      let { data: row, error } = await (includeDraft
         ? pageQuery.maybeSingle()
         : pageQuery.eq("status", "published").maybeSingle());
 
+      // Older databases may not have the newer Studio columns in their schema
+      // cache. Retry with the stable page columns so the Studio can still load.
+      if (
+        error &&
+        /composition_id|vibe_id|theme_overrides|config|column/i.test(error.message ?? "")
+      ) {
+        const fallbackQuery = supabase
+          .from("pages")
+          .select(
+            "id, owner_id, owner_type, layout_id, theme_id, status, published_at, created_at, updated_at",
+          )
+          .eq("owner_id", ownerId)
+          .eq("owner_type", ownerType);
+        ({ data: row, error } = await (includeDraft
+          ? fallbackQuery.maybeSingle()
+          : fallbackQuery.eq("status", "published").maybeSingle()));
+      }
       if (error) throw error;
       if (!row) return null;
 
@@ -110,11 +127,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         layout,
         theme,
         themeOverrides: pageRow.theme_overrides ? (pageRow.theme_overrides as ThemeTokens) : null,
-        config: normalizeStudioConfig({
-          ...(pageRow.config as Record<string, unknown> | null),
-          compositionId: pageRow.composition_id,
-          vibeId: pageRow.vibe_id,
-        }),
+        config: normalizeStudioConfig(pageRow.config),
       };
     },
     staleTime: 0, // Never serve stale page data — mutations must reflect immediately.

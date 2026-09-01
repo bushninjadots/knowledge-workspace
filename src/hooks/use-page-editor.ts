@@ -171,8 +171,6 @@ export function useUpdatePageConfig() {
         .from("pages")
         .update({
           config: config as unknown as Json,
-          composition_id: config.compositionId,
-          vibe_id: config.vibeId,
         })
         .eq("id", pageId);
 

@@ -51,12 +51,7 @@ export function CompositionPicker({ page, onClose, onApplied }: CompositionPicke
     };
     setApplyingId(personality.id);
     applyComposition.mutate(
-      {
-        pageId: page.id,
-        layoutId: page.layoutId,
-        layout: applied.layout,
-        config: nextConfig,
-      },
+      { pageId: page.id, layoutId: page.layoutId, layout: applied.layout, config: nextConfig },
       {
         onSuccess: () => {
           setApplyingId(null);

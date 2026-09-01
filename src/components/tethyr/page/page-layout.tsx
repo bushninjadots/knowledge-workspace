@@ -35,6 +35,8 @@ interface PageLayoutRendererProps {
   onLayoutChange?: (layout: PageLayoutType) => void;
   /** Called when a block's config changes. */
   onBlockConfigChange?: (blockId: string, config: Record<string, unknown>) => void;
+  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
+  onProfileMediaSaved?: () => void;
 }
 
 /** Tailwind grid classes for each section layout type. */
@@ -74,6 +76,8 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   context,
   onLayoutChange,
   onBlockConfigChange,
+  profileMedia,
+  onProfileMediaSaved,
 }: PageLayoutRendererProps) {
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
@@ -226,12 +230,16 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(si, e)}
           >
-            <div className={`${gridClass} content-safe`}>
+            <div
+              className={`${gridClass} content-safe`}
+              style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
+            >
               {blocks.map((block, bi) => (
                 <div
                   key={`drop-${block.id}`}
                   className={[
                     "contents",
+                    gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
                     dropTarget?.sectionIdx === si && dropTarget.blockIdx === bi
                       ? "[&>div]:border-t-2 [&>div]:border-[var(--user-accent,var(--trust))]"
                       : "",
@@ -263,18 +271,22 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               {context.isEditing && blocks.length > 0 && (
                 <div
                   className={[
-                    "min-h-3 rounded-sm border border-dashed border-transparent transition-colors",
+                    "min-h-8 rounded-sm border border-dashed border-border/50 bg-surface/30 text-center text-[10px] text-muted-foreground/60 transition-colors",
                     dropTarget?.sectionIdx === si && dropTarget.blockIdx === blocks.length
                       ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                       : "",
                   ].join(" ")}
                   aria-label={`Drop at end of section ${si + 1}`}
+                  role="button"
+                  tabIndex={0}
                   onDragOver={(event) => {
                     event.preventDefault();
                     setDropTarget({ sectionIdx: si, blockIdx: blocks.length });
                   }}
                   onDrop={(event) => handleBlockDrop(si, blocks.length, event)}
-                />
+                >
+                  <span className="pointer-events-none select-none">Drop here to place at end</span>
+                </div>
               )}
             </div>
           </section>
@@ -325,6 +337,20 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         <InlineInspector
           block={configuredBlock}
           definition={configuredDefinition}
+          ownerId={context.ownerId}
+          profileMedia={configuredBlock.type === "profile-header" ? profileMedia : undefined}
+          onProfileMediaSaved={onProfileMediaSaved}
+          onBlockLayoutChange={(layoutChange) => {
+            if (!onLayoutChange) return;
+            const next = cloneSections(layout);
+            const section = next.find((candidate) =>
+              candidate.blocks.some((item) => item.id === configuredBlock.id),
+            );
+            const target = section?.blocks.find((item) => item.id === configuredBlock.id);
+            if (!target) return;
+            Object.assign(target, layoutChange);
+            onLayoutChange({ sections: next });
+          }}
           onChange={(config) => onBlockConfigChange?.(configuredBlock.id, config)}
           onRemove={() => {
             setConfiguringBlockId(null);
@@ -350,4 +376,22 @@ function reindex(blocks: { position: number }[]) {
   blocks.forEach((b, i) => {
     b.position = i;
   });
+}
+
+function spanClass(span: number): string {
+  const classes = [
+    "md:col-span-1",
+    "md:col-span-2",
+    "md:col-span-3",
+    "md:col-span-4",
+    "md:col-span-5",
+    "md:col-span-6",
+    "md:col-span-7",
+    "md:col-span-8",
+    "md:col-span-9",
+    "md:col-span-10",
+    "md:col-span-11",
+    "md:col-span-12",
+  ];
+  return classes[Math.min(classes.length, Math.max(1, Math.round(span))) - 1];
 }

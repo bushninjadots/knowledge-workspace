@@ -165,7 +165,16 @@ function ProfilePage() {
       </div>
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <EditModeProvider>
-          <PageShell ownerId={userId} ownerType="profile" isOwner />
+          <PageShell
+            ownerId={userId}
+            ownerType="profile"
+            isOwner
+            profileMedia={{
+              avatarUrl: profile?.avatar_url ?? null,
+              bannerUrl: profile?.banner_url ?? null,
+            }}
+            onProfileMediaSaved={refresh}
+          />
         </EditModeProvider>
       </div>
     </>

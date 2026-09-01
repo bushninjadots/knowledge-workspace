@@ -14,7 +14,7 @@
 //   • Published/draft — resolved page with layout
 //   • Editing — blocks get move/remove/configure controls
 
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
@@ -31,6 +31,7 @@ import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
+import { createStudioHistory } from "@/lib/studio-history";
 
 interface PageShellProps {
   /** The owner's ID (profile UUID or project UUID). */
@@ -39,9 +40,17 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
+  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
+  onProfileMediaSaved?: () => void;
 }
 
-export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
+export function PageShell({
+  ownerId,
+  ownerType,
+  isOwner,
+  profileMedia,
+  onProfileMediaSaved,
+}: PageShellProps) {
   // Owners must be able to load their draft pages in the editor; public
   // visitors only ever see published pages.
   const {
@@ -58,6 +67,8 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
   const { isEditing } = useEditMode();
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const historyRef = useRef(createStudioHistory());
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -88,11 +99,15 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
   const handleLayoutChange = useCallback(
     (newLayout: PageLayout) => {
       if (!page) return;
-      updateLayout.mutate({
-        pageId: page.id,
-        layoutId: page.layoutId,
-        layout: newLayout,
-      });
+      historyRef.current.capture({ layout: page.layout, config: page.config });
+      setSaveState("saving");
+      updateLayout.mutate(
+        { pageId: page.id, layoutId: page.layoutId, layout: newLayout },
+        {
+          onSuccess: () => setSaveState("saved"),
+          onError: () => setSaveState("error"),
+        },
+      );
     },
     [page, updateLayout],
   );
@@ -188,10 +203,24 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
 
       <div
         style={containerStyle}
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+            event.preventDefault();
+            const snapshot = historyRef.current.take();
+            if (!snapshot || !page) return;
+            setSaveState("saving");
+            updateLayout.mutate(
+              { pageId: page.id, layoutId: page.layoutId, layout: snapshot.layout },
+              { onSuccess: () => setSaveState("saved"), onError: () => setSaveState("error") },
+            );
+          }
+        }}
+        tabIndex={-1}
         data-page-id={page.id}
         data-page-status={page.status}
         role="region"
         aria-label={`${ownerType} page`}
+        data-save-state={saveState}
       >
         {layout.sections.length === 0 ? (
           <div className="flex min-h-[20vh] items-center justify-center px-4">
@@ -216,6 +245,8 @@ export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
             context={blockContext}
             onLayoutChange={handleLayoutChange}
             onBlockConfigChange={handleBlockConfigChange}
+            profileMedia={profileMedia}
+            onProfileMediaSaved={onProfileMediaSaved}
           />
         ) : (
           <PageLayoutRenderer layout={layout} context={blockContext} />

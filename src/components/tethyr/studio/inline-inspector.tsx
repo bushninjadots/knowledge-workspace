@@ -3,12 +3,19 @@
 // control in edit mode. Renders a control for every registered BlockField and
 // writes changes immediately (persist-on-change — there is no save button).
 
-import { X } from "lucide-react";
+import { useState } from "react";
+import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { BlockConfig, BlockDefinition, LayoutBlockInstance } from "@/lib/page-blocks";
+import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
+import { validateImageFile } from "@/lib/validators";
+import { friendlyError } from "@/lib/error-message";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { ProfileMediaControls } from "@/components/tethyr/studio/profile-media-controls";
 
 interface InlineInspectorProps {
   block: LayoutBlockInstance;
@@ -16,6 +23,10 @@ interface InlineInspectorProps {
   onChange: (config: BlockConfig) => void;
   onRemove: () => void;
   onClose: () => void;
+  onBlockLayoutChange?: (layout: Pick<LayoutBlockInstance, "column" | "span">) => void;
+  ownerId?: string;
+  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
+  onProfileMediaSaved?: () => void;
 }
 
 function stringValue(config: BlockConfig, key: string): string {
@@ -33,8 +44,13 @@ export function InlineInspector({
   onChange,
   onRemove,
   onClose,
+  onBlockLayoutChange,
+  ownerId,
+  profileMedia,
+  onProfileMediaSaved,
 }: InlineInspectorProps) {
   const fields = definition.fields;
+  const [uploading, setUploading] = useState(false);
 
   function set<Key extends string>(key: Key, value: unknown) {
     onChange({ ...block.config, [key]: value });
@@ -63,6 +79,52 @@ export function InlineInspector({
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+
+      {profileMedia && ownerId && onProfileMediaSaved && (
+        <ProfileMediaControls
+          ownerId={ownerId}
+          avatarUrl={profileMedia.avatarUrl}
+          bannerUrl={profileMedia.bannerUrl}
+          onSaved={onProfileMediaSaved}
+        />
+      )}
+
+      {onBlockLayoutChange && (
+        <div className="mb-4 space-y-2 border-b border-border/30 pb-4">
+          <p className="text-[11px] font-medium text-muted-foreground">Grid placement</p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[11px] text-muted-foreground">
+              Column
+              <Input
+                type="number"
+                min={0}
+                max={11}
+                className="mt-1 h-8 text-xs"
+                value={typeof block.column === "number" ? block.column : 0}
+                onChange={(e) =>
+                  onBlockLayoutChange({ column: Math.max(0, Number(e.target.value) || 0) })
+                }
+              />
+            </label>
+            <label className="text-[11px] text-muted-foreground">
+              Width
+              <Input
+                type="number"
+                min={1}
+                max={12}
+                className="mt-1 h-8 text-xs"
+                value={typeof block.span === "number" ? block.span : 1}
+                onChange={(e) =>
+                  onBlockLayoutChange({
+                    span: Math.min(12, Math.max(1, Number(e.target.value) || 1)),
+                  })
+                }
+              />
+            </label>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Used when this section has columns.</p>
+        </div>
+      )}
 
       {!fields || fields.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">No editable settings for this block.</p>
@@ -174,6 +236,26 @@ export function InlineInspector({
 
             if (field.type === "image") {
               const url = stringValue(block.config, key);
+              const upload = async (file: File) => {
+                if (!ownerId) return toast.error("You must own this page to upload images.");
+                const check = validateImageFile(file);
+                if (!check.ok) return toast.error(check.error);
+                setUploading(true);
+                try {
+                  const path = `${ownerId}/block-${block.id}.${check.ext}`;
+                  const { error: uploadError } = await supabase.storage
+                    .from("project-media")
+                    .upload(path, file, { upsert: true, contentType: check.contentType });
+                  if (uploadError) throw uploadError;
+                  const { data } = supabase.storage.from("project-media").getPublicUrl(path);
+                  set(key, data.publicUrl);
+                  toast.success("Image uploaded");
+                } catch (error) {
+                  toast.error(friendlyError(error as Error, "Image upload failed"));
+                } finally {
+                  setUploading(false);
+                }
+              };
               return (
                 <div key={key} className="flex flex-col gap-1.5">
                   <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
@@ -193,6 +275,16 @@ export function InlineInspector({
                       </Button>
                     </div>
                   )}
+                  <DragDropFileInput
+                    accept="image/*"
+                    disabled={uploading}
+                    onFiles={(files) => files[0] && upload(files[0])}
+                    className="rounded-md"
+                  >
+                    <div className="mb-1 flex items-center justify-center gap-1 rounded-md border border-dashed border-border/60 px-2 py-1.5 text-[10px] text-muted-foreground">
+                      <ImagePlus className="h-3 w-3" /> {uploading ? "Uploading…" : "Upload image"}
+                    </div>
+                  </DragDropFileInput>
                   <Input
                     id={`${block.id}-${key}`}
                     className="h-8 text-xs"
