@@ -1,13 +1,6 @@
 // Reputation display — shows score, tier, and category breakdown on profile cards.
-import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  getTier,
-  getTierProgress,
-  computeCategoryBreakdown,
-  type ReputationCategory,
-} from "@/lib/reputation";
+import { getTier, getTierProgress } from "@/lib/reputation";
 
 export function ReputationScore({
   score,
@@ -74,44 +67,6 @@ export function ReputationTierBadge({ score }: { score: number }) {
             : "Max tier reached"}
         </p>
       </div>
-    </div>
-  );
-}
-
-export function ReputationBreakdown({ profileId }: { profileId: string }) {
-  const { data } = useQuery({
-    queryKey: ["reputation-breakdown", profileId],
-    queryFn: async (): Promise<ReputationCategory[]> => {
-      const { data, error } = await supabase
-        .from("contribution_log")
-        .select("category, points")
-        .eq("profile_id", profileId);
-      if (error) return [];
-      return computeCategoryBreakdown(data ?? []);
-    },
-    staleTime: 60_000,
-  });
-
-  if (!data || data.length === 0) return null;
-
-  const maxPoints = Math.max(...data.map((c) => c.points));
-
-  return (
-    <div className="space-y-2">
-      {data.map((cat) => (
-        <div key={cat.name} className="flex items-center gap-3">
-          <span className="w-28 shrink-0 text-xs text-muted-foreground">{cat.label}</span>
-          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-surface-elevated">
-            <div
-              className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${(cat.points / maxPoints) * 100}%` }}
-            />
-          </div>
-          <span className="w-10 text-right text-xs font-medium tabular-nums text-muted-foreground">
-            {cat.points}
-          </span>
-        </div>
-      ))}
     </div>
   );
 }

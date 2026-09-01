@@ -7,7 +7,6 @@
 // and drag-and-drop reordering.
 
 import { memo, useCallback, useState } from "react";
-import { Plus } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,8 @@ import {
 import type {
   PageLayout as PageLayoutType,
   BlockContext,
-  LayoutBlockInstance,
   LayoutSection,
+  SectionLayoutType,
 } from "@/lib/page-blocks";
 
 interface PageLayoutRendererProps {
@@ -36,7 +35,7 @@ interface PageLayoutRendererProps {
 }
 
 /** Tailwind grid classes for each section layout type. */
-const SECTION_GRID: Record<string, string> = {
+const SECTION_GRID: Record<SectionLayoutType, string> = {
   full: "",
   two_column: "grid grid-cols-1 gap-8 md:grid-cols-2",
   three_column: "grid grid-cols-1 gap-6 md:grid-cols-3",

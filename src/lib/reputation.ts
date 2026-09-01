@@ -232,7 +232,7 @@ export function getAchievementDef(type: AchievementType): AchievementDef | undef
 
 // ── Category breakdown ────────────────────────────────────────
 
-export type ReputationCategory = {
+type ReputationCategory = {
   name: string;
   label: string;
   points: number;

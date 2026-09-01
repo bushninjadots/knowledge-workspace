@@ -10,14 +10,6 @@ import type {
 const PROJECT_LOOP_KEY = (projectId: string) => ["project-loop", projectId] as const;
 export const PROJECT_RETURN_KEY = ["project-return-changes"] as const;
 
-export type EvidenceShelfItem = {
-  project_id: string;
-  title: string;
-  note?: string | null;
-  url?: string | null;
-  kind?: "project" | "image" | "video" | "link";
-};
-
 export type ProjectContributionInput = {
   projectId: string;
   title: string;

@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ROLE_PRECEDENCE,
   compileProjectCredits,
-  creditTextFor,
-  normalizeRole,
   type CreditRole,
   type ProjectCredit,
 } from "@/lib/credits";
@@ -15,7 +13,6 @@ export type { CreditRole, ProjectCredit };
 export { CREDIT_ROLE_ORDER } from "@/lib/credits";
 
 const CREDITS_KEY = (projectId: string) => ["project-credits", projectId] as const;
-const STUDIO_CREDITS_KEY = (profileId: string) => ["studio-credits", profileId] as const;
 const TEAM_CREDITS_KEY = (teamId: string) => ["team-credits", teamId] as const;
 
 /**
@@ -85,76 +82,6 @@ export type StudioCredit = {
   credit_text: string;
   at: string | null;
 };
-
-/**
- * A person's "Credited on" rollup — the projects they're credited on, each
- * with their role and most recent credit text. Sorted by most recent activity.
- */
-export function useStudioCredits(profileId: string) {
-  return useQuery({
-    queryKey: STUDIO_CREDITS_KEY(profileId),
-    queryFn: async (): Promise<StudioCredit[]> => {
-      const { data: contribs, error: cErr } = await sb
-        .from("project_contributors")
-        .select("project_id, role")
-        .eq("profile_id", profileId);
-      if (cErr) throw cErr;
-      const rows = (contribs ?? []) as { project_id: string; role: string }[];
-      if (rows.length === 0) return [];
-
-      const projectIds = rows.map((r) => r.project_id);
-
-      const { data: projects, error: pErr } = await sb
-        .from("projects")
-        .select("id, title, created_at")
-        .in("id", projectIds);
-      if (pErr) throw pErr;
-      const projectMap = new Map<string, { title: string | null; created_at: string }>(
-        ((projects ?? []) as { id: string; title: string | null; created_at: string }[]).map(
-          (p) => [p.id, p],
-        ),
-      );
-
-      const { data: activity, error: aErr } = await sb
-        .from("project_activity")
-        .select("project_id, kind, title, created_at")
-        .eq("actor_id", profileId)
-        .in("project_id", projectIds)
-        .order("created_at", { ascending: false });
-      if (aErr) throw aErr;
-
-      // Most recent credit text per project (rows arrive newest-first).
-      const latest = new Map<string, { text: string; at: string }>();
-      for (const a of (activity ?? []) as {
-        project_id: string;
-        kind: string;
-        title: string;
-        created_at: string;
-      }[]) {
-        if (!latest.has(a.project_id)) {
-          latest.set(a.project_id, { text: creditTextFor(a), at: a.created_at });
-        }
-      }
-
-      return rows
-        .map((r): StudioCredit => {
-          const p = projectMap.get(r.project_id);
-          const role = normalizeRole(r.role);
-          const last = latest.get(r.project_id);
-          return {
-            project_id: r.project_id,
-            project_title: p?.title ?? "Untitled project",
-            role,
-            credit_text:
-              role === "creator" && !last ? "Created the project" : (last?.text ?? "Contributed"),
-            at: role === "creator" && !last ? (p?.created_at ?? null) : (last?.at ?? null),
-          };
-        })
-        .sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
-    },
-    enabled: !!profileId,
-  });
-}
 
 /**
  * A crew's Credits roll — everyone credited across all of the team's projects,

@@ -3,7 +3,7 @@
 // Every existing project/profile section has a corresponding block type so
 // owners can add, remove, reorder, or hide any section they want.
 
-import type { PageLayout, LayoutBlockInstance, SectionLayoutType } from "@/lib/page-blocks";
+import type { PageLayout, LayoutBlockInstance } from "@/lib/page-blocks";
 
 let _counter = 0;
 function nid(): string {
