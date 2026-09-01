@@ -1,6 +1,6 @@
 // Reusable profile completeness calculation.
-// Add a new signal by appending a row to`sections()`. Everything else
-// (percentage, next-steps checklist, progress ring) reads from here.
+// Setup completeness answers “can people understand who you are?” while
+// showcase completeness answers “is there work here worth exploring?”
 
 export type CompletenessInput = {
   profile: {
@@ -35,36 +35,20 @@ export type Section = {
   cta?: { label: string; href: string };
 };
 
+const has = <T>(value: T | null | undefined) => value != null && value !== "";
+const arr = (value: unknown[] | null | undefined) => (value?.length ?? 0) > 0;
+
 export function sections({
-  profile,
+  profile: p,
   teachCount,
   learnCount,
   projectsCount,
 }: CompletenessInput): Section[] {
-  const p = profile;
-  const has = <T>(v: T | null | undefined) => v != null && v !== "";
-  const arr = (v: unknown[] | null | undefined) => (v?.length ?? 0) > 0;
   const cta = (href = "/profile") => ({ label: "Edit profile", href });
-
   return [
-    {
-      key: "teach",
-      label: "Add your first skill to share",
-      done: teachCount > 0,
-      cta: { label: "Open studio", href: "/profile" },
-    },
-    {
-      key: "learn",
-      label: "Add a skill you're growing",
-      done: learnCount > 0,
-      cta: { label: "Open studio", href: "/profile" },
-    },
-    {
-      key: "project",
-      label: "Publish your first project",
-      done: projectsCount > 0,
-      cta: { label: "Open studio", href: "/profile" },
-    },
+    { key: "teach", label: "Add your first skill to share", done: teachCount > 0, cta: cta() },
+    { key: "learn", label: "Add a skill you're growing", done: learnCount > 0, cta: cta() },
+    { key: "project", label: "Publish your first project", done: projectsCount > 0, cta: cta() },
     { key: "name", label: "Add your display name", done: has(p?.display_name), cta: cta() },
     { key: "title", label: "Write a title", done: has(p?.creator_title), cta: cta() },
     { key: "bio", label: "Write a short bio", done: has(p?.bio), cta: cta() },
@@ -102,16 +86,45 @@ export function sections({
     {
       key: "links",
       label: "Connect a social or portfolio link",
-      done: Object.keys(p?.social_links ?? {}).length > 0 || (p?.portfolio_links?.length ?? 0) > 0,
+      done: Object.keys(p?.social_links ?? {}).length > 0 || arr(p?.portfolio_links),
       cta: cta(),
     },
   ];
 }
 
+export function setupCompletenessPercent(input: CompletenessInput): number {
+  const setupKeys = new Set([
+    "name",
+    "title",
+    "bio",
+    "category",
+    "avatar",
+    "country",
+    "timezone",
+    "languages",
+  ]);
+  const items = sections(input).filter((item) => setupKeys.has(item.key));
+  return Math.round((items.filter((item) => item.done).length / items.length) * 100);
+}
+
+export function showcaseCompletenessPercent(input: CompletenessInput): number {
+  const showcaseKeys = new Set([
+    "teach",
+    "learn",
+    "project",
+    "banner",
+    "tools",
+    "style",
+    "goals",
+    "links",
+  ]);
+  const items = sections(input).filter((item) => showcaseKeys.has(item.key));
+  return Math.round((items.filter((item) => item.done).length / items.length) * 100);
+}
+
 export function completenessPercent(input: CompletenessInput): number {
   const items = sections(input);
-  const done = items.filter((s) => s.done).length;
-  return Math.round((done / items.length) * 100);
+  return Math.round((items.filter((s) => s.done).length / items.length) * 100);
 }
 
 export function nextSteps(input: CompletenessInput, limit = 5): Section[] {

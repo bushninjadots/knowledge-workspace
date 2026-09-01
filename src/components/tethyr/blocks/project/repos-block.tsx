@@ -11,7 +11,7 @@ type RepoRow = {
   id: string;
   provider: string;
   url: string;
-  metadata?: never;
+  metadata?: Record<string, unknown> | null;
 };
 
 function ProjectReposBlock({ config, context }: BlockProps) {
@@ -22,7 +22,7 @@ function ProjectReposBlock({ config, context }: BlockProps) {
     queryFn: async (): Promise<RepoRow[]> => {
       if (!projectId) return [];
       const { data: d } = await supabase
-        .from("project_repositories_public")
+        .from("project_repositories_safe")
         .select("id, provider, url")
         .eq("project_id", projectId)
         .order("provider");

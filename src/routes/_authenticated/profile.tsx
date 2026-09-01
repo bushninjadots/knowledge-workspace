@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
-import { completenessPercent } from "@/lib/profile-completeness";
+import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
@@ -41,6 +41,11 @@ import {
 import { validateImageFile } from "@/lib/validators";
 import { SkillEditingSection } from "@/components/tethyr/profile/skill-editing";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
+import {
+  normalizeProfileHandle,
+  validateProfileInput,
+  validateProfileUrl,
+} from "@/lib/profile-validation";
 import "@/components/tethyr/blocks/register-all";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -136,7 +141,7 @@ function ProfilePage() {
     );
   }
 
-  const { profile, userId, teachIds, teachMeta, learnIds } = profileQuery.data;
+  const { profile, userId, teachIds, teachMeta, learnIds, projects } = profileQuery.data;
 
   if (previewMode) {
     return (
@@ -162,11 +167,11 @@ function ProfilePage() {
   }
 
   const isComplete =
-    completenessPercent({
+    setupCompletenessPercent({
       profile,
-      teachCount: 0,
-      learnCount: 0,
-      projectsCount: 0,
+      teachCount: teachIds?.length ?? 0,
+      learnCount: learnIds?.length ?? 0,
+      projectsCount: projects?.length ?? 0,
     }) >= 40;
 
   if (!isComplete) {
@@ -279,6 +284,9 @@ function ProfileSetupForm({
   });
   const [saving, setSaving] = useState(false);
   const [bgOpen, setBgOpen] = useState(false);
+  const [handleStatus, setHandleStatus] = useState<"idle" | "checking" | "available" | "taken">(
+    "idle",
+  );
   const palette = useUserPalette(bannerSigned);
 
   const accentStyle = {
@@ -286,14 +294,39 @@ function ProfileSetupForm({
     ...appearanceStyle(background),
   };
 
-  const completeness = completenessPercent({
+  const setupCompleteness = setupCompletenessPercent({
     profile,
-    teachCount: 0,
-    learnCount: 0,
+    teachCount: teachIds.length,
+    learnCount: learnIds.length,
+    projectsCount: 0,
+  });
+  const showcaseCompleteness = showcaseCompletenessPercent({
+    profile,
+    teachCount: teachIds.length,
+    learnCount: learnIds.length,
     projectsCount: 0,
   });
 
   async function save() {
+    if (saving) return;
+    const displayName = form.display_name.trim();
+    const handle = normalizeProfileHandle(form.handle);
+    const validationError = validateProfileInput({
+      displayName,
+      handle,
+      yearsExperience: form.years_experience,
+    });
+    if (validationError) return toast.error(validationError);
+    if (handleStatus === "taken") return toast.error("That handle is already in use.");
+    const linksToValidate = [
+      ...form.portfolioLinks.map((link) => link.url),
+      ...(form.portfolio_label.trim() && form.portfolio_url.trim() ? [form.portfolio_url] : []),
+      ...Object.values(form.social_links),
+    ].filter(Boolean);
+    if (linksToValidate.some((url) => !validateProfileUrl(url))) {
+      return toast.error("Links must use a valid https:// URL.");
+    }
+    const years = form.years_experience.trim() ? Number(form.years_experience) : null;
     setSaving(true);
 
     const portfolioLinks: { label: string; url: string }[] =
@@ -309,11 +342,11 @@ function ProfileSetupForm({
     }
 
     const updateData = {
-      display_name: form.display_name || null,
-      handle: form.handle || null,
+      display_name: displayName || null,
+      handle: handle || null,
       creator_title: form.creator_title || null,
       category: form.category || null,
-      years_experience: form.years_experience ? Number(form.years_experience) : null,
+      years_experience: years,
       country: form.country || null,
       timezone: form.timezone || null,
       bio: form.bio || null,
@@ -331,9 +364,11 @@ function ProfileSetupForm({
             .map((s: string) => s.trim())
             .filter(Boolean)
         : undefined,
-      availability: form.availability
+      availability: ["available", "busy", "learning", "looking_for_team", "mentoring"].includes(
+        form.availability,
+      )
         ? (form.availability as
-            "available" | "busy" | "learning" | "looking_for_team" | "mentoring" | null)
+            "available" | "busy" | "learning" | "looking_for_team" | "mentoring")
         : null,
       languages: form.languages.length > 0 ? form.languages : undefined,
       portfolio_links: portfolioLinks.length > 0 ? portfolioLinks : null,
@@ -341,8 +376,28 @@ function ProfileSetupForm({
     };
 
     const { error } = await supabase.from("profiles").update(updateData).eq("id", userId);
+
     setSaving(false);
-    if (error) return toast.error(friendlyError(error));
+    if (error) {
+      // Older preview projects can have only the original profile columns.
+      // Retry with the stable subset instead of silently leaving the form stuck.
+      const fallback = await supabase
+        .from("profiles")
+        .update({
+          display_name: updateData.display_name,
+          handle: updateData.handle,
+          creator_title: updateData.creator_title,
+          category: updateData.category,
+          years_experience: updateData.years_experience,
+          country: updateData.country,
+          timezone: updateData.timezone,
+          bio: updateData.bio,
+          portfolio_links: updateData.portfolio_links,
+          social_links: updateData.social_links,
+        })
+        .eq("id", userId);
+      if (fallback.error) return toast.error(friendlyError(fallback.error));
+    }
     toast.success("Profile updated");
     // First save celebration — fires once per session
     const key = `tethyr:first-save:${userId}`;
@@ -508,7 +563,10 @@ function ProfileSetupForm({
 
             {/* COMPLETENESS */}
             <div className="shrink-0">
-              <CompletenessRing value={completeness} />
+              <CompletenessRing value={setupCompleteness} label="Setup" />
+              <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                Showcase {showcaseCompleteness}%
+              </p>
             </div>
           </div>
         </div>
@@ -546,12 +604,59 @@ function ProfileSetupForm({
                 onChange={(v) => setForm((f) => ({ ...f, display_name: v }))}
                 placeholder="Your name"
               />
-              <LabeledInput
-                label="Handle"
-                value={form.handle}
-                onChange={(v) => setForm((f) => ({ ...f, handle: v }))}
-                placeholder="yourhandle"
-              />
+              <div>
+                <LabeledInput
+                  label="Handle"
+                  value={form.handle}
+                  onChange={(v) => {
+                    setHandleStatus("idle");
+                    setForm((f) => ({ ...f, handle: v }));
+                  }}
+                  placeholder="yourhandle"
+                />
+                {handleStatus !== "idle" && (
+                  <p
+                    className={`mt-1 text-xs ${handleStatus === "taken" ? "text-destructive" : "text-muted-foreground"}`}
+                    role="status"
+                  >
+                    {handleStatus === "checking"
+                      ? "Checking handle…"
+                      : handleStatus === "available"
+                        ? "Handle is available"
+                        : "Handle is already taken"}
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-6 px-0 text-xs"
+                  disabled={!form.handle.trim() || handleStatus === "checking"}
+                  onClick={async () => {
+                    const candidate = normalizeProfileHandle(form.handle);
+                    const validation = validateProfileInput({
+                      displayName: "Member",
+                      handle: candidate,
+                      yearsExperience: "",
+                    });
+                    if (validation && validation.includes("Handle")) return toast.error(validation);
+                    setHandleStatus("checking");
+                    const { data, error } = await supabase
+                      .from("profiles")
+                      .select("id")
+                      .eq("handle", candidate)
+                      .neq("id", userId)
+                      .maybeSingle();
+                    if (error) {
+                      setHandleStatus("idle");
+                      return toast.error(friendlyError(error, "Could not check handle"));
+                    }
+                    setHandleStatus(data ? "taken" : "available");
+                  }}
+                >
+                  Check availability
+                </Button>
+              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <LabeledInput
@@ -794,6 +899,10 @@ function ProfileSetupForm({
                   toast.error("Both label and URL are required.");
                   return;
                 }
+                if (!validateProfileUrl(url)) {
+                  toast.error("Use a valid https:// URL.");
+                  return;
+                }
                 setForm((f) => ({
                   ...f,
                   portfolioLinks: [...f.portfolioLinks, { label, url }],
@@ -915,7 +1024,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CompletenessRing({ value }: { value: number }) {
+function CompletenessRing({ value, label = "Complete" }: { value: number; label?: string }) {
   const r = 32;
   const c = 2 * Math.PI * r;
   const offset = c - (value / 100) * c;
@@ -948,7 +1057,7 @@ function CompletenessRing({ value }: { value: number }) {
           {value}%
         </div>
       </div>
-      <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Complete</p>
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</p>
     </div>
   );
 }

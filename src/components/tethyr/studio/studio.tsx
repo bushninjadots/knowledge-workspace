@@ -123,6 +123,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   // instantly — nothing touches the database until the user presses Save.
   // This replaces the old per-click mutation + refetch loop.
   const [pageProvisioning, setPageProvisioning] = useState(false);
+  const [recoveryAvailable, setRecoveryAvailable] = useState(false);
   const {
     layout: draftLayout,
     overrides: draftOverrides,
@@ -138,6 +139,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     markSaved,
   } = useStudioDraft();
   const dirtyRef = useRef(false);
+  const draftStorageKey = `tethyr:studio-recovery:${activePage?.type ?? "none"}:${activePage?.id ?? "none"}`;
   // Last-persisted state, for accurate dirty detection after undo/redo.
   const savedLayoutRef = useRef<PageLayout | null>(null);
   const savedOverridesRef = useRef<ThemeTokens | null>(null);
@@ -304,12 +306,70 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [pageLoading, pageData, activePage, createPage, userId]);
 
-  // Refetch after page creation.
+  // Keep a local recovery copy while editing. This never publishes or writes
+  // to Supabase and is cleared only after a successful save.
+  useEffect(() => {
+    if (!dirty || typeof window === "undefined") return;
+    localStorage.setItem(
+      draftStorageKey,
+      JSON.stringify({ layout: draftLayout, overrides: draftOverrides }),
+    );
+  }, [dirty, draftLayout, draftOverrides, draftStorageKey]);
+
+  // Recover a locally saved working copy on revisit. It remains private and
+  // never replaces the explicit Save action.
+  useEffect(() => {
+    if (!activePage || typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(draftStorageKey);
+      if (!raw) return;
+      const recovery = JSON.parse(raw) as { layout?: PageLayout; overrides?: ThemeTokens | null };
+      if (recovery.layout) setRecoveryAvailable(true);
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+    }
+  }, [activePage, draftStorageKey]);
+
+  const restoreRecovery = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(draftStorageKey);
+      if (!raw) return;
+      const recovery = JSON.parse(raw) as { layout?: PageLayout; overrides?: ThemeTokens | null };
+      if (!recovery.layout) return;
+      resetDraftState(recovery.layout, recovery.overrides ?? null);
+      dirtyRef.current = true;
+      setRecoveryAvailable(false);
+      toast.success("Recovered unsaved Studio changes");
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+      setRecoveryAvailable(false);
+    }
+  }, [draftStorageKey, resetDraftState]);
+
+  const discardRecovery = useCallback(() => {
+    localStorage.removeItem(draftStorageKey);
+    setRecoveryAvailable(false);
+    toast.info("Recovery copy discarded");
+  }, [draftStorageKey]);
+
+  // Refetch after page creation. The mutation resolves after the insert has
+  // committed, so invalidate/refetch directly instead of relying on timing.
   useEffect(() => {
     if (createPage.isSuccess) {
-      setTimeout(() => refetchPage(), 300); // Small delay for DB commit visibility
+      void refetchPage();
     }
   }, [createPage.isSuccess, refetchPage]);
+
+  // Warn before browser-level navigation can discard a working draft.
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 
   // Log template loading status
   useEffect(() => {
@@ -402,6 +462,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           dirtyRef.current = false;
           savedLayoutRef.current = draftLayout;
           savedOverridesRef.current = draftOverrides ?? null;
+          if (typeof window !== "undefined") localStorage.removeItem(draftStorageKey);
           toast.success("Changes saved");
           await refetchPage();
         },
@@ -424,20 +485,23 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     overridesDirtyRef,
     activePage?.id,
     activePage?.type,
+    draftStorageKey,
   ]);
 
   // Undo/redo restore a history snapshot. Mark the draft dirty only if the
   // restored state actually differs from what's persisted (so undoing back to
   // the saved state shows a clean "Saved" indicator instead of false "unsaved").
   const handleUndo = useCallback(() => {
+    if (!canUndo) return;
     undo();
     dirtyRef.current = true;
-  }, [undo]);
+  }, [canUndo, undo]);
 
   const handleRedo = useCallback(() => {
+    if (!canRedo) return;
     redo();
     dirtyRef.current = true;
-  }, [redo]);
+  }, [canRedo, redo]);
 
   // ── Add block ─────────────────────────────────────────────────────────
   const handleAddBlock = useCallback(
@@ -762,6 +826,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           pageId: pageData.id,
           layoutId: pageData.layoutId,
           layout: draftLayout,
+          ownerId: activePage?.id,
+          ownerType: activePage?.type,
         });
         if (overridesDirtyRef.current && draftOverrides != null) {
           await updateThemeOverrides.mutateAsync({
@@ -800,6 +866,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     qc,
     markSaved,
     overridesDirtyRef,
+    activePage?.id,
+    activePage?.type,
   ]);
 
   const handleUnpublish = useCallback(async () => {
@@ -986,6 +1054,11 @@ export function Studio({ userId, profile, projects }: StudioProps) {
   );
 
   // ── Page selection ────────────────────────────────────────────────────
+  const handleCreateProject = useCallback(() => {
+    navigate({ to: "/profile" });
+    toast.info("Create your first project from Your Studio.");
+  }, [navigate]);
+
   const handleSelectPage = useCallback((page: StudioPage) => {
     setActivePage(page);
     setSelectionType("page");
@@ -1098,11 +1171,32 @@ export function Studio({ userId, profile, projects }: StudioProps) {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
+      {recoveryAvailable && (
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-amber-500/20 bg-amber-500/5 px-4 py-2 text-xs text-foreground">
+          <span>Unsaved Studio recovery is available for this page.</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={discardRecovery}>
+              Discard
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={restoreRecovery}>
+              Restore
+            </Button>
+          </div>
+        </div>
+      )}
       {/* ── Top toolbar ─────────────────────────────────────────────────── */}
       <header className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/30 bg-surface-elevated/30 px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link
             to="/profile"
+            onClick={(event) => {
+              if (
+                dirty &&
+                !window.confirm("You have unsaved Studio changes. Leave without saving?")
+              ) {
+                event.preventDefault();
+              }
+            }}
             className="shrink-0 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
             aria-label="Back to Your Studio"
             title="Back to Your Studio"
@@ -1132,6 +1226,13 @@ export function Studio({ userId, profile, projects }: StudioProps) {
             id="studio-page-select"
             value={`${activePage?.type}:${activePage?.id}`}
             onChange={(e) => {
+              if (
+                dirty &&
+                !window.confirm("You have unsaved Studio changes. Switch pages without saving?")
+              ) {
+                e.target.value = `${activePage?.type}:${activePage?.id}`;
+                return;
+              }
               const [type, id] = e.target.value.split(":");
               if (type === "profile" && profile) {
                 handleSelectPage({
@@ -1297,7 +1398,22 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       </header>
 
       {/* ── Three-column body ────────────────────────────────────────────── */}
-      <div className="relative flex flex-1 overflow-hidden">
+      {!activePage && (
+        <div className="flex flex-1 items-center justify-center p-6">
+          <div className="max-w-sm text-center">
+            <h2 className="font-display text-lg font-semibold">
+              Your Studio starts with a project
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create something worth exploring, then shape its page here.
+            </p>
+            <Button className="mt-4" onClick={handleCreateProject}>
+              Open project setup
+            </Button>
+          </div>
+        </div>
+      )}
+      <div className={`relative flex flex-1 overflow-hidden ${!activePage ? "hidden" : ""}`}>
         {/* Mobile panel scrim and focused panel */}
         {mobilePanel && (
           <button
@@ -1492,6 +1608,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         templatesError={templatesError}
         templateCount={publicTemplates.length}
         createPending={createPage.isPending}
+        ownerType={activePage?.type}
       />
 
       {/* ── Panel toggles ───────────────────────────────────────────────── */}
@@ -1554,6 +1671,7 @@ function StatusBar({
   templatesError,
   templateCount,
   createPending,
+  ownerType,
 }: {
   pageLoading: boolean;
   pageError: boolean;
@@ -1566,6 +1684,7 @@ function StatusBar({
   templatesError: boolean;
   templateCount: number;
   createPending: boolean;
+  ownerType?: "profile" | "project";
 }) {
   const sectionCount = layout.sections.length;
   const blockInstanceCount = layout.sections.reduce(
@@ -1606,7 +1725,7 @@ function StatusBar({
       ) : (
         <span className="flex items-center gap-1 text-amber-400">
           <Loader2 className="h-3 w-3" />
-          No page yet
+          {ownerType === "project" ? "Preparing project page..." : "Preparing Studio page..."}
         </span>
       )}
 
