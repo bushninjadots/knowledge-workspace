@@ -204,7 +204,7 @@ function ProfilePage() {
           <Button asChild size="sm" variant="outline">
             <Link to="/studio">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              Open in Creativity Studio
+              Customize Your Studio
             </Link>
           </Button>
         </div>

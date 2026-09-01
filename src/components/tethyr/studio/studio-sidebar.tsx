@@ -1,6 +1,5 @@
 // ── Studio Sidebar ───────────────────────────────────────────────────────────
-// Left panel tabs: Pages (block library), Templates (browse/apply/fork),
-// Themes (catalog/apply), Settings.
+// Left panel tabs: Content (blocks/sections), Templates, Appearance (themes).
 
 import { useState } from "react";
 import {
@@ -50,9 +49,9 @@ const RECIPES = [
 ] as const;
 
 const TABS: { key: SidebarTab; icon: React.FC<{ className?: string }>; label: string }[] = [
-  { key: "pages", icon: FileText, label: "Build" },
+  { key: "pages", icon: FileText, label: "Content" },
   { key: "templates", icon: LayoutTemplate, label: "Templates" },
-  { key: "themes", icon: Palette, label: "Themes" },
+  { key: "themes", icon: Palette, label: "Appearance" },
 ];
 
 const PRESET_ICONS: Record<string, React.FC<{ className?: string }>> = {
@@ -127,8 +126,8 @@ export function StudioSidebar({
   return (
     <div className="flex h-full flex-col">
       {/* ── Tab navigation ──────────────────────────────────────────────── */}
-      <nav className="shrink-0 border-b border-border/20 px-3 pt-3" aria-label="Studio navigation">
-        <div className="flex flex-col gap-0.5">
+      <nav className="shrink-0 border-b border-border/20 px-3 pt-3" aria-label="Creation Studio tools">
+        <div className="flex flex-col gap-0.5" role="tablist" aria-label="Creation Studio tools">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -136,8 +135,11 @@ export function StudioSidebar({
               <button
                 key={tab.key}
                 type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`studio-panel-${tab.key}`}
                 onClick={() => onTabChange(tab.key)}
-                className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
+                className={`flex items-center gap-2 rounded-md px-2 py-2.5 text-xs transition-colors ${
                   isActive
                     ? "bg-surface-elevated text-foreground"
                     : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
@@ -152,7 +154,7 @@ export function StudioSidebar({
       </nav>
 
       {/* ── Tab content ─────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" role="tabpanel" id={`studio-panel-${activeTab}`} aria-label={`${TABS.find((tab) => tab.key === activeTab)?.label ?? "Studio"} tools`}>
         {activeTab === "pages" && (
           <BuildPanel
             pageType={activePage?.type ?? "project"}
