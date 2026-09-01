@@ -513,6 +513,42 @@ function SectionInspector({
 
 // ── Page Inspector ───────────────────────────────────────────────────────────
 
+const FONT_OPTIONS = [
+  { label: "Theme default", value: "" },
+  { label: "Inter", value: "Inter, sans-serif" },
+  { label: "Space Grotesk", value: "'Space Grotesk', sans-serif" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "JetBrains Mono", value: "'JetBrains Mono', monospace" },
+  { label: "System", value: "system-ui, sans-serif" },
+];
+
+const COLOR_FIELDS: Array<{ label: string; key: string }> = [
+  { label: "Page background", key: "background" },
+  { label: "Card / surface", key: "card" },
+  { label: "Text", key: "foreground" },
+  { label: "Accent", key: "primary" },
+  { label: "Border", key: "border" },
+];
+
+/** Resolve any CSS color (oklch, var(), hsl) to a #rrggbb value the native
+ * color input can display. Returns null until the browser has painted. */
+function resolveHex(value: string | undefined, fallbackVar: string): string {
+  if (!value && typeof window === "undefined") return "#000000";
+  const probe = document.createElement("span");
+  probe.style.color = value && value.length > 0 ? value : `var(${fallbackVar})`;
+  probe.style.display = "none";
+  document.body.appendChild(probe);
+  const rgb = getComputedStyle(probe).color;
+  probe.remove();
+  const m = rgb.match(/-?[\d.]+/g);
+  if (!m) return "#000000";
+  const hex = m
+    .slice(0, 3)
+    .map((n) => Math.max(0, Math.min(255, Math.round(Number(n)))).toString(16).padStart(2, "0"))
+    .join("");
+  return `#${hex}`;
+}
+
 function PageInspector({
   pageData,
   themes,
@@ -528,37 +564,80 @@ function PageInspector({
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const activeTheme = themes.find((t) => t.id === currentThemeId) ?? themes[0];
-  const baseTokens = pageData?.theme ?? activeTheme?.previewVars ?? {};
-  const tokens = currentOverrides
-    ? ({ ...baseTokens, ...currentOverrides } as Record<string, string>)
-    : (baseTokens as Record<string, string>);
+  const baseTokens = (pageData?.theme ?? {}) as ThemeTokens;
+  const tokens = { ...baseTokens, ...(currentOverrides ?? {}) } as ThemeTokens;
 
-  const currentRadiusLg =
-    parseInt(
-      (tokens as { borders?: { radius?: Record<string, string> } }).borders?.radius?.lg ?? "12px",
-      10,
-    ) || 12;
+  const currentRadiusLg = parseInt(tokens.borders?.radius?.lg ?? "12px", 10) || 0;
+  const currentSection = parseInt(tokens.spacing?.section ?? "48px", 10) || 48;
+
+  /** Merge a partial token patch into the current overrides. */
+  const patch = useCallback(
+    (fn: (draft: ThemeTokens) => ThemeTokens) => {
+      if (!onUpdateThemeOverrides) return;
+      onUpdateThemeOverrides(fn({ ...(currentOverrides ?? {}) }));
+    },
+    [currentOverrides, onUpdateThemeOverrides],
+  );
 
   const setRadius = useCallback(
     (size: number) => {
-      if (!onUpdateThemeOverrides) return;
-      const existing = currentOverrides ?? {};
-      const newOverrides: ThemeTokens = {
-        ...existing,
+      patch((draft) => ({
+        ...draft,
         borders: {
-          ...(existing.borders ?? {}),
+          ...(draft.borders ?? {}),
           radius: {
-            ...(existing.borders?.radius ?? {}),
+            ...(draft.borders?.radius ?? {}),
+            sm: `${Math.max(0, Math.round(size * 0.33))}px`,
+            md: `${Math.max(0, Math.round(size * 0.66))}px`,
             lg: `${size}px`,
             xl: `${Math.round(size * 1.33)}px`,
             "2xl": `${Math.round(size * 1.67)}px`,
           },
         },
-      };
-      onUpdateThemeOverrides(newOverrides);
+      }));
     },
-    [currentOverrides, onUpdateThemeOverrides],
+    [patch],
   );
+
+  const setSpacing = useCallback(
+    (size: number) => {
+      patch((draft) => ({
+        ...draft,
+        spacing: {
+          ...(draft.spacing ?? {}),
+          section: `${size}px`,
+          block: `${Math.round(size / 3)}px`,
+        },
+      }));
+    },
+    [patch],
+  );
+
+  const setColor = useCallback(
+    (key: string, value: string | null) => {
+      patch((draft) => {
+        const colors = { ...(draft.colors ?? {}) };
+        if (value === null) delete colors[key];
+        else colors[key] = value;
+        return { ...draft, colors };
+      });
+    },
+    [patch],
+  );
+
+  const setFont = useCallback(
+    (key: "headingFont" | "bodyFont" | "monoFont", value: string) => {
+      patch((draft) => {
+        const typography = { ...(draft.typography ?? {}) };
+        if (!value) delete typography[key];
+        else typography[key] = value;
+        return { ...draft, typography };
+      });
+    },
+    [patch],
+  );
+
+  const hasOverrides = !!currentOverrides && Object.keys(currentOverrides).length > 0;
 
   return (
     <div className="space-y-5" onClick={(e) => e.stopPropagation()}>
@@ -566,6 +645,9 @@ function PageInspector({
       <div>
         <SectionLabel>Theme</SectionLabel>
         <p className="mt-1 text-sm font-medium text-foreground">{activeTheme?.name ?? "Default"}</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          Pick a theme in the left panel, then fine-tune it here.
+        </p>
       </div>
 
       {/* Shape presets */}
@@ -609,9 +691,10 @@ function PageInspector({
           }`}
           role="switch"
           aria-checked={showAdvanced}
+          aria-label="Show advanced appearance options"
         >
           <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+            className={`absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-sm transition-transform ${
               showAdvanced ? "left-[18px]" : "left-0.5"
             }`}
           />
@@ -623,62 +706,121 @@ function PageInspector({
           {/* Radius slider */}
           <div>
             <SectionLabel>
-              Corner radius: <span className="text-foreground">{currentRadiusLg}px</span>
+              Corner radius <span className="text-foreground">{currentRadiusLg}px</span>
             </SectionLabel>
             <input
               type="range"
               min="0"
               max="24"
+              step="1"
               value={currentRadiusLg}
-              onChange={(e) => setRadius(parseInt(e.target.value))}
-              className="mt-1.5 w-full h-1 accent-primary cursor-pointer"
+              onChange={(e) => setRadius(parseInt(e.target.value, 10))}
+              aria-label="Corner radius"
+              className="mt-2 w-full accent-primary cursor-pointer"
             />
-            <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground/50">
-              <span>0px</span>
-              <span>24px</span>
+            <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
+              <span>Sharp</span>
+              <span>Rounded</span>
+            </div>
+          </div>
+
+          {/* Section spacing */}
+          <div>
+            <SectionLabel>
+              Section spacing <span className="text-foreground">{currentSection}px</span>
+            </SectionLabel>
+            <input
+              type="range"
+              min="16"
+              max="120"
+              step="4"
+              value={currentSection}
+              onChange={(e) => setSpacing(parseInt(e.target.value, 10))}
+              aria-label="Section spacing"
+              className="mt-2 w-full accent-primary cursor-pointer"
+            />
+            <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
+              <span>Compact</span>
+              <span>Airy</span>
             </div>
           </div>
 
           {/* Colors */}
           <div>
             <SectionLabel>Colors</SectionLabel>
-            <div className="mt-1.5 space-y-1.5">
-              {[
-                ["Background", "--background"],
-                ["Surface", "--surface"],
-                ["Foreground", "--foreground"],
-                ["Primary", "--primary"],
-                ["Border", "--border"],
-              ].map(([label, cssVar]) => (
-                <div key={cssVar} className="flex items-center gap-2">
+            <div className="mt-1.5 space-y-1">
+              {COLOR_FIELDS.map(({ label, key }) => {
+                const raw = tokens.colors?.[key];
+                const overridden = !!currentOverrides?.colors?.[key];
+                return (
                   <div
-                    className="h-3.5 w-3.5 shrink-0 rounded border border-border/40"
-                    style={{ backgroundColor: `var(${cssVar})` }}
-                  />
-                  <span className="text-[10px] text-muted-foreground">{label}</span>
-                </div>
-              ))}
+                    key={key}
+                    className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5"
+                  >
+                    <input
+                      type="color"
+                      value={resolveHex(raw, `--${key}`)}
+                      onChange={(e) => setColor(key, e.target.value)}
+                      aria-label={label}
+                      className="h-5 w-5 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0"
+                    />
+                    <span className="flex-1 truncate text-[10px] text-foreground">{label}</span>
+                    {overridden && (
+                      <button
+                        type="button"
+                        onClick={() => setColor(key, null)}
+                        className="text-[9px] text-muted-foreground hover:text-foreground"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Typography */}
           <div>
             <SectionLabel>Typography</SectionLabel>
-            <div className="mt-1.5 space-y-1">
-              {[
-                ["Display", tokens["font-display"] ?? "var(--font-display)"],
-                ["Body", tokens["font-sans"] ?? "var(--font-sans)"],
-                ["Mono", tokens["font-mono"] ?? "var(--font-mono)"],
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">{label}</span>
-                  <span className="text-[9px] text-muted-foreground/40 font-mono truncate max-w-[120px]">
-                    {value}
-                  </span>
+            <div className="mt-1.5 space-y-2">
+              {(
+                [
+                  ["Headings", "headingFont"],
+                  ["Body", "bodyFont"],
+                  ["Mono", "monoFont"],
+                ] as Array<[string, "headingFont" | "bodyFont" | "monoFont"]>
+              ).map(([label, key]) => (
+                <div key={key}>
+                  <label className="mb-1 block text-[10px] text-muted-foreground" htmlFor={key}>
+                    {label}
+                  </label>
+                  <select
+                    id={key}
+                    value={tokens.typography?.[key] ?? ""}
+                    onChange={(e) => setFont(key, e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    {FONT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ))}
             </div>
           </div>
+
+          {hasOverrides && (
+            <button
+              type="button"
+              onClick={() => onUpdateThemeOverrides?.(null)}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Reset all customizations
+            </button>
+          )}
         </>
       )}
     </div>
