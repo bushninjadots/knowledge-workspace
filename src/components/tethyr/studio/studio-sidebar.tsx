@@ -182,8 +182,10 @@ export function StudioSidebar({
       <div className="shrink-0 border-t border-border/20 px-3 py-3">
         <p className="text-[10px] text-muted-foreground/60">
           {activePage
-            ? `Editing: ${activePage.type === "profile" ? "Profile" : "Project"}`
-            : "No page selected"}
+            ? activePage.type === "profile"
+              ? "Customizing your profile Studio"
+              : `Editing ${activePage.title}`
+            : "Choose a page to customize"}
         </p>
       </div>
     </div>

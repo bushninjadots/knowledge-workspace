@@ -197,6 +197,10 @@ function ProfilePage() {
     <>
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Your profile Studio is the public space people discover. Use Creation Studio to shape
+            its layout, themes, and story.
+          </p>
           <Button asChild size="sm" variant="outline">
             <Link to="/studio">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
@@ -587,7 +591,7 @@ function ProfileSetupForm({
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
               <Link to="/studio">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Open in Creativity Studio
+                Customize in Creation Studio
               </Link>
             </Button>
           )}

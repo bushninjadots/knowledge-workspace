@@ -1206,15 +1206,15 @@ export function Studio({ userId, profile, projects }: StudioProps) {
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
           <div className="min-w-0">
             <span className="block font-display text-sm font-semibold tracking-tight text-foreground">
-              Creativity Studio
+              Creation Studio
             </span>
             <span
               className="block truncate text-[10px] text-muted-foreground"
               title={`Editing ${activePage?.title ?? "page"}`}
             >
               {activePage?.type === "profile"
-                ? "your private Studio layout"
-                : (activePage?.title ?? "page")}
+                ? "Customize how your profile Studio looks"
+                : `Editing ${activePage?.title ?? "project"}`}
             </span>
           </div>
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
@@ -1397,6 +1397,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         </div>
       </header>
 
+<<<<<<< HEAD
       {/* ── Three-column body ────────────────────────────────────────────── */}
       {!activePage && (
         <div className="flex flex-1 items-center justify-center p-6">
@@ -1414,6 +1415,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         </div>
       )}
       <div className={`relative flex flex-1 overflow-hidden ${!activePage ? "hidden" : ""}`}>
+=======
+      {/* ── Three-column body ──────────────────────��─────────────────────── */}
+      <div className="relative flex flex-1 overflow-hidden">
+>>>>>>> origin/v0/creation-studio-ux-2abd4be1
         {/* Mobile panel scrim and focused panel */}
         {mobilePanel && (
           <button
