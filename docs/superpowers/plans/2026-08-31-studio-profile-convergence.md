@@ -28,7 +28,7 @@ view, and `ProfileLayout` is deleted entirely because nothing references it.
    - **custom** → `PageShell` (block-composition, the real Studio),
    - **setup** → legacy tabbed `ProfileLayout` ("Setup layout", the "Manage" fallback),
    - preview (`?preview=…`) → `PageShell`.
-   - Plus an **unreachable `else`** branch that renders a *second* `ProfileLayout` with
+   - Plus an **unreachable `else`** branch that renders a _second_ `ProfileLayout` with
      duplicated tab content (line ~317). This dead branch should be removed first.
 2. **Two header toggle states** ("Setup layout" / "Customized") present the same profile
    through two different frameworks, which is exactly the "duplicate visual ownership"
@@ -54,6 +54,7 @@ inspector and block fields, not via a separated tab bar.
   `ProfileActivityTab`, `ProfileSessionsTab`, `ProfileCommunitiesTab`.
 - Existing hooks (`useCurrentUser`, `usePage`, `usePageEditor`) and the block field schema
   (`BlockField`) for moving legacy controls into inspector fields.
+
 ## Proposed information architecture
 
 1. **Quick win (safe now):** delete the unreachable duplicate `ProfileLayout` `else`

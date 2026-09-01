@@ -1,4 +1,4 @@
-export type ProfileValidationInput = {
+type ProfileValidationInput = {
   displayName: string;
   handle: string;
   yearsExperience: string;
