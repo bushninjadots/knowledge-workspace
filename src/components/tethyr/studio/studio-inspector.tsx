@@ -171,7 +171,7 @@ function BlockInspector({
                         value={typeof value === "string" ? value : ""}
                         placeholder={field.placeholder}
                         onChange={(e) => updateField(field.key, e.target.value)}
-                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>
                   );
@@ -186,7 +186,7 @@ function BlockInspector({
                         placeholder={field.placeholder}
                         onChange={(e) => updateField(field.key, e.target.value)}
                         rows={3}
-                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                       />
                     </div>
                   );
@@ -226,7 +226,7 @@ function BlockInspector({
                             className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
                               String(value) === opt.value
                                 ? "bg-primary/15 text-primary"
-                                : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                             }`}
                           >
                             {opt.label}
@@ -246,13 +246,13 @@ function BlockInspector({
                         value={typeof value === "string" ? value : ""}
                         placeholder={field.placeholder ?? "https://..."}
                         onChange={(e) => updateField(field.key, e.target.value)}
-                        className="w-full rounded-md border border-border/30 bg-surface/40 px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                       {typeof value === "string" && value && (
                         <img
                           src={value}
                           alt=""
-                          className="mt-2 h-16 w-full rounded-md object-cover border border-border/20"
+                          className="mt-2 h-16 w-full rounded-md object-cover border border-border"
                         />
                       )}
                     </div>
@@ -300,7 +300,7 @@ function BlockInspector({
                 className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
                   currentWidth === value
                     ? "bg-primary/15 text-primary"
-                    : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 {label}
@@ -333,7 +333,7 @@ function BlockInspector({
                         className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
                           (block.column == null && value === -1) || block.column === value
                             ? "bg-primary/15 text-primary"
-                            : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                         }`}
                       >
                         {label}
@@ -358,7 +358,7 @@ function BlockInspector({
                       className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
                         (block.span == null && value === 1) || block.span === value
                           ? "bg-primary/15 text-primary"
-                          : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                       }`}
                     >
                       {value === 1 ? "1 col" : `${value} cols`}
@@ -445,7 +445,7 @@ function SectionInspector({
               className={`rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${
                 section.layout === opt.value
                   ? "bg-primary/15 text-primary"
-                  : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               {opt.label}
@@ -465,7 +465,7 @@ function SectionInspector({
                 key={block.id}
                 type="button"
                 onClick={() => onSelectBlock?.(block.id)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-left transition-colors hover:bg-surface/60 ${
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] text-left transition-colors hover:bg-accent ${
                   block.visible === false ? "opacity-40 text-muted-foreground" : "text-foreground"
                 }`}
               >
@@ -589,7 +589,7 @@ function PageInspector({
                 (preset.value === "angular" && currentRadiusLg > 2 && currentRadiusLg < 10) ||
                 (preset.value === "sharp" && currentRadiusLg <= 2)
                   ? "bg-primary/15 text-primary"
-                  : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               {preset.label}
@@ -710,9 +710,9 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-md border border-border/30 bg-surface/30 px-2 py-1.5 text-[10px] font-medium transition-colors ${
+      className={`flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1.5 text-[10px] font-medium transition-colors ${
         destructive
-          ? "text-red-400 hover:bg-red-500/10 hover:text-red-400"
+          ? "text-destructive hover:bg-destructive/10"
           : "text-muted-foreground hover:text-foreground"
       }`}
     >
