@@ -42,7 +42,18 @@ interface PageShellProps {
 }
 
 export function PageShell({ ownerId, ownerType, isOwner }: PageShellProps) {
-  const { data: page, isLoading, isError, refetch } = usePage({ ownerId, ownerType });
+  // Owners must be able to load their draft pages in the editor; public
+  // visitors only ever see published pages.
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = usePage({
+    ownerId,
+    ownerType,
+    includeDraft: isOwner,
+  });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
