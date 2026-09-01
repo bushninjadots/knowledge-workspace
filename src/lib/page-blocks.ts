@@ -120,6 +120,21 @@ export type SectionLayoutType =
   | "feature"
   | "side_by_side";
 
+/** A responsive freeform frame. Coordinates are normalized to a 12-column canvas. */
+export interface LayoutFrame {
+  x: number;
+  y: number;
+  width: number;
+  height?: number;
+}
+
+/** Optional per-device freeform placement. Older layouts omit this field. */
+export interface ResponsiveFrames {
+  desktop?: LayoutFrame;
+  tablet?: LayoutFrame;
+  mobile?: LayoutFrame;
+}
+
 /** A single block instance within a layout section. */
 export interface LayoutBlockInstance {
   /** Stable id for this block instance within the page. */
@@ -143,6 +158,10 @@ export interface LayoutBlockInstance {
    * E.g. span 2 in a two_column section = full width.
    */
   span?: number;
+  /** Optional responsive freeform placement; omitted means legacy flow layout. */
+  frames?: ResponsiveFrames;
+  /** When true, the block uses absolute freeform placement in its section canvas. */
+  freeform?: boolean;
 }
 
 /** A section groups blocks into a column arrangement. */
@@ -159,6 +178,10 @@ export interface LayoutSection {
   gridRow?: number;
   /** Legacy page-level placement retained for backwards-compatible data reads. */
   gridColumn?: number;
+  /** Optional responsive freeform placement; omitted means legacy flow layout. */
+  frames?: ResponsiveFrames;
+  /** When true, the section uses freeform placement in the page canvas. */
+  freeform?: boolean;
 }
 
 /** A complete page layout: an ordered list of sections. */

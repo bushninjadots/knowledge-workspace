@@ -1397,7 +1397,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         </div>
       </header>
 
-<<<<<<< HEAD
       {/* ── Three-column body ────────────────────────────────────────────── */}
       {!activePage && (
         <div className="flex flex-1 items-center justify-center p-6">
@@ -1415,10 +1414,6 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         </div>
       )}
       <div className={`relative flex flex-1 overflow-hidden ${!activePage ? "hidden" : ""}`}>
-=======
-      {/* ── Three-column body ──────────────────────��─────────────────────── */}
-      <div className="relative flex flex-1 overflow-hidden">
->>>>>>> origin/v0/creation-studio-ux-2abd4be1
         {/* Mobile panel scrim and focused panel */}
         {mobilePanel && (
           <button
@@ -1542,6 +1537,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
                     onSelectPage={handleSelectPageLevel}
                     onRemoveBlock={handleRemoveBlock}
                     onRemoveSection={handleRemoveSection}
+                    onMoveSection={handleMoveSection}
                     onToggleVisibility={handleToggleVisibility}
                     onMoveBlock={handleMoveBlock}
                     onReorderBlocks={handleReorderBlocks}

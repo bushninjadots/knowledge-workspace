@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { ComposerBar } from "@/components/tethyr/community/composer-bar";
@@ -12,6 +13,7 @@ const SpaceChatComposer = lazy(() =>
 );
 import { CommunityHeader, type SortMode } from "@/components/tethyr/community/community-header";
 import { CommunityFeedList } from "@/components/tethyr/community/community-feed-list";
+import { CommunityFeedSplitView } from "@/components/tethyr/community/community-feed-split-view";
 import { SpaceHeader, type SpaceSortMode } from "@/components/tethyr/community/space-header";
 import { ChallengesSection } from "@/components/tethyr/community/challenges-section";
 import { CommunitiesSection } from "@/components/tethyr/community/communities-section";
@@ -76,6 +78,7 @@ export function CommunityFeed({
   onOpenTrending: () => void;
   onOpenSpace: (space: CommunitySpace) => void;
 }) {
+  const navigate = useNavigate();
   const { data: me } = useCurrentUser();
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfinitePosts();
   const posts = useMemo(() => flattenPosts(data?.pages), [data]);
@@ -131,11 +134,30 @@ export function CommunityFeed({
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [editingPost, setEditingPost] = useState<PostWithAuthor | null>(null);
   const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(deepLinkedPostId ?? null);
 
   // Persist filters to localStorage on change
   useEffect(() => {
     saveFilters({ focusFilter, sortMode, mySkillsOnly });
   }, [focusFilter, sortMode, mySkillsOnly]);
+
+  // Keep desktop reading-mode selection aligned with the existing shareable
+  // ?post= deep link. Unknown or filtered posts simply fall back to the list.
+  useEffect(() => {
+    setSelectedPostId(deepLinkedPostId ?? null);
+  }, [deepLinkedPostId]);
+
+  const selectPost = useCallback(
+    (postId: string | null) => {
+      setSelectedPostId(postId);
+      navigate({
+        to: "/community",
+        search: postId ? { post: postId } : {},
+        replace: true,
+      });
+    },
+    [navigate],
+  );
 
   // If deep-linked to a post, highlight it after a short delay
   useEffect(() => {
@@ -442,32 +464,56 @@ export function CommunityFeed({
             </div>
           )}
 
-          <CommunityFeedList
-            lastReadAt={activeSpace ? lastReadAt : null}
-            posts={visiblePosts}
-            loading={loading}
-            nav={nav}
-            isSearching={isSearching}
-            searchQuery={nav === "following" ? undefined : isSearching ? searchQuery : undefined}
-            openComments={openComments}
-            highlightedPostId={highlightedPostId}
-            sortMode={sortMode}
-            spaceSortMode={activeSpace ? spaceSortMode : undefined}
-            mySkillNames={mySkillNames}
-            activeSpace={activeSpace}
-            reportedPostCounts={reportedPostCounts}
-            hasMore={nav !== "following" && !activeSpace && hasNextPage}
-            isLoadingMore={isFetchingNextPage}
-            onLoadMore={() => fetchNextPage()}
-            onToggleComments={toggleComments}
-            onDelete={deletePostHandler}
-            onEdit={editPost}
-            onToggleAction={handleToggleAction}
-            onClearSearch={clearSearch}
-            onGoHome={goHome}
-            focusComposer={focusComposer}
-            onSpaceSortChange={setSpaceSortMode}
-          />
+          {selectedPostId &&
+            !activeSpace &&
+            visiblePosts.some((post) => post.id === selectedPostId) && (
+              <CommunityFeedSplitView
+                posts={visiblePosts}
+                selectedPostId={selectedPostId}
+                searchQuery={isSearching ? searchQuery : undefined}
+                nav={nav}
+                sortMode={sortMode}
+                mySkillNames={mySkillNames}
+                reportedPostCounts={reportedPostCounts}
+                onSelectPost={selectPost}
+                onClose={() => selectPost(null)}
+                onToggleComments={toggleComments}
+                onDelete={deletePostHandler}
+                onEdit={editPost}
+                onToggleAction={handleToggleAction}
+                hasMore={nav !== "following" && hasNextPage}
+                isLoadingMore={isFetchingNextPage}
+                onLoadMore={() => fetchNextPage()}
+              />
+            )}
+          <div className={selectedPostId && !activeSpace ? "lg:hidden" : ""}>
+            <CommunityFeedList
+              lastReadAt={activeSpace ? lastReadAt : null}
+              posts={visiblePosts}
+              loading={loading}
+              nav={nav}
+              isSearching={isSearching}
+              searchQuery={nav === "following" ? undefined : isSearching ? searchQuery : undefined}
+              openComments={openComments}
+              highlightedPostId={highlightedPostId}
+              sortMode={sortMode}
+              spaceSortMode={activeSpace ? spaceSortMode : undefined}
+              mySkillNames={mySkillNames}
+              activeSpace={activeSpace}
+              reportedPostCounts={reportedPostCounts}
+              hasMore={nav !== "following" && !activeSpace && hasNextPage}
+              isLoadingMore={isFetchingNextPage}
+              onLoadMore={() => fetchNextPage()}
+              onToggleComments={toggleComments}
+              onDelete={deletePostHandler}
+              onEdit={editPost}
+              onToggleAction={handleToggleAction}
+              onClearSearch={clearSearch}
+              onGoHome={goHome}
+              focusComposer={focusComposer}
+              onSpaceSortChange={setSpaceSortMode}
+            />
+          </div>
         </>
       )}
     </div>

@@ -8,7 +8,12 @@
 // in the editor, in previews, and on the published page. Never redefine these
 // mappings in two places — that is exactly the drift the old copies caused.
 
-import type { LayoutBlockInstance, SectionLayoutType } from "@/lib/page-blocks";
+import type {
+  LayoutBlockInstance,
+  LayoutFrame,
+  ResponsiveFrames,
+  SectionLayoutType,
+} from "@/lib/page-blocks";
 
 /** Tailwind grid classes for each section layout type. */
 const SECTION_GRID: Record<string, string> = {
@@ -42,6 +47,27 @@ const BLOCK_WIDTH_CLASS: Record<string, string> = {
 };
 
 export type DevicePreview = "desktop" | "tablet" | "mobile";
+
+export const FREEFORM_COLUMNS = 12;
+
+export function frameForDevice(
+  frames: ResponsiveFrames | undefined,
+  device: DevicePreview = "desktop",
+): LayoutFrame | undefined {
+  if (!frames) return undefined;
+  return frames[device] ?? frames.desktop;
+}
+
+export function clampFrame(frame: LayoutFrame, columns = FREEFORM_COLUMNS): LayoutFrame {
+  const width = Math.max(1, Math.min(columns, Math.round(frame.width)));
+  const x = Math.max(0, Math.min(columns - width, Math.round(frame.x)));
+  return {
+    x,
+    y: Math.max(0, Math.round(frame.y)),
+    width,
+    ...(frame.height != null ? { height: Math.max(1, Math.round(frame.height)) } : {}),
+  };
+}
 
 /**
  * Grid class for a section layout with device-preview responsive overrides.

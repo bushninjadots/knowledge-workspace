@@ -16,6 +16,8 @@ import {
   gridClassForSection,
   groupBlocksByColumn,
   usesMultiColumnGrid,
+  frameForDevice,
+  FREEFORM_COLUMNS,
 } from "@/components/tethyr/page/page-composition";
 import type {
   PageLayout as PageLayoutType,
@@ -53,8 +55,22 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="flex flex-col" data-page-layout>
+    <div
+      className="flex flex-col"
+      data-page-layout
+      style={
+        sections.some((section) => frameForDevice(section.frames, devicePreview))
+          ? {
+              display: "grid",
+              gridTemplateColumns: `repeat(${FREEFORM_COLUMNS}, minmax(0, 1fr))`,
+              gridAutoRows: "minmax(2rem, auto)",
+              gap: "var(--spacing-section, 1rem)",
+            }
+          : undefined
+      }
+    >
       {sections.map((section) => {
+        const sectionFrame = frameForDevice(section.frames, devicePreview);
         const gridClass = gridClassForSection(section.layout, devicePreview);
         const blocks = section.blocks
           .filter((b) => b.visible !== false)
@@ -64,6 +80,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         // preview forced everything to a single column.
         const colCount = effectiveColumnCount(section.layout, devicePreview);
         const useGrid = usesMultiColumnGrid(section.layout, devicePreview);
+        const freeformBlocks = blocks.some((block) => frameForDevice(block.frames, devicePreview));
 
         const renderBlock = (block: LayoutBlockInstance) => {
           const span = Math.max(1, Math.min(block.span ?? 1, colCount));
@@ -71,8 +88,22 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             ? `min-w-0 ${blockWidthClass(block.config?.width, devicePreview)}`
             : "min-w-0";
           const spanClass = useGrid && span > 1 ? `md:col-span-${span}` : "";
+          const blockFrame = frameForDevice(block.frames, devicePreview);
           return (
-            <div key={block.id} className={`${widthWrap} ${spanClass}`}>
+            <div
+              key={block.id}
+              className={`${widthWrap} ${spanClass}`}
+              style={
+                blockFrame && freeformBlocks
+                  ? {
+                      gridColumn: `${blockFrame.x + 1} / span ${Math.max(1, Math.min(FREEFORM_COLUMNS, blockFrame.width))}`,
+                      gridRowStart: blockFrame.y + 1,
+                      minHeight: blockFrame.height ? `${blockFrame.height * 48}px` : undefined,
+                    }
+                  : undefined
+              }
+              data-freeform={blockFrame && freeformBlocks ? "true" : undefined}
+            >
               <BlockRenderer type={block.type} config={block.config} context={context} />
             </div>
           );
@@ -81,19 +112,43 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         return (
           <section
             key={section.id}
+            style={
+              sectionFrame
+                ? {
+                    gridColumn: `${sectionFrame.x + 1} / span ${Math.max(1, Math.min(FREEFORM_COLUMNS, sectionFrame.width))}`,
+                    gridRowStart: sectionFrame.y + 1,
+                    marginLeft: `${(sectionFrame.x / FREEFORM_COLUMNS) * 100}%`,
+                    width: `${(sectionFrame.width / FREEFORM_COLUMNS) * 100}%`,
+                  }
+                : { paddingBlock: "var(--spacing-section, 1rem)" }
+            }
             data-section-id={section.id}
             data-section-layout={section.layout}
             className="py-8 first:pt-0 last:pb-0 sm:py-10"
-            style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
+            data-freeform={sectionFrame ? "true" : undefined}
           >
-            <div className={`${gridClass} [&>*]:min-w-0`}>
-              {useGrid
-                ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
-                    <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">
-                      {colBlocks.map((block) => renderBlock(block))}
-                    </div>
-                  ))
-                : blocks.map((block) => renderBlock(block))}
+            <div
+              className={`${gridClass} [&>*]:min-w-0`}
+              style={
+                freeformBlocks
+                  ? {
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${FREEFORM_COLUMNS}, minmax(0, 1fr))`,
+                      gridAutoRows: "minmax(2rem, auto)",
+                      gap: "var(--spacing-section, 1rem)",
+                    }
+                  : undefined
+              }
+            >
+              {freeformBlocks
+                ? blocks.map((block) => renderBlock(block))
+                : useGrid
+                  ? groupBlocksByColumn(blocks, colCount).map((colBlocks, colIdx) => (
+                      <div key={`${section.id}:col-${colIdx}`} className="min-w-0 space-y-6">
+                        {colBlocks.map((block) => renderBlock(block))}
+                      </div>
+                    ))
+                  : blocks.map((block) => renderBlock(block))}
             </div>
           </section>
         );

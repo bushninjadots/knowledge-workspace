@@ -24,6 +24,9 @@ import {
   gridClassForSection,
   groupBlocksByColumn,
   usesMultiColumnGrid,
+  frameForDevice,
+  clampFrame,
+  FREEFORM_COLUMNS,
 } from "@/components/tethyr/page/page-composition";
 import type { DevicePreview } from "@/components/tethyr/page/page-composition";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +35,7 @@ import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioPage, SelectionType } from "./studio";
 import type { SectionPreset } from "./section-presets";
 import type { BlockContext, PageData, LayoutBlockInstance, PageLayout } from "@/lib/page-blocks";
+import { FreeformBlockCard } from "./freeform-block-card";
 
 const CATEGORY_LABELS: Record<string, string> = {
   content: "Text & Media",
@@ -61,6 +65,7 @@ interface StudioCanvasProps {
   onSelectPage: () => void;
   onRemoveBlock: (blockId: string) => void;
   onRemoveSection: (sectionId: string) => void;
+  onMoveSection: (sectionId: string, direction: "up" | "down") => void;
   onToggleVisibility: (blockId: string) => void;
   onMoveBlock: (blockId: string, direction: "up" | "down") => void;
   onAddBlock: (blockType: string, target?: BlockAddTarget) => void;
@@ -88,6 +93,7 @@ export function StudioCanvas({
   onSelectPage,
   onRemoveBlock: _onRemoveBlock,
   onRemoveSection,
+  onMoveSection,
   onToggleVisibility,
   onMoveBlock,
   onAddBlock,
@@ -103,6 +109,15 @@ export function StudioCanvas({
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<"block" | "section" | null>(null);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const [freeformMode] = useState(true);
+  const [interaction, setInteraction] = useState<{
+    kind: "move" | "resize";
+    target: "section" | "block";
+    id: string;
+    startX: number;
+    startY: number;
+    frame: { x: number; y: number; width: number; height?: number };
+  } | null>(null);
   const pickerTargetRef = useRef<BlockAddTarget | null>(null);
 
   // Open the block picker targeting a specific section (and grid column when
@@ -197,6 +212,50 @@ export function StudioCanvas({
     [onUpdateBlockConfig],
   );
 
+  useEffect(() => {
+    if (!interaction) return;
+    const onMove = (event: PointerEvent) => {
+      const canvas = document.querySelector<HTMLElement>("[data-studio-freeform-canvas]");
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const dx = ((event.clientX - interaction.startX) / rect.width) * FREEFORM_COLUMNS;
+      const dy = (event.clientY - interaction.startY) / 48;
+      const next = clampFrame({
+        ...interaction.frame,
+        x: interaction.kind === "move" ? interaction.frame.x + dx : interaction.frame.x,
+        y: interaction.kind === "move" ? interaction.frame.y + dy : interaction.frame.y,
+        width:
+          interaction.kind === "resize" ? interaction.frame.width + dx : interaction.frame.width,
+        height:
+          interaction.kind === "resize"
+            ? (interaction.frame.height ?? 4) + dy
+            : interaction.frame.height,
+      });
+      const framesKey = devicePreview ?? "desktop";
+      const sections = layout.sections.map((section) => {
+        if (interaction.target === "section" && section.id === interaction.id) {
+          return { ...section, frames: { ...section.frames, [framesKey]: next } };
+        }
+        return {
+          ...section,
+          blocks: section.blocks.map((block) =>
+            interaction.target === "block" && block.id === interaction.id
+              ? { ...block, frames: { ...block.frames, [framesKey]: next } }
+              : block,
+          ),
+        };
+      });
+      onLayoutChange({ sections });
+    };
+    const onUp = () => setInteraction(null);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp, { once: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [interaction, layout, onLayoutChange, devicePreview]);
+
   if (pageLoading && layout.sections.length === 0) {
     return (
       <div className="space-y-4 p-8" aria-busy="true" aria-label="Loading private draft">
@@ -273,6 +332,7 @@ export function StudioCanvas({
       className="flex flex-col"
       onClick={onSelectPage}
       data-studio-canvas="private-draft"
+      data-studio-freeform-canvas={freeformMode ? "true" : undefined}
       aria-label={`${page.type === "profile" ? "Private Studio" : "Private project"} draft canvas`}
     >
       {layout.sections.map((section, sectionIdx) => {
@@ -284,6 +344,12 @@ export function StudioCanvas({
         const isMultiColumn = usesMultiColumnGrid(section.layout, devicePreview);
         const colCount = effectiveColumnCount(section.layout, devicePreview);
         const useGrid = isMultiColumn && colCount > 1;
+        const sectionFrame = freeformMode
+          ? frameForDevice(section.frames, devicePreview)
+          : undefined;
+        const freeformBlocks =
+          freeformMode &&
+          section.blocks.some((block) => frameForDevice(block.frames, devicePreview));
 
         return (
           <div
@@ -299,34 +365,84 @@ export function StudioCanvas({
             onDragOver={(e) => handleSectionDragOver(e, section.id)}
             onDragLeave={() => setDragOverSectionId(null)}
             onDrop={(e) => handleSectionDrop(e, section.id)}
-            style={{ paddingBlock: "var(--spacing-section, 1rem)" }}
+            style={
+              sectionFrame
+                ? {
+                    gridColumn: `${sectionFrame.x + 1} / span ${sectionFrame.width}`,
+                    gridRowStart: sectionFrame.y + 1,
+                    minHeight: sectionFrame.height ? `${sectionFrame.height * 48}px` : undefined,
+                    marginLeft: `${(sectionFrame.x / FREEFORM_COLUMNS) * 100}%`,
+                    width: `${(sectionFrame.width / FREEFORM_COLUMNS) * 100}%`,
+                  }
+                : { paddingBlock: "var(--spacing-section, 1rem)" }
+            }
             data-section-id={section.id}
             onClick={(e) => {
               if (e.target === e.currentTarget) onSelectSection(section.id);
             }}
           >
+            {sectionFrame && (
+              <button
+                type="button"
+                aria-label={`Resize section ${sectionIdx + 1}`}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  setInteraction({
+                    kind: "resize",
+                    target: "section",
+                    id: section.id,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    frame: sectionFrame,
+                  });
+                }}
+                className="absolute bottom-1 right-1 z-20 h-3 w-3 cursor-se-resize rounded-sm bg-primary/60 opacity-0 transition-opacity group-hover/section:opacity-100 focus-visible:opacity-100"
+              />
+            )}
+
             {/* Section drag handle */}
             <button
               type="button"
               draggable
               aria-label={`Move section ${sectionIdx + 1}`}
               onDragStart={(e) => handleSectionDragStart(e, section.id)}
+              onPointerDown={(event) => {
+                if (!freeformMode || event.button !== 0) return;
+                event.stopPropagation();
+                const fallback = { x: 0, y: sectionIdx * 4, width: FREEFORM_COLUMNS, height: 4 };
+                setInteraction({
+                  kind: "move",
+                  target: "section",
+                  id: section.id,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                  frame: sectionFrame ?? fallback,
+                });
+              }}
               onDragEnd={handleDragEnd}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  onMoveSection(section.id, e.key === "ArrowUp" ? "up" : "down");
+                }
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onSelectSection(section.id);
               }}
-              className="absolute -left-1 top-2 z-20 rounded p-0.5 opacity-0 group-hover/section:opacity-100 focus-visible:opacity-100 transition-opacity"
+              className="absolute -left-1 top-2 z-20 rounded p-0.5 opacity-0 transition-opacity group-hover/section:opacity-100 focus-visible:opacity-100"
             >
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab active:cursor-grabbing" />
+              <GripVertical className="h-3.5 w-3.5 cursor-grab text-muted-foreground/40 active:cursor-grabbing" />
             </button>
 
-            {/* Section label — always visible */}
-            <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium text-muted-foreground border border-border/20">
-              {isSectionSelected && <span className="text-primary mr-1">●</span>}
-              Section {sectionIdx + 1}
+            {/* Section eyebrow — identifies the editable composition without adding another card. */}
+            <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground border border-border/20">
+              {isSectionSelected && <span className="mr-1 text-primary">●</span>}
+              {page.type === "profile" ? "Studio section" : "Project section"} {sectionIdx + 1}
               {colCount > 1 && (
-                <span className="ml-1 text-muted-foreground/50">· {colCount} col</span>
+                <span className="ml-1 normal-case tracking-normal text-muted-foreground/50">
+                  · {colCount} col
+                </span>
               )}
             </div>
 
@@ -336,6 +452,24 @@ export function StudioCanvas({
                 className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm"
                 onClick={(e) => e.stopPropagation()}
               >
+                <button
+                  type="button"
+                  onClick={() => onMoveSection(section.id, "up")}
+                  className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  aria-label={`Move section ${sectionIdx + 1} up`}
+                  disabled={sectionIdx === 0}
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMoveSection(section.id, "down")}
+                  className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  aria-label={`Move section ${sectionIdx + 1} down`}
+                  disabled={sectionIdx === layout.sections.length - 1}
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
                 {/* Section layout is configured in the inspector */}
                 <button
                   type="button"
@@ -352,7 +486,64 @@ export function StudioCanvas({
             )}
 
             {/* Blocks container */}
-            {useGrid ? (
+            {freeformBlocks ? (
+              <div
+                className="grid min-w-0"
+                style={{
+                  gridTemplateColumns: `repeat(${FREEFORM_COLUMNS}, minmax(0, 1fr))`,
+                  gridAutoRows: "minmax(2rem, auto)",
+                  gap: "var(--spacing-section, 1rem)",
+                }}
+              >
+                {section.blocks.map((block, idx) => (
+                  <FreeformBlockCard
+                    key={block.id}
+                    block={block}
+                    idx={idx}
+                    sectionId={section.id}
+                    blockContext={blockContext}
+                    devicePreview={devicePreview}
+                    onSelect={onSelectBlock}
+                    onPointerStart={(event, kind) => {
+                      const current = frameForDevice(block.frames, devicePreview) ?? {
+                        x: 0,
+                        y: idx * 4,
+                        width: FREEFORM_COLUMNS,
+                        height: 4,
+                      };
+                      setInteraction({
+                        kind,
+                        target: "block",
+                        id: block.id,
+                        startX: event.clientX,
+                        startY: event.clientY,
+                        frame: current,
+                      });
+                    }}
+                    onFrameChange={(id, frame) => {
+                      const framesKey = devicePreview ?? "desktop";
+                      onLayoutChange({
+                        sections: layout.sections.map((currentSection) => ({
+                          ...currentSection,
+                          blocks: currentSection.blocks.map((currentBlock) =>
+                            currentBlock.id === id
+                              ? {
+                                  ...currentBlock,
+                                  frames: { ...currentBlock.frames, [framesKey]: frame },
+                                }
+                              : currentBlock,
+                          ),
+                        })),
+                      });
+                    }}
+                    onToggleVisibility={onToggleVisibility}
+                    onDuplicateBlock={onDuplicateBlock}
+                    onMoveBlock={onMoveBlock}
+                    onConfigChange={handleInlineConfigChange}
+                  />
+                ))}
+              </div>
+            ) : useGrid ? (
               <div className={gridClass}>
                 {renderGridBlocks(
                   section,
