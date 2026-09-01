@@ -315,7 +315,7 @@ export function StudioCanvas({
                 ? "ring-2 ring-primary/25 bg-primary/[0.02]"
                 : isSectionDragOver
                   ? "ring-2 ring-primary/20 bg-primary/[0.05]"
-                  : "ring-1 ring-transparent hover:ring-border/20"
+                  : "ring-1 ring-transparent hover:ring-border"
             }`}
             draggable
             onDragStart={(e) => handleSectionDragStart(e, section.id)}
@@ -337,7 +337,7 @@ export function StudioCanvas({
             </div>
 
             {/* Section label — always visible */}
-            <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium text-muted-foreground border border-border/20">
+            <div className="pointer-events-none absolute -top-2 left-3 z-20 rounded bg-surface-elevated px-2 py-0.5 text-[9px] font-medium text-muted-foreground border border-border">
               {isSectionSelected && <span className="text-primary mr-1">●</span>}
               Section {sectionIdx + 1}
               {colCount > 1 && (
@@ -348,7 +348,7 @@ export function StudioCanvas({
             {/* Section quick-actions toolbar — shown when selected */}
             {isSectionSelected && (
               <div
-                className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1 py-0.5 shadow-sm"
+                className="absolute -top-2 right-3 z-20 flex items-center gap-0.5 rounded-md border border-border bg-surface-elevated px-1 py-0.5 shadow-sm"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Section layout is configured in the inspector */}
@@ -425,7 +425,7 @@ export function StudioCanvas({
                       e.stopPropagation();
                       openBlockPicker(section.id);
                     }}
-                    className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/30 py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
+                    className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border py-2 text-[10px] text-muted-foreground/50 transition-colors hover:border-border/50 hover:text-muted-foreground"
                   >
                     <Plus className="h-3 w-3" />
                     Add block
@@ -450,7 +450,7 @@ export function StudioCanvas({
             layout: "full",
           });
         }}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border/30 py-6 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border py-6 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
       >
         <Plus className="h-4 w-4" />
         Add section
@@ -526,7 +526,7 @@ function renderGridBlocks(
         <div key={colIdx} className="relative">
           {/* Column boundary indicator */}
           {colIdx > 0 && (
-            <div className="absolute -left-1.5 top-0 bottom-0 w-px border-l border-dashed border-border/30" />
+            <div className="absolute -left-1.5 top-0 bottom-0 w-px border-l border-dashed border-border" />
           )}
 
           {/* Column label */}
@@ -575,7 +575,7 @@ function renderGridBlocks(
                 e.stopPropagation();
                 onShowPicker(section.id, colIdx);
               }}
-              className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border/20 py-1.5 text-[9px] text-muted-foreground/40 transition-colors hover:border-border/40 hover:text-muted-foreground"
+              className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border py-1.5 text-[9px] text-muted-foreground/40 transition-colors hover:border-border hover:text-muted-foreground"
             >
               <Plus className="h-2.5 w-2.5" />
               Add
@@ -655,7 +655,7 @@ function BlockCard({
           ? "ring-2 ring-primary/30 bg-primary/[0.03]"
           : isDragOver
             ? "ring-2 ring-primary/20 bg-primary/[0.05]"
-            : "ring-1 ring-transparent hover:ring-border/20"
+            : "ring-1 ring-transparent hover:ring-border"
       } ${isDragOver ? "scale-[1.01]" : ""}`}
       draggable
       onDragStart={(e) => onDragStart(e, block.id)}
@@ -670,7 +670,7 @@ function BlockCard({
     >
       {/* Block type badge + width indicator */}
       <div className="absolute -top-1.5 left-2 z-10 flex items-center gap-1">
-        <span className="rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border/20 opacity-0 group-hover/block:opacity-100 transition-opacity">
+        <span className="rounded bg-surface-elevated px-1.5 py-0.5 text-[8px] font-medium text-muted-foreground border border-border opacity-0 group-hover/block:opacity-100 transition-opacity">
           {blockDef?.label ?? block.type}
         </span>
         {blockWidth !== "full" && (
@@ -691,7 +691,7 @@ function BlockCard({
 
       {/* Floating toolbar — shown only when this block is selected */}
       {isSelected && (
-        <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border/40 bg-surface-elevated px-1.5 py-1 shadow-md">
+        <div className="absolute -top-8 left-1/2 z-30 -translate-x-1/2 flex items-center gap-0.5 rounded-md border border-border bg-surface-elevated px-1.5 py-1 shadow-md">
           <span className="px-1.5 text-[10px] font-medium text-foreground select-none">
             {blockDef?.label ?? block.type}
           </span>
@@ -755,7 +755,7 @@ function BlockCard({
 
 function EmptySection({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/30 py-6 text-center">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-6 text-center">
       <p className="text-[10px] text-muted-foreground/50 mb-2">Empty section</p>
       <button
         type="button"
@@ -763,7 +763,7 @@ function EmptySection({ onAdd }: { onAdd: () => void }) {
           e.stopPropagation();
           onAdd();
         }}
-        className="flex items-center gap-1 rounded-md bg-surface/40 px-3 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-1 rounded-md bg-muted px-3 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
       >
         <Plus className="h-3 w-3" />
         Add first block
@@ -784,7 +784,7 @@ function EmptyColumn({
   onAdd: (sectionId: string, column: number) => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/20 py-4 text-center min-h-[60px]">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-4 text-center min-h-[60px]">
       <p className="text-[9px] text-muted-foreground/30 mb-1">Empty</p>
       <button
         type="button"
@@ -854,9 +854,9 @@ function BlockPickerModal({
       }}
     >
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
-      <div className="relative z-10 w-full max-w-md rounded-xl border border-border/30 bg-surface-elevated shadow-xl">
+      <div className="relative z-10 w-full max-w-md rounded-xl border border-border bg-surface-elevated shadow-xl">
         {/* Header */}
-        <div className="flex items-center gap-2 border-b border-border/20 px-4 py-3">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <Plus className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Add block</span>
           <button
@@ -869,7 +869,7 @@ function BlockPickerModal({
         </div>
 
         {/* Search */}
-        <div className="border-b border-border/20 px-4 py-2">
+        <div className="border-b border-border px-4 py-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -878,7 +878,7 @@ function BlockPickerModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search blocks..."
-              className="w-full rounded-md border border-border/30 bg-surface/40 py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-muted py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -899,9 +899,9 @@ function BlockPickerModal({
                       onSelect(block.type);
                       onClose();
                     }}
-                    className="flex items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface/60"
+                    className="flex items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
                   >
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface/60 text-muted-foreground">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <Plus className="h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0">

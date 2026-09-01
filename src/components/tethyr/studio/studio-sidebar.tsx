@@ -104,7 +104,7 @@ export function StudioSidebar({
   return (
     <div className="flex h-full flex-col">
       {/* ── Tab navigation ──────────────────────────────────────────────── */}
-      <nav className="shrink-0 border-b border-border/20 px-3 pt-3" aria-label="Studio navigation">
+      <nav className="shrink-0 border-b border-border px-3 pt-3" aria-label="Studio navigation">
         <div className="flex flex-col gap-0.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -117,7 +117,7 @@ export function StudioSidebar({
                 className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
                   isActive
                     ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -156,7 +156,7 @@ export function StudioSidebar({
       </div>
 
       {/* ── Page info ───────────────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-border/20 px-3 py-3">
+      <div className="shrink-0 border-t border-border px-3 py-3">
         <p className="text-[10px] text-muted-foreground/60">
           {activePage
             ? `Editing: ${activePage.type === "profile" ? "Profile" : "Project"}`
@@ -217,7 +217,7 @@ function BuildPanel({
               key={preset.id}
               type="button"
               onClick={() => onAddSection(preset)}
-              className="group flex flex-col items-center gap-1 rounded-md border border-border/20 bg-surface/20 px-2 py-2.5 text-center transition-colors hover:border-border/40 hover:bg-surface-elevated/50"
+              className="group flex flex-col items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-2.5 text-center transition-colors hover:border-border hover:bg-accent"
             >
               <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
               <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">
@@ -239,7 +239,7 @@ function BuildPanel({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search blocks..."
-          className="w-full rounded-md border border-border/30 bg-surface/40 py-1.5 pl-7 pr-2 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-border bg-muted py-1.5 pl-7 pr-2 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -254,7 +254,7 @@ function BuildPanel({
                 key={block.type}
                 type="button"
                 onClick={() => onAddBlock(block.type)}
-                className="flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-surface-elevated/50 hover:text-foreground"
+                className="flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <Plus className="h-3 w-3 shrink-0 mt-0.5" />
                 <div className="min-w-0">
@@ -336,13 +336,13 @@ function TemplatesPanel({
       </div>
 
       {showSave && (
-        <div className="mb-3 space-y-2 rounded-md border border-border/20 bg-surface/30 p-2">
+        <div className="mb-3 space-y-2 rounded-md border border-border bg-muted/50 p-2">
           <input
             type="text"
             value={saveName}
             onChange={(e) => setSaveName(e.target.value)}
             placeholder="Template name..."
-            className="w-full rounded border border-border/30 bg-surface/40 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded border border-border bg-muted px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <button
             type="button"
@@ -365,10 +365,10 @@ function TemplatesPanel({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-lg border border-border/20 bg-surface/20 p-2.5 animate-pulse"
+              className="rounded-lg border border-border bg-muted/40 p-2.5 animate-pulse"
             >
-              <div className="h-3 w-24 rounded bg-surface/40 mb-1.5" />
-              <div className="h-2 w-16 rounded bg-surface/40" />
+              <div className="h-3 w-24 rounded bg-muted mb-1.5" />
+              <div className="h-2 w-16 rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -396,7 +396,7 @@ function TemplatesPanel({
             className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${
               category === cat
                 ? "bg-primary/15 text-primary"
-                : "bg-surface/40 text-muted-foreground hover:text-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
             {cat}
@@ -411,7 +411,7 @@ function TemplatesPanel({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search layouts..."
-          className="w-full rounded-md border border-border/30 bg-surface/40 py-1.5 pl-7 pr-2 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-md border border-border bg-muted py-1.5 pl-7 pr-2 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -419,7 +419,7 @@ function TemplatesPanel({
         {filtered.slice(0, 15).map((t) => (
           <div
             key={t.id}
-            className="group rounded-lg border border-border/20 bg-surface/20 p-2.5 transition-colors hover:border-border/40"
+            className="group rounded-lg border border-border bg-muted/40 p-2.5 transition-colors hover:border-border"
           >
             {/* Mini block preview — visual thumbnail of template structure */}
             <TemplatePreviewCard template={t} themeNames={themeNames} />
@@ -452,7 +452,7 @@ function TemplatesPanel({
               <button
                 type="button"
                 onClick={() => onFork(t.id)}
-                className="flex-1 rounded bg-surface/40 px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground"
+                className="flex-1 rounded bg-muted px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground"
               >
                 <GitFork className="mr-1 inline h-2.5 w-2.5" />
                 Fork
@@ -494,12 +494,12 @@ function ThemesPanel({
           className={`w-full rounded-md px-2 py-2 text-left text-xs transition-colors ${
             currentThemeId === "00000000-0000-0000-0000-000000000001" || !currentThemeId
               ? "bg-primary/10 text-foreground"
-              : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
           }`}
         >
           <span className="flex items-center gap-2">
             <span
-              className="h-3.5 w-3.5 rounded border border-border/40"
+              className="h-3.5 w-3.5 rounded border border-border"
               style={{ background: "var(--background)" }}
             />
             Tethyr Default
@@ -519,12 +519,12 @@ function ThemesPanel({
                 className={`w-full rounded-md px-2 py-2 text-left text-xs transition-colors ${
                   isActive
                     ? "bg-primary/10 text-foreground"
-                    : "text-muted-foreground hover:bg-surface-elevated/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   {/* Mini preview swatch */}
-                  <div className="flex h-3.5 w-3.5 shrink-0 overflow-hidden rounded border border-border/40">
+                  <div className="flex h-3.5 w-3.5 shrink-0 overflow-hidden rounded border border-border">
                     <div
                       className="w-1/2"
                       style={{ background: colors["--foreground"] ?? "#fff" }}
@@ -599,7 +599,7 @@ function TemplatePreviewCard({
   const themeName = template.themeId ? themeNames.get(template.themeId) : null;
 
   return (
-    <div className="mb-2 overflow-hidden rounded-md border border-border/30 bg-surface/40">
+    <div className="mb-2 overflow-hidden rounded-md border border-border bg-muted">
       {/* Mini blocks visualization */}
       <div className="p-1.5 space-y-1">
         {allBlocks.slice(0, 5).map((block, i: number) => {
