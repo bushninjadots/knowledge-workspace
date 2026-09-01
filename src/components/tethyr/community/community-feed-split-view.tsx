@@ -8,7 +8,7 @@ import type { CommunityNavId } from "@/components/tethyr/community/left-sidebar"
 import type { SortMode } from "@/components/tethyr/community/community-header";
 import type { CommunitySpace } from "@/hooks/use-community-spaces";
 
-export function PostRowCompact({
+function PostRowCompact({
   post,
   selected,
   searchQuery,

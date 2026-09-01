@@ -46,7 +46,8 @@ export function useCreatePage() {
     mutationFn: async ({ ownerId, ownerType }: CreatePageParams) => {
       // Never point a new page at the shared empty layout. Create an owned
       // layout so every Studio starts with real, renderable content.
-      const starterLayout = ownerType === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
+      const starterLayout =
+        ownerType === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
       const { data: layout, error: layoutError } = await (supabase as any)
         .from("layouts")
         .insert({

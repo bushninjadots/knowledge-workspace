@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { themeTokensToVars } from "@/lib/theme-tokens";
 import type { ThemeTokens } from "@/lib/page-blocks";
 
-export interface ThemeCatalogEntry {
+interface ThemeCatalogEntry {
   id: string;
   name: string;
   description: string | null;

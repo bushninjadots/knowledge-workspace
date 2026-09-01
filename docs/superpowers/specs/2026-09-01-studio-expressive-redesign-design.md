@@ -24,7 +24,7 @@ public view plus contextual inline editing controls. No more two-website drift.
 2. Give every person a distinct visual identity through layout, projects, typography, accent, and density.
 3. Keep all of it behind the existing block system (no throwaway architecture).
 4. Delete every dead-end / legacy path and leave **one** Studio rendering path.
-5. Structured freedom: the system offers design *choices* (presets, compositions), not endless settings.
+5. Structured freedom: the system offers design _choices_ (presets, compositions), not endless settings.
 
 ## 3. Non-Goals
 
@@ -42,31 +42,31 @@ Holds the user's Studio-level decisions:
 
 ```ts
 // src/lib/studio-config.ts (new)
-type RadiusTreatment = 'sharp' | 'soft' | 'rounded'
-type TypographyTreatment = 'editorial' | 'modern' | 'classic'
-type Density = 'compact' | 'comfortable' | 'spacious'
-type AccentMode = 'auto' | 'person' | 'none'
+type RadiusTreatment = "sharp" | "soft" | "rounded";
+type TypographyTreatment = "editorial" | "modern" | "classic";
+type Density = "compact" | "comfortable" | "spacious";
+type AccentMode = "auto" | "person" | "none";
 
 interface StudioConfig {
-  personalityId: string | null   // 'minimal' | 'creative' | 'professional' | 'artistic' | null (custom)
-  radius: RadiusTreatment        // default 'soft'
-  typography: TypographyTreatment// default 'modern'
-  density: Density               // default 'comfortable'
-  accentMode: AccentMode         // default 'auto'
-  manual: boolean                // true once the user arranges/customizes beyond the applied preset;
-                                 // when set, re-applying a personality shows a confirmation first
+  personalityId: string | null; // 'minimal' | 'creative' | 'professional' | 'artistic' | null (custom)
+  radius: RadiusTreatment; // default 'soft'
+  typography: TypographyTreatment; // default 'modern'
+  density: Density; // default 'comfortable'
+  accentMode: AccentMode; // default 'auto'
+  manual: boolean; // true once the user arranges/customizes beyond the applied preset;
+  // when set, re-applying a personality shows a confirmation first
 }
 ```
 
 - Missing / empty config → defaults, i.e. current behavior (backward compatible).
-- `config.personalityId` is *intent*; the *applied* result lives in layout + themeOverrides.
+- `config.personalityId` is _intent_; the _applied_ result lives in layout + themeOverrides.
 - All appearance values (`radius`, `typography`, `density`, `accentMode`) are **independently tunable** after any personality is applied.
 
 ### 4.2 Migration list
 
-| Migration | Action |
-|---|---|
-| `20260901150000_studio_config.sql` | `ALTER TABLE pages ADD COLUMN config jsonb NOT NULL DEFAULT '{}'` |
+| Migration                                      | Action                                                                                            |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `20260901150000_studio_config.sql`             | `ALTER TABLE pages ADD COLUMN config jsonb NOT NULL DEFAULT '{}'`                                 |
 | `20260901150100_drop_public_studio_layout.sql` | `ALTER TABLE profiles DROP COLUMN IF EXISTS public_studio_layout` (reverse of the legacy restore) |
 
 ### 4.3 Types to add / extend in `src/lib/page-blocks.ts`
@@ -75,9 +75,18 @@ Extend `SectionLayoutType` with the new compositions:
 
 ```ts
 type SectionLayoutType =
-  | 'full' | 'two_column' | 'three_column' | 'sidebar_left' | 'sidebar_right'
-  | 'feature' | 'side_by_side'                 // existing
-  | 'featured_work' | 'asymmetric' | 'split' | 'image_lead' | 'compact_list'  // new
+  | "full"
+  | "two_column"
+  | "three_column"
+  | "sidebar_left"
+  | "sidebar_right"
+  | "feature"
+  | "side_by_side" // existing
+  | "featured_work"
+  | "asymmetric"
+  | "split"
+  | "image_lead"
+  | "compact_list"; // new
 ```
 
 ## 5. Architecture
@@ -88,15 +97,15 @@ type SectionLayoutType =
 
 ```ts
 interface StudioPersonality {
-  id: string              // 'minimal' | 'creative' | 'professional' | 'artistic'
-  label: string
-  description: string     // one line, used in the picker
-  composition: () => PageLayout          // blueprint builder (full section composition)
-  appearance: StudioConfig               // radius / typography / density / accentMode
-  themeTokens: Partial<ThemeTokens>      // token adjustments (e.g. display font, heading color)
+  id: string; // 'minimal' | 'creative' | 'professional' | 'artistic'
+  label: string;
+  description: string; // one line, used in the picker
+  composition: () => PageLayout; // blueprint builder (full section composition)
+  appearance: StudioConfig; // radius / typography / density / accentMode
+  themeTokens: Partial<ThemeTokens>; // token adjustments (e.g. display font, heading color)
 }
 
-const STUDIO_PERSONALITIES: StudioPersonality[]
+const STUDIO_PERSONALITIES: StudioPersonality[];
 ```
 
 Four presets, one per brief personality:
@@ -140,13 +149,13 @@ has already customized). Appearance settings persist independently after apply.
 **`src/components/tethyr/page/page-layout.tsx`** — extend `SECTION_GRID` with the new
 compositions:
 
-| Layout | Grid |
-|---|---|
+| Layout          | Grid                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------ |
 | `featured_work` | `md:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]` with first block large / offset |
-| `asymmetric` | `md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.7fr)]` alternating on odd sections |
-| `split` | `md:grid-cols-2` with tighter gap, optional equal leading trim |
-| `image_lead` | `md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]` image block first |
-| `compact_list` | single column, dense rows |
+| `asymmetric`    | `md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.7fr)]` alternating on odd sections         |
+| `split`         | `md:grid-cols-2` with tighter gap, optional equal leading trim                       |
+| `image_lead`    | `md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]` image block first                   |
+| `compact_list`  | single column, dense rows                                                            |
 
 Composition-aware section chrome: featured_work / split / image_lead drop the
 `border-b border-border/35` divider and use whitespace instead; asymmetric alternates
@@ -173,18 +182,18 @@ mutations writing `pages.config`; extend `usePage`/`PageData` with `config: Stud
 
 All 10 profile blocks get an expression pass in place. Guidelines per block:
 
-| Block | Expression changes |
-|---|---|
-| `profile-header` | Hero intent: optional large display type for name, banner bleeds full-bleed, avatar + name + handle composed as an identity stack, layout variant option (`stack` / `row` / `cover`) |
-| `profile-bio` | Editorial prose styling; longer line measure, larger lead paragraph when configured |
-| `profile-direction` | Keep 3-up but as bordered stats/sections separated by spacing not cards |
-| `profile-experience` | Timeline treatment (left rule + dots) instead of card list |
-| `profile-skills` | Grouped, two-tier hierarchy (teach louder than learn); not a wall of tags |
-| `profile-projects` | **Presentation styles** — new `presentation` config: `spotlight` (one large featured + supporting list), `editorial-grid` (asymmetric first-large grid), `horizontal-scroll` (scroll row), `minimal-list` (dense rows). Default: `spotlight` on fresh Studios |
-| `profile-tools` | Inline with skills hierarchy; quieter swatch treatment |
-| `profile-links` | Inline footer band, not a card |
-| `profile-achievements` | Gallery strip; badges as small medallions |
-| `profile-gallery` | Masonry / asymmetric evidence shelf, image-first |
+| Block                  | Expression changes                                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile-header`       | Hero intent: optional large display type for name, banner bleeds full-bleed, avatar + name + handle composed as an identity stack, layout variant option (`stack` / `row` / `cover`)                                                                          |
+| `profile-bio`          | Editorial prose styling; longer line measure, larger lead paragraph when configured                                                                                                                                                                           |
+| `profile-direction`    | Keep 3-up but as bordered stats/sections separated by spacing not cards                                                                                                                                                                                       |
+| `profile-experience`   | Timeline treatment (left rule + dots) instead of card list                                                                                                                                                                                                    |
+| `profile-skills`       | Grouped, two-tier hierarchy (teach louder than learn); not a wall of tags                                                                                                                                                                                     |
+| `profile-projects`     | **Presentation styles** — new `presentation` config: `spotlight` (one large featured + supporting list), `editorial-grid` (asymmetric first-large grid), `horizontal-scroll` (scroll row), `minimal-list` (dense rows). Default: `spotlight` on fresh Studios |
+| `profile-tools`        | Inline with skills hierarchy; quieter swatch treatment                                                                                                                                                                                                        |
+| `profile-links`        | Inline footer band, not a card                                                                                                                                                                                                                                |
+| `profile-achievements` | Gallery strip; badges as small medallions                                                                                                                                                                                                                     |
+| `profile-gallery`      | Masonry / asymmetric evidence shelf, image-first                                                                                                                                                                                                              |
 
 Block `fields` gain presentation-type options where relevant (select fields with
 `options`). `BlockDefinition` already supports `select` fields — no schema change needed.
@@ -192,6 +201,7 @@ Block `fields` gain presentation-type options where relevant (select fields with
 ### 5.4 Single Studio path
 
 **`src/routes/u.$handle.tsx`** — remove the legacy fallback. Rendering becomes:
+
 - owner or page exists → `EditModeProvider` + `PageShell` (owner gets edit controls, visitor doesn't);
 - no page yet (visitor) → tasteful empty state ("hasn't published their Studio yet");
 - `BackgroundLayer` + Back header stay.

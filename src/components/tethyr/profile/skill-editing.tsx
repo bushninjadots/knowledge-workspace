@@ -36,7 +36,7 @@ import {
   EXPERIENCE_LABEL,
 } from "@/components/tethyr/profile-sections";
 import { SectionCard } from "./section-card";
-import type { Skill } from "./profile-layout";
+import type { Skill } from "./types";
 import type {
   TeachSkillMeta,
   SkillVerificationLevel,

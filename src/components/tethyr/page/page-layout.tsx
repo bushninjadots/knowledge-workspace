@@ -134,7 +134,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         newSections.splice(srcSectionIdx, 1);
         if (sectionIdx > srcSectionIdx) sectionIdx--;
       }
-      reindex(newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks);
+      reindex(
+        newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks,
+      );
       onLayoutChange({ sections: newSections });
     },
     [layout, onLayoutChange, sections],
@@ -210,9 +212,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               onClick={() => {
                 if (!removingBlockId) return;
                 for (let si = 0; si < layout.sections.length; si++) {
-                  const bi = layout.sections[si].blocks.findIndex(
-                    (b) => b.id === removingBlockId,
-                  );
+                  const bi = layout.sections[si].blocks.findIndex((b) => b.id === removingBlockId);
                   if (bi !== -1) {
                     handleRemove(si, bi);
                     break;

@@ -121,7 +121,7 @@ export type SectionLayoutType =
   | "side_by_side";
 
 /** A responsive freeform frame. Coordinates are normalized to a 12-column canvas. */
-export interface LayoutFrame {
+interface LayoutFrame {
   x: number;
   y: number;
   width: number;
@@ -129,7 +129,7 @@ export interface LayoutFrame {
 }
 
 /** Optional per-device freeform placement. Older layouts omit this field. */
-export interface ResponsiveFrames {
+interface ResponsiveFrames {
   desktop?: LayoutFrame;
   tablet?: LayoutFrame;
   mobile?: LayoutFrame;

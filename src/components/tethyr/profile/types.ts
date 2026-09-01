@@ -43,6 +43,8 @@ export const EXPERIENCE_LABEL: Record<SkillExperienceLevel, string> = {
 
 export type ProjectSkill = { id: string; name: string; category: string };
 
+export type Skill = { id: string; slug: string; name: string; category: string };
+
 export type ProjectRow = {
   id: string;
   profile_id: string;

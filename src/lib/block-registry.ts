@@ -55,32 +55,6 @@ export function getBlocksByCategory(category: string): BlockDefinition[] {
   return getAllBlocks().filter((b) => b.category === category);
 }
 
-/** Page types that a block may be scoped to. */
-type BlockPageScope = "profile" | "project";
-
-/**
- * The page type a block is scoped to, derived from its type prefix:
- * `project-*` → project pages only, `profile-*` → profile pages only,
- * anything else (content/media/utility) → usable on both.
- */
-export function blockPageScope(type: string): BlockPageScope | "both" {
-  if (type.startsWith("project-")) return "project";
-  if (type.startsWith("profile-")) return "profile";
-  return "both";
-}
-
-/**
- * Return all blocks available for a given page type. Project blocks are
- * excluded from profile pages and vice-versa so the picker never offers a
- * block that doesn't belong (e.g. a second hero/header on a profile page).
- */
-export function getBlocksForPageType(pageType: BlockPageScope): BlockDefinition[] {
-  return getAllBlocks().filter((b) => {
-    const scope = blockPageScope(b.type);
-    return scope === "both" || scope === pageType;
-  });
-}
-
 /**
  * Create a fresh block instance for the given type with default config.
  * Returns null if the type is not registered.

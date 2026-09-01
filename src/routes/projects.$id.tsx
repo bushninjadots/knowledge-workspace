@@ -446,7 +446,6 @@ function ProjectPage() {
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
 
-
   // Fetch or auto-create the project's page (block-based presentation).
   const { page: projectPage } = useProjectPage({
     projectId: id,
@@ -560,35 +559,35 @@ function ProjectPage() {
       )}
 
       <ProjectWorkbench
-          project={project}
-          gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
-          milestones={milestones}
-          openRoles={openRoles}
-          needs={needs}
-          isOwner={isOwner}
-          isContributor={isContributor}
-          canWatch={!!me?.userId && !isOwner}
-          onAction={handleWorkbenchAction}
-          onPresentationChange={(preset) => {
-            setPresentationSaveState("saving");
-            updatePresentation.mutate(
-              { projectId: id, presentationPreset: preset },
-              {
-                onSuccess: () => {
-                  setPresentationSaveState("saved");
-                  if (presentationResetTimer.current)
-                    window.clearTimeout(presentationResetTimer.current);
-                  presentationResetTimer.current = window.setTimeout(
-                    () => setPresentationSaveState("idle"),
-                    2000,
-                  );
-                },
-                onError: () => setPresentationSaveState("error"),
+        project={project}
+        gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
+        milestones={milestones}
+        openRoles={openRoles}
+        needs={needs}
+        isOwner={isOwner}
+        isContributor={isContributor}
+        canWatch={!!me?.userId && !isOwner}
+        onAction={handleWorkbenchAction}
+        onPresentationChange={(preset) => {
+          setPresentationSaveState("saving");
+          updatePresentation.mutate(
+            { projectId: id, presentationPreset: preset },
+            {
+              onSuccess: () => {
+                setPresentationSaveState("saved");
+                if (presentationResetTimer.current)
+                  window.clearTimeout(presentationResetTimer.current);
+                presentationResetTimer.current = window.setTimeout(
+                  () => setPresentationSaveState("idle"),
+                  2000,
+                );
               },
-            );
-          }}
-          presentationSaveState={presentationSaveState}
-        />
+              onError: () => setPresentationSaveState("error"),
+            },
+          );
+        }}
+        presentationSaveState={presentationSaveState}
+      />
 
       {/* Legacy pulse — hidden when blocks render the page */}
       {!blocksArePage && (
@@ -607,11 +606,7 @@ function ProjectPage() {
           When blocks exist they ARE the page; legacy duplicate sections hide. */}
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <EditModeProvider>
-          <PageShell
-            ownerId={id}
-            ownerType="project"
-            isOwner={isOwner}
-          />
+          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
         </EditModeProvider>
       </div>
 

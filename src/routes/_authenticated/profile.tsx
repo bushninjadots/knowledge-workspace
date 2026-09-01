@@ -78,9 +78,7 @@ function ProfilePage() {
   const skillsQuery = useSkillsCatalog();
   const refresh = profileQuery.refresh;
 
-  const {
-    github: githubParam,
-  } = useSearch({ strict: false }) as {
+  const { github: githubParam } = useSearch({ strict: false }) as {
     github?: string;
   };
   const focusGithubToken = githubParam === "token";
@@ -156,19 +154,18 @@ function ProfilePage() {
             <p className="section-label">Personal creative space</p>
             <h1 className="mt-1 font-display text-2xl font-semibold">Your Studio</h1>
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              One Studio system. Infinite personalities. Shape the space around the work you want to be known for.
+              One Studio system. Infinite personalities. Shape the space around the work you want to
+              be known for.
             </p>
           </div>
-          <p className="text-xs text-muted-foreground">Create → Customize → Personalize → Arrange → Preview → Publish</p>
+          <p className="text-xs text-muted-foreground">
+            Create → Customize → Personalize → Arrange → Preview → Publish
+          </p>
         </div>
       </div>
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <EditModeProvider>
-          <PageShell
-            ownerId={userId}
-            ownerType="profile"
-            isOwner
-          />
+          <PageShell ownerId={userId} ownerType="profile" isOwner />
         </EditModeProvider>
       </div>
     </>
@@ -538,7 +535,6 @@ function ProfileSetupForm({
               work with you.
             </p>
           </div>
-
         </div>
 
         {/* IDENTITY FORM */}
@@ -910,7 +906,6 @@ function ProfileSetupForm({
               </>
             )}
           </Button>
-
         </div>
       </div>
 
