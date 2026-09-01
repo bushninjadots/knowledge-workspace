@@ -257,7 +257,7 @@ export function ProfileLayout({
         </div>
 
         {/* Profile management only. Page composition lives exclusively in
-            Creativity Studio (/studio), so the private route never renders a
+            Creation Studio (/studio), so the private route never renders a
             second copy of the public page canvas. */}
         <div className="flex flex-col items-start justify-between gap-4 border-b border-border/60 pb-4 sm:flex-row">
           <div>
@@ -282,7 +282,7 @@ export function ProfileLayout({
               <Button asChild size="sm" className="flex-1 sm:flex-none">
                 <Link to="/studio">
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Open in Creativity Studio
+                  Customize Your Studio
                 </Link>
               </Button>
             </div>

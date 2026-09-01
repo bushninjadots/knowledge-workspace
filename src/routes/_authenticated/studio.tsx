@@ -1,4 +1,4 @@
-// ── Creativity Studio ────────────────────────────────────────────────────────
+// ── Creation Studio ──────────────────────────────────────────────────────────
 // Route: /studio
 // The dedicated editing environment for Tethyr profiles and projects.
 // Three-column layout: left (blocks/templates/themes), center (live canvas),
@@ -18,7 +18,7 @@ import "@/components/tethyr/blocks/register-all";
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioRoute,
   head: () => ({
-    meta: [{ title: "Creativity Studio — Tethyr" }],
+    meta: [{ title: "Creation Studio — Tethyr" }],
   }),
 });
 
@@ -68,7 +68,7 @@ function StudioRoute() {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="max-w-sm text-center">
-          <p className="text-sm text-muted-foreground">Sign in to access the Creativity Studio.</p>
+          <p className="text-sm text-muted-foreground">Sign in to customize your Studio.</p>
           <Link
             to="/login"
             className="mt-3 inline-block text-sm font-medium text-primary hover:underline"

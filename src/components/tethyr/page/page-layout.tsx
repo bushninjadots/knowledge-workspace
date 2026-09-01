@@ -6,7 +6,7 @@
 // Purely presentational: blocks render through BlockRenderer with the shared
 // BlockContext. Arrangement (block width and assigned column) is honored so a
 // saved Studio layout renders identically here, in previews, and on the
-// published page. All editing lives exclusively in the Creativity Studio.
+// published page. All editing lives exclusively in the Creation Studio.
 
 import { memo } from "react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";

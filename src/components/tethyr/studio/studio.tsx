@@ -1,4 +1,4 @@
-// ── Creativity Studio ────────────────────────────────────────────────────────
+// ── Creation Studio ──────────────────────────────────────────────────────────
 // Three-column editing environment for profiles and projects.
 // Owns all state and mutation wiring — children receive data + callbacks.
 // Includes a status bar showing auth, page, registry, and template state to
@@ -380,7 +380,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
     }
   }, [templatesLoading, templatesError, publicTemplates.length, templateFetchError]);
 
-  // ── Layout helpers ────────────────────────────────────────────────────
+  // ── Layout helpers ─────────────────���──────────────────────────────────
   const isPublished = pageData?.status === "published";
   const studioMode = "Private draft" as const;
   const pageReady = !!pageData && !pageLoading && !pageProvisioning;
@@ -1213,8 +1213,8 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               title={`Editing ${activePage?.title ?? "page"}`}
             >
               {activePage?.type === "profile"
-                ? "Customize how your profile Studio looks"
-                : `Editing ${activePage?.title ?? "project"}`}
+                ? "Editing your profile Studio · private draft"
+                : `Editing ${activePage?.title ?? "project"} · private draft`}
             </span>
           </div>
           <span className="h-4 w-px bg-border/40" aria-hidden="true" />
@@ -1341,7 +1341,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
               />
             )}
             <Save className="h-3.5 w-3.5" />
-            {updateLayout.isPending ? "Saving…" : dirty ? "Save" : "Saved"}
+            {updateLayout.isPending ? "Saving…" : dirty ? "Save draft" : "Draft saved"}
           </Button>
           {/* Status badge */}{" "}
           <span className="sr-only" role="status" aria-live="polite">
@@ -1401,11 +1401,10 @@ export function Studio({ userId, profile, projects }: StudioProps) {
       {!activePage && (
         <div className="flex flex-1 items-center justify-center p-6">
           <div className="max-w-sm text-center">
-            <h2 className="font-display text-lg font-semibold">
-              Your Studio starts with a project
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Create something worth exploring, then shape its page here.
+            <h2 className="font-display text-lg font-semibold">Your Studio starts here</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Create a profile or project first, then shape its Studio with content, templates, and
+              appearance.
             </p>
             <Button className="mt-4" onClick={handleCreateProject}>
               Open project setup
@@ -1612,7 +1611,7 @@ export function Studio({ userId, profile, projects }: StudioProps) {
         ownerType={activePage?.type}
       />
 
-      {/* ── Panel toggles ───────────────────────────────────────────────── */}
+      {/* ── Panel toggles ─────────────────────────────────��─────────────── */}
       <div className="pointer-events-none fixed bottom-10 left-4 z-40 flex gap-2">
         <button
           type="button"

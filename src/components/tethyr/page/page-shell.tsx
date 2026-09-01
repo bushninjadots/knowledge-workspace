@@ -3,7 +3,7 @@
 // Fetches the page data (layout + theme), applies the theme tokens as CSS
 // custom properties, and renders the layout with blocks.
 //
-// Purely presentational: all editing lives in the Creativity Studio (/studio),
+// Purely presentational: all editing lives in the Creation Studio (/studio),
 // so this shell never renders edit controls of its own.
 //
 // States handled:
@@ -130,10 +130,10 @@ export function PageShell({
       return (
         <div className="py-12 text-center">
           <p className="text-sm text-muted-foreground">
-            You don't have a page yet — build it in the Creativity Studio.
+            You don't have a page yet — build it in the Creation Studio.
           </p>
           <Button asChild variant="outline" size="sm" className="mt-4">
-            <Link to="/studio">Open in Creativity Studio</Link>
+            <Link to="/studio">Customize in Creation Studio</Link>
           </Button>
         </div>
       );

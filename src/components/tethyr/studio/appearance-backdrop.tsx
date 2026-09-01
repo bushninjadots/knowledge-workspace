@@ -1,6 +1,6 @@
 // ── Appearance (Backdrop) ───────────────────────────────────────────────────
 // Self-contained control that surfaces the member's backdrop editor inside
-// the Creativity Studio's visual tab — so "Change appearance" is reachable
+// the Creation Studio's visual tab — so "Change appearance" is reachable
 // while building, not only from the /profile edit menu. Reads the current
 // user's background via useCurrentUser and opens the shared BackgroundPickerDialog.
 
