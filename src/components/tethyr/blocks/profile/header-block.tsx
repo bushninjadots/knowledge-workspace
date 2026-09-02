@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { isSafeUrl } from "@/lib/validators";
 import { registerBlock } from "@/lib/block-registry";
+import { HeroEditControls } from "@/components/tethyr/profile/hero-edit-controls";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -24,6 +25,10 @@ type ProfileHeaderData = {
   timezone: string | null;
   languages: string[];
   reputation_score: number | null;
+  banner_caption: string | null;
+  bio: string | null;
+  background: unknown;
+  public_background: unknown;
 };
 
 function ProfileHeaderBlock({ config, context }: BlockProps) {
@@ -36,7 +41,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
       const { data } = await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score",
+          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score, banner_caption, bio, background, public_background",
         )
         .eq("id", profileId)
         .maybeSingle();
@@ -71,9 +76,28 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showLocation = config.showLocation !== false;
   const showReputation = config.showReputation !== false;
   const showBanner = config.showBanner !== false;
+  const canEdit = context.isOwner === true && !context.isEditing;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
+      {canEdit && (
+        <HeroEditControls
+          userId={data.id}
+          hasBanner={!!bannerSrc}
+          identity={{
+            display_name: data.display_name,
+            handle: data.handle,
+            creator_title: data.creator_title,
+            bio: data.bio,
+            category: data.category,
+            country: data.country,
+            timezone: data.timezone,
+            banner_caption: data.banner_caption,
+            background: (data.background ?? null) as never,
+            public_background: (data.public_background ?? null) as never,
+          }}
+        />
+      )}
       {showBanner && bannerSrc && (
         <img
           src={bannerSrc}
@@ -84,6 +108,11 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           decoding="async"
           className="h-44 w-full object-cover sm:h-64"
         />
+      )}
+      {showBanner && bannerSrc && data.banner_caption && !canEdit && (
+        <span className="absolute right-4 top-[9.5rem] z-10 max-w-xs truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground sm:top-[13.5rem]">
+          {data.banner_caption}
+        </span>
       )}
       <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
         <div

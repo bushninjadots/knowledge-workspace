@@ -80,6 +80,7 @@ export function PageShell({
       pageId: page?.id ?? "",
       data: previewData,
       isEditing: isOwner && isEditing && !previewMode,
+      isOwner: isOwner && !previewMode,
     }),
     [ownerId, ownerType, page?.id, previewData, isOwner, isEditing, previewMode],
   );
