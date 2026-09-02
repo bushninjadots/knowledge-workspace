@@ -837,6 +837,8 @@ export type Database = {
       }
       pages: {
         Row: {
+          composition_id: string | null
+          config: Json
           created_at: string
           id: string
           layout_id: string | null
@@ -847,8 +849,11 @@ export type Database = {
           theme_id: string | null
           theme_overrides: Json | null
           updated_at: string
+          vibe_id: string | null
         }
         Insert: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -859,8 +864,11 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Update: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -871,6 +879,7 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Relationships: [
           {
