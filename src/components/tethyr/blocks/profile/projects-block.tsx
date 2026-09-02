@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
 import {
   getProfileProjectPresentation,
@@ -126,16 +127,19 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
 
   const cardCls =
     "group flex flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
-  const image = (project: { cover_url: string | null }) =>
-    project.cover_url ? (
+  const ProjectImage = ({ project }: { project: { id: string; cover_url: string | null; title: string } }) => {
+    const { data: signedUrl } = useSignedStorageUrl("project-media", project.cover_url);
+    const src = signedUrl ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
+    return src ? (
       <img
-        src={project.cover_url}
-        alt=""
+        src={src}
+        alt={`${project.title} cover`}
         className="mb-2 aspect-[16/9] w-full rounded-md object-cover"
         loading="lazy"
         decoding="async"
       />
     ) : null;
+  };
   const body = (
     project: {
       title: string;
@@ -180,7 +184,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               params={{ id: project.id }}
               className="min-w-[240px] shrink-0 rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated sm:min-w-[280px]"
             >
-              {image(project)}
+              <ProjectImage project={project} />
               {body(project, role)}
             </Link>
           ))}
@@ -203,7 +207,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               params={{ id: featured.project.id }}
               className={`${cardCls} md:col-span-2`}
             >
-              {image(featured.project)}
+              <ProjectImage project={featured.project} />
               {body(featured.project, featured.role)}
             </Link>
           )}
@@ -214,7 +218,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
               params={{ id: project.id }}
               className={cardCls}
             >
-              {image(project)}
+              <ProjectImage project={project} />
               {body(project, role)}
             </Link>
           ))}
@@ -235,7 +239,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             params={{ id: featured.project.id }}
             className={`${cardCls} sm:px-4 sm:py-4`}
           >
-            {featured.project.cover_url ? image(featured.project) : null}
+            {featured.project.cover_url ? <ProjectImage project={featured.project} /> : null}
             <span className="mb-1 text-[11px] text-muted-foreground">
               {ROLE_LABEL[featured.role] ?? featured.role}
             </span>
@@ -268,7 +272,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
                 params={{ id: project.id }}
                 className={cardCls}
               >
-                {image(project)}
+                <ProjectImage project={project} />
                 {body(project, role)}
               </Link>
             ))}

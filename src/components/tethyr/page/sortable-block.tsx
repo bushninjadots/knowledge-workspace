@@ -4,7 +4,7 @@
 // free reordering within a section.
 
 import { useCallback } from "react";
-import { ArrowUp, ArrowDown, GripVertical, Trash2, Settings2 } from "lucide-react";
+import { ArrowUp, ArrowDown, GripVertical, Trash2, Settings2, Maximize2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import type { LayoutBlockInstance, BlockContext } from "@/lib/page-blocks";
 
@@ -18,6 +18,7 @@ interface SortableBlockProps {
   onRemove: () => void;
   onConfigure: () => void;
   onConfigChange: (config: Record<string, unknown>) => void;
+  onResize: () => void;
 }
 
 export function SortableBlock({
@@ -30,6 +31,7 @@ export function SortableBlock({
   onRemove,
   onConfigure,
   onConfigChange,
+  onResize,
 }: SortableBlockProps) {
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
@@ -48,7 +50,7 @@ export function SortableBlock({
     >
       {/* Block controls stay visible in Customize mode so the primary edit path
           is discoverable on touch devices as well as with a mouse. */}
-      <div className="absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-md border border-card-border bg-surface-elevated px-1 py-0.5 opacity-100 shadow-sm transition-opacity sm:opacity-0 sm:group-hover/edit:opacity-100">
+      <div className="absolute -top-3 right-2 z-10 flex flex-wrap items-center gap-1 rounded-md border border-card-border bg-surface-elevated px-1.5 py-1 opacity-100 shadow-sm sm:opacity-0 sm:group-hover/edit:opacity-100 sm:group-focus-within/edit:opacity-100">
         <button
           type="button"
           className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
@@ -66,6 +68,7 @@ export function SortableBlock({
           }}
         >
           <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Reorder</span>
         </button>
         <button
           type="button"
@@ -76,6 +79,7 @@ export function SortableBlock({
           title="Move up"
         >
           <ArrowUp className="h-3.5 w-3.5" />
+          <span className="sr-only">Move up</span>
         </button>
         <button
           type="button"
@@ -86,6 +90,17 @@ export function SortableBlock({
           title="Move down"
         >
           <ArrowDown className="h-3.5 w-3.5" />
+          <span className="sr-only">Move down</span>
+        </button>
+        <button
+          type="button"
+          aria-label={`Resize ${block.type} block`}
+          className="rounded p-1 text-muted-foreground hover:text-foreground"
+          onClick={onResize}
+          title="Resize block"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+          <span className="sr-only">Resize</span>
         </button>
         <button
           type="button"
@@ -95,6 +110,7 @@ export function SortableBlock({
           title="Edit block"
         >
           <Settings2 className="h-3.5 w-3.5" />
+          <span className="sr-only">Edit content</span>
         </button>
         <button
           type="button"
@@ -104,6 +120,7 @@ export function SortableBlock({
           title="Remove"
         >
           <Trash2 className="h-3.5 w-3.5" />
+          <span className="sr-only">Remove</span>
         </button>
       </div>
 

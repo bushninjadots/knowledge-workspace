@@ -7,6 +7,7 @@
 // and drag-and-drop reordering.
 
 import { memo, useCallback, useState } from "react";
+import { ChevronDown, LayoutGrid } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
@@ -37,6 +38,8 @@ interface PageLayoutRendererProps {
   onBlockConfigChange?: (blockId: string, config: Record<string, unknown>) => void;
   profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
   onProfileMediaSaved?: () => void;
+  profileCompleteness?: number;
+  onCompleteProfile?: () => void;
 }
 
 /** Tailwind grid classes for each section layout type. */
@@ -58,6 +61,23 @@ const SECTION_GRID: Record<SectionLayoutType, string> = {
 };
 
 /** Section layouts whose rhythm is length/whitespace-driven instead of boxy. */
+const BLOCK_LABELS: Record<string, string> = {
+  "profile-header": "Header",
+  "profile-projects": "Your work",
+  "profile-direction": "What I’m looking for",
+  "profile-bio": "About",
+  "profile-links": "Links",
+  "profile-skills": "Skills",
+  "profile-experience": "Experience",
+  "profile-gallery": "Gallery",
+  "profile-tools": "Tools",
+  "profile-achievements": "Achievements",
+};
+
+function blockLabel(type: string): string {
+  return BLOCK_LABELS[type] ?? type.replace(/^profile-/, "").replace(/-/g, " ");
+}
+
 const WHITESPACE_LED_LAYOUTS = new Set<SectionLayoutType>([
   "featured_work",
   "asymmetric",
@@ -78,11 +98,15 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   onBlockConfigChange,
   profileMedia,
   onProfileMediaSaved,
+  profileCompleteness,
+  onCompleteProfile,
 }: PageLayoutRendererProps) {
   const sections = [...layout.sections].sort((a, b) => a.position - b.position);
 
   const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
   const [configuringBlockId, setConfiguringBlockId] = useState<string | null>(null);
+  const [resizingBlockId, setResizingBlockId] = useState<string | null>(null);
+  const [configuringSectionId, setConfiguringSectionId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ sectionIdx: number; blockIdx: number } | null>(
     null,
   );
@@ -92,6 +116,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
     ? sections.flatMap((s) => s.blocks).find((b) => b.id === configuringBlockId)
     : undefined;
   const configuredDefinition = configuredBlock ? getBlock(configuredBlock.type) : undefined;
+  const resizingBlock = resizingBlockId
+    ? sections.flatMap((s) => s.blocks).find((b) => b.id === resizingBlockId)
+    : undefined;
 
   // ── Block actions ──────────────────────────────────────────────────────
   const handleMoveUp = useCallback(
@@ -166,6 +193,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       if (newSections[sourceSectionIdx].blocks.length === 0 && sourceSectionIdx !== sectionIdx) {
         newSections.splice(sourceSectionIdx, 1);
       }
+      newSections.forEach((section, index) => {
+        section.position = index;
+      });
       setDropTarget(null);
       onLayoutChange({ sections: newSections });
     },
@@ -201,9 +231,13 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         newSections.splice(srcSectionIdx, 1);
         if (sectionIdx > srcSectionIdx) sectionIdx--;
       }
-      reindex(
-        newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx].blocks,
-      );
+      const target =
+        newSections[sectionIdx >= newSections.length ? newSections.length - 1 : sectionIdx];
+      if (!target) return;
+      reindex(target.blocks);
+      newSections.forEach((section, index) => {
+        section.position = index;
+      });
       onLayoutChange({ sections: newSections });
     },
     [layout, onLayoutChange, sections],
@@ -234,6 +268,26 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(si, e)}
           >
+            {context.isEditing && (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/25 pb-2">
+                <p className="text-xs text-muted-foreground">
+                  Section {si + 1}
+                  <span className="ml-2 text-foreground">· {section.blocks.map((block) => blockLabel(block.type)).join(" + ")}</span>
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setConfiguringSectionId(section.id)}
+                  aria-label={`Change layout for section ${si + 1}`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Change layout
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
             <div
               className={`${gridClass} content-safe`}
               style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
@@ -264,13 +318,19 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       onMoveDown={() => handleMoveDown(si, bi)}
                       onRemove={() => setRemovingBlockId(block.id)}
                       onConfigure={() => setConfiguringBlockId(block.id)}
+                      onResize={() => setResizingBlockId(block.id)}
                       onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
                     />
                   ) : (
                     <BlockRenderer
                       type={block.type}
                       config={block.config}
-                      context={{ ...context, blockId: block.id }}
+                      context={{
+                        ...context,
+                        blockId: block.id,
+                        profileCompleteness: block.type === "profile-header" ? profileCompleteness : undefined,
+                        onCompleteProfile: block.type === "profile-header" ? onCompleteProfile : undefined,
+                      }}
                     />
                   )}
                 </div>
@@ -340,6 +400,55 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         </DialogContent>
       </Dialog>
 
+      {configuringSectionId && onLayoutChange && (
+        <SectionLayoutPanel
+          section={sections.find((candidate) => candidate.id === configuringSectionId)}
+          onClose={() => setConfiguringSectionId(null)}
+          onChange={(layoutType) => {
+            const next = cloneSections(layout);
+            const section = next.find((candidate) => candidate.id === configuringSectionId);
+            if (!section) return;
+            section.layout = layoutType;
+            onLayoutChange({ sections: next });
+            setConfiguringSectionId(null);
+          }}
+        />
+      )}
+
+      {resizingBlock && onLayoutChange && (
+        <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Resize block</h3>
+              <p className="mt-1 text-[11px] text-muted-foreground">Set how much of the section grid it occupies.</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setResizingBlockId(null)} aria-label="Close resize panel">×</Button>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[1, 2, 3, 4, 6, 12].map((span) => (
+              <Button
+                key={span}
+                type="button"
+                variant={resizingBlock.span === span ? "default" : "outline"}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => {
+                  const next = cloneSections(layout);
+                  const target = next.flatMap((section) => section.blocks).find((block) => block.id === resizingBlock.id);
+                  if (!target) return;
+                  target.span = span;
+                  onLayoutChange({ sections: next });
+                  setResizingBlockId(null);
+                }}
+              >
+                {span}/12
+              </Button>
+            ))}
+          </div>
+          <p className="mt-3 text-[10px] text-muted-foreground">Choose a width to change the block size. On single-column sections, blocks remain full width.</p>
+        </div>
+      )}
+
       {/* Inline block settings */}
       {configuredBlock && configuredDefinition && (
         <InlineInspector
@@ -384,6 +493,46 @@ function reindex(blocks: { position: number }[]) {
   blocks.forEach((b, i) => {
     b.position = i;
   });
+}
+
+function SectionLayoutPanel({
+  section,
+  onClose,
+  onChange,
+}: {
+  section: LayoutSection | undefined;
+  onClose: () => void;
+  onChange: (layout: SectionLayoutType) => void;
+}) {
+  if (!section) return null;
+  const options: Array<[SectionLayoutType, string]> = [
+    ["full", "Full width"],
+    ["two_column", "Two columns"],
+    ["three_column", "Three columns"],
+    ["sidebar_left", "Sidebar left"],
+    ["sidebar_right", "Sidebar right"],
+    ["feature", "Feature + support"],
+    ["side_by_side", "Side by side"],
+  ];
+  return (
+    <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Change section layout</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Choose how the blocks in this section should be arranged.</p>
+        </div>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Close section layout">×</Button>
+      </div>
+      <div className="grid gap-1.5">
+        {options.map(([value, label]) => (
+          <Button key={value} type="button" variant={section.layout === value ? "default" : "outline"} size="sm" className="justify-between text-xs" onClick={() => onChange(value)}>
+            <span>{label}</span>
+            {section.layout === value && <span className="text-[10px] opacity-75">Current</span>}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function spanClass(span: number): string {

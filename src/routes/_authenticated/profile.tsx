@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { PageShell } from "@/components/tethyr/page/page-shell";
+import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
@@ -184,24 +185,6 @@ function ProfilePage() {
           </p>
         </div>
       </div>
-      {setupPercent < 40 && (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-card-border bg-surface px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Finish your profile anytime — add a title, bio, or location to help people understand
-              who you are.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setShowSetup(true)}
-            >
-              Complete profile
-            </Button>
-          </div>
-        </div>
-      )}
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <EditModeProvider>
           <PageShell
@@ -213,6 +196,8 @@ function ProfilePage() {
               bannerUrl: profile?.banner_url ?? null,
             }}
             onProfileMediaSaved={refresh}
+            profileCompleteness={setupPercent}
+            onCompleteProfile={() => setShowSetup(true)}
           />
         </EditModeProvider>
       </div>

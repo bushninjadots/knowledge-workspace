@@ -3,7 +3,7 @@
 // Shows the page status (draft/published), edit/done toggle, publish/save-draft,
 // block picker, and template save/apply actions.
 
-import { useState, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Edit3,
   Palette,
@@ -101,11 +101,40 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [templateName, setTemplateName] = useState("");
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
+  const [showChecklist, setShowChecklist] = useState(true);
 
   // Debounce refs for appearance config writes — coalesces rapid changes into one save.
   const pendingAppearanceRef = useRef<Partial<StudioConfig> | null>(null);
   const appearanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (appearanceTimerRef.current) clearTimeout(appearanceTimerRef.current);
+    };
+  }, []);
+
+  function handleSaved(onSuccess?: () => void) {
+    setLastAction("saved");
+    onSuccess?.();
+    onRefresh();
+  }
+
+  function saveLayout(layout: { sections: LayoutSection[] }, onSuccess?: () => void) {
+    setLastAction("saving");
+    updateLayout.mutate(
+      { ownerId, ownerType, layoutId: page!.layoutId, layout },
+      {
+        onSuccess: () => {
+          setLastAction("saved");
+          onSuccess?.();
+          onRefresh();
+        },
+        onError: () => setLastAction("error"),
+      },
+    );
+  }
 
   const isPublished = page?.status === "published";
 
@@ -130,21 +159,12 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     const reindexed = last.blocks.map((b, i) => ({ ...b, position: i + 1 }));
     newBlock.position = reindexed.length;
     sections[sections.length - 1] = { ...last, blocks: [...reindexed, newBlock] };
-    setLastAction("saving");
-    updateLayout.mutate(
-      { ownerId, ownerType, layoutId: page.layoutId, layout: { sections } },
-      {
-        onSuccess: () => {
-          setLastAction("saved");
-          onRefresh();
-        },
-        onError: () => setLastAction("error"),
-      },
-    );
+    saveLayout({ sections });
   }
 
   // ── Publish / Unpublish ────────────────────────────────────────────────
   async function handlePublish() {
+    if (!page) return;
     try {
       await publishPage.mutateAsync({ pageId: page!.id, ownerId, ownerType });
       toast.success("Page published");
@@ -155,6 +175,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     }
   }
   async function handleUnpublish() {
+    if (!page) return;
     try {
       await unpublishPage.mutateAsync({ pageId: page!.id, ownerId, ownerType });
       toast.success("Reverted to draft");
@@ -228,6 +249,15 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   return (
     <>
       <div className="mb-6 border-b border-border/30 pb-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Customize your Studio</p>
+            <p className="text-xs text-muted-foreground">Build the content, arrange the layout, style the look, then preview or publish.</p>
+          </div>
+          <span className="text-xs text-muted-foreground" role="status" aria-live="polite">
+            {lastAction === "saving" ? "Saving changes…" : lastAction === "saved" ? "Changes saved" : lastAction === "error" ? "Save failed — try again" : "Changes save automatically"}
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <div className="mr-2 flex items-center gap-2">
             <span className="text-[11px] font-medium text-foreground">Customizing</span>
@@ -247,22 +277,23 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
               Select a block's Edit button to change its content, identity, and media.
             </span>
           </div>
-          <span className="text-muted-foreground/30 mx-1">·</span>
+          <span className="mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Build</span>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-7 gap-1 text-[11px]"
+            className="h-8 gap-1.5 text-xs"
             onClick={() => setShowPicker(!showPicker)}
           >
-            <Plus className="h-3.5 w-3.5" /> Add section
+            <Plus className="h-3.5 w-3.5" /> Add content block
           </Button>
+          <span className="ml-2 mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Arrange</span>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-7 gap-1 text-[11px]"
+            className="h-8 gap-1.5 text-xs"
             onClick={() => setShowComposition(!showComposition)}
           >
-            <Layers className="h-3.5 w-3.5" /> Composition
+            <Layers className="h-3.5 w-3.5" /> Choose composition
           </Button>
           <Button
             variant="ghost"
@@ -270,7 +301,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowPersonality(!showPersonality)}
           >
-            <Sparkles className="h-3.5 w-3.5" /> Vibe
+            <Sparkles className="h-3.5 w-3.5" /> Choose vibe
           </Button>
           <Button
             variant="ghost"
@@ -278,7 +309,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowAppearance(!showAppearance)}
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" /> Appearance
+            <SlidersHorizontal className="h-3.5 w-3.5" /> Adjust appearance
           </Button>
           <Button
             variant="ghost"
@@ -286,7 +317,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowThemePicker(!showThemePicker)}
           >
-            <Palette className="h-3.5 w-3.5" /> Theme
+            <Palette className="h-3.5 w-3.5" /> Choose theme
           </Button>
           <Button
             variant="ghost"
@@ -294,7 +325,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowApplyPanel(!showApplyPanel)}
           >
-            <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Templates
+            <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Use template
           </Button>
           <Button
             variant="ghost"
@@ -302,12 +333,20 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             className="h-7 gap-1 text-[11px]"
             onClick={() => setShowTemplateName(true)}
           >
-            <Bookmark className="h-3.5 w-3.5" /> Save layout
+            <Bookmark className="h-3.5 w-3.5" /> Save as template
           </Button>
-          <span className="text-muted-foreground/30 mx-1">·</span>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px]" onClick={stopEditing}>
-            <Eye className="h-3.5 w-3.5" /> Preview
+          <span className="ml-2 mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Review</span>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={stopEditing}>
+            <Eye className="h-3.5 w-3.5" /> Preview studio
           </Button>
+          <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5" aria-label="Preview size">
+            {(["desktop", "mobile"] as const).map((device) => (
+              <button key={device} type="button" className={`rounded px-2 py-1 text-[10px] capitalize ${previewDevice === device ? "bg-surface font-medium text-foreground" : "text-muted-foreground"}`} onClick={() => setPreviewDevice(device)}>
+                {device}
+              </button>
+            ))}
+          </div>
+          <span className="text-[10px] text-muted-foreground">Preview size: {previewDevice}</span>
           {isPublished ? (
             <Button
               variant="ghost"
@@ -330,6 +369,17 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           )}
         </div>
       </div>
+
+      {showChecklist && (
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/20 pb-3 text-xs">
+          <span className="font-medium text-foreground">Studio checklist</span>
+          <span className="text-muted-foreground">Edit the header</span>
+          <span className="text-muted-foreground">Add your work</span>
+          <span className="text-muted-foreground">Arrange sections</span>
+          <span className="text-muted-foreground">Preview, then publish</span>
+          <button type="button" className="ml-auto text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" onClick={() => setShowChecklist(false)}>Hide</button>
+        </div>
+      )}
 
       {showPicker && (
         <BlockPickerPanel onAdd={handleAddBlock} onClose={() => setShowPicker(false)} />
@@ -378,10 +428,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
                   config: { ...page.config, ...merged },
                 },
                 {
-                  onSuccess: () => {
-                    setLastAction("saved");
-                    onRefresh();
-                  },
+                  onSuccess: () => handleSaved(),
                   onError: () => setLastAction("error"),
                 },
               );

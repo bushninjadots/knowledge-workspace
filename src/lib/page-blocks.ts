@@ -41,6 +41,11 @@ export interface BlockContext {
   isEditing: boolean;
   /** Whether the current viewer owns this page (enables in-place editing affordances). */
   isOwner?: boolean;
+  /** Optional translucent surface treatment for profile pages. */
+  translucent?: boolean;
+  /** Optional profile-header completion action supplied by the profile route. */
+  profileCompleteness?: number;
+  onCompleteProfile?: () => void;
 }
 
 /** Props every block component must accept. */

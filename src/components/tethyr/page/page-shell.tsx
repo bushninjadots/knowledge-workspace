@@ -1,22 +1,15 @@
 // ── Page Shell ────────────────────────────────────────────────────────────────
-// The top-level component for any page-backed surface (profile or project).
-// Fetches the page data (layout + theme), applies the theme tokens as CSS
-// custom properties, and renders the layout with blocks.
-//
-// Purely presentational: all editing lives in the Creativity Studio (/studio),
-// so this shell never renders edit controls of its own.
-//
-// States handled:
-//   • Loading — skeleton pulse
-//   • No page yet — owner-only "setting up" message
-//   • Error — friendly error with retry
-//   • Published/draft — resolved page with layout
+// Fetches a page, applies its theme, and renders the block layout. Owner views
+// also receive the Studio toolbar and persistence callbacks; public views remain
+// read-only.
 
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
+import { useUpdatePageLayout } from "@/hooks/use-page-editor";
+import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
@@ -24,26 +17,20 @@ import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 
 interface PageShellProps {
-  /** The owner's ID (profile UUID or project UUID). */
   ownerId: string;
-  /** "profile" or "project". */
   ownerType: PageOwnerType;
-  /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
-  /** Which lifecycle state this route should render. Public routes never opt into drafts. */
   renderState?: "draft" | "published";
-  /** Backwards-compatible alias for owner-only draft previews. */
   previewDraft?: boolean;
-  /** Optional layout supplied by Studio for an exact local preview. */
   previewLayout?: PageLayout;
-  /** Optional theme supplied by Studio for an exact local preview. */
   previewTheme?: import("@/lib/page-blocks").ThemeTokens;
-  /** Already-loaded owner data, shared by every block during previews. */
   previewData?: Record<string, unknown>;
-  /** Rendered-page framing for owner-only draft previews. */
   previewMode?: "private" | "public";
-  /** Callback used by preview chrome to return to the builder. */
   onBackToStudio?: () => void;
+  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
+  onProfileMediaSaved?: () => void;
+  profileCompleteness?: number;
+  onCompleteProfile?: () => void;
 }
 
 export function PageShell({
@@ -57,6 +44,10 @@ export function PageShell({
   previewData,
   previewMode,
   onBackToStudio,
+  profileMedia,
+  onProfileMediaSaved,
+  profileCompleteness,
+  onCompleteProfile,
 }: PageShellProps) {
   const {
     data: page,
@@ -66,12 +57,36 @@ export function PageShell({
   } = usePage({
     ownerId,
     ownerType,
-    // Draft access is explicit. A normal public route must remain published-only,
-    // even when the viewer happens to be the owner.
-    includeDraft: renderState === "draft" || previewDraft === true,
+    includeDraft: renderState === "draft" || previewDraft === true || isOwner,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const { isEditing } = useEditMode();
+  const updateLayout = useUpdatePageLayout();
+
+  const saveLayout = (nextLayout: PageLayout) => {
+    if (!page || updateLayout.isPending || !isOwner || previewMode) return;
+    updateLayout.mutate(
+      {
+        layoutId: page.layoutId,
+        layout: nextLayout,
+        ownerId,
+        ownerType,
+      },
+      { onSuccess: () => void refetch() },
+    );
+  };
+
+  const saveBlockConfig = (blockId: string, config: Record<string, unknown>) => {
+    if (!page || updateLayout.isPending || !isOwner || previewMode) return;
+    saveLayout({
+      sections: page.layout.sections.map((section) => ({
+        ...section,
+        blocks: section.blocks.map((block) =>
+          block.id === blockId ? { ...block, config } : block,
+        ),
+      })),
+    });
+  };
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -81,26 +96,43 @@ export function PageShell({
       data: previewData,
       isEditing: isOwner && isEditing && !previewMode,
       isOwner: isOwner && !previewMode,
+      profileCompleteness,
+      onCompleteProfile,
     }),
-    [ownerId, ownerType, page?.id, previewData, isOwner, isEditing, previewMode],
+    [
+      ownerId,
+      ownerType,
+      page?.id,
+      previewData,
+      isOwner,
+      isEditing,
+      previewMode,
+      profileCompleteness,
+      onCompleteProfile,
+    ],
   );
 
-  // The effective theme is the persisted page theme layered with any preview
-  // draft theme from Studio (the preview sheet already carries the full theme).
   const effectiveTheme = useMemo(
     () => deepMergeTokens(page?.theme ?? {}, previewTheme ?? {}),
     [page?.theme, previewTheme],
   );
+  const containerStyle = useMemo(
+    () => {
+      const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
+        Record<string, string>;
+      if (blockContext.translucent) {
+        style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
+        style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
+        style["--card"] = "color-mix(in oklab, var(--background) 78%, transparent)";
+        style["--card-border"] = "color-mix(in oklab, var(--foreground) 24%, transparent)";
+        style["--border"] = "color-mix(in oklab, var(--foreground) 22%, transparent)";
+        style["--border-strong"] = "color-mix(in oklab, var(--foreground) 36%, transparent)";
+      }
+      return style;
+    },
+    [themeVars, effectiveTheme, blockContext.translucent],
+  );
 
-  // Merge theme CSS vars with any user-provided style. Base theme vars are
-  // applied FIRST so customizations (radius, colors, draft previews) always
-  // win — previously the base tokens were spread last and clobbered the page.
-  const containerStyle = useMemo(() => {
-    const merged = themeTokensToStyle(effectiveTheme);
-    return { ...themeVars, ...merged } as React.CSSProperties;
-  }, [themeVars, effectiveTheme]);
-
-  // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="space-y-6 px-4 py-8 sm:px-6" data-page-loading>
@@ -111,13 +143,12 @@ export function PageShell({
     );
   }
 
-  // ── Error ────────────────────────────────────────────────────────────
   if (isError) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center px-4" role="alert">
         <div className="max-w-sm text-center">
-          <p className="text-sm text-destructive">This page couldn't be loaded.</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+          <p className="text-sm text-destructive">This page couldn&apos;t be loaded.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
             Try again
           </Button>
         </div>
@@ -125,39 +156,36 @@ export function PageShell({
     );
   }
 
-  // ── No page yet ──────────────────────────────────────────────────────
   if (!page) {
-    if (isOwner) {
-      return (
-        <div className="py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            You don't have a page yet — build it in the Creativity Studio.
-          </p>
-          <Button asChild variant="outline" size="sm" className="mt-4">
-            <Link to="/studio">Open in Creativity Studio</Link>
-          </Button>
-        </div>
-      );
-    }
-    return null;
+    if (!isOwner) return null;
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          You don&apos;t have a page yet — build it in the Creativity Studio.
+        </p>
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link to="/profile">Open in Creativity Studio</Link>
+        </Button>
+      </div>
+    );
   }
 
-  // ── Unpublished (non-owner only) ─────────────────────────────────────
-  // Owners always see their own page (published or draft) at its public URL.
   const wantsDraft = renderState === "draft" || previewDraft === true;
-  if (!wantsDraft && page.status !== "published") {
-    return null;
-  }
+  if (!wantsDraft && !isOwner && page.status !== "published") return null;
+  if (wantsDraft && !isOwner) return null;
 
-  if (wantsDraft && !isOwner) {
-    return null;
-  }
+  const layout = previewLayout ?? page.layout ?? { sections: [] };
 
-  const layout: PageLayout = previewLayout ?? page.layout ?? { sections: [] };
-
-  // ── Rendered page ────────────────────────────────────────────────────
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
+      {isOwner && !previewMode && (
+        <EditorToolbar
+          page={page}
+          onRefresh={() => void refetch()}
+          ownerId={ownerId}
+          ownerType={ownerType}
+        />
+      )}
       <div
         className="bg-background font-sans text-foreground"
         style={containerStyle}
@@ -208,7 +236,16 @@ export function PageShell({
             )}
           </div>
         ) : (
-          <PageLayoutRenderer layout={layout} context={blockContext} />
+          <PageLayoutRenderer
+            layout={layout}
+            context={blockContext}
+            onLayoutChange={isOwner && isEditing && !previewMode ? saveLayout : undefined}
+            onBlockConfigChange={isOwner && isEditing && !previewMode ? saveBlockConfig : undefined}
+            profileMedia={profileMedia}
+            onProfileMediaSaved={onProfileMediaSaved}
+            profileCompleteness={profileCompleteness}
+            onCompleteProfile={onCompleteProfile}
+          />
         )}
       </div>
     </div>

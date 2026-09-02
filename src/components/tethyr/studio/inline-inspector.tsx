@@ -136,25 +136,26 @@ export function InlineInspector({
 
       {onBlockLayoutChange && (
         <div className="mb-4 space-y-2 border-b border-border/30 pb-4">
-          <p className="text-[11px] font-medium text-muted-foreground">Grid placement</p>
+          <p className="text-xs font-semibold text-foreground">Arrange this block</p>
+          <p className="text-[10px] text-muted-foreground">Choose where it starts and how wide it is in a multi-column section.</p>
           <div className="grid grid-cols-2 gap-2">
             <label className="text-[11px] text-muted-foreground">
-              Column
+              Start column
               <Input
                 type="number"
                 min={0}
                 max={11}
                 className="mt-1 h-8 text-xs"
-                value={typeof block.column === "number" ? block.column : 0}
+                value={typeof block.column === "number" ? block.column + 1 : 1}
                 onChange={(e) =>
                   onBlockLayoutChange({
-                    column: Math.min(11, Math.max(0, Number(e.target.value) || 0)),
+                    column: Math.min(11, Math.max(0, (Number(e.target.value) || 1) - 1)),
                   })
                 }
               />
             </label>
             <label className="text-[11px] text-muted-foreground">
-              Width
+              Width (columns)
               <Input
                 type="number"
                 min={1}
@@ -169,7 +170,7 @@ export function InlineInspector({
               />
             </label>
           </div>
-          <p className="text-[10px] text-muted-foreground">Used when this section has columns.</p>
+          <p className="text-[10px] text-muted-foreground">Changes save automatically. This only affects sections with columns.</p>
         </div>
       )}
 
