@@ -3,35 +3,25 @@
 // Fetches the page data (layout + theme), applies the theme tokens as CSS
 // custom properties, and renders the layout with blocks.
 //
-// When `isOwner` is true, the editor toolbar is shown (customize button or
-// full edit controls via EditModeProvider). Layout changes are persisted
-// through usePageEditor mutations.
+// Purely presentational: all editing lives in the Creativity Studio (/studio),
+// so this shell never renders edit controls of its own.
 //
 // States handled:
 //   • Loading — skeleton pulse
-//   • No page yet — empty state with "create page" action (owner only)
+//   • No page yet — owner-only "setting up" message
 //   • Error — friendly error with retry
 //   • Published/draft — resolved page with layout
-//   • Editing — blocks get move/remove/configure controls
 
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
-import { useCreatePage, useUpdatePageLayout } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
-import {
-  studioConfigToStyle,
-  studioConfigToThemeTokens,
-  DEFAULT_STUDIO_CONFIG,
-} from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
-import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
-import { createStudioHistory } from "@/lib/studio-history";
 
 interface PageShellProps {
   /** The owner's ID (profile UUID or project UUID). */
@@ -40,19 +30,34 @@ interface PageShellProps {
   ownerType: PageOwnerType;
   /** Whether the current user is the page owner (can edit/publish). */
   isOwner: boolean;
-  profileMedia?: { avatarUrl: string | null; bannerUrl: string | null };
-  onProfileMediaSaved?: () => void;
+  /** Which lifecycle state this route should render. Public routes never opt into drafts. */
+  renderState?: "draft" | "published";
+  /** Backwards-compatible alias for owner-only draft previews. */
+  previewDraft?: boolean;
+  /** Optional layout supplied by Studio for an exact local preview. */
+  previewLayout?: PageLayout;
+  /** Optional theme supplied by Studio for an exact local preview. */
+  previewTheme?: import("@/lib/page-blocks").ThemeTokens;
+  /** Already-loaded owner data, shared by every block during previews. */
+  previewData?: Record<string, unknown>;
+  /** Rendered-page framing for owner-only draft previews. */
+  previewMode?: "private" | "public";
+  /** Callback used by preview chrome to return to the builder. */
+  onBackToStudio?: () => void;
 }
 
 export function PageShell({
   ownerId,
   ownerType,
   isOwner,
-  profileMedia,
-  onProfileMediaSaved,
+  renderState,
+  previewDraft,
+  previewLayout,
+  previewTheme,
+  previewData,
+  previewMode,
+  onBackToStudio,
 }: PageShellProps) {
-  // Owners must be able to load their draft pages in the editor; public
-  // visitors only ever see published pages.
   const {
     data: page,
     isLoading,
@@ -61,73 +66,39 @@ export function PageShell({
   } = usePage({
     ownerId,
     ownerType,
-    includeDraft: isOwner,
+    // Draft access is explicit. A normal public route must remain published-only,
+    // even when the viewer happens to be the owner.
+    includeDraft: renderState === "draft" || previewDraft === true,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
-  const createPage = useCreatePage();
-  const updateLayout = useUpdatePageLayout();
   const { isEditing } = useEditMode();
-  const historyRef = useRef(createStudioHistory());
 
   const blockContext: BlockContext = useMemo(
     () => ({
       ownerId,
       ownerType,
       pageId: page?.id ?? "",
-      isEditing: isOwner && isEditing,
+      data: previewData,
+      isEditing: isOwner && isEditing && !previewMode,
+      isOwner: isOwner && !previewMode,
     }),
-    [ownerId, ownerType, page?.id, isOwner, isEditing],
+    [ownerId, ownerType, page?.id, previewData, isOwner, isEditing, previewMode],
   );
 
-  // Merge theme CSS vars with the studio-config treatments. Studio config is
-  // applied as token overrides (radius/typography/density scale) layered on top
-  // of the page theme, then direct CSS vars for accent + density gutters.
+  // The effective theme is the persisted page theme layered with any preview
+  // draft theme from Studio (the preview sheet already carries the full theme).
+  const effectiveTheme = useMemo(
+    () => deepMergeTokens(page?.theme ?? {}, previewTheme ?? {}),
+    [page?.theme, previewTheme],
+  );
+
+  // Merge theme CSS vars with any user-provided style. Base theme vars are
+  // applied FIRST so customizations (radius, colors, draft previews) always
+  // win — previously the base tokens were spread last and clobbered the page.
   const containerStyle = useMemo(() => {
-    const themeTokens = deepMergeTokens(
-      page?.theme ?? {},
-      studioConfigToThemeTokens(page?.config ?? DEFAULT_STUDIO_CONFIG),
-    );
-    const base = themeTokensToStyle(themeTokens);
-    const configStyle = studioConfigToStyle(
-      page?.config ?? DEFAULT_STUDIO_CONFIG,
-    ) as unknown as React.CSSProperties;
-    return { ...base, ...themeVars, ...configStyle } as React.CSSProperties;
-  }, [page?.theme, page?.config, themeVars]);
-
-  // ── Layout change handler (persists to DB) ─────────────────────────────
-  const handleLayoutChange = useCallback(
-    (newLayout: PageLayout) => {
-      if (!page) return;
-      historyRef.current.capture({ layout: page.layout, config: page.config });
-      updateLayout.mutate({ ownerId, ownerType, layoutId: page.layoutId, layout: newLayout });
-    },
-    [page, updateLayout],
-  );
-
-  // ── Block config change handler ────────────────────────────────────────
-  const handleBlockConfigChange = useCallback(
-    (blockId: string, config: Record<string, unknown>) => {
-      if (!page || !page.layout) return;
-      const sections = page.layout.sections.map((s) => ({
-        ...s,
-        blocks: s.blocks.map((b) =>
-          b.id === blockId ? { ...b, config: { ...b.config, ...config } } : b,
-        ),
-      }));
-      handleLayoutChange({ sections });
-    },
-    [page, handleLayoutChange],
-  );
-
-  const createdRef = useRef(false);
-
-  // Auto-create the page on first render when owner and no page exists.
-  useEffect(() => {
-    if (!page && isOwner && !isLoading && !createPage.isPending && !createdRef.current) {
-      createdRef.current = true;
-      createPage.mutate({ ownerId, ownerType });
-    }
-  }, [page, isOwner, isLoading, createPage, ownerId, ownerType]);
+    const merged = themeTokensToStyle(effectiveTheme);
+    return { ...themeVars, ...merged } as React.CSSProperties;
+  }, [themeVars, effectiveTheme]);
 
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
@@ -160,60 +131,65 @@ export function PageShell({
       return (
         <div className="py-12 text-center">
           <p className="text-sm text-muted-foreground">
-            {createPage.isPending ? "Preparing your page…" : "Setting up your page layout…"}
+            You don't have a page yet — build it in the Creativity Studio.
           </p>
+          <Button asChild variant="outline" size="sm" className="mt-4">
+            <Link to="/studio">Open in Creativity Studio</Link>
+          </Button>
         </div>
       );
     }
     return null;
   }
 
-  // ── Unpublished (non-owner) ──────────────────────────────────────────
-  if (!isOwner && page.status !== "published") {
+  // ── Unpublished (non-owner only) ─────────────────────────────────────
+  // Owners always see their own page (published or draft) at its public URL.
+  const wantsDraft = renderState === "draft" || previewDraft === true;
+  if (!wantsDraft && page.status !== "published") {
     return null;
   }
 
-  const layout: PageLayout = page.layout?.sections?.length
-    ? page.layout
-    : ownerType === "profile"
-      ? createDefaultProfileLayout()
-      : createDefaultProjectLayout();
+  if (wantsDraft && !isOwner) {
+    return null;
+  }
+
+  const layout: PageLayout = previewLayout ?? page.layout ?? { sections: [] };
 
   // ── Rendered page ────────────────────────────────────────────────────
   return (
-    <div>
-      {/* Editor toolbar — only shows editing tools when in edit mode.
-          The Customize/Done toggle lives in the page Shell header. */}
-      {isOwner && (
-        <EditorToolbar
-          page={page}
-          onRefresh={() => refetch()}
-          ownerId={ownerId}
-          ownerType={ownerType}
-        />
-      )}
-
+    <div data-page-shell={`${ownerType}:${ownerId}`}>
       <div
+        className="bg-background font-sans text-foreground"
         style={containerStyle}
-        onKeyDown={(event) => {
-          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
-            event.preventDefault();
-            const snapshot = historyRef.current.take();
-            if (!snapshot || !page) return;
-            updateLayout.mutate({
-              ownerId,
-              ownerType,
-              layoutId: page.layoutId,
-              layout: snapshot.layout,
-            });
-          }
-        }}
-        tabIndex={-1}
         data-page-id={page.id}
         data-page-status={page.status}
+        data-page-preview={
+          previewMode ? `${previewMode}-preview` : wantsDraft ? "private-draft" : "published"
+        }
         role="region"
         aria-label={`${ownerType} page`}
       >
+        {previewMode && (
+          <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                {previewMode === "private" ? "Private preview" : "Public preview"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {previewMode === "private"
+                  ? "Only you can see this saved draft."
+                  : "This is how the saved draft will appear to visitors."}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBackToStudio ?? (() => window.history.back())}
+            >
+              ← Back to Studio
+            </Button>
+          </div>
+        )}
         {layout.sections.length === 0 ? (
           <div className="flex min-h-[20vh] items-center justify-center px-4">
             {isOwner && isEditing ? (
@@ -222,7 +198,7 @@ export function PageShell({
                   Your page is empty.
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Use Add block above to start building.
+                  Add a block to start building your page.
                 </p>
               </div>
             ) : (
@@ -231,15 +207,6 @@ export function PageShell({
               </p>
             )}
           </div>
-        ) : isOwner ? (
-          <PageLayoutRenderer
-            layout={layout}
-            context={blockContext}
-            onLayoutChange={handleLayoutChange}
-            onBlockConfigChange={handleBlockConfigChange}
-            profileMedia={profileMedia}
-            onProfileMediaSaved={onProfileMediaSaved}
-          />
         ) : (
           <PageLayoutRenderer layout={layout} context={blockContext} />
         )}

@@ -39,6 +39,8 @@ export interface BlockContext {
   blockId?: string;
   /** Whether the block is currently in edit mode (shows handles, config UI). */
   isEditing: boolean;
+  /** Whether the current viewer owns this page (enables in-place editing affordances). */
+  isOwner?: boolean;
 }
 
 /** Props every block component must accept. */
