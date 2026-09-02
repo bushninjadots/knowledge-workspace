@@ -25,6 +25,7 @@ interface PersonalityPickerProps {
   ownerId: string;
   ownerType: PageOwnerType;
   onClose: () => void;
+  onBeforeApply?: () => void;
   onApplied?: () => void;
 }
 
@@ -33,6 +34,7 @@ export function PersonalityPicker({
   ownerId,
   ownerType,
   onClose,
+  onBeforeApply,
   onApplied,
 }: PersonalityPickerProps) {
   const updateConfig = useUpdatePageConfig();
@@ -42,6 +44,7 @@ export function PersonalityPicker({
   const activeId = page.config.vibeId;
 
   function apply(personality: StudioPersonality) {
+    onBeforeApply?.();
     setApplyingId(personality.id);
     // Only overwrite the accent when this vibe intentionally supplies one.
     // Otherwise a manually-tuned accent color survives the vibe switch.

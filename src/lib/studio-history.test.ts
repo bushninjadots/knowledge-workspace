@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { createStudioHistory } from "./studio-history";
+import { createStudioHistory, type StudioSnapshot } from "./studio-history";
 
-const snapshot = { layout: { sections: [] }, config: { radius: "soft" } } as never;
+const snapshot: StudioSnapshot = {
+  layout: { sections: [] },
+  config: {
+    compositionId: null,
+    vibeId: null,
+    personalityId: null,
+    radius: "soft",
+    typography: "modern",
+    density: "comfortable",
+    accentMode: "auto",
+    accentColor: null,
+  },
+  themeId: "",
+};
 
 describe("studio history", () => {
   it("stores one cloned snapshot and consumes it on undo", () => {
@@ -18,6 +31,49 @@ describe("studio history", () => {
     expect(history.take()).toBeNull();
     history.capture(snapshot);
     history.clear();
+    expect(history.take()).toBeNull();
+  });
+
+  it("restores redo state after undo", () => {
+    const history = createStudioHistory();
+    const first: StudioSnapshot = {
+      ...snapshot,
+      config: { ...snapshot.config, radius: "soft" },
+    };
+    const second: StudioSnapshot = {
+      ...snapshot,
+      config: { ...snapshot.config, radius: "rounded" },
+    };
+
+    history.record(first);
+    expect(history.undo(second)).toEqual(first);
+    expect(history.canRedo).toBe(true);
+    expect(history.redo(first)).toEqual(second);
+    expect(history.canUndo).toBe(true);
+    expect(history.canRedo).toBe(false);
+  });
+
+  it("keeps only the most recent snapshots within the configured limit", () => {
+    const history = createStudioHistory(2);
+    const first: StudioSnapshot = {
+      ...snapshot,
+      config: { ...snapshot.config, radius: "soft" },
+    };
+    const second: StudioSnapshot = {
+      ...snapshot,
+      config: { ...snapshot.config, radius: "rounded" },
+    };
+    const third: StudioSnapshot = {
+      ...snapshot,
+      config: { ...snapshot.config, radius: "sharp" },
+    };
+
+    history.record(first);
+    history.record(second);
+    history.record(third);
+
+    expect(history.take()).toEqual(third);
+    expect(history.take()).toEqual(second);
     expect(history.take()).toBeNull();
   });
 });

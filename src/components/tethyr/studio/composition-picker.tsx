@@ -32,6 +32,7 @@ interface CompositionPickerProps {
   ownerId: string;
   ownerType: PageOwnerType;
   onClose: () => void;
+  onBeforeApply?: () => void;
   onApplied?: () => void;
 }
 
@@ -40,6 +41,7 @@ export function CompositionPicker({
   ownerId,
   ownerType,
   onClose,
+  onBeforeApply,
   onApplied,
 }: CompositionPickerProps) {
   const applyComposition = useApplyStudioComposition();
@@ -58,6 +60,7 @@ export function CompositionPicker({
       // Preserve the legacy field for older readers; Vibe remains independent.
       personalityId: page.config.personalityId,
     };
+    onBeforeApply?.();
     setApplyingId(personality.id);
     applyComposition.mutate(
       {

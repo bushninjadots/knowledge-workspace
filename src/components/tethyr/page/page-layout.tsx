@@ -7,11 +7,18 @@
 // and drag-and-drop reordering.
 
 import { memo, useCallback, useState } from "react";
-import { ChevronDown, LayoutGrid } from "lucide-react";
+import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -101,12 +108,20 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   profileCompleteness,
   onCompleteProfile,
 }: PageLayoutRendererProps) {
-  const sections = [...layout.sections].sort((a, b) => a.position - b.position);
+  const sections = [...layout.sections]
+    .sort((a, b) => a.position - b.position)
+    // Hidden blocks remain visible to the owner as editor targets, but public
+    // rendering should not reserve space for sections with no visible content.
+    .filter(
+      (section) => context.isEditing || section.blocks.some((block) => block.visible !== false),
+    );
 
   const [removingBlockId, setRemovingBlockId] = useState<string | null>(null);
   const [configuringBlockId, setConfiguringBlockId] = useState<string | null>(null);
   const [resizingBlockId, setResizingBlockId] = useState<string | null>(null);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [configuringSectionId, setConfiguringSectionId] = useState<string | null>(null);
+  const [removingSectionId, setRemovingSectionId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ sectionIdx: number; blockIdx: number } | null>(
     null,
   );
@@ -146,6 +161,78 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       blocks[blockIdx + 1] = { ...temp, position: blocks[blockIdx + 1].position };
       reindex(blocks);
       onLayoutChange({ sections: newSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleDuplicateSection = useCallback(
+    (sectionIdx: number) => {
+      if (!onLayoutChange) return;
+      const nextSections = cloneSections(layout);
+      const source = nextSections[sectionIdx];
+      if (!source) return;
+      const duplicate: LayoutSection = {
+        ...source,
+        id: `${source.id}-copy-${Date.now()}`,
+        position: sectionIdx + 1,
+        blocks: source.blocks.map((block) => ({
+          ...block,
+          id: `${block.id}-copy-${Date.now()}`,
+          config: { ...block.config },
+        })),
+      };
+      nextSections.splice(sectionIdx + 1, 0, duplicate);
+      nextSections.forEach((section, index) => {
+        section.position = index;
+      });
+      onLayoutChange({ sections: nextSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleMoveSection = useCallback(
+    (sectionIdx: number, direction: -1 | 1) => {
+      if (!onLayoutChange) return;
+      const targetIdx = sectionIdx + direction;
+      if (targetIdx < 0 || targetIdx >= layout.sections.length) return;
+      const nextSections = cloneSections(layout);
+      [nextSections[sectionIdx], nextSections[targetIdx]] = [
+        nextSections[targetIdx],
+        nextSections[sectionIdx],
+      ];
+      nextSections.forEach((section, index) => {
+        section.position = index;
+      });
+      onLayoutChange({ sections: nextSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleToggleSectionVisibility = useCallback(
+    (sectionIdx: number) => {
+      if (!onLayoutChange) return;
+      const nextSections = cloneSections(layout);
+      const section = nextSections[sectionIdx];
+      if (!section) return;
+      const shouldHide = section.blocks.some((item) => item.visible !== false);
+      section.blocks.forEach((block) => {
+        block.visible = !shouldHide;
+      });
+      onLayoutChange({ sections: nextSections });
+    },
+    [layout, onLayoutChange],
+  );
+
+  const handleRemoveSection = useCallback(
+    (sectionIdx: number) => {
+      if (!onLayoutChange) return;
+      const nextSections = cloneSections(layout);
+      nextSections.splice(sectionIdx, 1);
+      nextSections.forEach((section, index) => {
+        section.position = index;
+      });
+      onLayoutChange({ sections: nextSections });
+      setRemovingSectionId(null);
     },
     [layout, onLayoutChange],
   );
@@ -249,7 +336,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       {sections.map((section, si) => {
         const gridClass = SECTION_GRID[section.layout] ?? "";
         const blocks = section.blocks
-          .filter((b) => b.visible !== false)
+          .filter((b) => context.isEditing || b.visible !== false)
           .sort((a, b) => a.position - b.position);
 
         const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
@@ -272,24 +359,61 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/25 pb-2">
                 <p className="text-xs text-muted-foreground">
                   Section {si + 1}
-                  <span className="ml-2 text-foreground">· {section.blocks.map((block) => blockLabel(block.type)).join(" + ")}</span>
+                  <span className="ml-2 text-foreground">
+                    · {section.blocks.map((block) => blockLabel(block.type)).join(" + ")}
+                  </span>
                 </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setConfiguringSectionId(section.id)}
-                  aria-label={`Change layout for section ${si + 1}`}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  Change layout
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      aria-label={`Section ${si + 1} actions`}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setConfiguringSectionId(section.id)}>
+                      <LayoutGrid className="mr-2 h-3.5 w-3.5" /> Change layout
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDuplicateSection(si)}>
+                      <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate section
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={si === 0} onClick={() => handleMoveSection(si, -1)}>
+                      <ChevronDown className="mr-2 h-3.5 w-3.5 rotate-180" /> Move up
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={si === sections.length - 1}
+                      onClick={() => handleMoveSection(si, 1)}
+                    >
+                      <ChevronDown className="mr-2 h-3.5 w-3.5" /> Move down
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleToggleSectionVisibility(si)}>
+                      {blocks.some((block) => block.visible !== false) ? (
+                        <EyeOff className="mr-2 h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="mr-2 h-3.5 w-3.5" />
+                      )}
+                      {blocks.some((block) => block.visible !== false)
+                        ? "Hide section"
+                        : "Show section"}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setRemovingSectionId(section.id)}
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete section
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
             <div
-              className={`${gridClass} content-safe ${context.isEditing ? "rounded-xl border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))]/20 p-3" : ""}`}
+              className={`${gridClass} content-safe ${context.isEditing ? "rounded-xl border border-transparent p-3 transition-colors" : ""}`}
               style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
               data-section-canvas={context.isEditing ? "true" : undefined}
             >
@@ -298,7 +422,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                   key={`drop-${block.id}`}
                   className={[
                     context.isEditing
-                      ? "relative rounded-lg border border-dashed border-border/70 bg-surface/20 p-2 transition-colors hover:border-[var(--user-accent,var(--trust))]/70 hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]/20"
+                      ? "relative rounded-lg border border-transparent p-2 transition-colors hover:border-card-border hover:bg-surface/20"
                       : "contents",
                     gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
                     dropTarget?.sectionIdx === si && dropTarget.blockIdx === bi
@@ -319,9 +443,21 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       isLast={bi === blocks.length - 1}
                       onMoveUp={() => handleMoveUp(si, bi)}
                       onMoveDown={() => handleMoveDown(si, bi)}
-                      onRemove={() => setRemovingBlockId(block.id)}
-                      onConfigure={() => setConfiguringBlockId(block.id)}
-                      onResize={() => setResizingBlockId(block.id)}
+                      onRemove={() => {
+                        setSelectedBlockId(null);
+                        setRemovingBlockId(block.id);
+                      }}
+                      onConfigure={() => {
+                        setSelectedBlockId(block.id);
+                        setConfiguringBlockId(block.id);
+                      }}
+                      onResize={() => {
+                        setSelectedBlockId(block.id);
+                        setResizingBlockId(block.id);
+                      }}
+                      isSelected={selectedBlockId === block.id}
+                      isHidden={block.visible === false}
+                      onSelect={() => setSelectedBlockId(block.id)}
                       onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
                     />
                   ) : (
@@ -331,8 +467,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       context={{
                         ...context,
                         blockId: block.id,
-                        profileCompleteness: block.type === "profile-header" ? profileCompleteness : undefined,
-                        onCompleteProfile: block.type === "profile-header" ? onCompleteProfile : undefined,
+                        profileCompleteness:
+                          block.type === "profile-header" ? profileCompleteness : undefined,
+                        onCompleteProfile:
+                          block.type === "profile-header" ? onCompleteProfile : undefined,
                       }}
                     />
                   )}
@@ -356,13 +494,48 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                   }}
                   onDrop={(event) => handleBlockDrop(si, blocks.length, event)}
                 >
-                  <span className="pointer-events-none select-none">Drop here to place at end</span>
+                  <span className="pointer-events-none select-none">Drop section content here</span>
                 </div>
               )}
             </div>
           </section>
         );
       })}
+
+      {/* Remove section confirmation dialog */}
+      <Dialog
+        open={!!removingSectionId}
+        onOpenChange={(open) => {
+          if (!open) setRemovingSectionId(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete section?</DialogTitle>
+            <DialogDescription>
+              This removes the section and all of its blocks from your Studio.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (!removingSectionId) return;
+                const sectionIdx = layout.sections.findIndex(
+                  (section) => section.id === removingSectionId,
+                );
+                if (sectionIdx >= 0) handleRemoveSection(sectionIdx);
+              }}
+            >
+              Delete section
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setRemovingSectionId(null)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Remove confirmation dialog */}
       <Dialog
@@ -391,6 +564,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                     break;
                   }
                 }
+                setSelectedBlockId(null);
                 setRemovingBlockId(null);
               }}
             >
@@ -422,10 +596,22 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
         <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Resize block</h3>
-              <p className="mt-1 text-[11px] text-muted-foreground">Set how much of the section grid it occupies.</p>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Resize block
+              </h3>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Set how much of the section grid it occupies.
+              </p>
             </div>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setResizingBlockId(null)} aria-label="Close resize panel">×</Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setResizingBlockId(null)}
+              aria-label="Close resize panel"
+            >
+              ×
+            </Button>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             {[1, 2, 3, 4, 6, 12].map((span) => (
@@ -437,7 +623,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                 className="h-8 text-xs"
                 onClick={() => {
                   const next = cloneSections(layout);
-                  const target = next.flatMap((section) => section.blocks).find((block) => block.id === resizingBlock.id);
+                  const target = next
+                    .flatMap((section) => section.blocks)
+                    .find((block) => block.id === resizingBlock.id);
                   if (!target) return;
                   target.span = span;
                   onLayoutChange({ sections: next });
@@ -448,7 +636,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               </Button>
             ))}
           </div>
-          <p className="mt-3 text-[10px] text-muted-foreground">Choose a width to change the block size. On single-column sections, blocks remain full width.</p>
+          <p className="mt-3 text-[10px] text-muted-foreground">
+            Choose a width to change the block size. On single-column sections, blocks remain full
+            width.
+          </p>
         </div>
       )}
 
@@ -474,6 +665,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           onChange={(config) => onBlockConfigChange?.(configuredBlock.id, config)}
           onRemove={() => {
             setConfiguringBlockId(null);
+            setSelectedBlockId(null);
             setRemovingBlockId(configuredBlock.id);
           }}
           onClose={() => setConfiguringBlockId(null)}
@@ -522,13 +714,30 @@ function SectionLayoutPanel({
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Change section layout</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Choose how the blocks in this section should be arranged.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose how the blocks in this section should be arranged.
+          </p>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Close section layout">×</Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={onClose}
+          aria-label="Close section layout"
+        >
+          ×
+        </Button>
       </div>
       <div className="grid gap-1.5">
         {options.map(([value, label]) => (
-          <Button key={value} type="button" variant={section.layout === value ? "default" : "outline"} size="sm" className="justify-between text-xs" onClick={() => onChange(value)}>
+          <Button
+            key={value}
+            type="button"
+            variant={section.layout === value ? "default" : "outline"}
+            size="sm"
+            className="justify-between text-xs"
+            onClick={() => onChange(value)}
+          >
             <span>{label}</span>
             {section.layout === value && <span className="text-[10px] opacity-75">Current</span>}
           </Button>

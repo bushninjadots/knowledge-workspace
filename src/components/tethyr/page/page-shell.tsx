@@ -3,18 +3,23 @@
 // also receive the Studio toolbar and persistence callbacks; public views remain
 // read-only.
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
-import { useUpdatePageLayout } from "@/hooks/use-page-editor";
+import {
+  useUpdatePageConfig,
+  useUpdatePageLayout,
+  useUpdatePageTheme,
+} from "@/hooks/use-page-editor";
 import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
+import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
+import type { StudioSnapshot } from "@/lib/studio-history";
 
 interface PageShellProps {
   ownerId: string;
@@ -60,13 +65,21 @@ export function PageShell({
     includeDraft: renderState === "draft" || previewDraft === true || isOwner,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
-  const { isEditing } = useEditMode();
+  const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
+    useEditMode();
   const updateLayout = useUpdatePageLayout();
-  const isGlassTheme =
-    page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
+  const updateConfig = useUpdatePageConfig();
+  const updateTheme = useUpdatePageTheme();
+  const isGlassTheme = page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
 
   const saveLayout = (nextLayout: PageLayout) => {
     if (!page || updateLayout.isPending || !isOwner || previewMode) return;
+    recordSnapshot({
+      layout: page.layout,
+      config: page.config,
+      themeId: page.themeId,
+      theme: page.theme,
+    });
     updateLayout.mutate(
       {
         layoutId: page.layoutId,
@@ -89,6 +102,51 @@ export function PageShell({
       })),
     });
   };
+
+  const restoreSnapshot = useCallback(
+    async (snapshot: StudioSnapshot) => {
+      if (!page || !isOwner || previewMode) return;
+      await Promise.all([
+        updateLayout.mutateAsync({
+          layoutId: page.layoutId,
+          layout: snapshot.layout,
+          ownerId,
+          ownerType,
+        }),
+        updateConfig.mutateAsync({
+          pageId: page.id,
+          config: snapshot.config,
+          ownerId,
+          ownerType,
+        }),
+        snapshot.themeId !== page.themeId
+          ? updateTheme.mutateAsync({
+              pageId: page.id,
+              themeId: snapshot.themeId || null,
+              ownerId,
+              ownerType,
+            })
+          : Promise.resolve(),
+      ]);
+      await refetch();
+    },
+    [
+      page,
+      isOwner,
+      previewMode,
+      updateLayout,
+      updateConfig,
+      updateTheme,
+      ownerId,
+      ownerType,
+      refetch,
+    ],
+  );
+
+  useEffect(
+    () => registerRestoreHandler(restoreSnapshot),
+    [registerRestoreHandler, restoreSnapshot],
+  );
 
   const blockContext: BlockContext = useMemo(
     () => ({
@@ -118,22 +176,19 @@ export function PageShell({
     () => deepMergeTokens(page?.theme ?? {}, previewTheme ?? {}),
     [page?.theme, previewTheme],
   );
-  const containerStyle = useMemo(
-    () => {
-      const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
-        Record<string, string>;
-      if (isGlassTheme || blockContext.translucent) {
-        style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
-        style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
-        style["--card"] = "color-mix(in oklab, var(--background) 78%, transparent)";
-        style["--card-border"] = "color-mix(in oklab, var(--foreground) 24%, transparent)";
-        style["--border"] = "color-mix(in oklab, var(--foreground) 22%, transparent)";
-        style["--border-strong"] = "color-mix(in oklab, var(--foreground) 36%, transparent)";
-      }
-      return style;
-    },
-    [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent],
-  );
+  const containerStyle = useMemo(() => {
+    const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
+      Record<string, string>;
+    if (isGlassTheme || blockContext.translucent) {
+      style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
+      style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
+      style["--card"] = "color-mix(in oklab, var(--background) 78%, transparent)";
+      style["--card-border"] = "color-mix(in oklab, var(--foreground) 24%, transparent)";
+      style["--border"] = "color-mix(in oklab, var(--foreground) 22%, transparent)";
+      style["--border-strong"] = "color-mix(in oklab, var(--foreground) 36%, transparent)";
+    }
+    return style;
+  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent]);
 
   if (isLoading) {
     return (
@@ -177,6 +232,13 @@ export function PageShell({
   if (wantsDraft && !isOwner) return null;
 
   const layout = previewLayout ?? page.layout ?? { sections: [] };
+  const canvasFrameClass = isPreviewing
+    ? previewFrameClasses(previewDevice)
+    : isEditing
+      ? "mx-auto w-full max-w-7xl overflow-hidden rounded-xl border border-border/60 shadow-sm"
+      : "w-full";
+  const workspaceClass =
+    isPreviewing || isEditing ? "bg-surface-sunken px-3 py-4 sm:px-6 sm:py-8" : "";
 
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
@@ -189,67 +251,85 @@ export function PageShell({
         />
       )}
       <div
-        className="bg-background font-sans text-foreground"
-        style={containerStyle}
-        data-page-id={page.id}
-        data-page-status={page.status}
-        data-page-preview={
-          previewMode ? `${previewMode}-preview` : wantsDraft ? "private-draft" : "published"
-        }
-        role="region"
-        aria-label={`${ownerType} page`}
+        className={workspaceClass}
+        data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
       >
-        {previewMode && (
-          <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-                {previewMode === "private" ? "Private preview" : "Public preview"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {previewMode === "private"
-                  ? "Only you can see this saved draft."
-                  : "This is how the saved draft will appear to visitors."}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onBackToStudio ?? (() => window.history.back())}
-            >
-              ← Back to Studio
-            </Button>
-          </div>
-        )}
-        {layout.sections.length === 0 ? (
-          <div className="flex min-h-[20vh] items-center justify-center px-4">
-            {isOwner && isEditing ? (
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground" role="status">
-                  Your page is empty.
+        <div
+          className={`${canvasFrameClass} bg-background font-sans text-foreground`}
+          style={containerStyle}
+          data-page-id={page.id}
+          data-page-status={page.status}
+          data-page-preview={
+            previewMode ? `${previewMode}-preview` : wantsDraft ? "private-draft" : "published"
+          }
+          role="region"
+          aria-label={`${ownerType} page`}
+        >
+          {previewMode && (
+            <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                  {previewMode === "private" ? "Private preview" : "Public preview"}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Add a block to start building your page.
+                  {previewMode === "private"
+                    ? "Only you can see this saved draft."
+                    : "This is how the saved draft will appear to visitors."}
                 </p>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground" role="status">
-                Nothing here yet.
-              </p>
-            )}
-          </div>
-        ) : (
-          <PageLayoutRenderer
-            layout={layout}
-            context={blockContext}
-            onLayoutChange={isOwner && isEditing && !previewMode ? saveLayout : undefined}
-            onBlockConfigChange={isOwner && isEditing && !previewMode ? saveBlockConfig : undefined}
-            profileMedia={profileMedia}
-            onProfileMediaSaved={onProfileMediaSaved}
-            profileCompleteness={profileCompleteness}
-            onCompleteProfile={onCompleteProfile}
-          />
-        )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onBackToStudio ?? (() => window.history.back())}
+              >
+                ← Back to Studio
+              </Button>
+            </div>
+          )}
+          {layout.sections.length === 0 ? (
+            <div className="flex min-h-[20vh] items-center justify-center px-4">
+              {isOwner && isEditing ? (
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground" role="status">
+                    Your page is empty.
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Add a block to start building your page.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground" role="status">
+                  Nothing here yet.
+                </p>
+              )}
+            </div>
+          ) : (
+            <PageLayoutRenderer
+              layout={layout}
+              context={blockContext}
+              onLayoutChange={isOwner && isEditing && !previewMode ? saveLayout : undefined}
+              onBlockConfigChange={
+                isOwner && isEditing && !previewMode ? saveBlockConfig : undefined
+              }
+              profileMedia={profileMedia}
+              onProfileMediaSaved={onProfileMediaSaved}
+              profileCompleteness={profileCompleteness}
+              onCompleteProfile={onCompleteProfile}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
+}
+
+function previewFrameClasses(device: PreviewDevice): string {
+  switch (device) {
+    case "mobile":
+      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-xl border border-border/60 shadow-sm";
+    case "tablet":
+      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-xl border border-border/60 shadow-sm";
+    default:
+      return "mx-auto w-full max-w-7xl overflow-hidden rounded-xl border border-border/60 shadow-sm";
+  }
 }

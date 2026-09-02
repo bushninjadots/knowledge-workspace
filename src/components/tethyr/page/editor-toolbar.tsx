@@ -1,23 +1,32 @@
 // ── Editor Toolbar ────────────────────────────────────────────────────────────
-// The floating toolbar that appears at the top of a page when in edit mode.
-// Shows the page status (draft/published), edit/done toggle, publish/save-draft,
-// block picker, and template save/apply actions.
+// The Studio editor chrome and entry point. The editor groups existing page
+// mutations into task-oriented tabs while the canvas stays responsible for
+// contextual block and section editing.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
+  Bookmark,
+  Redo2,
+  Undo2,
   Edit3,
+  Eye,
+  EyeOff,
+  GalleryHorizontalEnd,
+  Layers,
+  Monitor,
   Palette,
   Plus,
   Send,
-  X,
-  Bookmark,
-  GalleryHorizontalEnd,
-  Eye,
-  Layers,
+  Settings2,
   SlidersHorizontal,
+  Smartphone,
   Sparkles,
+  Tablet,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import {
@@ -48,6 +57,7 @@ import type {
 import { createBlockInstance, getAllBlocks } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
 import type { StudioConfig } from "@/lib/studio-config";
+import type { StudioSnapshot } from "@/lib/studio-history";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -71,12 +81,21 @@ function cloneSections(layout: { sections: LayoutSection[] }): LayoutSection[] {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  content: "Content",
-  media: "Media",
-  project: "Project",
-  people: "People",
+  content: "Tell your story",
+  media: "Show your process",
+  project: "Your work",
+  people: "People and identity",
   community: "Community",
-  utility: "Utility",
+  utility: "Helpful details",
+};
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  content: "Explain what you make and what you want to build next.",
+  media: "Bring the references, images, and moments behind the work.",
+  project: "Give visitors more context about a project or collaboration.",
+  people: "Introduce yourself and the people you build with.",
+  community: "Show the conversations and communities around your work.",
+  utility: "Add supporting information without crowding the Studio.",
 };
 
 // ── Toolbar ──────────────────────────────────────────────────────────────────
@@ -89,7 +108,22 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToolbarProps) {
-  const { isEditing, startEditing, stopEditing } = useEditMode();
+  const {
+    isEditing,
+    isPreviewing,
+    previewDevice,
+    startEditing,
+    stopEditing,
+    startPreview,
+    stopPreview,
+    setPreviewDevice,
+    recordSnapshot,
+    undo,
+    redo,
+    restoreSnapshot,
+    canUndo,
+    canRedo,
+  } = useEditMode();
   const publishPage = usePublishPage();
   const unpublishPage = useUnpublishPage();
   const updateLayout = useUpdatePageLayout();
@@ -98,6 +132,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const applyTemplate = useApplyTemplate();
   const unpublishTemplate = useUnpublishTemplate();
   const { data: myTemplates = [] } = usePublicTemplates();
+  const blockDefinitions = useMemo(() => getAllBlocks(), []);
 
   const [showPicker, setShowPicker] = useState(false);
   const [showComposition, setShowComposition] = useState(false);
@@ -108,17 +143,36 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
-  const [showChecklist, setShowChecklist] = useState(true);
+  const [activeTab, setActiveTab] = useState<"content" | "layout" | "style" | "settings">(
+    "content",
+  );
 
-  function togglePanel(
+  function closePanels() {
+    setShowPicker(false);
+    setShowComposition(false);
+    setShowPersonality(false);
+    setShowAppearance(false);
+    setShowApplyPanel(false);
+    setShowThemePicker(false);
+    setShowTemplateName(false);
+  }
+
+  function selectTab(value: string) {
+    setActiveTab(value as "content" | "layout" | "style" | "settings");
+    closePanels();
+  }
+
+  function openPanel(
     panel: "picker" | "composition" | "personality" | "appearance" | "templates" | "theme",
+    tab: "content" | "layout" | "style" | "settings",
   ) {
-    setShowPicker(panel === "picker" ? !showPicker : false);
-    setShowComposition(panel === "composition" ? !showComposition : false);
-    setShowPersonality(panel === "personality" ? !showPersonality : false);
-    setShowAppearance(panel === "appearance" ? !showAppearance : false);
-    setShowApplyPanel(panel === "templates" ? !showApplyPanel : false);
-    setShowThemePicker(panel === "theme" ? !showThemePicker : false);
+    setActiveTab(tab);
+    setShowPicker(panel === "picker");
+    setShowComposition(panel === "composition");
+    setShowPersonality(panel === "personality");
+    setShowAppearance(panel === "appearance");
+    setShowApplyPanel(panel === "templates");
+    setShowThemePicker(panel === "theme");
   }
 
   // Debounce refs for appearance config writes — coalesces rapid changes into one save.
@@ -131,6 +185,49 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     };
   }, []);
 
+  const currentSnapshot = useCallback(
+    (): StudioSnapshot | null =>
+      page
+        ? {
+            layout: page.layout,
+            config: page.config,
+            themeId: page.themeId,
+            theme: page.theme,
+          }
+        : null,
+    [page],
+  );
+
+  const handleUndo = useCallback(() => {
+    const current = currentSnapshot();
+    if (!current) return;
+    const snapshot = undo(current);
+    if (snapshot) restoreSnapshot(snapshot);
+  }, [currentSnapshot, undo, restoreSnapshot]);
+
+  const handleRedo = useCallback(() => {
+    const current = currentSnapshot();
+    if (!current) return;
+    const snapshot = redo(current);
+    if (snapshot) restoreSnapshot(snapshot);
+  }, [currentSnapshot, redo, restoreSnapshot]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTextEntry =
+        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (isTextEntry || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z")
+        return;
+      event.preventDefault();
+      if (event.shiftKey) handleRedo();
+      else handleUndo();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing, handleRedo, handleUndo]);
+
   function handleSaved(onSuccess?: () => void) {
     setLastAction("saved");
     onSuccess?.();
@@ -138,6 +235,13 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   }
 
   function saveLayout(layout: { sections: LayoutSection[] }, onSuccess?: () => void) {
+    if (!page) return;
+    recordSnapshot({
+      layout: page.layout,
+      config: page.config,
+      themeId: page.themeId,
+      theme: page.theme,
+    });
     setLastAction("saving");
     updateLayout.mutate(
       { ownerId, ownerType, layoutId: page!.layoutId, layout },
@@ -175,6 +279,15 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     const reindexed = last.blocks.map((b, i) => ({ ...b, position: i + 1 }));
     newBlock.position = reindexed.length;
     sections[sections.length - 1] = { ...last, blocks: [...reindexed, newBlock] };
+    saveLayout({ sections });
+  }
+
+  function handleToggleBlockVisibility(blockId: string) {
+    if (!page) return;
+    const sections = cloneSections(page.layout ?? { sections: [] });
+    const block = sections.flatMap((section) => section.blocks).find((item) => item.id === blockId);
+    if (!block) return;
+    block.visible = block.visible === false;
     saveLayout({ sections });
   }
 
@@ -218,6 +331,12 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Apply template ─────────────────────────────────────────────────────
   function handleApply(templateId: string) {
     if (!page) return;
+    recordSnapshot({
+      layout: page.layout,
+      config: page.config,
+      themeId: page.themeId,
+      theme: page.theme,
+    });
     applyTemplate.mutate(
       { templateId, pageId: page.id, layoutId: page.layoutId, ownerId, ownerType },
       {
@@ -231,6 +350,17 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
   // ── No page ──────────────────────────────────────────────────────────
   if (!page) return null;
+
+  // ── Preview mode ───────────────────────────────────────────────────
+  if (isPreviewing) {
+    return (
+      <PreviewToolbar
+        device={previewDevice}
+        onDeviceChange={setPreviewDevice}
+        onBackToEditor={stopPreview}
+      />
+    );
+  }
 
   // ── Entry point (not editing) ──────────────────────────────────────
   if (!isEditing) {
@@ -253,7 +383,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
               </span>
             )}
             <Button variant="outline" size="sm" className="gap-1.5" onClick={startEditing}>
-              <Edit3 className="h-3.5 w-3.5" /> Customize
+              <Edit3 className="h-3.5 w-3.5" /> Edit Studio
             </Button>
           </div>
         </div>
@@ -264,130 +394,202 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Editing toolbar ────────────────────────────────────────────────
   return (
     <>
-      <div className="mb-6 border-b border-border/30 pb-3">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Customize your Studio</p>
-            <p className="text-xs text-muted-foreground">Build the content, arrange the layout, style the look, then preview or publish.</p>
+      <div className="mb-6 border-y border-border/40 bg-background px-3 py-3 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 px-2 text-xs"
+              onClick={stopEditing}
+              aria-label="Exit Studio editor"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Your Studio</span>
+              <span className="sm:hidden">Exit</span>
+            </Button>
+            <span className="h-4 w-px bg-border/60" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">Studio editor</p>
+              <p className="text-[11px] text-muted-foreground">
+                {isPublished ? "Published" : "Draft"}
+              </p>
+            </div>
           </div>
-          <span className="text-xs text-muted-foreground" role="status" aria-live="polite">
-            {lastAction === "saving" ? "Saving changes…" : lastAction === "saved" ? "Changes saved" : lastAction === "error" ? "Save failed — try again" : "Changes save automatically"}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div className="mr-2 flex items-center gap-2">
-            <span className="text-[11px] font-medium text-foreground">Customizing</span>
-            <span className="text-[10px] text-muted-foreground" role="status" aria-live="polite">
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex items-center gap-1" aria-label="Edit history">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                aria-label="Undo last change"
+                title="Undo (Ctrl/Cmd+Z)"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                aria-label="Redo last change"
+                title="Redo (Ctrl/Cmd+Shift+Z)"
+              >
+                <Redo2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <span className="text-xs text-muted-foreground" role="status" aria-live="polite">
               {lastAction === "saving"
                 ? "Saving…"
                 : lastAction === "saved"
                   ? "Saved"
                   : lastAction === "error"
                     ? "Save failed"
-                    : ""}
+                    : "Auto-save on"}
             </span>
-            <span className="text-[11px] text-muted-foreground" aria-live="polite">
-              {isPublished ? "Published" : "Draft"}
-            </span>
-            <span className="hidden text-[10px] text-muted-foreground sm:inline">
-              Select a block's Edit button to change its content, identity, and media.
-            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => startPreview("desktop")}
+            >
+              <Eye className="h-3.5 w-3.5" /> Preview
+            </Button>
+            {isPublished ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={handleUnpublish}
+              >
+                <X className="h-3.5 w-3.5" /> Unpublish
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={handlePublish}
+                disabled={publishPage.isPending}
+              >
+                <Send className="h-3.5 w-3.5" />
+                {publishPage.isPending ? "Publishing…" : "Publish Studio"}
+              </Button>
+            )}
           </div>
-          <span className="mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Build</span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => togglePanel("picker")}
-          >
-            <Plus className="h-3.5 w-3.5" /> Add content block
-          </Button>
-          <span className="ml-2 mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Arrange</span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => togglePanel("composition")}
-          >
-            <Layers className="h-3.5 w-3.5" /> Choose composition
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-[11px]"
-            onClick={() => togglePanel("personality")}
-          >
-            <Sparkles className="h-3.5 w-3.5" /> Choose vibe
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-[11px]"
-            onClick={() => togglePanel("appearance")}
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" /> Adjust appearance
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-[11px]"
-            onClick={() => togglePanel("theme")}
-          >
-            <Palette className="h-3.5 w-3.5" /> Choose theme
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-[11px]"
-            onClick={() => togglePanel("templates")}
-          >
-            <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Use template
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-[11px]"
-            onClick={() => setShowTemplateName(true)}
-          >
-            <Bookmark className="h-3.5 w-3.5" /> Save as template
-          </Button>
-          <span className="ml-2 mr-1 rounded-full bg-surface px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Review</span>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={stopEditing}>
-            <Eye className="h-3.5 w-3.5" /> Preview studio
-          </Button>
-          {isPublished ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 text-[11px]"
-              onClick={handleUnpublish}
-            >
-              <X className="h-3.5 w-3.5" /> Unpublish
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
-              className="h-7 gap-1 text-[11px]"
-              onClick={handlePublish}
-              disabled={publishPage.isPending}
-            >
-              <Send className="h-3.5 w-3.5" /> {publishPage.isPending ? "Publishing..." : "Publish"}
-            </Button>
-          )}
         </div>
-      </div>
 
-      {showChecklist && (
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/20 pb-3 text-xs">
-          <span className="font-medium text-foreground">Studio checklist</span>
-          <span className="text-muted-foreground">Edit the header</span>
-          <span className="text-muted-foreground">Add your work</span>
-          <span className="text-muted-foreground">Arrange sections</span>
-          <span className="text-muted-foreground">Preview, then publish</span>
-          <button type="button" className="ml-auto text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" onClick={() => setShowChecklist(false)}>Hide</button>
-        </div>
-      )}
+        <Tabs value={activeTab} onValueChange={selectTab} className="mt-3">
+          <TabsList className="h-10 w-full gap-5 overflow-x-auto border-border/60 sm:gap-7">
+            <TabsTrigger value="content" className="h-10 gap-1.5 text-xs sm:text-[13px]">
+              <Plus className="h-3.5 w-3.5" /> Content
+            </TabsTrigger>
+            <TabsTrigger value="layout" className="h-10 gap-1.5 text-xs sm:text-[13px]">
+              <Layers className="h-3.5 w-3.5" /> Layout
+            </TabsTrigger>
+            <TabsTrigger value="style" className="h-10 gap-1.5 text-xs sm:text-[13px]">
+              <Palette className="h-3.5 w-3.5" /> Style
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="h-10 gap-1.5 text-xs sm:text-[13px]">
+              <Settings2 className="h-3.5 w-3.5" /> Settings
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("picker", "content")}
+              >
+                <Plus className="h-3.5 w-3.5" /> Add content
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Choose what visitors should see, then arrange it on the canvas.
+              </span>
+            </div>
+            <ContentOutline
+              page={page}
+              blockDefinitions={blockDefinitions}
+              onToggleVisibility={handleToggleBlockVisibility}
+            />
+          </TabsContent>
+
+          <TabsContent value="layout">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("composition", "layout")}
+              >
+                <Layers className="h-3.5 w-3.5" /> Studio layout
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Select a section in the canvas for its local layout controls.
+              </span>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="style">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("personality", "style")}
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Vibe
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("appearance", "style")}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" /> Appearance
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("theme", "style")}
+              >
+                <Palette className="h-3.5 w-3.5" /> Theme
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => openPanel("templates", "settings")}
+              >
+                <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Use template
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setShowTemplateName(true)}
+              >
+                <Bookmark className="h-3.5 w-3.5" /> Save as template
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Templates change structure; your content stays with the page.
+              </span>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {showPicker && (
         <BlockPickerPanel onAdd={handleAddBlock} onClose={() => setShowPicker(false)} />
@@ -399,6 +601,10 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           ownerId={ownerId}
           ownerType={ownerType}
           onClose={() => setShowComposition(false)}
+          onBeforeApply={() => {
+            const snapshot = currentSnapshot();
+            if (snapshot) recordSnapshot(snapshot);
+          }}
           onApplied={onRefresh}
         />
       )}
@@ -409,6 +615,10 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           ownerId={ownerId}
           ownerType={ownerType}
           onClose={() => setShowPersonality(false)}
+          onBeforeApply={() => {
+            const snapshot = currentSnapshot();
+            if (snapshot) recordSnapshot(snapshot);
+          }}
           onApplied={onRefresh}
         />
       )}
@@ -417,6 +627,12 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
         <AppearancePanel
           config={page.config}
           onChange={(partial) => {
+            recordSnapshot({
+              layout: page.layout,
+              config: page.config,
+              themeId: page.themeId,
+              theme: page.theme,
+            });
             setLastAction("saving");
             // Merge into pending partial and debounce the actual write so rapid
             // clicks (radius → typography → density) coalesce into one save.
@@ -511,7 +727,10 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {myTemplates.map((t: { id: string; name: string; type: string }) => (
-                <div key={t.id} className="flex items-center gap-1 rounded-lg border border-transparent bg-surface/50 p-1 transition-colors hover:border-card-border hover:bg-surface">
+                <div
+                  key={t.id}
+                  className="flex items-center gap-1 rounded-lg border border-transparent bg-surface/50 p-1 transition-colors hover:border-card-border hover:bg-surface"
+                >
                   <button
                     type="button"
                     className="min-w-0 flex-1 px-2 py-1 text-left text-xs"
@@ -548,6 +767,14 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           ownerId={ownerId}
           ownerType={ownerType}
           onClose={() => setShowThemePicker(false)}
+          onBeforeApply={() => {
+            recordSnapshot({
+              layout: page.layout,
+              config: page.config,
+              themeId: page.themeId,
+              theme: page.theme,
+            });
+          }}
           onApplied={() => {
             setShowThemePicker(false);
             onRefresh();
@@ -555,6 +782,134 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
         />
       )}
     </>
+  );
+}
+
+function PreviewToolbar({
+  device,
+  onDeviceChange,
+  onBackToEditor,
+}: {
+  device: "desktop" | "tablet" | "mobile";
+  onDeviceChange: (device: "desktop" | "tablet" | "mobile") => void;
+  onBackToEditor: () => void;
+}) {
+  const devices = [
+    ["desktop", "Desktop", "Monitor"],
+    ["tablet", "Tablet", "Tablet"],
+    ["mobile", "Mobile", "Smartphone"],
+  ] as const;
+
+  return (
+    <div className="mb-6 border-y border-border/40 bg-background px-3 py-3 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2 text-xs"
+            onClick={onBackToEditor}
+            aria-label="Back to Studio editor"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Back to editor</span>
+            <span className="sm:hidden">Edit</span>
+          </Button>
+          <span className="h-4 w-px bg-border/60" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">Studio preview</p>
+            <p className="text-[11px] text-muted-foreground">Review the space before sharing it.</p>
+          </div>
+        </div>
+
+        <div
+          className="flex items-center gap-1 rounded-md border border-border/60 bg-surface px-1 py-1"
+          role="group"
+          aria-label="Preview device"
+        >
+          {devices.map(([value, label, icon]) => {
+            const Icon = icon === "Monitor" ? Monitor : icon === "Tablet" ? Tablet : Smartphone;
+            const active = device === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onDeviceChange(value)}
+                className={`inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? "bg-background font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContentOutline({
+  page,
+  blockDefinitions,
+  onToggleVisibility,
+}: {
+  page: PageData;
+  blockDefinitions: BlockDefinition[];
+  onToggleVisibility: (blockId: string) => void;
+}) {
+  const labels = new Map(blockDefinitions.map((block) => [block.type, block.label]));
+  const sections = [...page.layout.sections].sort((a, b) => a.position - b.position);
+
+  return (
+    <div className="mt-4 border-y border-border/40" aria-label="Studio contents">
+      {sections.map((section, sectionIndex) => (
+        <div key={section.id} className="border-b border-border/30 last:border-b-0">
+          <div className="flex items-center justify-between gap-3 px-1 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Section {sectionIndex + 1}
+            </p>
+            <span className="text-[10px] text-muted-foreground">
+              {section.layout.replace(/_/g, " ")}
+            </span>
+          </div>
+          <div className="divide-y divide-border/20">
+            {section.blocks
+              .slice()
+              .sort((a, b) => a.position - b.position)
+              .map((block) => {
+                const isVisible = block.visible !== false;
+                return (
+                  <div key={block.id} className="flex items-center gap-3 px-1 py-2">
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${isVisible ? "bg-[var(--user-accent,var(--trust))]" : "bg-muted-foreground/35"}`}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className={`min-w-0 flex-1 truncate text-xs ${isVisible ? "text-foreground" : "text-muted-foreground line-through"}`}
+                    >
+                      {labels.get(block.type) ?? block.type}
+                    </span>
+                    <button
+                      type="button"
+                      className="rounded-md p-1.5 text-muted-foreground transition hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => onToggleVisibility(block.id)}
+                      aria-label={`${isVisible ? "Hide" : "Show"} ${labels.get(block.type) ?? "block"}`}
+                      title={isVisible ? "Hide from Studio" : "Show in Studio"}
+                    >
+                      {isVisible ? (
+                        <Eye className="h-3.5 w-3.5" />
+                      ) : (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -589,16 +944,19 @@ function BlockPickerPanel({ onAdd, onClose }: BlockPickerPanelProps) {
         <X className="h-3.5 w-3.5" />
       </Button>
       <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Build your Studio
+        Add to your Studio
       </h3>
       <p className="mb-3 text-[11px] text-muted-foreground">
-        Choose a content block, then arrange it into the story you want visitors to follow.
+        Start with the part of your story you want people to discover.
       </p>
       {[...categories.entries()].map(([category, items]) => (
-        <div key={category} className="mb-3 last:mb-0">
-          <h4 className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+        <div key={category} className="mb-4 last:mb-0">
+          <h4 className="mb-0.5 text-[11px] font-medium text-foreground">
             {CATEGORY_LABELS[category] ?? category}
           </h4>
+          <p className="mb-1.5 text-[10px] leading-relaxed text-muted-foreground">
+            {CATEGORY_DESCRIPTIONS[category] ?? "Choose what belongs in your Studio."}
+          </p>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
             {items.map((block) => (
               <button

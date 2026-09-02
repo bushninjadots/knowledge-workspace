@@ -19,6 +19,9 @@ interface SortableBlockProps {
   onConfigure: () => void;
   onConfigChange: (config: Record<string, unknown>) => void;
   onResize: () => void;
+  isSelected?: boolean;
+  isHidden?: boolean;
+  onSelect?: () => void;
 }
 
 export function SortableBlock({
@@ -32,6 +35,9 @@ export function SortableBlock({
   onConfigure,
   onConfigChange,
   onResize,
+  isSelected = false,
+  isHidden = false,
+  onSelect,
 }: SortableBlockProps) {
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
@@ -43,14 +49,40 @@ export function SortableBlock({
 
   return (
     <div
-      className="group/edit relative rounded-lg border border-transparent transition-colors hover:border-card-border"
+      className={`group/edit relative rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))] ${
+        isSelected
+          ? "border-[var(--user-accent-border,var(--trust))] bg-[var(--user-accent-subtle,var(--surface-elevated))]/15"
+          : "border-transparent hover:border-card-border"
+      } ${isHidden ? "opacity-60" : ""}`}
       draggable
+      tabIndex={0}
+      role="group"
+      aria-label={`${block.type} block${isHidden ? " hidden from your public Studio" : ""}`}
+      aria-current={isSelected ? "true" : undefined}
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("button, a, input, textarea, select, [role='button']")) return;
+        onSelect?.();
+      }}
+      onKeyDown={(event) => {
+        if ((event.key === "Enter" || event.key === " ") && event.currentTarget === event.target) {
+          event.preventDefault();
+          onSelect?.();
+        }
+      }}
       onDragStart={handleDragStart}
       data-block-id={block.id}
+      data-block-selected={isSelected ? "true" : "false"}
     >
-      {/* Block controls stay visible in Customize mode so the primary edit path
-          is discoverable on touch devices as well as with a mouse. */}
-      <div className="absolute -top-3 right-2 z-10 flex flex-wrap items-center gap-1 rounded-md border border-card-border bg-surface-elevated px-1.5 py-1 opacity-100 shadow-sm sm:opacity-0 sm:group-hover/edit:opacity-100 sm:group-focus-within/edit:opacity-100">
+      {/* Controls stay quiet until the block is selected. Desktop users can
+          still reveal them on hover; touch users select the block first. */}
+      <div
+        className={`absolute -top-3 right-2 z-10 flex flex-wrap items-center gap-1 rounded-md border border-card-border bg-surface-elevated px-1.5 py-1 shadow-sm transition-opacity ${
+          isSelected
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0 sm:pointer-events-none sm:group-hover/edit:pointer-events-auto sm:group-hover/edit:opacity-100 sm:group-focus-within/edit:pointer-events-auto sm:group-focus-within/edit:opacity-100"
+        }`}
+      >
         <button
           type="button"
           className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
@@ -126,6 +158,11 @@ export function SortableBlock({
 
       {/* Visually hidden label for accessibility */}
       <span className="sr-only">{block.type} block</span>
+      {isHidden && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">
+          Hidden from public Studio
+        </span>
+      )}
 
       {/* Block content */}
       <BlockRenderer

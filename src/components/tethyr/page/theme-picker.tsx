@@ -17,10 +17,18 @@ interface ThemePickerProps {
   ownerId: string;
   ownerType: PageOwnerType;
   onClose: () => void;
+  onBeforeApply?: () => void;
   onApplied: () => void;
 }
 
-export function ThemePicker({ page, ownerId, ownerType, onClose, onApplied }: ThemePickerProps) {
+export function ThemePicker({
+  page,
+  ownerId,
+  ownerType,
+  onClose,
+  onBeforeApply,
+  onApplied,
+}: ThemePickerProps) {
   const { data: themes = [], isLoading } = useThemeCatalog();
   const updateTheme = useUpdatePageTheme();
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -28,6 +36,7 @@ export function ThemePicker({ page, ownerId, ownerType, onClose, onApplied }: Th
   const currentThemeId = page.themeId || DEFAULT_THEME_ID;
 
   function handleApply(themeId: string) {
+    onBeforeApply?.();
     setApplyingId(themeId);
     updateTheme.mutate(
       { pageId: page.id, ownerId, ownerType, themeId },
@@ -45,6 +54,7 @@ export function ThemePicker({ page, ownerId, ownerType, onClose, onApplied }: Th
 
   function handleReset() {
     // Reset to Tethyr Default by setting theme_id to null.
+    onBeforeApply?.();
     setApplyingId("default");
     updateTheme.mutate(
       { pageId: page.id, ownerId, ownerType, themeId: null },
