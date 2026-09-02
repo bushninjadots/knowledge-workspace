@@ -77,7 +77,7 @@ export function SortableBlock({
       {/* Controls stay quiet until the block is selected. Desktop users can
           still reveal them on hover; touch users select the block first. */}
       <div
-        className={`absolute -top-3 right-2 z-10 flex flex-wrap items-center gap-1 rounded-md border border-card-border bg-surface-elevated px-1.5 py-1 shadow-sm transition-opacity ${
+        className={`absolute right-2 top-2 z-10 flex flex-wrap items-center gap-1 rounded-md border border-border/70 bg-background px-1 py-0.5 transition-opacity ${
           isSelected
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0 sm:pointer-events-none sm:group-hover/edit:pointer-events-auto sm:group-hover/edit:opacity-100 sm:group-focus-within/edit:pointer-events-auto sm:group-focus-within/edit:opacity-100"

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Compass, Hammer, Users, ArrowUpRight } from "lucide-react";
@@ -20,6 +21,7 @@ type DirData = {
 };
 
 function ProfileDirectionBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["profile-direction-block", profileId],
@@ -59,8 +61,18 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
     },
     enabled: !!profileId,
   });
+  const hasContent =
+    !!data &&
+    ((config.showProject !== false && !!data.active_project) ||
+      (config.showAvailability !== false && !!data.availability) ||
+      (config.showGoals !== false && !!data.learning_goals));
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
+
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
-  if (!data || (!data.availability && !data.learning_goals && !data.active_project)) {
+  if (!data || !hasContent) {
     if (context.isEditing)
       return (
         <BlockEmptyState

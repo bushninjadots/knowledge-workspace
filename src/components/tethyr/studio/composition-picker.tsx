@@ -97,7 +97,7 @@ export function CompositionPicker({
   }
 
   return (
-    <div className="relative mb-4 rounded-xl border border-card-border bg-surface-elevated p-4">
+    <div className="studio-tool-panel relative mb-5 px-4 py-4 sm:px-5">
       <Button
         variant="ghost"
         size="icon"

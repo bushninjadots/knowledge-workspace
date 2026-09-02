@@ -1,6 +1,7 @@
 // ── Profile Skills Block ──────────────────────────────────────────────────────
 // Shows the profile's teach/learn skills with experience and verification badges.
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +28,7 @@ const VERIF_LABEL: Record<string, string> = {
 };
 
 function ProfileSkillsBlock({ context, config }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -53,15 +55,21 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const teach = data?.teach ?? [];
+  const learn = data?.learn ?? [];
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, teach.length === 0 && learn.length === 0);
+  }, [blockId, isEditing, isLoading, learn.length, onBlockEmptyChange, teach.length]);
+
   if (isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
   if (!data) return null;
 
-  const { teach, learn } = data;
   if (teach.length === 0 && learn.length === 0) {
     if (context.isEditing) {
       return (
         <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
-          Skills block — skills will appear here when added to your profile.
+          Skills block — add the skills you share or are growing.
         </div>
       );
     }

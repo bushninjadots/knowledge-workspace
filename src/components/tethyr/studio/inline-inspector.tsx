@@ -29,11 +29,6 @@ interface InlineInspectorProps {
   onProfileMediaSaved?: () => void;
 }
 
-function stringValue(config: BlockConfig, key: string): string {
-  const value = config[key];
-  return typeof value === "string" ? value : "";
-}
-
 function looksLikeUrl(value: string): boolean {
   return /^https?:\/\/\S+$/.test(value.trim());
 }
@@ -57,8 +52,9 @@ export function InlineInspector({
   const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
+    const timers = debounceTimersRef.current;
     return () => {
-      Object.values(debounceTimersRef.current).forEach(clearTimeout);
+      Object.values(timers).forEach(clearTimeout);
     };
   }, []);
 
@@ -105,7 +101,7 @@ export function InlineInspector({
     <div
       role="dialog"
       aria-label={`${definition.label} settings`}
-      className="fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto rounded-xl border border-card-border bg-surface-elevated px-4 py-3 shadow-xl sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-24 sm:w-72 sm:max-h-[70vh]"
+      className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto rounded-xl border border-card-border bg-surface-elevated px-4 py-3 shadow-xl sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-24 sm:w-72 sm:max-h-[70vh]"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -137,7 +133,9 @@ export function InlineInspector({
       {onBlockLayoutChange && (
         <div className="mb-4 space-y-2 border-b border-border/30 pb-4">
           <p className="text-xs font-semibold text-foreground">Arrange this block</p>
-          <p className="text-[10px] text-muted-foreground">Choose where it starts and how wide it is in a multi-column section.</p>
+          <p className="text-[10px] text-muted-foreground">
+            Choose where it starts and how wide it is in a multi-column section.
+          </p>
           <div className="grid grid-cols-2 gap-2">
             <label className="text-[11px] text-muted-foreground">
               Start column
@@ -170,7 +168,9 @@ export function InlineInspector({
               />
             </label>
           </div>
-          <p className="text-[10px] text-muted-foreground">Changes save automatically. This only affects sections with columns.</p>
+          <p className="text-[10px] text-muted-foreground">
+            Changes save automatically. This only affects sections with columns.
+          </p>
         </div>
       )}
 

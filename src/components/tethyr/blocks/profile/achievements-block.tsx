@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Award } from "lucide-react";
@@ -17,6 +18,7 @@ type AchieveRow = {
 };
 
 function ProfileAchievementsBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
   const { data, isLoading } = useQuery({
     queryKey: ["profile-achievements-block", profileId],
@@ -43,8 +45,15 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
     },
     enabled: !!profileId,
   });
+  const achievements = data ?? [];
+  const hasContent = achievements.length > 0;
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
+
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
-  if (!data?.length) {
+  if (!hasContent) {
     if (context.isEditing)
       return (
         <BlockEmptyState
@@ -56,9 +65,11 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
   }
   return (
     <div>
-      <h4 className="mb-3 text-sm font-medium text-foreground">Achievements ({data.length})</h4>
+      <h4 className="mb-3 text-sm font-medium text-foreground">
+        Achievements ({achievements.length})
+      </h4>
       <div className="flex flex-wrap gap-3">
-        {data.map((a) => (
+        {achievements.map((a) => (
           <div
             key={a.id}
             className="flex min-w-44 flex-1 items-start gap-3 border-l-2 border-trust/40 pl-3"

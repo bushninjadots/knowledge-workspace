@@ -235,10 +235,10 @@ export function PageShell({
   const canvasFrameClass = isPreviewing
     ? previewFrameClasses(previewDevice)
     : isEditing
-      ? "mx-auto w-full max-w-7xl overflow-hidden rounded-xl border border-border/60 shadow-sm"
+      ? "mx-auto w-full max-w-5xl overflow-hidden border-y border-border/50"
       : "w-full";
   const workspaceClass =
-    isPreviewing || isEditing ? "bg-surface-sunken px-3 py-4 sm:px-6 sm:py-8" : "";
+    isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";
 
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
@@ -251,7 +251,7 @@ export function PageShell({
         />
       )}
       <div
-        className={workspaceClass}
+        className={`${workspaceClass} ${isPreviewing || isEditing ? "studio-editor-workspace" : ""}`}
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
       >
         <div
@@ -326,10 +326,10 @@ export function PageShell({
 function previewFrameClasses(device: PreviewDevice): string {
   switch (device) {
     case "mobile":
-      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-xl border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-lg border border-border/60 shadow-sm";
     case "tablet":
-      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-xl border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-lg border border-border/60 shadow-sm";
     default:
-      return "mx-auto w-full max-w-7xl overflow-hidden rounded-xl border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-7xl overflow-hidden rounded-lg border border-border/60 shadow-sm";
   }
 }

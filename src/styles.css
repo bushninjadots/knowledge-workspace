@@ -333,6 +333,117 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Editor chrome — stable Tethyr workspace tokens
+ * ------------------------------------------------------------------------ */
+
+/*
+ * The editor workspace is intentionally a stable surface around the canvas.
+ * The canvas below gets its own page theme; this layer only frames the work.
+ */
+.studio-editor-workspace {
+  background-color: oklch(0.968 0.0025 265);
+}
+
+.dark .studio-editor-workspace {
+  background-color: oklch(0.138 0.006 258);
+}
+
+/* Tool surfaces are part of the workbench, not floating cards. The quiet
+   horizontal rule keeps an open editor rhythm while separating active tools
+   from the canvas below. */
+.studio-tool-panel {
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/*
+ * A creator's Studio can intentionally change its background, radius, type,
+ * and accent. Editor controls stay on the app's neutral workspace tokens so
+ * those choices cannot reduce control contrast or make the canvas chrome
+ * disappear into the work being edited.
+ */
+.studio-editor-chrome {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.205 0.006 265);
+  --surface: oklch(0.985 0.0015 265);
+  --surface-elevated: oklch(1 0 0);
+  --surface-sunken: oklch(0.968 0.0025 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.006 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.006 265);
+  --muted: oklch(0.968 0.003 265);
+  --muted-foreground: oklch(0.49 0.012 265);
+  --muted-foreground-subtle: oklch(0.55 0.012 265);
+  --primary: oklch(0.16 0.004 265);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.972 0.003 265);
+  --secondary-foreground: oklch(0.205 0.006 265);
+  --accent: oklch(0.968 0.003 265);
+  --accent-foreground: oklch(0.205 0.006 265);
+  --border: oklch(0.912 0.004 265);
+  --border-strong: oklch(0.845 0.007 265);
+  --input: oklch(0.905 0.005 265);
+  --ring: oklch(0.55 0.16 253);
+  --destructive: oklch(0.53 0.19 27);
+  --destructive-foreground: oklch(1 0 0);
+  --user-accent: oklch(0.52 0.17 253);
+  --user-accent-foreground: oklch(1 0 0);
+  --user-accent-subtle: color-mix(in oklab, oklch(0.52 0.17 253) 10%, transparent);
+  --user-accent-border: color-mix(in oklab, oklch(0.52 0.17 253) 30%, transparent);
+  --user-accent-glow: color-mix(in oklab, oklch(0.52 0.17 253) 6%, transparent);
+  --card-border-color: var(--border);
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-title: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 4px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 5px;
+  --radius-2xl: 5px;
+  --radius-3xl: 6px;
+  --radius-4xl: 8px;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.dark .studio-editor-chrome {
+  --background: oklch(0.152 0.006 260);
+  --foreground: oklch(0.93 0.005 250);
+  --surface: oklch(0.192 0.009 258);
+  --surface-elevated: oklch(0.22 0.01 258);
+  --surface-sunken: oklch(0.138 0.006 258);
+  --card: oklch(0.205 0.009 258);
+  --card-foreground: oklch(0.93 0.005 250);
+  --popover: oklch(0.22 0.009 260);
+  --popover-foreground: oklch(0.93 0.005 250);
+  --muted: oklch(0.24 0.009 260);
+  --muted-foreground: oklch(0.74 0.012 255);
+  --muted-foreground-subtle: oklch(0.65 0.013 255);
+  --primary: oklch(0.95 0.004 250);
+  --primary-foreground: oklch(0.16 0.006 260);
+  --secondary: oklch(0.24 0.009 260);
+  --secondary-foreground: oklch(0.93 0.005 250);
+  --accent: oklch(0.25 0.01 260);
+  --accent-foreground: oklch(0.93 0.005 250);
+  --border: oklch(0.32 0.012 258);
+  --border-strong: oklch(0.42 0.014 258);
+  --input: oklch(0.33 0.012 258);
+  --ring: oklch(0.68 0.18 253);
+  --destructive: oklch(0.7 0.22 25);
+  --destructive-foreground: oklch(0.14 0.04 26);
+  --user-accent: oklch(0.73 0.18 250);
+  --user-accent-foreground: oklch(0.14 0.04 253);
+  --user-accent-subtle: color-mix(in oklab, oklch(0.73 0.18 250) 16%, transparent);
+  --user-accent-border: color-mix(in oklab, oklch(0.73 0.18 250) 36%, transparent);
+  --user-accent-glow: color-mix(in oklab, oklch(0.73 0.18 250) 10%, transparent);
+  --card-border-color: var(--border);
+}
+
+/* ---------------------------------------------------------------------------
  * Structural primitives — panels, rules, section headers
  * ------------------------------------------------------------------------ */
 

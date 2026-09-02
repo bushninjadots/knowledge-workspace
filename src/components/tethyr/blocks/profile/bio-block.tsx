@@ -2,6 +2,7 @@
 // Shows the profile's bio and learning goals. Simple text display.
 // `learning_goals` is owned by the Direction block; this block shows bio only.
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,7 @@ type BioData = {
 };
 
 function ProfileBioBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -29,10 +31,14 @@ function ProfileBioBlock({ config, context }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const hasBio = !!data?.bio?.trim() && config.showAbout !== false;
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasBio);
+  }, [blockId, hasBio, isEditing, isLoading, onBlockEmptyChange]);
+
   if (isLoading) return <Skeleton className="h-16 w-full rounded-xl" />;
   if (!data) return null;
-
-  const hasBio = data.bio && data.bio.trim().length > 0;
   if (!hasBio) {
     if (context.isEditing) {
       return (
@@ -43,8 +49,6 @@ function ProfileBioBlock({ config, context }: BlockProps) {
     }
     return null;
   }
-
-  if (config.showAbout === false) return null;
 
   return (
     <div>

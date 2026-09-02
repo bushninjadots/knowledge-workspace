@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
+import { EditorChromeBoundary } from "@/components/tethyr/page/editor-chrome-boundary";
 import {
   usePublishPage,
   useUnpublishPage,
@@ -380,47 +381,50 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Preview mode ───────────────────────────────────────────────────
   if (isPreviewing) {
     return (
-      <PreviewToolbar
-        device={previewDevice}
-        onDeviceChange={setPreviewDevice}
-        onBackToEditor={stopPreview}
-      />
+      <EditorChromeBoundary className="mx-auto w-full max-w-5xl">
+        <PreviewToolbar
+          device={previewDevice}
+          onDeviceChange={setPreviewDevice}
+          onBackToEditor={stopPreview}
+        />
+      </EditorChromeBoundary>
     );
   }
 
   // ── Entry point (not editing) ──────────────────────────────────────
   if (!isEditing) {
     return (
-      <div className="mb-6 border-b border-border/30 pb-4">
+      <EditorChromeBoundary className="mx-auto mb-5 w-full max-w-5xl border-b border-border/40 pb-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="section-label">Your Studio</p>
-            <h2 className="mt-1 font-display text-lg font-semibold">
-              Create a space that feels like yours
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Customize the story, arrange the work, and publish when it is ready to share.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[var(--user-accent,var(--trust))]"
+              aria-hidden="true"
+            />
+            <span className="text-xs text-muted-foreground">Studio controls</span>
             {page.status === "draft" && (
               <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                 Draft
               </span>
             )}
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={startEditing}>
-              <Edit3 className="h-3.5 w-3.5" /> Edit Studio
-            </Button>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={startEditing}
+          >
+            <Edit3 className="h-3.5 w-3.5" /> Edit Studio
+          </Button>
         </div>
-      </div>
+      </EditorChromeBoundary>
     );
   }
 
   // ── Editing toolbar ────────────────────────────────────────────────
   return (
-    <>
-      <div className="mb-6 border-y border-border/40 bg-background px-3 py-3 sm:px-4">
+    <EditorChromeBoundary className="mx-auto w-full max-w-5xl">
+      <div className="mb-5 border-b border-border/50 bg-background px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Button
@@ -509,7 +513,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={selectTab} className="mt-3">
+        <Tabs value={activeTab} onValueChange={selectTab} className="mt-4">
           <TabsList className="h-10 w-full gap-5 overflow-x-auto border-border/60 sm:gap-7">
             <TabsTrigger value="content" className="h-10 gap-1.5 text-xs sm:text-[13px]">
               <Plus className="h-3.5 w-3.5" /> Content
@@ -690,7 +694,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
       {/* Save as template dialog */}
       {showTemplateName && (
-        <div className="relative mb-4 rounded-xl border border-card-border bg-surface-elevated p-4">
+        <div className="studio-tool-panel relative mb-5 px-4 py-4 sm:px-5">
           <Button
             variant="ghost"
             size="icon"
@@ -729,7 +733,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
       {/* Apply template panel */}
       {showApplyPanel && (
-        <div className="relative mb-4 rounded-xl border border-card-border bg-surface-elevated p-4">
+        <div className="studio-tool-panel relative mb-5 px-4 py-4 sm:px-5">
           <Button
             variant="ghost"
             size="icon"
@@ -792,7 +796,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           open={!!confirmingTemplate}
           onOpenChange={(open) => !open && setConfirmingTemplate(null)}
         >
-          <DialogContent className="sm:max-w-sm">
+          <DialogContent className="studio-editor-chrome sm:max-w-sm">
             <DialogHeader>
               <DialogTitle>Apply “{confirmingTemplate.name}”?</DialogTitle>
               <DialogDescription>
@@ -841,7 +845,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           }}
         />
       )}
-    </>
+    </EditorChromeBoundary>
   );
 }
 
@@ -861,7 +865,7 @@ function PreviewToolbar({
   ] as const;
 
   return (
-    <div className="mb-6 border-y border-border/40 bg-background px-3 py-3 sm:px-4">
+    <div className="mb-5 border-b border-border/50 bg-background px-3 py-3 sm:px-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <Button
@@ -993,7 +997,7 @@ function BlockPickerPanel({ onAdd, onClose }: BlockPickerPanelProps) {
   }, [blocks]);
 
   return (
-    <div className="relative mb-4 rounded-xl border border-card-border bg-surface-elevated p-4">
+    <div className="studio-tool-panel relative mb-5 px-4 py-4 sm:px-5">
       <Button
         variant="ghost"
         size="icon"

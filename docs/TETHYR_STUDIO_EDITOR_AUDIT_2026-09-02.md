@@ -16,23 +16,23 @@ real gaps into a prioritized execution plan.
 
 ## Grounding: how the Studio is actually wired
 
-| Concern | Where it lives | Notes |
-| --- | --- | --- |
-| Studio host (owner) | `src/routes/_authenticated/profile.tsx` | Also hosts setup form, skill editor, GitHub connect. |
-| Public Studio | `src/routes/u.$handle.tsx` → `PageShell` | Read-only unless the owner is signed in. |
-| Editor toolbar + tabs | `src/components/tethyr/page/editor-toolbar.tsx` | Content / Layout / Style / Settings tabs, undo/redo, preview, publish. |
-| Edit / view / preview state | `src/components/tethyr/page/edit-mode-context.tsx` | `isEditing` / `isPreviewing` / `previewDevice`. |
-| Canvas renderer (sections→blocks) | `src/components/tethyr/page/page-layout.tsx` | Section grid + contextual block/section controls. |
-| Per-block hover tray + drag | `src/components/tethyr/page/sortable-block.tsx` | Drag handle, move up/down, resize, edit, remove. |
-| Per-block settings panel | `src/components/tethyr/studio/inline-inspector.tsx` | Persist-on-change + debounce. |
-| Composition ("arrange" preset) | `src/components/tethyr/studio/composition-picker.tsx` | Confirm before replacing an existing arrangement. |
-| Vibe (tone preset) | `src/components/tethyr/studio/personality-picker.tsx` | Restyles without touching arrangement. |
-| Appearance (radius/type/density/accent) | `src/components/tethyr/studio/appearance-panel.tsx` | Fine-grained, no personality needed. |
-| Theme picker (mini previews) | `src/components/tethyr/page/theme-picker.tsx` | Swatch preview per theme + reset to default. |
-| Background editor (App / Public Studio) | `src/components/tethyr/profile/background-picker-dialog.tsx` | Lives as a modal. |
-| Identity / banner / caption editing | `src/components/tethyr/profile/hero-edit-controls.tsx` | Edit-mode gated (`context.isOwner && context.isEditing`). |
-| Block system | `src/lib/block-registry.ts`, `src/lib/page-blocks.ts` | Registry keyed by type; blocks self-register. |
-| **Dead code** | `src/components/tethyr/studio/studio-guide.tsx`, `studio-navigation.tsx` | Defined but never imported anywhere. |
+| Concern                                 | Where it lives                                                           | Notes                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Studio host (owner)                     | `src/routes/_authenticated/profile.tsx`                                  | Also hosts setup form, skill editor, GitHub connect.                   |
+| Public Studio                           | `src/routes/u.$handle.tsx` → `PageShell`                                 | Read-only unless the owner is signed in.                               |
+| Editor toolbar + tabs                   | `src/components/tethyr/page/editor-toolbar.tsx`                          | Content / Layout / Style / Settings tabs, undo/redo, preview, publish. |
+| Edit / view / preview state             | `src/components/tethyr/page/edit-mode-context.tsx`                       | `isEditing` / `isPreviewing` / `previewDevice`.                        |
+| Canvas renderer (sections→blocks)       | `src/components/tethyr/page/page-layout.tsx`                             | Section grid + contextual block/section controls.                      |
+| Per-block hover tray + drag             | `src/components/tethyr/page/sortable-block.tsx`                          | Drag handle, move up/down, resize, edit, remove.                       |
+| Per-block settings panel                | `src/components/tethyr/studio/inline-inspector.tsx`                      | Persist-on-change + debounce.                                          |
+| Composition ("arrange" preset)          | `src/components/tethyr/studio/composition-picker.tsx`                    | Confirm before replacing an existing arrangement.                      |
+| Vibe (tone preset)                      | `src/components/tethyr/studio/personality-picker.tsx`                    | Restyles without touching arrangement.                                 |
+| Appearance (radius/type/density/accent) | `src/components/tethyr/studio/appearance-panel.tsx`                      | Fine-grained, no personality needed.                                   |
+| Theme picker (mini previews)            | `src/components/tethyr/page/theme-picker.tsx`                            | Swatch preview per theme + reset to default.                           |
+| Background editor (App / Public Studio) | `src/components/tethyr/profile/background-picker-dialog.tsx`             | Lives as a modal.                                                      |
+| Identity / banner / caption editing     | `src/components/tethyr/profile/hero-edit-controls.tsx`                   | Edit-mode gated (`context.isOwner && context.isEditing`).              |
+| Block system                            | `src/lib/block-registry.ts`, `src/lib/page-blocks.ts`                    | Registry keyed by type; blocks self-register.                          |
+| **Dead code**                           | `src/components/tethyr/studio/studio-guide.tsx`, `studio-navigation.tsx` | Defined but never imported anywhere.                                   |
 
 ## Verdict
 
@@ -43,17 +43,17 @@ below is about **reorganizing, not rebuilding**.
 
 ### Scorecard (updated against code)
 
-| Area | Note |
-| --- | --- |
-| Content / Layout / Style / Settings tabs | ✅ Shipped exactly as the target editor proposed. |
-| Undo / Redo + Cmd/Ctrl+Z | ✅ `studio-history.ts` + context + toolbar. |
-| Preview (Desktop / Tablet / Mobile) | ✅ `previewDevice` frames in `page-shell.tsx`. |
-| Save-state indicator | ⚠️ Status label exists, but publishes flip a single page `status`; no draft copy separation. |
-| Template preview-before-apply | 🔴 Missing — applying a template is immediate; only composition-swap confirms. |
-| Empty public sections collapse | ⚠️ Half: blocks `return null` when empty in view, but the section band still renders with padding + divider. |
-| Editor chrome neutrality (#35/#36) | 🔴 Toolbar/chrome sits inside the owner's `BackgroundLayer` + `appearanceStyle`. |
+| Area                                     | Note                                                                                                                             |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Content / Layout / Style / Settings tabs | ✅ Shipped exactly as the target editor proposed.                                                                                |
+| Undo / Redo + Cmd/Ctrl+Z                 | ✅ `studio-history.ts` + context + toolbar.                                                                                      |
+| Preview (Desktop / Tablet / Mobile)      | ✅ `previewDevice` frames in `page-shell.tsx`.                                                                                   |
+| Save-state indicator                     | ⚠️ Status label exists, but publishes flip a single page `status`; no draft copy separation.                                     |
+| Template preview-before-apply            | 🔴 Missing — applying a template is immediate; only composition-swap confirms.                                                   |
+| Empty public sections collapse           | ✅ View-mode blocks report resolved emptiness and fully empty profile sections are omitted, including their band + divider.      |
+| Editor chrome neutrality (#35/#36)       | ✅ Edit/preview chrome and workspace use stable Tethyr tokens; the themed Studio canvas remains separate.                        |
 | Identity editing consolidation (#17/#18) | ⚠️ Identity edited via `hero-edit-controls`, `ProfileSetupForm`, `skill-editing`, and route-level avatar/banner — four surfaces. |
-| Dead code | 🔴 `studio-guide.tsx`, `studio-navigation.tsx` unused. |
+| Dead code                                | 🔴 `studio-guide.tsx`, `studio-navigation.tsx` unused.                                                                           |
 
 ## What already ships (don't rebuild)
 
@@ -69,6 +69,7 @@ below is about **reorganizing, not rebuilding**.
 Per `TETHYR_UX_RULES.md`, order is smallest-strong-change first:
 
 ### P0 — Correctness of the model
+
 1. **Public empty-section collapse** (`page-layout.tsx`): a section whose
    wrapped blocks all render no content must not reserve a band + divider.
    (The critique's "three giant empty boxes" — gallery/experience/links.)
@@ -77,15 +78,20 @@ Per `TETHYR_UX_RULES.md`, order is smallest-strong-change first:
    behind what you make" copy everywhere a block uses `BlockEmptyState`.
 
 ### P1 — Editor chrome neutrality
-4. Separate the editor toolbar/panel chrome from the owner's
+
+4. ✅ Separate the editor toolbar/panel chrome from the owner's
    `BackgroundLayer`/`appearanceStyle` so an extreme creator theme cannot break
-   editor readability.
+   editor readability. The owner route suppresses the wallpaper during edit and
+   preview, the workspace gets a stable neutral surface, and contextual panels
+   use the same neutral token scope.
 
 ### P2 — Destructive-safety + publishing clarity
+
 5. **Template preview-before-apply** + an apply-confirmation enumerating what
    changes (sections, order, spacing) while content is preserved.
 
 ### P3 — Presentation polish
+
 6. A compact "Studio readiness" indicator (data already flows through
    `setupCompleteness`), surfaced without adding a checklist to the canvas.
 
@@ -96,12 +102,23 @@ Per `TETHYR_UX_RULES.md`, order is smallest-strong-change first:
   generic `onBlockEmptyChange` reporter + `shouldRenderSectionInView` helper
   (with tests), removed dead `studio-guide.tsx` / `studio-navigation.tsx`,
   and brightened empty-state copy across profile blocks.
+- Extended the P0 contract across the remaining profile data blocks (projects,
+  skills, bio, direction, tools, and achievements), including configuration
+  visibility toggles, so public sections collapse only after their content
+  state is known.
+- Implemented P1 editor chrome neutrality: `EditorChromeBoundary` scopes
+  stable Tethyr tokens across the toolbar, preview bar, dropdowns, dialogs,
+  resize panel, and inline inspector; edit/preview mode suppresses the owner's
+  wallpaper and renders the Studio canvas on a neutral workspace.
+- Corrected section action indices after public filtering: display order and
+  persisted layout order are now kept separate, so move, drop, duplicate, and
+  visibility actions target the intended section.
 - Implemented P2 part 1 (this branch, uncommitted at audit time): an
   apply-confirmation dialog for templates, plus corrected the false copy
   ("Content in blocks stays with the page") — applying a template actually
   **replaces** the creator's sections and blocks, protected only by undo.
-- Deferred P1 (editor chrome neutrality) and the remaining P2/P3 items to
-  follow-up passes to keep scope and reviewability bounded.
+- Remaining P2/P3 items stay deferred to follow-up passes to keep scope and
+  reviewability bounded.
 
 ## Validation
 
@@ -109,8 +126,10 @@ Per `TETHYR_UX_RULES.md`, order is smallest-strong-change first:
 - `npm run lint` (changed files)
 - `npm run test`
 - Source review of empty-collapse behavior (see limitations below).
-- Build/route smoke where practical.
+- Build/route smoke where practical.Known limitation: no live browser verification was possible in this pass; the
+  empty-collapse behavior and editor boundary were validated by source review,
+  focused tests, full Vitest, changed-file ESLint, and typecheck. Typecheck still
+  reports pre-existing generated Supabase schema drift in unrelated project,
+  repository, activity, and page-editor query modules. A browser pass at desktop
 
-Known limitation: no live browser verification was possible in this pass; the
-empty-collapse behavior was validated by source review + typecheck. A browser
-pass at desktop + 390px is the recommended next confirmation.
+* 390px is the recommended next confirmation.

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, Layers } from "lucide-react";
@@ -9,6 +10,7 @@ import type { BlockProps } from "@/lib/page-blocks";
 type ToolsData = { favourite_tools: string[]; software_stack: string[] };
 
 function ProfileToolsBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -25,6 +27,14 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const tools = data && config.showFavourites !== false ? (data.favourite_tools ?? []) : [];
+  const stack = data && config.showStack !== false ? (data.software_stack ?? []) : [];
+  const hasContent = tools.length > 0 || stack.length > 0;
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [blockId, hasContent, isEditing, isLoading, onBlockEmptyChange]);
+
   if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
   if (!data) {
     if (context.isEditing)
@@ -36,9 +46,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
       );
     return null;
   }
-  const tools = config.showFavourites === false ? [] : (data.favourite_tools ?? []);
-  const stack = config.showStack === false ? [] : (data.software_stack ?? []);
-  if (tools.length === 0 && stack.length === 0) {
+  if (!hasContent) {
     if (context.isEditing)
       return <BlockEmptyState label="Tools & Stack" detail="Add the tools and software you use." />;
     return null;

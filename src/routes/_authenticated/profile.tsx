@@ -21,8 +21,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
-import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
+import { EditModeProvider, useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,36 +172,74 @@ function ProfilePage() {
         className={`relative isolate min-h-screen ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
         style={{ ...appearanceStyle(setupBackground) }}
       >
-        <BackgroundLayer background={setupBackground} imageUrl={profileQuery.data.backgroundImageUrl} />
+        <BackgroundLayer
+          background={setupBackground}
+          imageUrl={profileQuery.data.backgroundImageUrl}
+        />
         {setupForm()}
       </div>
     );
   }
 
   return (
+    <EditModeProvider>
+      <StudioArea
+        profile={profile}
+        userId={userId}
+        setupPercent={setupPercent}
+        background={background}
+        backgroundImageUrl={profileQuery.data.backgroundImageUrl}
+        onRefresh={refresh}
+        onOpenCompleteProfile={() => setShowSetup(true)}
+      />
+    </EditModeProvider>
+  );
+}
+
+// ── Studio Area ─────────────────────────────────────────────────────────────
+// The owner's Studio route. In view mode the creator's background renders as
+// the immersive backdrop; in edit/preview mode the wallpaper is suppressed so
+// the editor chrome stays readable on the neutral Tethyr surface (the Studio
+// canvas itself still renders the page's own theme). Accent/density vars are
+// kept in both modes so the canvas content keeps the creator's accent.
+function StudioArea({
+  profile,
+  userId,
+  setupPercent,
+  background,
+  backgroundImageUrl,
+  onRefresh,
+  onOpenCompleteProfile,
+}: {
+  profile: ProfileType | null;
+  userId: string;
+  setupPercent: number;
+  background: ProfileBackground | null;
+  backgroundImageUrl: string | null;
+  onRefresh: () => void;
+  onOpenCompleteProfile: () => void;
+}) {
+  const { isEditing, isPreviewing } = useEditMode();
+  const editing = isEditing || isPreviewing;
+
+  return (
     <div
       className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={{ ...appearanceStyle(background) }}
     >
-      <BackgroundLayer background={background} imageUrl={profileQuery.data.backgroundImageUrl} />
+      {/* The creator's wallpaper only shows in view mode — never behind the
+          editor chrome. */}
+      {!editing && <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />}
       <>
-      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="section-label">Personal creative space</p>
-            <h1 className="mt-1 font-display text-2xl font-semibold">Your Studio</h1>
-            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-              One Studio system. Infinite personalities. Shape the space around the work you want to
-              be known for.
-            </p>
+        {!editing && (
+          <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+            <div className="mb-4">
+              <p className="section-label">Personal creative space</p>
+              <h1 className="mt-1 font-display text-2xl font-semibold">Your Studio</h1>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Create → Customize → Personalize → Arrange → Preview → Publish
-          </p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-        <EditModeProvider>
+        )}
+        <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
           <PageShell
             ownerId={userId}
             ownerType="profile"
@@ -211,12 +248,11 @@ function ProfilePage() {
               avatarUrl: profile?.avatar_url ?? null,
               bannerUrl: profile?.banner_url ?? null,
             }}
-            onProfileMediaSaved={refresh}
+            onProfileMediaSaved={onRefresh}
             profileCompleteness={setupPercent}
-            onCompleteProfile={() => setShowSetup(true)}
+            onCompleteProfile={onOpenCompleteProfile}
           />
-        </EditModeProvider>
-      </div>
+        </div>
       </>
     </div>
   );

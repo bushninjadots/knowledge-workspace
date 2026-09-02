@@ -320,11 +320,11 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       const blockId = e.dataTransfer.getData("text/plain");
       if (!blockId) return;
 
-      // Find source block and section.
+      // Find source block and section in the persisted layout order.
       let srcSectionIdx = -1;
       let srcBlockIdx = -1;
-      for (let si = 0; si < sections.length; si++) {
-        const bi = sections[si].blocks.findIndex((b) => b.id === blockId);
+      for (let si = 0; si < layout.sections.length; si++) {
+        const bi = layout.sections[si].blocks.findIndex((b) => b.id === blockId);
         if (bi !== -1) {
           srcSectionIdx = si;
           srcBlockIdx = bi;
@@ -351,17 +351,22 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       });
       onLayoutChange({ sections: newSections });
     },
-    [layout, onLayoutChange, sections],
+    [layout, onLayoutChange],
   );
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col" data-page-layout>
-      {sectionsToRender.map((section, si) => {
+      {sectionsToRender.map((section) => {
+        const sectionIndex = sections.findIndex((candidate) => candidate.id === section.id);
+        const layoutSectionIndex = layout.sections.findIndex(
+          (candidate) => candidate.id === section.id,
+        );
         const gridClass = SECTION_GRID[section.layout] ?? "";
         const blocks = section.blocks
           .filter((b) => context.isEditing || b.visible !== false)
           .sort((a, b) => a.position - b.position);
+        const persistedBlocks = layout.sections[layoutSectionIndex]?.blocks ?? [];
 
         const isWhitespaceLed = WHITESPACE_LED_LAYOUTS.has(section.layout);
 
@@ -371,18 +376,18 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             data-section-id={section.id}
             data-section-layout={section.layout}
             className={[
-              "py-[var(--spacing-section)] first:pt-0",
+              context.isEditing ? "py-8 first:pt-0" : "py-[var(--spacing-section)] first:pt-0",
               isWhitespaceLed ? "" : "border-b border-border/35 last:border-b-0 last:pb-0",
             ]
               .filter(Boolean)
               .join(" ")}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDrop(si, e)}
+            onDrop={(e) => handleDrop(layoutSectionIndex, e)}
           >
             {context.isEditing && (
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/25 pb-2">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/35 pb-2">
                 <p className="text-xs text-muted-foreground">
-                  Section {si + 1}
+                  Section {sectionIndex + 1}
                   <span className="ml-2 text-foreground">
                     · {section.blocks.map((block) => blockLabel(block.type)).join(" + ")}
                   </span>
@@ -394,28 +399,33 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      aria-label={`Section ${si + 1} actions`}
+                      aria-label={`Section ${sectionIndex + 1} actions`}
                     >
                       <MoreVertical className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="studio-editor-chrome w-48">
                     <DropdownMenuItem onClick={() => setConfiguringSectionId(section.id)}>
                       <LayoutGrid className="mr-2 h-3.5 w-3.5" /> Change layout
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDuplicateSection(si)}>
+                    <DropdownMenuItem onClick={() => handleDuplicateSection(layoutSectionIndex)}>
                       <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate section
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled={si === 0} onClick={() => handleMoveSection(si, -1)}>
+                    <DropdownMenuItem
+                      disabled={sectionIndex === 0}
+                      onClick={() => handleMoveSection(layoutSectionIndex, -1)}
+                    >
                       <ChevronDown className="mr-2 h-3.5 w-3.5 rotate-180" /> Move up
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      disabled={si === sections.length - 1}
-                      onClick={() => handleMoveSection(si, 1)}
+                      disabled={sectionIndex === sections.length - 1}
+                      onClick={() => handleMoveSection(layoutSectionIndex, 1)}
                     >
                       <ChevronDown className="mr-2 h-3.5 w-3.5" /> Move down
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleToggleSectionVisibility(si)}>
+                    <DropdownMenuItem
+                      onClick={() => handleToggleSectionVisibility(layoutSectionIndex)}
+                    >
                       {blocks.some((block) => block.visible !== false) ? (
                         <EyeOff className="mr-2 h-3.5 w-3.5" />
                       ) : (
@@ -437,89 +447,102 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               </div>
             )}
             <div
-              className={`${gridClass} content-safe ${context.isEditing ? "rounded-xl border border-transparent p-3 transition-colors" : ""}`}
+              className={`${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`}
               style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
               data-section-canvas={context.isEditing ? "true" : undefined}
             >
-              {blocks.map((block, bi) => (
-                <div
-                  key={`drop-${block.id}`}
-                  className={[
-                    context.isEditing
-                      ? "relative rounded-lg border border-transparent p-2 transition-colors hover:border-card-border hover:bg-surface/20"
-                      : "contents",
-                    gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
-                    dropTarget?.sectionIdx === si && dropTarget.blockIdx === bi
-                      ? "border-t-2 border-[var(--user-accent,var(--trust))]"
-                      : "",
-                  ].join(" ")}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDropTarget({ sectionIdx: si, blockIdx: bi });
-                  }}
-                  onDrop={(event) => handleBlockDrop(si, bi, event)}
-                >
-                  {context.isEditing ? (
-                    <SortableBlock
-                      block={block}
-                      context={context}
-                      isFirst={bi === 0}
-                      isLast={bi === blocks.length - 1}
-                      onMoveUp={() => handleMoveUp(si, bi)}
-                      onMoveDown={() => handleMoveDown(si, bi)}
-                      onRemove={() => {
-                        setSelectedBlockId(null);
-                        setRemovingBlockId(block.id);
-                      }}
-                      onConfigure={() => {
-                        setSelectedBlockId(block.id);
-                        setConfiguringBlockId(block.id);
-                      }}
-                      onResize={() => {
-                        setSelectedBlockId(block.id);
-                        setResizingBlockId(block.id);
-                      }}
-                      isSelected={selectedBlockId === block.id}
-                      isHidden={block.visible === false}
-                      onSelect={() => setSelectedBlockId(block.id)}
-                      onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
-                    />
-                  ) : (
-                    <BlockRenderer
-                      type={block.type}
-                      config={block.config}
-                      context={{
-                        ...context,
-                        blockId: block.id,
-                        profileCompleteness:
-                          block.type === "profile-header" ? profileCompleteness : undefined,
-                        onCompleteProfile:
-                          block.type === "profile-header" ? onCompleteProfile : undefined,
-                        onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+              {blocks.map((block, bi) => {
+                const persistedBlockIndex = persistedBlocks.findIndex(
+                  (candidate) => candidate.id === block.id,
+                );
+                return (
+                  <div
+                    key={`drop-${block.id}`}
+                    className={[
+                      context.isEditing
+                        ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
+                        : "contents",
+                      gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
+                      dropTarget?.sectionIdx === layoutSectionIndex && dropTarget.blockIdx === bi
+                        ? "border-t-2 border-[var(--user-accent,var(--trust))]"
+                        : "",
+                    ].join(" ")}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDropTarget({ sectionIdx: layoutSectionIndex, blockIdx: bi });
+                    }}
+                    onDrop={(event) =>
+                      handleBlockDrop(layoutSectionIndex, persistedBlockIndex, event)
+                    }
+                  >
+                    {context.isEditing ? (
+                      <SortableBlock
+                        block={block}
+                        context={context}
+                        isFirst={bi === 0}
+                        isLast={bi === blocks.length - 1}
+                        onMoveUp={() => handleMoveUp(layoutSectionIndex, persistedBlockIndex)}
+                        onMoveDown={() => handleMoveDown(layoutSectionIndex, persistedBlockIndex)}
+                        onRemove={() => {
+                          setSelectedBlockId(null);
+                          setRemovingBlockId(block.id);
+                        }}
+                        onConfigure={() => {
+                          setSelectedBlockId(block.id);
+                          setConfiguringBlockId(block.id);
+                        }}
+                        onResize={() => {
+                          setSelectedBlockId(block.id);
+                          setResizingBlockId(block.id);
+                        }}
+                        isSelected={selectedBlockId === block.id}
+                        isHidden={block.visible === false}
+                        onSelect={() => setSelectedBlockId(block.id)}
+                        onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
+                      />
+                    ) : (
+                      <BlockRenderer
+                        type={block.type}
+                        config={block.config}
+                        context={{
+                          ...context,
+                          blockId: block.id,
+                          profileCompleteness:
+                            block.type === "profile-header" ? profileCompleteness : undefined,
+                          onCompleteProfile:
+                            block.type === "profile-header" ? onCompleteProfile : undefined,
+                          onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
               {/* Empty tail drop target makes moving a block to the end explicit. */}
               {context.isEditing && blocks.length > 0 && (
                 <div
                   className={[
-                    "col-span-full min-h-8 rounded-md border border-dashed border-border/50 bg-surface/30 text-center text-[10px] text-muted-foreground/60 transition-colors",
-                    dropTarget?.sectionIdx === si && dropTarget.blockIdx === blocks.length
+                    "col-span-full min-h-4 border-t border-dashed border-border/45 text-center text-[10px] text-muted-foreground/60 transition-colors",
+                    dropTarget?.sectionIdx === layoutSectionIndex &&
+                    dropTarget.blockIdx === persistedBlocks.length
                       ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                       : "",
                   ].join(" ")}
-                  aria-label={`Drop at end of section ${si + 1}`}
+                  aria-label={`Drop at end of section ${sectionIndex + 1}`}
                   role="button"
                   tabIndex={0}
                   onDragOver={(event) => {
                     event.preventDefault();
-                    setDropTarget({ sectionIdx: si, blockIdx: blocks.length });
+                    setDropTarget({
+                      sectionIdx: layoutSectionIndex,
+                      blockIdx: persistedBlocks.length,
+                    });
                   }}
-                  onDrop={(event) => handleBlockDrop(si, blocks.length, event)}
+                  onDrop={(event) =>
+                    handleBlockDrop(layoutSectionIndex, persistedBlocks.length, event)
+                  }
                 >
-                  <span className="pointer-events-none select-none">Drop section content here</span>
+                  <span className="sr-only">Drop section content here</span>
                 </div>
               )}
             </div>
@@ -534,7 +557,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           if (!open) setRemovingSectionId(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="studio-editor-chrome sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete section?</DialogTitle>
             <DialogDescription>
@@ -569,7 +592,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           if (!open) setRemovingBlockId(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="studio-editor-chrome sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Remove block?</DialogTitle>
             <DialogDescription>
@@ -618,7 +641,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       )}
 
       {resizingBlock && onLayoutChange && (
-        <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+        <div className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -735,7 +758,7 @@ function SectionLayoutPanel({
     ["side_by_side", "Side by side"],
   ];
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+    <div className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Change section layout</h3>

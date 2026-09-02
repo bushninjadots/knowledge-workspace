@@ -1,11 +1,13 @@
 // ── Profile Projects Block ────────────────────────────────────────────────────
 // Shows projects the person contributed to, with role, status, and progress.
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { registerBlock } from "@/lib/block-registry";
 import {
@@ -40,6 +42,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function ProfileProjectsBlock({ context, config }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -58,6 +61,17 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const projects = (data ?? [])
+    .map((row) => ({ project: row.projects, role: row.role }))
+    .filter(
+      (row): row is { project: NonNullable<ProjectRow["projects"]>; role: string } =>
+        row.project !== null,
+    );
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, projects.length === 0);
+  }, [blockId, isEditing, isLoading, onBlockEmptyChange, projects.length]);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -69,12 +83,13 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!data || projects.length === 0) {
     if (context.isEditing) {
       return (
-        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
-          Projects block — contributed projects will appear here.
-        </div>
+        <BlockEmptyState
+          label="Projects"
+          detail="Show the work you are building with other people."
+        />
       );
     }
     return null;
@@ -83,13 +98,6 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   const showStatus = config.showStatus !== false;
   const showProgress = config.showProgress !== false;
   const presentation = getProfileProjectPresentation(config.presentation);
-  const projects = data
-    .map((row) => ({ project: row.projects, role: row.role }))
-    .filter(
-      (row): row is { project: NonNullable<ProjectRow["projects"]>; role: string } =>
-        row.project !== null,
-    );
-
   const heading = <h3 className="mb-3 text-sm font-medium text-foreground">Projects</h3>;
 
   if (presentation.id === "minimal-list") {
@@ -127,7 +135,11 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
 
   const cardCls =
     "group flex h-fit flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
-  const ProjectImage = ({ project }: { project: { id: string; cover_url: string | null; title: string } }) => {
+  const ProjectImage = ({
+    project,
+  }: {
+    project: { id: string; cover_url: string | null; title: string };
+  }) => {
     const { data: signedUrl } = useSignedStorageUrl("project-media", project.cover_url);
     const src = signedUrl ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
     return src ? (
