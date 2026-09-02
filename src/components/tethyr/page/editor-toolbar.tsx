@@ -28,6 +28,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEditMode } from "@/components/tethyr/page/edit-mode-context";
 import {
   usePublishPage,
@@ -141,6 +149,12 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [showTemplateName, setShowTemplateName] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [showApplyPanel, setShowApplyPanel] = useState(false);
+  // Template awaiting destructive-apply confirmation. Templates replace the
+  // current sections + blocks, so we confirm before calling useApplyTemplate.
+  const [confirmingTemplate, setConfirmingTemplate] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
   const [activeTab, setActiveTab] = useState<"content" | "layout" | "style" | "settings">(
@@ -329,8 +343,13 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   }
 
   // ── Apply template ─────────────────────────────────────────────────────
-  function handleApply(templateId: string) {
-    if (!page) return;
+  function handleApply(templateId: string, name: string) {
+    // Ask first — applying a template replaces the current sections and blocks.
+    setConfirmingTemplate({ id: templateId, name });
+  }
+
+  function confirmApplyTemplate() {
+    if (!page || !confirmingTemplate) return;
     recordSnapshot({
       layout: page.layout,
       config: page.config,
@@ -338,9 +357,16 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       theme: page.theme,
     });
     applyTemplate.mutate(
-      { templateId, pageId: page.id, layoutId: page.layoutId, ownerId, ownerType },
+      {
+        templateId: confirmingTemplate.id,
+        pageId: page.id,
+        layoutId: page.layoutId,
+        ownerId,
+        ownerType,
+      },
       {
         onSuccess: () => {
+          setConfirmingTemplate(null);
           setShowApplyPanel(false);
           onRefresh();
         },
@@ -584,7 +610,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
                 <Bookmark className="h-3.5 w-3.5" /> Save as template
               </Button>
               <span className="text-xs text-muted-foreground">
-                Templates change structure; your content stays with the page.
+                Applying a template replaces your current layout. You can undo from the toolbar.
               </span>
             </div>
           </TabsContent>
@@ -717,8 +743,8 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             Your templates
           </h3>
           <p className="mb-3 text-xs text-muted-foreground">
-            Applying a template replaces your layout structure. Content in blocks stays with the
-            page.
+            Applying a template replaces your current sections and blocks. You can undo from the
+            toolbar.
           </p>
           {myTemplates.length === 0 ? (
             <p className="text-xs text-muted-foreground">
@@ -734,7 +760,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
                   <button
                     type="button"
                     className="min-w-0 flex-1 px-2 py-1 text-left text-xs"
-                    onClick={() => handleApply(t.id)}
+                    onClick={() => handleApply(t.id, t.name)}
                   >
                     <span className="block truncate font-medium">{t.name}</span>
                     <span className="block text-[10px] text-muted-foreground">{t.type}</span>
@@ -758,6 +784,40 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             </div>
           )}
         </div>
+      )}
+
+      {/* Apply template confirmation */}
+      {confirmingTemplate && (
+        <Dialog
+          open={!!confirmingTemplate}
+          onOpenChange={(open) => !open && setConfirmingTemplate(null)}
+        >
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Apply “{confirmingTemplate.name}”?</DialogTitle>
+              <DialogDescription>
+                Applying a template replaces your current Studio structure — section order, section
+                layouts, and the blocks inside them.
+              </DialogDescription>
+            </DialogHeader>
+            <ul className="space-y-1 text-sm text-foreground">
+              <li>✓ Section order and layouts</li>
+              <li>✓ Blocks in each section</li>
+              <li>✓ Spacing and visual structure</li>
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              You can undo this change (Ctrl/Cmd+Z) if you change your mind.
+            </p>
+            <DialogFooter className="gap-2 sm:justify-start">
+              <Button onClick={confirmApplyTemplate} disabled={applyTemplate.isPending}>
+                {applyTemplate.isPending ? "Applying…" : "Apply template"}
+              </Button>
+              <Button variant="outline" onClick={() => setConfirmingTemplate(null)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Theme picker */}

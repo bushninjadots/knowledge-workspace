@@ -92,8 +92,16 @@ Per `TETHYR_UX_RULES.md`, order is smallest-strong-change first:
 ## Decisions taken this session
 
 - Created this dated audit.
-- Implemented P0 items 1–3 (see commit).
-- Deferred P1–P3 to follow-up passes to keep scope and reviewability bounded.
+- Implemented P0 (committed `20a1951`): collapse empty public sections via a
+  generic `onBlockEmptyChange` reporter + `shouldRenderSectionInView` helper
+  (with tests), removed dead `studio-guide.tsx` / `studio-navigation.tsx`,
+  and brightened empty-state copy across profile blocks.
+- Implemented P2 part 1 (this branch, uncommitted at audit time): an
+  apply-confirmation dialog for templates, plus corrected the false copy
+  ("Content in blocks stays with the page") — applying a template actually
+  **replaces** the creator's sections and blocks, protected only by undo.
+- Deferred P1 (editor chrome neutrality) and the remaining P2/P3 items to
+  follow-up passes to keep scope and reviewability bounded.
 
 ## Validation
 
