@@ -46,8 +46,9 @@ export function SortableBlock({
       onDragStart={handleDragStart}
       data-block-id={block.id}
     >
-      {/* Hover controls */}
-      <div className="absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-md border border-card-border bg-surface-elevated px-1 py-0.5 opacity-0 shadow-sm transition-opacity group-hover/edit:opacity-100">
+      {/* Block controls stay visible in Customize mode so the primary edit path
+          is discoverable on touch devices as well as with a mouse. */}
+      <div className="absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-md border border-card-border bg-surface-elevated px-1 py-0.5 opacity-100 shadow-sm transition-opacity sm:opacity-0 sm:group-hover/edit:opacity-100">
         <button
           type="button"
           className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
@@ -88,10 +89,10 @@ export function SortableBlock({
         </button>
         <button
           type="button"
-          aria-label={`Configure ${block.type} block`}
+          aria-label={`Edit ${block.type} block`}
           className="rounded p-1 text-muted-foreground hover:text-foreground"
           onClick={onConfigure}
-          title="Configure"
+          title="Edit block"
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>

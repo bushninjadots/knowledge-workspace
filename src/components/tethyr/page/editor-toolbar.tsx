@@ -243,6 +243,9 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             <span className="text-[11px] text-muted-foreground" aria-live="polite">
               {isPublished ? "Published" : "Draft"}
             </span>
+            <span className="hidden text-[10px] text-muted-foreground sm:inline">
+              Select a block's Edit button to change its content, identity, and media.
+            </span>
           </div>
           <span className="text-muted-foreground/30 mx-1">·</span>
           <Button

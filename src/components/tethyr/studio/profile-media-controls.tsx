@@ -158,7 +158,7 @@ export function ProfileMediaControls({
 
   return (
     <div className="mb-4 space-y-3 border-b border-border/30 pb-4">
-      <p className="text-[11px] font-medium text-muted-foreground">Identity</p>
+      <p className="text-[11px] font-medium text-muted-foreground">Header identity</p>
       {identityLoading && (
         <p className="text-[10px] text-muted-foreground">Loading current identity…</p>
       )}
@@ -181,7 +181,7 @@ export function ProfileMediaControls({
         />
       </div>
       <div className="space-y-2">
-        <Label className="text-[11px] font-medium">Title / caption</Label>
+        <Label className="text-[11px] font-medium">Creator title</Label>
         <Input
           className="h-8 text-xs"
           value={title}
