@@ -31,7 +31,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
       return (
         <BlockEmptyState
           label="Tools & Stack"
-          detail="Tools will appear here when added to your profile."
+          detail="Show the tools and software you build with."
         />
       );
     return null;
@@ -40,9 +40,7 @@ function ProfileToolsBlock({ config, context }: BlockProps) {
   const stack = config.showStack === false ? [] : (data.software_stack ?? []);
   if (tools.length === 0 && stack.length === 0) {
     if (context.isEditing)
-      return (
-        <BlockEmptyState label="Tools & Stack" detail="Add tools and software to your profile." />
-      );
+      return <BlockEmptyState label="Tools & Stack" detail="Add the tools and software you use." />;
     return null;
   }
 

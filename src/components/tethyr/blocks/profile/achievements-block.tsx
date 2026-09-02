@@ -49,7 +49,7 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
       return (
         <BlockEmptyState
           label="Achievements"
-          detail="Achievements will appear here as you contribute."
+          detail="Recognition appears here as you contribute."
         />
       );
     return null;

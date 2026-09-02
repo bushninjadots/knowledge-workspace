@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Image, Camera } from "lucide-react";
@@ -16,6 +17,8 @@ type EvidenceItem = {
 
 function ProfileGalleryBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const { onBlockEmptyChange, isEditing, blockId } = context;
+
   const { data, isLoading } = useQuery({
     queryKey: ["profile-gallery-block", profileId],
     queryFn: async () => {
@@ -46,13 +49,20 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
     },
     enabled: !!profileId,
   });
+  const hasContent = (data?.length ?? 0) > 0;
+  // Report emptiness so the page renderer can collapse this section in view mode.
+  useEffect(() => {
+    if (isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
   if (isLoading) return <Skeleton className="h-32 w-full rounded-xl" />;
+  // Narrow `data` for the render path below (hasContent alone doesn't narrow it).
   if (!data?.length) {
-    if (context.isEditing)
+    if (isEditing)
       return (
         <BlockEmptyState
           label="Gallery"
-          detail="Images and videos you share as evidence will appear here."
+          detail="Show the work, references, and moments behind what you create."
         />
       );
     return null;

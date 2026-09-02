@@ -43,6 +43,13 @@ export interface BlockContext {
   isOwner?: boolean;
   /** Optional translucent surface treatment for profile pages. */
   translucent?: boolean;
+  /**
+   * View-mode content reporter. A block calls this (when not editing) to tell
+   * the page renderer whether it rendered any public content. The layout uses
+   * it to collapse empty sections in the public Studio so they don't leave a
+   * blank band + divider.
+   */
+  onBlockEmptyChange?: (blockId: string, isEmpty: boolean) => void;
   /** Optional profile-header completion action supplied by the profile route. */
   profileCompleteness?: number;
   onCompleteProfile?: () => void;

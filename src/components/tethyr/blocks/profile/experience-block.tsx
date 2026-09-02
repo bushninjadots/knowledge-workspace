@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Star } from "lucide-react";
@@ -13,6 +14,7 @@ type ExpData = {
 
 function ProfileExperienceBlock({ config, context }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const { onBlockEmptyChange, isEditing, blockId } = context;
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-experience-block", profileId],
@@ -28,20 +30,27 @@ function ProfileExperienceBlock({ config, context }: BlockProps) {
     enabled: !!profileId,
   });
 
-  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
-  if (!data) {
-    if (context.isEditing)
-      return <BlockEmptyState label="Experience" detail="Experience details will appear here." />;
-    return null;
-  }
   const showYears = config.showYears !== false;
   const showStyle = config.showTeachingStyle !== false;
-  const hasExp = showYears && data.years_experience != null;
-  const hasStyle = showStyle && !!data.teaching_style;
+  const hasContent =
+    !!data &&
+    ((showYears && data.years_experience != null) || (showStyle && !!data.teaching_style));
+  // Report emptiness so the page renderer can collapse this section in view mode.
+  useEffect(() => {
+    if (isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+
+  if (isLoading) return <Skeleton className="h-20 w-full rounded-xl" />;
+  const hasExp = showYears && data?.years_experience != null;
+  const hasStyle = showStyle && !!data?.teaching_style;
   if (!hasExp && !hasStyle) {
     if (context.isEditing)
       return (
-        <BlockEmptyState label="Experience" detail="Add experience details to your profile." />
+        <BlockEmptyState
+          label="Experience"
+          detail="Tell the story of your background and how long you've been at it."
+        />
       );
     return null;
   }

@@ -65,7 +65,7 @@ function ProfileDirectionBlock({ config, context }: BlockProps) {
       return (
         <BlockEmptyState
           label="Direction"
-          detail="Set your availability and learning goals on your profile."
+          detail="Tell people what you're looking for and how they can help."
         />
       );
     return null;

@@ -35,6 +35,7 @@ import type {
   SectionLayoutType,
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
+import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 
 interface PageLayoutRendererProps {
   layout: PageLayoutType;
@@ -125,6 +126,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   const [dropTarget, setDropTarget] = useState<{ sectionIdx: number; blockIdx: number } | null>(
     null,
   );
+  // Blocks that report (in view mode) they rendered no public content. Used to
+  // fully collapse sections whose visible blocks are all empty, so the public
+  // Studio doesn't leave blank bands + dividers behind.
+  const [emptyBlockIds, setEmptyBlockIds] = useState<Set<string>>(new Set());
 
   // The block currently being configured (inspector target).
   const configuredBlock: LayoutBlockInstance | undefined = configuringBlockId
@@ -134,6 +139,25 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   const resizingBlock = resizingBlockId
     ? sections.flatMap((s) => s.blocks).find((b) => b.id === resizingBlockId)
     : undefined;
+
+  // Track which blocks rendered no public content (view mode only). Memoised so
+  // unrelated layout renders don't reset the set.
+  const reportBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
+    setEmptyBlockIds((prev) => {
+      const next = new Set(prev);
+      if (isEmpty) next.add(blockId);
+      else next.delete(blockId);
+      if (next.size === prev.size && [...next].every((id) => prev.has(id))) return prev;
+      return next;
+    });
+  }, []);
+
+  // In view mode, drop sections whose visible blocks are all empty so the
+  // public Studio renders only real content. Editing always shows every section
+  // (empty blocks get their inline "add content" affordance).
+  const sectionsToRender = context.isEditing
+    ? sections
+    : sections.filter((section) => shouldRenderSectionInView(section, emptyBlockIds));
 
   // ── Block actions ──────────────────────────────────────────────────────
   const handleMoveUp = useCallback(
@@ -333,7 +357,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col" data-page-layout>
-      {sections.map((section, si) => {
+      {sectionsToRender.map((section, si) => {
         const gridClass = SECTION_GRID[section.layout] ?? "";
         const blocks = section.blocks
           .filter((b) => context.isEditing || b.visible !== false)
@@ -471,6 +495,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                           block.type === "profile-header" ? profileCompleteness : undefined,
                         onCompleteProfile:
                           block.type === "profile-header" ? onCompleteProfile : undefined,
+                        onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
                       }}
                     />
                   )}

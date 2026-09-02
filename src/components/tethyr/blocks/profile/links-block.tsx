@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, LinkIcon } from "lucide-react";
@@ -14,6 +15,7 @@ type LinksData = {
 
 function ProfileLinksBlock({ context, config }: BlockProps) {
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
+  const { onBlockEmptyChange, isEditing, blockId } = context;
 
   const { data, isLoading } = useQuery({
     queryKey: ["profile-links-block", profileId],
@@ -29,10 +31,21 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
     enabled: !!profileId,
   });
 
+  const hasPortfolio = (data?.portfolio_links?.length ?? 0) > 0;
+  const hasSocial = Object.values(data?.social_links ?? {}).some((v) => !!v);
+  const hasContent = hasPortfolio || hasSocial;
+  // Report emptiness so the page renderer can collapse this section in view mode.
+  useEffect(() => {
+    if (isEditing || !blockId) return;
+    onBlockEmptyChange?.(blockId, !hasContent);
+  }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+
   if (isLoading) return <Skeleton className="h-16 w-full rounded-xl" />;
   if (!data) {
     if (context.isEditing)
-      return <BlockEmptyState label="Links" detail="Links will appear here when added." />;
+      return (
+        <BlockEmptyState label="Links" detail="Share where people can find and follow your work." />
+      );
     return null;
   }
   const portfolio = data.portfolio_links ?? [];
@@ -40,7 +53,7 @@ function ProfileLinksBlock({ context, config }: BlockProps) {
   if (portfolio.length === 0 && social.length === 0) {
     if (context.isEditing)
       return (
-        <BlockEmptyState label="Links" detail="Add portfolio and social links to your profile." />
+        <BlockEmptyState label="Links" detail="Add places where people can follow your work." />
       );
     return null;
   }
