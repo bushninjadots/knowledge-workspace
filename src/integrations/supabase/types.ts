@@ -1072,8 +1072,57 @@ export type Database = {
           },
         ]
       }
+      page_versions: {
+        Row: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          layout?: Json
+          page_id: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version: number
+        }
+        Update: {
+          id?: string
+          layout?: Json
+          page_id?: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
+          composition_id: string | null
           config: Json
           created_at: string
           id: string
@@ -1085,8 +1134,10 @@ export type Database = {
           theme_id: string | null
           theme_overrides: Json | null
           updated_at: string
+          vibe_id: string | null
         }
         Insert: {
+          composition_id?: string | null
           config?: Json
           created_at?: string
           id?: string
@@ -1098,8 +1149,10 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Update: {
+          composition_id?: string | null
           config?: Json
           created_at?: string
           id?: string
@@ -1111,6 +1164,7 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Relationships: [
           {
@@ -3006,27 +3060,6 @@ export type Database = {
       }
     }
     Views: {
-      pg_all_foreign_keys: {
-        Row: {
-          fk_columns: unknown[] | null
-          fk_constraint_name: unknown
-          fk_schema_name: unknown
-          fk_table_name: unknown
-          fk_table_oid: unknown
-          is_deferrable: boolean | null
-          is_deferred: boolean | null
-          match_type: string | null
-          on_delete: string | null
-          on_update: string | null
-          pk_columns: unknown[] | null
-          pk_constraint_name: unknown
-          pk_index_name: unknown
-          pk_schema_name: unknown
-          pk_table_name: unknown
-          pk_table_oid: unknown
-        }
-        Relationships: []
-      }
       project_repositories_public: {
         Row: {
           created_at: string | null
@@ -3097,28 +3130,8 @@ export type Database = {
           },
         ]
       }
-      tap_funky: {
-        Row: {
-          args: string | null
-          is_definer: boolean | null
-          is_strict: boolean | null
-          is_visible: boolean | null
-          kind: unknown
-          langoid: unknown
-          name: unknown
-          oid: unknown
-          owner: unknown
-          returns: string | null
-          returns_set: boolean | null
-          schema: unknown
-          volatility: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
-      _cleanup: { Args: never; Returns: boolean }
-      _contract_on: { Args: { "": string }; Returns: unknown }
       _create_trigger_if_table_exists: {
         Args: {
           p_event?: string
@@ -3130,26 +3143,22 @@ export type Database = {
         }
         Returns: undefined
       }
-      _currtest: { Args: never; Returns: number }
-      _db_privs: { Args: never; Returns: unknown[] }
-      _extensions: { Args: never; Returns: unknown[] }
-      _get: { Args: { "": string }; Returns: number }
-      _get_latest: { Args: { "": string }; Returns: number[] }
-      _get_note: { Args: { "": string }; Returns: string }
-      _is_verbose: { Args: never; Returns: boolean }
-      _prokind: { Args: { p_oid: unknown }; Returns: unknown }
-      _query: { Args: { "": string }; Returns: string }
-      _refine_vol: { Args: { "": string }; Returns: string }
-      _retval: { Args: { "": string }; Returns: string }
-      _table_privs: { Args: never; Returns: unknown[] }
-      _temptypes: { Args: { "": string }; Returns: string }
-      _todo: { Args: never; Returns: string }
       accept_project_role_application: {
         Args: {
           p_application_id: string
           p_profile_id: string
           p_project_id: string
           p_role_id: string
+        }
+        Returns: undefined
+      }
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string
+          p_config: Json
+          p_layout_id: string
+          p_page_id: string
+          p_sections: Json
         }
         Returns: undefined
       }
@@ -3165,42 +3174,6 @@ export type Database = {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string }
         Returns: undefined
       }
-      col_is_null:
-        | {
-            Args: {
-              column_name: unknown
-              description?: string
-              schema_name: unknown
-              table_name: unknown
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              column_name: unknown
-              description?: string
-              table_name: unknown
-            }
-            Returns: string
-          }
-      col_not_null:
-        | {
-            Args: {
-              column_name: unknown
-              description?: string
-              schema_name: unknown
-              table_name: unknown
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              column_name: unknown
-              description?: string
-              table_name: unknown
-            }
-            Returns: string
-          }
       community_space_member_counts: {
         Args: never
         Returns: {
@@ -3216,29 +3189,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      diag:
-        | {
-            Args: { msg: unknown }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.diag(msg => text), public.diag(msg => anyelement). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { msg: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.diag(msg => text), public.diag(msg => anyelement). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-      diag_test_name: { Args: { "": string }; Returns: string }
-      do_tap:
-        | { Args: never; Returns: string[] }
-        | { Args: { "": string }; Returns: string[] }
-      fail:
-        | { Args: never; Returns: string }
-        | { Args: { "": string }; Returns: string }
-      findfuncs: { Args: { "": string }; Returns: string[] }
-      finish: { Args: { exception_on_failure?: boolean }; Returns: string[] }
-      format_type_string: { Args: { "": string }; Returns: string }
       get_layout_lineage: {
         Args: { start_id: string }
         Returns: {
@@ -3247,21 +3197,9 @@ export type Database = {
           parent_id: string
         }[]
       }
-      has_unique: { Args: { "": string }; Returns: string }
-      in_todo: { Args: never; Returns: boolean }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
       increment_usage_count: {
         Args: { template_id: string }
-        Returns: undefined
-      }
-      apply_studio_composition: {
-        Args: {
-          p_composition_id: string | null
-          p_config: Json
-          p_layout_id: string
-          p_page_id: string
-          p_sections: Json
-        }
         Returns: undefined
       }
       insert_notification: {
@@ -3281,7 +3219,6 @@ export type Database = {
         Args: { p_bucket: string; p_metadata: Json; p_name: string }
         Returns: boolean
       }
-      is_empty: { Args: { "": string }; Returns: string }
       is_project_visible: { Args: { project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
@@ -3311,8 +3248,6 @@ export type Database = {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
-      isnt_empty: { Args: { "": string }; Returns: string }
-      lives_ok: { Args: { "": string }; Returns: string }
       log_activity: {
         Args: { _kind: string; _metadata?: Json; _profile_id: string }
         Returns: undefined
@@ -3328,37 +3263,35 @@ export type Database = {
         Returns: undefined
       }
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
-      no_plan: { Args: never; Returns: boolean[] }
-      num_failed: { Args: never; Returns: number }
-      os_name: { Args: never; Returns: string }
-      pass:
-        | { Args: never; Returns: string }
-        | { Args: { "": string }; Returns: string }
-      pg_version: { Args: never; Returns: string }
-      pg_version_num: { Args: never; Returns: number }
-      pgtap_version: { Args: never; Returns: number }
       posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
+      publish_page_version: {
+        Args: { _page_id: string }
+        Returns: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "page_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
-      runtests:
-        | { Args: never; Returns: string[] }
-        | { Args: { "": string }; Returns: string[] }
-      skip:
-        | { Args: { "": string }; Returns: string }
-        | { Args: { how_many: number; why: string }; Returns: string }
-      throws_ok: { Args: { "": string }; Returns: string }
-      todo:
-        | { Args: { how_many: number }; Returns: boolean[] }
-        | { Args: { how_many: number; why: string }; Returns: boolean[] }
-        | { Args: { why: string }; Returns: boolean[] }
-        | { Args: { how_many: number; why: string }; Returns: boolean[] }
-      todo_end: { Args: never; Returns: boolean[] }
-      todo_start:
-        | { Args: never; Returns: boolean[] }
-        | { Args: { "": string }; Returns: boolean[] }
+      rollback_page_version: {
+        Args: { _page_id: string; _version: number }
+        Returns: undefined
+      }
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -3458,9 +3391,7 @@ export type Database = {
       space_member_role: "owner" | "moderator" | "member"
     }
     CompositeTypes: {
-      _time_trial_type: {
-        a_time: number | null
-      }
+      [_ in never]: never
     }
   }
 }

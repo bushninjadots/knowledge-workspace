@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,23 +22,31 @@ import {
   STUDIO_PERSONALITIES,
   type StudioPersonality,
 } from "@/lib/studio-personalities";
-import type { PageData } from "@/lib/page-blocks";
+import type { PageData, PageOwnerType } from "@/lib/page-blocks";
 import type { StudioConfig } from "@/lib/studio-config";
 import { useApplyStudioComposition } from "@/hooks/use-page-editor";
+import { friendlyError } from "@/lib/error-message";
 
 interface CompositionPickerProps {
   page: PageData;
+  ownerId: string;
+  ownerType: PageOwnerType;
   onClose: () => void;
   onApplied?: () => void;
 }
 
-export function CompositionPicker({ page, onClose, onApplied }: CompositionPickerProps) {
+export function CompositionPicker({
+  page,
+  ownerId,
+  ownerType,
+  onClose,
+  onApplied,
+}: CompositionPickerProps) {
   const applyComposition = useApplyStudioComposition();
   const [confirming, setConfirming] = useState<StudioPersonality | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
   const activeId = page.config.compositionId;
-  const hasExistingArrangement = page.layout.sections.some((section) => section.blocks.length > 0);
 
   function apply(personality: StudioPersonality) {
     const applied = applyStudioPersonality(personality);
@@ -51,20 +60,33 @@ export function CompositionPicker({ page, onClose, onApplied }: CompositionPicke
     };
     setApplyingId(personality.id);
     applyComposition.mutate(
-      { pageId: page.id, layoutId: page.layoutId, layout: applied.layout, config: nextConfig },
+      {
+        pageId: page.id,
+        ownerId,
+        ownerType,
+        layoutId: page.layoutId,
+        layout: applied.layout,
+        config: nextConfig,
+      },
       {
         onSuccess: () => {
           setApplyingId(null);
           onClose();
           onApplied?.();
         },
-        onError: () => setApplyingId(null),
+        onError: (err) => {
+          setApplyingId(null);
+          toast.error(friendlyError(err, "Couldn't apply this composition"));
+        },
       },
     );
   }
 
   function onSelect(personality: StudioPersonality) {
-    if (activeId || hasExistingArrangement) {
+    // Confirm only when replacing an already-chosen composition (which may hold
+    // custom arrangement work). Applying a preset to a fresh default layout
+    // applies immediately — there's no custom work to destroy yet.
+    if (activeId) {
       setConfirming(personality);
       return;
     }

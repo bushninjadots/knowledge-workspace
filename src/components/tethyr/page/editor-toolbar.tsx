@@ -3,7 +3,7 @@
 // Shows the page status (draft/published), edit/done toggle, publish/save-draft,
 // block picker, and template save/apply actions.
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Edit3,
   Palette,
@@ -42,6 +42,7 @@ import type {
 } from "@/lib/page-blocks";
 import { createBlockInstance, getAllBlocks } from "@/lib/block-registry";
 import type { BlockDefinition } from "@/lib/page-blocks";
+import type { StudioConfig } from "@/lib/studio-config";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,10 @@ function nextBlockId(): string {
 }
 
 function cloneSections(layout: { sections: LayoutSection[] }): LayoutSection[] {
-  return layout.sections.map((s) => ({ ...s, blocks: s.blocks.map((b) => ({ ...b })) }));
+  return layout.sections.map((s) => ({
+    ...s,
+    blocks: s.blocks.map((b) => ({ ...b, config: { ...b.config } })),
+  }));
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -99,6 +103,10 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
 
+  // Debounce refs for appearance config writes — coalesces rapid changes into one save.
+  const pendingAppearanceRef = useRef<Partial<StudioConfig> | null>(null);
+  const appearanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const isPublished = page?.status === "published";
 
   // ── Add block ──────────────────────────────────────────────────────────
@@ -124,7 +132,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
     sections[sections.length - 1] = { ...last, blocks: [...reindexed, newBlock] };
     setLastAction("saving");
     updateLayout.mutate(
-      { pageId: page.id, layoutId: page.layoutId, layout: { sections } },
+      { ownerId, ownerType, layoutId: page.layoutId, layout: { sections } },
       {
         onSuccess: () => {
           setLastAction("saved");
@@ -138,7 +146,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   // ── Publish / Unpublish ────────────────────────────────────────────────
   async function handlePublish() {
     try {
-      await publishPage.mutateAsync({ pageId: page!.id });
+      await publishPage.mutateAsync({ pageId: page!.id, ownerId, ownerType });
       toast.success("Page published");
       stopEditing();
       onRefresh();
@@ -148,7 +156,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   }
   async function handleUnpublish() {
     try {
-      await unpublishPage.mutateAsync({ pageId: page!.id });
+      await unpublishPage.mutateAsync({ pageId: page!.id, ownerId, ownerType });
       toast.success("Reverted to draft");
       onRefresh();
     } catch (err) {
@@ -202,9 +210,6 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">
-              Create → Customize → Personalize → Arrange → Preview → Publish
-            </span>
             {page.status === "draft" && (
               <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                 Draft
@@ -330,6 +335,8 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       {showComposition && (
         <CompositionPicker
           page={page}
+          ownerId={ownerId}
+          ownerType={ownerType}
           onClose={() => setShowComposition(false)}
           onApplied={onRefresh}
         />
@@ -338,6 +345,8 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       {showPersonality && (
         <PersonalityPicker
           page={page}
+          ownerId={ownerId}
+          ownerType={ownerType}
           onClose={() => setShowPersonality(false)}
           onApplied={onRefresh}
         />
@@ -348,19 +357,32 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           config={page.config}
           onChange={(partial) => {
             setLastAction("saving");
-            updateConfig.mutate(
-              {
-                pageId: page.id,
-                config: { ...page.config, ...partial },
-              },
-              {
-                onSuccess: () => {
-                  setLastAction("saved");
-                  onRefresh();
+            // Merge into pending partial and debounce the actual write so rapid
+            // clicks (radius → typography → density) coalesce into one save.
+            pendingAppearanceRef.current = {
+              ...pendingAppearanceRef.current,
+              ...partial,
+            };
+            if (appearanceTimerRef.current) clearTimeout(appearanceTimerRef.current);
+            appearanceTimerRef.current = setTimeout(() => {
+              const merged = pendingAppearanceRef.current;
+              pendingAppearanceRef.current = null;
+              updateConfig.mutate(
+                {
+                  pageId: page.id,
+                  ownerId,
+                  ownerType,
+                  config: { ...page.config, ...merged },
                 },
-                onError: () => setLastAction("error"),
-              },
-            );
+                {
+                  onSuccess: () => {
+                    setLastAction("saved");
+                    onRefresh();
+                  },
+                  onError: () => setLastAction("error"),
+                },
+              );
+            }, 300);
           }}
           onClose={() => setShowAppearance(false)}
         />
@@ -451,6 +473,8 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       {showThemePicker && (
         <ThemePicker
           page={page}
+          ownerId={ownerId}
+          ownerType={ownerType}
           onClose={() => setShowThemePicker(false)}
           onApplied={() => {
             setShowThemePicker(false);

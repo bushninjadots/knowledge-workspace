@@ -9,10 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { usePage, invalidatePage } from "@/hooks/use-page";
 import { createDefaultProjectLayout } from "@/lib/default-layouts";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 type LayoutsSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
-
-const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
 interface UseProjectPageOptions {
   projectId: string;

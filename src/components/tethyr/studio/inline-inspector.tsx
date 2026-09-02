@@ -3,7 +3,7 @@
 // control in edit mode. Renders a control for every registered BlockField and
 // writes changes immediately (persist-on-change — there is no save button).
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +51,54 @@ export function InlineInspector({
 }: InlineInspectorProps) {
   const fields = definition.fields;
   const [uploading, setUploading] = useState(false);
+  // Local draft edits so text inputs stay responsive while their writes are
+  // debounced (avoiding a full config save on every keystroke).
+  const [drafts, setDrafts] = useState<Record<string, unknown>>({});
+  const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimersRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
   function set<Key extends string>(key: Key, value: unknown) {
+    const pendingTimer = debounceTimersRef.current[key];
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      delete debounceTimersRef.current[key];
+    }
+    setDrafts((prev) => {
+      if (!(key in prev)) return prev;
+      const { [key]: _removed, ...rest } = prev;
+      return rest;
+    });
     onChange({ ...block.config, [key]: value });
+  }
+
+  // Like set(), but defers the parent write until the user pauses. Dragged color
+  // pickers and rapid typing collapse into a single save.
+  function debouncedSet(key: string, value: unknown) {
+    setDrafts((prev) => ({ ...prev, [key]: value }));
+    if (debounceTimersRef.current[key]) clearTimeout(debounceTimersRef.current[key]);
+    debounceTimersRef.current[key] = setTimeout(() => {
+      setDrafts((prev) => {
+        const { [key]: _removed, ...rest } = prev;
+        return rest;
+      });
+      delete debounceTimersRef.current[key];
+      onChange({ ...block.config, [key]: value });
+    }, 350);
+  }
+
+  // Prefer an in-flight draft so the field never lags behind the debounce.
+  function fieldValue(key: string): unknown {
+    return key in drafts ? drafts[key] : block.config[key];
+  }
+
+  function stringFieldValue(key: string): string {
+    const value = fieldValue(key);
+    return typeof value === "string" ? value : "";
   }
 
   return (
@@ -102,7 +147,9 @@ export function InlineInspector({
                 className="mt-1 h-8 text-xs"
                 value={typeof block.column === "number" ? block.column : 0}
                 onChange={(e) =>
-                  onBlockLayoutChange({ column: Math.max(0, Number(e.target.value) || 0) })
+                  onBlockLayoutChange({
+                    column: Math.min(11, Math.max(0, Number(e.target.value) || 0)),
+                  })
                 }
               />
             </label>
@@ -132,7 +179,7 @@ export function InlineInspector({
         <div className="flex flex-col gap-3">
           {fields.map((field) => {
             const { key, label } = field;
-            const value = block.config[key];
+            const value = fieldValue(key);
 
             if (field.type === "toggle") {
               const on = value === true;
@@ -205,8 +252,8 @@ export function InlineInspector({
                     id={`${block.id}-${key}`}
                     className="min-h-[5rem] text-xs"
                     placeholder={field.placeholder}
-                    value={stringValue(block.config, key)}
-                    onChange={(e) => set(key, e.target.value)}
+                    value={stringFieldValue(key)}
+                    onChange={(e) => debouncedSet(key, e.target.value)}
                   />
                 </div>
               );
@@ -220,13 +267,13 @@ export function InlineInspector({
                   </Label>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[11px] text-muted-foreground">
-                      {stringValue(block.config, key) || "none"}
+                      {stringFieldValue(key) || "none"}
                     </span>
                     <input
                       id={`${block.id}-${key}`}
                       type="color"
-                      value={stringValue(block.config, key) || "#333333"}
-                      onChange={(e) => set(key, e.target.value)}
+                      value={stringFieldValue(key) || "#333333"}
+                      onChange={(e) => debouncedSet(key, e.target.value)}
                       className="h-7 w-9 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
                     />
                   </div>
@@ -235,7 +282,7 @@ export function InlineInspector({
             }
 
             if (field.type === "image") {
-              const url = stringValue(block.config, key);
+              const url = stringFieldValue(key);
               const upload = async (file: File) => {
                 if (!ownerId) return toast.error("You must own this page to upload images.");
                 const check = validateImageFile(file);
@@ -289,8 +336,8 @@ export function InlineInspector({
                     id={`${block.id}-${key}`}
                     className="h-8 text-xs"
                     placeholder={field.placeholder ?? "https://…"}
-                    value={url}
-                    onChange={(e) => set(key, e.target.value)}
+                    value={stringFieldValue(key)}
+                    onChange={(e) => debouncedSet(key, e.target.value)}
                   />
                 </div>
               );
@@ -305,8 +352,8 @@ export function InlineInspector({
                   id={`${block.id}-${key}`}
                   className="h-8 text-xs"
                   placeholder={field.placeholder}
-                  value={stringValue(block.config, key)}
-                  onChange={(e) => set(key, e.target.value)}
+                  value={stringFieldValue(key)}
+                  onChange={(e) => debouncedSet(key, e.target.value)}
                 />
               </div>
             );

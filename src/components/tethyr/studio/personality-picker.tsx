@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,16 +16,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { STUDIO_PERSONALITIES, type StudioPersonality } from "@/lib/studio-personalities";
-import type { PageData } from "@/lib/page-blocks";
+import type { PageData, PageOwnerType } from "@/lib/page-blocks";
 import { useUpdatePageConfig } from "@/hooks/use-page-editor";
+import { friendlyError } from "@/lib/error-message";
 
 interface PersonalityPickerProps {
   page: PageData;
+  ownerId: string;
+  ownerType: PageOwnerType;
   onClose: () => void;
   onApplied?: () => void;
 }
 
-export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPickerProps) {
+export function PersonalityPicker({
+  page,
+  ownerId,
+  ownerType,
+  onClose,
+  onApplied,
+}: PersonalityPickerProps) {
   const updateConfig = useUpdatePageConfig();
   const [confirming, setConfirming] = useState<StudioPersonality | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -33,9 +43,15 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
 
   function apply(personality: StudioPersonality) {
     setApplyingId(personality.id);
+    // Only overwrite the accent when this vibe intentionally supplies one.
+    // Otherwise a manually-tuned accent color survives the vibe switch.
+    const personalityHasAccent =
+      personality.appearance.accentMode === "person" && !!personality.appearance.accentColor;
     updateConfig.mutate(
       {
         pageId: page.id,
+        ownerId,
+        ownerType,
         config: {
           ...page.config,
           vibeId: personality.id,
@@ -44,8 +60,12 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
           radius: personality.appearance.radius,
           typography: personality.appearance.typography,
           density: personality.appearance.density,
-          accentMode: personality.appearance.accentMode,
-          accentColor: personality.appearance.accentColor,
+          accentMode: personalityHasAccent
+            ? personality.appearance.accentMode
+            : page.config.accentMode,
+          accentColor: personalityHasAccent
+            ? personality.appearance.accentColor
+            : page.config.accentColor,
         },
       },
       {
@@ -54,7 +74,10 @@ export function PersonalityPicker({ page, onClose, onApplied }: PersonalityPicke
           onClose();
           onApplied?.();
         },
-        onError: () => setApplyingId(null),
+        onError: (err) => {
+          setApplyingId(null);
+          toast.error(friendlyError(err, "Couldn't apply this vibe"));
+        },
       },
     );
   }

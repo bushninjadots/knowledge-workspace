@@ -9,37 +9,47 @@ import { invalidatePage } from "@/hooks/use-page";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
 import type { StudioConfig } from "@/lib/studio-config";
 import type { Database, Json } from "@/integrations/supabase/types";
-
-const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 type LayoutSections = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
+
+/** Owner-scoped metadata optional on most mutations so we can invalidate just
+ * the affected page's queries instead of every page in the app. */
+interface OwnerScope {
+  ownerId?: string;
+  ownerType?: PageOwnerType;
+}
+
+function invalidatePageFor(qc: ReturnType<typeof useQueryClient>, vars: OwnerScope) {
+  if (vars.ownerId && vars.ownerType) invalidatePage(qc, vars.ownerId, vars.ownerType);
+  else qc.invalidateQueries({ queryKey: ["page"] });
+}
 
 interface CreatePageParams {
   ownerId: string;
   ownerType: PageOwnerType;
 }
 
-interface UpdateLayoutParams {
-  pageId: string;
+interface UpdateLayoutParams extends OwnerScope {
   layout: PageLayout;
   layoutId: string;
 }
 
-interface UpdateThemeParams {
+interface UpdateThemeParams extends OwnerScope {
   pageId: string;
   themeId: string | null;
 }
 
-interface UpdateConfigParams {
+interface UpdateConfigParams extends OwnerScope {
   pageId: string;
   config: StudioConfig;
 }
 
-interface PublishParams {
+interface PublishParams extends OwnerScope {
   pageId: string;
 }
 
-interface ApplyStudioCompositionParams {
+interface ApplyStudioCompositionParams extends OwnerScope {
   pageId: string;
   layoutId: string;
   layout: PageLayout;
@@ -110,10 +120,8 @@ export function useUpdatePageLayout() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      // Invalidate all page queries since we don't know the owner from here.
-      // The caller can also invalidate more specifically.
-      qc.invalidateQueries({ queryKey: ["page"] });
+    onSuccess: (_data, vars) => {
+      invalidatePageFor(qc, vars);
     },
   });
 }
@@ -129,11 +137,11 @@ export function useApplyStudioComposition() {
         p_layout_id: layoutId,
         p_sections: layout.sections as unknown as Json,
         p_config: config as unknown as Json,
-        p_composition_id: config.compositionId,
+        p_composition_id: config.compositionId ?? "",
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["page"] }),
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
   });
 }
 
@@ -152,9 +160,7 @@ export function useUpdatePageTheme() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["page"] });
-    },
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
   });
 }
 
@@ -176,39 +182,31 @@ export function useUpdatePageConfig() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["page"] });
-    },
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
   });
 }
 
 /**
- * Publish a page. Changes status from draft to published and sets published_at.
- * After publishing, public visitors can view the page.
+ * Publish a page. Calls the `publish_page_version` RPC which snapshots the
+ * current layout + theme into `page_versions`, bumps the version number,
+ * and sets `pages.status = 'published'`.
  */
 export function usePublishPage() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await (supabase as any)
-        .from("pages")
-        .update({
-          status: "published" as PageStatus,
-          published_at: new Date().toISOString(),
-        })
-        .eq("id", pageId);
-
+      const { error } = await supabase.rpc("publish_page_version", {
+        _page_id: pageId,
+      });
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["page"] });
-    },
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
   });
 }
 
 /**
- * Unpublish a page (set back to draft).
+ * Unpublish a page (set back to draft). Does not touch version history.
  */
 export function useUnpublishPage() {
   const qc = useQueryClient();
@@ -222,8 +220,31 @@ export function useUnpublishPage() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["page"] });
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
+  });
+}
+
+interface RollbackParams extends OwnerScope {
+  pageId: string;
+  version: number;
+}
+
+/**
+ * Roll back a page to a previous published version. Calls the
+ * `rollback_page_version` RPC which restores the snapshot's layout + theme
+ * and re-publishes the page.
+ */
+export function useRollbackPageVersion() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pageId, version }: RollbackParams) => {
+      const { error } = await supabase.rpc("rollback_page_version", {
+        _page_id: pageId,
+        _version: version,
+      });
+      if (error) throw error;
     },
+    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
   });
 }

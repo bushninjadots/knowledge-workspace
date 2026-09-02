@@ -3,16 +3,15 @@
 // and the current user is the profile owner, create one with the default profile
 // layout. Otherwise just fetch the existing page.
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { usePage, invalidatePage } from "@/hooks/use-page";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 type LayoutsSectionsJson = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
-
-const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
 
 interface UseProfilePageOptions {
   profileId: string;
@@ -45,12 +44,20 @@ export function useProfilePage({
   });
   const qc = useQueryClient();
 
+  // Guard against double-fire in React strict mode / concurrent features so we
+  // never create two pages for the same owner.
+  const creatingRef = useRef(false);
+
   // Auto-create a page for profile owners when none exists.
   useEffect(() => {
-    if (!isLoading && !page && isOwner) {
-      autoCreatePage(profileId, qc);
+    if (!isLoading && !page && isOwner && !creatingRef.current) {
+      creatingRef.current = true;
+      void autoCreatePage(profileId, qc).finally(() => {
+        creatingRef.current = false;
+        void refetch();
+      });
     }
-  }, [isLoading, page, isOwner, profileId, qc]);
+  }, [isLoading, page, isOwner, profileId, qc, refetch]);
 
   return { page, isLoading, isError, refetch };
 }

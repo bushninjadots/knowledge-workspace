@@ -14,7 +14,7 @@
 //   • Published/draft — resolved page with layout
 //   • Editing — blocks get move/remove/configure controls
 
-import { useMemo, useCallback, useEffect, useRef, useState } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
@@ -67,7 +67,6 @@ export function PageShell({
   const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
   const { isEditing } = useEditMode();
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const historyRef = useRef(createStudioHistory());
 
   const blockContext: BlockContext = useMemo(
@@ -100,14 +99,7 @@ export function PageShell({
     (newLayout: PageLayout) => {
       if (!page) return;
       historyRef.current.capture({ layout: page.layout, config: page.config });
-      setSaveState("saving");
-      updateLayout.mutate(
-        { pageId: page.id, layoutId: page.layoutId, layout: newLayout },
-        {
-          onSuccess: () => setSaveState("saved"),
-          onError: () => setSaveState("error"),
-        },
-      );
+      updateLayout.mutate({ ownerId, ownerType, layoutId: page.layoutId, layout: newLayout });
     },
     [page, updateLayout],
   );
@@ -208,11 +200,12 @@ export function PageShell({
             event.preventDefault();
             const snapshot = historyRef.current.take();
             if (!snapshot || !page) return;
-            setSaveState("saving");
-            updateLayout.mutate(
-              { pageId: page.id, layoutId: page.layoutId, layout: snapshot.layout },
-              { onSuccess: () => setSaveState("saved"), onError: () => setSaveState("error") },
-            );
+            updateLayout.mutate({
+              ownerId,
+              ownerType,
+              layoutId: page.layoutId,
+              layout: snapshot.layout,
+            });
           }
         }}
         tabIndex={-1}
@@ -220,7 +213,6 @@ export function PageShell({
         data-page-status={page.status}
         role="region"
         aria-label={`${ownerType} page`}
-        data-save-state={saveState}
       >
         {layout.sections.length === 0 ? (
           <div className="flex min-h-[20vh] items-center justify-center px-4">

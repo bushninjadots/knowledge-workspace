@@ -159,8 +159,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       if (sourceSectionIdx < 0) return;
       const [moved] = newSections[sourceSectionIdx].blocks.splice(sourceBlockIdx, 1);
       if (sourceSectionIdx === sectionIdx && sourceBlockIdx < blockIdx) blockIdx--;
-      newSections[sectionIdx].blocks.splice(blockIdx, 0, moved);
-      reindex(newSections[sectionIdx].blocks);
+      const targetSection = newSections[sectionIdx];
+      if (!targetSection) return;
+      targetSection.blocks.splice(blockIdx, 0, moved);
+      reindex(targetSection.blocks);
       if (newSections[sourceSectionIdx].blocks.length === 0 && sourceSectionIdx !== sectionIdx) {
         newSections.splice(sourceSectionIdx, 1);
       }
@@ -192,7 +194,9 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
 
       const newSections = cloneSections(layout);
       const [moved] = newSections[srcSectionIdx].blocks.splice(srcBlockIdx, 1);
-      newSections[sectionIdx].blocks.push(moved);
+      const targetSection = newSections[sectionIdx];
+      if (!targetSection) return;
+      targetSection.blocks.push(moved);
       if (newSections[srcSectionIdx].blocks.length === 0) {
         newSections.splice(srcSectionIdx, 1);
         if (sectionIdx > srcSectionIdx) sectionIdx--;
@@ -263,7 +267,11 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
                     />
                   ) : (
-                    <BlockRenderer type={block.type} config={block.config} context={context} />
+                    <BlockRenderer
+                      type={block.type}
+                      config={block.config}
+                      context={{ ...context, blockId: block.id }}
+                    />
                   )}
                 </div>
               ))}

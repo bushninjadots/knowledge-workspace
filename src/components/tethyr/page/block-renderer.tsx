@@ -44,7 +44,11 @@ export const BlockRenderer = memo(function BlockRenderer({
   }
 
   return (
-    <div data-block-type={type} data-block-id={context.pageId} className="group/block">
+    <div
+      data-block-type={type}
+      data-block-id={context.blockId ?? context.pageId}
+      className="group/block"
+    >
       <Component config={config} onChange={onChange} context={context} />
     </div>
   );

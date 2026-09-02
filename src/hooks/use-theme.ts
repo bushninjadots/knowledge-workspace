@@ -7,8 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import type { ThemeTokens } from "@/lib/page-blocks";
 import { themeTokensToVars } from "@/lib/theme-tokens";
-
-const DEFAULT_THEME_ID = "00000000-0000-0000-0000-000000000001";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 interface ThemeRecord {
   tokens: Json;

@@ -83,6 +83,9 @@ function ProfilePage() {
   };
   const focusGithubToken = githubParam === "token";
   const githubScrolledRef = useRef(false);
+  // While in the Studio, users can jump into the setup form anytime to finish
+  // their profile — entering the Studio should not require it first.
+  const [showSetup, setShowSetup] = useState(false);
 
   useEffect(() => {
     if (!focusGithubToken || !profileQuery.data || githubScrolledRef.current) return;
@@ -117,33 +120,51 @@ function ProfilePage() {
     );
   }
 
-  const { profile, userId, teachIds, teachMeta, learnIds, projects } = profileQuery.data;
+  const {
+    profile,
+    userId,
+    teachIds,
+    teachMeta,
+    learnIds,
+    projects,
+    avatarSigned,
+    bannerSigned,
+    background,
+  } = profileQuery.data;
 
-  const isComplete =
-    setupCompletenessPercent({
-      profile,
-      teachCount: teachIds?.length ?? 0,
-      learnCount: learnIds?.length ?? 0,
-      projectsCount: projects?.length ?? 0,
-    }) >= 40;
+  const setupPercent = setupCompletenessPercent({
+    profile,
+    teachCount: teachIds?.length ?? 0,
+    learnCount: learnIds?.length ?? 0,
+    projectsCount: projects?.length ?? 0,
+  });
 
-  if (!isComplete) {
-    return (
-      <ProfileSetupForm
-        profile={profile}
-        userId={userId}
-        onSaved={refresh}
-        refresh={refresh}
-        avatarSigned={profileQuery.data.avatarSigned}
-        bannerSigned={profileQuery.data.bannerSigned}
-        background={profileQuery.data.background}
-        publicBackground={profile?.public_background ?? null}
-        teachIds={teachIds ?? []}
-        teachMeta={teachMeta ?? {}}
-        learnIds={learnIds ?? []}
-        allSkills={skillsQuery.data ?? []}
-      />
-    );
+  const setupForm = () => (
+    <ProfileSetupForm
+      profile={profile}
+      userId={userId}
+      onSaved={() => {
+        setShowSetup(false);
+        refresh();
+      }}
+      refresh={refresh}
+      avatarSigned={avatarSigned}
+      bannerSigned={bannerSigned}
+      background={background}
+      publicBackground={profile?.public_background ?? null}
+      teachIds={teachIds ?? []}
+      teachMeta={teachMeta ?? {}}
+      learnIds={learnIds ?? []}
+      allSkills={skillsQuery.data ?? []}
+    />
+  );
+
+  // Low bar: entering the Studio requires only a display name. Everything else
+  // (title, bio, location, …) is completed from inside the Studio, anytime.
+  const requiresNameForm = !profile?.display_name;
+
+  if (requiresNameForm || showSetup) {
+    return setupForm();
   }
 
   return (
@@ -163,6 +184,24 @@ function ProfilePage() {
           </p>
         </div>
       </div>
+      {setupPercent < 40 && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-card-border bg-surface px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Finish your profile anytime — add a title, bio, or location to help people understand
+              who you are.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setShowSetup(true)}
+            >
+              Complete profile
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <EditModeProvider>
           <PageShell

@@ -19,6 +19,7 @@ type ProfileHeaderData = {
   creator_title: string | null;
   avatar_url: string | null;
   banner_url: string | null;
+  banner_caption: string | null;
   category: string | null;
   country: string | null;
   timezone: string | null;
@@ -36,7 +37,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
       const { data } = await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score",
+          "id, display_name, handle, creator_title, avatar_url, banner_url, banner_caption, category, country, timezone, languages, reputation_score",
         )
         .eq("id", profileId)
         .maybeSingle();
@@ -68,6 +69,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const initial = (data.display_name ?? data.handle ?? "?").charAt(0).toUpperCase();
   const variant = typeof config.variant === "string" ? config.variant : "row";
   const coverActive = variant === "cover" && config.showBanner !== false && !!bannerSrc;
+  const bannerCaption = data.banner_caption?.trim();
   const showTitle = config.showTitle !== false;
   const showHandle = config.showHandle !== false;
   const showLocation = config.showLocation !== false;
@@ -138,17 +140,24 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
       {showBanner && bannerSrc && (
-        <img
-          src={bannerSrc}
-          alt=""
-          width="1200"
-          height="400"
-          loading="eager"
-          decoding="async"
-          className={
-            coverActive ? "h-72 w-full object-cover sm:h-96" : "h-44 w-full object-cover sm:h-64"
-          }
-        />
+        <div className="relative">
+          <img
+            src={bannerSrc}
+            alt=""
+            width="1200"
+            height="400"
+            loading="eager"
+            decoding="async"
+            className={
+              coverActive ? "h-72 w-full object-cover sm:h-96" : "h-44 w-full object-cover sm:h-64"
+            }
+          />
+          {bannerCaption && !coverActive && (
+            <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-3 pt-8 text-sm text-white sm:px-8">
+              {bannerCaption}
+            </p>
+          )}
+        </div>
       )}
 
       {coverActive ? (
@@ -159,6 +168,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>
             {identity}
+            {bannerCaption && <p className="max-w-xl text-sm text-white/85">{bannerCaption}</p>}
           </div>
         </div>
       ) : (

@@ -113,7 +113,7 @@ export function SortableBlock({
       <BlockRenderer
         type={block.type}
         config={block.config}
-        context={context}
+        context={{ ...context, blockId: block.id }}
         onChange={onConfigChange}
       />
     </div>

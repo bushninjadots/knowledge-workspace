@@ -9,25 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useThemeCatalog } from "@/hooks/use-theme-catalog";
 import { useUpdatePageTheme } from "@/hooks/use-page-editor";
-import type { PageData } from "@/lib/page-blocks";
+import type { PageData, PageOwnerType } from "@/lib/page-blocks";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 interface ThemePickerProps {
   page: PageData;
+  ownerId: string;
+  ownerType: PageOwnerType;
   onClose: () => void;
   onApplied: () => void;
 }
 
-export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
+export function ThemePicker({ page, ownerId, ownerType, onClose, onApplied }: ThemePickerProps) {
   const { data: themes = [], isLoading } = useThemeCatalog();
   const updateTheme = useUpdatePageTheme();
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
-  const currentThemeId = page.themeId || "00000000-0000-0000-0000-000000000001";
+  const currentThemeId = page.themeId || DEFAULT_THEME_ID;
 
   function handleApply(themeId: string) {
     setApplyingId(themeId);
     updateTheme.mutate(
-      { pageId: page.id, themeId },
+      { pageId: page.id, ownerId, ownerType, themeId },
       {
         onSuccess: () => {
           setApplyingId(null);
@@ -44,7 +47,7 @@ export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
     // Reset to Tethyr Default by setting theme_id to null.
     setApplyingId("default");
     updateTheme.mutate(
-      { pageId: page.id, themeId: null as unknown as string },
+      { pageId: page.id, ownerId, ownerType, themeId: null as unknown as string },
       {
         onSuccess: () => {
           setApplyingId(null);
@@ -88,7 +91,7 @@ export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
           <button
             type="button"
             className={`mb-2 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
-              currentThemeId === "00000000-0000-0000-0000-000000000001"
+              currentThemeId === DEFAULT_THEME_ID
                 ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent,var(--trust))]/5"
                 : "border-transparent bg-surface/50 hover:border-card-border hover:bg-surface"
             }`}
@@ -96,7 +99,7 @@ export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
           >
             <PaintBucket className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-[11px] font-medium">Tethyr Default</span>
-            {currentThemeId === "00000000-0000-0000-0000-000000000001" && (
+            {currentThemeId === DEFAULT_THEME_ID && (
               <Check className="ml-auto h-3.5 w-3.5 text-[var(--user-accent,var(--trust))]" />
             )}
           </button>
@@ -104,7 +107,7 @@ export function ThemePicker({ page, onClose, onApplied }: ThemePickerProps) {
           {/* Theme grid */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {themes
-              .filter((t) => t.id !== "00000000-0000-0000-0000-000000000001")
+              .filter((t) => t.id !== DEFAULT_THEME_ID)
               .map((theme) => {
                 const isActive = currentThemeId === theme.id;
                 const isApplying = applyingId === theme.id;

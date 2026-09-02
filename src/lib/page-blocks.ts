@@ -35,6 +35,8 @@ export interface BlockContext {
   ownerType: "profile" | "project";
   /** The page ID, useful for data hooks that scope to the page owner. */
   pageId: string;
+  /** The block instance ID, used for data attributes and targeting. */
+  blockId?: string;
   /** Whether the block is currently in edit mode (shows handles, config UI). */
   isEditing: boolean;
 }
@@ -83,7 +85,7 @@ export interface BlockDefinition {
 }
 
 /** Describes a single editable field for a block in the Studio inspector. */
-interface BlockField {
+export interface BlockField {
   /** Config key this field reads/writes. */
   key: string;
   /** Human-readable label shown in the inspector. */

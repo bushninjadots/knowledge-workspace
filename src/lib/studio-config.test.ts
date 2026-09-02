@@ -159,9 +159,9 @@ describe("studioConfigToStyle", () => {
     expect(style["--user-accent"]).toBe("var(--primary)");
   });
 
-  it("'auto' leaves the accent family untouched", () => {
+  it("'auto' falls back to primary so the accent family always resolves", () => {
     const style = studioConfigToStyle({ ...DEFAULT_STUDIO_CONFIG }) as Record<string, string>;
-    expect(style["--user-accent"]).toBeUndefined();
+    expect(style["--user-accent"]).toBe("var(--primary)");
   });
 });
 

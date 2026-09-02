@@ -205,7 +205,9 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
     style["--user-accent-subtle"] = `color-mix(in oklab, ${config.accentColor} 10%, transparent)`;
     style["--user-accent-border"] = `color-mix(in oklab, ${config.accentColor} 30%, transparent)`;
     style["--user-accent-glow"] = `color-mix(in oklab, ${config.accentColor} 6%, transparent)`;
-  } else if (config.accentMode === "none") {
+  } else {
+    // Accent "none" AND "auto" both resolve to the page primary so the
+    // --user-accent-* family always has a defined value (no dangling var()).
     style["--user-accent"] = "var(--primary)";
     style["--user-accent-foreground"] = "var(--primary-foreground)";
     style["--user-accent-subtle"] = "color-mix(in oklab, var(--primary) 10%, transparent)";

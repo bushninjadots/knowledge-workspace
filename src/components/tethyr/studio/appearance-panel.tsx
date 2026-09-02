@@ -11,6 +11,7 @@ import {
   DENSITY_OPTIONS,
   RADIUS_OPTIONS,
   TYPOGRAPHY_OPTIONS,
+  DEFAULT_STUDIO_CONFIG,
   type StudioConfig,
 } from "@/lib/studio-config";
 
@@ -139,11 +140,11 @@ export function AppearancePanel({ config, onChange, onClose }: AppearancePanelPr
           className="h-7 w-full text-xs"
           onClick={() =>
             onChange({
-              radius: "soft",
-              typography: "modern",
-              density: "comfortable",
-              accentMode: "auto",
-              accentColor: null,
+              radius: DEFAULT_STUDIO_CONFIG.radius,
+              typography: DEFAULT_STUDIO_CONFIG.typography,
+              density: DEFAULT_STUDIO_CONFIG.density,
+              accentMode: DEFAULT_STUDIO_CONFIG.accentMode,
+              accentColor: DEFAULT_STUDIO_CONFIG.accentColor,
             })
           }
         >
