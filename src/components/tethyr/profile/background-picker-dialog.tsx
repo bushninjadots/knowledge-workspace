@@ -593,7 +593,12 @@ export function BackgroundPickerDialog({
                             ? "border-[var(--user-accent,var(--primary))] ring-2 ring-[var(--user-accent,var(--primary))]/40"
                             : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
                         )}
-                        style={backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id })}
+                        style={{
+                          ...backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id }),
+                          backgroundColor:
+                            backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id }).backgroundColor ??
+                            "var(--background)",
+                        }}
                       />
                     );
                   })}

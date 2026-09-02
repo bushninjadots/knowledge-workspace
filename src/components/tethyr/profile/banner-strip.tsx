@@ -23,7 +23,7 @@ export function BannerStrip({
   overlay = "soft",
   captionPosition = "right",
   readonly = false,
-  showCaption = false,
+  showCaption = true,
 }: {
   bannerSigned: string | null;
   bannerCaption?: string | null;
@@ -63,6 +63,7 @@ export function BannerStrip({
     if (error) return toast.error(friendlyError(error));
     toast.success("Banner updated");
     onChange();
+    if (ref.current) ref.current.value = "";
   }
 
   function openCaptionEditor() {
@@ -96,6 +97,7 @@ export function BannerStrip({
     >
       {bannerSigned ? (
         <img
+          key={bannerSigned}
           src={bannerSigned}
           alt=""
           width="1200"
@@ -139,7 +141,7 @@ export function BannerStrip({
 
       {readonly && showCaption && bannerCaption && (
         <span
-          className={`absolute bottom-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-xs ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+          className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
         >
           {bannerCaption}
         </span>
@@ -206,7 +208,7 @@ export function BannerStrip({
           bannerCaption && (
             <button
               onClick={openCaptionEditor}
-              className={`absolute bottom-4 z-20 max-w-44 truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-xs ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
               title="Click to edit caption"
             >
               {bannerCaption}

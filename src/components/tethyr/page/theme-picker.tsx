@@ -47,7 +47,7 @@ export function ThemePicker({ page, ownerId, ownerType, onClose, onApplied }: Th
     // Reset to Tethyr Default by setting theme_id to null.
     setApplyingId("default");
     updateTheme.mutate(
-      { pageId: page.id, ownerId, ownerType, themeId: null as unknown as string },
+      { pageId: page.id, ownerId, ownerType, themeId: null },
       {
         onSuccess: () => {
           setApplyingId(null);

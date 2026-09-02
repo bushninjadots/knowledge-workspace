@@ -289,17 +289,20 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               </div>
             )}
             <div
-              className={`${gridClass} content-safe`}
+              className={`${gridClass} content-safe ${context.isEditing ? "rounded-xl border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))]/20 p-3" : ""}`}
               style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
+              data-section-canvas={context.isEditing ? "true" : undefined}
             >
               {blocks.map((block, bi) => (
                 <div
                   key={`drop-${block.id}`}
                   className={[
-                    "contents",
+                    context.isEditing
+                      ? "relative rounded-lg border border-dashed border-border/70 bg-surface/20 p-2 transition-colors hover:border-[var(--user-accent,var(--trust))]/70 hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]/20"
+                      : "contents",
                     gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
                     dropTarget?.sectionIdx === si && dropTarget.blockIdx === bi
-                      ? "[&>div]:border-t-2 [&>div]:border-[var(--user-accent,var(--trust))]"
+                      ? "border-t-2 border-[var(--user-accent,var(--trust))]"
                       : "",
                   ].join(" ")}
                   onDragOver={(event) => {
@@ -339,7 +342,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               {context.isEditing && blocks.length > 0 && (
                 <div
                   className={[
-                    "min-h-8 rounded-sm border border-dashed border-border/50 bg-surface/30 text-center text-[10px] text-muted-foreground/60 transition-colors",
+                    "col-span-full min-h-8 rounded-md border border-dashed border-border/50 bg-surface/30 text-center text-[10px] text-muted-foreground/60 transition-colors",
                     dropTarget?.sectionIdx === si && dropTarget.blockIdx === blocks.length
                       ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                       : "",

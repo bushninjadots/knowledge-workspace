@@ -4,13 +4,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Languages, Sparkles } from "lucide-react";
+import { MapPin, Clock, Languages, Sparkles, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { isSafeUrl } from "@/lib/validators";
 import { registerBlock } from "@/lib/block-registry";
 import { HeroEditControls } from "@/components/tethyr/profile/hero-edit-controls";
+import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -77,6 +78,8 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showReputation = config.showReputation !== false;
   const showBanner = config.showBanner !== false;
   const canEdit = context.isOwner === true && !context.isEditing;
+  const profileCompleteness =
+    typeof context.profileCompleteness === "number" ? context.profileCompleteness : null;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
@@ -99,20 +102,14 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         />
       )}
       {showBanner && bannerSrc && (
-        <img
-          src={bannerSrc}
-          alt=""
-          width="1200"
-          height="400"
-          loading="eager"
-          decoding="async"
-          className="h-44 w-full object-cover sm:h-64"
+        <BannerStrip
+          bannerSigned={bannerSrc}
+          bannerCaption={data.banner_caption}
+          userId={data.id}
+          onChange={() => undefined}
+          readonly
+          showCaption
         />
-      )}
-      {showBanner && bannerSrc && data.banner_caption && !canEdit && (
-        <span className="absolute right-4 top-[9.5rem] z-10 max-w-xs truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground sm:top-[13.5rem]">
-          {data.banner_caption}
-        </span>
       )}
       <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
         <div
@@ -137,7 +134,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
             {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
 
             {/* Metadata chips */}
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {data.category && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
                   {data.category}
@@ -164,6 +161,23 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                 </span>
               )}
             </div>
+
+            {canEdit && profileCompleteness !== null && profileCompleteness < 100 && context.onCompleteProfile && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-3">
+                <p className="text-xs text-muted-foreground">
+                  Complete your profile so people can understand what you make and how to work with you.
+                </p>
+                <button
+                  type="button"
+                  onClick={context.onCompleteProfile}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--card-border))] bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-background"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Complete profile
+                  <span className="text-muted-foreground">{profileCompleteness}%</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

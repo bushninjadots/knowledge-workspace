@@ -62,6 +62,8 @@ export function PageShell({
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const { isEditing } = useEditMode();
   const updateLayout = useUpdatePageLayout();
+  const isGlassTheme =
+    page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
 
   const saveLayout = (nextLayout: PageLayout) => {
     if (!page || updateLayout.isPending || !isOwner || previewMode) return;
@@ -120,7 +122,7 @@ export function PageShell({
     () => {
       const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
         Record<string, string>;
-      if (blockContext.translucent) {
+      if (isGlassTheme || blockContext.translucent) {
         style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
         style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
         style["--card"] = "color-mix(in oklab, var(--background) 78%, transparent)";
@@ -130,7 +132,7 @@ export function PageShell({
       }
       return style;
     },
-    [themeVars, effectiveTheme, blockContext.translucent],
+    [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent],
   );
 
   if (isLoading) {

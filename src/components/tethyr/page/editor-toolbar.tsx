@@ -26,7 +26,12 @@ import {
   useUpdatePageLayout,
   useUpdatePageConfig,
 } from "@/hooks/use-page-editor";
-import { useSaveAsTemplate, useApplyTemplate, usePublicTemplates } from "@/hooks/use-templates";
+import {
+  useSaveAsTemplate,
+  useApplyTemplate,
+  usePublicTemplates,
+  useUnpublishTemplate,
+} from "@/hooks/use-templates";
 import { ThemePicker } from "@/components/tethyr/page/theme-picker";
 import { CompositionPicker } from "@/components/tethyr/studio/composition-picker";
 import { PersonalityPicker } from "@/components/tethyr/studio/personality-picker";
@@ -91,6 +96,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const updateConfig = useUpdatePageConfig();
   const saveAsTemplate = useSaveAsTemplate();
   const applyTemplate = useApplyTemplate();
+  const unpublishTemplate = useUnpublishTemplate();
   const { data: myTemplates = [] } = usePublicTemplates();
 
   const [showPicker, setShowPicker] = useState(false);
@@ -101,9 +107,19 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const [templateName, setTemplateName] = useState("");
   const [showApplyPanel, setShowApplyPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
   const [showChecklist, setShowChecklist] = useState(true);
+
+  function togglePanel(
+    panel: "picker" | "composition" | "personality" | "appearance" | "templates" | "theme",
+  ) {
+    setShowPicker(panel === "picker" ? !showPicker : false);
+    setShowComposition(panel === "composition" ? !showComposition : false);
+    setShowPersonality(panel === "personality" ? !showPersonality : false);
+    setShowAppearance(panel === "appearance" ? !showAppearance : false);
+    setShowApplyPanel(panel === "templates" ? !showApplyPanel : false);
+    setShowThemePicker(panel === "theme" ? !showThemePicker : false);
+  }
 
   // Debounce refs for appearance config writes — coalesces rapid changes into one save.
   const pendingAppearanceRef = useRef<Partial<StudioConfig> | null>(null);
@@ -282,7 +298,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => setShowPicker(!showPicker)}
+            onClick={() => togglePanel("picker")}
           >
             <Plus className="h-3.5 w-3.5" /> Add content block
           </Button>
@@ -291,7 +307,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="outline"
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => setShowComposition(!showComposition)}
+            onClick={() => togglePanel("composition")}
           >
             <Layers className="h-3.5 w-3.5" /> Choose composition
           </Button>
@@ -299,7 +315,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-[11px]"
-            onClick={() => setShowPersonality(!showPersonality)}
+            onClick={() => togglePanel("personality")}
           >
             <Sparkles className="h-3.5 w-3.5" /> Choose vibe
           </Button>
@@ -307,7 +323,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-[11px]"
-            onClick={() => setShowAppearance(!showAppearance)}
+            onClick={() => togglePanel("appearance")}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" /> Adjust appearance
           </Button>
@@ -315,7 +331,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-[11px]"
-            onClick={() => setShowThemePicker(!showThemePicker)}
+            onClick={() => togglePanel("theme")}
           >
             <Palette className="h-3.5 w-3.5" /> Choose theme
           </Button>
@@ -323,7 +339,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-[11px]"
-            onClick={() => setShowApplyPanel(!showApplyPanel)}
+            onClick={() => togglePanel("templates")}
           >
             <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Use template
           </Button>
@@ -339,14 +355,6 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={stopEditing}>
             <Eye className="h-3.5 w-3.5" /> Preview studio
           </Button>
-          <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5" aria-label="Preview size">
-            {(["desktop", "mobile"] as const).map((device) => (
-              <button key={device} type="button" className={`rounded px-2 py-1 text-[10px] capitalize ${previewDevice === device ? "bg-surface font-medium text-foreground" : "text-muted-foreground"}`} onClick={() => setPreviewDevice(device)}>
-                {device}
-              </button>
-            ))}
-          </div>
-          <span className="text-[10px] text-muted-foreground">Preview size: {previewDevice}</span>
           {isPublished ? (
             <Button
               variant="ghost"
@@ -502,17 +510,31 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              {" "}
               {myTemplates.map((t: { id: string; name: string; type: string }) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="flex items-center justify-between rounded-lg border border-transparent bg-surface/50 px-3 py-2 text-left text-xs transition-colors hover:border-card-border hover:bg-surface"
-                  onClick={() => handleApply(t.id)}
-                >
-                  <span className="text-xs font-medium">{t.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{t.type}</span>
-                </button>
+                <div key={t.id} className="flex items-center gap-1 rounded-lg border border-transparent bg-surface/50 p-1 transition-colors hover:border-card-border hover:bg-surface">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 px-2 py-1 text-left text-xs"
+                    onClick={() => handleApply(t.id)}
+                  >
+                    <span className="block truncate font-medium">{t.name}</span>
+                    <span className="block text-[10px] text-muted-foreground">{t.type}</span>
+                  </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Delete template ${t.name}`}
+                    onClick={() => {
+                      if (window.confirm(`Remove template “${t.name}” from your templates?`)) {
+                        unpublishTemplate.mutate({ layoutId: t.id });
+                      }
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               ))}
             </div>
           )}

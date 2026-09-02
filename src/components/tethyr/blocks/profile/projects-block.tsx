@@ -126,7 +126,7 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
   }
 
   const cardCls =
-    "group flex flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
+    "group flex h-fit flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
   const ProjectImage = ({ project }: { project: { id: string; cover_url: string | null; title: string } }) => {
     const { data: signedUrl } = useSignedStorageUrl("project-media", project.cover_url);
     const src = signedUrl ?? (project.cover_url?.startsWith("http") ? project.cover_url : null);
@@ -199,13 +199,13 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
     return (
       <div>
         {heading}
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid items-start gap-3 md:grid-cols-3">
           {featured && (
             <Link
               key={featured.project.id}
               to="/projects/$id"
               params={{ id: featured.project.id }}
-              className={`${cardCls} md:col-span-2`}
+              className={`${cardCls} md:col-span-2 md:row-span-2`}
             >
               <ProjectImage project={featured.project} />
               {body(featured.project, featured.role)}

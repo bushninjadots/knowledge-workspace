@@ -28,6 +28,7 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
+import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
@@ -140,6 +141,8 @@ function ProfilePage() {
     projectsCount: projects?.length ?? 0,
   });
 
+  const setupBackground = profile?.background as ProfileBackground | null;
+
   const setupForm = () => (
     <ProfileSetupForm
       profile={profile}
@@ -165,11 +168,24 @@ function ProfilePage() {
   const requiresNameForm = !profile?.display_name;
 
   if (requiresNameForm || showSetup) {
-    return setupForm();
+    return (
+      <div
+        className={`relative isolate min-h-screen ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
+        style={{ ...appearanceStyle(setupBackground) }}
+      >
+        <BackgroundLayer background={setupBackground} imageUrl={profileQuery.data.backgroundImageUrl} />
+        {setupForm()}
+      </div>
+    );
   }
 
   return (
-    <>
+    <div
+      className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
+      style={{ ...appearanceStyle(background) }}
+    >
+      <BackgroundLayer background={background} imageUrl={profileQuery.data.backgroundImageUrl} />
+      <>
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -201,7 +217,8 @@ function ProfilePage() {
           />
         </EditModeProvider>
       </div>
-    </>
+      </>
+    </div>
   );
 }
 
