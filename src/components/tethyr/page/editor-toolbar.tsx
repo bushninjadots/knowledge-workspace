@@ -143,52 +143,43 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
   const { data: myTemplates = [] } = usePublicTemplates();
   const blockDefinitions = useMemo(() => getAllBlocks(), []);
 
-  const [showPicker, setShowPicker] = useState(false);
-  const [showComposition, setShowComposition] = useState(false);
-  const [showPersonality, setShowPersonality] = useState(false);
-  const [showAppearance, setShowAppearance] = useState(false);
-  const [showTemplateName, setShowTemplateName] = useState(false);
+  // One panel at a time. A single `activePanel` value replaces the previous
+  // tabs-plus-buttons double hop: each tool chip toggles its own panel.
+  type StudioPanelId =
+    | "content"
+    | "layout"
+    | "vibe"
+    | "appearance"
+    | "theme"
+    | "templates"
+    | "saveTemplate";
+  const [activePanel, setActivePanel] = useState<StudioPanelId | null>(null);
   const [templateName, setTemplateName] = useState("");
-  const [showApplyPanel, setShowApplyPanel] = useState(false);
+  const [showOutline, setShowOutline] = useState(true);
   // Template awaiting destructive-apply confirmation. Templates replace the
   // current sections + blocks, so we confirm before calling useApplyTemplate.
   const [confirmingTemplate, setConfirmingTemplate] = useState<{
     id: string;
     name: string;
   } | null>(null);
-  const [showThemePicker, setShowThemePicker] = useState(false);
   const [lastAction, setLastAction] = useState<"saving" | "saved" | "error" | null>(null);
-  const [activeTab, setActiveTab] = useState<"content" | "layout" | "style" | "settings">(
-    "content",
-  );
+
+  const showPicker = activePanel === "content";
+  const showComposition = activePanel === "layout";
+  const showPersonality = activePanel === "vibe";
+  const showAppearance = activePanel === "appearance";
+  const showApplyPanel = activePanel === "templates";
+  const showThemePicker = activePanel === "theme";
+  const showTemplateName = activePanel === "saveTemplate";
+
+  function togglePanel(panel: StudioPanelId) {
+    setActivePanel((current) => (current === panel ? null : panel));
+  }
 
   function closePanels() {
-    setShowPicker(false);
-    setShowComposition(false);
-    setShowPersonality(false);
-    setShowAppearance(false);
-    setShowApplyPanel(false);
-    setShowThemePicker(false);
-    setShowTemplateName(false);
+    setActivePanel(null);
   }
 
-  function selectTab(value: string) {
-    setActiveTab(value as "content" | "layout" | "style" | "settings");
-    closePanels();
-  }
-
-  function openPanel(
-    panel: "picker" | "composition" | "personality" | "appearance" | "templates" | "theme",
-    tab: "content" | "layout" | "style" | "settings",
-  ) {
-    setActiveTab(tab);
-    setShowPicker(panel === "picker");
-    setShowComposition(panel === "composition");
-    setShowPersonality(panel === "personality");
-    setShowAppearance(panel === "appearance");
-    setShowApplyPanel(panel === "templates");
-    setShowThemePicker(panel === "theme");
-  }
 
   // Debounce refs for appearance config writes — coalesces rapid changes into one save.
   const pendingAppearanceRef = useRef<Partial<StudioConfig> | null>(null);
