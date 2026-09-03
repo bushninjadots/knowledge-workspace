@@ -45,7 +45,7 @@ import {
   STUDIO_STARTERS,
   type StudioStarter,
 } from "@/components/tethyr/studio/starter-picker";
-import { BACKGROUND_OPTIONS, structureMaxWidth, type StudioConfig } from "@/lib/studio-config";
+import { BACKGROUND_OPTIONS, structureMaxWidth, studioConfigToStyle, type StudioConfig } from "@/lib/studio-config";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
 export type GStudioConfig = StudioConfig;
 
@@ -71,7 +71,6 @@ export interface GStudioSurfaceProps {
   publishedVersion: number | null;
   canUndo: boolean;
   canRedo: boolean;
-  history: Array<unknown>;
   profile: { id: string; handle: string | null; display_name: string | null } | null;
   userId: string;
   onModeChange: (mode: GStudioMode) => void;
@@ -97,10 +96,7 @@ export interface GStudioSurfaceProps {
   onSave: () => void;
   onPublish: () => void;
   onRollback: (version: number) => void;
-  onFeel: () => void;
   onChooseStarter: (starter: StudioStarter) => void;
-  onToggleCustomize: () => void;
-  onTogglePalette: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onCompleteProfile?: () => void;
@@ -198,10 +194,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onDeviceChange={props.onDeviceChange}
         onUndo={props.onUndo}
         onRedo={props.onRedo}
-        onFeel={() => {
-          setStarterOpen(true);
-          props.onFeel();
-        }}
+        onFeel={() => setStarterOpen(true)}
         onCustomize={toggleCustomize}
         onPalette={togglePalette}
         onSave={props.onSave}
@@ -232,10 +225,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               setCustomizeOpen(false);
               setMobilePanel(null);
             }}
-            onFeel={() => {
-              setStarterOpen(true);
-              props.onFeel();
-            }}
+            onFeel={() => setStarterOpen(true)}
             onCompleteProfile={props.onCompleteProfile}
             onReset={props.onReset}
           />
@@ -265,7 +255,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             }}
           />
         )}
-        {editing && compact && <GMobileEditSheet {...props} onFeel={props.onFeel} />}
+        {editing && compact && <GMobileEditSheet {...props} onFeel={() => setStarterOpen(true)} />}
       </div>
       {starterOpen && (
         <StarterPicker
@@ -749,7 +739,7 @@ function GSectionBand({
           resizeHandles={["se", "e", "s"]}
           resizeHandle={ResizeHandle}
           useCSSTransforms
-          compactType="vertical"
+          compactType={null}
           onBreakpointChange={(breakpoint) => {
             breakpointRef.current = breakpoint;
           }}
@@ -1176,6 +1166,7 @@ function GCustomizePanel({
         </div>
         <Choice
           label="Structure"
+          hint="How wide your Studio reads"
           value={config.structure}
           options={[
             ["single", "Column"],
@@ -1186,6 +1177,7 @@ function GCustomizePanel({
         />
         <Choice
           label="Personality"
+          hint="Typography and visual character — Editorial uses Space Grotesk, Technical uses JetBrains Mono"
           value={config.personality}
           options={[
             ["modern", "Modern"],
@@ -1196,6 +1188,7 @@ function GCustomizePanel({
         />
         <Choice
           label="Density"
+          hint="Spacing rhythm between blocks"
           value={config.density}
           options={[
             ["compact", "Compact"],
@@ -1370,15 +1363,18 @@ function Choice({
   value,
   options,
   onChange,
+  hint,
 }: {
   label: string;
   value: string;
   options: Array<[string, string]>;
   onChange: (value: string) => void;
+  hint?: string;
 }) {
   return (
     <div className="mb-4">
       <p className="t-label mb-1.5">{label}</p>
+      {hint && <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">{hint}</p>}
       <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
         {options.map(([option, text]) => (
           <button
@@ -1401,7 +1397,7 @@ function Choice({
   );
 }
 
-function GMobileEditSheet(props: GStudioSurfaceProps) {
+function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
   const [tab, setTab] = useState<"arrange" | "add" | "feel">("arrange");
   const [open, setOpen] = useState(true);
   const [targetArea, setTargetArea] = useState<string | undefined>(props.layout.sections[0]?.id);
@@ -1728,19 +1724,13 @@ export function sizeFor(type: string): [number, number, number, number] {
 }
 
 function studioSurfaceStyle(config: GStudioConfig): CSSProperties {
-  const style: CSSProperties & Record<string, string> = {};
-  style["--studio-radius"] = config.radius === "sharp" ? "2px" : "5px";
-  style["--studio-gap"] =
-    config.density === "compact" ? "10px" : config.density === "spacious" ? "20px" : "14px";
-  style["--studio-pad"] =
-    config.density === "compact" ? "12px" : config.density === "spacious" ? "24px" : "16px";
+  // Use the canonical style computation from studio-config so all accent
+  // variables (--user-accent-foreground, --user-accent-glow, etc.) are set
+  // consistently — the previous local copy omitted several, breaking contrast
+  // on buttons/labels when a custom accent colour was picked.
+  const style = studioConfigToStyle(config) as CSSProperties & Record<string, string>;
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
-  if (config.accentMode === "custom") {
-    style["--user-accent"] = config.accentColor;
-    style["--user-accent-border"] = `color-mix(in oklab, ${config.accentColor} 30%, transparent)`;
-    style["--user-accent-subtle"] = `color-mix(in oklab, ${config.accentColor} 10%, transparent)`;
-  }
   return style;
 }
 

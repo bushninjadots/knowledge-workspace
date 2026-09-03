@@ -79,7 +79,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showBanner = config.showBanner !== false;
   // Profile editing belongs to Studio editor mode. View mode stays presentation-only,
   // including on the owner's public-facing Studio route.
-  const canEdit = context.isOwner === true && context.isEditing;
+  const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
   const profileCompleteness =
     typeof context.profileCompleteness === "number" ? context.profileCompleteness : null;
 
