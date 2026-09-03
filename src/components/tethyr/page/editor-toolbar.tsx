@@ -223,8 +223,14 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       const target = event.target as HTMLElement | null;
       const isTextEntry =
         target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      // Escape dismisses whichever tool panel is open.
+      if (event.key === "Escape" && !isTextEntry) {
+        setActivePanel(null);
+        return;
+      }
       if (isTextEntry || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z")
         return;
+
       event.preventDefault();
       if (event.shiftKey) handleRedo();
       else handleUndo();
