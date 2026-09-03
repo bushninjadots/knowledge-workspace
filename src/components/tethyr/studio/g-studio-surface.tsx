@@ -739,7 +739,7 @@ function GSectionBand({
           resizeHandles={["se", "e", "s"]}
           resizeHandle={ResizeHandle}
           useCSSTransforms
-          compactType="vertical"
+          compactType={null}
           onBreakpointChange={(breakpoint) => {
             breakpointRef.current = breakpoint;
           }}

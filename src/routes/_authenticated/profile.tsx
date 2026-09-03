@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
-import { CreationStudio } from "@/components/tethyr/studio/creation-studio";
+import { StudioView } from "@/components/tethyr/studio/studio-view";
 import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -172,7 +172,7 @@ function ProfilePage() {
   }
 
   return (
-    <CreationStudio
+    <StudioView
       userId={userId}
       profile={profile}
       onCompleteProfile={() => setShowSetup(true)}

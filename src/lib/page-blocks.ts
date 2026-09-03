@@ -39,6 +39,12 @@ export interface BlockContext {
   blockId?: string;
   /** Whether the block is currently in edit mode (shows handles, config UI). */
   isEditing: boolean;
+  /**
+   * Quick-edit mode: the owner can change identity/media/appearance on the
+   * header block without the full block editor. Blocks stay in view mode
+   * (empty states hidden) — only the header's owner controls are revealed.
+   */
+  quickEdit?: boolean;
   /** Whether the current viewer owns this page (enables in-place editing affordances). */
   isOwner?: boolean;
   /** Optional translucent surface treatment for profile pages. */
