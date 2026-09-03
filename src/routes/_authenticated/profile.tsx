@@ -126,7 +126,6 @@ function ProfilePage() {
     teachIds,
     teachMeta,
     learnIds,
-    projects,
     avatarSigned,
     bannerSigned,
     background,
@@ -176,11 +175,6 @@ function ProfilePage() {
     <CreationStudio
       userId={userId}
       profile={profile}
-      projects={projects.map((project) => ({
-        id: project.id,
-        title: project.title,
-        status: project.status,
-      }))}
       onCompleteProfile={() => setShowSetup(true)}
     />
   );

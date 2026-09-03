@@ -32,7 +32,6 @@ import { createDefaultProfileLayout } from "@/lib/default-layouts";
 interface CreationStudioProps {
   userId: string;
   profile: { id: string; handle: string | null; display_name: string | null } | null;
-  projects?: { id: string; title: string; status: string }[];
   onCompleteProfile?: () => void;
 }
 
@@ -537,7 +536,6 @@ export function CreationStudio({ userId, profile, onCompleteProfile }: CreationS
       publishedVersion={page?.publishedVersion ?? null}
       canUndo={history.length > 0}
       canRedo={future.length > 0}
-      history={history}
       profile={profile}
       userId={userId}
       onModeChange={setMode}
@@ -563,10 +561,7 @@ export function CreationStudio({ userId, profile, onCompleteProfile }: CreationS
       onSave={save}
       onPublish={publish}
       onRollback={rollback}
-      onFeel={() => undefined}
       onChooseStarter={chooseStarter}
-      onToggleCustomize={() => undefined}
-      onTogglePalette={() => undefined}
       onUndo={undo}
       onRedo={redo}
       onCompleteProfile={onCompleteProfile}
