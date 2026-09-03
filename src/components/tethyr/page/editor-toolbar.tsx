@@ -504,113 +504,64 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={selectTab} className="mt-4">
-          <TabsList className="h-10 w-full gap-5 overflow-x-auto border-border/60 sm:gap-7">
-            <TabsTrigger value="content" className="h-10 gap-1.5 text-xs sm:text-[13px]">
-              <Plus className="h-3.5 w-3.5" /> Content
-            </TabsTrigger>
-            <TabsTrigger value="layout" className="h-10 gap-1.5 text-xs sm:text-[13px]">
-              <Layers className="h-3.5 w-3.5" /> Layout
-            </TabsTrigger>
-            <TabsTrigger value="style" className="h-10 gap-1.5 text-xs sm:text-[13px]">
-              <Palette className="h-3.5 w-3.5" /> Style
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="h-10 gap-1.5 text-xs sm:text-[13px]">
-              <Settings2 className="h-3.5 w-3.5" /> Settings
-            </TabsTrigger>
-          </TabsList>
+        {/* One flat row of tools. Each chip toggles its own panel, so every
+            control is one click away instead of tab → button. */}
+        <div
+          className="mt-3 -mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-0.5"
+          role="group"
+          aria-label="Studio tools"
+        >
+          {(
+            [
+              ["content", "Add", Plus, "Add a block to your Studio"],
+              ["layout", "Layout", Layers, "Change the whole-page arrangement"],
+              ["vibe", "Vibe", Sparkles, "Apply a visual tone preset"],
+              ["appearance", "Appearance", SlidersHorizontal, "Radius, type, density, accent"],
+              ["theme", "Theme", Palette, "Pick a color theme"],
+              ["templates", "Templates", GalleryHorizontalEnd, "Use or save a layout template"],
+            ] as const
+          ).map(([id, label, Icon, hint]) => {
+            const active = activePanel === id || (id === "templates" && showTemplateName);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => togglePanel(id)}
+                aria-pressed={active}
+                title={hint}
+                className={[
+                  "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-surface font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-surface/60 hover:text-foreground",
+                ].join(" ")}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                {label}
+              </button>
+            );
+          })}
+          <span className="ml-auto hidden shrink-0 pl-2 sm:inline" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={() => setShowOutline((v) => !v)}
+            aria-expanded={showOutline}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground transition-colors hover:bg-surface/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Layers className="h-3.5 w-3.5" aria-hidden="true" />
+            {showOutline ? "Hide contents" : "Contents"}
+          </button>
+        </div>
 
-          <TabsContent value="content">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("picker", "content")}
-              >
-                <Plus className="h-3.5 w-3.5" /> Add content
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Choose what visitors should see, then arrange it on the canvas.
-              </span>
-            </div>
-            <ContentOutline
-              page={page}
-              blockDefinitions={blockDefinitions}
-              onToggleVisibility={handleToggleBlockVisibility}
-            />
-          </TabsContent>
-
-          <TabsContent value="layout">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("composition", "layout")}
-              >
-                <Layers className="h-3.5 w-3.5" /> Studio layout
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Select a section in the canvas for its local layout controls.
-              </span>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="style">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("personality", "style")}
-              >
-                <Sparkles className="h-3.5 w-3.5" /> Vibe
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("appearance", "style")}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5" /> Appearance
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("theme", "style")}
-              >
-                <Palette className="h-3.5 w-3.5" /> Theme
-              </Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => openPanel("templates", "settings")}
-              >
-                <GalleryHorizontalEnd className="h-3.5 w-3.5" /> Use template
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => setShowTemplateName(true)}
-              >
-                <Bookmark className="h-3.5 w-3.5" /> Save as template
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Applying a template replaces your current layout. You can undo from the toolbar.
-              </span>
-            </div>
-          </TabsContent>
-        </Tabs>
+        {showOutline && (
+          <ContentOutline
+            page={page}
+            blockDefinitions={blockDefinitions}
+            onToggleVisibility={handleToggleBlockVisibility}
+          />
+        )}
       </div>
+
 
       {showPicker && (
         <BlockPickerPanel onAdd={handleAddBlock} onClose={() => setShowPicker(false)} />
