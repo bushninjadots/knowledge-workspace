@@ -255,18 +255,21 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string
+          last_read_at: string | null
           role: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Insert: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Update: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id?: string
           user_id?: string
@@ -1049,8 +1052,58 @@ export type Database = {
           },
         ]
       }
+      page_versions: {
+        Row: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          layout?: Json
+          page_id: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version: number
+        }
+        Update: {
+          id?: string
+          layout?: Json
+          page_id?: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
+          composition_id: string | null
+          config: Json
           created_at: string
           id: string
           layout_id: string | null
@@ -1061,8 +1114,11 @@ export type Database = {
           theme_id: string | null
           theme_overrides: Json | null
           updated_at: string
+          vibe_id: string | null
         }
         Insert: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1073,8 +1129,11 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Update: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1085,6 +1144,7 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Relationships: [
           {
@@ -1867,6 +1927,65 @@ export type Database = {
           },
         ]
       }
+      project_recognitions: {
+        Row: {
+          created_at: string
+          giver_id: string
+          id: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          giver_id: string
+          id?: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          giver_id?: string
+          id?: string
+          kind?: string
+          project_activity_id?: string
+          project_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey"
+            columns: ["giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_repositories: {
         Row: {
           created_at: string
@@ -2024,6 +2143,39 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_visits: {
+        Row: {
+          last_seen_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2888,7 +3040,76 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      project_repositories_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_repositories_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _create_trigger_if_table_exists: {
@@ -2899,6 +3120,16 @@ export type Database = {
           p_table_name: string
           p_timing?: string
           p_trigger_name: string
+        }
+        Returns: undefined
+      }
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string
+          p_config: Json
+          p_layout_id: string
+          p_page_id: string
+          p_sections: Json
         }
         Returns: undefined
       }
@@ -3013,11 +3244,34 @@ export type Database = {
       }
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
       posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
+      publish_page_version: {
+        Args: { _page_id: string }
+        Returns: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "page_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
+      rollback_page_version: {
+        Args: { _page_id: string; _version: number }
+        Returns: undefined
+      }
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined

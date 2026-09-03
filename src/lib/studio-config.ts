@@ -1,90 +1,195 @@
 // ── Studio Config ─────────────────────────────────────────────────────────────
-// The StudioConfig JSON stored on each page row drives the look-and-feel of a
-// studio: corner radius, typography mood, spacing density, and the accent color
-// (auto = derived from the active theme, person = the owner's chosen hue,
-// none = neutral primary).
+// Five coherent decisions that drive the Studio's look-and-feel:
+//   STRUCTURE  — how the Studio is arranged (single column, balanced, wide)
+//   PERSONALITY — typography + visual character (editorial, modern, technical)
+//   DENSITY    — spacing rhythm (compact, comfortable, spacious)
+//   RADIUS     — corner treatment (sharp, soft)
+//   ACCENT     — user identity colour (auto from banner, custom pick, none)
 //
 // Two outputs are produced:
 //   • studioConfigToThemeTokens  → merged into the page's ThemeTokens so it
 //     flows through the existing theme-token → CSS variable pipeline.
-//   • studioConfigToStyle        → something like `--content-density-*` and the
-//     `--user-accent-*` family, which are page-local custom properties set
-//     directly on the page container.
+//   • studioConfigToStyle        → page-local custom properties (--user-accent-*
+//     family, density gap, structure max-width, studio radius/gap/pad).
 //
-// A personality preset (see studio-personalities.ts) stamps an initial
-// StudioConfig + layout; manual edits afterward just tweak this config.
+// Legacy fields (compositionId, vibeId, personalityId, typography) are accepted
+// on read via normalizeStudioConfig and silently migrated. New writes never
+// produce them.
 
 import type { ThemeTokens } from "@/lib/page-blocks";
 
-// ── Treatment Types ───────────────────────────────────────────────────────────
+// ── Dimension Types ───────────────────────────────────────────────────────────
 
-export type RadiusTreatment = "sharp" | "soft" | "rounded";
+/** STRUCTURE — how the Studio is arranged. */
+export type StructureId = "single" | "sidebar" | "wide";
+/** PERSONALITY — typography + visual character. */
+export type PersonalityId = "editorial" | "modern" | "technical";
+export type DensityId = "compact" | "comfortable" | "spacious";
+export type RadiusId = "sharp" | "soft";
+/** ACCENT — user identity colour. */
+export type AccentMode = "auto" | "custom" | "none";
+/** BACKGROUND — app shell vs public Studio. */
+export type BackgroundId = "default" | "surface" | "sunken";
+
+export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
+
+// ── Legacy Types (accepted on read, never produced on write) ──────────────────
+
+/** @deprecated Use StructureId instead. */
+export type RadiusTreatment = RadiusId | "rounded";
+/** @deprecated Use PersonalityId instead. */
 export type TypographyTreatment = "editorial" | "modern" | "classic";
-export type Density = "compact" | "comfortable" | "spacious";
-export type AccentMode = "auto" | "person" | "none";
+/** @deprecated Use DensityId instead. */
+export type Density = DensityId;
+/** @deprecated Use AccentMode instead (was "person", now "custom"). */
+
+// ── Studio Config ─────────────────────────────────────────────────────────────
 
 export interface StudioConfig {
-  /** Selected page structure preset (null = custom arrangement). */
-  compositionId: string | null;
-  /** Selected visual-tone preset (null = custom visual treatment). */
-  vibeId: string | null;
-  /** Legacy combined preset id, retained for backwards-compatible writes/reads. */
-  personalityId: string | null;
-  radius: RadiusTreatment;
-  typography: TypographyTreatment;
-  density: Density;
+  /** Active starter preset (null = custom arrangement). */
+  starterId: StarterId | null;
+  /** How the Studio is arranged. */
+  structure: StructureId;
+  /** Typography + visual character. */
+  personality: PersonalityId;
+  /** Spacing rhythm. */
+  density: DensityId;
+  /** Corner treatment. */
+  radius: RadiusId;
+  /** User identity colour mode. */
   accentMode: AccentMode;
-  /** Personal accent color (only used when accentMode === "person"). */
-  accentColor: string | null;
+  /** Accent hex colour (used when accentMode === "custom"). */
+  accentColor: string;
+  /** App shell background while editing. */
+  appBackground: BackgroundId;
+  /** Public Studio background. */
+  publicBackground: BackgroundId;
+
+  // ── Legacy fields (optional, accepted on read for backward compat) ────────
+  /** @deprecated Use `structure` instead. */
+  compositionId?: string | null;
+  /** @deprecated Use `personality` instead. */
+  vibeId?: string | null;
+  /** @deprecated Removed. Use `personality` instead. */
+  personalityId?: string | null;
+  /** @deprecated Use `personality` instead (classic → technical). */
+  typography?: TypographyTreatment;
 }
 
-export const DEFAULT_STUDIO_CONFIG: StudioConfig = {
-  compositionId: null,
-  vibeId: null,
-  personalityId: null,
-  radius: "soft",
-  typography: "modern",
+export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
+  starterId: null,
+  structure: "wide",
+  personality: "modern",
   density: "comfortable",
+  radius: "soft",
   accentMode: "auto",
-  accentColor: null,
+  accentColor: "#3f8f8a",
+  appBackground: "surface",
+  publicBackground: "default",
 };
 
 // ── Option Catalogs ───────────────────────────────────────────────────────────
-// Shared by the appearance picker controls and the normalization guards.
 
-export const RADIUS_OPTIONS: ReadonlyArray<{ value: RadiusTreatment; label: string }> = [
-  { value: "sharp", label: "Sharp" },
-  { value: "soft", label: "Soft" },
-  { value: "rounded", label: "Rounded" },
-];
+export const STRUCTURE_OPTIONS: ReadonlyArray<{ value: StructureId; label: string; hint: string }> =
+  [
+    { value: "single", label: "Column", hint: "One narrow column. Everything reads in order." },
+    {
+      value: "sidebar",
+      label: "Balanced",
+      hint: "A medium measure that lets blocks sit side by side.",
+    },
+    { value: "wide", label: "Wide", hint: "Full width — room for three columns of signals." },
+  ];
 
-export const TYPOGRAPHY_OPTIONS: ReadonlyArray<{ value: TypographyTreatment; label: string }> = [
+export const PERSONALITY_OPTIONS: ReadonlyArray<{ value: PersonalityId; label: string }> = [
   { value: "editorial", label: "Editorial" },
   { value: "modern", label: "Modern" },
-  { value: "classic", label: "Classic" },
+  { value: "technical", label: "Technical" },
 ];
 
-export const DENSITY_OPTIONS: ReadonlyArray<{ value: Density; label: string }> = [
+export const DENSITY_OPTIONS: ReadonlyArray<{ value: DensityId; label: string }> = [
   { value: "compact", label: "Compact" },
   { value: "comfortable", label: "Comfortable" },
   { value: "spacious", label: "Spacious" },
 ];
 
+export const RADIUS_OPTIONS: ReadonlyArray<{ value: RadiusId; label: string }> = [
+  { value: "sharp", label: "Sharp" },
+  { value: "soft", label: "Soft" },
+];
+
 export const ACCENT_OPTIONS: ReadonlyArray<{ value: AccentMode; label: string }> = [
-  { value: "auto", label: "Auto" },
-  { value: "person", label: "Choose" },
+  { value: "auto", label: "From banner" },
+  { value: "custom", label: "Pick" },
   { value: "none", label: "None" },
 ];
 
-const RADIUS_VALUES = new Set(RADIUS_OPTIONS.map((o) => o.value));
-const TYPOGRAPHY_VALUES = new Set(TYPOGRAPHY_OPTIONS.map((o) => o.value));
+export const BACKGROUND_OPTIONS: ReadonlyArray<{ value: BackgroundId; label: string }> = [
+  { value: "default", label: "Paper" },
+  { value: "surface", label: "Surface" },
+  { value: "sunken", label: "Sunken" },
+];
+
+const STRUCTURE_VALUES = new Set(STRUCTURE_OPTIONS.map((o) => o.value));
+const PERSONALITY_VALUES = new Set(PERSONALITY_OPTIONS.map((o) => o.value));
 const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
+const RADIUS_VALUES = new Set(RADIUS_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
+const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
 
 const isOneOf =
   <T extends string>(allowed: Set<T>) =>
   (value: unknown): value is T =>
     typeof value === "string" && allowed.has(value as T);
+
+/**
+ * Map legacy personality/composition IDs to the new clean model.
+ * Handles: compositionId → structure, vibeId/personalityId → personality,
+ * typography "classic" → "technical", accentMode "person" → "custom",
+ * radius "rounded" → "soft".
+ */
+function migrateLegacy(value: Record<string, unknown>): Partial<StudioConfig> {
+  const patch: Partial<StudioConfig> = {};
+
+  // Structure: read from compositionId if present
+  if (typeof value.compositionId === "string" && value.compositionId.length > 0) {
+    const v = value.compositionId;
+    if (v === "single" || v === "sidebar" || v === "wide") {
+      patch.structure = v;
+    }
+  }
+
+  // Personality: read from vibeId, personalityId, or typography
+  if (typeof value.vibeId === "string" && value.vibeId.length > 0) {
+    const v = value.vibeId;
+    if (v === "editorial" || v === "modern" || v === "technical") {
+      patch.personality = v;
+    }
+  } else if (typeof value.personalityId === "string" && value.personalityId.length > 0) {
+    const v = value.personalityId;
+    if (v === "editorial" || v === "modern" || v === "technical") {
+      patch.personality = v;
+    }
+  }
+  // Typography "classic" → "technical" if no personality found yet
+  if (!patch.personality && typeof value.typography === "string") {
+    if (value.typography === "editorial") patch.personality = "editorial";
+    else if (value.typography === "modern") patch.personality = "modern";
+    else if (value.typography === "classic") patch.personality = "technical";
+  }
+
+  // Radius: "rounded" → "soft"
+  if (value.radius === "rounded") {
+    patch.radius = "soft";
+  }
+
+  // AccentMode: "person" → "custom"
+  if (value.accentMode === "person") {
+    patch.accentMode = "custom";
+  }
+
+  return patch;
+}
 
 /**
  * Defensively normalize an unknown JSON value (from the pages.config column)
@@ -95,56 +200,86 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_STUDIO_CONFIG };
 
   const value = raw as Record<string, unknown>;
-  const legacyId =
-    typeof value.personalityId === "string" && value.personalityId.length > 0
-      ? value.personalityId
-      : null;
-  const compositionId =
-    typeof value.compositionId === "string" && value.compositionId.length > 0
-      ? value.compositionId
-      : legacyId;
-  const vibeId =
-    typeof value.vibeId === "string" && value.vibeId.length > 0 ? value.vibeId : legacyId;
+  const legacy = migrateLegacy(value);
 
   return {
-    compositionId,
-    vibeId,
-    // Kept populated for old consumers, but new UI reads the independent ids.
-    personalityId: legacyId,
-    radius: isOneOf(RADIUS_VALUES)(value.radius) ? value.radius : DEFAULT_STUDIO_CONFIG.radius,
-    typography: isOneOf(TYPOGRAPHY_VALUES)(value.typography)
-      ? value.typography
-      : DEFAULT_STUDIO_CONFIG.typography,
+    starterId:
+      typeof value.starterId === "string" && value.starterId.length > 0
+        ? (value.starterId as StarterId)
+        : null,
+    structure:
+      legacy.structure ??
+      (isOneOf(STRUCTURE_VALUES)(value.structure)
+        ? value.structure
+        : DEFAULT_STUDIO_CONFIG.structure),
+    personality:
+      legacy.personality ??
+      (isOneOf(PERSONALITY_VALUES)(value.personality)
+        ? value.personality
+        : DEFAULT_STUDIO_CONFIG.personality),
     density: isOneOf(DENSITY_VALUES)(value.density) ? value.density : DEFAULT_STUDIO_CONFIG.density,
-    accentMode: isOneOf(ACCENT_VALUES)(value.accentMode)
-      ? value.accentMode
-      : DEFAULT_STUDIO_CONFIG.accentMode,
+    radius:
+      legacy.radius ??
+      (isOneOf(RADIUS_VALUES)(value.radius) ? value.radius : DEFAULT_STUDIO_CONFIG.radius),
+    accentMode:
+      legacy.accentMode ??
+      (isOneOf(ACCENT_VALUES)(value.accentMode)
+        ? value.accentMode
+        : DEFAULT_STUDIO_CONFIG.accentMode),
     accentColor:
       typeof value.accentColor === "string" && /^#([0-9a-f]{6})$/i.test(value.accentColor)
         ? value.accentColor
-        : null,
+        : DEFAULT_STUDIO_CONFIG.accentColor,
+    appBackground: isOneOf(BACKGROUND_VALUES)(value.appBackground)
+      ? value.appBackground
+      : DEFAULT_STUDIO_CONFIG.appBackground,
+    publicBackground: isOneOf(BACKGROUND_VALUES)(value.publicBackground)
+      ? value.publicBackground
+      : DEFAULT_STUDIO_CONFIG.publicBackground,
   };
+}
+
+// ── Structure → Canvas Width ──────────────────────────────────────────────────
+
+/**
+ * Max content width (px) for each structure mode. Kept under the site-wide
+ * max-w-7xl (1280px) cap so the builder fits alongside the rest of Tethyr's
+ * fixed chrome (inspector rail + customize panel).
+ */
+export function structureMaxWidth(config: StudioConfig): number {
+  if (config.structure === "single") return 768;
+  if (config.structure === "sidebar") return 1024;
+  return 1200;
+}
+
+// ── Density → Spacing Metrics ─────────────────────────────────────────────────
+
+interface DensityMetrics {
+  gap: number;
+  pad: number;
+  rowHeight: number;
+}
+
+const DENSITY_METRICS: Record<DensityId, DensityMetrics> = {
+  compact: { gap: 10, pad: 12, rowHeight: 20 },
+  comfortable: { gap: 14, pad: 16, rowHeight: 24 },
+  spacious: { gap: 20, pad: 22, rowHeight: 28 },
+};
+
+export function densityMetrics(density: DensityId): DensityMetrics {
+  return DENSITY_METRICS[density];
 }
 
 // ── Treatment → Theme Tokens ──────────────────────────────────────────────────
 
-const RADIUS_SCALE: Record<RadiusTreatment, Record<string, string>> = {
+const RADIUS_SCALE: Record<RadiusId, Record<string, string>> = {
   sharp: { sm: "1px", md: "2px", lg: "3px", xl: "4px", "2xl": "4px", "3xl": "5px", "4xl": "6px" },
   soft: { sm: "2px", md: "3px", lg: "4px", xl: "5px", "2xl": "5px", "3xl": "6px", "4xl": "8px" },
-  rounded: {
-    sm: "4px",
-    md: "6px",
-    lg: "8px",
-    xl: "12px",
-    "2xl": "14px",
-    "3xl": "16px",
-    "4xl": "18px",
-  },
 };
 
 const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
 
-const DENSITY_SECTION: Record<Density, string> = {
+const DENSITY_SECTION: Record<DensityId, string> = {
   compact: "2.5rem",
   comfortable: "4rem",
   spacious: "6rem",
@@ -161,14 +296,14 @@ export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
     spacing: { section: DENSITY_SECTION[config.density] },
   };
 
-  if (config.typography === "editorial") {
+  if (config.personality === "editorial") {
     tokens.typography = {
       headingFont: EDITORIAL_HEADING_FONT,
       scale: {
         heading1: { fontSize: "clamp(2.5rem, 5vw, 4.5rem)", lineHeight: "1.05", fontWeight: "600" },
       },
     };
-  } else if (config.typography === "classic") {
+  } else if (config.personality === "technical") {
     tokens.typography = {
       scale: {
         heading1: {
@@ -187,18 +322,28 @@ export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
 
 /**
  * Emit the page-local custom properties that don't fit the token pipeline:
- * density gutters and the `--user-accent-*` family (used by rings, borders,
- * active states, and selection across the whole studio).
+ * density gutters, studio radius/gap/pad, structure max-width, and the
+ * `--user-accent-*` family (used by rings, borders, active states, and
+ * selection across the whole studio).
  */
 export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
   const style = {} as React.CSSProperties & Record<string, string>;
 
+  const { gap, pad } = densityMetrics(config.density);
+
+  // Density
   const densityGap =
     config.density === "compact" ? "0.75rem" : config.density === "spacious" ? "1.5rem" : "1rem";
   style["--content-density-gap"] = densityGap;
   style["--content-density-padding"] = densityGap;
 
-  if (config.accentMode === "person" && config.accentColor) {
+  // Studio-specific tokens (used by g-studio-surface)
+  style["--studio-radius"] = config.radius === "sharp" ? "2px" : "5px";
+  style["--studio-gap"] = `${gap}px`;
+  style["--studio-pad"] = `${pad}px`;
+
+  // Accent
+  if (config.accentMode === "custom" && config.accentColor) {
     const foreground = contrastingHexForeground(config.accentColor);
     style["--user-accent"] = config.accentColor;
     style["--user-accent-foreground"] = foreground;

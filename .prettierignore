@@ -1,10 +1,3 @@
-node_modules
-.venv
-dist
-.output
-.vinxi
-pnpm-lock.yaml
-package-lock.json
-bun.lock
-routeTree.gen.ts
-src/integrations/supabase/types.ts
+# The imported Magic Patterns reference app is preserved verbatim under g/.
+# Production code is formatted and checked from src/.
+g/

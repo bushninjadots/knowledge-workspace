@@ -4,7 +4,7 @@
 // free reordering within a section.
 
 import { useCallback } from "react";
-import { ArrowUp, ArrowDown, GripVertical, Trash2, Settings2, Maximize2 } from "lucide-react";
+import { ArrowUp, ArrowDown, GripVertical, Move, Trash2, Settings2, Maximize2 } from "lucide-react";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import type { LayoutBlockInstance, BlockContext } from "@/lib/page-blocks";
 
@@ -22,6 +22,8 @@ interface SortableBlockProps {
   isSelected?: boolean;
   isHidden?: boolean;
   onSelect?: () => void;
+  /** RGL owns dragging for this block; disable the legacy HTML5 drag layer. */
+  gridManaged?: boolean;
 }
 
 export function SortableBlock({
@@ -38,6 +40,7 @@ export function SortableBlock({
   isSelected = false,
   isHidden = false,
   onSelect,
+  gridManaged = false,
 }: SortableBlockProps) {
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
@@ -54,7 +57,7 @@ export function SortableBlock({
           ? "border-[var(--user-accent-border,var(--trust))] bg-[var(--user-accent-subtle,var(--surface-elevated))]/15"
           : "border-transparent hover:border-card-border"
       } ${isHidden ? "opacity-60" : ""}`}
-      draggable
+      draggable={!gridManaged}
       tabIndex={0}
       role="group"
       aria-label={`${block.type} block${isHidden ? " hidden from your public Studio" : ""}`}
@@ -85,7 +88,7 @@ export function SortableBlock({
       >
         <button
           type="button"
-          className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
+          className="studio-rgl-handle cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
           title="Drag to reorder"
           aria-label={`Drag ${block.type} block to reorder`}
           onKeyDown={(e) => {
@@ -100,7 +103,18 @@ export function SortableBlock({
           }}
         >
           <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
-          <span className="sr-only">Reorder</span>
+          <span className="sr-only">Reorder within this section</span>
+        </button>
+        <button
+          type="button"
+          draggable
+          className="studio-cross-section-handle cursor-grab rounded p-1 text-muted-foreground hover:text-foreground"
+          title="Drag to another section"
+          aria-label={`Drag ${block.type} block to another section`}
+          onDragStart={handleDragStart}
+        >
+          <Move className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Move to another section</span>
         </button>
         <button
           type="button"

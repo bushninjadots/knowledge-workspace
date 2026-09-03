@@ -1,0 +1,288 @@
+/* --- MANAGED FONT IMPORTS START (do not edit manually) --- */
+/* INTERNAL USE NAME: Heading */
+@import url('https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* INTERNAL USE NAME: Mono */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* --- MANAGED FONT IMPORTS END --- */
+
+/* Tethyr type stack: Inter (sans), Space Grotesk (title), JetBrains Mono (mono) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+/*
+ * =============================================================================
+ * TETHYR DESIGN SYSTEM — "Professional Knowledge Workspace"
+ * =============================================================================
+ *  1. Neutral by default. Colour only ever carries meaning.
+ *  2. Panels and rules, not floating cards. Borders do the structural work.
+ *  3. Tight radii (2–6px). No pills except status chips.
+ *  4. Dense, legible typography. Small headings, strong hierarchy.
+ *  5. Restrained motion: 120–180ms colour/opacity transitions only.
+ * =============================================================================
+ */
+
+:root {
+  --radius: 4px;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.205 0.006 265);
+  --surface: oklch(0.985 0.0015 265);
+  --surface-elevated: oklch(1 0 0);
+  --surface-sunken: oklch(0.968 0.0025 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.006 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.006 265);
+  --muted: oklch(0.968 0.003 265);
+  --muted-foreground: oklch(0.49 0.012 265);
+  --muted-foreground-subtle: oklch(0.55 0.012 265);
+  --primary: oklch(0.16 0.004 265);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.972 0.003 265);
+  --secondary-foreground: oklch(0.205 0.006 265);
+  --accent: oklch(0.968 0.003 265);
+  --accent-foreground: oklch(0.205 0.006 265);
+  --border: oklch(0.912 0.004 265);
+  --border-strong: oklch(0.845 0.007 265);
+  --input: oklch(0.905 0.005 265);
+  --ring: oklch(0.55 0.16 253);
+  --shadow-tint: oklch(0.2 0.02 265 / 0.06);
+  --trust: oklch(0.55 0.13 152);
+  --trust-foreground: oklch(1 0 0);
+  --trust-subtle: oklch(0.955 0.03 152);
+  --learning: oklch(0.52 0.17 253);
+  --learning-foreground: oklch(1 0 0);
+  --learning-subtle: oklch(0.955 0.028 253);
+  --teaching: oklch(0.55 0.12 70);
+  --teaching-foreground: oklch(1 0 0);
+  --teaching-subtle: oklch(0.96 0.04 85);
+  --ai: oklch(0.52 0.17 292);
+  --ai-foreground: oklch(1 0 0);
+  --ai-subtle: oklch(0.955 0.028 292);
+  --warning: oklch(0.53 0.19 27);
+  --warning-foreground: oklch(1 0 0);
+  --warning-subtle: oklch(0.958 0.025 27);
+  --caution: oklch(0.7 0.16 75);
+  --caution-foreground: oklch(0.35 0.12 75);
+  --caution-subtle: oklch(0.96 0.035 75);
+  --destructive: var(--warning);
+  --destructive-foreground: var(--warning-foreground);
+  /* User accent — overridden inline from the banner-derived or custom colour */
+  --user-accent: var(--learning);
+  --user-accent-foreground: var(--background);
+  --user-accent-subtle: color-mix(in oklab, var(--learning) 10%, transparent);
+  --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
+  --card-border-color: var(--border);
+  /* Studio personality + density (written by studioStyle.ts) */
+  --studio-radius: 3px;
+  --studio-display-font: 'Inter';
+  --studio-label-font: 'JetBrains Mono';
+  --studio-gap: 14px;
+  --studio-pad: 16px;
+  --studio-heading-tracking: -0.015em;
+  --studio-measure: 68ch;
+}
+.dark {
+  --background: oklch(0.152 0.006 260);
+  --foreground: oklch(0.93 0.005 250);
+  --surface: oklch(0.192 0.009 258);
+  --surface-elevated: oklch(0.22 0.01 258);
+  --surface-sunken: oklch(0.138 0.006 258);
+  --card: oklch(0.205 0.009 258);
+  --card-foreground: oklch(0.93 0.005 250);
+  --popover: oklch(0.22 0.009 260);
+  --popover-foreground: oklch(0.93 0.005 250);
+  --muted: oklch(0.24 0.009 260);
+  --muted-foreground: oklch(0.74 0.012 255);
+  --muted-foreground-subtle: oklch(0.65 0.013 255);
+  --primary: oklch(0.95 0.004 250);
+  --primary-foreground: oklch(0.16 0.006 260);
+  --secondary: oklch(0.24 0.009 260);
+  --secondary-foreground: oklch(0.93 0.005 250);
+  --accent: oklch(0.25 0.01 260);
+  --accent-foreground: oklch(0.93 0.005 250);
+  --border: oklch(0.32 0.012 258);
+  --border-strong: oklch(0.42 0.014 258);
+  --input: oklch(0.33 0.012 258);
+  --ring: oklch(0.68 0.18 253);
+  --shadow-tint: oklch(0 0 0 / 0.6);
+  --trust: oklch(0.78 0.18 152);
+  --trust-foreground: oklch(0.12 0.04 152);
+  --trust-subtle: oklch(0.28 0.07 152);
+  --learning: oklch(0.73 0.18 250);
+  --learning-foreground: oklch(0.14 0.04 253);
+  --learning-subtle: oklch(0.29 0.07 253);
+  --teaching: oklch(0.82 0.16 82);
+  --teaching-foreground: oklch(0.15 0.04 80);
+  --teaching-subtle: oklch(0.3 0.07 82);
+  --ai: oklch(0.74 0.18 292);
+  --ai-foreground: oklch(0.14 0.04 292);
+  --ai-subtle: oklch(0.29 0.07 292);
+  --warning: oklch(0.7 0.22 25);
+  --warning-foreground: oklch(0.14 0.04 26);
+  --warning-subtle: oklch(0.29 0.08 25);
+  --caution: oklch(0.82 0.16 80);
+  --caution-foreground: oklch(0.25 0.1 75);
+  --caution-subtle: oklch(0.3 0.06 75);
+  --destructive: var(--warning);
+  --destructive-foreground: var(--warning-foreground);
+  --user-accent: var(--learning);
+  --user-accent-foreground: var(--background);
+  --user-accent-subtle: color-mix(in oklab, var(--learning) 12%, transparent);
+  --user-accent-border: color-mix(in oklab, var(--learning) 32%, transparent);
+  --card-border-color: var(--border);
+}
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+  }
+}
+/* --- Studio primitives ---------------------------------------------------- */
+.t-panel {
+  border: 1px solid var(--card-border-color);
+  background: var(--surface-elevated);
+  border-radius: var(--studio-radius);
+}
+.t-label {
+  font-family: var(--studio-label-font), ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.t-heading {
+  font-family: var(--studio-display-font), Inter, sans-serif;
+  letter-spacing: var(--studio-heading-tracking);
+}
+.t-rule {
+  border-top: 1px solid var(--border);
+}
+.t-focus {
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.t-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.t-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+.t-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* Personality: typography character ---------------------------------------- */
+[data-personality='editorial'] {
+  --studio-display-font: 'Space Grotesk';
+  --studio-label-font: 'Space Grotesk';
+  --studio-heading-tracking: -0.02em;
+  --studio-measure: 62ch;
+}
+[data-personality='modern'] {
+  --studio-display-font: 'Inter';
+  --studio-label-font: 'Inter';
+  --studio-heading-tracking: -0.022em;
+  --studio-measure: 70ch;
+}
+[data-personality='technical'] {
+  --studio-display-font: 'Inter';
+  --studio-label-font: 'JetBrains Mono';
+  --studio-heading-tracking: -0.005em;
+  --studio-measure: 76ch;
+}
+[data-personality='technical'] .t-heading {
+  font-feature-settings: 'tnum' 1;
+}
+/* --- react-grid-layout ---------------------------------------------------- */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+.react-grid-item {
+  transition: all 180ms ease;
+  transition-property: left, top, width, height;
+}
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+.react-grid-item.resizing {
+  transition: none;
+  z-index: 30;
+  will-change: width, height;
+}
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+  will-change: transform;
+  cursor: grabbing;
+}
+.react-grid-item.react-grid-placeholder {
+  background: var(--user-accent);
+  opacity: 0.14;
+  border: 1px dashed var(--user-accent);
+  border-radius: var(--studio-radius);
+  transition-duration: 100ms;
+  z-index: 2;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.react-grid-item.dropping {
+  visibility: hidden;
+}
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  z-index: 20;
+  touch-action: none;
+}
+.react-resizable-handle-se {
+  bottom: -5px;
+  right: -5px;
+  cursor: se-resize;
+}
+.react-resizable-handle-e {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+.react-resizable-handle-s {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+.react-grid-item > .react-resizable-hide > .react-resizable-handle {
+  display: none;
+}
+/* --- Motion --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .react-grid-layout,
+  .react-grid-item {
+    transition: none !important;
+  }
+}

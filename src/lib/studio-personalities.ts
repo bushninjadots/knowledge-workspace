@@ -7,7 +7,12 @@
 // Once applied, the page records `personalityId`; subsequent manual edits
 // update StudioConfig without touching the layout, detaching from the preset.
 
-import type { LayoutBlockInstance, PageLayout, ThemeTokens } from "@/lib/page-blocks";
+import type {
+  LayoutBlockInstance,
+  LayoutSection,
+  PageLayout,
+  ThemeTokens,
+} from "@/lib/page-blocks";
 import type { StudioConfig } from "@/lib/studio-config";
 
 let _counter = 0;
@@ -33,7 +38,7 @@ export interface StudioPersonality {
   composition(): PageLayout;
   appearance: Pick<
     StudioConfig,
-    "radius" | "typography" | "density" | "accentMode" | "accentColor"
+    "radius" | "personality" | "density" | "accentMode" | "accentColor"
   >;
   themeTokens: Partial<ThemeTokens>;
 }
@@ -44,19 +49,156 @@ export interface AppliedPersonality {
   themeOverrides: Partial<ThemeTokens>;
 }
 
-/** Compose a config + layout + token overrides from a personality preset. */
-export function applyStudioPersonality(personality: StudioPersonality): AppliedPersonality {
+/** User-facing names for structure presets. The underlying personality IDs stay
+ * stable so existing pages and history remain backwards compatible. */
+export interface StudioPreset {
+  id: "focused" | "editorial" | "project-first" | "minimal" | "experimental";
+  label: string;
+  description: string;
+  personalityId: StudioPersonality["id"];
+}
+
+/**
+ * Compose a config + layout + token overrides from a personality preset.
+ *
+ * When an existing layout is supplied, block instances are matched by type and
+ * moved into the preset's structure without replacing their ids or config. Any
+ * custom blocks the preset does not know about are appended to the final
+ * section, so a preset can change the rhythm of a Studio without deleting work.
+ */
+export function applyStudioPersonality(
+  personality: StudioPersonality,
+  currentLayout?: PageLayout,
+): AppliedPersonality {
+  const presetLayout = personality.composition();
   return {
-    layout: personality.composition(),
+    layout: currentLayout ? preserveStudioContent(currentLayout, presetLayout) : presetLayout,
     config: {
-      compositionId: personality.id,
-      vibeId: personality.id,
-      personalityId: personality.id,
-      ...personality.appearance,
-      accentColor: personality.appearance.accentColor ?? null,
+      structure: "wide", // Presets set structure via composition, not appearance
+      personality: personality.appearance.personality,
+      density: personality.appearance.density,
+      radius: personality.appearance.radius,
+      accentMode: personality.appearance.accentMode,
+      accentColor: personality.appearance.accentColor,
+      starterId: null,
+      appBackground: "surface",
+      publicBackground: "default",
     },
     themeOverrides: personality.themeTokens,
   };
+}
+
+/** Apply a user-facing preset without exposing the legacy personality catalog. */
+export function applyStudioPreset(
+  preset: StudioPreset,
+  currentLayout?: PageLayout,
+): AppliedPersonality {
+  const personality = STUDIO_PERSONALITIES.find((item) => item.id === preset.personalityId);
+  if (!personality) throw new Error(`Unknown Studio preset: ${preset.id}`);
+  const applied = applyStudioPersonality(personality, currentLayout);
+
+  if (preset.id !== "project-first") return applied;
+
+  const projectSection = applied.layout.sections.find((section) =>
+    section.blocks.some((block) => block.type === "profile-projects"),
+  );
+  if (!projectSection) return applied;
+  return {
+    ...applied,
+    layout: {
+      sections: [
+        projectSection,
+        ...applied.layout.sections.filter((section) => section.id !== projectSection.id),
+      ].map((section, position) => ({ ...section, position })),
+    },
+  };
+}
+
+export const STUDIO_PRESETS: StudioPreset[] = [
+  {
+    id: "focused",
+    label: "Focused",
+    description: "Lead with your identity and the work you are building now.",
+    personalityId: "professional",
+  },
+  {
+    id: "editorial",
+    label: "Editorial",
+    description: "Give your work a considered, text-led rhythm with room to breathe.",
+    personalityId: "creative",
+  },
+  {
+    id: "project-first",
+    label: "Project-first",
+    description: "Put projects and collaboration context at the center of the Studio.",
+    personalityId: "professional",
+  },
+  {
+    id: "minimal",
+    label: "Minimal",
+    description: "Keep the page quiet so the work and its story carry the weight.",
+    personalityId: "minimal",
+  },
+  {
+    id: "experimental",
+    label: "Experimental",
+    description: "Use a more expressive arrangement for a Studio with a strong point of view.",
+    personalityId: "artistic",
+  },
+];
+
+export function preserveStudioContent(current: PageLayout, preset: PageLayout): PageLayout {
+  const existingByType = new Map<string, LayoutBlockInstance[]>();
+  for (const section of current.sections) {
+    for (const block of section.blocks) {
+      const blocks = existingByType.get(block.type) ?? [];
+      blocks.push(block);
+      existingByType.set(block.type, blocks);
+    }
+  }
+
+  const usedIds = new Set<string>();
+  const sections: LayoutSection[] = preset.sections.map((section) => ({
+    ...section,
+    blocks: section.blocks.map((presetBlock, position) => {
+      const candidates = existingByType.get(presetBlock.type) ?? [];
+      const existing = candidates.find((block) => !usedIds.has(block.id));
+      if (!existing) return { ...presetBlock, position };
+      usedIds.add(existing.id);
+      return {
+        ...existing,
+        position,
+        // The preset controls placement, while the user's content remains
+        // authoritative. Keep visibility and every field in the block config.
+        config: { ...existing.config },
+      };
+    }),
+  }));
+
+  const unmatched = [...existingByType.values()]
+    .flat()
+    .filter((block) => !usedIds.has(block.id))
+    .map((block) => ({ ...block, config: { ...block.config } }));
+
+  if (unmatched.length > 0) {
+    const lastIndex = Math.max(0, sections.length - 1);
+    const target = sections[lastIndex] ?? {
+      id: `section-${Date.now()}`,
+      position: 0,
+      layout: "full" as const,
+      blocks: [],
+    };
+    if (!sections[lastIndex]) sections.push(target);
+    target.blocks = [...target.blocks, ...unmatched];
+    target.blocks.forEach((block, position) => {
+      block.position = position;
+    });
+  }
+
+  sections.forEach((section, position) => {
+    section.position = position;
+  });
+  return { sections };
 }
 
 // ── Presets ──────────────────────────────────────────────────────────────────
@@ -68,10 +210,10 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     description: "One calm column. Text-led and quiet, with nothing clamoring for attention.",
     appearance: {
       radius: "sharp",
-      typography: "classic",
+      personality: "technical",
       density: "spacious",
       accentMode: "auto",
-      accentColor: null,
+      accentColor: "#3f8f8a",
     },
     themeTokens: {},
     composition(): PageLayout {
@@ -102,10 +244,10 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     description: "Gallery-led and image-first. Asymmetric spreads that feel like a portfolio.",
     appearance: {
       radius: "soft",
-      typography: "editorial",
+      personality: "editorial",
       density: "comfortable",
       accentMode: "auto",
-      accentColor: null,
+      accentColor: "#3f8f8a",
     },
     themeTokens: {},
     composition(): PageLayout {
@@ -144,10 +286,10 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     description: "Structured and trustworthy. A clean hierarchy built for credibility.",
     appearance: {
       radius: "sharp",
-      typography: "modern",
+      personality: "modern",
       density: "compact",
       accentMode: "none",
-      accentColor: null,
+      accentColor: "#3f8f8a",
     },
     themeTokens: {},
     composition(): PageLayout {
@@ -190,10 +332,10 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     label: "Artistic",
     description: "Confident and experimental. Big type, rounded corners, a personal accent.",
     appearance: {
-      radius: "rounded",
-      typography: "editorial",
+      radius: "soft",
+      personality: "editorial",
       density: "spacious",
-      accentMode: "person",
+      accentMode: "custom",
       accentColor: "#6d28d9",
     },
     themeTokens: {},

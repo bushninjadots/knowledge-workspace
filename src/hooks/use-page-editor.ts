@@ -70,7 +70,7 @@ export function useCreatePage() {
       // layout so every Studio starts with real, renderable content.
       const starterLayout =
         ownerType === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
-      const { data: layout, error: layoutError } = await (supabase as any)
+      const { data: layout, error: layoutError } = await supabase
         .from("layouts")
         .insert({
           name: ownerType === "profile" ? "Default Studio" : "Default Project Space",
@@ -83,7 +83,7 @@ export function useCreatePage() {
         .single();
       if (layoutError || !layout) throw layoutError ?? new Error("Could not create layout");
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("pages")
         .insert({
           owner_id: ownerId,
@@ -113,9 +113,9 @@ export function useUpdatePageLayout() {
 
   return useMutation({
     mutationFn: async ({ layoutId, layout }: UpdateLayoutParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("layouts")
-        .update({ sections: layout.sections as unknown as Record<string, unknown>[] })
+        .update({ sections: layout.sections as unknown as Json })
         .eq("id", layoutId);
 
       if (error) throw error;
@@ -137,7 +137,7 @@ export function useApplyStudioComposition() {
         p_layout_id: layoutId,
         p_sections: layout.sections as unknown as Json,
         p_config: config as unknown as Json,
-        p_composition_id: config.compositionId ?? "",
+        p_composition_id: config.compositionId ?? config.structure ?? "",
       });
       if (error) throw error;
     },
@@ -153,10 +153,7 @@ export function useUpdatePageTheme() {
 
   return useMutation({
     mutationFn: async ({ pageId, themeId }: UpdateThemeParams) => {
-      const { error } = await (supabase as any)
-        .from("pages")
-        .update({ theme_id: themeId })
-        .eq("id", pageId);
+      const { error } = await supabase.from("pages").update({ theme_id: themeId }).eq("id", pageId);
 
       if (error) throw error;
     },
@@ -173,7 +170,7 @@ export function useUpdatePageConfig() {
 
   return useMutation({
     mutationFn: async ({ pageId, config }: UpdateConfigParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("pages")
         .update({
           config: config as unknown as Json,
@@ -213,7 +210,7 @@ export function useUnpublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("pages")
         .update({ status: "draft" as PageStatus, published_at: null })
         .eq("id", pageId);

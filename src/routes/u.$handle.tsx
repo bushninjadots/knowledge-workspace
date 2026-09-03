@@ -14,6 +14,7 @@ import {
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { CreationStudio } from "@/components/tethyr/studio/creation-studio";
 
 // Block system — profile blocks via PageShell.
 import "@/components/tethyr/blocks/register-all";
@@ -110,10 +111,14 @@ function PublicProfileRoute() {
 
   const isOwner = !!(meId && data?.profile && meId === data.profile.id);
 
-  const { page: profilePage } = useProfilePage({
+  // The owner builder provisions its draft itself. Keeping this query
+  // published-only prevents the public route and builder from racing to create
+  // two profile pages for the same owner.
+  const profilePageQuery = useProfilePage({
     profileId: data?.profile?.id ?? "",
-    isOwner,
+    isOwner: false,
   });
+  const { page: profilePage } = profilePageQuery;
 
   const pageThemeStyle = useMemo(
     () => themeTokensToStyle(profilePage?.theme ?? {}),
@@ -156,9 +161,18 @@ function PublicProfileRoute() {
       backgroundImageUrl={data.backgroundImageUrl}
       pageThemeStyle={pageThemeStyle}
     >
-      {isOwner || hasBlocks ? (
+      {isOwner ? (
+        <CreationStudio userId={profile.id} profile={profile} onCompleteProfile={() => undefined} />
+      ) : hasBlocks ? (
         <EditModeProvider>
-          <PageShell ownerId={profile.id} ownerType="profile" isOwner={isOwner} />
+          <PageShell
+            ownerId={profile.id}
+            ownerType="profile"
+            isOwner={false}
+            pageCreationAction={profilePageQuery.createPage}
+            pageCreationError={profilePageQuery.pageCreationError}
+            pageCreationPending={profilePageQuery.pageCreationPending}
+          />
         </EditModeProvider>
       ) : (
         <div className="animate-room-enter mx-auto w-full max-w-2xl px-4 py-24 text-center sm:px-8">

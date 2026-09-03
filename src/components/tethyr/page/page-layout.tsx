@@ -11,6 +11,7 @@ import { ChevronDown, Copy, Eye, EyeOff, LayoutGrid, MoreVertical, Trash2 } from
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
+import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -385,7 +386,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             onDrop={(e) => handleDrop(layoutSectionIndex, e)}
           >
             {context.isEditing && (
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/35 pb-2">
+              <div className="studio-section-editor-bar mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-border/35 pb-2">
                 <p className="text-xs text-muted-foreground">
                   Section {sectionIndex + 1}
                   <span className="ml-2 text-foreground">
@@ -446,106 +447,160 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                 </DropdownMenu>
               </div>
             )}
-            <div
-              className={`${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`}
-              style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
-              data-section-canvas={context.isEditing ? "true" : undefined}
-            >
-              {blocks.map((block, bi) => {
-                const persistedBlockIndex = persistedBlocks.findIndex(
-                  (candidate) => candidate.id === block.id,
-                );
-                return (
+            {context.isEditing ? (
+              <div
+                className="studio-edit-canvas rounded-lg border border-dashed border-[var(--user-accent-border,var(--border))] bg-[var(--user-accent-subtle,var(--surface))]/10 p-2 sm:p-3"
+                data-studio-edit-canvas
+              >
+                <StudioSectionGrid
+                  section={section}
+                  blocks={blocks}
+                  onChange={(nextBlocks) => {
+                    const nextSections = cloneSections(layout);
+                    const targetSection = nextSections.find(
+                      (candidate) => candidate.id === section.id,
+                    );
+                    if (!targetSection) return;
+                    targetSection.blocks = nextBlocks;
+                    onLayoutChange?.({ sections: nextSections });
+                  }}
+                  renderBlock={(block, bi) => (
+                    <SortableBlock
+                      block={block}
+                      context={context}
+                      isFirst={bi === 0}
+                      isLast={bi === blocks.length - 1}
+                      onMoveUp={() =>
+                        handleMoveUp(
+                          layoutSectionIndex,
+                          persistedBlocks.findIndex((candidate) => candidate.id === block.id),
+                        )
+                      }
+                      onMoveDown={() =>
+                        handleMoveDown(
+                          layoutSectionIndex,
+                          persistedBlocks.findIndex((candidate) => candidate.id === block.id),
+                        )
+                      }
+                      onRemove={() => {
+                        setSelectedBlockId(null);
+                        setRemovingBlockId(block.id);
+                      }}
+                      onConfigure={() => {
+                        setSelectedBlockId(block.id);
+                        setConfiguringBlockId(block.id);
+                      }}
+                      onResize={() => setResizingBlockId(block.id)}
+                      gridManaged
+                      isSelected={selectedBlockId === block.id}
+                      isHidden={block.visible === false}
+                      onSelect={() => setSelectedBlockId(block.id)}
+                      onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
+                    />
+                  )}
+                />
+              </div>
+            ) : (
+              <div
+                className={`${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`}
+                style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
+                data-section-canvas={context.isEditing ? "true" : undefined}
+              >
+                {blocks.map((block, bi) => {
+                  const persistedBlockIndex = persistedBlocks.findIndex(
+                    (candidate) => candidate.id === block.id,
+                  );
+                  return (
+                    <div
+                      key={`drop-${block.id}`}
+                      className={[
+                        context.isEditing
+                          ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
+                          : "contents",
+                        gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
+                        dropTarget?.sectionIdx === layoutSectionIndex && dropTarget.blockIdx === bi
+                          ? "border-t-2 border-[var(--user-accent,var(--trust))]"
+                          : "",
+                      ].join(" ")}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setDropTarget({ sectionIdx: layoutSectionIndex, blockIdx: bi });
+                      }}
+                      onDrop={(event) =>
+                        handleBlockDrop(layoutSectionIndex, persistedBlockIndex, event)
+                      }
+                    >
+                      {context.isEditing ? (
+                        <SortableBlock
+                          block={block}
+                          context={context}
+                          isFirst={bi === 0}
+                          isLast={bi === blocks.length - 1}
+                          onMoveUp={() => handleMoveUp(layoutSectionIndex, persistedBlockIndex)}
+                          onMoveDown={() => handleMoveDown(layoutSectionIndex, persistedBlockIndex)}
+                          onRemove={() => {
+                            setSelectedBlockId(null);
+                            setRemovingBlockId(block.id);
+                          }}
+                          onConfigure={() => {
+                            setSelectedBlockId(block.id);
+                            setConfiguringBlockId(block.id);
+                          }}
+                          onResize={() => {
+                            setSelectedBlockId(block.id);
+                            setResizingBlockId(block.id);
+                          }}
+                          isSelected={selectedBlockId === block.id}
+                          isHidden={block.visible === false}
+                          onSelect={() => setSelectedBlockId(block.id)}
+                          onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
+                        />
+                      ) : (
+                        <BlockRenderer
+                          type={block.type}
+                          config={block.config}
+                          context={{
+                            ...context,
+                            blockId: block.id,
+                            profileCompleteness:
+                              block.type === "profile-header" ? profileCompleteness : undefined,
+                            onCompleteProfile:
+                              block.type === "profile-header" ? onCompleteProfile : undefined,
+                            onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+                {context.isEditing && blocks.length > 0 && (
                   <div
-                    key={`drop-${block.id}`}
                     className={[
-                      context.isEditing
-                        ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
-                        : "contents",
-                      gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
-                      dropTarget?.sectionIdx === layoutSectionIndex && dropTarget.blockIdx === bi
-                        ? "border-t-2 border-[var(--user-accent,var(--trust))]"
+                      "col-span-full min-h-4 border-t border-dashed border-border/45 text-center text-[10px] text-muted-foreground/60 transition-colors",
+                      dropTarget?.sectionIdx === layoutSectionIndex &&
+                      dropTarget.blockIdx === persistedBlocks.length
+                        ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
                         : "",
                     ].join(" ")}
+                    aria-label={`Drop at end of section ${sectionIndex + 1}`}
+                    role="button"
+                    tabIndex={0}
                     onDragOver={(event) => {
                       event.preventDefault();
-                      setDropTarget({ sectionIdx: layoutSectionIndex, blockIdx: bi });
+                      setDropTarget({
+                        sectionIdx: layoutSectionIndex,
+                        blockIdx: persistedBlocks.length,
+                      });
                     }}
                     onDrop={(event) =>
-                      handleBlockDrop(layoutSectionIndex, persistedBlockIndex, event)
+                      handleBlockDrop(layoutSectionIndex, persistedBlocks.length, event)
                     }
                   >
-                    {context.isEditing ? (
-                      <SortableBlock
-                        block={block}
-                        context={context}
-                        isFirst={bi === 0}
-                        isLast={bi === blocks.length - 1}
-                        onMoveUp={() => handleMoveUp(layoutSectionIndex, persistedBlockIndex)}
-                        onMoveDown={() => handleMoveDown(layoutSectionIndex, persistedBlockIndex)}
-                        onRemove={() => {
-                          setSelectedBlockId(null);
-                          setRemovingBlockId(block.id);
-                        }}
-                        onConfigure={() => {
-                          setSelectedBlockId(block.id);
-                          setConfiguringBlockId(block.id);
-                        }}
-                        onResize={() => {
-                          setSelectedBlockId(block.id);
-                          setResizingBlockId(block.id);
-                        }}
-                        isSelected={selectedBlockId === block.id}
-                        isHidden={block.visible === false}
-                        onSelect={() => setSelectedBlockId(block.id)}
-                        onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
-                      />
-                    ) : (
-                      <BlockRenderer
-                        type={block.type}
-                        config={block.config}
-                        context={{
-                          ...context,
-                          blockId: block.id,
-                          profileCompleteness:
-                            block.type === "profile-header" ? profileCompleteness : undefined,
-                          onCompleteProfile:
-                            block.type === "profile-header" ? onCompleteProfile : undefined,
-                          onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
-                        }}
-                      />
-                    )}
+                    <span className="sr-only">Drop section content here</span>
                   </div>
-                );
-              })}
-              {/* Empty tail drop target makes moving a block to the end explicit. */}
-              {context.isEditing && blocks.length > 0 && (
-                <div
-                  className={[
-                    "col-span-full min-h-4 border-t border-dashed border-border/45 text-center text-[10px] text-muted-foreground/60 transition-colors",
-                    dropTarget?.sectionIdx === layoutSectionIndex &&
-                    dropTarget.blockIdx === persistedBlocks.length
-                      ? "border-[var(--user-accent,var(--trust))] bg-[var(--user-accent-subtle,var(--learning-subtle))]"
-                      : "",
-                  ].join(" ")}
-                  aria-label={`Drop at end of section ${sectionIndex + 1}`}
-                  role="button"
-                  tabIndex={0}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDropTarget({
-                      sectionIdx: layoutSectionIndex,
-                      blockIdx: persistedBlocks.length,
-                    });
-                  }}
-                  onDrop={(event) =>
-                    handleBlockDrop(layoutSectionIndex, persistedBlocks.length, event)
-                  }
-                >
-                  <span className="sr-only">Drop section content here</span>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </section>
         );
       })}

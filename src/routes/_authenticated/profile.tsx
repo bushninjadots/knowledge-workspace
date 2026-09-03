@@ -20,8 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
-import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditModeProvider, useEditMode } from "@/components/tethyr/page/edit-mode-context";
+import { CreationStudio } from "@/components/tethyr/studio/creation-studio";
 import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,13 +132,6 @@ function ProfilePage() {
     background,
   } = profileQuery.data;
 
-  const setupPercent = setupCompletenessPercent({
-    profile,
-    teachCount: teachIds?.length ?? 0,
-    learnCount: learnIds?.length ?? 0,
-    projectsCount: projects?.length ?? 0,
-  });
-
   const setupBackground = profile?.background as ProfileBackground | null;
 
   const setupForm = () => (
@@ -162,11 +154,10 @@ function ProfilePage() {
     />
   );
 
-  // Low bar: entering the Studio requires only a display name. Everything else
-  // (title, bio, location, …) is completed from inside the Studio, anytime.
-  const requiresNameForm = !profile?.display_name;
-
-  if (requiresNameForm || showSetup) {
+  // The Studio is the primary profile surface, including for incomplete
+  // accounts. Identity completion stays available from the editor's header
+  // action instead of replacing the Studio with the legacy setup form.
+  if (showSetup) {
     return (
       <div
         className={`relative isolate min-h-screen ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
@@ -182,79 +173,16 @@ function ProfilePage() {
   }
 
   return (
-    <EditModeProvider>
-      <StudioArea
-        profile={profile}
-        userId={userId}
-        setupPercent={setupPercent}
-        background={background}
-        backgroundImageUrl={profileQuery.data.backgroundImageUrl}
-        onRefresh={refresh}
-        onOpenCompleteProfile={() => setShowSetup(true)}
-      />
-    </EditModeProvider>
-  );
-}
-
-// ── Studio Area ─────────────────────────────────────────────────────────────
-// The owner's Studio route. In view mode the creator's background renders as
-// the immersive backdrop; in edit/preview mode the wallpaper is suppressed so
-// the editor chrome stays readable on the neutral Tethyr surface (the Studio
-// canvas itself still renders the page's own theme). Accent/density vars are
-// kept in both modes so the canvas content keeps the creator's accent.
-function StudioArea({
-  profile,
-  userId,
-  setupPercent,
-  background,
-  backgroundImageUrl,
-  onRefresh,
-  onOpenCompleteProfile,
-}: {
-  profile: ProfileType | null;
-  userId: string;
-  setupPercent: number;
-  background: ProfileBackground | null;
-  backgroundImageUrl: string | null;
-  onRefresh: () => void;
-  onOpenCompleteProfile: () => void;
-}) {
-  const { isEditing, isPreviewing } = useEditMode();
-  const editing = isEditing || isPreviewing;
-
-  return (
-    <div
-      className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
-      style={{ ...appearanceStyle(background) }}
-    >
-      {/* The creator's wallpaper only shows in view mode — never behind the
-          editor chrome. */}
-      {!editing && <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />}
-      <>
-        {!editing && (
-          <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-            <div className="mb-4">
-              <p className="section-label">Personal creative space</p>
-              <h1 className="mt-1 font-display text-2xl font-semibold">Your Studio</h1>
-            </div>
-          </div>
-        )}
-        <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
-          <PageShell
-            ownerId={userId}
-            ownerType="profile"
-            isOwner
-            profileMedia={{
-              avatarUrl: profile?.avatar_url ?? null,
-              bannerUrl: profile?.banner_url ?? null,
-            }}
-            onProfileMediaSaved={onRefresh}
-            profileCompleteness={setupPercent}
-            onCompleteProfile={onOpenCompleteProfile}
-          />
-        </div>
-      </>
-    </div>
+    <CreationStudio
+      userId={userId}
+      profile={profile}
+      projects={projects.map((project) => ({
+        id: project.id,
+        title: project.title,
+        status: project.status,
+      }))}
+      onCompleteProfile={() => setShowSetup(true)}
+    />
   );
 }
 

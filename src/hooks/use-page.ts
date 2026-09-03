@@ -8,7 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
 import { normalizeStudioConfig } from "@/lib/studio-config";
-import type { PageData, PageLayout, PageOwnerType, ThemeTokens } from "@/lib/page-blocks";
+import type {
+  PageData,
+  PageLayout,
+  PageOwnerType,
+  PageVersion,
+  ThemeTokens,
+} from "@/lib/page-blocks";
 
 interface PageRow {
   id: string;
@@ -114,6 +120,20 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         theme = deepMergeTokens(baseTokens as ThemeTokens, overrides);
       }
 
+      // Query 4: Get published versions (newest first). Publicly readable via RLS.
+      const { data: versionRows } = await supabase
+        .from("page_versions")
+        .select("id, version, layout, published_at")
+        .eq("page_id", pageRow.id)
+        .order("version", { ascending: false });
+
+      const versions: PageVersion[] = (versionRows ?? []).map((row) => ({
+        id: row.id,
+        version: row.version,
+        layout: { sections: (row.layout as unknown as PageLayout).sections },
+        publishedAt: row.published_at,
+      }));
+
       return {
         id: pageRow.id,
         ownerId: pageRow.owner_id,
@@ -128,6 +148,8 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         theme,
         themeOverrides: pageRow.theme_overrides ? (pageRow.theme_overrides as ThemeTokens) : null,
         config: normalizeStudioConfig(pageRow.config),
+        versions,
+        publishedVersion: versions.length > 0 ? versions[0].version : null,
       };
     },
     staleTime: 0, // Never serve stale page data — mutations must reflect immediately.

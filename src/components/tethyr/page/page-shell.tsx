@@ -4,20 +4,21 @@
 // read-only.
 
 import { useCallback, useEffect, useMemo } from "react";
-import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { usePage } from "@/hooks/use-page";
 import {
+  useCreatePage,
   useUpdatePageConfig,
   useUpdatePageLayout,
   useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
-import { EditorToolbar } from "@/components/tethyr/page/editor-toolbar";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
+import { studioConfigToStyle, studioConfigToThemeTokens } from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
+import { friendlyError } from "@/lib/error-message";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 import type { StudioSnapshot } from "@/lib/studio-history";
 
@@ -36,6 +37,9 @@ interface PageShellProps {
   onProfileMediaSaved?: () => void;
   profileCompleteness?: number;
   onCompleteProfile?: () => void;
+  pageCreationAction?: () => void;
+  pageCreationError?: unknown;
+  pageCreationPending?: boolean;
 }
 
 export function PageShell({
@@ -53,6 +57,9 @@ export function PageShell({
   onProfileMediaSaved,
   profileCompleteness,
   onCompleteProfile,
+  pageCreationAction,
+  pageCreationError,
+  pageCreationPending,
 }: PageShellProps) {
   const {
     data: page,
@@ -67,11 +74,11 @@ export function PageShell({
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
     useEditMode();
+  const createPage = useCreatePage();
   const updateLayout = useUpdatePageLayout();
   const updateConfig = useUpdatePageConfig();
   const updateTheme = useUpdatePageTheme();
   const isGlassTheme = page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
-
   const saveLayout = (nextLayout: PageLayout) => {
     if (!page || updateLayout.isPending || !isOwner || previewMode) return;
     recordSnapshot({
@@ -173,12 +180,27 @@ export function PageShell({
   );
 
   const effectiveTheme = useMemo(
-    () => deepMergeTokens(page?.theme ?? {}, previewTheme ?? {}),
-    [page?.theme, previewTheme],
+    () =>
+      deepMergeTokens(
+        deepMergeTokens(page?.theme ?? {}, page ? studioConfigToThemeTokens(page.config) : {}),
+        previewTheme ?? {},
+      ),
+    [page, previewTheme],
   );
   const containerStyle = useMemo(() => {
     const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
       Record<string, string>;
+    if (page) {
+      const configStyle = studioConfigToStyle(page.config) as React.CSSProperties &
+        Record<string, string>;
+      style["--content-density-gap"] = configStyle["--content-density-gap"];
+      style["--content-density-padding"] = configStyle["--content-density-padding"];
+      // Auto follows the creator's inherited Tethyr palette; explicit accent
+      // modes are page-local and should override it.
+      if (page.config.accentMode !== "auto") {
+        Object.assign(style, configStyle);
+      }
+    }
     if (isGlassTheme || blockContext.translucent) {
       style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
       style["--surface-elevated"] = "color-mix(in oklab, var(--background) 84%, transparent)";
@@ -188,7 +210,7 @@ export function PageShell({
       style["--border-strong"] = "color-mix(in oklab, var(--foreground) 36%, transparent)";
     }
     return style;
-  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent]);
+  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent, page]);
 
   if (isLoading) {
     return (
@@ -215,13 +237,36 @@ export function PageShell({
 
   if (!page) {
     if (!isOwner) return null;
+    const creationPending = pageCreationPending ?? createPage.isPending;
+    const creationError = pageCreationError ?? createPage.error;
+    const creationMessage = creationError
+      ? friendlyError(creationError, "We couldn't create your Studio. Please try again.")
+      : null;
     return (
       <div className="py-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          You don&apos;t have a page yet — build it in the Creativity Studio.
+        <p className="text-sm font-medium text-foreground">Your Studio isn&apos;t set up yet.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Create your Studio to start sharing what you build.
         </p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link to="/profile">Open in Creativity Studio</Link>
+        {creationMessage && (
+          <p className="mx-auto mt-3 max-w-md text-sm text-destructive" role="alert">
+            {creationMessage}
+          </p>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          busy={creationPending}
+          onClick={() => {
+            if (pageCreationAction) {
+              pageCreationAction();
+              return;
+            }
+            createPage.mutate({ ownerId, ownerType }, { onSuccess: () => void refetch() });
+          }}
+        >
+          {creationPending ? "Creating…" : "Create my Studio"}
         </Button>
       </div>
     );
@@ -242,14 +287,6 @@ export function PageShell({
 
   return (
     <div data-page-shell={`${ownerType}:${ownerId}`}>
-      {isOwner && !previewMode && (
-        <EditorToolbar
-          page={page}
-          onRefresh={() => void refetch()}
-          ownerId={ownerId}
-          ownerType={ownerType}
-        />
-      )}
       <div
         className={`${workspaceClass} ${isPreviewing || isEditing ? "studio-editor-workspace" : ""}`}
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}

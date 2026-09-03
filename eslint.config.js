@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      "g/**",
       ".output",
       ".vinxi",
       "supabase/.temp/**",

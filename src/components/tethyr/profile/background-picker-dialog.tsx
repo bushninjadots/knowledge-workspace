@@ -596,8 +596,8 @@ export function BackgroundPickerDialog({
                         style={{
                           ...backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id }),
                           backgroundColor:
-                            backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id }).backgroundColor ??
-                            "var(--background)",
+                            backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id })
+                              .backgroundColor ?? "var(--background)",
                         }}
                       />
                     );

@@ -6,8 +6,11 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import { createStudioHistory, type StudioSnapshot } from "@/lib/studio-history";
 
 export type PreviewDevice = "desktop" | "tablet" | "mobile";
+export type StudioMode = "view" | "edit" | "preview";
 
 interface EditModeState {
+  /** The single public mode exposed by the Studio surface. */
+  mode: StudioMode;
   /** Whether the page is currently in edit mode. */
   isEditing: boolean;
   /** Whether the owner is viewing the Studio in preview mode. */
@@ -42,9 +45,16 @@ interface EditModeState {
 
 const EditModeContext = createContext<EditModeState | null>(null);
 
-export function EditModeProvider({ children }: { children: React.ReactNode }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
+export function EditModeProvider({
+  children,
+  initialMode = "view",
+}: {
+  children: React.ReactNode;
+  /** Owner routes can open directly in the editor; public routes stay read-only. */
+  initialMode?: StudioMode;
+}) {
+  const [isEditing, setIsEditing] = useState(initialMode === "edit");
+  const [isPreviewing, setIsPreviewing] = useState(initialMode === "preview");
   const [previewDevice, setPreviewDeviceState] = useState<PreviewDevice>("desktop");
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
   const historyRef = useRef(createStudioHistory());
@@ -136,8 +146,11 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const mode: StudioMode = isPreviewing ? "preview" : isEditing ? "edit" : "view";
+
   const value = useMemo<EditModeState>(
     () => ({
+      mode,
       isEditing,
       isPreviewing,
       previewDevice,
@@ -156,6 +169,7 @@ export function EditModeProvider({ children }: { children: React.ReactNode }) {
       canRedo: historyState.canRedo,
     }),
     [
+      mode,
       isEditing,
       isPreviewing,
       previewDevice,

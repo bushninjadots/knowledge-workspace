@@ -5,6 +5,7 @@ import {
   STUDIO_PERSONALITIES,
   applyStudioPersonality,
   getStudioPersonality,
+  preserveStudioContent,
 } from "@/lib/studio-personalities";
 import type { AppliedPersonality, StudioPersonality } from "@/lib/studio-personalities";
 import type {
@@ -30,7 +31,7 @@ describe("STUDIO_PERSONALITIES", () => {
       expect(personality.description.length).toBeGreaterThan(3);
       expect(personality.composition().sections.length).toBeGreaterThan(0);
       expect(personality.appearance.radius).toBeTruthy();
-      expect(personality.appearance.typography).toBeTruthy();
+      expect(personality.appearance.personality).toBeTruthy();
       expect(personality.appearance.density).toBeTruthy();
       expect(personality.appearance.accentMode).toBeTruthy();
       expect(personality.themeTokens).toBeDefined();
@@ -51,11 +52,123 @@ describe("STUDIO_PERSONALITIES", () => {
   });
 });
 
+describe("preserveStudioContent", () => {
+  it("keeps existing block ids, configs, and visibility while changing structure", () => {
+    const current = {
+      sections: [
+        {
+          id: "current-section",
+          position: 0,
+          layout: "full" as const,
+          blocks: [
+            {
+              id: "projects-1",
+              type: "profile-projects",
+              position: 0,
+              config: { presentation: "custom" },
+              visible: false,
+            },
+          ],
+        },
+      ],
+    };
+    const preset = {
+      sections: [
+        {
+          id: "preset-section",
+          position: 0,
+          layout: "featured_work" as const,
+          blocks: [
+            {
+              id: "preset-projects",
+              type: "profile-projects",
+              position: 0,
+              config: {},
+              visible: true,
+            },
+          ],
+        },
+      ],
+    };
+
+    const next = preserveStudioContent(current, preset);
+    expect(next.sections[0].blocks[0]).toMatchObject({
+      id: "projects-1",
+      type: "profile-projects",
+      config: { presentation: "custom" },
+      visible: false,
+    });
+  });
+
+  it("appends custom block types instead of dropping them", () => {
+    const current = {
+      sections: [
+        {
+          id: "current-section",
+          position: 0,
+          layout: "full" as const,
+          blocks: [
+            {
+              id: "custom-1",
+              type: "custom-block",
+              position: 0,
+              config: { copy: "Keep me" },
+              visible: true,
+            },
+          ],
+        },
+      ],
+    };
+    const preset = {
+      sections: [
+        {
+          id: "preset-section",
+          position: 0,
+          layout: "full" as const,
+          blocks: [
+            { id: "header", type: "profile-header", position: 0, config: {}, visible: true },
+          ],
+        },
+      ],
+    };
+
+    const next = preserveStudioContent(current, preset);
+    expect(next.sections[0].blocks.map((block) => block.id)).toEqual(["header", "custom-1"]);
+  });
+});
+
 describe("applyStudioPersonality", () => {
+  it("preserves existing content when applying a preset", () => {
+    const current = {
+      sections: [
+        {
+          id: "current",
+          position: 0,
+          layout: "full" as const,
+          blocks: [
+            {
+              id: "bio",
+              type: "profile-bio",
+              position: 0,
+              config: { text: "Hello" },
+              visible: true,
+            },
+          ],
+        },
+      ],
+    };
+    const applied = applyStudioPersonality(STUDIO_PERSONALITIES[0], current);
+    expect(applied.layout.sections.flatMap((section) => section.blocks)).toContainEqual(
+      expect.objectContaining({ id: "bio", config: { text: "Hello" } }),
+    );
+  });
   it("produces a full config stamped with the personality id", () => {
     const applied = applyStudioPersonality(STUDIO_PERSONALITIES[0]);
-    expect(applied.config.personalityId).toBe("minimal");
-    expect(applied.config).toMatchObject(STUDIO_PERSONALITIES[0].appearance);
+    expect(applied.config).toMatchObject({
+      ...STUDIO_PERSONALITIES[0].appearance,
+      structure: "wide",
+      starterId: null,
+    });
   });
 
   it("copies the preset's layout", () => {
@@ -74,9 +187,9 @@ describe("applyStudioPersonality", () => {
     expect(applied.themeOverrides).toBeDefined();
   });
 
-  it("normalizes a missing accent color to null", () => {
+  it("carries a default accent color for all presets", () => {
     const applied = applyStudioPersonality(STUDIO_PERSONALITIES[2]);
-    expect(applied.config.accentColor).toBeNull();
+    expect(applied.config.accentColor).toBeTruthy();
   });
 });
 

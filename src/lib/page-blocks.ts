@@ -181,10 +181,25 @@ export interface LayoutBlockInstance {
    * E.g. span 2 in a two_column section = full width.
    */
   span?: number;
+  /** Editing-time grid height in rows; omitted for legacy content-sized layouts. */
+  height?: number;
   /** Optional responsive freeform placement; omitted means legacy flow layout. */
   frames?: ResponsiveFrames;
   /** When true, the block uses absolute freeform placement in its section canvas. */
   freeform?: boolean;
+}
+
+/** A 12-column grid item used by the Studio's direct manipulation canvas. */
+export interface LayoutGridItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+  maxW?: number;
+  maxH?: number;
 }
 
 /** A section groups blocks into a column arrangement. */
@@ -193,10 +208,16 @@ export interface LayoutSection {
   id: string;
   /** Position within the layout (0-based). */
   position: number;
+  /** Optional human-readable section name. Omitted sections display their layout type. */
+  title?: string;
   /** Column arrangement for this section. */
   layout: SectionLayoutType;
   /** Blocks within this section, ordered by position. */
   blocks: LayoutBlockInstance[];
+  /** Whether the section is visible in the public Studio. */
+  visible?: boolean;
+  /** Persisted 12-column placement used by the owner Studio editor. */
+  grid?: LayoutGridItem[];
   /** Legacy page-level placement retained for backwards-compatible data reads. */
   gridRow?: number;
   /** Legacy page-level placement retained for backwards-compatible data reads. */
@@ -265,6 +286,15 @@ export interface ThemeTokens {
 export type PageOwnerType = "profile" | "project";
 export type PageStatus = "draft" | "published";
 
+/** A published snapshot row from the `page_versions` table. */
+export interface PageVersion {
+  id: string;
+  version: number;
+  /** The layout sections that were live at publish time. */
+  layout: PageLayout;
+  publishedAt: string;
+}
+
 /** Row from the `pages` table (joined with layout + theme). */
 export interface PageData {
   id: string;
@@ -284,6 +314,10 @@ export interface PageData {
   themeOverrides: ThemeTokens | null;
   /** Normalized StudioConfig (radius/typography/density/accent/personality). */
   config: StudioConfig;
+  /** Published version snapshots (newest first). Empty while never published. */
+  versions: PageVersion[];
+  /** The latest published version number, or null when never published. */
+  publishedVersion: number | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -4,14 +4,15 @@ import { createStudioHistory, type StudioSnapshot } from "./studio-history";
 const snapshot: StudioSnapshot = {
   layout: { sections: [] },
   config: {
-    compositionId: null,
-    vibeId: null,
-    personalityId: null,
+    starterId: null,
+    structure: "wide",
+    personality: "modern",
     radius: "soft",
-    typography: "modern",
     density: "comfortable",
     accentMode: "auto",
-    accentColor: null,
+    accentColor: "#3f8f8a",
+    appBackground: "surface",
+    publicBackground: "default",
   },
   themeId: "",
 };
@@ -38,11 +39,11 @@ describe("studio history", () => {
     const history = createStudioHistory();
     const first: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "soft" },
+      config: { ...snapshot.config, radius: "sharp" },
     };
     const second: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "rounded" },
+      config: { ...snapshot.config, radius: "soft" },
     };
 
     history.record(first);
@@ -57,15 +58,15 @@ describe("studio history", () => {
     const history = createStudioHistory(2);
     const first: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "soft" },
+      config: { ...snapshot.config, radius: "sharp" },
     };
     const second: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "rounded" },
+      config: { ...snapshot.config, radius: "soft" },
     };
     const third: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "sharp" },
+      config: { ...snapshot.config, density: "compact" },
     };
 
     history.record(first);

@@ -6,10 +6,15 @@ import {
   normalizeStudioConfig,
   studioConfigToStyle,
   studioConfigToThemeTokens,
+  structureMaxWidth,
+  densityMetrics,
   RADIUS_OPTIONS,
-  TYPOGRAPHY_OPTIONS,
+  PERSONALITY_OPTIONS,
+  STRUCTURE_OPTIONS,
   DENSITY_OPTIONS,
   ACCENT_OPTIONS,
+  BACKGROUND_OPTIONS,
+  type StudioConfig,
 } from "@/lib/studio-config";
 
 describe("normalizeStudioConfig", () => {
@@ -20,43 +25,53 @@ describe("normalizeStudioConfig", () => {
     expect(normalizeStudioConfig(42)).toEqual(DEFAULT_STUDIO_CONFIG);
   });
 
-  it("uses independent ids when present and legacy personalityId as fallback", () => {
-    expect(
-      normalizeStudioConfig({
-        personalityId: "creative",
-        compositionId: "minimal",
-        vibeId: "artistic",
-      }),
-    ).toMatchObject({ compositionId: "minimal", vibeId: "artistic", personalityId: "creative" });
-  });
-
   it("keeps valid values and drops invalid ones to defaults", () => {
     const raw: Record<string, unknown> = {
-      personalityId: "minimal",
-      radius: "rounded",
-      typography: "bogus", // invalid → default
+      structure: "single",
+      personality: "editorial",
       density: "compact",
-      accentMode: "person",
+      radius: "soft",
+      accentMode: "custom",
       accentColor: "#123456",
+      appBackground: "sunken",
+      publicBackground: "surface",
+      starterId: "focused",
     };
     expect(normalizeStudioConfig(raw)).toEqual({
-      compositionId: "minimal",
-      vibeId: "minimal",
-      personalityId: "minimal",
-      radius: "rounded",
-      typography: DEFAULT_STUDIO_CONFIG.typography,
-      density: "compact",
-      accentMode: "person",
-      accentColor: "#123456",
+      ...raw,
+      starterId: "focused",
     });
   });
 
-  it("rejects malformed accent colors and empty personality ids", () => {
-    const raw = { accentColor: "not-a-color", personalityId: "" };
-    expect(normalizeStudioConfig(raw).accentColor).toBeNull();
-    expect(normalizeStudioConfig(raw).personalityId).toBeNull();
-    expect(normalizeStudioConfig(raw).compositionId).toBeNull();
-    expect(normalizeStudioConfig(raw).vibeId).toBeNull();
+  it("migrates legacy compositionId → structure, vibeId/personalityId → personality", () => {
+    const raw: Record<string, unknown> = {
+      compositionId: "sidebar",
+      vibeId: "technical",
+      accentMode: "person",
+      radius: "rounded",
+    };
+    const config = normalizeStudioConfig(raw);
+    expect(config.structure).toBe("sidebar");
+    expect(config.personality).toBe("technical");
+    expect(config.accentMode).toBe("custom");
+    expect(config.radius).toBe("soft");
+  });
+
+  it("migrates legacy typography classic → technical", () => {
+    const config = normalizeStudioConfig({ typography: "classic" });
+    expect(config.personality).toBe("technical");
+  });
+
+  it("migrates legacy accentMode person → custom but keeps the color", () => {
+    const config = normalizeStudioConfig({ accentMode: "person", accentColor: "#6d28d9" });
+    expect(config.accentMode).toBe("custom");
+    expect(config.accentColor).toBe("#6d28d9");
+  });
+
+  it("rejects malformed accent colors", () => {
+    expect(normalizeStudioConfig({ accentColor: "not-a-color" }).accentColor).toBe(
+      DEFAULT_STUDIO_CONFIG.accentColor,
+    );
   });
 });
 
@@ -64,29 +79,28 @@ describe("studioConfigToThemeTokens", () => {
   it("maps every radius treatment to the full radius scale", () => {
     expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: "sharp" }).borders?.radius)
       .toMatchInlineSnapshot(`
-        {
-          "2xl": "4px",
-          "3xl": "5px",
-          "4xl": "6px",
-          "lg": "3px",
-          "md": "2px",
-          "sm": "1px",
-          "xl": "4px",
-        }
-      `);
-    expect(
-      studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: "rounded" }).borders?.radius,
-    ).toMatchInlineSnapshot(`
-        {
-          "2xl": "14px",
-          "3xl": "16px",
-          "4xl": "18px",
-          "lg": "8px",
-          "md": "6px",
-          "sm": "4px",
-          "xl": "12px",
-        }
-      `);
+      {
+        "2xl": "4px",
+        "3xl": "5px",
+        "4xl": "6px",
+        "lg": "3px",
+        "md": "2px",
+        "sm": "1px",
+        "xl": "4px",
+      }
+    `);
+    expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: "soft" }).borders?.radius)
+      .toMatchInlineSnapshot(`
+      {
+        "2xl": "5px",
+        "3xl": "6px",
+        "4xl": "8px",
+        "lg": "4px",
+        "md": "3px",
+        "sm": "2px",
+        "xl": "5px",
+      }
+    `);
   });
 
   it("maps density to a section spacing token", () => {
@@ -99,7 +113,10 @@ describe("studioConfigToThemeTokens", () => {
   });
 
   it("editorial enables the Space Grotesk display stack and display-scale heading", () => {
-    const tokens = studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, typography: "editorial" });
+    const tokens = studioConfigToThemeTokens({
+      ...DEFAULT_STUDIO_CONFIG,
+      personality: "editorial",
+    });
     expect(tokens.typography?.headingFont).toContain("Space Grotesk");
     expect(tokens.typography?.scale?.heading1).toEqual({
       fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
@@ -108,15 +125,18 @@ describe("studioConfigToThemeTokens", () => {
     });
   });
 
-  it("classic down-shifts the display scale without changing fonts", () => {
-    const tokens = studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, typography: "classic" });
+  it("technical down-shifts the display scale without changing fonts", () => {
+    const tokens = studioConfigToThemeTokens({
+      ...DEFAULT_STUDIO_CONFIG,
+      personality: "technical",
+    });
     expect(tokens.typography?.headingFont).toBeUndefined();
     expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(1.875rem, 3.5vw, 2.5rem)");
   });
 
   it("modern leaves typography untouched", () => {
     expect(
-      studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, typography: "modern" }).typography,
+      studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, personality: "modern" }).typography,
     ).toBeUndefined();
   });
 });
@@ -131,10 +151,10 @@ describe("studioConfigToStyle", () => {
     expect(style["--content-density-padding"]).toBe("1.5rem");
   });
 
-  it("emits the accent family for person mode with readable foreground", () => {
+  it("emits the accent family for custom mode with readable foreground", () => {
     const style = studioConfigToStyle({
       ...DEFAULT_STUDIO_CONFIG,
-      accentMode: "person",
+      accentMode: "custom",
       accentColor: "#6d28d9",
     }) as Record<string, string>;
     expect(style["--user-accent"]).toBe("#6d28d9");
@@ -145,7 +165,7 @@ describe("studioConfigToStyle", () => {
   it("light accents get a dark foreground", () => {
     const style = studioConfigToStyle({
       ...DEFAULT_STUDIO_CONFIG,
-      accentMode: "person",
+      accentMode: "custom",
       accentColor: "#e2e8f0",
     }) as Record<string, string>;
     expect(style["--user-accent-foreground"]).toBe("#1f2328");
@@ -163,15 +183,52 @@ describe("studioConfigToStyle", () => {
     const style = studioConfigToStyle({ ...DEFAULT_STUDIO_CONFIG }) as Record<string, string>;
     expect(style["--user-accent"]).toBe("var(--primary)");
   });
+
+  it("emits studio tokens for density and radius", () => {
+    const style = studioConfigToStyle({
+      ...DEFAULT_STUDIO_CONFIG,
+      density: "comfortable",
+      radius: "soft",
+    }) as Record<string, string>;
+    expect(style["--studio-radius"]).toBe("5px");
+    expect(style["--studio-gap"]).toBe("14px");
+    expect(style["--studio-pad"]).toBe("16px");
+  });
+});
+
+describe("structureMaxWidth", () => {
+  it("caps each structure under the site-wide max-w-7xl so the builder fits alongside chrome", () => {
+    expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "single" })).toBe(768);
+    expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "sidebar" })).toBe(1024);
+    expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "wide" })).toBe(1200);
+  });
+});
+
+describe("densityMetrics", () => {
+  it("returns concrete spacing metrics per density", () => {
+    expect(densityMetrics("compact")).toEqual({ gap: 10, pad: 12, rowHeight: 20 });
+    expect(densityMetrics("comfortable")).toEqual({ gap: 14, pad: 16, rowHeight: 24 });
+    expect(densityMetrics("spacious")).toEqual({ gap: 20, pad: 22, rowHeight: 28 });
+  });
 });
 
 describe("option catalogs", () => {
   it("enumerate every treatment value exactly once", () => {
     const values = <T extends string>(opts: ReadonlyArray<{ value: T; label: string }>) =>
       opts.map((o) => o.value);
-    expect(values(RADIUS_OPTIONS)).toEqual(["sharp", "soft", "rounded"]);
-    expect(values(TYPOGRAPHY_OPTIONS)).toEqual(["editorial", "modern", "classic"]);
+    expect(values(RADIUS_OPTIONS)).toEqual(["sharp", "soft"]);
+    expect(values(PERSONALITY_OPTIONS)).toEqual(["editorial", "modern", "technical"]);
+    expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide"]);
     expect(values(DENSITY_OPTIONS)).toEqual(["compact", "comfortable", "spacious"]);
-    expect(values(ACCENT_OPTIONS)).toEqual(["auto", "person", "none"]);
+    expect(values(ACCENT_OPTIONS)).toEqual(["auto", "custom", "none"]);
+    expect(values(BACKGROUND_OPTIONS as ReadonlyArray<{ value: string; label: string }>)).toEqual([
+      "default",
+      "surface",
+      "sunken",
+    ]);
   });
 });
+
+// Keep the type import referenced so TS stays happy.
+type _Config = StudioConfig;
+void (null as unknown as _Config);
