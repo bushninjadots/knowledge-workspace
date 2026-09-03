@@ -327,7 +327,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       { layoutId: page.layoutId, name: templateName.trim() },
       {
         onSuccess: () => {
-          setShowTemplateName(false);
+          closePanels();
           setTemplateName("");
         },
       },
@@ -359,7 +359,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
       {
         onSuccess: () => {
           setConfirmingTemplate(null);
-          setShowApplyPanel(false);
+          closePanels();
           onRefresh();
         },
       },
@@ -564,7 +564,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
 
 
       {showPicker && (
-        <BlockPickerPanel onAdd={handleAddBlock} onClose={() => setShowPicker(false)} />
+        <BlockPickerPanel onAdd={handleAddBlock} onClose={() => closePanels()} />
       )}
 
       {showComposition && (
@@ -572,7 +572,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           page={page}
           ownerId={ownerId}
           ownerType={ownerType}
-          onClose={() => setShowComposition(false)}
+          onClose={() => closePanels()}
           onBeforeApply={() => {
             const snapshot = currentSnapshot();
             if (snapshot) recordSnapshot(snapshot);
@@ -586,7 +586,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           page={page}
           ownerId={ownerId}
           ownerType={ownerType}
-          onClose={() => setShowPersonality(false)}
+          onClose={() => closePanels()}
           onBeforeApply={() => {
             const snapshot = currentSnapshot();
             if (snapshot) recordSnapshot(snapshot);
@@ -630,7 +630,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
               );
             }, 300);
           }}
-          onClose={() => setShowAppearance(false)}
+          onClose={() => closePanels()}
         />
       )}
 
@@ -641,7 +641,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2 h-6 w-6"
-            onClick={() => setShowTemplateName(false)}
+            onClick={() => closePanels()}
             aria-label="Cancel"
           >
             <X className="h-3.5 w-3.5" />
@@ -680,7 +680,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2 h-6 w-6"
-            onClick={() => setShowApplyPanel(false)}
+            onClick={() => closePanels()}
             aria-label="Close"
           >
             <X className="h-3.5 w-3.5" />
@@ -772,7 +772,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           page={page}
           ownerId={ownerId}
           ownerType={ownerType}
-          onClose={() => setShowThemePicker(false)}
+          onClose={() => closePanels()}
           onBeforeApply={() => {
             recordSnapshot({
               layout: page.layout,
@@ -782,7 +782,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
             });
           }}
           onApplied={() => {
-            setShowThemePicker(false);
+            closePanels();
             onRefresh();
           }}
         />
