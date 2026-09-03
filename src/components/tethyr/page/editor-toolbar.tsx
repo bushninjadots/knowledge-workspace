@@ -685,9 +685,19 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
           >
             <X className="h-3.5 w-3.5" />
           </Button>
-          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Your templates
-          </h3>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Your templates
+            </h3>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => setActivePanel("saveTemplate")}
+            >
+              <Bookmark className="h-3.5 w-3.5" /> Save current layout
+            </Button>
+          </div>
           <p className="mb-3 text-xs text-muted-foreground">
             Applying a template replaces your current sections and blocks. You can undo from the
             toolbar.
@@ -697,6 +707,7 @@ export function EditorToolbar({ page, onRefresh, ownerId, ownerType }: EditorToo
               No templates yet. Customize your layout and save it as a template.
             </p>
           ) : (
+
             <div className="grid grid-cols-2 gap-2">
               {myTemplates.map((t: { id: string; name: string; type: string }) => (
                 <div
