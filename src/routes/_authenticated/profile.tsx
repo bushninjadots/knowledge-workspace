@@ -120,16 +120,8 @@ function ProfilePage() {
     );
   }
 
-  const {
-    profile,
-    userId,
-    teachIds,
-    teachMeta,
-    learnIds,
-    avatarSigned,
-    bannerSigned,
-    background,
-  } = profileQuery.data;
+  const { profile, userId, teachIds, teachMeta, learnIds, avatarSigned, bannerSigned, background } =
+    profileQuery.data;
 
   const setupBackground = profile?.background as ProfileBackground | null;
 
@@ -172,11 +164,7 @@ function ProfilePage() {
   }
 
   return (
-    <StudioView
-      userId={userId}
-      profile={profile}
-      onCompleteProfile={() => setShowSetup(true)}
-    />
+    <StudioView userId={userId} profile={profile} onCompleteProfile={() => setShowSetup(true)} />
   );
 }
 

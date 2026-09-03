@@ -45,7 +45,12 @@ import {
   STUDIO_STARTERS,
   type StudioStarter,
 } from "@/components/tethyr/studio/starter-picker";
-import { BACKGROUND_OPTIONS, structureMaxWidth, studioConfigToStyle, type StudioConfig } from "@/lib/studio-config";
+import {
+  BACKGROUND_OPTIONS,
+  structureMaxWidth,
+  studioConfigToStyle,
+  type StudioConfig,
+} from "@/lib/studio-config";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
 export type GStudioConfig = StudioConfig;
 

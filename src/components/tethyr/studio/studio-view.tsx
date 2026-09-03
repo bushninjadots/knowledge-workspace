@@ -117,12 +117,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-sm text-center">
           <p className="text-sm text-muted-foreground">Your studio could not load.</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => pageQuery.refetch()}
-          >
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => pageQuery.refetch()}>
             Try again
           </Button>
         </div>
@@ -131,11 +126,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   }
 
   return (
-    <div
-      className="flex min-h-screen flex-col bg-background"
-      data-studio-view
-      style={surfaceStyle}
-    >
+    <div className="flex min-h-screen flex-col bg-background" data-studio-view style={surfaceStyle}>
       <StudioViewTopBar
         profile={profile}
         published={page?.status === "published"}
@@ -167,12 +158,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                     section.blocks.some((block) => block.visible !== false),
                 )
                 .map((section) => (
-                  <StudioViewSection
-                    key={section.id}
-                    section={section}
-                    context={blockContext}
-                    userId={userId}
-                  />
+                  <StudioViewSection key={section.id} section={section} context={blockContext} />
                 ))}
             </div>
           )}
@@ -256,11 +242,9 @@ function StudioViewTopBar({
 function StudioViewSection({
   section,
   context,
-  userId,
 }: {
   section: LayoutSection;
   context: BlockContext;
-  userId: string;
 }) {
   const blocks = section.blocks
     .slice()
@@ -287,7 +271,6 @@ function StudioViewSection({
             block={block}
             gridItem={gridMap.get(block.id)}
             context={context}
-            userId={userId}
           />
         ))}
       </div>
@@ -299,12 +282,10 @@ function StudioViewBlock({
   block,
   gridItem,
   context,
-  userId,
 }: {
   block: LayoutBlockInstance;
   gridItem?: LayoutGridItem;
   context: BlockContext;
-  userId: string;
 }) {
   const span = Math.max(1, Math.min(12, gridItem?.w ?? 12));
   return (
