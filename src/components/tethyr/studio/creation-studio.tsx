@@ -33,11 +33,18 @@ interface CreationStudioProps {
   userId: string;
   profile: { id: string; handle: string | null; display_name: string | null } | null;
   onCompleteProfile?: () => void;
+  /** Return to the Studio view (read-only) — keeps the two pages connected. */
+  onExit?: () => void;
 }
 
 type HistoryEntry = { layout: PageLayout; config: GStudioConfig };
 
-export function CreationStudio({ userId, profile, onCompleteProfile }: CreationStudioProps) {
+export function CreationStudio({
+  userId,
+  profile,
+  onCompleteProfile,
+  onExit,
+}: CreationStudioProps) {
   const [mode, setMode] = useState<GStudioMode>("edit");
   const [device, setDevice] = useState<GStudioDevice>("desktop");
   const [layout, setLayout] = useState<PageLayout | null>(null);
@@ -565,6 +572,7 @@ export function CreationStudio({ userId, profile, onCompleteProfile }: CreationS
       onUndo={undo}
       onRedo={redo}
       onCompleteProfile={onCompleteProfile}
+      onExit={onExit}
       onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
     />
   );
