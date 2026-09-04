@@ -636,8 +636,11 @@ function GSectionBand({
   const [renaming, setRenaming] = useState(false);
   const sectionTitle = sectionLabel(section);
   const blocks = useMemo(
-    () => [...section.blocks].sort((a, b) => a.position - b.position),
-    [section.blocks],
+    () =>
+      [...section.blocks]
+        .sort((a, b) => a.position - b.position)
+        .filter((block) => editing || block.visible !== false),
+    [editing, section.blocks],
   );
   const grid = useMemo(() => sectionGrid(section, blocks), [section, blocks]);
   const rowHeight =

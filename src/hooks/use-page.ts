@@ -9,6 +9,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
 import { normalizeStudioConfig } from "@/lib/studio-config";
 import type {
+  LayoutSection,
   PageData,
   PageLayout,
   PageOwnerType,
@@ -45,6 +46,18 @@ interface FetchPageParams {
   ownerType: PageOwnerType;
   /** Drafts are only requested by an authenticated owner (RLS still protects them). */
   includeDraft?: boolean;
+}
+
+/**
+ * `publish_page_version` snapshots `layouts.sections` — a bare array — into
+ * `page_versions.layout`, while older rows may hold an object `{ sections }`.
+ * Normalize both shapes so a published version never yields an undefined
+ * layout for the Studio editor.
+ */
+export function parseVersionLayoutSections(raw: unknown): LayoutSection[] {
+  return Array.isArray(raw)
+    ? (raw as LayoutSection[])
+    : ((raw as PageLayout | null)?.sections ?? []);
 }
 
 /**
@@ -127,12 +140,18 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
         .eq("page_id", pageRow.id)
         .order("version", { ascending: false });
 
-      const versions: PageVersion[] = (versionRows ?? []).map((row) => ({
-        id: row.id,
-        version: row.version,
-        layout: { sections: (row.layout as unknown as PageLayout).sections },
-        publishedAt: row.published_at,
-      }));
+      const versions: PageVersion[] = (versionRows ?? []).map((row) => {
+        // publish_page_version snapshots `layouts.sections` — a bare array —
+        // into page_versions.layout. Defend against both shapes (an object
+        // with `sections` or the raw array) so published pages never surface
+        // an undefined layout to the Studio editor.
+        return {
+          id: row.id,
+          version: row.version,
+          layout: { sections: parseVersionLayoutSections(row.layout as unknown) },
+          publishedAt: row.published_at,
+        };
+      });
 
       return {
         id: pageRow.id,

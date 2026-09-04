@@ -364,6 +364,10 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
           (candidate) => candidate.id === section.id,
         );
         const gridClass = SECTION_GRID[section.layout] ?? "";
+        /** Grid-based (builder) sections render from their persisted 12-col
+         *  grid; template sections fall back to SECTION_GRID + block.span. */
+        const hasGrid = !context.isEditing && (section.grid?.length ?? 0) > 0;
+        const gridByBlock = new Map((section.grid ?? []).map((item) => [item.i, item]));
         const blocks = section.blocks
           .filter((b) => context.isEditing || b.visible !== false)
           .sort((a, b) => a.position - b.position);
@@ -502,22 +506,40 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
               </div>
             ) : (
               <div
-                className={`${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`}
-                style={gridClass ? { gridAutoFlow: "row", alignItems: "start" } : undefined}
+                className={`${
+                  hasGrid
+                    ? "grid grid-cols-1 gap-8 md:grid-cols-12 content-safe"
+                    : `${gridClass} content-safe ${context.isEditing ? "transition-colors" : ""}`
+                }`}
+                style={
+                  hasGrid
+                    ? { gridAutoFlow: "row dense", alignItems: "start" }
+                    : gridClass
+                      ? { gridAutoFlow: "row", alignItems: "start" }
+                      : undefined
+                }
                 data-section-canvas={context.isEditing ? "true" : undefined}
+                data-section-grid={hasGrid ? "true" : undefined}
               >
                 {blocks.map((block, bi) => {
                   const persistedBlockIndex = persistedBlocks.findIndex(
                     (candidate) => candidate.id === block.id,
                   );
+                  const gridItem = hasGrid ? gridByBlock.get(block.id) : undefined;
                   return (
                     <div
                       key={`drop-${block.id}`}
                       className={[
                         context.isEditing
                           ? "relative rounded-md border border-transparent p-1 transition-colors hover:border-card-border hover:bg-surface/20"
-                          : "contents",
-                        gridClass && typeof block.span === "number" ? spanClass(block.span) : "",
+                          : hasGrid
+                            ? gridItem
+                              ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)}`
+                              : "relative min-w-0"
+                            : "contents",
+                        gridClass && !hasGrid && typeof block.span === "number"
+                          ? spanClass(block.span)
+                          : "",
                         dropTarget?.sectionIdx === layoutSectionIndex && dropTarget.blockIdx === bi
                           ? "border-t-2 border-[var(--user-accent,var(--trust))]"
                           : "",
@@ -866,4 +888,22 @@ function spanClass(span: number): string {
     "md:col-span-12",
   ];
   return classes[Math.min(classes.length, Math.max(1, Math.round(span))) - 1];
+}
+
+function colStartClass(column: number): string {
+  const classes = [
+    "md:col-start-1",
+    "md:col-start-2",
+    "md:col-start-3",
+    "md:col-start-4",
+    "md:col-start-5",
+    "md:col-start-6",
+    "md:col-start-7",
+    "md:col-start-8",
+    "md:col-start-9",
+    "md:col-start-10",
+    "md:col-start-11",
+    "md:col-start-12",
+  ];
+  return classes[Math.min(classes.length, Math.max(1, Math.round(column))) - 1];
 }

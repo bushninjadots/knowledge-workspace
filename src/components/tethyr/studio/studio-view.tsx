@@ -137,32 +137,41 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
       />
       <main className="min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio">
-        <div className="mx-auto w-full px-4 pb-24 pt-6 sm:px-6" style={{ maxWidth }}>
-          {!layout || layout.sections.length === 0 ? (
-            <div className="flex min-h-[30vh] items-center justify-center text-center">
-              <div>
-                <p className="text-sm text-muted-foreground">Your Studio is empty.</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Open Customize to add blocks and arrange your space.
-                </p>
+        {mode === "preview" && profile?.handle ? (
+          <iframe
+            title="Public Studio preview"
+            src={`/u/${profile.handle}`}
+            className="h-full w-full border-0 bg-background"
+            data-studio-preview-frame
+          />
+        ) : (
+          <div className="mx-auto w-full px-4 pb-24 pt-6 sm:px-6" style={{ maxWidth }}>
+            {!layout || layout.sections.length === 0 ? (
+              <div className="flex min-h-[30vh] items-center justify-center text-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Your Studio is empty.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Open Customize to add blocks and arrange your space.
+                  </p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col" style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}>
-              {layout.sections
-                .slice()
-                .sort((a, b) => a.position - b.position)
-                .filter(
-                  (section) =>
-                    section.visible !== false &&
-                    section.blocks.some((block) => block.visible !== false),
-                )
-                .map((section) => (
-                  <StudioViewSection key={section.id} section={section} context={blockContext} />
-                ))}
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="flex flex-col" style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}>
+                {layout.sections
+                  .slice()
+                  .sort((a, b) => a.position - b.position)
+                  .filter(
+                    (section) =>
+                      section.visible !== false &&
+                      section.blocks.some((block) => block.visible !== false),
+                  )
+                  .map((section) => (
+                    <StudioViewSection key={section.id} section={section} context={blockContext} />
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

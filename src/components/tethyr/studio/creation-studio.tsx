@@ -62,6 +62,7 @@ export function CreationStudio({
   const configRef = useRef<GStudioConfig | null>(null);
   const autosaveSnapshotRef = useRef<string | null>(null);
   const createAttempted = useRef(false);
+  const touchedGridRef = useRef<Set<string>>(new Set());
 
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const createPage = useCreatePage();
@@ -88,6 +89,9 @@ export function CreationStudio({
     setFuture([]);
     setSelectedBlockId(null);
     autosaveSnapshotRef.current = null;
+    touchedGridRef.current = new Set(
+      nextLayout.sections.filter((s) => s.grid && s.grid.length > 0).map((s) => s.id),
+    );
   }, [page]);
 
   useEffect(() => {
@@ -216,6 +220,7 @@ export function CreationStudio({
             )
           : nextGridItem(block.id, section.grid ?? [], defaultW, defaultH, minW, minH),
       ];
+      touchedGridRef.current.add(section.id);
       commit(next);
       setSelectedBlockId(block.id);
     },
@@ -225,8 +230,14 @@ export function CreationStudio({
   const removeBlock = useCallback(
     (blockId: string) => {
       if (!layout) return;
+      const next = cloneLayout(layout);
+      for (const section of next.sections) {
+        if (section.blocks.some((b) => b.id === blockId)) {
+          touchedGridRef.current.add(section.id);
+        }
+      }
       commit({
-        sections: layout.sections.map((section) => ({
+        sections: next.sections.map((section) => ({
           ...section,
           blocks: section.blocks.filter((block) => block.id !== blockId),
           grid: section.grid?.filter((item) => item.i !== blockId),
@@ -262,6 +273,7 @@ export function CreationStudio({
           duplicate.id,
           blockSize(source.type),
         );
+        touchedGridRef.current.add(section.id);
         commit(next);
         setSelectedBlockId(duplicate.id);
         return;
@@ -285,6 +297,19 @@ export function CreationStudio({
         section.blocks.forEach((block, blockIndex) => {
           block.position = blockIndex;
         });
+        // Rebuild the moved block's grid slot so the reorder is visible on the
+        // canvas; other blocks keep their existing positions.
+        if (section.grid && section.grid.length > 0) {
+          const movedBlock = section.blocks[index];
+          const [w, h, minW, minH] = blockSize(movedBlock.type);
+          const others = section.grid.filter((item) => item.i !== movedBlock.id);
+          const { x, y } = firstFreePosition(movedBlock.id, others, w, h);
+          section.grid = [
+            ...others,
+            normalizeGridItem({ i: movedBlock.id, x, y, w, h }, movedBlock.id, w, h, minW, minH),
+          ];
+          touchedGridRef.current.add(section.id);
+        }
         commit(next);
         return;
       }
@@ -312,6 +337,8 @@ export function CreationStudio({
         ...(targetSection.grid ?? []),
         nextGridItem(block.id, targetSection.grid ?? [], w, h, minW, minH),
       ];
+      touchedGridRef.current.add(sourceSection.id);
+      touchedGridRef.current.add(targetSection.id);
       next.sections.forEach((section) =>
         section.blocks.forEach((item, index) => (item.position = index)),
       );
@@ -383,6 +410,7 @@ export function CreationStudio({
         );
       const section = layout.sections.find((candidate) => candidate.id === sectionId);
       if (!section || sameGrid(section.grid ?? [], normalized)) return;
+      touchedGridRef.current.add(sectionId);
       const positions = new Map(normalized.map((item, index) => [item.i, { item, index }]));
       setLayout({
         ...layout,
@@ -473,7 +501,14 @@ export function CreationStudio({
         await applyComposition.mutateAsync({
           pageId: page.id,
           layoutId: page.layoutId,
-          layout: snapshotLayout,
+          // Sections the user never arranged on the grid are persisted without
+          // a `grid`, so the public page keeps their template-based layout.
+          layout: {
+            ...snapshotLayout,
+            sections: snapshotLayout.sections.map((section) =>
+              !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
+            ),
+          },
           config: toTethyrConfig(snapshotConfig, page.config),
           ownerId: userId,
           ownerType: "profile",
@@ -541,15 +576,21 @@ export function CreationStudio({
     setSaving(true);
     try {
       if (dirty) {
+        const snapshotLayout = normalizeLayout(layout);
         await applyComposition.mutateAsync({
           pageId: page.id,
           layoutId: page.layoutId,
-          layout: normalizeLayout(layout),
+          layout: {
+            ...snapshotLayout,
+            sections: snapshotLayout.sections.map((section) =>
+              !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
+            ),
+          },
           config: toTethyrConfig(config, page.config),
           ownerId: userId,
           ownerType: "profile",
         });
-        setSavedLayout(cloneLayout(normalizeLayout(layout)));
+        setSavedLayout(cloneLayout(snapshotLayout));
         setSavedConfig(cloneConfig(config));
       }
       await publishPage.mutateAsync({ pageId: page.id, ownerId: userId, ownerType: "profile" });
@@ -648,6 +689,27 @@ function blockSize(type: string): [number, number, number, number] {
   return sizeFor(type);
 }
 
+function overlaps(a: LayoutGridItem, b: LayoutGridItem) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function firstFreePosition(
+  id: string,
+  existing: LayoutGridItem[],
+  width: number,
+  height: number,
+): { x: number; y: number } {
+  const others = existing.filter((item) => item.i !== id);
+  const maxY = others.reduce((value, item) => Math.max(value, item.y + item.h), 0);
+  for (let y = 0; y <= maxY + height; y++) {
+    for (let x = 0; x <= 12 - width; x++) {
+      const candidate: LayoutGridItem = { i: id, x, y, w: width, h: height };
+      if (!others.some((item) => overlaps(candidate, item))) return { x, y };
+    }
+  }
+  return { x: 0, y: maxY + height };
+}
+
 function nextGridItem(
   id: string,
   existing: LayoutGridItem[],
@@ -656,15 +718,10 @@ function nextGridItem(
   minW: number,
   minH: number,
 ): LayoutGridItem {
-  const bottom = existing.reduce((value, item) => Math.max(value, item.y + item.h), 0);
-  return normalizeGridItem(
-    { i: id, x: 0, y: bottom, w: width, h: height },
-    id,
-    width,
-    height,
-    minW,
-    minH,
-  );
+  const w = Math.max(minW, Math.min(12, width));
+  const h = Math.max(minH, height);
+  const { x, y } = firstFreePosition(id, existing, w, h);
+  return normalizeGridItem({ i: id, x, y, w, h }, id, w, h, minW, minH);
 }
 
 function placeDuplicateGridItem(
@@ -675,19 +732,24 @@ function placeDuplicateGridItem(
 ): LayoutGridItem[] {
   const [defaultW, defaultH, minW, minH] = size;
   if (!source) return [...grid, nextGridItem(duplicateId, grid, defaultW, defaultH, minW, minH)];
-  const x = source.x + source.w + defaultW <= 12 ? source.x + source.w : 0;
+  const w = Math.max(minW, Math.min(12, source.w));
+  const h = Math.max(minH, source.h);
+  const x = source.x + source.w + w <= 12 ? source.x + source.w : 0;
   const y = x === 0 ? Math.max(...grid.map((item) => item.y + item.h), 0) : source.y;
-  return [
-    ...grid,
-    normalizeGridItem(
-      { i: duplicateId, x, y, w: source.w, h: source.h },
-      duplicateId,
-      defaultW,
-      defaultH,
-      minW,
-      minH,
-    ),
-  ];
+  const candidate = normalizeGridItem(
+    { i: duplicateId, x, y, w, h },
+    duplicateId,
+    defaultW,
+    defaultH,
+    minW,
+    minH,
+  );
+  if (grid.some((item) => overlaps(candidate, item))) {
+    const { x: freeX, y: freeY } = firstFreePosition(duplicateId, grid, candidate.w, candidate.h);
+    candidate.x = freeX;
+    candidate.y = freeY;
+  }
+  return [...grid, candidate];
 }
 
 function normalizeGridItem(
@@ -716,20 +778,16 @@ function normalizeLayout(layout: PageLayout): PageLayout {
   return {
     sections: layout.sections.map((section, sectionIndex) => {
       const blocks = [...section.blocks].sort((a, b) => a.position - b.position);
-      const grid = blocks.map((block, index) => {
-        const existing = section.grid?.find((item) => item.i === block.id);
+      const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
+      const grid: LayoutGridItem[] = [];
+      blocks.forEach((block) => {
         const [w, h, minW, minH] = blockSize(block.type);
-        return existing
-          ? normalizeGridItem(existing, block.id, w, h, minW, minH)
-          : nextGridItem(
-              block.id,
-              section.grid ??
-                blocks.slice(0, index).map((item) => ({ i: item.id, x: 0, y: 0, w: 12, h: 1 })),
-              w,
-              h,
-              minW,
-              minH,
-            );
+        const existing = seeded.get(block.id);
+        if (existing) {
+          grid.push(normalizeGridItem(existing, block.id, w, h, minW, minH));
+        } else {
+          grid.push(nextGridItem(block.id, grid, w, h, minW, minH));
+        }
       });
       return {
         ...section,
@@ -778,26 +836,27 @@ export function sectionGrid(
   section: LayoutSection,
   blocks: LayoutBlockInstance[],
 ): LayoutGridItem[] {
-  const persisted = new Map((section.grid ?? []).map((item) => [item.i, item]));
-  return blocks.map((block, position) => {
-    const existing = persisted.get(block.id);
-    if (existing) return { ...existing, minW: existing.minW ?? 2, minH: existing.minH ?? 2 };
+  const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
+  const grid: LayoutGridItem[] = [];
+  blocks.forEach((block) => {
+    const existing = seeded.get(block.id);
     const [width, height, minW, minH] = blockSize(block.type);
-    return normalizeGridItem(
-      {
-        i: block.id,
-        x: width >= 12 ? 0 : position % 2 === 0 ? 0 : 6,
-        y: Math.floor(position / 2) * 5,
-        w: width,
-        h: height,
-      },
-      block.id,
-      width,
-      height,
-      minW,
-      minH,
-    );
+    if (existing) {
+      grid.push(
+        normalizeGridItem(
+          existing,
+          block.id,
+          width,
+          height,
+          existing.minW ?? 2,
+          existing.minH ?? 2,
+        ),
+      );
+    } else {
+      grid.push(nextGridItem(block.id, grid, width, height, minW, minH));
+    }
   });
+  return grid;
 }
 
 export function insertDuplicateGridItem(
@@ -812,8 +871,12 @@ export function insertDuplicateGridItem(
     : blockSize("text");
   const duplicate = nextGridItem(duplicateId, grid, width, height, minW, minH);
   if (!sourceItem) return [...grid, duplicate];
-  duplicate.x = Math.min(12 - duplicate.w, sourceItem.x + sourceItem.w);
-  duplicate.y = sourceItem.y;
+  const x = Math.min(12 - duplicate.w, sourceItem.x + sourceItem.w);
+  const y = sourceItem.y;
+  if (!grid.some((item) => overlaps({ ...duplicate, x, y }, item))) {
+    duplicate.x = x;
+    duplicate.y = y;
+  }
   return [...grid, duplicate];
 }
 
