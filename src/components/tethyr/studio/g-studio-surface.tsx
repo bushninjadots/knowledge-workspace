@@ -1,5 +1,6 @@
 import { forwardRef, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  ArrowLeft,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -106,6 +107,8 @@ export interface GStudioSurfaceProps {
   onRedo: () => void;
   onCompleteProfile?: () => void;
   onReset: () => void;
+  /** Leave customization and return to the Studio view. */
+  onExit?: () => void;
 }
 
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -210,6 +213,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onPublish={props.onPublish}
         customizeOpen={customizeOpen}
         paletteOpen={paletteOpen}
+        onExit={props.onExit}
       />
       {historyOpen && (
         <VersionPopover
@@ -297,6 +301,7 @@ function GStudioTopBar({
   onUndo,
   onRedo,
   onFeel,
+  onExit,
   onCustomize,
   onPalette,
   onSave,
@@ -321,6 +326,7 @@ function GStudioTopBar({
   onUndo: () => void;
   onRedo: () => void;
   onFeel: () => void;
+  onExit?: () => void;
   onCustomize: () => void;
   onPalette: () => void;
   onSave: () => void;
@@ -332,6 +338,12 @@ function GStudioTopBar({
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
       <div className="flex min-h-10 items-center gap-2 px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
+          {onExit && (
+            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onExit}>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {!compact && <span className="text-xs">Studio</span>}
+            </Button>
+          )}
           <span className="font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-foreground">
             Tethyr
           </span>
@@ -412,7 +424,7 @@ function GStudioTopBar({
                     <Sliders className="h-3 w-3" /> Customize
                   </Button>
                   <Button variant="ghost" size="sm" onClick={onFeel}>
-                    <Sparkles className="h-3 w-3" /> Feel
+                    <Sparkles className="h-3 w-3" /> Starting point
                   </Button>
                   <Button
                     variant={paletteOpen ? "default" : "secondary"}
@@ -1456,7 +1468,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
             tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
           )}
         >
-          <Sliders className="mr-1 inline h-3 w-3" /> Feel
+          <Sliders className="mr-1 inline h-3 w-3" /> Style
         </button>
         <IconButton label="Close mobile editor" className="ml-auto" onClick={() => setOpen(false)}>
           <X className="h-3.5 w-3.5" />
