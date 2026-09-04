@@ -9,7 +9,6 @@ import {
   GripHorizontal,
   GripVertical,
   History,
-  Layers,
   Monitor,
   Pencil,
   Plus,
