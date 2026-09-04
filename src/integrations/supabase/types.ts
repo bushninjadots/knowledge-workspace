@@ -1202,6 +1202,7 @@ export type Database = {
           available_days: string[]
           available_times: string[]
           avatar_url: string | null
+          background: Json | null
           banner_caption: string | null
           banner_url: string | null
           bio: string | null
@@ -1210,12 +1211,15 @@ export type Database = {
           created_at: string
           creator_title: string | null
           display_name: string | null
+          evidence_shelf: Json
+          favorite_achievement: string | null
           favourite_tools: string[]
           handle: string | null
           id: string
           languages: string[]
           learning_goals: string | null
           portfolio_links: Json
+          public_background: Json | null
           reputation_score: number
           social_links: Json
           software_stack: string[]
@@ -1231,6 +1235,7 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1239,12 +1244,15 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          evidence_shelf?: Json
+          favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
           id: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          public_background?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
@@ -1260,6 +1268,7 @@ export type Database = {
           available_days?: string[]
           available_times?: string[]
           avatar_url?: string | null
+          background?: Json | null
           banner_caption?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -1268,12 +1277,15 @@ export type Database = {
           created_at?: string
           creator_title?: string | null
           display_name?: string | null
+          evidence_shelf?: Json
+          favorite_achievement?: string | null
           favourite_tools?: string[]
           handle?: string | null
           id?: string
           languages?: string[]
           learning_goals?: string | null
           portfolio_links?: Json
+          public_background?: Json | null
           reputation_score?: number
           social_links?: Json
           software_stack?: string[]
