@@ -1728,6 +1728,64 @@ export type Database = {
           },
         ]
       }
+      project_needs: {
+        Row: {
+          created_at: string
+          filled_by: string | null
+          id: string
+          is_filled: boolean
+          note: string | null
+          project_id: string
+          skill_id: string | null
+          title: string
+          urgency: string
+        }
+        Insert: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id: string
+          skill_id?: string | null
+          title: string
+          urgency?: string
+        }
+        Update: {
+          created_at?: string
+          filled_by?: string | null
+          id?: string
+          is_filled?: boolean
+          note?: string | null
+          project_id?: string
+          skill_id?: string | null
+          title?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_needs_filled_by_fkey"
+            columns: ["filled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_needs_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_open_roles: {
         Row: {
           created_at: string
@@ -1772,6 +1830,65 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_recognitions: {
+        Row: {
+          created_at: string
+          giver_id: string
+          id: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          giver_id: string
+          id?: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          giver_id?: string
+          id?: string
+          kind?: string
+          project_activity_id?: string
+          project_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey"
+            columns: ["giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1937,8 +2054,75 @@ export type Database = {
           },
         ]
       }
+      project_visits: {
+        Row: {
+          last_seen_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_watchers: {
+        Row: {
+          created_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_watchers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_watchers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
+          collaboration_brief: Json
           cover_url: string | null
           created_at: string
           description: string | null
@@ -1946,6 +2130,7 @@ export type Database = {
           goal: string | null
           id: string
           is_featured: boolean
+          lineage: Json
           links: Json
           looking_for_collaborators: boolean
           looking_for_feedback: boolean
@@ -1954,6 +2139,7 @@ export type Database = {
           progress_percent: number
           readme: string | null
           resources: Json
+          season: string
           stage: Database["public"]["Enums"]["project_stage"]
           started_at: string
           status: Database["public"]["Enums"]["project_status"]
@@ -1966,6 +2152,7 @@ export type Database = {
           vision: string | null
         }
         Insert: {
+          collaboration_brief?: Json
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -1973,6 +2160,7 @@ export type Database = {
           goal?: string | null
           id?: string
           is_featured?: boolean
+          lineage?: Json
           links?: Json
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
@@ -1981,6 +2169,7 @@ export type Database = {
           progress_percent?: number
           readme?: string | null
           resources?: Json
+          season?: string
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -1993,6 +2182,7 @@ export type Database = {
           vision?: string | null
         }
         Update: {
+          collaboration_brief?: Json
           cover_url?: string | null
           created_at?: string
           description?: string | null
@@ -2000,6 +2190,7 @@ export type Database = {
           goal?: string | null
           id?: string
           is_featured?: boolean
+          lineage?: Json
           links?: Json
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
@@ -2008,6 +2199,7 @@ export type Database = {
           progress_percent?: number
           readme?: string | null
           resources?: Json
+          season?: string
           stage?: Database["public"]["Enums"]["project_stage"]
           started_at?: string
           status?: Database["public"]["Enums"]["project_status"]
@@ -2576,6 +2768,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_project_visible: { Args: { _project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
