@@ -229,7 +229,14 @@ export function CreationStudio({
               minW,
               minH,
             )
-          : nextGridItem(block.id, section.grid ?? [], defaultW, defaultH, minW, minH),
+          : nextGridItem(
+              block.id,
+              section.grid ?? [],
+              preferredGridWidth(section.layout, section.blocks.length - 1, minW),
+              defaultH,
+              minW,
+              minH,
+            ),
       ];
       touchedGridRef.current.add(section.id);
       commit(next);
@@ -329,7 +336,7 @@ export function CreationStudio({
   );
 
   const moveToSection = useCallback(
-    (blockId: string, targetSectionId: string) => {
+    (blockId: string, targetSectionId: string, placement?: { col: number; row: number }) => {
       if (!layout) return;
       const next = cloneLayout(layout);
       const sourceSection = next.sections.find((section) =>
@@ -342,12 +349,29 @@ export function CreationStudio({
       if (!block) return;
       block.position = targetSection.blocks.length;
       targetSection.blocks.push(block);
+      const sourceGridItem = sourceSection.grid?.find((item) => item.i === blockId);
       sourceSection.grid = sourceSection.grid?.filter((item) => item.i !== blockId);
-      const [w, h, minW, minH] = blockSize(block.type);
-      targetSection.grid = [
-        ...(targetSection.grid ?? []),
-        nextGridItem(block.id, targetSection.grid ?? [], w, h, minW, minH),
-      ];
+      const [defaultW, defaultH, minW, minH] = blockSize(block.type);
+      const w = Math.max(minW, Math.min(12, sourceGridItem?.w ?? defaultW));
+      const h = Math.max(minH, sourceGridItem?.h ?? defaultH);
+      const existing = targetSection.grid ?? [];
+      const dropped =
+        placement !== undefined
+          ? normalizeGridItem(
+              { i: block.id, x: placement.col, y: placement.row, w, h },
+              block.id,
+              w,
+              h,
+              minW,
+              minH,
+            )
+          : nextGridItem(block.id, existing, w, h, minW, minH);
+      if (existing.some((item) => overlaps(dropped, item))) {
+        const { x: freeX, y: freeY } = firstFreePosition(block.id, existing, dropped.w, dropped.h);
+        dropped.x = freeX;
+        dropped.y = freeY;
+      }
+      targetSection.grid = [...existing, dropped];
       touchedGridRef.current.add(sourceSection.id);
       touchedGridRef.current.add(targetSection.id);
       next.sections.forEach((section) =>
@@ -441,13 +465,15 @@ export function CreationStudio({
   const applyGrid = useCallback(
     (sectionId: string, nextGrid: LayoutGridItem[]) => {
       if (!layout) return;
+      const section = layout.sections.find((candidate) => candidate.id === sectionId);
+      if (!section) return;
+      const validIds = new Set(section.blocks.map((block) => block.id));
       const normalized = nextGrid
-        .filter((item) => item.i !== "__dropping-elem__")
+        .filter((item) => item.i !== "__dropping-elem__" && validIds.has(item.i))
         .map((item) =>
           normalizeGridItem(item, item.i, item.w, item.h, item.minW ?? 2, item.minH ?? 2),
         );
-      const section = layout.sections.find((candidate) => candidate.id === sectionId);
-      if (!section || sameGrid(section.grid ?? [], normalized)) return;
+      if (sameGrid(section.grid ?? [], normalized)) return;
       touchedGridRef.current.add(sectionId);
       const positions = new Map(normalized.map((item, index) => [item.i, { item, index }]));
       setLayout({
@@ -910,13 +936,14 @@ function normalizeLayout(layout: PageLayout): PageLayout {
       const blocks = [...section.blocks].sort((a, b) => a.position - b.position);
       const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
       const grid: LayoutGridItem[] = [];
-      blocks.forEach((block) => {
+      blocks.forEach((block, index) => {
         const [w, h, minW, minH] = blockSize(block.type);
         const existing = seeded.get(block.id);
         if (existing) {
           grid.push(normalizeGridItem(existing, block.id, w, h, minW, minH));
         } else {
-          grid.push(nextGridItem(block.id, grid, w, h, minW, minH));
+          const preferredWidth = preferredGridWidth(section.layout, index, minW);
+          grid.push(nextGridItem(block.id, grid, preferredWidth, h, minW, minH));
         }
       });
       return {
@@ -962,13 +989,18 @@ function toTethyrConfig(value: GStudioConfig, _current: StudioConfig): StudioCon
   return { ...value };
 }
 
+function preferredGridWidth(layout: LayoutSection["layout"], index: number, minW: number): number {
+  const widths = TRACK_WIDTHS[layout] ?? [12];
+  return Math.max(minW, Math.min(12, widths[index % widths.length]));
+}
+
 export function sectionGrid(
   section: LayoutSection,
   blocks: LayoutBlockInstance[],
 ): LayoutGridItem[] {
   const seeded = new Map((section.grid ?? []).map((item) => [item.i, item]));
   const grid: LayoutGridItem[] = [];
-  blocks.forEach((block) => {
+  blocks.forEach((block, index) => {
     const existing = seeded.get(block.id);
     const [width, height, minW, minH] = blockSize(block.type);
     if (existing) {
@@ -983,7 +1015,8 @@ export function sectionGrid(
         ),
       );
     } else {
-      grid.push(nextGridItem(block.id, grid, width, height, minW, minH));
+      const preferredWidth = preferredGridWidth(section.layout, index, minW);
+      grid.push(nextGridItem(block.id, grid, preferredWidth, height, minW, minH));
     }
   });
   return grid;

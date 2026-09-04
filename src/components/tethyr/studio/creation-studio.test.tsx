@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   insertDuplicateGridItem,
   makeHistoryEntry,
+  normalizeGridItem,
   sectionGrid,
   seedGridFromLayout,
 } from "@/components/tethyr/studio/creation-studio";
+import { snapGridPlacement } from "@/components/tethyr/studio/g-studio-surface";
 import type { StudioConfig } from "@/lib/studio-config";
 import type { LayoutSection } from "@/lib/page-blocks";
 
@@ -70,6 +72,51 @@ describe("Creation Studio grid adapter", () => {
       { ...section.grid![0], minW: 2, minH: 2 },
       { ...section.grid![1], minW: 2, minH: 2 },
     ]);
+  });
+
+  it("keeps a dropped placement when its destination slot is clear", () => {
+    const dropped = normalizeGridItem({ i: "moved", x: 6, y: 4, w: 5, h: 3 }, "moved", 6, 3, 2, 2);
+
+    expect(dropped).toMatchObject({ i: "moved", x: 6, y: 4, w: 5, h: 3 });
+  });
+
+  it("snaps a near placement to the next block edge", () => {
+    expect(
+      snapGridPlacement(
+        { sectionId: "section-1", col: 5, row: 1 },
+        4,
+        3,
+        [{ i: "a", x: 0, y: 0, w: 4, h: 3 }],
+        true,
+      ),
+    ).toMatchObject({ col: 4, row: 0 });
+  });
+
+  it("keeps free placement when snapping is disabled", () => {
+    expect(
+      snapGridPlacement(
+        { sectionId: "section-1", col: 5, row: 1 },
+        4,
+        3,
+        [{ i: "a", x: 0, y: 0, w: 4, h: 3 }],
+        false,
+      ),
+    ).toMatchObject({ col: 5, row: 1 });
+  });
+
+  it("does not snap into an occupied slot", () => {
+    expect(
+      snapGridPlacement(
+        { sectionId: "section-1", col: 4, row: 0 },
+        4,
+        3,
+        [
+          { i: "a", x: 0, y: 0, w: 4, h: 3 },
+          { i: "b", x: 4, y: 0, w: 4, h: 3 },
+        ],
+        true,
+      ),
+    ).toMatchObject({ col: 4, row: 0 });
   });
 
   it("adds a duplicate as a separate grid item beside its source", () => {
