@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { slugify, useCreateTeam, useInviteToTeam, useRespondToTeamInvite } from "./use-teams";
+import {
+  slugify,
+  useCreateTeam,
+  useInviteToTeam,
+  useMyTeams,
+  useRespondToTeamInvite,
+} from "./use-teams";
 import { createFakeSupabase } from "../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
@@ -90,6 +96,44 @@ describe("useCreateTeam", () => {
       (c) => c.table === "team_members" && c.action === "insert",
     );
     expect(memberInsert).toBeUndefined();
+  });
+});
+
+// --- useMyTeams ----------------------------------------------------------
+
+describe("useMyTeams", () => {
+  it("loads the signed-in member's crews with their role", async () => {
+    handle.reset();
+    handle.on("team_members:select", () => ({
+      data: [
+        {
+          team_id: "team-1",
+          role: "core",
+          joined_at: "2026-09-03T10:00:00Z",
+          teams: {
+            id: "team-1",
+            name: "Night Shift",
+            slug: "night-shift-ab12",
+            description: "Builds after dark",
+            avatar_url: null,
+            cover_url: null,
+            created_by: "user-1",
+            created_at: "2026-09-01T10:00:00Z",
+          },
+        },
+      ],
+      error: null,
+    }));
+
+    const { result } = renderHookWithClient(() => useMyTeams());
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([
+      expect.objectContaining({
+        role: "core",
+        team: expect.objectContaining({ name: "Night Shift", slug: "night-shift-ab12" }),
+      }),
+    ]);
   });
 });
 

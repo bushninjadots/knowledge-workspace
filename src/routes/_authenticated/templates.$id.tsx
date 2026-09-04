@@ -4,7 +4,7 @@
 // Authenticated users can apply, fork, or remix the template.
 
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTemplate, useApplyTemplate } from "@/hooks/use-templates";
 import { useForkLayout, useRemixLayout, useLineage } from "@/hooks/use-fork";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/templates/$id")({
 
 function TemplateDetailPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const { data: template, isLoading, isError } = useTemplate(id);
   const applyTemplate = useApplyTemplate();
   const forkLayout = useForkLayout();
@@ -73,13 +74,15 @@ function TemplateDetailPage() {
     ) ?? 0;
 
   const handleApply = () => {
-    applyTemplate.mutate({
-      templateId: template.id,
-      pageId: "",
-      layoutId: "",
-      ownerId: "",
-      ownerType: "profile",
-    });
+    applyTemplate.mutate(
+      {
+        templateId: template.id,
+        ownerType: "profile",
+      },
+      {
+        onSuccess: () => navigate({ to: "/studio" }),
+      },
+    );
   };
 
   const handleFork = () => {

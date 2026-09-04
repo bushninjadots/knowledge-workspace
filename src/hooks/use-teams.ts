@@ -57,6 +57,47 @@ export const PROJECT_TEAMS_KEY = (projectId: string) => ["project-teams", projec
 // Queries
 // ============================================================
 
+/** Teams the signed-in member belongs to, including their role. */
+export function useMyTeams() {
+  return useQuery({
+    queryKey: MY_TEAMS_KEY,
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await sb
+        .from("team_members")
+        .select(
+          "team_id, role, joined_at, teams(id, name, slug, description, avatar_url, cover_url, created_by, created_at)",
+        )
+        .eq("profile_id", user.id)
+        .order("joined_at", { ascending: true });
+      if (error) {
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+
+      return (
+        (data ?? []) as {
+          team_id: string;
+          role: TeamRole;
+          joined_at: string;
+          teams: TeamRow | null;
+        }[]
+      )
+        .filter((row) => !!row.teams)
+        .map((row) => ({
+          team: row.teams as TeamRow,
+          role: row.role,
+          joinedAt: row.joined_at,
+        }));
+    },
+    staleTime: 30_000,
+  });
+}
+
 export function useTeam(slug: string) {
   return useQuery({
     queryKey: TEAM_KEY(slug),

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createElement, type ReactNode } from "react";
-import { renderHook, waitFor } from "@testing-library/react";
-import { useCreatePage } from "./use-page-editor";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { useApplyStudioComposition, useCreatePage } from "./use-page-editor";
 import { createFakeSupabase } from "../../tests/helpers/fake-supabase";
 
 const fake = vi.hoisted(() => ({
@@ -60,6 +60,53 @@ describe("Studio page creation contract", () => {
   });
 });
 
+describe("useApplyStudioComposition", () => {
+  it("saves the layout and Studio config through the atomic RPC", async () => {
+    handle.reset();
+    handle.client.rpc.mockResolvedValue({ data: null, error: null });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+    });
+    fake.supabase.from = handle.client.from;
+    fake.supabase.auth = handle.client.auth;
+    fake.supabase.rpc = handle.client.rpc;
+
+    const composition = renderHook(() => useApplyStudioComposition(), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client: queryClient }, children),
+    });
+    await act(async () => {
+      await composition.result.current.mutateAsync({
+        pageId: "page-1",
+        layoutId: "layout-1",
+        layout: { sections: [] },
+        config: {
+          starterId: null,
+          structure: "wide",
+          personality: "modern",
+          density: "comfortable",
+          radius: "soft",
+          accentMode: "auto",
+          accentColor: "#3f8f8a",
+          appBackground: "surface",
+          publicBackground: "default",
+        },
+        ownerId: "user-1",
+        ownerType: "profile",
+      });
+    });
+
+    expect(fake.supabase.rpc).toHaveBeenCalledWith("apply_studio_composition", {
+      p_page_id: "page-1",
+      p_layout_id: "layout-1",
+      p_sections: [],
+      p_config: expect.objectContaining({ structure: "wide" }),
+      p_composition_id: "wide",
+    });
+  });
+});
+
 describe("useCreatePage", () => {
   it("creates an owned profile layout and page, then invalidates that owner page", async () => {
     handle.reset();
@@ -79,7 +126,7 @@ describe("useCreatePage", () => {
         action: "insert",
         value: expect.objectContaining({
           name: "Default Studio",
-          created_by: "profile-1",
+          created_by: "user-1",
         }),
       }),
       expect.objectContaining({

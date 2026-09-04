@@ -271,7 +271,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
       </div>
       {starterOpen && (
         <StarterPicker
-          currentId={null}
+          currentId={props.config.starterId}
           canUndo={props.canUndo}
           onUndo={props.onUndo}
           onChoose={props.onChooseStarter}

@@ -11,52 +11,85 @@ CREATE TABLE IF NOT EXISTS project_repositories (
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Index for fast lookups by project
 CREATE INDEX IF NOT EXISTS idx_project_repos_project ON project_repositories(project_id);
 
--- Public read (projects are public)
 ALTER TABLE project_repositories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Project repositories are publicly readable"
-  ON project_repositories FOR SELECT
-  USING (true);
+-- These policies may already exist from the original repository migration. Do
+-- not replace an existing policy here: later security migrations may have
+-- intentionally tightened its predicate.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'project_repositories'
+      AND policyname = 'Project repositories are publicly readable'
+  ) THEN
+    CREATE POLICY "Project repositories are publicly readable"
+      ON project_repositories FOR SELECT
+      USING (true);
+  END IF;
 
-CREATE POLICY "Project owner can insert repository"
-  ON project_repositories FOR INSERT TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = project_repositories.project_id
-      AND projects.profile_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'project_repositories'
+      AND policyname = 'Project owner can insert repository'
+  ) THEN
+    CREATE POLICY "Project owner can insert repository"
+      ON project_repositories FOR INSERT TO authenticated
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM projects
+          WHERE projects.id = project_repositories.project_id
+            AND projects.profile_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY "Project owner can update repository"
-  ON project_repositories FOR UPDATE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = project_repositories.project_id
-      AND projects.profile_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'project_repositories'
+      AND policyname = 'Project owner can update repository'
+  ) THEN
+    CREATE POLICY "Project owner can update repository"
+      ON project_repositories FOR UPDATE TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM projects
+          WHERE projects.id = project_repositories.project_id
+            AND projects.profile_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY "Project owner can delete repository"
-  ON project_repositories FOR DELETE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = project_repositories.project_id
-      AND projects.profile_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'project_repositories'
+      AND policyname = 'Project owner can delete repository'
+  ) THEN
+    CREATE POLICY "Project owner can delete repository"
+      ON project_repositories FOR DELETE TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM projects
+          WHERE projects.id = project_repositories.project_id
+            AND projects.profile_id = auth.uid()
+        )
+      );
+  END IF;
+END
+$$;
 
 -- GitHub OAuth: store connected accounts for repo discovery and activity
 CREATE TABLE IF NOT EXISTS connected_accounts (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  provider      text NOT NULL,                  -- github, gitlab, etc.
-  provider_id   text NOT NULL,                  -- provider's user ID
+  provider      text NOT NULL,
+  provider_id   text NOT NULL,
   username      text,
   access_token  text,
   metadata      jsonb DEFAULT '{}',
@@ -67,49 +100,98 @@ CREATE TABLE IF NOT EXISTS connected_accounts (
 
 ALTER TABLE connected_accounts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read own connected accounts"
-  ON connected_accounts FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'connected_accounts'
+      AND policyname = 'Users can read own connected accounts'
+  ) THEN
+    CREATE POLICY "Users can read own connected accounts"
+      ON connected_accounts FOR SELECT TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
 
-CREATE POLICY "Users can insert own connected account"
-  ON connected_accounts FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'connected_accounts'
+      AND policyname = 'Users can insert own connected account'
+  ) THEN
+    CREATE POLICY "Users can insert own connected account"
+      ON connected_accounts FOR INSERT TO authenticated
+      WITH CHECK (user_id = auth.uid());
+  END IF;
 
-CREATE POLICY "Users can delete own connected account"
-  ON connected_accounts FOR DELETE TO authenticated
-  USING (user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'connected_accounts'
+      AND policyname = 'Users can delete own connected account'
+  ) THEN
+    CREATE POLICY "Users can delete own connected account"
+      ON connected_accounts FOR DELETE TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
+END
+$$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON connected_accounts TO authenticated;
 GRANT ALL ON connected_accounts TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.user_layout_preferences (
   user_id     uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  page        text NOT NULL,                        -- 'dashboard' | 'profile'
+  page        text NOT NULL,
   layout      jsonb NOT NULL DEFAULT '{}'::jsonb,
   updated_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, page)
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_layout_preferences_page ON public.user_layout_preferences(page);
-
 ALTER TABLE public.user_layout_preferences ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can read their own layout preferences"
-  ON public.user_layout_preferences FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_layout_preferences'
+      AND policyname = 'Users can read their own layout preferences'
+  ) THEN
+    CREATE POLICY "Users can read their own layout preferences"
+      ON public.user_layout_preferences FOR SELECT TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
 
-CREATE POLICY "Users can insert their own layout preferences"
-  ON public.user_layout_preferences FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_layout_preferences'
+      AND policyname = 'Users can insert their own layout preferences'
+  ) THEN
+    CREATE POLICY "Users can insert their own layout preferences"
+      ON public.user_layout_preferences FOR INSERT TO authenticated
+      WITH CHECK (user_id = auth.uid());
+  END IF;
 
-CREATE POLICY "Users can update their own layout preferences"
-  ON public.user_layout_preferences FOR UPDATE TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_layout_preferences'
+      AND policyname = 'Users can update their own layout preferences'
+  ) THEN
+    CREATE POLICY "Users can update their own layout preferences"
+      ON public.user_layout_preferences FOR UPDATE TO authenticated
+      USING (user_id = auth.uid())
+      WITH CHECK (user_id = auth.uid());
+  END IF;
 
-CREATE POLICY "Users can delete their own layout preferences"
-  ON public.user_layout_preferences FOR DELETE TO authenticated
-  USING (user_id = auth.uid());
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_layout_preferences'
+      AND policyname = 'Users can delete their own layout preferences'
+  ) THEN
+    CREATE POLICY "Users can delete their own layout preferences"
+      ON public.user_layout_preferences FOR DELETE TO authenticated
+      USING (user_id = auth.uid());
+  END IF;
+END
+$$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_layout_preferences TO authenticated;
 GRANT ALL ON public.user_layout_preferences TO service_role;
@@ -131,32 +213,53 @@ CREATE TABLE IF NOT EXISTS project_activity (
 
 CREATE INDEX IF NOT EXISTS idx_project_activity_project
   ON project_activity(project_id, created_at DESC);
-
 ALTER TABLE project_activity ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Project activity is publicly readable"
-  ON project_activity FOR SELECT
-  USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'project_activity'
+      AND policyname = 'Project activity is publicly readable'
+  ) THEN
+    CREATE POLICY "Project activity is publicly readable"
+      ON project_activity FOR SELECT
+      USING (true);
+  END IF;
 
-CREATE POLICY "Project owner can insert activity"
-  ON project_activity FOR INSERT TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = project_activity.project_id
-      AND projects.profile_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'project_activity'
+      AND policyname = 'Project owner can insert activity'
+  ) THEN
+    CREATE POLICY "Project owner can insert activity"
+      ON project_activity FOR INSERT TO authenticated
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM projects
+          WHERE projects.id = project_activity.project_id
+            AND projects.profile_id = auth.uid()
+        )
+      );
+  END IF;
 
-CREATE POLICY "Project owner can delete activity"
-  ON project_activity FOR DELETE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM projects
-      WHERE projects.id = project_activity.project_id
-      AND projects.profile_id = auth.uid()
-    )
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'project_activity'
+      AND policyname = 'Project owner can delete activity'
+  ) THEN
+    CREATE POLICY "Project owner can delete activity"
+      ON project_activity FOR DELETE TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM projects
+          WHERE projects.id = project_activity.project_id
+            AND projects.profile_id = auth.uid()
+        )
+      );
+  END IF;
+END
+$$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON project_repositories TO anon, authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON project_discussions TO anon, authenticated, service_role;

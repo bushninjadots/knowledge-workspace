@@ -50,6 +50,7 @@ const groups = [
     label: "Network",
     items: [
       { to: "/community", label: "Community", icon: Users },
+      { to: "/teams", label: "Teams", icon: Users },
       { to: "/connections", label: "Connections", icon: Link2 },
       { to: "/messages", label: "Messages", icon: MessageSquare },
       { to: "/notifications", label: "Notifications", icon: Bell },

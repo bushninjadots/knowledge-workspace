@@ -227,10 +227,11 @@ export function useUnpublishTemplate() {
 
 interface ApplyTemplateParams {
   templateId: string;
-  pageId: string;
-  layoutId: string;
-  ownerId: string;
-  ownerType: "profile" | "project";
+  /** Destination page and layout are optional so callers can apply to a fresh profile Studio. */
+  pageId?: string;
+  layoutId?: string;
+  ownerId?: string;
+  ownerType?: "profile" | "project";
 }
 
 /** Copy a template's sections into a page's layout and bump usage count. */
@@ -239,6 +240,26 @@ export function useApplyTemplate() {
 
   return useMutation({
     mutationFn: async ({ templateId, pageId, layoutId }: ApplyTemplateParams) => {
+      let destinationPageId = pageId;
+      let destinationLayoutId = layoutId;
+
+      if (!destinationPageId || !destinationLayoutId) {
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) throw new Error("You must be signed in to apply a template.");
+        const { data: destination, error: destinationError } = await supabase
+          .from("pages")
+          .select("id, layout_id")
+          .eq("owner_id", user.id)
+          .eq("owner_type", "profile")
+          .maybeSingle();
+        if (destinationError) throw destinationError;
+        if (!destination?.id || !destination.layout_id) {
+          throw new Error("Open your Studio once before applying a template.");
+        }
+        destinationPageId = destination.id;
+        destinationLayoutId = destination.layout_id;
+      }
+
       // 1. Fetch the template's sections and theme.
       const { data: template, error: fetchErr } = await supabase
         .from("layouts")
@@ -262,7 +283,7 @@ export function useApplyTemplate() {
           sections:
             sections as unknown as Database["public"]["Tables"]["layouts"]["Update"]["sections"],
         })
-        .eq("id", layoutId);
+        .eq("id", destinationLayoutId);
 
       if (updateErr) throw updateErr;
 
@@ -273,7 +294,7 @@ export function useApplyTemplate() {
         await supabase
           .from("pages")
           .update({ theme_id: template.theme_id, theme_overrides: null as unknown as Json })
-          .eq("id", pageId);
+          .eq("id", destinationPageId);
       }
 
       // 4. Bump template usage count.
@@ -285,7 +306,11 @@ export function useApplyTemplate() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["templates"] });
-      invalidatePage(qc, vars.ownerId, vars.ownerType);
+      if (vars.ownerId && vars.ownerType) {
+        invalidatePage(qc, vars.ownerId, vars.ownerType);
+      } else {
+        qc.invalidateQueries({ queryKey: ["page"] });
+      }
       toast.success("Template applied");
     },
     onError: (err) => {

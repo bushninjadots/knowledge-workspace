@@ -9,11 +9,10 @@ import {
 } from "@/components/tethyr/studio/g-studio-surface";
 import { usePage } from "@/hooks/use-page";
 import {
+  useApplyStudioComposition,
   useCreatePage,
   usePublishPage,
   useRollbackPageVersion,
-  useUpdatePageConfig,
-  useUpdatePageLayout,
 } from "@/hooks/use-page-editor";
 import { createBlockInstance } from "@/lib/block-registry";
 import type { StudioStarter } from "@/components/tethyr/studio/starter-picker";
@@ -63,8 +62,7 @@ export function CreationStudio({
 
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const createPage = useCreatePage();
-  const updateLayout = useUpdatePageLayout();
-  const updateConfig = useUpdatePageConfig();
+  const applyComposition = useApplyStudioComposition();
   const publishPage = usePublishPage();
   const rollbackPage = useRollbackPageVersion();
   const page = pageQuery.data;
@@ -455,20 +453,14 @@ export function CreationStudio({
     if (!page || !layout || !config || saving || !dirty) return;
     setSaving(true);
     try {
-      await Promise.all([
-        updateLayout.mutateAsync({
-          layoutId: page.layoutId,
-          layout: normalizeLayout(layout),
-          ownerId: userId,
-          ownerType: "profile",
-        }),
-        updateConfig.mutateAsync({
-          pageId: page.id,
-          config: toTethyrConfig(config, page.config),
-          ownerId: userId,
-          ownerType: "profile",
-        }),
-      ]);
+      await applyComposition.mutateAsync({
+        pageId: page.id,
+        layoutId: page.layoutId,
+        layout: normalizeLayout(layout),
+        config: toTethyrConfig(config, page.config),
+        ownerId: userId,
+        ownerType: "profile",
+      });
       setSavedLayout(cloneLayout(layout));
       setSavedConfig({ ...config });
       toast.success("Draft saved");
@@ -477,27 +469,21 @@ export function CreationStudio({
     } finally {
       setSaving(false);
     }
-  }, [config, dirty, layout, page, saving, updateConfig, updateLayout, userId]);
+  }, [applyComposition, config, dirty, layout, page, saving, userId]);
 
   const publish = useCallback(async () => {
     if (!page || !layout || !config || saving) return;
     setSaving(true);
     try {
       if (dirty) {
-        await Promise.all([
-          updateLayout.mutateAsync({
-            layoutId: page.layoutId,
-            layout: normalizeLayout(layout),
-            ownerId: userId,
-            ownerType: "profile",
-          }),
-          updateConfig.mutateAsync({
-            pageId: page.id,
-            config: toTethyrConfig(config, page.config),
-            ownerId: userId,
-            ownerType: "profile",
-          }),
-        ]);
+        await applyComposition.mutateAsync({
+          pageId: page.id,
+          layoutId: page.layoutId,
+          layout: normalizeLayout(layout),
+          config: toTethyrConfig(config, page.config),
+          ownerId: userId,
+          ownerType: "profile",
+        });
         setSavedLayout(cloneLayout(layout));
         setSavedConfig({ ...config });
       }
@@ -508,7 +494,7 @@ export function CreationStudio({
     } finally {
       setSaving(false);
     }
-  }, [config, dirty, layout, page, publishPage, saving, updateConfig, updateLayout, userId]);
+  }, [applyComposition, config, dirty, layout, page, publishPage, saving, userId]);
 
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {

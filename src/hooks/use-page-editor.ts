@@ -66,8 +66,15 @@ export function useCreatePage() {
 
   return useMutation({
     mutationFn: async ({ ownerId, ownerType }: CreatePageParams) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       // Never point a new page at the shared empty layout. Create an owned
-      // layout so every Studio starts with real, renderable content.
+      // layout so every Studio starts with real, renderable content. The
+      // layout owner must be the authenticated user, not the page owner id
+      // (project pages are owned by a project row).
       const starterLayout =
         ownerType === "profile" ? createDefaultProfileLayout() : createDefaultProjectLayout();
       const { data: layout, error: layoutError } = await supabase
@@ -77,7 +84,7 @@ export function useCreatePage() {
           type: ownerType === "profile" ? "portfolio" : "standard",
           sections: starterLayout.sections as unknown as LayoutSections,
           is_template: false,
-          created_by: ownerId,
+          created_by: user.id,
         })
         .select("id")
         .single();
@@ -96,7 +103,7 @@ export function useCreatePage() {
         .single();
 
       if (error) throw error;
-      return { pageId: data.id };
+      return { pageId: data.id, layoutId: layout.id };
     },
     onSuccess: (_data, vars) => {
       invalidatePage(qc, vars.ownerId, vars.ownerType);

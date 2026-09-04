@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.is_project_visible(_project_id uuid)
+CREATE OR REPLACE FUNCTION public.is_project_visible(project_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -7,7 +7,7 @@ SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.projects p
-    WHERE p.id = _project_id
+    WHERE p.id = project_id
       AND (
         p.visibility = 'public'
         OR p.profile_id = auth.uid()
