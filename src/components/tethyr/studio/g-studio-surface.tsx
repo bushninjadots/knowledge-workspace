@@ -365,7 +365,12 @@ function GStudioTopBar({
           role="radiogroup"
           aria-label="Studio mode"
         >
-          {(["view", "edit", "preview"] as GStudioMode[]).map((item) => (
+          {(
+            [
+              ["edit", "Editing"],
+              ["preview", "Preview"],
+            ] as Array<[GStudioMode, string]>
+          ).map(([item, label]) => (
             <button
               key={item}
               type="button"
@@ -379,14 +384,12 @@ function GStudioTopBar({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {item === "view" ? (
-                <Layers className="h-3.5 w-3.5" />
-              ) : item === "edit" ? (
+              {item === "edit" ? (
                 <Pencil className="h-3.5 w-3.5" />
               ) : (
                 <Eye className="h-3.5 w-3.5" />
               )}
-              {!compact && item}
+              {!compact && label}
             </button>
           ))}
         </div>
