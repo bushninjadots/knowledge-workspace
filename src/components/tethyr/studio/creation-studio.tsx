@@ -58,6 +58,9 @@ export function CreationStudio({
   const [saving, setSaving] = useState(false);
   const [gridInteraction, setGridInteraction] = useState(false);
   const pageIdRef = useRef<string | null>(null);
+  const layoutRef = useRef<PageLayout | null>(null);
+  const configRef = useRef<GStudioConfig | null>(null);
+  const autosaveSnapshotRef = useRef<string | null>(null);
   const createAttempted = useRef(false);
 
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
@@ -68,17 +71,23 @@ export function CreationStudio({
   const page = pageQuery.data;
 
   useEffect(() => {
+    layoutRef.current = layout;
+    configRef.current = config;
+  }, [config, layout]);
+
+  useEffect(() => {
     if (!page || pageIdRef.current === page.id) return;
     const nextLayout = normalizeLayout(page.layout);
     const nextConfig = fromTethyrConfig(page.config);
     pageIdRef.current = page.id;
     setLayout(cloneLayout(nextLayout));
     setSavedLayout(cloneLayout(nextLayout));
-    setConfig({ ...nextConfig });
+    setConfig(cloneConfig(nextConfig));
     setSavedConfig({ ...nextConfig });
     setHistory([]);
     setFuture([]);
     setSelectedBlockId(null);
+    autosaveSnapshotRef.current = null;
   }, [page]);
 
   useEffect(() => {
@@ -110,7 +119,7 @@ export function CreationStudio({
       !!savedLayout &&
       !!config &&
       !!savedConfig &&
-      (JSON.stringify(layout) !== JSON.stringify(savedLayout) ||
+      (JSON.stringify(normalizeLayout(layout)) !== JSON.stringify(savedLayout) ||
         JSON.stringify(config) !== JSON.stringify(savedConfig)),
     [config, layout, savedConfig, savedLayout],
   );
@@ -124,20 +133,25 @@ export function CreationStudio({
   );
   const hasUnpublishedChanges = useMemo(
     () =>
-      !latestPublishedLayout || JSON.stringify(layout) !== JSON.stringify(latestPublishedLayout),
+      !latestPublishedLayout ||
+      JSON.stringify(layout ? normalizeLayout(layout) : null) !==
+        JSON.stringify(normalizeLayout(latestPublishedLayout)),
     [latestPublishedLayout, layout],
   );
 
   const commit = useCallback(
-    (nextLayout: PageLayout, nextConfig = config) => {
-      if (!layout || !nextConfig) return;
+    (nextLayout: PageLayout, nextConfig?: GStudioConfig) => {
+      if (!layout || !config) return;
+      const resolvedConfig = nextConfig ?? config;
       setHistory((entries) => [
         ...entries.slice(-49),
-        { layout: cloneLayout(layout), config: { ...nextConfig } },
+        // Capture the state before the change. Using the next config here
+        // makes appearance undo restore the setting the user just changed.
+        createHistoryEntry(layout, config),
       ]);
       setFuture([]);
       setLayout(normalizeLayout(nextLayout));
-      setConfig({ ...nextConfig });
+      setConfig({ ...resolvedConfig });
     },
     [config, layout],
   );
@@ -414,7 +428,7 @@ export function CreationStudio({
     setFuture((entries) => [{ layout: cloneLayout(layout), config: { ...config } }, ...entries]);
     setHistory((entries) => entries.slice(0, -1));
     setLayout(cloneLayout(previous.layout));
-    setConfig({ ...previous.config });
+    setConfig(cloneConfig(previous.config));
   }, [config, history, layout]);
 
   const redo = useCallback(() => {
@@ -423,7 +437,7 @@ export function CreationStudio({
     setHistory((entries) => [...entries, { layout: cloneLayout(layout), config: { ...config } }]);
     setFuture((entries) => entries.slice(1));
     setLayout(cloneLayout(next.layout));
-    setConfig({ ...next.config });
+    setConfig(cloneConfig(next.config));
   }, [config, future, layout]);
 
   // Restore a previously published version via the rollback RPC. The hook
@@ -449,27 +463,78 @@ export function CreationStudio({
     [page, rollbackPage, saving, userId],
   );
 
-  const save = useCallback(async () => {
-    if (!page || !layout || !config || saving || !dirty) return;
-    setSaving(true);
-    try {
-      await applyComposition.mutateAsync({
-        pageId: page.id,
-        layoutId: page.layoutId,
-        layout: normalizeLayout(layout),
-        config: toTethyrConfig(config, page.config),
-        ownerId: userId,
-        ownerType: "profile",
-      });
-      setSavedLayout(cloneLayout(layout));
-      setSavedConfig({ ...config });
-      toast.success("Draft saved");
-    } catch {
-      toast.error("Could not save your Studio draft");
-    } finally {
-      setSaving(false);
-    }
-  }, [applyComposition, config, dirty, layout, page, saving, userId]);
+  const save = useCallback(
+    async ({ announce = true }: { announce?: boolean } = {}) => {
+      if (!page || !layout || !config || saving || !dirty) return;
+      const snapshotLayout = normalizeLayout(layout);
+      const snapshotConfig = { ...config };
+      setSaving(true);
+      try {
+        await applyComposition.mutateAsync({
+          pageId: page.id,
+          layoutId: page.layoutId,
+          layout: snapshotLayout,
+          config: toTethyrConfig(snapshotConfig, page.config),
+          ownerId: userId,
+          ownerType: "profile",
+        });
+        // Do not mark newer edits as saved when they happened while this
+        // request was in flight. The autosave effect will persist those next.
+        if (
+          JSON.stringify(layoutRef.current && normalizeLayout(layoutRef.current)) ===
+            JSON.stringify(snapshotLayout) &&
+          JSON.stringify(configRef.current) === JSON.stringify(snapshotConfig)
+        ) {
+          setSavedLayout(cloneLayout(snapshotLayout));
+          setSavedConfig({ ...snapshotConfig });
+        }
+        if (announce) toast.success("Draft saved");
+      } catch {
+        if (announce) toast.error("Could not save your Studio draft");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [applyComposition, config, dirty, layout, page, saving, userId],
+  );
+
+  // Persist the current draft after a short pause, rather than making every
+  // field edit a network request. Manual Save draft remains available.
+  useEffect(() => {
+    if (!page || !layout || !config || !dirty || saving) return;
+    const snapshot = JSON.stringify({ layout: normalizeLayout(layout), config });
+    // A failed autosave should not produce a toast/retry loop. A later edit
+    // creates a new snapshot and schedules another attempt.
+    if (autosaveSnapshotRef.current === snapshot) return;
+    const timer = window.setTimeout(() => {
+      autosaveSnapshotRef.current = snapshot;
+      void save({ announce: false });
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [config, dirty, layout, page, save, saving]);
+
+  // Protect against closing or refreshing the tab with a draft still in the
+  // editor. The explicit Studio exit is guarded separately below.
+  useEffect(() => {
+    if (!dirty) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
+
+  const leave = useCallback(
+    (destination?: () => void) => {
+      if (!destination) return;
+      if (dirty && !window.confirm("You have unsaved Studio changes. Leave anyway?")) return;
+      destination();
+    },
+    [dirty],
+  );
+  const exit = useCallback(() => leave(onExit), [leave, onExit]);
+  const completeProfile = useCallback(() => leave(onCompleteProfile), [leave, onCompleteProfile]);
 
   const publish = useCallback(async () => {
     if (!page || !layout || !config || saving) return;
@@ -484,8 +549,8 @@ export function CreationStudio({
           ownerId: userId,
           ownerType: "profile",
         });
-        setSavedLayout(cloneLayout(layout));
-        setSavedConfig({ ...config });
+        setSavedLayout(cloneLayout(normalizeLayout(layout)));
+        setSavedConfig(cloneConfig(config));
       }
       await publishPage.mutateAsync({ pageId: page.id, ownerId: userId, ownerType: "profile" });
       toast.success("Studio published");
@@ -551,17 +616,25 @@ export function CreationStudio({
       onDragTypeChange={setDragType}
       onPaletteTargetChange={setPaletteTarget}
       onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
-      onSave={save}
+      onSave={() => void save()}
       onPublish={publish}
       onRollback={rollback}
       onChooseStarter={chooseStarter}
       onUndo={undo}
       onRedo={redo}
-      onCompleteProfile={onCompleteProfile}
-      onExit={onExit}
+      onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
+      onExit={onExit ? exit : undefined}
       onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
     />
   );
+}
+
+function createHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {
+  return { layout: cloneLayout(layout), config: cloneConfig(config) };
+}
+
+export function makeHistoryEntry(layout: PageLayout, config: GStudioConfig): HistoryEntry {
+  return createHistoryEntry(layout, config);
 }
 
 function makeId(prefix: string) {
@@ -669,13 +742,11 @@ function normalizeLayout(layout: PageLayout): PageLayout {
 }
 
 function cloneLayout(layout: PageLayout): PageLayout {
-  return {
-    sections: layout.sections.map((section) => ({
-      ...section,
-      grid: section.grid?.map((item) => ({ ...item })),
-      blocks: section.blocks.map((block) => ({ ...block, config: { ...block.config } })),
-    })),
-  };
+  return JSON.parse(JSON.stringify(layout)) as PageLayout;
+}
+
+function cloneConfig(config: GStudioConfig): GStudioConfig {
+  return JSON.parse(JSON.stringify(config)) as GStudioConfig;
 }
 
 function sameGrid(a: LayoutGridItem[], b: LayoutGridItem[]) {

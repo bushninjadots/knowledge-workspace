@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { insertDuplicateGridItem, sectionGrid } from "@/components/tethyr/studio/creation-studio";
+import {
+  insertDuplicateGridItem,
+  makeHistoryEntry,
+  sectionGrid,
+} from "@/components/tethyr/studio/creation-studio";
+import type { StudioConfig } from "@/lib/studio-config";
 import type { LayoutSection } from "@/lib/page-blocks";
 
 function makeSection(overrides: Partial<LayoutSection> = {}): LayoutSection {
@@ -14,6 +19,29 @@ function makeSection(overrides: Partial<LayoutSection> = {}): LayoutSection {
     ...overrides,
   };
 }
+
+const studioConfig: StudioConfig = {
+  starterId: null,
+  structure: "wide",
+  personality: "modern",
+  density: "comfortable",
+  radius: "soft",
+  accentMode: "auto",
+  accentColor: "#3f8f8a",
+  appBackground: "surface",
+  publicBackground: "default",
+};
+
+describe("Creation Studio history snapshots", () => {
+  it("captures appearance before the next config is applied", () => {
+    const previous = { ...studioConfig, radius: "sharp" as const };
+    const next = { ...studioConfig, radius: "soft" as const };
+    const entry = makeHistoryEntry({ sections: [] }, previous);
+
+    expect(entry.config).toEqual(previous);
+    expect(entry.config).not.toEqual(next);
+  });
+});
 
 describe("Creation Studio grid adapter", () => {
   it("creates stable positions for legacy sections", () => {

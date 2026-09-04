@@ -364,11 +364,13 @@ function GStudioTopBar({
           >
             {saving
               ? "Saving"
-              : hasUnpublishedChanges
-                ? "Unpublished changes"
-                : published
-                  ? `Live · v${publishedVersion ?? 1}`
-                  : "Draft"}
+              : dirty
+                ? "Unsaved changes"
+                : hasUnpublishedChanges
+                  ? "Unpublished changes"
+                  : published
+                    ? `Live · v${publishedVersion ?? 1}`
+                    : "Draft"}
           </span>
         </div>
         <div
