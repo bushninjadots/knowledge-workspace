@@ -549,7 +549,7 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag the grip to move · pull an edge to resize · click a block for its actions
+            Drag the grip to move · pull an edge to resize · arrow keys nudge a selected block
           </span>
         </div>
       )}

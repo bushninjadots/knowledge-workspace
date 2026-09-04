@@ -431,3 +431,29 @@ functions"), building on the empty-collapse parity surfaced by F6/F7:
 
 Verified green: `tsc --noEmit`, `eslint` (after `--fix`), 464 vitest tests
 (62 files). Committed + pushed as the "Studio flow polish" change.
+
+## UI/UX follow-up pass 4 follow-up (2026-09-04) — arrow-key nudge + validation
+
+Browser validation of pass 4 against the live app (Playwright, testuser):
+
+- `/studio` loads a published page without the old F10 crash (10 blocks, 10 grid
+  items).
+- Publish stays disabled with no changes, enables after a real change, and the
+  confirm dialog content + Escape-to-cancel behave correctly.
+- Cmd+Z / Cmd+Shift+Z / Cmd+Y undo/redo and Escape-deselect fire with zero
+  console errors.
+- New area: section count +1 and the rename input auto-focuses
+  (`aria-label` = "Section name").
+- Desktop preview renders content-flow (react-grid-item count 0) and the
+  empty-section collapse is identical in builder preview, public `/u/testuser`,
+  and the owner quick-view (`/profile`).
+
+Additional improvement (same commit series): **arrow-key nudge.** With a block
+selected in edit mode, ←/→/↑/↓ move the selected block one grid column/row
+within its section grid (clamped to the 12-col bounds, blocked on overlap so the
+grid never invalidates), committed to history so Cmd+Z undoes it. Hint strip in
+`GStudioTopBar` updated to mention it. Verified in-browser: 9/10 blocks move on
+ArrowDown; the full-width Featured Projects block is correctly blocked from
+moving because it would overlap the Direction block below.
+
+Verified green: `tsc --noEmit`, `eslint`, 464 vitest tests (62 files).

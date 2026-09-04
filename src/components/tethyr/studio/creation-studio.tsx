@@ -527,11 +527,40 @@ export function CreationStudio({
         redo();
       } else if (event.key === "Escape") {
         setSelectedBlockId(null);
+      } else if (
+        !mod &&
+        mode === "edit" &&
+        layout &&
+        selectedBlockId &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+      ) {
+        const section = layout.sections.find((candidate) =>
+          candidate.blocks.some((block) => block.id === selectedBlockId),
+        );
+        const item = section?.grid?.find((gridItem) => gridItem.i === selectedBlockId);
+        if (!section || !item) return;
+        event.preventDefault();
+        const dx = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+        const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+        const x = Math.max(0, Math.min(12 - item.w, item.x + dx));
+        const y = Math.max(0, item.y + dy);
+        if (x === item.x && y === item.y) return;
+        const candidate = { ...item, x, y };
+        const others = (section.grid ?? []).filter((gridItem) => gridItem.i !== item.i);
+        if (others.some((other) => overlaps(candidate, other))) return;
+        const next = cloneLayout(layout);
+        const targetSection = next.sections.find((s) => s.id === section.id);
+        if (!targetSection) return;
+        targetSection.grid = (targetSection.grid ?? []).map((gridItem) =>
+          gridItem.i === item.i ? candidate : gridItem,
+        );
+        touchedGridRef.current.add(section.id);
+        commit(next);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [redo, undo]);
+  }, [commit, layout, mode, redo, selectedBlockId, undo]);
 
   // Restore a previously published version via the rollback RPC. The hook
   // invalidates the page query so the restored layout reloads from Supabase.
