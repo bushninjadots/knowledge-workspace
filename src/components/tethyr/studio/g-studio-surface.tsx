@@ -341,11 +341,10 @@ function GStudioTopBar({
           <span className="t-heading truncate text-[13px] font-semibold text-foreground">
             Studio
           </span>
-          {!compact && (
-            <span className="truncate font-mono text-2xs text-muted-foreground-subtle">
-              Magic Patterns
-            </span>
-          )}
+          <span className="text-muted-foreground-subtle" aria-hidden>
+            /
+          </span>
+          <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
             className={cn(
               "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
