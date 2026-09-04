@@ -1,9 +1,18 @@
-import { forwardRef, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
   Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   GripHorizontal,
@@ -92,6 +101,7 @@ export interface GStudioSurfaceProps {
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onToggleSection: (id: string) => void;
   onRenameSection: (id: string, title: string) => void;
+  onSectionLayoutChange: (sectionId: string, layout: LayoutSection["layout"]) => void;
   onAddSection: () => void;
   onMoveToSection: (id: string, sectionId: string) => void;
   onAdd: (type: string, sectionId?: string, placement?: LayoutGridItem) => void;
@@ -108,6 +118,10 @@ export interface GStudioSurfaceProps {
   onReset: () => void;
   /** Leave customization and return to the Studio view. */
   onExit?: () => void;
+  /** Tracks blocks whose content is empty (preview only) so empty sections
+   *  collapse like they do on the published page. */
+  onBlockEmptyChange?: (blockId: string, isEmpty: boolean) => void;
+  emptyBlockIds?: Set<string>;
 }
 
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -116,7 +130,9 @@ const PERSISTED_BREAKPOINTS = new Set(["lg", "md"]);
 const ResponsiveGrid = WidthProvider(LegacyResponsive);
 const DEVICE_WIDTHS: Record<GStudioDevice, number | undefined> = {
   desktop: undefined,
-  tablet: 834,
+  // Public CSS grids use `md` = 996px, so the tablet frame lands on the same
+  // 12-column grid instead of the editor-only 8-column `sm` layout.
+  tablet: 996,
   mobile: 390,
 };
 const BLOCK_SIZES: Record<string, [number, number, number, number]> = {
@@ -152,6 +168,16 @@ const BLOCK_CATEGORY_LABELS: Record<BlockCategory, string> = {
   community: "Community",
   utility: "Utility",
 };
+/** Layout presets exposed in the section header. Choosing one seeds the grid. */
+const SECTION_LAYOUT_OPTIONS: Array<{ value: LayoutSection["layout"]; label: string }> = [
+  { value: "full", label: "Full" },
+  { value: "two_column", label: "Two columns" },
+  { value: "three_column", label: "Three columns" },
+  { value: "sidebar_left", label: "Sidebar left" },
+  { value: "sidebar_right", label: "Sidebar right" },
+  { value: "feature", label: "Feature" },
+  { value: "side_by_side", label: "Side by side" },
+];
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
   // Customization is the whole point of this view, so the panel starts open on
@@ -163,6 +189,15 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"left" | "right" | null>(null);
   const [starterOpen, setStarterOpen] = useState(false);
+  const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
+  const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
+    setEmptyBlocks((previous) => {
+      const next = new Set(previous);
+      if (isEmpty) next.add(blockId);
+      else next.delete(blockId);
+      return next;
+    });
+  }, []);
   const compact = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
   const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   const directManipulation = !compact && !touch;
@@ -213,6 +248,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         customizeOpen={customizeOpen}
         paletteOpen={paletteOpen}
         onExit={props.onExit}
+        profile={props.profile}
       />
       {historyOpen && (
         <VersionPopover
@@ -250,6 +286,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               editing={editing}
               directManipulation={directManipulation}
               frameWidth={deviceWidth}
+              onBlockEmptyChange={handleBlockEmpty}
+              emptyBlockIds={emptyBlocks}
               onRequestPalette={(sectionId) => {
                 props.onPaletteTargetChange(sectionId);
                 setPaletteOpen(true);
@@ -307,6 +345,7 @@ function GStudioTopBar({
   onPublish,
   customizeOpen,
   paletteOpen,
+  profile,
 }: {
   mode: GStudioMode;
   device: GStudioDevice;
@@ -332,6 +371,7 @@ function GStudioTopBar({
   onPublish: () => void;
   customizeOpen: boolean;
   paletteOpen: boolean;
+  profile: GStudioSurfaceProps["profile"];
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
@@ -389,6 +429,7 @@ function GStudioTopBar({
               type="button"
               role="radio"
               aria-checked={mode === item}
+              aria-label={label}
               onClick={() => onModeChange(item)}
               className={cn(
                 "flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs",
@@ -477,6 +518,18 @@ function GStudioTopBar({
           <IconButton label="Version history" active={historyOpen} onClick={onHistory}>
             <History className="h-3.5 w-3.5" />
           </IconButton>
+          {profile?.handle && (
+            <a
+              href={`/u/${profile.handle}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:bg-[var(--surface-sunken)] hover:text-foreground"
+              title="View public page"
+              aria-label="View public page"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
       </div>
       {mode === "edit" && (
@@ -656,11 +709,17 @@ function GSectionBand({
         h: sizeFor(props.dragType)[1],
       }
     : undefined;
-  if (!editing && (section.visible === false || !blocks.some((block) => block.visible !== false)))
+  if (
+    !editing &&
+    (section.visible === false ||
+      !blocks.some(
+        (block) => block.visible !== false && !(props.emptyBlockIds?.has(block.id) ?? false),
+      ))
+  )
     return null;
   return (
     <section
-      aria-label={section.layout}
+      aria-label={sectionTitle}
       className={cn("relative", section.visible === false && editing && "opacity-60")}
       onClick={(event) => event.stopPropagation()}
     >
@@ -693,6 +752,7 @@ function GSectionBand({
               type="button"
               onClick={() => setRenaming(true)}
               title="Rename area"
+              aria-label="Rename area"
               className="t-label truncate rounded-sm px-0.5 hover:text-foreground"
             >
               {sectionTitle}
@@ -704,6 +764,25 @@ function GSectionBand({
           <span className="font-mono text-3xs text-muted-foreground-subtle">
             {blocks.length} {blocks.length === 1 ? "block" : "blocks"}
           </span>
+          <select
+            aria-label="Area layout"
+            value={section.layout}
+            onChange={(event) =>
+              props.onSectionLayoutChange(section.id, event.target.value as LayoutSection["layout"])
+            }
+            className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)]"
+          >
+            {!SECTION_LAYOUT_OPTIONS.some((option) => option.value === section.layout) && (
+              <option value={section.layout} disabled>
+                {section.layout}
+              </option>
+            )}
+            {SECTION_LAYOUT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <div className="ml-auto flex gap-0.5">
             <IconButton
               label="Move area up"
@@ -866,6 +945,7 @@ const GBlockFrame = forwardRef<
               isEditing: editing,
               isOwner: true,
               data: props.profile ? { profile: props.profile } : undefined,
+              onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
             }}
             onChange={(config) => props.onUpdateBlockConfig(block.id, config)}
           />

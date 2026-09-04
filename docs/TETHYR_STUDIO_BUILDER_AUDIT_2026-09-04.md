@@ -337,3 +337,42 @@ vitest tests) or **DEFERRED** (documented product call, no change).
   `src/components/tethyr/page/page-layout.tsx`, plus this doc.
 - Pre-existing unrelated working-tree changes (`.gitignore` prowl rules and
   `g/` legacy-folder deletions) were deliberately left out of the commit.
+
+## UI/UX follow-up pass (2026-09-04, applied + pushed)
+
+Four previously-deferred items and two new polish wins were implemented in a
+second pass (requested: preview truthfulness, view-public-page, public section
+titles, canvas control labels, section layout picker). Green on submit:
+`tsc --noEmit`, `eslint` on all touched files, 464 vitest tests.
+
+- **F4 — section layout picker (FIXED)**. Section bands in the builder now show
+  an "Area layout" `<select>` (Full / Two columns / Three columns / Sidebar
+  left / Sidebar right / Feature / Side by side). Choosing one seeds the
+  section's grid via new exported `seedGridFromLayout` (widths matched to the
+  public `SECTION_GRID` proportions: full 12, 2-col 6/6, 3-col 4/4/4,
+  sidebar 3/9, feature 8/4, …) using the existing first-fit packing, marks the
+  section as grid-touched, and commits to history. 4 new vitest cases cover the
+  seeding patterns.
+- **F7 — preview truthfulness (EXTENDED)**. Builder/`/u` parity in preview:
+  `GSectionBand` now drops a section in preview when every visible block
+  reports empty via `onBlockEmptyChange` (now wired through `GBlockFrame`'s
+  `BlockContext` → `GStudioSurface` empty-block set), matching the public
+  empty-collapse behavior. Hidden blocks were already dropped (F7-1).
+- **Tablet preview alignment**. `DEVICE_WIDTHS.tablet` 834 → 996 so tablet
+  preview lands on the `md` breakpoint (12-col grid) that the public page uses,
+  instead of the editor-only `sm` 8-col view.
+- **View public page**. The builder top bar now links to
+  `/u/{handle}` (`target="_blank"`, ExternalLink icon) so owners can dart to
+  the real public page without leaving edit mode.
+- **F8 — public section titles (DONE as product call)**. The public page now
+  renders a small accent-bar heading for a section **only when its title is
+  user-renamed** (default "Area N" titles are excluded via
+  `/^area\s+\d+$/i`), keeping defaults visually unchanged.
+- **A11y labels**. Added aria-labels to the edit/preview radio group, the
+  rename-area button, the new layout select, and the public-page link;
+  block toolbar buttons (`Move …`, Block settings, Show/Hide, Duplicate,
+  Remove) already carried labels.
+
+Files changed (staged/committed together): `g-studio-surface.tsx`,
+`creation-studio.tsx`, `creation-studio.test.tsx`, `page-layout.tsx`, plus this
+doc.

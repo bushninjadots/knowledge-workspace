@@ -400,6 +400,22 @@ export function CreationStudio({
     [commit, layout],
   );
 
+  const setSectionLayout = useCallback(
+    (sectionId: string, newLayout: LayoutSection["layout"]) => {
+      if (!layout) return;
+      const next = cloneLayout(layout);
+      const section = next.sections.find((candidate) => candidate.id === sectionId);
+      if (!section || section.layout === newLayout) return;
+      section.layout = newLayout;
+      section.grid = seedGridFromLayout(section, newLayout);
+      section.blocks.forEach((block, index) => (block.position = index));
+      touchedGridRef.current.add(sectionId);
+      commit(next);
+      setSelectedBlockId(null);
+    },
+    [commit, layout],
+  );
+
   const applyGrid = useCallback(
     (sectionId: string, nextGrid: LayoutGridItem[]) => {
       if (!layout) return;
@@ -651,6 +667,7 @@ export function CreationStudio({
       onMoveSection={moveSection}
       onToggleSection={toggleSection}
       onRenameSection={renameSection}
+      onSectionLayoutChange={setSectionLayout}
       onAddSection={addSection}
       onMoveToSection={moveToSection}
       onAdd={addBlock}
@@ -878,6 +895,42 @@ export function insertDuplicateGridItem(
     duplicate.y = y;
   }
   return [...grid, duplicate];
+}
+
+/** Typical column widths per section layout, matched to the public page's
+ *  SECTION_GRID proportions so a chosen layout seeds a faithful grid. */
+const TRACK_WIDTHS: Record<LayoutSection["layout"], number[]> = {
+  full: [12],
+  two_column: [6],
+  three_column: [4],
+  sidebar_left: [3, 9],
+  sidebar_right: [9, 3],
+  feature: [8, 4],
+  side_by_side: [6],
+  featured_work: [8, 4],
+  asymmetric: [8, 4],
+  split: [6],
+  image_lead: [5, 7],
+  compact_list: [12],
+};
+
+/** Build a non-overlapping grid that snapshots a section layout into concrete
+ *  column widths (the pattern repeats for blocks beyond the first row). */
+export function seedGridFromLayout(
+  section: Pick<LayoutSection, "id" | "blocks">,
+  layout: LayoutSection["layout"],
+): LayoutGridItem[] {
+  const widths = TRACK_WIDTHS[layout] ?? [12];
+  const ordered = [...section.blocks].sort((a, b) => a.position - b.position);
+  const grid: LayoutGridItem[] = [];
+  ordered.forEach((block, index) => {
+    const [, defaultHeight, minW, minH] = blockSize(block.type);
+    const w = Math.max(minW, Math.min(12, widths[index % widths.length]));
+    const h = Math.max(minH, defaultHeight);
+    const { x, y } = firstFreePosition(block.id, grid, w, h);
+    grid.push(normalizeGridItem({ i: block.id, x, y, w, h }, block.id, w, h, minW, minH));
+  });
+  return grid;
 }
 
 export { cloneLayout, normalizeLayout, normalizeGridItem };
