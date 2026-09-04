@@ -152,7 +152,11 @@ const BLOCK_CATEGORY_LABELS: Record<BlockCategory, string> = {
 };
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
-  const [customizeOpen, setCustomizeOpen] = useState(false);
+  // Customization is the whole point of this view, so the panel starts open on
+  // desktop instead of hiding behind a toggle the owner has to discover.
+  const [customizeOpen, setCustomizeOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"left" | "right" | null>(null);
