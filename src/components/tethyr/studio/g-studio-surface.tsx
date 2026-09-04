@@ -58,6 +58,7 @@ import {
 } from "@/components/tethyr/studio/starter-picker";
 import {
   BACKGROUND_OPTIONS,
+  EDITORIAL_HEADING_FONT,
   structureMaxWidth,
   studioConfigToStyle,
   type StudioConfig,
@@ -1938,6 +1939,13 @@ function studioSurfaceStyle(config: GStudioConfig): CSSProperties {
   const style = studioConfigToStyle(config) as CSSProperties & Record<string, string>;
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
+  // Match the public page's font mapping (studioConfigToThemeTokens): an
+  // editorial page flips --font-display/title to Space Grotesk, so the canvas
+  // must render the same face the published page will.
+  if (config.personality === "editorial") {
+    style["--font-display"] = EDITORIAL_HEADING_FONT;
+    style["--font-title"] = EDITORIAL_HEADING_FONT;
+  }
   return style;
 }
 

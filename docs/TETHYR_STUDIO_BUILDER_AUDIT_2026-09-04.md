@@ -457,3 +457,77 @@ ArrowDown; the full-width Featured Projects block is correctly blocked from
 moving because it would overlap the Direction block below.
 
 Verified green: `tsc --noEmit`, `eslint`, 464 vitest tests (62 files).
+
+## Visuals audit (2026-09-04) — fonts, colour tokens, contrast adaptation
+
+User: "do visuals audit make sure all fonts are same and colors match and when
+backgrounds change then font changes color formatting to show contrast those
+kind of things". Audited the whole app against `src/styles.css` tokens and the
+public page pipeline (`page-shell` → `theme-tokens` → `studio-config`).
+
+### Findings
+
+1. **Font family is consistent in practice** — every heading/body/UI face
+   resolves to Inter (`--font-sans`/`--font-display`), JetBrains Mono
+   (`mono`), no default-palette or hard-coded `font-['…']` anywhere. Two dead
+   branches found:
+   - `--font-title` (Space Grotesk) and the loaded Space Grotesk webfont are
+     defined but consume **zero** `font-title` classes — the token only takes
+     effect through public editorial pages.
+   - The editor set `--studio-display-font`/`--studio-label-font`, but **no
+     consumer ever referenced them** — they were dead variables.
+2. **Micro-label scale was undefined, not merely inconsistent.** `t-label`
+   (24 uses) and `text-2xs`/`text-3xs` (20+ uses) are not real utilities —
+   computed size in the live `/studio` was **16px** for all of them. Every
+   Studio panel label ("Editing", "Customize", "Block inspector", version
+   chips…) rendered at body size.
+3. **Editor ↔ public typography mismatch for editorial pages.** The public
+   pipeline (`studioConfigToThemeTokens` → `themeTokensToVars`) sets
+   `--font-display`/`--font-title` to Space Grotesk for editorial personality;
+   the only block that uses `font-display` is `header-block`'s name `<h1>`. The
+   editor canvas and owner quick-view did NOT apply that mapping, so the name
+   rendered Inter in the editor and Space Grotesk on the published page.
+4. **One real contrast bug:** `dashboard.tsx` "Your next move" icon chips
+   hard-coded `color:"#fff"` on `var(--trust)/--learning/--ai/--brand-purple`
+   backgrounds. In dark mode those hues are light (L≈0.7+), so white icons
+   nearly vanish. Everywhere else that pairs a filled hue with text correctly
+   uses the `--*-foreground` companion token.
+5. **Colour/token hygiene is otherwise clean:** components use semantic tokens
+   only; the only hard-coded hex is intentional domain/brand data (GitHub
+   language colours, GitHub logo chip `#24292e`, accent swatch presets,
+   SVG brand gradients, white captions over photo thumbnails/gallery).
+6. **Contrast adaptation when backgrounds change is already robust** and needs
+   no change: `deriveContrastVars` (theme-tokens) refills every missing
+   token by mixing the theme's own bg/foreground and forces inherited text to
+   the theme foreground; `contrastingHexForeground` picks dark text on light
+   accents (`luminance > 0.56 ? #1f2328 : #fff`) in studio-config,
+   background-themes, and dominant-color; background tints are always
+   `color-mix`ed into `var(--background)` at a clamped strength and images get
+   dimmed + overlay options, so page text keeps its contrast in both themes.
+
+### Fixes applied
+
+- `styles.css`: added `--text-2xs: 0.6875rem` and `--text-3xs: 0.625rem`
+  font-size tokens and a `t-label` utility that mirrors `section-label`
+  (11px / 600 / 0.06em / uppercase / muted-subtle). Live-verified:
+  `.t-label` 16px→**11px**, `.text-3xs`→**10px**, `.text-2xs`→**11px**.
+- `dashboard.tsx`: `TodayRow` gains a `foreground` prop; call sites pair each
+  accent with its semantic foreground token (`var(--trust-foreground)`,
+  `--learning-foreground`, `--ai-foreground`) so chips stay legible in dark
+  mode; fallback stays `#fff` for light mode.
+- `studio-config.ts`: exported `EDITORIAL_HEADING_FONT`. `g-studio-surface.tsx`
+  + `studio-view.tsx` `studioSurfaceStyle` now also set `--font-display` and
+  `--font-title` for editorial personality — identical values the public
+  pipeline emits — so editor canvas, owner quick-view, and published page
+  render the same faces.
+
+### Deferred / notes (no change)
+
+- Auth shell radial brand glows, emoji-as-icon in Messages (renders per
+  platform's emoji font), and the landing page's marketing display sizes are
+  intentional and outside this audit's scope.
+- `--studio-display-font` / `--studio-label-font` are now effectively
+  superseded by the public `--font-display` mapping; kept for clarity.
+
+Verified green: `tsc --noEmit`, `eslint` (touched files), 464 vitest tests
+(62 files).

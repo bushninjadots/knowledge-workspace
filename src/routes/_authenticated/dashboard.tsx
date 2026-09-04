@@ -389,6 +389,7 @@ function DashboardContent({
                 <TodayRow
                   icon={activeProjects.length > 0 ? Folder : Plus}
                   accent="var(--trust)"
+                  foreground="var(--trust-foreground)"
                   title={activeProjects.length > 0 ? "Continue your project" : "Start a project"}
                   href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
                 >
@@ -428,6 +429,7 @@ function DashboardContent({
                 <TodayRow
                   icon={UserPlus}
                   accent="var(--learning)"
+                  foreground="var(--learning-foreground)"
                   title={
                     pendingInviteCount > 0 || unreadMessageCount > 0
                       ? "You have activity"
@@ -476,6 +478,7 @@ function DashboardContent({
                 <TodayRow
                   icon={Users}
                   accent="var(--ai)"
+                  foreground="var(--ai-foreground)"
                   title="Find collaborators"
                   href="/explore"
                 >
@@ -487,6 +490,7 @@ function DashboardContent({
                 <TodayRow
                   icon={TrendingUp}
                   accent="var(--brand-purple)"
+                  foreground="var(--ai-foreground)"
                   title={
                     todayOpps.length > 0
                       ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
@@ -838,6 +842,7 @@ function DashboardModuleLoading({ title }: { title: string }) {
 function TodayRow({
   icon: Icon,
   accent,
+  foreground = "#fff",
   title,
   href,
   search,
@@ -845,6 +850,7 @@ function TodayRow({
 }: {
   icon: React.ComponentType<{ className?: string }>;
   accent: string;
+  foreground?: string;
   title: string;
   href?: string;
   search?: Record<string, string>;
@@ -854,7 +860,7 @@ function TodayRow({
     <div className="flex items-start gap-3 py-3.5 first:pt-2 last:pb-1">
       <span
         className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-        style={{ backgroundColor: accent, color: "#fff" }}
+        style={{ backgroundColor: accent, color: foreground }}
       >
         <Icon className="h-3.5 w-3.5" />
       </span>

@@ -15,6 +15,7 @@ import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
 import {
   studioConfigToStyle,
+  EDITORIAL_HEADING_FONT,
   structureMaxWidth,
   DEFAULT_STUDIO_CONFIG,
   type StudioConfig,
@@ -332,5 +333,9 @@ function studioSurfaceStyle(config: StudioConfig): React.CSSProperties {
   const style = studioConfigToStyle(config) as React.CSSProperties & Record<string, string>;
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
+  if (config.personality === "editorial") {
+    style["--font-display"] = EDITORIAL_HEADING_FONT;
+    style["--font-title"] = EDITORIAL_HEADING_FONT;
+  }
   return style;
 }

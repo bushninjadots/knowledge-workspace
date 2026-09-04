@@ -277,7 +277,7 @@ const RADIUS_SCALE: Record<RadiusId, Record<string, string>> = {
   soft: { sm: "2px", md: "3px", lg: "4px", xl: "5px", "2xl": "5px", "3xl": "6px", "4xl": "8px" },
 };
 
-const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
+export const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
 
 const DENSITY_SECTION: Record<DensityId, string> = {
   compact: "2.5rem",
