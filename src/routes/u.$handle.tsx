@@ -14,7 +14,6 @@ import {
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { CreationStudio } from "@/components/tethyr/studio/creation-studio";
 
 // Block system — profile blocks via PageShell.
 import "@/components/tethyr/blocks/register-all";
@@ -161,9 +160,20 @@ function PublicProfileRoute() {
       backgroundImageUrl={data.backgroundImageUrl}
       pageThemeStyle={pageThemeStyle}
     >
-      {isOwner ? (
-        <CreationStudio userId={profile.id} profile={profile} onCompleteProfile={() => undefined} />
-      ) : hasBlocks ? (
+      {isOwner && (
+        <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-2 px-4 pt-4 sm:px-8">
+          <span className="text-xs text-muted-foreground">
+            This is your public Studio, exactly as visitors see it.
+          </span>
+          <Link
+            to="/studio"
+            className="ml-auto text-xs font-medium text-primary hover:underline"
+          >
+            Customize
+          </Link>
+        </div>
+      )}
+      {hasBlocks ? (
         <EditModeProvider>
           <PageShell
             ownerId={profile.id}
