@@ -376,3 +376,31 @@ titles, canvas control labels, section layout picker). Green on submit:
 Files changed (staged/committed together): `g-studio-surface.tsx`,
 `creation-studio.tsx`, `creation-studio.test.tsx`, `page-layout.tsx`, plus this
 doc.
+
+## UI/UX follow-up pass 3 (2026-09-04) — applied + pushed
+
+Third pass (after the F1–F11 resolution and pass 2), driven by the audit's
+deferred items and browser observations:
+
+- **Publish confirmation.** The top-bar Publish action previously published
+  with a single click. It now opens a confirm dialog ("Publish your Studio?")
+  with Publish/Cancel; confirming runs the existing publish flow
+  (`creation-studio.tsx`: `requestPublish` → `Dialog` → `doPublish`).
+- **Auto-focus rename on new section.** Adding an area captures the new id and
+  drops the user straight into inline rename (`renameFocusId` →
+  `GSectionBand` auto-rename effect, select-all on focus).
+- **Persistent drag grip on the selected block.** The canvas grip was hover-only
+  (invisible once untouched); it is now `opacity-100` while a block is
+  selected, matching the always-on selected toolbar.
+- **F9 — content-sized preview.** Preview no longer renders inside the
+  fixed-row react-grid-layout canvas (which clipped block content to grid
+  rows). It now uses the same math as the public page — `hasGrid` sections
+  render a `md:grid-cols-12` grid with `colStartClass`/`spanClass` from the
+  persisted grid; template sections use `SECTION_GRID[section.layout]` +
+  `block.span` — via new `fluid`/`bare` `GBlockFrame` modes (content-sized, no
+  scroll clip). `SECTION_GRID`, `spanClass`, `colStartClass` are now exported
+  from `page-layout.tsx` and shared with the builder.
+- Declined by user this round: undo/redo keyboard shortcuts.
+
+Verified green: `tsc --noEmit`, `eslint` (after `--fix`), 464 vitest tests
+(62 files). Committed + pushed as part of the "Polish Studio UX" change.

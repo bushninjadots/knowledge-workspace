@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -36,6 +37,7 @@ import {
 import { Responsive as LegacyResponsive, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
+import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
 import type {
@@ -122,6 +124,10 @@ export interface GStudioSurfaceProps {
    *  collapse like they do on the published page. */
   onBlockEmptyChange?: (blockId: string, isEmpty: boolean) => void;
   emptyBlockIds?: Set<string>;
+  /** The id of a freshly added section whose rename input should auto-focus. */
+  autoRenameId?: string | null;
+  /** Callback fired once the auto-focus rename has been triggered. */
+  onRenameFocusHandled?: () => void;
 }
 
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -709,6 +715,15 @@ function GSectionBand({
         h: sizeFor(props.dragType)[1],
       }
     : undefined;
+  const hasGrid = !editing && (section.grid?.length ?? 0) > 0;
+  useEffect(() => {
+    if (editing && props.autoRenameId === section.id && !renaming) {
+      setRenaming(true);
+      props.onRenameFocusHandled?.();
+    }
+    // Only react when the target section id changes to the requested one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, props.autoRenameId, section.id]);
   if (
     !editing &&
     (section.visible === false ||
@@ -827,7 +842,7 @@ function GSectionBand({
             <Plus className="h-3.5 w-3.5" /> Add a block
           </button>
         ) : null
-      ) : (
+      ) : editing ? (
         <ResponsiveGrid
           className="layout"
           layouts={{ lg: grid }}
@@ -887,6 +902,56 @@ function GSectionBand({
             />
           ))}
         </ResponsiveGrid>
+      ) : (
+        <div
+          className={cn(
+            "content-safe",
+            hasGrid
+              ? "grid grid-cols-1 gap-8 md:grid-cols-12"
+              : (SECTION_GRID[section.layout] ?? ""),
+          )}
+          style={
+            hasGrid
+              ? { gridAutoFlow: "row dense", alignItems: "start" }
+              : (SECTION_GRID[section.layout] ?? "")
+                ? { gridAutoFlow: "row", alignItems: "start" }
+                : undefined
+          }
+        >
+          {blocks.map((block) => {
+            const item = hasGrid ? grid.find((candidate) => candidate.i === block.id) : undefined;
+            return hasGrid ? (
+              <GBlockFrame
+                key={block.id}
+                block={block}
+                editing={editing}
+                selected={false}
+                fluid
+                className={cn(
+                  "relative min-w-0",
+                  colStartClass((item?.x ?? 0) + 1),
+                  spanClass(item?.w ?? 12),
+                )}
+                {...props}
+              />
+            ) : (
+              <GBlockFrame
+                key={block.id}
+                block={block}
+                editing={editing}
+                selected={false}
+                bare
+                className={cn(
+                  "contents",
+                  (SECTION_GRID[section.layout] ?? "") && typeof block.span === "number"
+                    ? spanClass(block.span)
+                    : "",
+                )}
+                {...props}
+              />
+            );
+          })}
+        </div>
       )}
       {editing && blocks.length > 0 && (
         <button
@@ -910,16 +975,46 @@ const GBlockFrame = forwardRef<
     style?: CSSProperties;
     className?: string;
     children?: ReactNode;
+    /** Content-sized frame (public-style flow) instead of a fixed grid cell. */
+    fluid?: boolean;
+    /** Frame-less render mirroring the public page's `contents` wrapper. */
+    bare?: boolean;
   }
->(function GBlockFrame({ block, editing, selected, style, className, children, ...props }, ref) {
+>(function GBlockFrame(
+  { block, editing, selected, style, className, children, fluid, bare, ...props },
+  ref,
+) {
   const def = getBlock(block.type);
+  const blockContext = {
+    ownerId: props.userId,
+    ownerType: "profile" as const,
+    pageId: `profile:${props.userId}`,
+    blockId: block.id,
+    isEditing: editing,
+    isOwner: true,
+    data: props.profile ? { profile: props.profile } : undefined,
+    onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
+  };
+  if (bare) {
+    return (
+      <div ref={ref} style={style} className={className}>
+        <BlockRenderer
+          type={block.type}
+          config={block.config}
+          context={blockContext}
+          onChange={(config) => props.onUpdateBlockConfig(block.id, config)}
+        />
+      </div>
+    );
+  }
   return (
     <div
       ref={ref}
       style={style}
       className={cn(
         className,
-        "group/frame relative h-full min-h-0",
+        "group/frame relative",
+        !fluid && "h-full min-h-0",
         selected && "ring-1 ring-[var(--user-accent)]",
         block.visible === false && "opacity-45",
       )}
@@ -930,23 +1025,17 @@ const GBlockFrame = forwardRef<
       }}
     >
       <div
-        className="relative h-full min-h-0 overflow-y-auto overflow-x-hidden rounded-[inherit] bg-[var(--surface)]"
+        className={cn(
+          "relative overflow-x-hidden rounded-[inherit] bg-[var(--surface)]",
+          !fluid && "h-full min-h-0 overflow-y-auto",
+        )}
         style={{ borderRadius: "var(--studio-radius)" }}
       >
-        <div className="flex min-h-full [&>*]:min-w-0 [&>*]:flex-1">
+        <div className={cn("flex [&>*]:min-w-0 [&>*]:flex-1", !fluid && "min-h-full")}>
           <BlockRenderer
             type={block.type}
             config={block.config}
-            context={{
-              ownerId: props.userId,
-              ownerType: "profile",
-              pageId: `profile:${props.userId}`,
-              blockId: block.id,
-              isEditing: editing,
-              isOwner: true,
-              data: props.profile ? { profile: props.profile } : undefined,
-              onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
-            }}
+            context={blockContext}
             onChange={(config) => props.onUpdateBlockConfig(block.id, config)}
           />
         </div>
@@ -956,7 +1045,10 @@ const GBlockFrame = forwardRef<
           <button
             type="button"
             aria-label={`Move ${def?.label ?? block.type}`}
-            className="magic-drag-handle absolute left-1 top-1 z-20 flex h-6 w-5 cursor-grab items-center justify-center border border-border bg-[var(--surface-elevated)] text-muted-foreground opacity-0 transition-opacity group-hover/frame:opacity-100 focus-visible:opacity-100"
+            className={cn(
+              "magic-drag-handle absolute left-1 top-1 z-20 flex h-6 w-5 cursor-grab items-center justify-center border border-border bg-[var(--surface-elevated)] text-muted-foreground transition-opacity group-hover/frame:opacity-100 focus-visible:opacity-100",
+              selected ? "opacity-100" : "opacity-0",
+            )}
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>

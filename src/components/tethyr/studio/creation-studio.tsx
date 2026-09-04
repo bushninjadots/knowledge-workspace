@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   GStudioSurface,
   sizeFor,
@@ -57,6 +66,8 @@ export function CreationStudio({
   const [future, setFuture] = useState<HistoryEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [gridInteraction, setGridInteraction] = useState(false);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [renameFocusId, setRenameFocusId] = useState<string | null>(null);
   const pageIdRef = useRef<string | null>(null);
   const layoutRef = useRef<PageLayout | null>(null);
   const configRef = useRef<GStudioConfig | null>(null);
@@ -350,8 +361,9 @@ export function CreationStudio({
   const addSection = useCallback(() => {
     if (!layout) return;
     const next = cloneLayout(layout);
+    const id = makeId("section");
     next.sections.push({
-      id: makeId("section"),
+      id,
       position: next.sections.length,
       layout: "full",
       title: `Area ${next.sections.length + 1}`,
@@ -360,6 +372,8 @@ export function CreationStudio({
       grid: [],
     });
     commit(next);
+    setSelectedBlockId(null);
+    setRenameFocusId(id);
   }, [commit, layout]);
 
   const moveSection = useCallback(
@@ -587,7 +601,7 @@ export function CreationStudio({
   const exit = useCallback(() => leave(onExit), [leave, onExit]);
   const completeProfile = useCallback(() => leave(onCompleteProfile), [leave, onCompleteProfile]);
 
-  const publish = useCallback(async () => {
+  const doPublish = useCallback(async () => {
     if (!page || !layout || !config || saving) return;
     setSaving(true);
     try {
@@ -618,6 +632,11 @@ export function CreationStudio({
     }
   }, [applyComposition, config, dirty, layout, page, publishPage, saving, userId]);
 
+  const requestPublish = useCallback(() => {
+    if (!page || !layout || !config || saving) return;
+    setPublishConfirmOpen(true);
+  }, [config, layout, page, saving]);
+
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {
       if (!layout || !config) return;
@@ -635,55 +654,85 @@ export function CreationStudio({
   }
 
   return (
-    <GStudioSurface
-      layout={layout}
-      config={config}
-      mode={mode}
-      device={device}
-      selectedBlockId={selectedBlockId}
-      dragType={dragType}
-      paletteTarget={paletteTarget}
-      dirty={dirty}
-      saving={saving}
-      published={page?.status === "published"}
-      hasUnpublishedChanges={hasUnpublishedChanges}
-      versions={page?.versions ?? []}
-      publishedVersion={page?.publishedVersion ?? null}
-      canUndo={history.length > 0}
-      canRedo={future.length > 0}
-      profile={profile}
-      userId={userId}
-      onModeChange={setMode}
-      onDeviceChange={setDevice}
-      onSelect={setSelectedBlockId}
-      onGridChange={applyGrid}
-      onGridInteractionStart={beginGridInteraction}
-      onGridInteractionEnd={endGridInteraction}
-      onUpdateBlockConfig={updateBlockConfig}
-      onBlockAction={updateBlock}
-      onDuplicate={duplicateBlock}
-      onRemove={removeBlock}
-      onMove={moveBlock}
-      onMoveSection={moveSection}
-      onToggleSection={toggleSection}
-      onRenameSection={renameSection}
-      onSectionLayoutChange={setSectionLayout}
-      onAddSection={addSection}
-      onMoveToSection={moveToSection}
-      onAdd={addBlock}
-      onDragTypeChange={setDragType}
-      onPaletteTargetChange={setPaletteTarget}
-      onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
-      onSave={() => void save()}
-      onPublish={publish}
-      onRollback={rollback}
-      onChooseStarter={chooseStarter}
-      onUndo={undo}
-      onRedo={redo}
-      onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
-      onExit={onExit ? exit : undefined}
-      onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
-    />
+    <>
+      <GStudioSurface
+        layout={layout}
+        config={config}
+        mode={mode}
+        device={device}
+        selectedBlockId={selectedBlockId}
+        dragType={dragType}
+        paletteTarget={paletteTarget}
+        dirty={dirty}
+        saving={saving}
+        published={page?.status === "published"}
+        hasUnpublishedChanges={hasUnpublishedChanges}
+        versions={page?.versions ?? []}
+        publishedVersion={page?.publishedVersion ?? null}
+        canUndo={history.length > 0}
+        canRedo={future.length > 0}
+        profile={profile}
+        userId={userId}
+        onModeChange={setMode}
+        onDeviceChange={setDevice}
+        onSelect={setSelectedBlockId}
+        onGridChange={applyGrid}
+        onGridInteractionStart={beginGridInteraction}
+        onGridInteractionEnd={endGridInteraction}
+        onUpdateBlockConfig={updateBlockConfig}
+        onBlockAction={updateBlock}
+        onDuplicate={duplicateBlock}
+        onRemove={removeBlock}
+        onMove={moveBlock}
+        onMoveSection={moveSection}
+        onToggleSection={toggleSection}
+        onRenameSection={renameSection}
+        onSectionLayoutChange={setSectionLayout}
+        onAddSection={addSection}
+        onMoveToSection={moveToSection}
+        onAdd={addBlock}
+        onDragTypeChange={setDragType}
+        onPaletteTargetChange={setPaletteTarget}
+        onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
+        onSave={() => void save()}
+        onPublish={requestPublish}
+        onRollback={rollback}
+        onChooseStarter={chooseStarter}
+        onUndo={undo}
+        onRedo={redo}
+        onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
+        onExit={onExit ? exit : undefined}
+        autoRenameId={renameFocusId}
+        onRenameFocusHandled={() => setRenameFocusId(null)}
+        onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
+      />
+      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
+        <DialogContent className="studio-editor-chrome sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Publish your Studio?</DialogTitle>
+            <DialogDescription>
+              Your current draft becomes live — visitors on your public page will see the latest
+              arrangement, blocks, and appearance.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-start">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setPublishConfirmOpen(false);
+                void doPublish();
+              }}
+            >
+              Publish
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPublishConfirmOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

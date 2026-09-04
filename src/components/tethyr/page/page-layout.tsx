@@ -52,7 +52,7 @@ interface PageLayoutRendererProps {
 }
 
 /** Tailwind grid classes for each section layout type. */
-const SECTION_GRID: Record<SectionLayoutType, string> = {
+export const SECTION_GRID: Record<SectionLayoutType, string> = {
   full: "",
   two_column: "grid grid-cols-1 gap-8 md:grid-cols-2",
   three_column: "grid grid-cols-1 gap-6 md:grid-cols-3",
@@ -888,7 +888,7 @@ function SectionLayoutPanel({
   );
 }
 
-function spanClass(span: number): string {
+export function spanClass(span: number): string {
   const classes = [
     "md:col-span-1",
     "md:col-span-2",
@@ -906,7 +906,7 @@ function spanClass(span: number): string {
   return classes[Math.min(classes.length, Math.max(1, Math.round(span))) - 1];
 }
 
-function colStartClass(column: number): string {
+export function colStartClass(column: number): string {
   const classes = [
     "md:col-start-1",
     "md:col-start-2",
