@@ -374,6 +374,14 @@ export function CreationStudio({
     commit(next);
     setSelectedBlockId(null);
     setRenameFocusId(id);
+    // Keep the new area in view so the rename happens where you can see it.
+    setTimeout(
+      () =>
+        document
+          .getElementById("studio-add-section")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      0,
+    );
   }, [commit, layout]);
 
   const moveSection = useCallback(
@@ -497,6 +505,33 @@ export function CreationStudio({
     setLayout(cloneLayout(next.layout));
     setConfig(cloneConfig(next.config));
   }, [config, future, layout]);
+
+  // Keyboard shortcuts: undo/redo history and escape to clear block selection.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editable =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+      if (editable || target?.closest?.('[role="dialog"]')) return;
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) redo();
+        else undo();
+      } else if (mod && event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        redo();
+      } else if (event.key === "Escape") {
+        setSelectedBlockId(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [redo, undo]);
 
   // Restore a previously published version via the rollback RPC. The hook
   // invalidates the page query so the restored layout reloads from Supabase.

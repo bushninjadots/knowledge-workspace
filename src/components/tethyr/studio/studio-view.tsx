@@ -4,12 +4,13 @@
 // controls (banner, profile photo, caption, identity, appearance) available
 // without opening the full block editor. "Open editor" launches the builder.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, Sparkles } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
 import { useCreatePage } from "@/hooks/use-page-editor";
+import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +91,15 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const layout: PageLayout | null = page?.layout ?? null;
   const maxWidth = structureMaxWidth(config);
   const surfaceStyle = studioSurfaceStyle(config);
+  const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
+  const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
+    setEmptyBlocks((previous) => {
+      const next = new Set(previous);
+      if (isEmpty) next.add(blockId);
+      else next.delete(blockId);
+      return next;
+    });
+  }, []);
 
   const blockContext: BlockContext = {
     ownerId: userId,
@@ -99,6 +109,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     isOwner: true,
     quickEdit: mode === "view",
     data: profile ? { profile } : undefined,
+    onBlockEmptyChange: handleBlockEmpty,
   };
 
   if (pageQuery.isLoading) {
@@ -160,11 +171,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 {layout.sections
                   .slice()
                   .sort((a, b) => a.position - b.position)
-                  .filter(
-                    (section) =>
-                      section.visible !== false &&
-                      section.blocks.some((block) => block.visible !== false),
-                  )
+                  .filter((section) => shouldRenderSectionInView(section, emptyBlocks))
                   .map((section) => (
                     <StudioViewSection key={section.id} section={section} context={blockContext} />
                   ))}

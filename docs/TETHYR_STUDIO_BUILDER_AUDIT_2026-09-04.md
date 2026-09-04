@@ -404,3 +404,30 @@ deferred items and browser observations:
 
 Verified green: `tsc --noEmit`, `eslint` (after `--fix`), 464 vitest tests
 (62 files). Committed + pushed as part of the "Polish Studio UX" change.
+
+## UI/UX follow-up pass 4 (2026-09-04) — applied + pushed
+
+Fourth pass (user: "carry on with improvements and flow and layouts and
+functions"), building on the empty-collapse parity surfaced by F6/F7:
+
+- **Owner quick-view parity (`/profile`).** `StudioView` now wires
+  `onBlockEmptyChange` and uses the same `shouldRenderSectionInView` predicate
+  as the public page, so all-empty sections collapse identically in the owner
+  quick-view, the public page, and the builder preview.
+- **Keyboard shortcuts.** The builder now supports Cmd/Ctrl+Z undo, Cmd/Ctrl+
+  Shift+Z / Cmd+Y redo, and Escape to deselect, wired to the existing 49-step
+  history. Inputs, selects, textareas, contentEditable regions, and dialogs are
+  ignored so typing and modal flow are never hijacked.
+- **New-area flow.** Adding an area now scrolls it into view
+  (`id="studio-add-section"` + `scrollIntoView`) alongside the existing
+  auto-focus rename, so a newly added section is immediately visible and
+  nameable.
+- **Desktop preview truthfulness.** The builder's desktop preview was capped at
+  `structureMaxWidth` (768/1024/1200) while the real public page is full-bleed
+  (`w-full` container, `PageShell`). Desktop preview is now full-bleed to match;
+  edit mode and tablet (996) / mobile (390) preview widths are unchanged.
+- Verified NOT needed: block-palette search (already present) and a
+  `.content-safe` width knob (it is media-only, not a width constraint).
+
+Verified green: `tsc --noEmit`, `eslint` (after `--fix`), 464 vitest tests
+(62 files). Committed + pushed as the "Studio flow polish" change.

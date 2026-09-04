@@ -285,7 +285,14 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           />
         )}
         <main className="min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio canvas">
-          <div className="mx-auto w-full" style={{ maxWidth: deviceWidth ?? maxWidth }}>
+          <div
+            className="mx-auto w-full"
+            style={{
+              // Desktop preview is full-bleed like the public page; edit and
+              // tablet/mobile preview stay capped (structure or device width).
+              maxWidth: deviceWidth ?? (props.mode === "preview" ? undefined : maxWidth),
+            }}
+          >
             <GStudioCanvas
               {...props}
               sections={sections}
@@ -642,6 +649,7 @@ function GStudioCanvas({
         {editing && (
           <button
             type="button"
+            id="studio-add-section"
             onClick={props.onAddSection}
             className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-3 font-mono text-2xs uppercase tracking-widest text-muted-foreground hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)]"
           >
