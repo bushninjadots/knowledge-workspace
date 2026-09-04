@@ -9,7 +9,7 @@ import "@/components/tethyr/blocks/register-all";
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioRoute,
   head: () => ({
-    meta: [{ title: "Creation Studio — Tethyr" }],
+    meta: [{ title: "Customize your Studio — Tethyr" }],
   }),
 });
 
@@ -40,7 +40,7 @@ function StudioRoute() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="mt-3 text-sm text-muted-foreground">Loading Creation Studio…</p>
+          <p className="mt-3 text-sm text-muted-foreground">Loading your Studio…</p>
         </div>
       </div>
     );
@@ -67,6 +67,7 @@ function StudioRoute() {
       userId={me.userId}
       profile={studioData ?? null}
       onCompleteProfile={() => navigate({ to: "/profile" })}
+      onExit={() => navigate({ to: "/profile" })}
     />
   );
 }

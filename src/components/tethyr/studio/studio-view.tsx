@@ -143,7 +143,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
               <div>
                 <p className="text-sm text-muted-foreground">Your Studio is empty.</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Open the editor to add blocks and arrange your space.
+                  Open Customize to add blocks and arrange your space.
                 </p>
               </div>
             </div>
@@ -227,11 +227,13 @@ function StudioViewTopBar({
           )}
           <Button variant="ghost" size="sm" onClick={onToggleMode} title="Toggle preview">
             <Sparkles className="h-3 w-3" />
-            <span className="hidden sm:inline">{mode === "view" ? "Quick edit" : "Preview"}</span>
+            <span className="hidden sm:inline">
+              {mode === "view" ? "View as visitor" : "Back to quick edit"}
+            </span>
           </Button>
           <Button variant="default" size="sm" onClick={onOpenEditor}>
             <Pencil className="h-3 w-3" />
-            Open editor
+            Customize
           </Button>
         </div>
       </div>

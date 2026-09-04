@@ -1,5 +1,6 @@
 import { forwardRef, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  ArrowLeft,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -8,7 +9,6 @@ import {
   GripHorizontal,
   GripVertical,
   History,
-  Layers,
   Monitor,
   Pencil,
   Plus,
@@ -106,6 +106,8 @@ export interface GStudioSurfaceProps {
   onRedo: () => void;
   onCompleteProfile?: () => void;
   onReset: () => void;
+  /** Leave customization and return to the Studio view. */
+  onExit?: () => void;
 }
 
 const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
@@ -152,7 +154,11 @@ const BLOCK_CATEGORY_LABELS: Record<BlockCategory, string> = {
 };
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
-  const [customizeOpen, setCustomizeOpen] = useState(false);
+  // Customization is the whole point of this view, so the panel starts open on
+  // desktop instead of hiding behind a toggle the owner has to discover.
+  const [customizeOpen, setCustomizeOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"left" | "right" | null>(null);
@@ -206,6 +212,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onPublish={props.onPublish}
         customizeOpen={customizeOpen}
         paletteOpen={paletteOpen}
+        onExit={props.onExit}
       />
       {historyOpen && (
         <VersionPopover
@@ -293,6 +300,7 @@ function GStudioTopBar({
   onUndo,
   onRedo,
   onFeel,
+  onExit,
   onCustomize,
   onPalette,
   onSave,
@@ -317,6 +325,7 @@ function GStudioTopBar({
   onUndo: () => void;
   onRedo: () => void;
   onFeel: () => void;
+  onExit?: () => void;
   onCustomize: () => void;
   onPalette: () => void;
   onSave: () => void;
@@ -328,6 +337,12 @@ function GStudioTopBar({
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
       <div className="flex min-h-10 items-center gap-2 px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
+          {onExit && (
+            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onExit}>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {!compact && <span className="text-xs">Studio</span>}
+            </Button>
+          )}
           <span className="font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-foreground">
             Tethyr
           </span>
@@ -337,11 +352,10 @@ function GStudioTopBar({
           <span className="t-heading truncate text-[13px] font-semibold text-foreground">
             Studio
           </span>
-          {!compact && (
-            <span className="truncate font-mono text-2xs text-muted-foreground-subtle">
-              Magic Patterns
-            </span>
-          )}
+          <span className="text-muted-foreground-subtle" aria-hidden>
+            /
+          </span>
+          <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
             className={cn(
               "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
@@ -362,7 +376,12 @@ function GStudioTopBar({
           role="radiogroup"
           aria-label="Studio mode"
         >
-          {(["view", "edit", "preview"] as GStudioMode[]).map((item) => (
+          {(
+            [
+              ["edit", "Editing"],
+              ["preview", "Preview"],
+            ] as Array<[GStudioMode, string]>
+          ).map(([item, label]) => (
             <button
               key={item}
               type="button"
@@ -376,14 +395,12 @@ function GStudioTopBar({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {item === "view" ? (
-                <Layers className="h-3.5 w-3.5" />
-              ) : item === "edit" ? (
+              {item === "edit" ? (
                 <Pencil className="h-3.5 w-3.5" />
               ) : (
                 <Eye className="h-3.5 w-3.5" />
               )}
-              {!compact && item}
+              {!compact && label}
             </button>
           ))}
         </div>
@@ -406,7 +423,7 @@ function GStudioTopBar({
                     <Sliders className="h-3 w-3" /> Customize
                   </Button>
                   <Button variant="ghost" size="sm" onClick={onFeel}>
-                    <Sparkles className="h-3 w-3" /> Feel
+                    <Sparkles className="h-3 w-3" /> Starting point
                   </Button>
                   <Button
                     variant={paletteOpen ? "default" : "secondary"}
@@ -1450,7 +1467,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
             tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
           )}
         >
-          <Sliders className="mr-1 inline h-3 w-3" /> Feel
+          <Sliders className="mr-1 inline h-3 w-3" /> Style
         </button>
         <IconButton label="Close mobile editor" className="ml-auto" onClick={() => setOpen(false)}>
           <X className="h-3.5 w-3.5" />
