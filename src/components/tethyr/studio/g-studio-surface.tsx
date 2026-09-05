@@ -38,6 +38,9 @@ import {
 import { ReactGridLayout as LegacyGridLayout, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
+import { BackgroundLayer } from "@/components/tethyr/background-layer";
+import { appearanceStyle } from "@/lib/background-themes";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
@@ -202,6 +205,7 @@ const SECTION_LAYOUT_OPTIONS: Array<{ value: LayoutSection["layout"]; label: str
 ];
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
+  const { data: me } = useCurrentUser();
   // Customization is the whole point of this view, so the panel starts open on
   // desktop instead of hiding behind a toggle the owner has to discover.
   const [customizeOpen, setCustomizeOpen] = useState(
