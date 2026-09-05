@@ -9,6 +9,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, Sparkles } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { BackgroundLayer } from "@/components/tethyr/background-layer";
+import { appearanceStyle } from "@/lib/background-themes";
 import { useCreatePage } from "@/hooks/use-page-editor";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
@@ -59,6 +62,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
+  const { data: me } = useCurrentUser();
   const createPage = useCreatePage();
   const createAttempted = useRef(false);
   const page = pageQuery.data;
@@ -91,7 +95,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const config: StudioConfig = page?.config ?? DEFAULT_STUDIO_CONFIG;
   const layout: PageLayout | null = page?.layout ?? null;
   const maxWidth = structureMaxWidth(config);
-  const surfaceStyle = studioSurfaceStyle(config);
+  const surfaceStyle = { ...studioSurfaceStyle(config), ...appearanceStyle(me?.background) };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlocks((previous) => {
@@ -148,7 +152,8 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         onOpenEditor={() => navigate({ to: "/studio" })}
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
       />
-      <main className="min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio">
+      <main className="relative min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio">
+        <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
         {mode === "preview" && profile?.handle ? (
           <iframe
             title="Public Studio preview"

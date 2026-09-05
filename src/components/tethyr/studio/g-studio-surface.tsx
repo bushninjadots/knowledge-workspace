@@ -375,7 +375,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidth(props.config);
   const sections = props.layout.sections;
-  const surfaceStyle = studioSurfaceStyle(props.config);
+  const surfaceStyle = { ...studioSurfaceStyle(props.config), ...appearanceStyle(me?.background) };
 
   const toggleCustomize = () => {
     setCustomizeOpen((open) => !open);
@@ -450,7 +450,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             onReset={props.onReset}
           />
         )}
-        <main className="min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio canvas">
+        <main
+          className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
+          aria-label="Studio canvas"
+        >
+          <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
           <div
             className="mx-auto w-full"
             style={{
