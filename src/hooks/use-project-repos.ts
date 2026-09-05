@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { fetchRepoMetaServer } from "@/lib/github-server";
 import type { RepoMeta } from "@/lib/github";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 const sb = supabase;
 
@@ -23,7 +24,7 @@ export function useProjectRepos(projectId: string) {
   return useQuery({
     queryKey: ["project-repos", projectId],
     queryFn: async (): Promise<ProjectRepo[]> => {
-      const { data, error } = await sb
+      const { data, error } = await supabasePending
         .from("project_repositories_safe")
         .select("id, project_id, url, provider, created_at, updated_at")
         .eq("project_id", projectId)
