@@ -20,12 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
+
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
