@@ -28,7 +28,7 @@ layer between the two. Consequences, verified in source:
 3. The builder **cannot set `section.layout`**, yet that value is the public
    page's primary layout lever.
 4. **"Move up/down" a block inside a section is invisible in the builder**
-   canvas (order changes only; grid untouched) but *does* reorder the public
+   canvas (order changes only; grid untouched) but _does_ reorder the public
    page — editor and public disagree.
 5. **`/profile` "View as visitor" is not the public page.** `StudioView`
    renders a third layout model (reads only `section.grid.w`) and keeps
@@ -39,11 +39,11 @@ layer between the two. Consequences, verified in source:
 
 ## How the three surfaces are wired
 
-| Surface | Route | Renderer | Layout model used |
-| --- | --- | --- | --- |
-| Builder (the only profile editor) | `/studio` | `creation-studio.tsx` → `GStudioSurface` (`g-studio-surface.tsx`) | `react-grid-layout` **legacy**, per-section 12-col canvas, `section.grid` x/y/w/h, `compactType={null}` (freeform), uniform band per section. `section.layout` is cosmetic (`feature` → "spine" label). |
-| Public Studio | `/u/:handle` | `PageShell` → `PageLayoutRenderer` (`page-layout.tsx`, `context.isEditing=false`) | DOM order + CSS grid `SECTION_GRID[section.layout]`; `block.span` → `md:col-span-N` **only when** `gridClass` is non-empty; `x/y/h` never used. |
-| Owner quick-view | `/profile` | `StudioView` (`studio-view.tsx`) | 12-col `md:grid`; `md:col-span` = `clamp(section.grid.w)`, fallback 12; ignores `section.layout`, `block.span`, `grid.x/y`, and empty-collapse. |
+| Surface                           | Route        | Renderer                                                                          | Layout model used                                                                                                                                                                                       |
+| --------------------------------- | ------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builder (the only profile editor) | `/studio`    | `creation-studio.tsx` → `GStudioSurface` (`g-studio-surface.tsx`)                 | `react-grid-layout` **legacy**, per-section 12-col canvas, `section.grid` x/y/w/h, `compactType={null}` (freeform), uniform band per section. `section.layout` is cosmetic (`feature` → "spine" label). |
+| Public Studio                     | `/u/:handle` | `PageShell` → `PageLayoutRenderer` (`page-layout.tsx`, `context.isEditing=false`) | DOM order + CSS grid `SECTION_GRID[section.layout]`; `block.span` → `md:col-span-N` **only when** `gridClass` is non-empty; `x/y/h` never used.                                                         |
+| Owner quick-view                  | `/profile`   | `StudioView` (`studio-view.tsx`)                                                  | 12-col `md:grid`; `md:col-span` = `clamp(section.grid.w)`, fallback 12; ignores `section.layout`, `block.span`, `grid.x/y`, and empty-collapse.                                                         |
 
 **Persistence path** (`creation-studio.tsx`): every drag/resize at `lg`/`md`
 breakpoints (`PERSISTED_BREAKPOINTS`, `g-studio-surface.tsx:781-796` →
@@ -56,11 +56,12 @@ block; autosave (`save` → RPC `apply_studio_composition`) persists
 the owner **cannot** reach `PageLayoutRenderer`'s edit mode from the public
 page. The profile editor is exclusively the builder. (The `PageLayoutRenderer`
 edit mode — `StudioSectionGrid` + `sortable-block.tsx` + `SectionLayoutPanel` —
-still exists and is what *projects* use; out of scope here.)
+still exists and is what _projects_ use; out of scope here.)
 
 ## Findings
 
 ### F1 — Two incompatible layout models, no translation layer
+
 - Builder = absolute grid (`grid.x/y/w/h`, freeform). Public = CSS grid from
   `section.layout` template + DOM order. `page-layout.tsx:520` applies
   `block.span` only through
@@ -71,10 +72,12 @@ still exists and is what *projects* use; out of scope here.)
   polish can make the builder faithfully show the public result.
 
 ### F2 — Default profile diverges without any user edits
+
 `createDefaultProfileLayout` (`default-layouts.ts`) yields sections:
 `full` (header) → `feature` (projects+direction) → `sidebar_right`
 (bio+links) → `two_column` (skills+experience) → `full` (gallery) →
 `two_column` (tools+achievements); blocks have **no span/grid**.
+
 - `normalizeLayout` synthesizes a grid from `sizeFor` with 2-col parity packing
   (`sectionGrid`, `creation-studio.tsx:777-801`): in the `feature` section,
   `profile-projects` (w12) fills row 0 and `profile-direction` (w5) lands at
@@ -85,6 +88,7 @@ still exists and is what *projects* use; out of scope here.)
   owner opens the builder.
 
 ### F3 — Resizing in the builder ≠ resizing publicly
+
 - `full` sections (`gridClass=""`, e.g. header/gallery): `block.span` is never
   applied → **any width change in the builder is silently dropped** on the
   public page (always full-width stacked). This is the most common case.
@@ -96,16 +100,18 @@ still exists and is what *projects* use; out of scope here.)
 - Vertical resize (`h`) is lost everywhere — public blocks are content-sized.
 
 ### F4 — `section.layout` is uneditable in the only profile editor
+
 - `addSection` always creates `layout: "full"` (`creation-studio.tsx:323-336`);
   `GCustomizePanel` "Structure" only changes `structureMaxWidth`
   (768/1024/1200px content width), not section grids.
 - The only control that sets `section.layout` is `SectionLayoutPanel` in the
-  *old* `PageLayoutRenderer` edit mode — unreachable for profile owners.
+  _old_ `PageLayoutRenderer` edit mode — unreachable for profile owners.
 - Yet `section.layout` is the public page's dominant layout signal. For
   profiles, two of the three persisted layout state slots (`grid` vs
   `layout`+`span`) are effectively controlled by different, disconnected tools.
 
 ### F5 — "Move up/down" and "Move to area" behave differently editor vs public
+
 - `moveBlock` (`creation-studio.tsx:273-293`) swaps `block.position` only —
   `section.grid` is untouched. RGL positions children by their layout item
   (`key` → `item`), so the canvas **does not visibly move** after Up/Down.
@@ -120,6 +126,7 @@ still exists and is what *projects* use; out of scope here.)
   source's width/row.
 
 ### F6 — Owner quick-view is a third, divergent renderer
+
 - `StudioView` (`studio-view.tsx`) spans blocks via
   `Math.max(1, Math.min(12, gridItem?.w ?? 12))` (`:292`), i.e. only
   `section.grid.w`, falling back to **12 (full width)** when there's no grid.
@@ -135,8 +142,9 @@ still exists and is what *projects* use; out of scope here.)
   (`:299`) while the public has no frame; header/content heights differ.
 
 ### F7 — Builder preview ≠ public
+
 - Hidden blocks (`visible=false`) render in the builder at `opacity-45` even in
-  *preview* (`g-studio-surface.tsx:842`), while public drops them entirely.
+  _preview_ (`g-studio-surface.tsx:842`), while public drops them entirely.
 - Empty-content sections: the builder preview only drops sections whose blocks
   are all `visible!=false` (`g-studio-surface.tsx:656`); it never reports
   resolved emptiness (no `onBlockEmptyChange` in the canvas `BlockContext`,
@@ -151,6 +159,7 @@ still exists and is what *projects* use; out of scope here.)
   live-resize but vanish on save/reload.
 
 ### F8 — Section titles are editor-only
+
 - The builder shows an editable title bar per section and a "spine" header for
   `feature` (edit mode) and feature spine labels in preview
   (`g-studio-surface.tsx:664-737`), default title `Area N`.
@@ -160,6 +169,7 @@ still exists and is what *projects* use; out of scope here.)
   so the copy "rename areas" isn't read as public-facing.)
 
 ### F9 — Height/density are editor-only
+
 - Builder row height is density-scaled (20/24/28, `g-studio-surface.tsx:643-646`)
   and blocks are fixed to their `h` rows with `overflow-y-auto` frames
   (`:851`) — content scrolls or leaves whitespace.
@@ -168,18 +178,18 @@ still exists and is what *projects* use; out of scope here.)
 
 ## Consistency matrix (verified in source)
 
-| Action (builder) | Sees it in builder? | Sees it on `/u/:handle`? | Sees it on `/profile`? |
-| --- | --- | --- | --- |
-| Drag block (lg/md) | ✅ grid canvas | ⚠️ order yes; width only in non-`full`; x/y/h no | ⚠️ width via grid.w only, order yes |
-| Resize width | ✅ | 🔴 `full` sections drop it; column sections overflow template | ✅ width (grid.w) |
-| Resize height | ✅ rows | 🔴 | 🔴 |
-| Move block up/down | 🔴 nothing visible | ✅ order changes | ✅ order |
-| Move section up/down | ✅ | ✅ | ✅ |
-| Hide block/section | ✅ (opacity) | ✅ dropped | ✅ dropped |
-| Rename section | ✅ | 🔴 never shown | 🔴 never shown |
-| Empty section collapse | 🔴 preview shows band | ✅ collapses | 🔴 shows band |
-| Tablet/mobile resize | ⚠️ live, not persisted | 🔴 | 🔴 |
-| section.layout change | 🔴 impossible | ✅ main lever | 🔴 ignored |
+| Action (builder)       | Sees it in builder?    | Sees it on `/u/:handle`?                                      | Sees it on `/profile`?              |
+| ---------------------- | ---------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| Drag block (lg/md)     | ✅ grid canvas         | ⚠️ order yes; width only in non-`full`; x/y/h no              | ⚠️ width via grid.w only, order yes |
+| Resize width           | ✅                     | 🔴 `full` sections drop it; column sections overflow template | ✅ width (grid.w)                   |
+| Resize height          | ✅ rows                | 🔴                                                            | 🔴                                  |
+| Move block up/down     | 🔴 nothing visible     | ✅ order changes                                              | ✅ order                            |
+| Move section up/down   | ✅                     | ✅                                                            | ✅                                  |
+| Hide block/section     | ✅ (opacity)           | ✅ dropped                                                    | ✅ dropped                          |
+| Rename section         | ✅                     | 🔴 never shown                                                | 🔴 never shown                      |
+| Empty section collapse | 🔴 preview shows band  | ✅ collapses                                                  | 🔴 shows band                       |
+| Tablet/mobile resize   | ⚠️ live, not persisted | 🔴                                                            | 🔴                                  |
+| section.layout change  | 🔴 impossible          | ✅ main lever                                                 | 🔴 ignored                          |
 
 ## Suggested direction (no changes made — decision needed)
 
@@ -192,7 +202,7 @@ Smallest strong changes, in rough order:
 1. **Pick one canonical public model.** Either teach the public page to read
    `section.grid` (translate x/y/w/h on a 12-col grid to the section's CSS
    grid: `md:grid-cols-12` + `md:col-span-xs`/`md:row-span-y` from grid w/h,
-   keep `section.layout` as the *desktop measure* fallback), or stop the
+   keep `section.layout` as the _desktop measure_ fallback), or stop the
    builder from writing `grid` and route everything through `layout`+`span`.
    Option A has the smaller diff today (page-layout public branch) and makes
    the builder truthful for widths/heights.
@@ -304,27 +314,29 @@ DOM geometry (`[data-block-type]` / `.react-grid-item` rects), not screenshots.
 - **Publish-then-reopen**: `/studio` crashes on load (F10); `/profile` still
   renders 10 blocks, no console errors; public page renders fine. Regression
   fully consistent with root-cause analysis.
+
 ## Resolution status (2026-09-04, applied + committed with `078360b` follow-up)
 
 The findings above were addressed in the next pass. Each item is marked
 **FIXED** (verified green: `tsc --noEmit`, `eslint` on touched files, 460
 vitest tests) or **DEFERRED** (documented product call, no change).
 
-| Finding | Status | What changed |
-| --- | --- | --- |
-| F1 two incompatible layout models | **FIXED (Option A)** | Public `PageLayoutRenderer` now renders a 12-col CSS grid (`md:grid-cols-12`, `gap-8`) when `section.grid` is present and well-formed: each block gets `md:col-start-{gridItem.x+1}` + `md:col-span-{gridItem.w}` (see `page-layout.tsx` public branch + `colStartClass`). Legacy template path (`SECTION_GRID[section.layout]` + `block.span`) is fully preserved when a section has no grid. `x/y/h` still not persisted publicly beyond placement — see F9. |
-| F2 default feature-section divergence | **FIXED** | `nextGridItem`/`normalizeLayout`/`sectionGrid` now use first-fit non-overlapping packing (`firstFreePosition`) instead of the floor-packer that overlapped 2nd blocks in 2-block sections. Combined with F1, the editor canvas and public grid now agree on placement. |
-| F3 resize lost on full sections / span–template conflict | **FIXED** | Any section whose grid is touched (drag/resize/add/remove/duplicate/move) now writes `section.grid` and the public page honours it via the 12-col grid. Untouched sections save **without** a synthetic grid (`save()`/`publish()` strip `grid` from untouched sections via `touchedGridRef`), so pristine default layouts keep the pretty template rendering. Height (`h`) remains editor-only — F9. |
-| F4 `section.layout` uneditable in `/studio` | **DEFERRED** | With F1, `section.layout` is no longer the primary public lever for grid-touched sections, so the gap matters less. The builder still cannot set it; new sections are `full`. Revisit only if column templates are wanted over grid placement. |
-| F5 "Move up/down" invisible on canvas | **FIXED** | `moveBlock` now swaps positions **and** rebuilds the block's grid slot via first-fit (`creation-studio.tsx`), so the canvas visibly reorders and stays consistent with public order. |
-| F6 `/profile` "View as visitor" ≠ public | **FIXED** | `StudioView` preview mode now renders a real `<iframe src="/u/{handle}">` (the actual public page, `data-studio-preview-frame`) when a handle exists. |
-| F7 preview truthfulness | **FIXED** | `GSectionBand` drops `visible === false` blocks when not editing (no more 45%-opacity zombies); empty-collapse in public preview still differs from public by design (editor shows empty bands). |
-| F8 section titles editor-only | **DEFERRED** | Product call — section titles are a builder affordance; they are not rendered on the public page. No change. |
-| F9 height/density editor-only | **DEFERRED** | Public is content-sized by design; rows/density are an editor framing concept. No change. |
-| F10 publish-then-reopen `/studio` crash | **FIXED (blocker)** | Root cause: `publish_page_version` stores `layouts.sections` as a **bare array** in `page_versions.layout`; `use-page.ts` read `(row.layout as PageLayout).sections` → `undefined` → `normalizeLayout` crashed on every `/studio` load after first publish. Fixed with exported `parseVersionLayoutSections(raw)` (handles array + `{sections}` + nullish) + new regression test `src/hooks/use-page.test.ts`. |
-| F11 builder resize not persisted | **RETESTED / suspected-invalid** | Write path (`applyGrid` → `save()` → RPC `apply_studio_composition`) re-verified sound end-to-end. The earlier observation was almost certainly Playwright synthetic-input noise (drag never fired `onResizeStop`); persisted-grid persistence should be revalidated in-browser with a real drag. |
+| Finding                                                  | Status                           | What changed                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1 two incompatible layout models                        | **FIXED (Option A)**             | Public `PageLayoutRenderer` now renders a 12-col CSS grid (`md:grid-cols-12`, `gap-8`) when `section.grid` is present and well-formed: each block gets `md:col-start-{gridItem.x+1}` + `md:col-span-{gridItem.w}` (see `page-layout.tsx` public branch + `colStartClass`). Legacy template path (`SECTION_GRID[section.layout]` + `block.span`) is fully preserved when a section has no grid. `x/y/h` still not persisted publicly beyond placement — see F9. |
+| F2 default feature-section divergence                    | **FIXED**                        | `nextGridItem`/`normalizeLayout`/`sectionGrid` now use first-fit non-overlapping packing (`firstFreePosition`) instead of the floor-packer that overlapped 2nd blocks in 2-block sections. Combined with F1, the editor canvas and public grid now agree on placement.                                                                                                                                                                                         |
+| F3 resize lost on full sections / span–template conflict | **FIXED**                        | Any section whose grid is touched (drag/resize/add/remove/duplicate/move) now writes `section.grid` and the public page honours it via the 12-col grid. Untouched sections save **without** a synthetic grid (`save()`/`publish()` strip `grid` from untouched sections via `touchedGridRef`), so pristine default layouts keep the pretty template rendering. Height (`h`) remains editor-only — F9.                                                          |
+| F4 `section.layout` uneditable in `/studio`              | **DEFERRED**                     | With F1, `section.layout` is no longer the primary public lever for grid-touched sections, so the gap matters less. The builder still cannot set it; new sections are `full`. Revisit only if column templates are wanted over grid placement.                                                                                                                                                                                                                 |
+| F5 "Move up/down" invisible on canvas                    | **FIXED**                        | `moveBlock` now swaps positions **and** rebuilds the block's grid slot via first-fit (`creation-studio.tsx`), so the canvas visibly reorders and stays consistent with public order.                                                                                                                                                                                                                                                                           |
+| F6 `/profile` "View as visitor" ≠ public                 | **FIXED**                        | `StudioView` preview mode now renders a real `<iframe src="/u/{handle}">` (the actual public page, `data-studio-preview-frame`) when a handle exists.                                                                                                                                                                                                                                                                                                          |
+| F7 preview truthfulness                                  | **FIXED**                        | `GSectionBand` drops `visible === false` blocks when not editing (no more 45%-opacity zombies); empty-collapse in public preview still differs from public by design (editor shows empty bands).                                                                                                                                                                                                                                                               |
+| F8 section titles editor-only                            | **DEFERRED**                     | Product call — section titles are a builder affordance; they are not rendered on the public page. No change.                                                                                                                                                                                                                                                                                                                                                   |
+| F9 height/density editor-only                            | **DEFERRED**                     | Public is content-sized by design; rows/density are an editor framing concept. No change.                                                                                                                                                                                                                                                                                                                                                                      |
+| F10 publish-then-reopen `/studio` crash                  | **FIXED (blocker)**              | Root cause: `publish_page_version` stores `layouts.sections` as a **bare array** in `page_versions.layout`; `use-page.ts` read `(row.layout as PageLayout).sections` → `undefined` → `normalizeLayout` crashed on every `/studio` load after first publish. Fixed with exported `parseVersionLayoutSections(raw)` (handles array + `{sections}` + nullish) + new regression test `src/hooks/use-page.test.ts`.                                                 |
+| F11 builder resize not persisted                         | **RETESTED / suspected-invalid** | Write path (`applyGrid` → `save()` → RPC `apply_studio_composition`) re-verified sound end-to-end. The earlier observation was almost certainly Playwright synthetic-input noise (drag never fired `onResizeStop`); persisted-grid persistence should be revalidated in-browser with a real drag.                                                                                                                                                              |
 
 ### Verified state after changes
+
 - `npm run typecheck` clean; `npx eslint` clean on all six touched source
   files + tests; `npm run test` → 460 passed (61 files), including the new
   `parseVersionLayoutSections` suite and the existing grid-adapter tests
@@ -516,10 +528,10 @@ public page pipeline (`page-shell` → `theme-tokens` → `studio-config`).
   `--learning-foreground`, `--ai-foreground`) so chips stay legible in dark
   mode; fallback stays `#fff` for light mode.
 - `studio-config.ts`: exported `EDITORIAL_HEADING_FONT`. `g-studio-surface.tsx`
-  + `studio-view.tsx` `studioSurfaceStyle` now also set `--font-display` and
-  `--font-title` for editorial personality — identical values the public
-  pipeline emits — so editor canvas, owner quick-view, and published page
-  render the same faces.
+  - `studio-view.tsx` `studioSurfaceStyle` now also set `--font-display` and
+    `--font-title` for editorial personality — identical values the public
+    pipeline emits — so editor canvas, owner quick-view, and published page
+    render the same faces.
 
 ### Deferred / notes (no change)
 

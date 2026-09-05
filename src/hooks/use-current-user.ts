@@ -191,16 +191,16 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const projectSkillIds: Record<string, string[]> = {};
   if (projects.length > 0) {
     const [, skillsRes] = await Promise.all([
-      Promise.all(
-        projects
-          .filter((p) => p.cover_url)
-          .map(async (p) => {
-            const { data: s } = await supabase.storage
-              .from("project-media")
-              .createSignedUrl(p.cover_url as string, 60 * 60 * 24);
-            if (s?.signedUrl) coverUrls[p.cover_url as string] = s.signedUrl;
-          }),
-      ),
+      (async () => {
+        const coverPaths = projects.filter((p) => p.cover_url).map((p) => p.cover_url as string);
+        if (coverPaths.length === 0) return;
+        const { data: signed } = await supabase.storage
+          .from("project-media")
+          .createSignedUrls(coverPaths, 60 * 60 * 24);
+        for (const item of signed ?? []) {
+          if (item.path && !item.error && item.signedUrl) coverUrls[item.path] = item.signedUrl;
+        }
+      })(),
       supabase
         .from("project_skills")
         .select("project_id, skill_id")

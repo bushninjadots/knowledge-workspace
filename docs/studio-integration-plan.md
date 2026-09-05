@@ -5,6 +5,7 @@
 The `g/` folder prototype has a cleaner, more cohesive Studio design than what Tethyr currently ships. But **`g-studio-surface.tsx` (1430 lines) IS already the g/ system adapted for Tethyr's type system** — it's just incomplete and the wiring around it is messy.
 
 **Three layers:**
+
 1. **`g/` prototype** — the design target (standalone Vite, localStorage, 15 block types)
 2. **`g-studio-surface.tsx`** — the g/ components adapted to Tethyr's types, called "GStudioSurface" (incomplete)
 3. **`creation-studio.tsx`** — the Tethyr orchestrator that owns Supabase persistence, history, config conversion
@@ -18,6 +19,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 **Problem:** Tethyr's `StudioConfig` has 3 overlapping preset IDs (`compositionId`, `vibeId`, `personalityId`) vs g/'s clean 5-dimension model (`structure`, `personality`, `density`, `radius`, `accent`).
 
 ### Files to change:
+
 - **`src/lib/studio-config.ts`** — Rewrite `StudioConfig` to match g/'s model:
   ```
   structure: 'single' | 'sidebar' | 'wide'
@@ -34,9 +36,11 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 - Add g/'s `structureMaxWidth()` and `densityMetrics()`
 
 ### Risk: **High** — Config type touches everything
+
 ### Mitigation: Keep old fields optional for backward compat, normalize on read
 
 > **STATUS: ✅ COMPLETE (2026-09-03)**
+>
 > - `StudioConfig` rewritten to the clean 5-dimension model plus `starterId`, `appBackground`, `publicBackground`.
 > - Legacy fields (`compositionId`, `vibeId`, `personalityId`, `typography`) kept optional and migrated to the new model in `normalizeStudioConfig()`.
 > - Added `structureMaxWidth()`, `densityMetrics()`, `STRUCTURE_OPTIONS`, `PERSONALITY_OPTIONS`, `BACKGROUND_OPTIONS`. Removed `TYPOGRAPHY_OPTIONS` and the `rounded` radius / `person` accent values.
@@ -51,6 +55,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 **`src/components/tethyr/studio/g-studio-surface.tsx`** is the main file. It's 1430 lines and already has GStudioTopBar, GStudioCanvas, GSectionBand, GBlockFrame, GInspectorRail, GBlockPalette, GBlockInspector, GCustomizePanel, GMobileEditSheet.
 
 ### What's missing from g/:
+
 1. **InlineText** — click-to-type editing (currently blocks don't support inline editing)
 2. **Section renaming** — SectionBand has no rename UI
 3. **Content visibility tree** — CustomizePanel has no visibility controls
@@ -61,6 +66,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 8. **Spine indicator** — No visual weight indicator for spine sections
 
 ### Files to change:
+
 - **`src/components/tethyr/studio/g-studio-surface.tsx`** — The big one. Bring over from g/:
   - `InlineText` component (from `g/src/components/blocks/ContentBlocks.tsx`)
   - Section rail with rename, reorder, toggle (from `g/src/components/studio/SectionBand.tsx`)
@@ -73,6 +79,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 ### Risk: **Medium** — This is finishing existing code, not inventing new code
 
 > **STATUS: ✅ COMPLETE (2026-09-03)**
+>
 > - InlineText: already handled by Tethyr's own `text`/`heading`/`markdown` blocks, which render an editable textarea/input in edit mode (the surface already passes `isEditing` + `onChange` via `GBlockFrame`). No separate `InlineText` component needed.
 > - Section renaming: added optional `title` to `LayoutSection` (`src/lib/page-blocks.ts`), a `renameSection` callback in `creation-studio.tsx`, and rename-in-place UI (title button → input) in `GSectionBand`. Added `sectionLabel()` helper (title ?? layout type) used across the rail, palette dropdown, inspector, and mobile sheet.
 > - Accent swatches: `GCustomizePanel` now shows 6 preset swatches instead of the raw color input.
@@ -88,6 +95,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 **Problem:** g/'s starter system (5 starters with non-destructive application) exists in `g/src/data/starters.ts` and `g/src/components/studio/StarterPicker.tsx`. Tethyr has its own `starter-picker.tsx` that doesn't use g/'s model.
 
 ### Files to change:
+
 - **`src/components/tethyr/studio/starter-picker.tsx`** — Replace with g/'s starter picker (wireframe previews, non-destructive application, undo support)
 - **`src/data/starters.ts`** (new) — Bring over g/'s starter definitions (5 starters with config, sectionOrder, widths, heights, presentation, sketch)
 - **`src/components/tethyr/studio/creation-studio.tsx`** — Wire `chooseStarter` to use g/'s `applyStarter()` + `starterConfig()`
@@ -95,6 +103,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 ### Risk: **Low** — Mostly reusing g/'s code directly
 
 > **STATUS: ✅ COMPLETE (2026-09-03)**
+>
 > - Created `src/data/starters.ts` — the 5 g/ starters (focused/editorial/project-first/minimal/experimental) adapted to Tethyr. Each carries a config stamp, projects `presentation`, `sectionOrder`/`collapsedSections` as semantic `SectionMarker`s, and a `sketch` wireframe. Exports `STARTERS`, `starterMap`, `sectionMarker`, `applyStarter`, `starterConfig`.
 > - Design note: g/ reflows a section-per-block model keyed by stable `sec-*` ids. Tethyr composes multiple blocks into sections with generated ids, so a **Tethyr-native adaptation** was chosen (confirmed with the user): `sectionMarker()` classifies a section by the block types it holds, and `applyStarter()` reorders leading sections, hides (never deletes) collapsed ones, and re-dresses the profile-projects `presentation` — every block id/config/content survives.
 > - `src/components/tethyr/studio/starter-picker.tsx` — replaced with g/'s wireframe `Sketch` previews (accent active state, "Current" badge, feels text), immediate non-destructive application, and an Undo + "Keep what I have" footer.
@@ -108,6 +117,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 **Problem:** g/'s customize panel has 5 coherent decisions. Tethyr's appearance-panel.tsx is separate and disconnected.
 
 ### Files to change:
+
 - **`src/components/tethyr/studio/g-studio-surface.tsx`** — The GCustomizePanel already exists but needs:
   - Starter section at top (showing current starter, change button)
   - Accent swatches (6 preset colors + auto/none)
@@ -122,6 +132,7 @@ The work is NOT "rewrite everything from g/". It's "finish what was started and 
 ### STATUS: ✅ COMPLETE (2026-09-03)
 
 Completed:
+
 - **Starter section at top** (change button → starter picker) — done in Phase 2
 - **Accent swatches** (6 preset colors + auto/none) — done in Phase 2
 - **Background control** (app vs public) — done in Phase 2
@@ -139,6 +150,7 @@ Verification: `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run` �
 **Problem:** g/'s MobileEditSheet is a bottom sheet with 3 tabs (arrange/add/feel) and honest touch controls (width stepper, section reordering). Tethyr's version is more basic.
 
 ### Files to change:
+
 - **`src/components/tethyr/studio/g-studio-surface.tsx`** — Replace GMobileEditSheet with g/'s full mobile editing model:
   - Arrange tab: ordered blocks with move/hide/remove + section reordering
   - Add tab: category-grouped block buttons + target area select
@@ -147,6 +159,7 @@ Verification: `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run` �
 ### Risk: **Low** — Self-contained component
 
 ### STATUS: ✅ COMPLETE (2026-09-03)
+
 - Arrange tab upgraded: helper note (widths apply to wide layout / mobile stacks in order), per-section **visibility toggle** (Eye/EyeOff via `onToggleSection`), and **selected-block accent highlight** when `props.selectedBlockId === block.id`.
 - Add tab upgraded: **"Add to" target area `<select>`** (bound to a `targetArea` state, defaulting to the first section) + blocks **grouped by `BlockCategory`** via new `BLOCK_CATEGORY_ORDER` (content, media, people, project, community, utility) and `BLOCK_CATEGORY_LABELS` constants.
 - Feel tab: added **Density** segmented control (compact/comfortable/spacious) alongside the existing structure/personality + starter button.
@@ -160,6 +173,7 @@ Verification: `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run` �
 **Problem:** g/'s history system is snapshot-based with published version tracking. Tethyr's is simpler (no published version concept, no rollback UI).
 
 ### Files to change:
+
 - **`src/components/tethyr/studio/creation-studio.tsx`** — Adopt g/'s history model:
   - Snapshot-based undo/redo (clone, push, pop)
   - `hasUnpublishedChanges` detection (compare current vs last published snapshot)
@@ -170,6 +184,7 @@ Verification: `npx tsc --noEmit` clean, `npm run lint` clean, `npx vitest run` �
 ### Risk: **Medium** — Needs to work with Supabase page_versions table
 
 ### STATUS: ✅ COMPLETE (2026-09-03)
+
 - `use-page.ts`: now fetches `page_versions` (newest first) alongside the page, returning `versions: PageVersion[]` and `publishedVersion: number | null` on `PageData`.
 - `page-blocks.ts`: added the `PageVersion` type (`{ id, version, layout, publishedAt }`) and the two new `PageData` fields.
 - `creation-studio.tsx`: added `hasUnpublishedChanges` (working layout vs latest published snapshot's layout — config isn't snapshotted, so layout-only; never published → true); wired `rollback(version)` through the existing `useRollbackPageVersion` RPC hook (toast on success/error, `saving` guard); passes `versions`/`publishedVersion`/`hasUnpublishedChanges`/`onRollback` to the surface.

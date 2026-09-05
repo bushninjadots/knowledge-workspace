@@ -27,6 +27,7 @@ import {
   useOpenRoles,
   useProjectNeeds,
   useUpdateProjectPresentation,
+  useProjectCommunityPostCount,
   type ProjectDetail,
 } from "@/hooks/use-projects";
 import { getProjectPresentationOption, type ProjectSectionKey } from "@/lib/project-presentation";
@@ -382,14 +383,20 @@ function ProjectPage() {
 
       const avatarTargets = contributors.filter((c) => c.profile?.avatar_url);
       const avatarSigned: Record<string, string> = {};
-      await Promise.all(
-        avatarTargets.map(async (c) => {
-          const { data: s } = await supabase.storage
-            .from("avatars")
-            .createSignedUrl(c.profile!.avatar_url as string, 60 * 60);
-          if (s?.signedUrl) avatarSigned[c.profile_id] = s.signedUrl;
-        }),
-      );
+      if (avatarTargets.length > 0) {
+        // Batch the signing — the per-avatar loop was N+1 storage calls each
+        // time the project page loaded (avatars bucket is private).
+        const { data: signed } = await supabase.storage.from("avatars").createSignedUrls(
+          avatarTargets.map((c) => c.profile!.avatar_url as string),
+          60 * 60,
+        );
+        for (const item of signed ?? []) {
+          if (!item.error && item.signedUrl) {
+            const target = avatarTargets.find((c) => c.profile!.avatar_url === item.path);
+            if (target) avatarSigned[target.profile_id] = item.signedUrl;
+          }
+        }
+      }
 
       return {
         project: project as unknown as ProjectDetail,
@@ -432,7 +439,7 @@ function ProjectPage() {
   const { data: repos = [] } = useProjectRepos(id);
   const { data: projectSessions = [] } = useProjectSessions(id);
   const { data: projectChallenges = [] } = useProjectChallenges(id);
-  const communityPostCount = 0;
+  const { data: communityPostCount = 0 } = useProjectCommunityPostCount(id);
   const updatePresentation = useUpdateProjectPresentation();
   const markProjectVisited = useMarkProjectVisited();
 

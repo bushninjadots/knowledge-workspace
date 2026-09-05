@@ -4,7 +4,7 @@ import { STARTERS, type Starter } from "@/data/starters";
 
 // Backward-compatible aliases so existing consumers keep importing from here.
 export type StudioStarter = Starter;
-export type StudioStarterId = Starter["id"];
+type StudioStarterId = Starter["id"];
 export const STUDIO_STARTERS: StudioStarter[] = STARTERS;
 
 /**

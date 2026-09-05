@@ -82,7 +82,7 @@ type NativeDragDrop = (event: React.DragEvent) => void;
 type NativeDragEnd = () => void;
 type DragTarget = { sectionId: string; col: number; row: number };
 
-export interface GStudioSurfaceProps {
+interface GStudioSurfaceProps {
   layout: PageLayout;
   config: GStudioConfig;
   mode: GStudioMode;

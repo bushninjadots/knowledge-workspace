@@ -4,7 +4,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { PageLayout, PageOwnerType, PageStatus } from "@/lib/page-blocks";
+import type { PageLayout, PageOwnerType } from "@/lib/page-blocks";
 import { invalidatePage } from "@/hooks/use-page";
 import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/default-layouts";
 import type { StudioConfig } from "@/lib/studio-config";
@@ -203,25 +203,6 @@ export function usePublishPage() {
       const { error } = await supabase.rpc("publish_page_version", {
         _page_id: pageId,
       });
-      if (error) throw error;
-    },
-    onSuccess: (_data, vars) => invalidatePageFor(qc, vars),
-  });
-}
-
-/**
- * Unpublish a page (set back to draft). Does not touch version history.
- */
-export function useUnpublishPage() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await supabase
-        .from("pages")
-        .update({ status: "draft" as PageStatus, published_at: null })
-        .eq("id", pageId);
-
       if (error) throw error;
     },
     onSuccess: (_data, vars) => invalidatePageFor(qc, vars),

@@ -49,15 +49,6 @@ export interface AppliedPersonality {
   themeOverrides: Partial<ThemeTokens>;
 }
 
-/** User-facing names for structure presets. The underlying personality IDs stay
- * stable so existing pages and history remain backwards compatible. */
-export interface StudioPreset {
-  id: "focused" | "editorial" | "project-first" | "minimal" | "experimental";
-  label: string;
-  description: string;
-  personalityId: StudioPersonality["id"];
-}
-
 /**
  * Compose a config + layout + token overrides from a personality preset.
  *
@@ -87,65 +78,6 @@ export function applyStudioPersonality(
     themeOverrides: personality.themeTokens,
   };
 }
-
-/** Apply a user-facing preset without exposing the legacy personality catalog. */
-export function applyStudioPreset(
-  preset: StudioPreset,
-  currentLayout?: PageLayout,
-): AppliedPersonality {
-  const personality = STUDIO_PERSONALITIES.find((item) => item.id === preset.personalityId);
-  if (!personality) throw new Error(`Unknown Studio preset: ${preset.id}`);
-  const applied = applyStudioPersonality(personality, currentLayout);
-
-  if (preset.id !== "project-first") return applied;
-
-  const projectSection = applied.layout.sections.find((section) =>
-    section.blocks.some((block) => block.type === "profile-projects"),
-  );
-  if (!projectSection) return applied;
-  return {
-    ...applied,
-    layout: {
-      sections: [
-        projectSection,
-        ...applied.layout.sections.filter((section) => section.id !== projectSection.id),
-      ].map((section, position) => ({ ...section, position })),
-    },
-  };
-}
-
-export const STUDIO_PRESETS: StudioPreset[] = [
-  {
-    id: "focused",
-    label: "Focused",
-    description: "Lead with your identity and the work you are building now.",
-    personalityId: "professional",
-  },
-  {
-    id: "editorial",
-    label: "Editorial",
-    description: "Give your work a considered, text-led rhythm with room to breathe.",
-    personalityId: "creative",
-  },
-  {
-    id: "project-first",
-    label: "Project-first",
-    description: "Put projects and collaboration context at the center of the Studio.",
-    personalityId: "professional",
-  },
-  {
-    id: "minimal",
-    label: "Minimal",
-    description: "Keep the page quiet so the work and its story carry the weight.",
-    personalityId: "minimal",
-  },
-  {
-    id: "experimental",
-    label: "Experimental",
-    description: "Use a more expressive arrangement for a Studio with a strong point of view.",
-    personalityId: "artistic",
-  },
-];
 
 export function preserveStudioContent(current: PageLayout, preset: PageLayout): PageLayout {
   const existingByType = new Map<string, LayoutBlockInstance[]>();

@@ -3135,7 +3135,9 @@ export type Database = {
         Returns: undefined;
       };
       award_earned_achievements: {
-        Args: never;
+        Args: {
+          p_profile_id?: string;
+        };
         Returns: Database["public"]["Enums"]["achievement_type"][];
       };
       ban_space_member: {

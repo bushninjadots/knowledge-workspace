@@ -256,7 +256,7 @@ These stages implement the block/page/template/fork system described in [`TETHYR
 
 **Files created:**
 
-- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useSaveAsTemplate`, `useApplyTemplate`, `useUnpublishTemplate`.
+- `src/hooks/use-templates.ts` — `usePublicTemplates`, `useMyTemplates`, `useTemplate`, `useApplyTemplate`, `useUnpublishTemplate`.
 - `src/routes/_authenticated/templates.tsx` — public template gallery.
 
 **Files modified:**
@@ -344,12 +344,11 @@ User visits /templates/$id → clicks "Remix" → enters name
 - [x] Theme picker UI — grid of preview cards with color swatches, active highlight, apply/reset actions.
 - [x] Theme preview — `MiniPreview` component shows bg/fg/surface/primary in miniature on each card.
 - [x] Theme application — `updatePageTheme` mutation; themes apply instantly, revertible to Tethyr Default.
-- [x] Theme catalog hook — `useThemeCatalog` lists all themes with pre-computed preview vars.
+- [x] Theme catalog — built-in themes ship with pre-computed preview vars for the picker.
 
 **Files created:**
 
 - `supabase/migrations/20260823120000_theme_catalog.sql` — 13 built-in themes.
-- `src/hooks/use-theme-catalog.ts` — `useThemeCatalog`, `useCurrentThemeInfo`.
 - `src/components/tethyr/page/theme-picker.tsx` — theme picker panel with mini previews.
 
 **Files modified:**

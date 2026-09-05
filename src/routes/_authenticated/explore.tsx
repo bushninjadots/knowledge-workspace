@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Compass,
   Search,
@@ -18,9 +18,11 @@ import {
   Zap,
   Hammer,
   GraduationCap,
+  Loader2,
   MessageCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
@@ -73,6 +75,7 @@ type Creator = {
   creator_title: string | null;
   category: string | null;
   country: string | null;
+  updated_at: string;
 };
 
 type Tab = "projects" | "creators" | "opportunities";
@@ -83,6 +86,7 @@ type OpportunityQueryRow = {
   title: string;
   description: string | null;
   skills: string[] | null;
+  created_at: string;
   projects: {
     id: string;
     title: string;
@@ -103,6 +107,7 @@ type Opportunity = {
   title: string;
   description: string | null;
   skills: string[];
+  created_at: string;
   project: {
     id: string;
     title: string;
@@ -257,34 +262,51 @@ function ExplorePage() {
     return names;
   }, [me, skills]);
 
-  const { data: projects, isLoading: projectsLoading } = useQuery({
+  const PROJECTS_PAGE_SIZE = 40;
+  const {
+    data: projectsPages,
+    isPending: projectsLoading,
+    hasNextPage: projectsHasNextPage,
+    isFetchingNextPage: projectsFetchingMore,
+    fetchNextPage: fetchNextProjects,
+  } = useInfiniteQuery({
     queryKey: ["explore-projects"],
-    queryFn: async (): Promise<ProjectRow[]> => {
+    queryFn: async ({ pageParam }): Promise<ProjectRow[]> => {
       const PROJECTS_SELECT =
         "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url)" as const;
-      const { data, error } = await supabase
+      let query = supabase
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)
         .order("created_at", { ascending: false })
-        .limit(40);
+        .limit(PROJECTS_PAGE_SIZE);
+      if (pageParam) query = query.lt("created_at", pageParam);
+      const { data, error } = await query;
       if (error) throw error;
       const rows = data ?? [];
-      await Promise.all(
-        rows.map(async (p) => {
-          if (!p.cover_url) return;
-          const { data: s } = await supabase.storage
-            .from("project-media")
-            .createSignedUrl(p.cover_url, 60 * 60);
-          if (s?.signedUrl) p.cover_url = s.signedUrl;
-        }),
-      );
+      const coverPaths = rows.filter((p) => p.cover_url).map((p) => p.cover_url as string);
+      if (coverPaths.length > 0) {
+        const { data: signed } = await supabase.storage
+          .from("project-media")
+          .createSignedUrls(coverPaths, 60 * 60);
+        const signedByPath = new Map(
+          (signed ?? []).filter((i) => !i.error && i.signedUrl).map((i) => [i.path, i.signedUrl]),
+        );
+        for (const p of rows) {
+          if (p.cover_url && signedByPath.has(p.cover_url))
+            p.cover_url = signedByPath.get(p.cover_url)!;
+        }
+      }
       return rows;
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.length < PROJECTS_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1].created_at,
     staleTime: 60_000,
   });
+  const projects = projectsPages?.pages.flat() ?? undefined;
 
   const { data: contributors } = useQuery({
-    queryKey: ["explore-contributors", meId ?? "anon"],
+    queryKey: ["explore-contributors", meId ?? "anon", (projects ?? []).length],
     queryFn: async (): Promise<{ project_id: string }[]> => {
       if (!meId) return [];
       const ids = (projects ?? []).map((p) => p.id);
@@ -301,20 +323,29 @@ function ExplorePage() {
     staleTime: 60_000,
   });
 
-  const { data: opportunities = [], isLoading: opportunitiesLoading } = useQuery({
+  const OPPORTUNITIES_PAGE_SIZE = 80;
+  const {
+    data: opportunitiesPages,
+    isPending: opportunitiesLoading,
+    hasNextPage: opportunitiesHasNextPage,
+    isFetchingNextPage: opportunitiesFetchingMore,
+    fetchNextPage: fetchNextOpportunities,
+  } = useInfiniteQuery({
     queryKey: ["explore-opportunities"],
-    queryFn: async (): Promise<Opportunity[]> => {
+    queryFn: async ({ pageParam }): Promise<Opportunity[]> => {
       const OPPORTUNITIES_SELECT =
         // profiles is disambiguated via the direct FK — without it, PostgREST
         // 300s (PGRST201) because projects↔profiles also has a many-to-many
         // path through project_contributors.
-        "id, title, description, skills, projects(id, title, description, stage, status, profile_id, profiles!projects_profile_id_fkey(handle, display_name, creator_title))" as const;
-      const { data, error } = await supabase
+        "id, title, description, skills, created_at, projects(id, title, description, stage, status, profile_id, profiles!projects_profile_id_fkey(handle, display_name, creator_title))" as const;
+      let query = supabase
         .from("project_open_roles")
         .select<typeof OPPORTUNITIES_SELECT, OpportunityQueryRow>(OPPORTUNITIES_SELECT)
         .eq("is_filled", false)
         .order("created_at", { ascending: false })
-        .limit(80);
+        .limit(OPPORTUNITIES_PAGE_SIZE);
+      if (pageParam) query = query.lt("created_at", pageParam);
+      const { data, error } = await query;
       if (error) throw error;
 
       return (data ?? []).flatMap((row) => {
@@ -326,6 +357,7 @@ function ExplorePage() {
             title: row.title,
             description: row.description ?? null,
             skills: Array.isArray(row.skills) ? row.skills : [],
+            created_at: row.created_at,
             project: {
               id: project.id,
               title: project.title,
@@ -339,9 +371,15 @@ function ExplorePage() {
         ];
       });
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.length < OPPORTUNITIES_PAGE_SIZE
+        ? undefined
+        : lastPage[lastPage.length - 1].created_at,
     enabled: tab === "opportunities",
     staleTime: 60_000,
   });
+  const opportunities = (opportunitiesPages?.pages ?? []).flat();
 
   // One batched query for my application status across all visible roles —
   // avoids each Apply button firing its own query on the Opportunities tab.
@@ -395,22 +433,34 @@ function ExplorePage() {
     staleTime: 60_000,
   });
 
-  const { data: creators, isLoading: creatorsLoading } = useQuery({
+  const CREATORS_PAGE_SIZE = 60;
+  const {
+    data: creatorsPages,
+    isPending: creatorsLoading,
+    hasNextPage: creatorsHasNextPage,
+    isFetchingNextPage: creatorsFetchingMore,
+    fetchNextPage: fetchNextCreators,
+  } = useInfiniteQuery({
     queryKey: ["explore-creators", meId ?? "anon"],
-    queryFn: async (): Promise<Creator[]> => {
+    queryFn: async ({ pageParam }): Promise<Creator[]> => {
       let query = supabase
         .from("profiles")
-        .select("id, handle, display_name, creator_title, category, country")
+        .select("id, handle, display_name, creator_title, category, country, updated_at")
         .not("display_name", "is", null)
         .order("updated_at", { ascending: false })
-        .limit(60);
+        .limit(CREATORS_PAGE_SIZE);
+      if (pageParam) query = query.lt("updated_at", pageParam);
       if (meId) query = query.neq("id", meId);
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Creator[];
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.length < CREATORS_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1].updated_at,
     staleTime: 60_000,
   });
+  const creators = (creatorsPages?.pages ?? []).flat();
 
   const contributorIds = useMemo(() => {
     if (!meId) return new Set<string>();
@@ -909,19 +959,33 @@ function ExplorePage() {
                       );
                     })}
                   </div>
+                  <LoadMoreButton
+                    canLoadMore={opportunitiesHasNextPage}
+                    isLoading={opportunitiesFetchingMore}
+                    onLoadMore={fetchNextOpportunities}
+                  />
                 </>
               )}
             </>
           ) : tab === "projects" ? (
-            <ProjectShelf
-              projects={filteredProjects}
-              meId={meId}
-              contributorIds={contributorIds}
-              q={q}
-              setQ={setQ}
-              category={category}
-              setCategory={setCategory}
-            />
+            <>
+              <ProjectShelf
+                projects={filteredProjects}
+                meId={meId}
+                contributorIds={contributorIds}
+                q={q}
+                setQ={setQ}
+                category={category}
+                setCategory={setCategory}
+              />
+              {filteredProjects.length > 0 && (
+                <LoadMoreButton
+                  canLoadMore={projectsHasNextPage}
+                  isLoading={projectsFetchingMore}
+                  onLoadMore={fetchNextProjects}
+                />
+              )}
+            </>
           ) : filteredCreators.length === 0 ? (
             <EmptyState
               icon={<Compass className="h-5 w-5" />}
@@ -994,6 +1058,11 @@ function ExplorePage() {
                   );
                 })}
               </div>
+              <LoadMoreButton
+                canLoadMore={creatorsHasNextPage}
+                isLoading={creatorsFetchingMore}
+                onLoadMore={fetchNextCreators}
+              />
             </>
           )}
         </div>
@@ -1120,6 +1189,38 @@ function StatRow({ icon, label, value }: { icon: React.ReactNode; label: string;
       <span className="numeric font-medium tabular-nums text-foreground">
         {value != null ? value.toLocaleString() : "–"}
       </span>
+    </div>
+  );
+}
+
+function LoadMoreButton({
+  canLoadMore,
+  isLoading,
+  onLoadMore,
+}: {
+  canLoadMore: boolean;
+  isLoading: boolean;
+  onLoadMore: () => void;
+}) {
+  if (!canLoadMore) return null;
+  return (
+    <div className="flex justify-center pt-6">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onLoadMore}
+        disabled={isLoading}
+        className="rounded-full text-muted-foreground"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            Loading…
+          </>
+        ) : (
+          "Load more"
+        )}
+      </Button>
     </div>
   );
 }

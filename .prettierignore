@@ -1,3 +1,4 @@
-# The imported Magic Patterns reference app is preserved verbatim under g/.
-# Production code is formatted and checked from src/.
+# Vendored / third-party files are preserved verbatim.
 g/
+.venv/
+pnpm-lock.yaml

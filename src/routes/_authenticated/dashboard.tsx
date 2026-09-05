@@ -121,6 +121,8 @@ function DashboardContent({
     staleTime: 60_000,
   });
 
+  // DB triggers (trg_award_earned_achievements) award achievements primarily;
+  // this client call is a backstop/recompute for sessions/streak-tracked ones.
   useEffect(() => {
     if (!data?.userId) return;
     checkAndAwardAchievements()

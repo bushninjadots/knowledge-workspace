@@ -152,6 +152,8 @@ export const DISCUSSION_REPLIES_KEY = (discussionId: string) =>
   ["discussion-replies", discussionId] as const;
 export const OPEN_ROLES_KEY = (projectId: string) => ["open-roles", projectId] as const;
 export const PROJECT_ACTIVITY_KEY = (projectId: string) => ["project-activity", projectId] as const;
+const PROJECT_COMMUNITY_POSTS_KEY = (projectId: string) =>
+  ["project-community-posts", projectId] as const;
 
 // ============================================================
 // Milestones
@@ -443,6 +445,30 @@ export function useDiscussions(projectId: string) {
       }));
     },
     enabled: !!projectId,
+  });
+}
+
+// ============================================================
+// Community posts
+// ============================================================
+
+export function useProjectCommunityPostCount(projectId: string) {
+  return useQuery({
+    queryKey: PROJECT_COMMUNITY_POSTS_KEY(projectId),
+    queryFn: async () => {
+      const { count, error } = await sb
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", projectId);
+
+      if (error) {
+        if (error.code === "42P01") return 0;
+        throw error;
+      }
+      return count ?? 0;
+    },
+    enabled: !!projectId,
+    staleTime: 30_000,
   });
 }
 

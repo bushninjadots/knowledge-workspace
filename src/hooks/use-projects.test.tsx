@@ -1,9 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { PROJECT_KEY, useUpdateProjectContent, useUpdateProjectPresentation } from "./use-projects";
+import {
+  PROJECT_KEY,
+  useUpdateProjectContent,
+  useUpdateProjectPresentation,
+  useProjectCommunityPostCount,
+} from "./use-projects";
 import type { ProjectDetail } from "./use-projects";
-import { createFakeSupabase } from "../../tests/helpers/fake-supabase";
+import { createFakeSupabase, type FakeSupabaseHandle } from "../../tests/helpers/fake-supabase";
 
 // --- Mocks ---------------------------------------------------------------
 
@@ -79,6 +84,46 @@ function renderMutation({ failUpdate = false }: { failUpdate?: boolean } = {}) {
 }
 
 // --- Tests ---------------------------------------------------------------
+
+function renderCountQuery(
+  projectId = "project-1",
+  registerHandler?: (h: FakeSupabaseHandle) => void,
+) {
+  handle.reset();
+  fake.supabase.from = handle.client.from;
+  fake.supabase.auth = handle.client.auth;
+  registerHandler?.(handle);
+
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+  const utils = renderHook(() => useProjectCommunityPostCount(projectId), { wrapper });
+  return { qc, ...utils };
+}
+
+describe("useProjectCommunityPostCount", () => {
+  it("returns the exact count of posts linked to the project", async () => {
+    const { result } = renderCountQuery("project-1", (h) =>
+      h.on("posts:select", () => ({ data: [], error: null, count: 4 })),
+    );
+
+    await waitFor(() => expect(result.current.data).toBe(4));
+    const call = handle.calls.find((c) => c.table === "posts" && c.action === "select");
+    expect(call?.table).toBe("posts");
+    expect(call?.projection).toBe("id");
+  });
+
+  it("returns 0 when the posts table is missing", async () => {
+    const { result } = renderCountQuery("project-1", (h) =>
+      h.on("posts:select", () => ({ data: null, error: { code: "42P01", message: "nope" } })),
+    );
+
+    await waitFor(() => expect(result.current.data).toBe(0));
+  });
+});
 
 describe("useUpdateProjectPresentation", () => {
   it("persists the selected presentation preset", async () => {

@@ -35,7 +35,7 @@ import type { ProfileBackground } from "@/lib/background-themes";
 const CAPTION_MAX = 60;
 const QUICK_EMOJI = ["✨", "🚀", "🌿", "💜", "🎨", "🔥", "🌊", "☕️", "🎧", "🌸"];
 
-export type HeroIdentity = {
+type HeroIdentity = {
   display_name: string | null;
   handle: string | null;
   creator_title: string | null;

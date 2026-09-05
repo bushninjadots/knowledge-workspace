@@ -18,6 +18,7 @@ type ContributorRow = {
     handle: string | null;
     avatar_url: string | null;
   } | null;
+  signed_avatar_url: string | null;
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -38,7 +39,21 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
         .select("profile_id, role, profiles(id, display_name, handle, avatar_url)")
         .eq("project_id", projectId)
         .order("role", { ascending: true });
-      return (data ?? []) as unknown as ContributorRow[];
+      const rows = (data ?? []) as unknown as ContributorRow[];
+      // avatars is a private bucket — render signed URLs, never raw paths.
+      const avatarTargets = rows.filter((r) => r.profiles?.avatar_url);
+      if (avatarTargets.length > 0) {
+        const { data: signed } = await supabase.storage.from("avatars").createSignedUrls(
+          avatarTargets.map((r) => r.profiles!.avatar_url as string),
+          60 * 60,
+        );
+        for (const item of signed ?? []) {
+          if (item.error || !item.signedUrl) continue;
+          const target = avatarTargets.find((r) => r.profiles?.avatar_url === item.path);
+          if (target) target.signed_avatar_url = item.signedUrl;
+        }
+      }
+      return rows;
     },
     enabled: !!projectId,
   });
@@ -84,7 +99,7 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
             >
               {config.showAvatars !== false && (
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.avatar_url ?? undefined} />
+                  <AvatarImage src={c.signed_avatar_url ?? undefined} />
                   <AvatarFallback className="text-xs">{initial}</AvatarFallback>
                 </Avatar>
               )}

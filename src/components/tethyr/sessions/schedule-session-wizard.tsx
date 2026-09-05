@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
+import { zonedDateTimeToUtcIso } from "@/lib/timezones";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
@@ -178,7 +179,7 @@ export function ScheduleSessionWizard({
       return;
     }
 
-    const startsAt = new Date(`${state.date}T${state.time}`).toISOString();
+    const startsAt = zonedDateTimeToUtcIso(state.date, state.time, state.timezone);
     const participantIds = state.participants.map((p) => p.id);
 
     try {

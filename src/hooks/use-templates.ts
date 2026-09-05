@@ -4,7 +4,6 @@
 //   • useUpdateProjectDirection — set a project's collaboration direction.
 //   • usePublicTemplates — browse all published templates (with search/filter).
 //   • useTemplate — fetch a single template by ID.
-//   • useSaveAsTemplate — mark an existing layout as a template.
 //   • useApplyTemplate — copy a template's sections to a page's layout + bump usage.
 //   • useUnpublishTemplate — unmark a template (sets is_template = false).
 
@@ -145,62 +144,6 @@ export function useTemplate(templateId: string) {
 }
 
 // ── Mutations ────────────────────────────────────────────────────────────────
-
-interface SaveAsTemplateParams {
-  layoutId: string;
-  name: string;
-  description?: string;
-  category?: string;
-}
-
-/** Create a duplicate layout and mark it as a public template. The original
- * page layout stays private — only the copy becomes a template. */
-export function useSaveAsTemplate() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ layoutId, name, description, category }: SaveAsTemplateParams) => {
-      // 1. Fetch the current layout's sections.
-      const { data: source, error: fetchErr } = await supabase
-        .from("layouts")
-        .select("sections, created_by")
-        .eq("id", layoutId)
-        .single();
-      if (fetchErr) throw fetchErr;
-
-      // 2. Create a NEW layout row (a copy) marked as a template,
-      //    carrying the page's current theme ID.
-      const { data: pageForTheme } = await supabase
-        .from("pages")
-        .select("theme_id")
-        .eq("layout_id", layoutId)
-        .maybeSingle();
-
-      // created_by MUST be auth.uid() — RLS requires auth.uid() = created_by
-      // for INSERT. Copying source.created_by fails when source has null.
-      const me = (await supabase.auth.getUser()).data.user;
-      const { error: insertErr } = await supabase.from("layouts").insert({
-        name,
-        description: description ?? null,
-        type: "standard",
-        category: category ?? null,
-        sections:
-          source.sections as unknown as Database["public"]["Tables"]["layouts"]["Insert"]["sections"],
-        theme_id: pageForTheme?.theme_id ?? null,
-        is_template: true,
-        created_by: me?.id ?? null,
-      });
-      if (insertErr) throw insertErr;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template published");
-    },
-    onError: (err) => {
-      toast.error(friendlyError(err, "Failed to publish template"));
-    },
-  });
-}
 
 /** Unmark a template (revert to private layout). */
 export function useUnpublishTemplate() {

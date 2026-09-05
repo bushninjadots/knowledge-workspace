@@ -24,8 +24,7 @@ import type {
 import type { LayoutSection, PageLayout } from "@/lib/page-blocks";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
-export type SectionMarker =
-  "identity" | "projects" | "bio" | "skills" | "gallery" | "tools" | "links";
+type SectionMarker = "identity" | "projects" | "bio" | "skills" | "gallery" | "tools" | "links";
 
 type ProfileProjectsPresentation =
   "spotlight" | "editorial-grid" | "horizontal-scroll" | "minimal-list";

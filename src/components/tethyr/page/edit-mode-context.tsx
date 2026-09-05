@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import { createStudioHistory, type StudioSnapshot } from "@/lib/studio-history";
 
 export type PreviewDevice = "desktop" | "tablet" | "mobile";
-export type StudioMode = "view" | "edit" | "preview";
+type StudioMode = "view" | "edit" | "preview";
 
 interface EditModeState {
   /** The single public mode exposed by the Studio surface. */

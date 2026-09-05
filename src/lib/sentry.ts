@@ -18,7 +18,9 @@ export function initSentry() {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     integrations: [
       Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
+      // Text and media stay masked (GDPR / Spain) — replays show interaction
+      // structure, never the contents of messages, forms, or uploaded media.
+      Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
     ],
     tracesSampleRate: 0.1,
     replaysSessionSampleRate: 0,
