@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(96);
+SELECT plan(108);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -1117,6 +1117,78 @@ SELECT is(
     WHERE id = '55555555-5555-5555-5555-555555555555'),
   'Builder Gal',
   '96. GitHub user_name becomes the profile display name'
+);
+
+
+-- ---------------------------------------------------------------------------
+-- 14. Function ACLs: studio/teams/space RPCs must not be callable by anon.
+--     (Regression: schema-drift repair re-surfaced Supabase's default
+--     EXECUTE grants to PUBLIC/anon on the recreated functions.)
+-- ---------------------------------------------------------------------------
+-- Studio publish/rollback are signed-in editor actions.
+SELECT is(
+  has_function_privilege('anon', 'public.publish_page_version(uuid)', 'EXECUTE'),
+  false,
+  '97. anonymous cannot execute publish_page_version'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.publish_page_version(uuid)', 'EXECUTE'),
+  true,
+  '98. authenticated can execute publish_page_version'
+);
+SELECT is(
+  has_function_privilege('anon', 'public.rollback_page_version(uuid, integer)', 'EXECUTE'),
+  false,
+  '99. anonymous cannot execute rollback_page_version'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.rollback_page_version(uuid, integer)', 'EXECUTE'),
+  true,
+  '100. authenticated can execute rollback_page_version'
+);
+
+-- notify_team_invite is a SECURITY DEFINER trigger function — no client role.
+SELECT is(
+  has_function_privilege('anon', 'public.notify_team_invite()', 'EXECUTE'),
+  false,
+  '101. anonymous cannot execute notify_team_invite'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.notify_team_invite()', 'EXECUTE'),
+  false,
+  '102. authenticated cannot execute notify_team_invite'
+);
+
+-- Space bans and unread counts require a signed-in user.
+SELECT is(
+  has_function_privilege('anon', 'public.ban_space_member(uuid, uuid, text)', 'EXECUTE'),
+  false,
+  '103. anonymous cannot execute ban_space_member'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.ban_space_member(uuid, uuid, text)', 'EXECUTE'),
+  true,
+  '104. authenticated can execute ban_space_member'
+);
+SELECT is(
+  has_function_privilege('anon', 'public.unban_space_member(uuid, uuid)', 'EXECUTE'),
+  false,
+  '105. anonymous cannot execute unban_space_member'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.unban_space_member(uuid, uuid)', 'EXECUTE'),
+  true,
+  '106. authenticated can execute unban_space_member'
+);
+SELECT is(
+  has_function_privilege('anon', 'public.unread_message_counts()', 'EXECUTE'),
+  false,
+  '107. anonymous cannot execute unread_message_counts'
+);
+SELECT is(
+  has_function_privilege('authenticated', 'public.unread_message_counts()', 'EXECUTE'),
+  true,
+  '108. authenticated can execute unread_message_counts'
 );
 
 

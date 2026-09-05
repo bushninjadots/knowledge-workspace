@@ -165,10 +165,7 @@ function PublicProfileRoute() {
           <span className="text-xs text-muted-foreground">
             This is your public Studio, exactly as visitors see it.
           </span>
-          <Link
-            to="/studio"
-            className="ml-auto text-xs font-medium text-primary hover:underline"
-          >
+          <Link to="/studio" className="ml-auto text-xs font-medium text-primary hover:underline">
             Customize
           </Link>
         </div>

@@ -44,3 +44,7 @@ supabase/.branches/
 .aider.chat.history.md
 .aider.input.history
 .playwright-mcp/
+
+# prowl-agent local index and lock
+.prowl/
+.prowl-setup.lock

@@ -119,10 +119,7 @@ export function StudioSectionGrid({
       const node = root.querySelector<HTMLElement>(`[data-block-id="${item.i}"]`);
       const content = node?.scrollHeight ?? 0;
       if (!content) return item;
-      const rows = Math.max(
-        MIN_ROWS,
-        Math.ceil((content + MARGIN[1]) / (ROW_HEIGHT + MARGIN[1])),
-      );
+      const rows = Math.max(MIN_ROWS, Math.ceil((content + MARGIN[1]) / (ROW_HEIGHT + MARGIN[1])));
       return { ...item, h: rows };
     });
     readyRef.current = true;
