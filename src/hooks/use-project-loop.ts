@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type {
 import { supabasePending } from "@/lib/supabase-pending-schema";
+import type {
   CollaborationBrief,
   ProjectLineage,
   ProjectRecognition,
