@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 
-import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
