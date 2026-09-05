@@ -9,6 +9,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
 import { normalizeStudioConfig } from "@/lib/studio-config";
 import type {
+import { supabasePending } from "@/lib/supabase-pending-schema";
   LayoutSection,
   PageData,
   PageLayout,
@@ -134,7 +135,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       }
 
       // Query 4: Get published versions (newest first). Publicly readable via RLS.
-      const { data: versionRows } = await supabase
+      const { data: versionRows } = await supabasePending
         .from("page_versions")
         .select("id, version, layout, published_at")
         .eq("page_id", pageRow.id)

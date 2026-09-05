@@ -10,6 +10,7 @@ import { createDefaultProfileLayout, createDefaultProjectLayout } from "@/lib/de
 import type { StudioConfig } from "@/lib/studio-config";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 type LayoutSections = Database["public"]["Tables"]["layouts"]["Insert"]["sections"];
 
@@ -139,7 +140,7 @@ export function useApplyStudioComposition() {
 
   return useMutation({
     mutationFn: async ({ pageId, layoutId, layout, config }: ApplyStudioCompositionParams) => {
-      const { error } = await supabase.rpc("apply_studio_composition", {
+      const { error } = await supabasePending.rpc("apply_studio_composition", {
         p_page_id: pageId,
         p_layout_id: layoutId,
         p_sections: layout.sections as unknown as Json,
@@ -177,7 +178,7 @@ export function useUpdatePageConfig() {
 
   return useMutation({
     mutationFn: async ({ pageId, config }: UpdateConfigParams) => {
-      const { error } = await supabase
+      const { error } = await supabasePending
         .from("pages")
         .update({
           config: config as unknown as Json,
@@ -200,7 +201,7 @@ export function usePublishPage() {
 
   return useMutation({
     mutationFn: async ({ pageId }: PublishParams) => {
-      const { error } = await supabase.rpc("publish_page_version", {
+      const { error } = await supabasePending.rpc("publish_page_version", {
         _page_id: pageId,
       });
       if (error) throw error;
@@ -224,7 +225,7 @@ export function useRollbackPageVersion() {
 
   return useMutation({
     mutationFn: async ({ pageId, version }: RollbackParams) => {
-      const { error } = await supabase.rpc("rollback_page_version", {
+      const { error } = await supabasePending.rpc("rollback_page_version", {
         _page_id: pageId,
         _version: version,
       });

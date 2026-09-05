@@ -6,6 +6,7 @@ import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 import { safeHref } from "@/lib/validators";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 type RepoRow = {
   id: string;
@@ -21,7 +22,7 @@ function ProjectReposBlock({ config, context }: BlockProps) {
     queryKey: ["project-repos-block", projectId],
     queryFn: async (): Promise<RepoRow[]> => {
       if (!projectId) return [];
-      const { data: d } = await supabase
+      const { data: d } = await supabasePending
         .from("project_repositories_safe")
         .select("id, provider, url")
         .eq("project_id", projectId)
