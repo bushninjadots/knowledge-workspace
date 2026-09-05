@@ -20,13 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
+
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
@@ -135,27 +130,24 @@ export function HeroEditControls({
           {uploading ? "Uploading…" : hasBanner ? "Change banner" : "Add banner"}
         </button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit identity
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-52">
-            <DropdownMenuItem onClick={() => setIdentityOpen(true)}>
-              <Pencil className="mr-2 h-3.5 w-3.5" />
-              Edit identity details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setAppearanceOpen(true)}>
-              <Palette className="mr-2 h-3.5 w-3.5" />
-              Change appearance
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          type="button"
+          onClick={() => setIdentityOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit identity
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setAppearanceOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
+        >
+          <Palette className="h-3.5 w-3.5" />
+          Appearance
+        </button>
+
       </div>
 
       <input

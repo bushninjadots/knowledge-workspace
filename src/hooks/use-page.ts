@@ -5,6 +5,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import type { Json } from "@/integrations/supabase/types";
 import { deepMergeTokens } from "@/lib/theme-tokens";
 import { normalizeStudioConfig } from "@/lib/studio-config";
@@ -134,7 +135,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       }
 
       // Query 4: Get published versions (newest first). Publicly readable via RLS.
-      const { data: versionRows } = await supabase
+      const { data: versionRows } = await supabasePending
         .from("page_versions")
         .select("id, version, layout, published_at")
         .eq("page_id", pageRow.id)
