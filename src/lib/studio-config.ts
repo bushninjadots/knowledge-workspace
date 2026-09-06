@@ -66,6 +66,10 @@ export interface StudioConfig {
   appBackground: BackgroundId;
   /** Public Studio background. */
   publicBackground: BackgroundId;
+  /** How card/panel outlines are drawn inside the Studio. */
+  cardBorders: CardBordersId;
+  /** Card border hex colour (used when cardBorders === "custom"). */
+  cardBorderColor: string;
 
   // ── Legacy fields (optional, accepted on read for backward compat) ────────
   /** @deprecated Use `structure` instead. */
