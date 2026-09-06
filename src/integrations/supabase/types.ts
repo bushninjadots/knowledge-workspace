@@ -1128,27 +1128,39 @@ export type Database = {
           created_at: string
           details: string | null
           id: string
-          post_id: string
+          moderator_note: string | null
+          post_id: string | null
+          post_title_snapshot: string | null
           reason: string
           reporter_id: string
+          resolved_at: string | null
+          space_id_snapshot: string | null
           status: string
         }
         Insert: {
           created_at?: string
           details?: string | null
           id?: string
-          post_id: string
+          moderator_note?: string | null
+          post_id?: string | null
+          post_title_snapshot?: string | null
           reason: string
           reporter_id: string
+          resolved_at?: string | null
+          space_id_snapshot?: string | null
           status?: string
         }
         Update: {
           created_at?: string
           details?: string | null
           id?: string
-          post_id?: string
+          moderator_note?: string | null
+          post_id?: string | null
+          post_title_snapshot?: string | null
           reason?: string
           reporter_id?: string
+          resolved_at?: string | null
+          space_id_snapshot?: string | null
           status?: string
         }
         Relationships: [
@@ -2144,6 +2156,7 @@ export type Database = {
           looking_for_collaborators: boolean
           looking_for_feedback: boolean
           media: Json
+          presentation_preset: string
           profile_id: string
           progress_percent: number
           readme: string | null
@@ -2174,6 +2187,7 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
+          presentation_preset?: string
           profile_id: string
           progress_percent?: number
           readme?: string | null
@@ -2204,6 +2218,7 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
+          presentation_preset?: string
           profile_id?: string
           progress_percent?: number
           readme?: string | null
@@ -2807,6 +2822,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           created_by: string
+          description: string | null
           id: string
           name: string
           slug: string
@@ -2816,6 +2832,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
           name: string
           slug: string
@@ -2825,6 +2842,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
           name?: string
           slug?: string
@@ -2953,6 +2971,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_project_role_application: {
+        Args: {
+          p_application_id: string
+          p_profile_id: string
+          p_project_id: string
+          p_role_id: string
+        }
+        Returns: undefined
+      }
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -2967,6 +2994,14 @@ export type Database = {
           member_count: number
           space_id: string
         }[]
+      }
+      decline_project_role_application: {
+        Args: {
+          p_application_id: string
+          p_project_id: string
+          p_role_id: string
+        }
+        Returns: undefined
       }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
       increment_usage_count: {
@@ -3034,6 +3069,10 @@ export type Database = {
           unread_count: number
         }[]
       }
+      vote_on_poll: {
+        Args: { p_option_index: number; p_post_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       achievement_type:
@@ -3052,6 +3091,15 @@ export type Database = {
         | "helped_ten_people"
         | "learner_journey"
         | "challenge_winner"
+        | "crew_founder"
+        | "team_player"
+        | "milestone_master"
+        | "helping_hand"
+        | "conversation_starter"
+        | "role_filler"
+        | "first_session"
+        | "session_teacher"
+        | "streak_4_weeks"
       availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
@@ -3250,6 +3298,15 @@ export const Constants = {
         "helped_ten_people",
         "learner_journey",
         "challenge_winner",
+        "crew_founder",
+        "team_player",
+        "milestone_master",
+        "helping_hand",
+        "conversation_starter",
+        "role_filler",
+        "first_session",
+        "session_teacher",
+        "streak_4_weeks",
       ],
       availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [
