@@ -253,18 +253,21 @@ export type Database = {
       community_space_members: {
         Row: {
           joined_at: string
+          last_read_at: string | null
           role: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Insert: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id: string
           user_id: string
         }
         Update: {
           joined_at?: string
+          last_read_at?: string | null
           role?: Database["public"]["Enums"]["space_member_role"]
           space_id?: string
           user_id?: string
@@ -295,9 +298,11 @@ export type Database = {
           id: string
           join_type: string
           name: string
+          report_auto_dim_threshold: number
           rules: string[]
           slug: string
           updated_at: string
+          visibility: string
         }
         Insert: {
           avatar_url?: string | null
@@ -307,9 +312,11 @@ export type Database = {
           id?: string
           join_type?: string
           name: string
+          report_auto_dim_threshold?: number
           rules?: string[]
           slug: string
           updated_at?: string
+          visibility?: string
         }
         Update: {
           avatar_url?: string | null
@@ -319,9 +326,11 @@ export type Database = {
           id?: string
           join_type?: string
           name?: string
+          report_auto_dim_threshold?: number
           rules?: string[]
           slug?: string
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -2625,6 +2634,58 @@ export type Database = {
         }
         Relationships: []
       }
+      space_bans: {
+        Row: {
+          banned_by: string | null
+          created_at: string
+          id: string
+          lifted_at: string | null
+          reason: string | null
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          banned_by?: string | null
+          created_at?: string
+          id?: string
+          lifted_at?: string | null
+          reason?: string | null
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          banned_by?: string | null
+          created_at?: string
+          id?: string
+          lifted_at?: string | null
+          reason?: string | null
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_bans_banned_by_fkey"
+            columns: ["banned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_bans_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "community_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_bans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invites: {
         Row: {
           created_at: string
@@ -2896,6 +2957,10 @@ export type Database = {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
+      ban_space_member: {
+        Args: { p_reason?: string; p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
       community_space_member_counts: {
         Args: never
         Returns: {
@@ -2926,6 +2991,10 @@ export type Database = {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
       }
+      is_space_banned: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_space_member: {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
@@ -2948,11 +3017,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
+      unban_space_member: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
       unread_message_counts: {
         Args: never
         Returns: {
