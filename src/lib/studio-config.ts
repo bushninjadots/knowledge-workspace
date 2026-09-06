@@ -30,6 +30,8 @@ export type RadiusId = "sharp" | "soft";
 export type AccentMode = "auto" | "custom" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
+/** CARD BORDERS — how the outline around each card/panel is drawn. */
+export type CardBordersId = "neutral" | "dynamic" | "custom" | "none";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
 
