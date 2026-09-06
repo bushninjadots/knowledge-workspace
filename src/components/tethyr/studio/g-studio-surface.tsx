@@ -73,17 +73,21 @@ export type GStudioConfig = StudioConfig;
 export type GStudioMode = "view" | "edit" | "preview";
 export type GStudioDevice = "desktop" | "tablet" | "mobile";
 
-type NativeDragStart = (
-  blockId: string,
-  sourceSectionId: string,
-  width: number,
-  height: number,
-  event: React.DragEvent,
-) => void;
-type NativeDragMove = (event: React.DragEvent, rowHeight: number, margin: number) => void;
-type NativeDragDrop = (event: React.DragEvent) => void;
-type NativeDragEnd = () => void;
 type DragTarget = { sectionId: string; col: number; row: number };
+
+/** RGL attaches its mouse listeners to each grid item's DOM node. Blocks that
+ *  do not forward `onMouseDown`/`onMouseUp` silently disable drag; keep the
+ *  event props flowing from the injected handlers down to the host element. */
+type ForwardedGridEvents = {
+  onMouseDown?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseUp?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onTouchEnd?: (event: React.TouchEvent<HTMLDivElement>) => void;
+};
+
+/** Pointer types that must never start a block drag while editing. Mirrors the
+ *  project-page canvas cancel list (interactive controls stay clickable). */
+const BLOCK_DRAG_CANCEL =
+  "button, a, input, textarea, select, label, [role='button'], [contenteditable='true'], [data-no-drag]";
 
 interface GStudioSurfaceProps {
   layout: PageLayout;
@@ -217,13 +221,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const [starterOpen, setStarterOpen] = useState(false);
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const [snapToBlocks, setSnapToBlocks] = useState(true);
-  const [dragMoveTarget, setDragMoveTarget] = useState<DragTarget | null>(null);
-  const dragMoveTargetRef = useRef<DragTarget | null>(null);
-  const dragFrameRef = useRef<number | null>(null);
-  // RGL can emit source-grid layout updates while an unbounded item is being
-  // dragged over another area. Ignore those transient updates so the single
-  // cross-area move remains the source of truth for history and undo.
-  const suppressDropLayoutRef = useRef<string | null>(null);
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlocks((previous) => {
       const next = new Set(previous);
@@ -232,146 +229,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
       return next;
     });
   }, []);
-  const handleDragMove = useCallback((target: DragTarget | null, sourceSectionId: string) => {
-    dragMoveTargetRef.current = target;
-    if (target?.sectionId && target.sectionId !== sourceSectionId) {
-      suppressDropLayoutRef.current = sourceSectionId;
-    } else if (target?.sectionId === sourceSectionId) {
-      suppressDropLayoutRef.current = null;
-    }
-    if (dragFrameRef.current !== null) return;
-    const flush = () => {
-      dragFrameRef.current = null;
-      setDragMoveTarget(dragMoveTargetRef.current);
-    };
-    if (typeof window !== "undefined") {
-      dragFrameRef.current = window.requestAnimationFrame(flush);
-    } else {
-      flush();
-    }
-  }, []);
-  const handleDragDrop = useCallback(
-    (item: LayoutGridItem | undefined, sourceSectionId: string) => {
-      props.onGridInteractionEnd();
-      const target = dragMoveTargetRef.current;
-      dragMoveTargetRef.current = null;
-      setDragMoveTarget(null);
-      const crossAreaDrop = target && target.sectionId !== sourceSectionId && item;
-      if (crossAreaDrop) {
-        suppressDropLayoutRef.current = sourceSectionId;
-        props.onMoveToSection(item.i, target.sectionId, { col: target.col, row: target.row });
-        // RGL may flush one final layout callback after onDragStop. Let the
-        // destination render first, then allow future source-grid changes.
-        setTimeout(() => {
-          if (suppressDropLayoutRef.current === sourceSectionId) {
-            suppressDropLayoutRef.current = null;
-          }
-        }, 0);
-      } else {
-        suppressDropLayoutRef.current = null;
-      }
-    },
-    [props],
-  );
-  const nativeDragRef = useRef<{
-    blockId: string;
-    sourceSectionId: string;
-    width: number;
-    height: number;
-  } | null>(null);
-  const handleNativeDragStart = useCallback(
-    (
-      blockId: string,
-      sourceSectionId: string,
-      width: number,
-      height: number,
-      event: React.DragEvent,
-    ) => {
-      nativeDragRef.current = { blockId, sourceSectionId, width, height };
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", blockId);
-      props.onGridInteractionStart();
-    },
-    [props],
-  );
-  const handleNativeDragMove = useCallback(
-    (event: React.DragEvent, rowHeight: number, margin: number) => {
-      const drag = nativeDragRef.current;
-      if (!drag) return;
-      event.preventDefault();
-      const detected = detectDropPosition(
-        drag.width,
-        event.nativeEvent,
-        { rowHeight, margin },
-        drag.sourceSectionId,
-      );
-      handleDragMove(
-        snapDragTarget(
-          detected,
-          drag.width,
-          drag.height,
-          props.layout.sections,
-          snapToBlocks,
-          drag.blockId,
-        ),
-        drag.sourceSectionId,
-      );
-    },
-    [handleDragMove, props.layout.sections, snapToBlocks],
-  );
-  const handleNativeDrop = useCallback(
-    (event: React.DragEvent) => {
-      const drag = nativeDragRef.current;
-      if (!drag) return;
-      event.preventDefault();
-      nativeDragRef.current = null;
-      const target = dragMoveTargetRef.current;
-      props.onGridInteractionEnd();
-      dragMoveTargetRef.current = null;
-      suppressDropLayoutRef.current = null;
-      setDragMoveTarget(null);
-      if (!target) return;
-
-      const sourceSection = props.layout.sections.find(
-        (section) => section.id === drag.sourceSectionId,
-      );
-      const sourceItem = sourceSection?.grid?.find((item) => item.i === drag.blockId);
-      const targetSection = props.layout.sections.find(
-        (section) => section.id === target.sectionId,
-      );
-      if (!sourceSection || !sourceItem || !targetSection) return;
-      const existing = (targetSection.grid ?? []).filter((item) => item.i !== drag.blockId);
-      const snapped = snapGridPlacement(target, drag.width, drag.height, existing, snapToBlocks);
-      if (!snapped) return;
-      if (target.sectionId !== drag.sourceSectionId) {
-        props.onMoveToSection(drag.blockId, target.sectionId, {
-          col: snapped.col,
-          row: snapped.row,
-        });
-        return;
-      }
-
-      const moved = { ...sourceItem, x: snapped.col, y: snapped.row };
-      if (existing.some((item) => overlapsGridItems(moved, item))) {
-        const free = firstFreeGridPosition(existing, moved.w, moved.h);
-        moved.x = free.x;
-        moved.y = free.y;
-      }
-      props.onGridChange(drag.sourceSectionId, [...existing, moved]);
-    },
-    [props, snapToBlocks],
-  );
-  const handleNativeDragEnd = useCallback(() => {
-    nativeDragRef.current = null;
-    if (dragFrameRef.current !== null && typeof window !== "undefined") {
-      window.cancelAnimationFrame(dragFrameRef.current);
-      dragFrameRef.current = null;
-    }
-    props.onGridInteractionEnd();
-    dragMoveTargetRef.current = null;
-    suppressDropLayoutRef.current = null;
-    setDragMoveTarget(null);
-  }, [props]);
   const compact = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
   const touch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   const directManipulation = !touch;
@@ -475,20 +332,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               frameWidth={deviceWidth}
               onBlockEmptyChange={handleBlockEmpty}
               emptyBlockIds={emptyBlocks}
-              moveTargetSection={dragMoveTarget?.sectionId ?? null}
-              onDragMove={handleDragMove}
-              onDragDrop={handleDragDrop}
-              onNativeDragMove={handleNativeDragMove}
-              onNativeDrop={handleNativeDrop}
-              onNativeDragEnd={handleNativeDragEnd}
-              onNativeDragStart={handleNativeDragStart}
               snapToBlocks={snapToBlocks}
-              onGridChange={(sectionId, grid) => {
-                if (suppressDropLayoutRef.current === sectionId) {
-                  return;
-                }
-                props.onGridChange(sectionId, grid);
-              }}
+              onGridChange={props.onGridChange}
               onRequestPalette={(sectionId) => {
                 props.onPaletteTargetChange(sectionId);
                 setPaletteOpen(true);
@@ -750,7 +595,7 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag the grip to move · pull an edge to resize · arrow keys nudge a selected block
+            Drag any block to move it — it snaps to the grid and nearby blocks when Snap is on · pull an edge or corner to resize · arrow keys nudge a selected block
           </span>
         </div>
       )}
@@ -819,13 +664,6 @@ function GStudioCanvas({
   editing,
   directManipulation,
   frameWidth,
-  moveTargetSection,
-  onDragMove,
-  onDragDrop,
-  onNativeDragMove,
-  onNativeDrop,
-  onNativeDragEnd,
-  onNativeDragStart,
   snapToBlocks,
   onRequestPalette,
   ...props
@@ -834,16 +672,6 @@ function GStudioCanvas({
   editing: boolean;
   directManipulation: boolean;
   frameWidth?: number;
-  moveTargetSection: string | null;
-  onDragMove: (
-    target: { sectionId: string; col: number; row: number } | null,
-    sourceSectionId: string,
-  ) => void;
-  onDragDrop: (item: LayoutGridItem | undefined, sourceSectionId: string) => void;
-  onNativeDragMove: NativeDragMove;
-  onNativeDrop: NativeDragDrop;
-  onNativeDragEnd: NativeDragEnd;
-  onNativeDragStart: NativeDragStart;
   snapToBlocks: boolean;
   onRequestPalette: (id: string) => void;
 }) {
@@ -862,13 +690,6 @@ function GStudioCanvas({
             total={sections.length}
             editing={editing}
             directManipulation={directManipulation}
-            moveTargetSection={moveTargetSection}
-            onDragMove={onDragMove}
-            onDragDrop={onDragDrop}
-            onNativeDragMove={onNativeDragMove}
-            onNativeDrop={onNativeDrop}
-            onNativeDragEnd={onNativeDragEnd}
-            onNativeDragStart={onNativeDragStart}
             snapToBlocks={snapToBlocks}
             {...props}
             onRequestPalette={onRequestPalette}
@@ -915,6 +736,10 @@ function overlapsGridItems(a: LayoutGridItem, b: LayoutGridItem): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+function xOverlaps(a: LayoutGridItem, b: LayoutGridItem): boolean {
+  return a.x < b.x + b.w && a.x + a.w > b.x;
+}
+
 function firstFreeGridPosition(
   existing: LayoutGridItem[],
   width: number,
@@ -930,18 +755,6 @@ function firstFreeGridPosition(
     }
   }
   return { x: 0, y: maxY };
-}
-
-function snapDragTarget(
-  target: DragTarget | null,
-  width: number,
-  height: number,
-  sections: LayoutSection[],
-  enabled: boolean,
-  ignoreId?: string,
-): DragTarget | null {
-  const targetSection = sections.find((section) => section.id === target?.sectionId);
-  return snapGridPlacement(target, width, height, targetSection?.grid ?? [], enabled, ignoreId);
 }
 
 export function snapGridPlacement(
@@ -989,44 +802,101 @@ export function snapGridPlacement(
   return nearest ? { ...clamped, col: nearest.col, row: nearest.row } : clamped;
 }
 
-/** Map a drag pointer to the area currently under the cursor plus a (col, row)
- *  grid position within it. Returns null when not over any area (e.g. page
- *  margins between sections). */
-function detectDropPosition(
-  itemWidth: number,
-  event: Event,
-  geometry: { rowHeight: number; margin: number },
-  sourceSectionId: string,
-): { sectionId: string; col: number; row: number } | null {
-  if (!("clientX" in event) || !("clientY" in event)) return null;
-  const clientX = typeof event.clientX === "number" ? event.clientX : null;
-  const clientY = typeof event.clientY === "number" ? event.clientY : null;
-  if (clientX === null || clientY === null) return null;
-
-  const sectionsAtPointer = document
-    .elementsFromPoint(clientX, clientY)
-    .map((element) => element.closest<HTMLElement>("[data-section-id]"))
-    .filter((section): section is HTMLElement => Boolean(section));
-  const hovered =
-    sectionsAtPointer.find((section) => section.dataset.sectionId !== sourceSectionId) ??
-    sectionsAtPointer[0];
-  if (!hovered) return null;
-  const sectionId = hovered.dataset.sectionId ?? "";
-  const gridEl = hovered.querySelector<HTMLElement>("[data-studio-grid]") ?? hovered;
-  const rect = gridEl.getBoundingClientRect();
-  const cellWidth = Math.max(1, (rect.width - (COLS - 1) * geometry.margin) / COLS);
-  const col = Math.max(
-    0,
-    Math.min(
-      Math.min(COLS - itemWidth, Math.floor((clientX - rect.left) / (cellWidth + geometry.margin))),
-    ),
+/** After RGL settles a drag inside a section, re-align the block onto a nearby
+ *  neighbour edge when block-edge snapping is enabled. Returns an updated grid
+ *  when the dropped cell moved, otherwise null (caller keeps the RGL result). */
+export function settleGridSnap(
+  grid: LayoutGridItem[],
+  blockId: string,
+  enabled: boolean,
+): LayoutGridItem[] | null {
+  const item = grid.find((candidate) => candidate.i === blockId);
+  if (!item) return null;
+  const others = grid.filter((candidate) => candidate.i !== blockId);
+  const snapped = snapGridPlacement(
+    { sectionId: "", col: item.x, row: item.y },
+    item.w,
+    item.h,
+    others,
+    enabled,
+    blockId,
   );
-  const row = Math.max(
-    0,
-    Math.floor((clientY - rect.top) / (geometry.rowHeight + geometry.margin)),
-  );
-  return { sectionId, col, row };
+  if (!snapped || (snapped.col === item.x && snapped.row === item.y)) return null;
+  const moved = { ...item, x: snapped.col, y: snapped.row };
+  if (others.some((other) => overlapsGridItems(moved, other))) {
+    const free = firstFreeGridPosition(others, moved.w, moved.h);
+    moved.x = free.x;
+    moved.y = free.y;
+  }
+  if (moved.x === item.x && moved.y === item.y) return null;
+  return [...others, moved];
 }
+
+/** Minimum whole grid rows whose pixel box (h × row + (h−1) × margin) can hold
+ *  `contentPx` pixels. Auto-grow uses this so editing never clips content. */
+export function minRowsForContent(
+  contentPx: number,
+  rowHeight: number,
+  marginY: number,
+  minRows = 1,
+): number {
+  if (!Number.isFinite(contentPx) || contentPx <= 0) return minRows;
+  return Math.max(minRows, Math.ceil((contentPx + marginY) / (rowHeight + marginY)));
+}
+
+/** Grow a block's rows to fit its measured content, pushing any neighbours it
+ *  would now overlap downward so the grid never ends up with overlapping
+ *  blocks. Returns the updated grid or null when no change is needed. */
+export function growGridItemToContent(
+  grid: LayoutGridItem[],
+  blockId: string,
+  contentPx: number,
+  rowHeight: number,
+  marginY: number,
+): LayoutGridItem[] | null {
+  const item = grid.find((candidate) => candidate.i === blockId);
+  if (!item) return null;
+  const rows = minRowsForContent(contentPx, rowHeight, marginY, item.minH ?? 1);
+  if (rows <= item.h) return null;
+  const grown = { ...item, h: rows };
+  const updated = grid.map((candidate) =>
+    candidate.i === blockId ? grown : candidate,
+  );
+  return pushDownOverlaps(updated);
+}
+
+/** Move any item that overlaps the one above it straight down so the grid is
+ *  never overlapping. Only items that actually collide move — deliberate
+ *  whitespace gaps elsewhere survive. The item array order (and therefore block
+ *  positions) is preserved. */
+export function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
+  const items = grid.map((item) => ({ ...item }));
+  let changed = true;
+  let guard = 0;
+  const maxPasses = items.length * items.length + items.length + 4;
+  while (changed && guard < maxPasses) {
+    changed = false;
+    guard += 1;
+    for (let i = 0; i < items.length; i += 1) {
+      const upper = items[i];
+      for (let j = 0; j < items.length; j += 1) {
+        if (i === j) continue;
+        const lower = items[j];
+        // Only nudge items that start below the grown block.
+        if (lower.y < upper.y) continue;
+        if (lower.y >= upper.y + upper.h) continue;
+        if (!xOverlaps(upper, lower)) continue;
+        const pushedY = upper.y + upper.h;
+        if (pushedY > lower.y) {
+          lower.y = pushedY;
+          changed = true;
+        }
+      }
+    }
+  }
+  return items;
+}
+
 
 function GSectionBand({
   section,
@@ -1034,13 +904,6 @@ function GSectionBand({
   total,
   editing,
   directManipulation,
-  moveTargetSection,
-  onDragMove,
-  onDragDrop,
-  onNativeDragMove,
-  onNativeDrop,
-  onNativeDragEnd,
-  onNativeDragStart,
   snapToBlocks,
   onRequestPalette,
   ...props
@@ -1050,21 +913,10 @@ function GSectionBand({
   total: number;
   editing: boolean;
   directManipulation: boolean;
-  moveTargetSection: string | null;
-  onDragMove: (
-    target: { sectionId: string; col: number; row: number } | null,
-    sourceSectionId: string,
-  ) => void;
-  onDragDrop: (item: LayoutGridItem | undefined, sourceSectionId: string) => void;
-  onNativeDragMove: NativeDragMove;
-  onNativeDrop: NativeDragDrop;
-  onNativeDragEnd: NativeDragEnd;
-  onNativeDragStart: NativeDragStart;
   snapToBlocks: boolean;
   onRequestPalette: (id: string) => void;
 }) {
   const [renaming, setRenaming] = useState(false);
-  const isMoveTarget = editing && moveTargetSection === section.id;
   const sectionTitle = sectionLabel(section);
   const blocks = useMemo(
     () =>
@@ -1088,6 +940,67 @@ function GSectionBand({
       }
     : undefined;
   const hasGrid = !editing && (section.grid?.length ?? 0) > 0;
+
+  // Auto-fit: when a block's content is taller than its grid rows the frame
+  // clips it. Measure each block and grow its rows (pushing neighbours down)
+  // so nothing in the canvas is ever cut off. The ResizeObserver lives in
+  // GBlockFrame; this band converts reported content height into grid rows and
+  // commits the change. All reads go through refs so the callback stays stable.
+  const gridRef = useRef<LayoutGridItem[]>(grid);
+  gridRef.current = grid;
+  const rowHeightRef = useRef(rowHeight);
+  rowHeightRef.current = rowHeight;
+  const marginRef = useRef(margin);
+  marginRef.current = margin;
+  const editingRef = useRef(editing);
+  editingRef.current = editing;
+  const onGridChangeRef = useRef(props.onGridChange);
+  onGridChangeRef.current = props.onGridChange;
+  const sectionIdRef = useRef(section.id);
+  sectionIdRef.current = section.id;
+  const pendingFitRef = useRef<Map<string, number>>(new Map());
+  const fitTimerRef = useRef<number | null>(null);
+  const fitBlock = useCallback((blockId: string, contentPx: number) => {
+    pendingFitRef.current.set(blockId, contentPx);
+    if (fitTimerRef.current !== null) return;
+    const run = () => {
+      fitTimerRef.current = null;
+      if (!editingRef.current) {
+        pendingFitRef.current.clear();
+        return;
+      }
+      // Never fight an in-flight drag or resize; re-run once it settles.
+      const busy =
+        typeof document !== "undefined" &&
+        Boolean(
+          document.querySelector(
+            ".react-grid-item.react-draggable-dragging, .react-grid-item.resizing",
+          ),
+        );
+      if (busy) {
+        fitTimerRef.current = window.setTimeout(run, 120);
+        return;
+      }
+      let current = gridRef.current;
+      let changed = false;
+      for (const [blockId, px] of pendingFitRef.current) {
+        const updated = growGridItemToContent(
+          current,
+          blockId,
+          px,
+          rowHeightRef.current,
+          marginRef.current,
+        );
+        if (updated) {
+          current = updated;
+          changed = true;
+        }
+      }
+      pendingFitRef.current.clear();
+      if (changed) onGridChangeRef.current(sectionIdRef.current, current);
+    };
+    fitTimerRef.current = window.setTimeout(run, 0);
+  }, []);
   useEffect(() => {
     if (editing && props.autoRenameId === section.id && !renaming) {
       setRenaming(true);
@@ -1111,26 +1024,9 @@ function GSectionBand({
       className={cn(
         "relative",
         section.visible === false && editing && "opacity-60",
-        isMoveTarget && "ring-2 ring-inset ring-[var(--user-accent-border)]",
       )}
       onClick={(event) => event.stopPropagation()}
-      onDragOver={(event) => {
-        if (editing && directManipulation) {
-          onNativeDragMove(event, rowHeight, margin);
-        }
-      }}
-      onDrop={(event) => {
-        if (editing && directManipulation) {
-          event.stopPropagation();
-          onNativeDrop(event);
-        }
-      }}
     >
-      {isMoveTarget && (
-        <div className="pointer-events-none absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-[var(--user-accent)] px-2 py-0.5 font-mono text-3xs uppercase tracking-widest text-white">
-          Drop to move here
-        </div>
-      )}
       {editing ? (
         <header className="mb-2 flex items-center gap-1.5">
           <span
@@ -1249,38 +1145,33 @@ function GSectionBand({
             isResizable={editing && directManipulation}
             isDroppable={editing && directManipulation && Boolean(props.dragType)}
             droppingItem={dropItem}
-            draggableHandle=".magic-drag-handle"
-            draggableCancel="input,textarea,a,[data-no-drag]"
+            draggableCancel={BLOCK_DRAG_CANCEL}
             resizeHandles={["se", "e", "s"]}
             resizeHandle={ResizeHandle}
             useCSSTransforms
             compactType={null}
             onDragStart={() => props.onGridInteractionStart()}
             onResizeStart={() => props.onGridInteractionStart()}
-            onDrag={(_layout, _oldItem, newItem, _placeholder, event) => {
+            onDragStop={(current, _oldItem, newItem) => {
+              props.onGridInteractionEnd();
               if (!editing || !directManipulation || !newItem) return;
-              onDragMove(
-                snapDragTarget(
-                  detectDropPosition(
-                    newItem.w,
-                    event,
-                    {
-                      rowHeight,
-                      margin,
-                    },
-                    section.id,
-                  ),
-                  newItem.w,
-                  newItem.h,
-                  props.layout.sections,
-                  snapToBlocks,
-                  newItem.i,
-                ),
-                section.id,
-              );
-            }}
-            onDragStop={(_currentLayout, _oldItem, newItem) => {
-              onDragDrop(newItem ?? undefined, section.id);
+              const blockId = newItem.i;
+              const committed = (current as unknown as LayoutGridItem[]).map((item) => ({
+                i: item.i,
+                x: item.x,
+                y: item.y,
+                w: item.w,
+                h: item.h,
+                minW: item.minW,
+                minH: item.minH,
+              }));
+              // RGL has already committed the drop at the grid cell; when block
+              // snapping is on, nudge the final cell onto the nearest neighbour
+              // edge one tick later so this is the last write and wins.
+              const settled = settleGridSnap(committed, blockId, snapToBlocks);
+              if (settled) {
+                window.setTimeout(() => props.onGridChange(section.id, settled), 0);
+              }
             }}
             onResizeStop={() => props.onGridInteractionEnd()}
             onDrop={(_layout, item, event) => {
@@ -1313,16 +1204,8 @@ function GSectionBand({
                 block={block}
                 editing={editing}
                 selected={props.selectedBlockId === block.id}
+                reportContentHeight={fitBlock}
                 {...props}
-                directManipulation={directManipulation}
-                nativeDragWidth={
-                  grid.find((item) => item.i === block.id)?.w ?? sizeFor(block.type)[0]
-                }
-                nativeDragHeight={
-                  grid.find((item) => item.i === block.id)?.h ?? sizeFor(block.type)[1]
-                }
-                onNativeDragStart={onNativeDragStart}
-                onNativeDragEnd={onNativeDragEnd}
               />
             ))}
           </EditorGrid>
@@ -1393,23 +1276,22 @@ function GSectionBand({
 
 const GBlockFrame = forwardRef<
   HTMLDivElement,
-  GStudioSurfaceProps & {
-    block: LayoutBlockInstance;
-    editing: boolean;
-    selected: boolean;
-    style?: CSSProperties;
-    className?: string;
-    children?: ReactNode;
-    nativeDragWidth?: number;
-    nativeDragHeight?: number;
-    directManipulation?: boolean;
-    onNativeDragStart?: NativeDragStart;
-    onNativeDragEnd?: NativeDragEnd;
-    /** Content-sized frame (public-style flow) instead of a fixed grid cell. */
-    fluid?: boolean;
-    /** Frame-less render mirroring the public page's `contents` wrapper. */
-    bare?: boolean;
-  }
+  GStudioSurfaceProps &
+    ForwardedGridEvents & {
+      block: LayoutBlockInstance;
+      editing: boolean;
+      selected: boolean;
+      style?: CSSProperties;
+      className?: string;
+      children?: ReactNode;
+      /** Content-sized frame (public-style flow) instead of a fixed grid cell. */
+      fluid?: boolean;
+      /** Frame-less render mirroring the public page's `contents` wrapper. */
+      bare?: boolean;
+      /** Reports the natural content height (px) of an editing block so the
+       *  section can grow the grid rows instead of clipping the content. */
+      reportContentHeight?: (blockId: string, contentPx: number) => void;
+    }
 >(function GBlockFrame(
   {
     block,
@@ -1420,16 +1302,16 @@ const GBlockFrame = forwardRef<
     children,
     fluid,
     bare,
-    directManipulation,
-    nativeDragWidth,
-    nativeDragHeight,
-    onNativeDragStart,
-    onNativeDragEnd,
+    onMouseDown,
+    onMouseUp,
+    onTouchEnd,
+    reportContentHeight,
     ...props
   },
   ref,
 ) {
   const def = getBlock(block.type);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const blockContext = {
     ownerId: props.userId,
     ownerType: "profile" as const,
@@ -1440,6 +1322,29 @@ const GBlockFrame = forwardRef<
     data: props.profile ? { profile: props.profile } : undefined,
     onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
   };
+  // Watch the content box of an editing block and report its natural height so
+  // the grid can grow the row count instead of clipping the block's content.
+  useEffect(() => {
+    if (!editing || fluid || !reportContentHeight) return;
+    const node = contentRef.current;
+    if (!node) return;
+    let frame = 0;
+    const report = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        reportContentHeight(block.id, node.scrollHeight);
+      });
+    };
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+    // Re-observe when the measured element or the reporter changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, fluid, block.id, reportContentHeight]);
   if (bare) {
     return (
       <div ref={ref} style={style} className={className}>
@@ -1456,10 +1361,14 @@ const GBlockFrame = forwardRef<
     <div
       ref={ref}
       style={style}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
+      onTouchEnd={onTouchEnd}
       className={cn(
         className,
         "group/frame relative",
         !fluid && "h-full min-h-0",
+        editing && "cursor-grab active:cursor-grabbing",
         selected && "ring-1 ring-[var(--user-accent)]",
         block.visible === false && "opacity-45",
       )}
@@ -1470,6 +1379,7 @@ const GBlockFrame = forwardRef<
       }}
     >
       <div
+        ref={contentRef}
         className={cn(
           "relative overflow-x-hidden rounded-[inherit] bg-[var(--surface)]",
           !fluid && "h-full min-h-0 overflow-y-auto",
@@ -1487,30 +1397,15 @@ const GBlockFrame = forwardRef<
       </div>
       {editing && (
         <>
-          <button
-            type="button"
-            draggable={editing && directManipulation === true}
-            onDragStart={(event) => {
-              if (!editing) return;
-              onNativeDragStart?.(
-                block.id,
-                props.layout.sections.find((section) =>
-                  section.blocks.some((candidate) => candidate.id === block.id),
-                )?.id ?? "",
-                nativeDragWidth ?? sizeFor(block.type)[0],
-                nativeDragHeight ?? sizeFor(block.type)[1],
-                event,
-              );
-            }}
-            onDragEnd={onNativeDragEnd}
-            aria-label={`Move ${def?.label ?? block.type}`}
+          <span
+            aria-hidden
             className={cn(
-              "magic-drag-handle absolute left-1 top-1 z-20 flex h-7 w-7 cursor-grab items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent)] shadow-sm transition-opacity group-hover/frame:opacity-100 focus-visible:opacity-100",
-              selected ? "opacity-100" : "opacity-70",
+              "pointer-events-none absolute left-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-sm border border-[var(--user-accent-border)] bg-[var(--surface-elevated)] text-[var(--user-accent)] shadow-sm transition-opacity group-hover/frame:opacity-100",
+              selected ? "opacity-100" : "opacity-60",
             )}
           >
             <GripVertical className="h-3.5 w-3.5" />
-          </button>
+          </span>
           {selected && (
             <div
               className="absolute -top-2 right-1 z-30 flex items-center gap-0.5 border border-border bg-[var(--popover)] px-1 py-0.5 shadow-panel"
