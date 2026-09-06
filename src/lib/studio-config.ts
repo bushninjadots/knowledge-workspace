@@ -138,12 +138,34 @@ export const BACKGROUND_OPTIONS: ReadonlyArray<{ value: BackgroundId; label: str
   { value: "sunken", label: "Sunken" },
 ];
 
+export const CARD_BORDER_OPTIONS: ReadonlyArray<{
+  value: CardBordersId;
+  label: string;
+  hint: string;
+}> = [
+  { value: "neutral", label: "Neutral", hint: "A quiet hairline that matches the theme" },
+  { value: "dynamic", label: "Dynamic", hint: "Tinted with your accent colour" },
+  { value: "custom", label: "Custom", hint: "Pick your own border colour" },
+  { value: "none", label: "None", hint: "No outlines — separate with space alone" },
+];
+
+/** Card border swatches offered next to the "Custom" choice. */
+export const CARD_BORDER_SWATCHES: ReadonlyArray<string> = [
+  "#d0d7de",
+  "#8c959f",
+  "#1f2328",
+  "#3f8f8a",
+  "#2f6fd0",
+  "#b4632a",
+];
+
 const STRUCTURE_VALUES = new Set(STRUCTURE_OPTIONS.map((o) => o.value));
 const PERSONALITY_VALUES = new Set(PERSONALITY_OPTIONS.map((o) => o.value));
 const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
 const RADIUS_VALUES = new Set(RADIUS_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
 const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
+const CARD_BORDER_VALUES = new Set(CARD_BORDER_OPTIONS.map((o) => o.value));
 
 const isOneOf =
   <T extends string>(allowed: Set<T>) =>
