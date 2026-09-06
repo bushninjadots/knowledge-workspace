@@ -92,6 +92,8 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   accentColor: "#3f8f8a",
   appBackground: "surface",
   publicBackground: "default",
+  cardBorders: "neutral",
+  cardBorderColor: "#d0d7de",
 };
 
 // ── Option Catalogs ───────────────────────────────────────────────────────────
