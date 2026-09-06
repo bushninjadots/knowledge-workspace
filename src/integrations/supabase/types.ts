@@ -51,7 +51,7 @@ export type Database = {
           challenge_id: string
           id: string
           joined_at: string
-          progress: Json | null
+          progress: Json
           review_status: string
           reviewed_at: string | null
           reviewer_note: string | null
@@ -65,7 +65,7 @@ export type Database = {
           challenge_id: string
           id?: string
           joined_at?: string
-          progress?: Json | null
+          progress?: Json
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -79,7 +79,7 @@ export type Database = {
           challenge_id?: string
           id?: string
           joined_at?: string
-          progress?: Json | null
+          progress?: Json
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -97,6 +97,13 @@ export type Database = {
             referencedRelation: "challenges"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "challenge_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       challenges: {
@@ -107,9 +114,7 @@ export type Database = {
           difficulty: string
           end_date: string | null
           id: string
-          is_starter: boolean
           max_participants: number | null
-          pass_criteria: string | null
           project_id: string | null
           skills: string[]
           start_date: string | null
@@ -125,9 +130,7 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
-          is_starter?: boolean
           max_participants?: number | null
-          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -143,9 +146,7 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
-          is_starter?: boolean
           max_participants?: number | null
-          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -155,6 +156,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "challenges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "challenges_project_id_fkey"
             columns: ["project_id"]
@@ -171,7 +179,6 @@ export type Database = {
           created_at: string
           id: string
           is_best_answer: boolean
-          parent_id: string | null
           post_id: string
         }
         Insert: {
@@ -180,7 +187,6 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
-          parent_id?: string | null
           post_id: string
         }
         Update: {
@@ -189,7 +195,6 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
-          parent_id?: string | null
           post_id?: string
         }
         Relationships: [
@@ -198,13 +203,6 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {
@@ -297,11 +295,9 @@ export type Database = {
           id: string
           join_type: string
           name: string
-          report_auto_dim_threshold: number
           rules: string[]
           slug: string
           updated_at: string
-          visibility: string
         }
         Insert: {
           avatar_url?: string | null
@@ -311,11 +307,9 @@ export type Database = {
           id?: string
           join_type?: string
           name: string
-          report_auto_dim_threshold?: number
           rules?: string[]
           slug: string
           updated_at?: string
-          visibility?: string
         }
         Update: {
           avatar_url?: string | null
@@ -325,11 +319,9 @@ export type Database = {
           id?: string
           join_type?: string
           name?: string
-          report_auto_dim_threshold?: number
           rules?: string[]
           slug?: string
           updated_at?: string
-          visibility?: string
         }
         Relationships: [
           {
@@ -915,35 +907,6 @@ export type Database = {
           },
         ]
       }
-      migrated_pages: {
-        Row: {
-          migrated_at: string
-          owner_id: string
-          owner_type: string
-          page_id: string
-        }
-        Insert: {
-          migrated_at?: string
-          owner_id: string
-          owner_type: string
-          page_id: string
-        }
-        Update: {
-          migrated_at?: string
-          owner_id?: string
-          owner_type?: string
-          page_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "migrated_pages_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: true
-            referencedRelation: "pages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       moderation_log: {
         Row: {
           action: string
@@ -1051,6 +1014,8 @@ export type Database = {
       }
       pages: {
         Row: {
+          composition_id: string | null
+          config: Json
           created_at: string
           id: string
           layout_id: string | null
@@ -1061,8 +1026,11 @@ export type Database = {
           theme_id: string | null
           theme_overrides: Json | null
           updated_at: string
+          vibe_id: string | null
         }
         Insert: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1073,8 +1041,11 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Update: {
+          composition_id?: string | null
+          config?: Json
           created_at?: string
           id?: string
           layout_id?: string | null
@@ -1085,6 +1056,7 @@ export type Database = {
           theme_id?: string | null
           theme_overrides?: Json | null
           updated_at?: string
+          vibe_id?: string | null
         }
         Relationships: [
           {
@@ -1147,39 +1119,27 @@ export type Database = {
           created_at: string
           details: string | null
           id: string
-          moderator_note: string | null
-          post_id: string | null
-          post_title_snapshot: string | null
+          post_id: string
           reason: string
           reporter_id: string
-          resolved_at: string | null
-          space_id_snapshot: string | null
           status: string
         }
         Insert: {
           created_at?: string
           details?: string | null
           id?: string
-          moderator_note?: string | null
-          post_id?: string | null
-          post_title_snapshot?: string | null
+          post_id: string
           reason: string
           reporter_id: string
-          resolved_at?: string | null
-          space_id_snapshot?: string | null
           status?: string
         }
         Update: {
           created_at?: string
           details?: string | null
           id?: string
-          moderator_note?: string | null
-          post_id?: string | null
-          post_title_snapshot?: string | null
+          post_id?: string
           reason?: string
           reporter_id?: string
-          resolved_at?: string | null
-          space_id_snapshot?: string | null
           status?: string
         }
         Relationships: [
@@ -1227,6 +1187,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_space_shares_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1867,6 +1834,65 @@ export type Database = {
           },
         ]
       }
+      project_recognitions: {
+        Row: {
+          created_at: string
+          giver_id: string
+          id: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          giver_id: string
+          id?: string
+          kind: string
+          project_activity_id: string
+          project_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          giver_id?: string
+          id?: string
+          kind?: string
+          project_activity_id?: string
+          project_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_recognitions_giver_id_fkey"
+            columns: ["giver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_recognitions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_repositories: {
         Row: {
           created_at: string
@@ -2028,6 +2054,39 @@ export type Database = {
           },
         ]
       }
+      project_visits: {
+        Row: {
+          last_seen_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_visits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_visits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_watchers: {
         Row: {
           created_at: string
@@ -2076,7 +2135,6 @@ export type Database = {
           looking_for_collaborators: boolean
           looking_for_feedback: boolean
           media: Json
-          presentation_preset: string
           profile_id: string
           progress_percent: number
           readme: string | null
@@ -2107,7 +2165,6 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
-          presentation_preset?: string
           profile_id: string
           progress_percent?: number
           readme?: string | null
@@ -2138,7 +2195,6 @@ export type Database = {
           looking_for_collaborators?: boolean
           looking_for_feedback?: boolean
           media?: Json
-          presentation_preset?: string
           profile_id?: string
           progress_percent?: number
           readme?: string | null
@@ -2569,58 +2625,6 @@ export type Database = {
         }
         Relationships: []
       }
-      space_bans: {
-        Row: {
-          banned_by: string | null
-          created_at: string
-          id: string
-          lifted_at: string | null
-          reason: string | null
-          space_id: string
-          user_id: string
-        }
-        Insert: {
-          banned_by?: string | null
-          created_at?: string
-          id?: string
-          lifted_at?: string | null
-          reason?: string | null
-          space_id: string
-          user_id: string
-        }
-        Update: {
-          banned_by?: string | null
-          created_at?: string
-          id?: string
-          lifted_at?: string | null
-          reason?: string | null
-          space_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "space_bans_banned_by_fkey"
-            columns: ["banned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "space_bans_space_id_fkey"
-            columns: ["space_id"]
-            isOneToOne: false
-            referencedRelation: "community_spaces"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "space_bans_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_invites: {
         Row: {
           created_at: string
@@ -2742,7 +2746,6 @@ export type Database = {
           cover_url: string | null
           created_at: string
           created_by: string
-          description: string | null
           id: string
           name: string
           slug: string
@@ -2752,7 +2755,6 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by: string
-          description?: string | null
           id?: string
           name: string
           slug: string
@@ -2762,7 +2764,6 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by?: string
-          description?: string | null
           id?: string
           name?: string
           slug?: string
@@ -2891,36 +2892,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _create_trigger_if_table_exists: {
-        Args: {
-          p_event?: string
-          p_function_name: string
-          p_level?: string
-          p_table_name: string
-          p_timing?: string
-          p_trigger_name: string
-        }
-        Returns: undefined
-      }
-      accept_project_role_application: {
-        Args: {
-          p_application_id: string
-          p_profile_id: string
-          p_project_id: string
-          p_role_id: string
-        }
-        Returns: undefined
-      }
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
-        Returns: undefined
-      }
-      award_earned_achievements: {
-        Args: never
-        Returns: Database["public"]["Enums"]["achievement_type"][]
-      }
-      ban_space_member: {
-        Args: { p_reason?: string; p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       community_space_member_counts: {
@@ -2928,22 +2901,6 @@ export type Database = {
         Returns: {
           member_count: number
           space_id: string
-        }[]
-      }
-      decline_project_role_application: {
-        Args: {
-          p_application_id: string
-          p_project_id: string
-          p_role_id: string
-        }
-        Returns: undefined
-      }
-      get_layout_lineage: {
-        Args: { start_id: string }
-        Returns: {
-          depth: number
-          layout_id: string
-          parent_id: string
         }[]
       }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
@@ -2964,32 +2921,12 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_allowed_storage_upload: {
-        Args: { p_bucket: string; p_metadata: Json; p_name: string }
-        Returns: boolean
-      }
-      is_project_visible: { Args: { project_id: string }; Returns: boolean }
+      is_project_visible: { Args: { _project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
       }
-      is_session_organizer: {
-        Args: { p_session_id: string; p_user_id?: string }
-        Returns: boolean
-      }
-      is_session_participant: {
-        Args: { p_session_id: string; p_user_id?: string }
-        Returns: boolean
-      }
-      is_space_banned: {
-        Args: { p_space_id: string; p_user_id: string }
-        Returns: boolean
-      }
       is_space_member: {
-        Args: { p_space_id: string; p_user_id?: string }
-        Returns: boolean
-      }
-      is_space_owner: {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
@@ -3011,27 +2948,17 @@ export type Database = {
         }
         Returns: undefined
       }
-      mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
-      posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
-      unban_space_member: {
-        Args: { p_space_id: string; p_user_id: string }
-        Returns: undefined
-      }
       unread_message_counts: {
         Args: never
         Returns: {
           connection_id: string
           unread_count: number
         }[]
-      }
-      vote_on_poll: {
-        Args: { p_option_index: number; p_post_id: string }
-        Returns: undefined
       }
     }
     Enums: {
@@ -3051,15 +2978,6 @@ export type Database = {
         | "helped_ten_people"
         | "learner_journey"
         | "challenge_winner"
-        | "crew_founder"
-        | "team_player"
-        | "milestone_master"
-        | "helping_hand"
-        | "conversation_starter"
-        | "role_filler"
-        | "first_session"
-        | "session_teacher"
-        | "streak_4_weeks"
       availability_day_status: "available" | "unavailable" | "tentative"
       availability_status:
         | "available"
@@ -3258,15 +3176,6 @@ export const Constants = {
         "helped_ten_people",
         "learner_journey",
         "challenge_winner",
-        "crew_founder",
-        "team_player",
-        "milestone_master",
-        "helping_hand",
-        "conversation_starter",
-        "role_filler",
-        "first_session",
-        "session_teacher",
-        "streak_4_weeks",
       ],
       availability_day_status: ["available", "unavailable", "tentative"],
       availability_status: [
