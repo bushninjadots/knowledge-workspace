@@ -1806,6 +1806,19 @@ function GCustomizePanel({
           options={CARD_BORDER_OPTIONS.map((o) => [o.value, o.label] as [string, string])}
           onChange={(value) => onChange({ cardBorders: value as GStudioConfig["cardBorders"] })}
         />
+        <Choice
+          label="Border weight"
+          hint="Control how much the card outline carries"
+          value={config.cardBorderWidth ?? "thin"}
+          options={[
+            ["thin", "Thin"],
+            ["medium", "Medium"],
+            ["thick", "Thick"],
+          ]}
+          onChange={(value) =>
+            onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+          }
+        />
         {config.cardBorders === "custom" && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {CARD_BORDER_SWATCHES.map((swatch) => (
@@ -1838,11 +1851,11 @@ function GCustomizePanel({
                 type="button"
                 title={swatch.label}
                 aria-label={`Card fill ${swatch.label}`}
-                aria-pressed={config.cardColor.toLowerCase() === swatch.value}
+                aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
                 onClick={() => onChange({ cardColor: swatch.value })}
                 className={cn(
                   "h-6 w-6 rounded-sm border-2 text-3xs",
-                  config.cardColor.toLowerCase() === swatch.value
+                  (config.cardColor ?? "").toLowerCase() === swatch.value
                     ? "border-foreground"
                     : "border-border",
                 )}

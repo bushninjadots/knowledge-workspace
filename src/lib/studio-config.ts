@@ -31,6 +31,7 @@ export type RadiusId = "sharp" | "soft";
 export type AccentMode = "auto" | "custom" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
+export type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
 
@@ -65,11 +66,13 @@ export interface StudioConfig {
   cardBorders: CardBorderPreference;
   /** Custom card border hex, used when cardBorders === "custom". */
   cardBorderColor: string;
+  /** Border weight shared by cards and panels. */
+  cardBorderWidth?: CardBorderWidth;
   /** Card/block fill colour (hex). Empty = follow the page's elevated surface. */
-  cardColor: string;
+  cardColor?: string;
   /** Card/block fill opacity, 0–100. Lower values let the backdrop show through,
-   *  the way Dashboard panels do. */
-  cardOpacity: number;
+   * the way Dashboard panels do. */
+  cardOpacity?: number;
   /** App shell background while editing. */
   appBackground: BackgroundId;
   /** Public Studio background. */
@@ -96,6 +99,7 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   accentColor: "#3f8f8a",
   cardBorders: "neutral",
   cardBorderColor: "",
+  cardBorderWidth: "thin",
   cardColor: "",
   cardOpacity: 30,
   appBackground: "surface",
@@ -150,6 +154,7 @@ const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
 const RADIUS_VALUES = new Set(RADIUS_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
 const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
+const CARD_BORDER_WIDTH_VALUES = new Set<CardBorderWidth>(["thin", "medium", "thick"]);
 
 const isOneOf =
   <T extends string>(allowed: Set<T>) =>
@@ -264,6 +269,9 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
       typeof value.cardBorderColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardBorderColor)
         ? value.cardBorderColor
         : DEFAULT_STUDIO_CONFIG.cardBorderColor,
+    cardBorderWidth: isOneOf(CARD_BORDER_WIDTH_VALUES)(value.cardBorderWidth)
+      ? value.cardBorderWidth
+      : DEFAULT_STUDIO_CONFIG.cardBorderWidth,
     cardColor:
       typeof value.cardColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardColor)
         ? value.cardColor
@@ -420,10 +428,9 @@ export const CARD_FILL_SWATCHES: ReadonlyArray<{ value: string; label: string }>
  * custom property (which CSS drops as a cycle).
  */
 export function cardFillStyle(config: StudioConfig): React.CSSProperties {
-  const base = /^#([0-9a-f]{6})$/i.test(config.cardColor)
-    ? config.cardColor
-    : "var(--surface-elevated)";
-  const opacity = Math.min(100, Math.max(0, Math.round(config.cardOpacity)));
+  const cardColor = config.cardColor ?? "";
+  const base = /^#([0-9a-f]{6})$/i.test(cardColor) ? cardColor : "var(--surface-elevated)";
+  const opacity = Math.min(100, Math.max(0, Math.round(config.cardOpacity ?? 100)));
   const fill = opacity >= 100 ? base : `color-mix(in oklab, ${base} ${opacity}%, transparent)`;
   return { "--studio-card-fill": fill } as React.CSSProperties;
 }
@@ -474,6 +481,12 @@ export function cardBorderStyle(config: StudioConfig): React.CSSProperties {
           : "var(--user-accent-border, var(--border))";
   style["--card-border-color"] = color;
   style["--card-border"] = color;
+  style["--card-border-width"] =
+    config.cardBorderWidth === "thick"
+      ? "2px"
+      : config.cardBorderWidth === "medium"
+        ? "1.5px"
+        : "1px";
   return style;
 }
 

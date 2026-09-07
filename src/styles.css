@@ -184,6 +184,7 @@
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
   --card-border-color: var(--border);
+  --card-border-width: 1px;
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
   --spacing-section: 4rem;
@@ -267,6 +268,7 @@
   --user-accent-border: color-mix(in oklab, var(--learning) 30%, transparent);
   --user-accent-glow: color-mix(in oklab, var(--learning) 6%, transparent);
   --card-border-color: var(--border);
+  --card-border-width: 1px;
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
   --spacing-section: 4rem;
@@ -455,7 +457,7 @@
    Use for self-contained widgets that need to stand apart. */
 @utility panel {
   background-color: var(--surface);
-  border: 1px solid var(--card-border-color, var(--border));
+  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
   border-radius: var(--radius-lg);
 }
 
@@ -477,7 +479,7 @@
    Tints with the user accent when the member has chosen accent borders. */
 @utility card {
   background-color: var(--surface);
-  border: 1px solid var(--card-border-color, var(--border));
+  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
   border-radius: var(--radius-lg);
 }
 

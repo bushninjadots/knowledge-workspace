@@ -25,6 +25,7 @@ import {
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
+import { useDominantColor, withAlpha } from "@/lib/dominant-color";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 import type { StudioSnapshot } from "@/lib/studio-history";
 
@@ -85,6 +86,7 @@ export function PageShell({
   const updateConfig = useUpdatePageConfig();
   const updateTheme = useUpdatePageTheme();
   const isGlassTheme = page?.config?.vibeId === "glass" || page?.config?.personalityId === "glass";
+  const bannerAccent = useDominantColor(profileMedia?.bannerUrl ?? null);
   const saveLayout = (nextLayout: PageLayout) => {
     if (!page || updateLayout.isPending || !isOwner || previewMode) return;
     recordSnapshot({
@@ -205,9 +207,21 @@ export function PageShell({
       // modes are page-local and should override it.
       if (page.config.accentMode !== "auto") {
         Object.assign(style, configStyle);
+      } else if (bannerAccent) {
+        style["--user-accent"] = bannerAccent;
+        style["--user-accent-border"] = withAlpha(bannerAccent, 0.3) ?? "var(--border)";
       }
       // Card borders are their own decision — apply them whatever the accent mode.
       Object.assign(style, cardBorderStyle(page.config));
+      if (
+        page.config.accentMode === "auto" &&
+        bannerAccent &&
+        page.config.cardBorders !== "neutral"
+      ) {
+        style["--card-border-color"] =
+          withAlpha(bannerAccent, page.config.cardBorders === "accent" ? 0.34 : 0.22) ??
+          "var(--border)";
+      }
     }
     if (isGlassTheme || blockContext.translucent) {
       style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";
@@ -225,7 +239,15 @@ export function PageShell({
       Object.assign(style, CARD_SURFACE_STYLE);
     }
     return style;
-  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent, page, ownerType]);
+  }, [
+    themeVars,
+    effectiveTheme,
+    isGlassTheme,
+    blockContext.translucent,
+    page,
+    bannerAccent,
+    ownerType,
+  ]);
 
   if (isLoading) {
     return (
