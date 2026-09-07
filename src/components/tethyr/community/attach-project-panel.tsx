@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FolderOpen, Link2, Plus, ExternalLink, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,132 +132,137 @@ export function AttachProjectPanel({
           </button>
         </div>
       ) : (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="my-projects" className="flex items-center gap-1.5 text-xs">
-              <FolderOpen className="h-3 w-3" /> My Projects
-            </TabsTrigger>
-            <TabsTrigger value="external" className="flex items-center gap-1.5 text-xs">
-              <Link2 className="h-3 w-3" /> External URL
-            </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-1.5 text-xs">
-              <Plus className="h-3 w-3" /> Create New
-            </TabsTrigger>
-          </TabsList>
+        <>
+          <SegmentedControl
+            value={tab}
+            onChange={setTab}
+            ariaLabel="Attachment source"
+            options={[
+              { value: "my-projects", label: "My Projects", icon: FolderOpen },
+              { value: "external", label: "External URL", icon: Link2 },
+              { value: "create", label: "Create New", icon: Plus },
+            ]}
+          />
 
-          <TabsContent value="my-projects" className="mt-2">
-            {loadingProjects ? (
-              <p className="text-xs text-muted-foreground">Loading...</p>
-            ) : myProjects.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                No projects yet. Create one or attach an external URL.
-              </p>
-            ) : (
-              <div className="max-h-48 space-y-1 overflow-y-auto">
-                {myProjects.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => {
-                      const snapshot: ProjectSnapshot = {
-                        name: p.title,
-                        description: p.description,
-                        platform: "tethyr",
-                        url: `/projects/${p.id}`,
-                        logo: p.cover_url,
-                        status: p.status,
-                        stage: p.stage,
-                      };
-                      onAttach(p.id, snapshot);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-surface-elevated"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-green/10 text-xs font-semibold text-brand-green">
-                      {p.title.charAt(0)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{p.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">{p.stage}</p>
-                    </div>
-                  </button>
-                ))}
+          {tab === "my-projects" && (
+            <div className="mt-2">
+              {loadingProjects ? (
+                <p className="text-xs text-muted-foreground">Loading...</p>
+              ) : myProjects.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No projects yet. Create one or attach an external URL.
+                </p>
+              ) : (
+                <div className="max-h-48 space-y-1 overflow-y-auto">
+                  {myProjects.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        const snapshot: ProjectSnapshot = {
+                          name: p.title,
+                          description: p.description,
+                          platform: "tethyr",
+                          url: `/projects/${p.id}`,
+                          logo: p.cover_url,
+                          status: p.status,
+                          stage: p.stage,
+                        };
+                        onAttach(p.id, snapshot);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-surface-elevated"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-green/10 text-xs font-semibold text-brand-green">
+                        {p.title.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{p.title}</p>
+                        <p className="truncate text-xs text-muted-foreground">{p.stage}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}{" "}
+            </div>
+          )}
+
+          {tab === "external" && (
+            <div className="mt-2 space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  placeholder="https://github.com/owner/repo"
+                  className="text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") fetchExternalPreview();
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={fetchExternalPreview}
+                  disabled={fetching || !externalUrl.trim()}
+                  className="shrink-0"
+                >
+                  {fetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Fetch"}
+                </Button>
               </div>
-            )}
-          </TabsContent>
+              {fetchedSnapshot && (
+                <div className="flex items-center gap-3 rounded-xl border card-border p-2">
+                  {fetchedSnapshot.logo ? (
+                    <img
+                      src={fetchedSnapshot.logo}
+                      alt=""
+                      width="32"
+                      height="32"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-8 w-8 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated text-xs">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{fetchedSnapshot.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {fetchedSnapshot.platform}
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={confirmExternal} className="shrink-0">
+                    Attach
+                  </Button>
+                </div>
+              )}{" "}
+            </div>
+          )}
 
-          <TabsContent value="external" className="mt-2 space-y-2">
-            <div className="flex gap-2">
+          {tab === "create" && (
+            <div className="mt-2 space-y-2">
               <Input
-                value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
-                placeholder="https://github.com/owner/repo"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Project name"
                 className="text-xs"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") fetchExternalPreview();
-                }}
+              />
+              <Input
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Description (optional)"
+                className="text-xs"
               />
               <Button
                 size="sm"
-                variant="outline"
-                onClick={fetchExternalPreview}
-                disabled={fetching || !externalUrl.trim()}
-                className="shrink-0"
+                onClick={createAndAttach}
+                disabled={creating || !newName.trim()}
+                className="w-full"
               >
-                {fetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Fetch"}
+                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Create & Attach"}
               </Button>
             </div>
-            {fetchedSnapshot && (
-              <div className="flex items-center gap-3 rounded-xl border card-border p-2">
-                {fetchedSnapshot.logo ? (
-                  <img
-                    src={fetchedSnapshot.logo}
-                    alt=""
-                    width="32"
-                    height="32"
-                    loading="lazy"
-                    decoding="async"
-                    className="h-8 w-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-elevated text-xs">
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{fetchedSnapshot.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {fetchedSnapshot.platform}
-                  </p>
-                </div>
-                <Button size="sm" onClick={confirmExternal} className="shrink-0">
-                  Attach
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="create" className="mt-2 space-y-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Project name"
-              className="text-xs"
-            />
-            <Input
-              value={newDesc}
-              onChange={(e) => setNewDesc(e.target.value)}
-              placeholder="Description (optional)"
-              className="text-xs"
-            />
-            <Button
-              size="sm"
-              onClick={createAndAttach}
-              disabled={creating || !newName.trim()}
-              className="w-full"
-            >
-              {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Create & Attach"}
-            </Button>
-          </TabsContent>
-        </Tabs>
+          )}
+        </>
       )}
 
       {currentAttachment && FEEDBACK_TAG_OPTIONS.length > 0 && (

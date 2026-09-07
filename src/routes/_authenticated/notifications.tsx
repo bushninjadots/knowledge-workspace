@@ -4,7 +4,7 @@ import { useNotifications, useNotificationRealtime } from "@/hooks/use-notificat
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import type { Notification } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
 import { getNotificationDestination } from "@/lib/notification-destinations";
@@ -79,21 +79,18 @@ function NotificationsPage() {
             Start with <span className="font-medium text-foreground">Needs action</span> when you
             want to focus on decisions and replies; everything else can wait.
           </p>
-          <Tabs
+          <SegmentedControl
             value={activeCategory}
-            onValueChange={(value) => {
+            onChange={(value) => {
               if (isNotificationCategoryViewKey(value)) setActiveCategory(value);
             }}
+            ariaLabel="Notification views"
             className="mb-6"
-          >
-            <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
-              {NOTIFICATION_CATEGORY_VIEWS.map((tab) => (
-                <TabsTrigger key={tab.key} value={tab.key} className="whitespace-nowrap text-xs">
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+            options={NOTIFICATION_CATEGORY_VIEWS.map((tab) => ({
+              value: tab.key,
+              label: tab.label,
+            }))}
+          />
           <NotificationFeed
             notifications={notifications}
             isLoading={isLoading}

@@ -1,5 +1,6 @@
-import { Undo2, X } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { STARTERS, type Starter } from "@/data/starters";
 
 // Backward-compatible aliases so existing consumers keep importing from here.
@@ -27,18 +28,12 @@ export function StarterPicker({
   onUndo: () => void;
 }) {
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Choose how your Studio feels"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg [border-color:var(--card-border-color,var(--border))] bg-surface-elevated card shadow-xl"
-        onClick={(event) => event.stopPropagation()}
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent
+        aria-label="Choose how your Studio feels"
+        className="max-w-3xl gap-0 overflow-y-auto rounded-lg sm:rounded-lg border-card-border bg-surface-elevated p-0 shadow-xl card"
       >
-        <header className="flex items-start justify-between gap-4 border-b [border-color:var(--card-border-color,var(--border))] px-5 py-4">
+        <header className="flex items-start justify-between gap-4 border-b border-card-border px-5 py-4">
           <div>
             <h2 className="font-display text-lg font-semibold text-foreground">
               Choose how you want your Studio to feel
@@ -48,14 +43,6 @@ export function StarterPicker({
               one undo puts it back.
             </p>
           </div>
-          <button
-            type="button"
-            aria-label="Close starter picker"
-            onClick={onClose}
-            className="rounded p-1 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </header>
 
         <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 card">
@@ -106,8 +93,8 @@ export function StarterPicker({
             </Button>
           </div>
         </footer>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

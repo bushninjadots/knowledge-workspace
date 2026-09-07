@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { X, Briefcase } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import type { OpenRoleRow } from "@/hooks/use-projects";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ApplyToRoleButton } from "./project-role-applications";
 
 interface ProjectJoinModalProps {
@@ -25,16 +26,6 @@ export function ProjectJoinModal({
 }: ProjectJoinModalProps) {
   const focusRef = useRef<HTMLDivElement | null>(null);
 
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
-
   // Scroll the focused role into view once the modal renders (after layout settles).
   useEffect(() => {
     if (!open || !focusRoleId) return;
@@ -44,28 +35,9 @@ export function ProjectJoinModal({
     return () => cancelAnimationFrame(raf);
   }, [open, focusRoleId]);
 
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Join project"
-    >
-      <div
-        className="relative w-full max-w-md rounded-xl border card-border bg-surface p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground transition hover:bg-surface-sunken hover:text-foreground"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent aria-label="Join project" className="max-w-md sm:rounded-xl">
         <h2 className="font-display text-lg font-semibold">
           Join {projectTitle || "this project"}
         </h2>
@@ -129,7 +101,7 @@ export function ProjectJoinModal({
             </p>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
