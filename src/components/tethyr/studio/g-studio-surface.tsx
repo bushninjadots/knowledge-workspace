@@ -1150,6 +1150,10 @@ function GSectionBand({
             resizeHandle={ResizeHandle}
             useCSSTransforms
             compactType={null}
+            // Free canvas: a dragged block never displaces its neighbours. It
+            // parks at the last free spot instead of shoving everything away.
+            preventCollision
+
             onDragStart={() => props.onGridInteractionStart()}
             onResizeStart={() => props.onGridInteractionStart()}
             onDragStop={(current, _oldItem, newItem) => {
