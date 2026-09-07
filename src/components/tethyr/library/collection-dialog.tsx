@@ -158,7 +158,7 @@ export function CollectionDialog({
                   key={color}
                   onClick={() => setSelectedColor(color)}
                   className={cn(
-                    "h-7 w-7 rounded-full border-2 transition-all",
+                    "h-7 w-7 rounded-full border-2 transition-colors",
                     selectedColor === color
                       ? "border-foreground scale-110"
                       : "border-transparent hover:scale-110",

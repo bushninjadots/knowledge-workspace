@@ -136,10 +136,16 @@ function ConnectionsPage() {
             actionHref="/explore"
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {accepted.map((c) => (
-              <FriendRow key={c.id} conn={c} />
-            ))}
+          <div className="overflow-hidden rounded-xl border border-border/60">
+            <div className="hidden grid-cols-[1fr_auto] gap-3 border-b border-border/60 bg-surface/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid">
+              <span>Name</span>
+              <span>Actions</span>
+            </div>
+            <div className="divide-y divide-border/60">
+              {accepted.map((c) => (
+                <FriendRow key={c.id} conn={c} />
+              ))}
+            </div>
           </div>
         )}
       </section>
@@ -210,29 +216,33 @@ function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
   const title = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
-      <Avatar conn={conn} size="lg" />
-      <div className="min-w-0 flex-1">
-        <Name conn={conn} />
-        <p className="truncate text-xs text-muted-foreground" title={title}>
-          {title}
-        </p>
+    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-surface/40">
+      <div className="flex items-center gap-3 min-w-0">
+        <Avatar conn={conn} />
+        <div className="min-w-0">
+          <Name conn={conn} />
+          <p className="truncate text-xs text-muted-foreground" title={title}>
+            {title}
+          </p>
+        </div>
       </div>
-      {conn.other?.handle ? (
-        <Link
-          to="/u/$handle"
-          params={{ handle: conn.other.handle }}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
-        >
-          Profile
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      ) : null}
-      <Button size="icon" variant="ghost" asChild aria-label={`Message ${name}`}>
-        <Link to="/messages" search={{ c: conn.id }}>
-          <MessageSquare className="h-4 w-4" />
-        </Link>
-      </Button>
+      <div className="flex items-center gap-1">
+        {conn.other?.handle ? (
+          <Link
+            to="/u/$handle"
+            params={{ handle: conn.other.handle }}
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            Profile
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        ) : null}
+        <Button size="icon" variant="ghost" asChild aria-label={`Message ${name}`}>
+          <Link to="/messages" search={{ c: conn.id }}>
+            <MessageSquare className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }

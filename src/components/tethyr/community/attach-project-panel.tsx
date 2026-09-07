@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FolderOpen, Link2, Plus, ExternalLink, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,20 +132,20 @@ export function AttachProjectPanel({
           </button>
         </div>
       ) : (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="my-projects" className="flex items-center gap-1.5 text-xs">
-              <FolderOpen className="h-3 w-3" /> My Projects
-            </TabsTrigger>
-            <TabsTrigger value="external" className="flex items-center gap-1.5 text-xs">
-              <Link2 className="h-3 w-3" /> External URL
-            </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-1.5 text-xs">
-              <Plus className="h-3 w-3" /> Create New
-            </TabsTrigger>
-          </TabsList>
+        <SegmentedControl
+          value={tab}
+          onChange={(v) => setTab(v)}
+          options={[
+            { value: "my-projects", label: "My Projects", icon: FolderOpen },
+            { value: "external", label: "External URL", icon: Link2 },
+            { value: "create", label: "Create New", icon: Plus },
+          ]}
+          ariaLabel="Attach project method"
+          className="w-full"
+        />
 
-          <TabsContent value="my-projects" className="mt-2">
+          {tab === "my-projects" && (
+          <div className="mt-2">
             {loadingProjects ? (
               <p className="text-xs text-muted-foreground">Loading...</p>
             ) : myProjects.length === 0 ? (
@@ -182,9 +182,11 @@ export function AttachProjectPanel({
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+          )}
 
-          <TabsContent value="external" className="mt-2 space-y-2">
+          {tab === "external" && (
+          <div className="mt-2 space-y-2">
             <div className="flex gap-2">
               <Input
                 value={externalUrl}
@@ -233,9 +235,11 @@ export function AttachProjectPanel({
                 </Button>
               </div>
             )}
-          </TabsContent>
+          </div>
+          )}
 
-          <TabsContent value="create" className="mt-2 space-y-2">
+          {tab === "create" && (
+          <div className="mt-2 space-y-2">
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -256,8 +260,8 @@ export function AttachProjectPanel({
             >
               {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Create & Attach"}
             </Button>
-          </TabsContent>
-        </Tabs>
+          </div>
+          )}
       )}
 
       {currentAttachment && FEEDBACK_TAG_OPTIONS.length > 0 && (

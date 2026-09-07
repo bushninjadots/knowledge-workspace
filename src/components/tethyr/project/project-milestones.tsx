@@ -143,7 +143,7 @@ export function MilestonesTimeline({
       {total > 0 && (
         <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
           <div
-            className="h-full rounded-full bg-foreground transition-all"
+            className="h-full rounded-full bg-foreground transition-[width]"
             style={{ width: `${progress}%` }}
           />
         </div>

@@ -353,7 +353,7 @@ export function ProjectHeader({
         <div className="mt-4 flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated">
             <div
-              className="h-full rounded-full bg-foreground transition-all"
+              className="h-full rounded-full bg-foreground transition-[width]"
               style={{ width: `${project.progress_percent}%` }}
             />
           </div>

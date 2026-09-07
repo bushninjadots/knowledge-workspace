@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { X, Briefcase } from "lucide-react";
+import { Briefcase } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { OpenRoleRow } from "@/hooks/use-projects";
 import { ApplyToRoleButton } from "./project-role-applications";
 
@@ -25,16 +26,6 @@ export function ProjectJoinModal({
 }: ProjectJoinModalProps) {
   const focusRef = useRef<HTMLDivElement | null>(null);
 
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
-
   // Scroll the focused role into view once the modal renders (after layout settles).
   useEffect(() => {
     if (!open || !focusRoleId) return;
@@ -47,32 +38,15 @@ export function ProjectJoinModal({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Join project"
-    >
-      <div
-        className="relative w-full max-w-md rounded-xl border card-border bg-surface p-6 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground transition hover:bg-surface-sunken hover:text-foreground"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        <h2 className="font-display text-lg font-semibold">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md rounded-xl border card-border bg-surface p-6">
+        <DialogTitle className="font-display text-lg font-semibold">
           Join {projectTitle || "this project"}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        </DialogTitle>
+        <DialogDescription className="mt-1 text-sm text-muted-foreground">
           Pick a role below to send an application. Your application will stay connected to this
           project.
-        </p>
+        </DialogDescription>
 
         {openRoles.length > 0 ? (
           <div className="mt-4 max-h-[55vh] space-y-3 overflow-y-auto pr-1">
@@ -129,7 +103,7 @@ export function ProjectJoinModal({
             </p>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

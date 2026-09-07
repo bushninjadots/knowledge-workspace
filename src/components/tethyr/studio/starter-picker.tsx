@@ -1,5 +1,6 @@
-import { Undo2, X } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { STARTERS, type Starter } from "@/data/starters";
 
 // Backward-compatible aliases so existing consumers keep importing from here.
@@ -27,36 +28,19 @@ export function StarterPicker({
   onUndo: () => void;
 }) {
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Choose how your Studio feels"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg [border-color:var(--card-border-color,var(--border))] bg-surface-elevated card shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="flex items-start justify-between gap-4 border-b [border-color:var(--card-border-color,var(--border))] px-5 py-4">
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border card-border bg-surface-elevated p-0">
+        <DialogHeader className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 text-left">
           <div>
-            <h2 className="font-display text-lg font-semibold text-foreground">
+            <DialogTitle className="font-display text-lg font-semibold text-foreground">
               Choose how you want your Studio to feel
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-xs text-muted-foreground">
               A starting direction. It rearranges what you already have — nothing is deleted, and
               one undo puts it back.
-            </p>
+            </DialogDescription>
           </div>
-          <button
-            type="button"
-            aria-label="Close starter picker"
-            onClick={onClose}
-            className="rounded p-1 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </header>
+        </DialogHeader>
 
         <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 card">
           {STUDIO_STARTERS.map((starter) => {
@@ -106,8 +90,8 @@ export function StarterPicker({
             </Button>
           </div>
         </footer>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

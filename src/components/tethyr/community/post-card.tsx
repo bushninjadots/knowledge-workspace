@@ -916,7 +916,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
               {myVote && (
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
                   <div
-                    className="h-full rounded-full bg-brand-purple/40 transition-all duration-500"
+                    className="h-full rounded-full bg-brand-purple/40 transition-[width] duration-300"
                     style={{ width: `${pct}%` }}
                   />
                 </div>

@@ -580,7 +580,7 @@ export function ComposerBar({
             onBlur={() => setFocused(false)}
             placeholder="What are you building or learning today?"
             rows={focused || draft.length > 80 ? 5 : 2}
-            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-all text-sm"
+            className="min-h-16 resize-none rounded-xl border-border/60 bg-background/40 transition-colors text-sm"
           />
           {focused && (
             <div className="mt-1.5 flex items-center justify-end gap-1.5">

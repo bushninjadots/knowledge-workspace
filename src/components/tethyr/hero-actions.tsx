@@ -58,7 +58,7 @@ export function HeroActions() {
               {action.title}
             </h3>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{action.desc}</p>
-            <span className="mt-auto inline-flex items-center gap-1.5 pt-3 text-xs font-medium text-primary transition-all group-hover:gap-2.5">
+            <span className="mt-auto inline-flex items-center gap-1.5 pt-3 text-xs font-medium text-primary transition-[gap] group-hover:gap-2.5">
               {action.cta} <ArrowRight className="h-3 w-3" />
             </span>
           </Link>
