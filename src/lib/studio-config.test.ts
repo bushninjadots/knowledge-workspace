@@ -43,6 +43,9 @@ describe("normalizeStudioConfig", () => {
       ...raw,
       cardBorders: "neutral",
       cardBorderColor: "",
+      cardBorderWidth: "thin",
+      cardColor: "",
+      cardOpacity: 30,
       starterId: "focused",
     });
   });
@@ -186,6 +189,14 @@ describe("studioConfigToStyle", () => {
   it("'auto' falls back to primary so the accent family always resolves", () => {
     const style = studioConfigToStyle({ ...DEFAULT_STUDIO_CONFIG }) as Record<string, string>;
     expect(style["--user-accent"]).toBe("var(--primary)");
+  });
+
+  it("emits the selected card border width", () => {
+    const style = studioConfigToStyle({
+      ...DEFAULT_STUDIO_CONFIG,
+      cardBorderWidth: "thick",
+    }) as Record<string, string>;
+    expect(style["--card-border-width"]).toBe("2px");
   });
 
   it("emits studio tokens for density and radius", () => {
