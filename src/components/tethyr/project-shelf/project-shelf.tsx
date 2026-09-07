@@ -537,7 +537,7 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-surface-elevated to-surface-sunken" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 on-media-scrim" />
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-2">
         <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">

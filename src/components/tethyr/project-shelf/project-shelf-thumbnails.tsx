@@ -61,8 +61,9 @@ export function ProjectShelfThumbnails({
               progress={project.progress_percent}
               animated={false}
             />
-            {/* Title overlay so the strip is scannable without clicking */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-1.5 pb-0.5 pt-4">
+            {/* Title overlay — guaranteed scrim so white text is always readable. */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 on-media-scrim" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 px-1.5 pb-0.5">
               <p className="truncate text-[9px] font-medium leading-tight text-white drop-shadow-sm">
                 {project.title}
               </p>

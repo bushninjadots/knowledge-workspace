@@ -125,7 +125,7 @@ function TeamsPage() {
               </h2>
               <span className="text-xs text-muted-foreground">({invites.length})</span>
             </div>
-            <ul className="space-y-2">
+            <ul className="grid gap-2 sm:grid-cols-2">
               {invites.map((invite) => (
                 <li
                   key={invite.id}
@@ -179,7 +179,7 @@ function TeamsPage() {
             </h2>
           </div>
           {teamsLoading || invitesLoading ? (
-            <div className="space-y-3" aria-label="Loading teams">
+            <div className="grid gap-3 sm:grid-cols-2" aria-label="Loading teams">
               <div className="h-20 animate-pulse bg-surface" />
               <div className="h-20 animate-pulse bg-surface" />
             </div>
@@ -199,33 +199,32 @@ function TeamsPage() {
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-border/60 border-y border-border/60">
+            <div className="grid gap-3 sm:grid-cols-2">
               {teams.map(({ team, role }) => (
-                <li key={team.id}>
-                  <Link
-                    to="/teams/$slug"
-                    params={{ slug: team.slug }}
-                    className="group flex items-center gap-4 px-2 py-4 transition hover:bg-surface/50 sm:px-3"
-                  >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-lg font-semibold text-foreground">
-                      {team.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-foreground">{team.name}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {role} · /{team.slug}
+                <Link
+                  key={team.id}
+                  to="/teams/$slug"
+                  params={{ slug: team.slug }}
+                  className="group flex items-center gap-4 rounded-xl border card-border bg-surface px-4 py-4 transition hover:bg-surface/50 hover:border-[var(--user-accent-border,var(--border-strong))]"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-lg font-semibold text-foreground">
+                    {team.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground">{team.name}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {role} · /{team.slug}
+                    </p>
+                    {team.description && (
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {team.description}
                       </p>
-                      {team.description && (
-                        <p className="mt-1 truncate text-xs text-muted-foreground">
-                          {team.description}
-                        </p>
-                      )}
-                    </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
-                  </Link>
-                </li>
+                    )}
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                </Link>
               ))}
-            </ul>
+            </div>
           )}
         </section>
 

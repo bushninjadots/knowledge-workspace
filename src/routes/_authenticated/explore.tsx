@@ -29,6 +29,12 @@ import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-appl
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
 import {
@@ -242,6 +248,7 @@ function ExplorePage() {
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
   const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "match");
   const [activeNeed, setActiveNeed] = useState<string>((savedOpp.activeNeed as string) ?? "");
+  const [discoverOpen, setDiscoverOpen] = useState(false);
   const { data: skills = [] } = useSkillsCatalog();
 
   // Persist opportunity filters
@@ -571,6 +578,18 @@ function ExplorePage() {
       <div className="mx-auto flex max-w-[90rem] gap-6 px-4 py-6 sm:px-6 sm:py-8">
         {/* Main content */}
         <div className="min-w-0 flex-1">
+          {/* Mobile discover panel trigger — sidebar content is hidden below lg */}
+          <div className="mb-4 lg:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDiscoverOpen(true)}
+              className="gap-1.5"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              Discover
+            </Button>
+          </div>
           <section
             aria-labelledby="explore-intent-heading"
             className="mb-6 border-b border-border/60 pb-5"
@@ -1072,6 +1091,18 @@ function ExplorePage() {
           <DiscoverSidebar tab={tab} />
         </aside>
       </div>
+
+      {/* Mobile discover drawer — sidebar content accessible below lg */}
+      <Drawer open={discoverOpen} onOpenChange={setDiscoverOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Discover</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-6">
+            <DiscoverSidebar tab={tab} />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

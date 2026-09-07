@@ -576,6 +576,18 @@
   border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
 }
 
+/* Guaranteed scrim behind text placed on user-supplied images. Always dark
+   enough for white text regardless of the underlying image. */
+@utility on-media-scrim {
+  background: linear-gradient(
+    to top,
+    oklch(0 0 0 / 0.78) 0%,
+    oklch(0 0 0 / 0.45) 35%,
+    oklch(0 0 0 / 0.12) 65%,
+    transparent 100%
+  );
+}
+
 /* Shared containment contract for independent cards and workspace content. */
 @utility content-safe {
   min-width: 0;
