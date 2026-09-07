@@ -381,6 +381,8 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
     style["--user-accent-glow"] = "color-mix(in oklab, var(--primary) 6%, transparent)";
   }
 
+  Object.assign(style, cardBorderStyle(config));
+
   return style;
 }
 
