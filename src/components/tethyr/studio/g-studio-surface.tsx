@@ -64,6 +64,7 @@ import {
   BACKGROUND_OPTIONS,
   EDITORIAL_HEADING_FONT,
   structureMaxWidth,
+  cardBorderStyle,
   studioConfigToStyle,
   type StudioConfig,
 } from "@/lib/studio-config";
@@ -236,7 +237,12 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidth(props.config);
   const sections = props.layout.sections;
-  const surfaceStyle = { ...studioSurfaceStyle(props.config), ...appearanceStyle(me?.background) };
+  const surfaceStyle = {
+    ...studioSurfaceStyle(props.config),
+    ...appearanceStyle(me?.background),
+    // The Studio config owns card borders; the profile appearance must not win here.
+    ...cardBorderStyle(props.config),
+  };
 
   const toggleCustomize = () => {
     setCustomizeOpen((open) => !open);
