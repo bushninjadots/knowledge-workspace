@@ -46,5 +46,6 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`FULL_SITE_AUDIT_2026-08-26.md`](./FULL_SITE_AUDIT_2026-08-26.md) — full-stack site audit (2026-08-26): P0 production crash (Sentry double-init), stored XSS in block renderers, CSP gaps, bundle budget, lint debt, DB drift, and healthy-surface verification
 - [`superpowers/specs/`](./superpowers/specs/) — feature design specifications
 - [`superpowers/plans/`](./superpowers/plans/) — feature execution plans
+- [`MEDIA_STORAGE_MAINTENANCE.md`](./MEDIA_STORAGE_MAINTENANCE.md) — storage upload conventions, orphaned-media prune tool + registry contract, and bucket-growth monitoring
 
 Dated documents should be read for relevant context, but their recommendations may be complete, stale, or superseded. Check dates and compare them against the current source before acting.
