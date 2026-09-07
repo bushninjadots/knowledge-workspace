@@ -35,11 +35,16 @@ export const Route = createFileRoute("/_authenticated/connections")({
   component: ConnectionsPage,
 });
 
+type ConnectionsView = "rows" | "gallery";
+
 function ConnectionsPage() {
   const { data: me } = useCurrentUser();
   const { data: connections, isLoading } = useConnections();
   const respond = useRespondConnection();
   const remove = useDeleteConnection();
+  // Dense rows are the default: accepted connections are comparable list data,
+  // so a scan-friendly single-column layout leads over an equal-weight grid.
+  const [view, setView] = useState<ConnectionsView>("rows");
 
   const meId = me?.userId ?? null;
   const accepted = (connections ?? []).filter((c) => c.status === "accepted");
@@ -120,13 +125,53 @@ function ConnectionsPage() {
 
       {/* Connected friends */}
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold">Your people</h2>
-        {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-elevated/40" />
-            ))}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Your people</h2>
+          <div
+            role="group"
+            aria-label="Connections layout"
+            className="flex items-center rounded-lg border card-border bg-surface p-0.5"
+          >
+            <button
+              type="button"
+              aria-pressed={view === "rows"}
+              onClick={() => setView("rows")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                view === "rows"
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Rows
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "gallery"}
+              onClick={() => setView("gallery")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                view === "gallery"
+                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Gallery
+            </button>
           </div>
+        </div>
+        {isLoading ? (
+          view === "rows" ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-elevated/40" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-elevated/40" />
+              ))}
+            </div>
+          )
         ) : accepted.length === 0 ? (
           <EmptyState
             icon={<Link2 className="h-5 w-5" />}
@@ -135,6 +180,12 @@ function ConnectionsPage() {
             actionLabel="Explore people"
             actionHref="/explore"
           />
+        ) : view === "rows" ? (
+          <div className="space-y-2">
+            {accepted.map((c) => (
+              <FriendRow key={c.id} conn={c} />
+            ))}
+          </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {accepted.map((c) => (

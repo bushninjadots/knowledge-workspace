@@ -62,7 +62,9 @@ function LibraryPage() {
 function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () => void }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [layout, setLayout] = useState<"grid" | "list">("grid");
+  // Dense rows are the default: library items are comparable list data, and
+  // the gallery stays one toggle away.
+  const [layout, setLayout] = useState<"grid" | "list">("list");
   const [showUpload, setShowUpload] = useState(false);
 
   const { data: collections = [], error: collectionsError } = useLibraryCollections();
