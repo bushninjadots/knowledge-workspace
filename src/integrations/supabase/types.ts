@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -51,7 +71,7 @@ export type Database = {
           challenge_id: string
           id: string
           joined_at: string
-          progress: Json
+          progress: Json | null
           review_status: string
           reviewed_at: string | null
           reviewer_note: string | null
@@ -65,7 +85,7 @@ export type Database = {
           challenge_id: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -79,7 +99,7 @@ export type Database = {
           challenge_id?: string
           id?: string
           joined_at?: string
-          progress?: Json
+          progress?: Json | null
           review_status?: string
           reviewed_at?: string | null
           reviewer_note?: string | null
@@ -97,13 +117,6 @@ export type Database = {
             referencedRelation: "challenges"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "challenge_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       challenges: {
@@ -114,7 +127,9 @@ export type Database = {
           difficulty: string
           end_date: string | null
           id: string
+          is_starter: boolean
           max_participants: number | null
+          pass_criteria: string | null
           project_id: string | null
           skills: string[]
           start_date: string | null
@@ -130,7 +145,9 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
+          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -146,7 +163,9 @@ export type Database = {
           difficulty?: string
           end_date?: string | null
           id?: string
+          is_starter?: boolean
           max_participants?: number | null
+          pass_criteria?: string | null
           project_id?: string | null
           skills?: string[]
           start_date?: string | null
@@ -156,13 +175,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "challenges_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "challenges_project_id_fkey"
             columns: ["project_id"]
@@ -179,6 +191,7 @@ export type Database = {
           created_at: string
           id: string
           is_best_answer: boolean
+          parent_id: string | null
           post_id: string
         }
         Insert: {
@@ -187,6 +200,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id: string
         }
         Update: {
@@ -195,6 +209,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_best_answer?: boolean
+          parent_id?: string | null
           post_id?: string
         }
         Relationships: [
@@ -203,6 +218,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
             referencedColumns: ["id"]
           },
           {
@@ -916,6 +938,35 @@ export type Database = {
           },
         ]
       }
+      migrated_pages: {
+        Row: {
+          migrated_at: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Insert: {
+          migrated_at?: string
+          owner_id: string
+          owner_type: string
+          page_id: string
+        }
+        Update: {
+          migrated_at?: string
+          owner_id?: string
+          owner_type?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migrated_pages_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_log: {
         Row: {
           action: string
@@ -1017,6 +1068,54 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_versions: {
+        Row: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          layout?: Json
+          page_id: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version: number
+        }
+        Update: {
+          id?: string
+          layout?: Json
+          page_id?: string
+          published_at?: string
+          published_by?: string | null
+          theme_id?: string | null
+          theme_overrides?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_versions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_versions_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
             referencedColumns: ["id"]
           },
         ]
@@ -1208,13 +1307,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_space_shares_shared_by_fkey"
-            columns: ["shared_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2968,9 +3060,89 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      project_repositories_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_repositories_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          project_id: string | null
+          provider: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          project_id?: string | null
+          provider?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      _create_trigger_if_table_exists: {
+        Args: {
+          p_event?: string
+          p_function_name: string
+          p_level?: string
+          p_table_name: string
+          p_timing?: string
+          p_trigger_name: string
+        }
+        Returns: undefined
+      }
       accept_project_role_application: {
         Args: {
           p_application_id: string
@@ -2980,9 +3152,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_studio_composition: {
+        Args: {
+          p_composition_id: string
+          p_config: Json
+          p_layout_id: string
+          p_page_id: string
+          p_sections: Json
+        }
+        Returns: undefined
+      }
       approve_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
+      }
+      award_earned_achievements: {
+        Args: { p_profile_id?: string }
+        Returns: Database["public"]["Enums"]["achievement_type"][]
       }
       ban_space_member: {
         Args: { p_reason?: string; p_space_id: string; p_user_id: string }
@@ -3003,6 +3189,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_layout_lineage: {
+        Args: { start_id: string }
+        Returns: {
+          depth: number
+          layout_id: string
+          parent_id: string
+        }[]
+      }
       increment_fork_count: { Args: { layout_id: string }; Returns: undefined }
       increment_usage_count: {
         Args: { template_id: string }
@@ -3021,9 +3215,21 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_project_visible: { Args: { _project_id: string }; Returns: boolean }
+      is_allowed_storage_upload: {
+        Args: { p_bucket: string; p_metadata: Json; p_name: string }
+        Returns: boolean
+      }
+      is_project_visible: { Args: { project_id: string }; Returns: boolean }
       is_session_member: {
         Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_session_organizer: {
+        Args: { p_session_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_session_participant: {
+        Args: { p_session_id: string; p_user_id?: string }
         Returns: boolean
       }
       is_space_banned: {
@@ -3031,6 +3237,10 @@ export type Database = {
         Returns: boolean
       }
       is_space_member: {
+        Args: { p_space_id: string; p_user_id?: string }
+        Returns: boolean
+      }
+      is_space_owner: {
         Args: { p_space_id: string; p_user_id?: string }
         Returns: boolean
       }
@@ -3053,11 +3263,35 @@ export type Database = {
         Returns: undefined
       }
       mark_space_read: { Args: { p_space_id: string }; Returns: undefined }
+      posts_images_are_valid: { Args: { p_images: string[] }; Returns: boolean }
+      publish_page_version: {
+        Args: { _page_id: string }
+        Returns: {
+          id: string
+          layout: Json
+          page_id: string
+          published_at: string
+          published_by: string | null
+          theme_id: string | null
+          theme_overrides: Json | null
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "page_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       reject_space_join_request: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
       }
       reseed_default_templates: { Args: never; Returns: number }
+      rollback_page_version: {
+        Args: { _page_id: string; _version: number }
+        Returns: undefined
+      }
       unban_space_member: {
         Args: { p_space_id: string; p_user_id: string }
         Returns: undefined
@@ -3170,12 +3404,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3199,11 +3433,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3224,11 +3458,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3249,11 +3483,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3266,11 +3500,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3280,6 +3514,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       achievement_type: [
@@ -3372,3 +3609,4 @@ export const Constants = {
     },
   },
 } as const
+
