@@ -15,7 +15,7 @@ import {
 } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
-import { studioConfigToStyle, studioConfigToThemeTokens } from "@/lib/studio-config";
+import { cardBorderStyle, studioConfigToStyle, studioConfigToThemeTokens } from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
@@ -200,6 +200,8 @@ export function PageShell({
       if (page.config.accentMode !== "auto") {
         Object.assign(style, configStyle);
       }
+      // Card borders are their own decision — apply them whatever the accent mode.
+      Object.assign(style, cardBorderStyle(page.config));
     }
     if (isGlassTheme || blockContext.translucent) {
       style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";

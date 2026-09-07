@@ -17,6 +17,7 @@ import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
 import {
+  cardBorderStyle,
   studioConfigToStyle,
   EDITORIAL_HEADING_FONT,
   structureMaxWidth,
@@ -95,7 +96,12 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const config: StudioConfig = page?.config ?? DEFAULT_STUDIO_CONFIG;
   const layout: PageLayout | null = page?.layout ?? null;
   const maxWidth = structureMaxWidth(config);
-  const surfaceStyle = { ...studioSurfaceStyle(config), ...appearanceStyle(me?.background) };
+  const surfaceStyle = {
+    ...studioSurfaceStyle(config),
+    ...appearanceStyle(me?.background),
+    // The Studio config owns card borders; the profile appearance must not win here.
+    ...cardBorderStyle(config),
+  };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlocks((previous) => {

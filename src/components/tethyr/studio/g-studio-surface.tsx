@@ -62,8 +62,11 @@ import {
 } from "@/components/tethyr/studio/starter-picker";
 import {
   BACKGROUND_OPTIONS,
+  CARD_BORDER_OPTIONS,
+  CARD_BORDER_SWATCHES,
   EDITORIAL_HEADING_FONT,
   structureMaxWidth,
+  cardBorderStyle,
   studioConfigToStyle,
   type StudioConfig,
 } from "@/lib/studio-config";
@@ -236,7 +239,12 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidth(props.config);
   const sections = props.layout.sections;
-  const surfaceStyle = { ...studioSurfaceStyle(props.config), ...appearanceStyle(me?.background) };
+  const surfaceStyle = {
+    ...studioSurfaceStyle(props.config),
+    ...appearanceStyle(me?.background),
+    // The Studio config owns card borders; the profile appearance must not win here.
+    ...cardBorderStyle(props.config),
+  };
 
   const toggleCustomize = () => {
     setCustomizeOpen((open) => !open);
@@ -1785,6 +1793,33 @@ function GCustomizePanel({
                 className={cn(
                   "h-6 w-6 rounded-sm border-2",
                   config.accentColor.toLowerCase() === swatch
+                    ? "border-foreground"
+                    : "border-border",
+                )}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
+        )}
+        <Choice
+          label="Card borders"
+          hint="Outlines around cards and panels"
+          value={config.cardBorders}
+          options={CARD_BORDER_OPTIONS.map((o) => [o.value, o.label] as [string, string])}
+          onChange={(value) => onChange({ cardBorders: value as GStudioConfig["cardBorders"] })}
+        />
+        {config.cardBorders === "custom" && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {CARD_BORDER_SWATCHES.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                aria-label={`Card border ${swatch}`}
+                aria-pressed={config.cardBorderColor.toLowerCase() === swatch}
+                onClick={() => onChange({ cardBorderColor: swatch })}
+                className={cn(
+                  "h-6 w-6 rounded-sm border-2",
+                  config.cardBorderColor.toLowerCase() === swatch
                     ? "border-foreground"
                     : "border-border",
                 )}
