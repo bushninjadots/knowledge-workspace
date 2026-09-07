@@ -80,6 +80,16 @@ export function ProjectShelfOverlay({
     }
   }, [project]);
 
+  // Lock page scroll while the lightbox is open (Dialog parity).
+  useEffect(() => {
+    if (!project) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [project]);
+
   useEffect(() => {
     if (!project) return;
     const panel = panelRef.current;
