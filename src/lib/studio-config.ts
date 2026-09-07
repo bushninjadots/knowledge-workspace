@@ -386,6 +386,44 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
   return style;
 }
 
+/** Card border options surfaced in the Studio customize panel. */
+export const CARD_BORDER_OPTIONS: ReadonlyArray<{ value: CardBorderPreference; label: string }> = [
+  { value: "neutral", label: "Neutral" },
+  { value: "accent", label: "Dynamic" },
+  { value: "custom", label: "Custom" },
+  { value: "none", label: "None" },
+];
+
+/** Swatches offered when cardBorders === "custom". */
+export const CARD_BORDER_SWATCHES: ReadonlyArray<string> = [
+  "#d0d7de",
+  "#8c959f",
+  "#1f2328",
+  "#3f8f8a",
+  "#2f6fd0",
+  "#b4632a",
+];
+
+/**
+ * Card border preference → the `--card-border*` family every Studio surface
+ * reads. Emitted from studioConfigToStyle so the editor canvas, the Studio
+ * page, and the published page all resolve borders the same way.
+ */
+export function cardBorderStyle(config: StudioConfig): React.CSSProperties {
+  const style = {} as React.CSSProperties & Record<string, string>;
+  const color =
+    config.cardBorders === "none"
+      ? "transparent"
+      : config.cardBorders === "neutral"
+        ? "var(--border)"
+        : config.cardBorders === "custom" && /^#([0-9a-f]{6})$/i.test(config.cardBorderColor)
+          ? config.cardBorderColor
+          : "var(--user-accent-border, var(--border))";
+  style["--card-border-color"] = color;
+  style["--card-border"] = color;
+  return style;
+}
+
 /**
  * Pick a readable foreground for the accent color (dark text on light colors,
  * white on dark colors). Mirrors the private helper in background-themes.ts.
