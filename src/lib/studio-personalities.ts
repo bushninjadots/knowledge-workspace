@@ -71,6 +71,8 @@ export function applyStudioPersonality(
       radius: personality.appearance.radius,
       accentMode: personality.appearance.accentMode,
       accentColor: personality.appearance.accentColor,
+      cardBorders: "neutral",
+      cardBorderColor: "",
       starterId: null,
       appBackground: "surface",
       publicBackground: "default",

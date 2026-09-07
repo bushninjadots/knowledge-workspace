@@ -35,10 +35,10 @@ export function StarterPicker({
       onClick={onClose}
     >
       <div
-        className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg border border-border bg-surface-elevated shadow-xl"
+        className="max-h-full w-full max-w-3xl overflow-y-auto rounded-lg [border-color:var(--card-border-color,var(--border))] bg-surface-elevated card shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+        <header className="flex items-start justify-between gap-4 border-b [border-color:var(--card-border-color,var(--border))] px-5 py-4">
           <div>
             <h2 className="font-display text-lg font-semibold text-foreground">
               Choose how you want your Studio to feel
@@ -58,7 +58,7 @@ export function StarterPicker({
           </button>
         </header>
 
-        <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 card">
           {STUDIO_STARTERS.map((starter) => {
             const active = starter.id === currentId;
             return (
@@ -92,7 +92,7 @@ export function StarterPicker({
           })}
         </ul>
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3">
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t [border-color:var(--card-border-color,var(--border))] px-5 py-3 card">
           <span className="text-[11px] text-muted-foreground">
             You can change any of this directly on the canvas afterwards.
           </span>
@@ -114,7 +114,10 @@ export function StarterPicker({
 /** Small wireframe preview of a starter's rhythm. */
 function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
   return (
-    <div aria-hidden className="flex flex-col gap-1 border border-border bg-background p-2">
+    <div
+      aria-hidden
+      className="flex flex-col gap-1 [border-color:var(--card-border-color,var(--border))] bg-background p-2 card"
+    >
       {rows.map((row, rowIndex) => (
         <div key={rowIndex} className="flex gap-1">
           {row.map((span, spanIndex) => (

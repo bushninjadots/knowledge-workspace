@@ -11,6 +11,8 @@ const snapshot: StudioSnapshot = {
     density: "comfortable",
     accentMode: "auto",
     accentColor: "#3f8f8a",
+    cardBorders: "neutral",
+    cardBorderColor: "",
     appBackground: "surface",
     publicBackground: "default",
   },

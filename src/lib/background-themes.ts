@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * devices and can render on their public Studio too. `color`/`pattern`/mode
  * are always kept in the row so switching modes never loses a previous choice.
  */
-export type CardBorderPreference = "accent" | "neutral" | "none";
+export type CardBorderPreference = "accent" | "neutral" | "none" | "custom";
 export type AccentMode = "dynamic" | "custom";
 export type ContentDensity = "comfortable" | "compact";
 
@@ -36,6 +36,8 @@ export type ProfileBackground = {
   /** Shared banner presentation preferences for Dashboard and Studio. */
   bannerOverlay?: BannerOverlayId | null;
   bannerCaptionPosition?: "left" | "center" | "right" | null;
+  /** Custom card border colour (hex) used when cardBorders === "custom". */
+  cardBorderColor?: string | null;
 };
 
 /**
@@ -202,6 +204,18 @@ export const BACKGROUND_GRADIENTS: BackgroundGradient[] = [
 
 export const BACKGROUND_GRADIENT_IDS = BACKGROUND_GRADIENTS.map((g) => g.id);
 
+/** Swatch palette for the custom card border colour picker. */
+export const BORDER_SWATCHES = [
+  "#3f8f8a",
+  "#2f6fd0",
+  "#7a4ecf",
+  "#b4632a",
+  "#2f7d4a",
+  "#1f2328",
+  "#ffffff",
+  "#1f2328",
+];
+
 /**
  * The CSS for a gradient backdrop at a given strength. Both ends are
  * color-mixed to transparent so the theme background shows through, which
@@ -260,13 +274,17 @@ export function emptyBackground(): ProfileBackground {
 }
 
 export function hasAppearanceSettings(background: ProfileBackground | null | undefined): boolean {
-  return (
-    !!background &&
-    (background.mode != null ||
-      (background.cardBorders != null && background.cardBorders !== "neutral") ||
-      (background.accentMode === "custom" && !!background.accentColor) ||
-      background.density === "compact")
-  );
+  if (!background) return false;
+  if (background.mode != null) return true;
+  // cardBorders other than "neutral" indicate a custom choice
+  if (background.cardBorders != null && background.cardBorders !== "neutral") {
+    // "custom" additionally needs a colour to count as a real setting
+    if (background.cardBorders === "custom") return !!background.cardBorderColor;
+    return true;
+  }
+  if (background.accentMode === "custom" && !!background.accentColor) return true;
+  if (background.density === "compact") return true;
+  return false;
 }
 
 /** Apply creator-selected accent, border, and density preferences as CSS variables. */
@@ -279,7 +297,9 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
       ? "transparent"
       : cardBorders === "neutral"
         ? "var(--border)"
-        : "var(--user-accent-border, var(--border))";
+        : cardBorders === "custom" && background.cardBorderColor
+          ? background.cardBorderColor
+          : "var(--user-accent-border, var(--border))";
 
   if (background.accentMode === "custom" && background.accentColor) {
     const foreground = contrastingHexForeground(background.accentColor);

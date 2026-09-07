@@ -33,12 +33,16 @@ describe("normalizeStudioConfig", () => {
       radius: "soft",
       accentMode: "custom",
       accentColor: "#123456",
+      cardBorders: "neutral",
+      cardBorderColor: "",
       appBackground: "sunken",
       publicBackground: "surface",
       starterId: "focused",
     };
     expect(normalizeStudioConfig(raw)).toEqual({
       ...raw,
+      cardBorders: "neutral",
+      cardBorderColor: "",
       starterId: "focused",
     });
   });

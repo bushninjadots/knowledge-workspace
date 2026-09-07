@@ -17,6 +17,7 @@
 // produce them.
 
 import type { ThemeTokens } from "@/lib/page-blocks";
+import type { CardBorderPreference } from "@/lib/background-themes";
 
 // ── Dimension Types ───────────────────────────────────────────────────────────
 
@@ -60,6 +61,10 @@ export interface StudioConfig {
   accentMode: AccentMode;
   /** Accent hex colour (used when accentMode === "custom"). */
   accentColor: string;
+  /** Card border preference (mirrors the member's ProfileBackground.cardBorders). */
+  cardBorders: CardBorderPreference;
+  /** Custom card border hex, used when cardBorders === "custom". */
+  cardBorderColor: string;
   /** App shell background while editing. */
   appBackground: BackgroundId;
   /** Public Studio background. */
@@ -84,6 +89,8 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   radius: "soft",
   accentMode: "auto",
   accentColor: "#3f8f8a",
+  cardBorders: "neutral",
+  cardBorderColor: "",
   appBackground: "surface",
   publicBackground: "default",
 };
@@ -236,6 +243,20 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
     publicBackground: isOneOf(BACKGROUND_VALUES)(value.publicBackground)
       ? value.publicBackground
       : DEFAULT_STUDIO_CONFIG.publicBackground,
+    // Card border preference (accepted from ProfileBackground; Studio panels
+    // mirror the same choice so the canvas honours it without a separate table).
+    cardBorders:
+      typeof value.cardBorders === "string" &&
+      (value.cardBorders === "accent" ||
+        value.cardBorders === "neutral" ||
+        value.cardBorders === "none" ||
+        value.cardBorders === "custom")
+        ? (value.cardBorders as CardBorderPreference)
+        : DEFAULT_STUDIO_CONFIG.cardBorders,
+    cardBorderColor:
+      typeof value.cardBorderColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardBorderColor)
+        ? value.cardBorderColor
+        : DEFAULT_STUDIO_CONFIG.cardBorderColor,
   };
 }
 

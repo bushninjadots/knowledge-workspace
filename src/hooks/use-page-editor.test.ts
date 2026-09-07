@@ -89,6 +89,8 @@ describe("useApplyStudioComposition", () => {
           radius: "soft",
           accentMode: "auto",
           accentColor: "#3f8f8a",
+          cardBorders: "neutral",
+          cardBorderColor: "",
           appBackground: "surface",
           publicBackground: "default",
         },

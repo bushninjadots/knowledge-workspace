@@ -472,6 +472,15 @@
   border-top: 2px solid var(--user-accent-border, var(--border));
 }
 
+/* Tethyr card surface — used for project cards, profile cards, and studio blocks.
+   Uses the member's card-border-color when set, falling back to the page border.
+   Tints with the user accent when the member has chosen accent borders. */
+@utility card {
+  background-color: var(--surface);
+  border: 1px solid var(--card-border-color, var(--border));
+  border-radius: var(--radius-lg);
+}
+
 /* Full-bleed panel that sits flush inside a column (no side borders). */
 @utility panel-flush {
   background-color: var(--surface-elevated);

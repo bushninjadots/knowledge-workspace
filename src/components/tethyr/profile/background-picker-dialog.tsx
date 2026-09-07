@@ -22,6 +22,7 @@ import {
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
   BACKGROUND_PATTERNS,
+  BORDER_SWATCHES,
   appearanceStyle,
   backgroundImageSignedUrl,
   backgroundStyle,
@@ -37,6 +38,29 @@ import { BannerOverlayPicker } from "./banner-overlay";
 import { cn } from "@/lib/utils";
 
 const EMPTY_BACKGROUND = emptyBackground();
+
+const CARD_BORDER_OPTIONS = [
+  {
+    id: "accent",
+    label: "Accent borders",
+    description: "Use your chosen accent",
+  },
+  {
+    id: "neutral",
+    label: "Neutral borders",
+    description: "Use the Tethyr rule",
+  },
+  {
+    id: "none",
+    label: "No card borders",
+    description: "Let surfaces define shape",
+  },
+  {
+    id: "custom",
+    label: "Custom colour",
+    description: "Pick a border colour",
+  },
+] as const;
 
 type BgTab = "app" | "public";
 
@@ -245,31 +269,24 @@ export function BackgroundPickerDialog({
                     Keep cards structured, quiet, or completely borderless.
                   </p>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-3" role="group" aria-label="Card borders">
-                  {(
-                    [
-                      {
-                        id: "accent",
-                        label: "Accent borders",
-                        description: "Use your chosen accent",
-                      },
-                      {
-                        id: "neutral",
-                        label: "Neutral borders",
-                        description: "Use the Tethyr rule",
-                      },
-                      {
-                        id: "none",
-                        label: "No card borders",
-                        description: "Let surfaces define shape",
-                      },
-                    ] as const
-                  ).map((option) => (
+                <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Card borders">
+                  {CARD_BORDER_OPTIONS.map((option) => (
                     <button
                       key={option.id}
                       type="button"
                       aria-pressed={(activeDraft.cardBorders ?? "neutral") === option.id}
-                      onClick={() => setActiveDraft((d) => ({ ...d, cardBorders: option.id }))}
+                      onClick={() =>
+                        setActiveDraft((d) => ({
+                          ...d,
+                          cardBorders: option.id,
+                          // Seed a swatch when custom is first chosen so the
+                          // choice has an immediate, visible border colour.
+                          cardBorderColor:
+                            option.id === "custom" && !d.cardBorderColor
+                              ? BORDER_SWATCHES[0]
+                              : d.cardBorderColor,
+                        }))
+                      }
                       className={cn(
                         "min-w-0 rounded-lg border p-3 text-left transition",
                         (activeDraft.cardBorders ?? "neutral") === option.id
@@ -284,6 +301,28 @@ export function BackgroundPickerDialog({
                     </button>
                   ))}
                 </div>
+                {activeDraft.cardBorders === "custom" && (
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    role="group"
+                    aria-label="Custom card border colour"
+                  >
+                    {BORDER_SWATCHES.map((swatch) => {
+                      const selected = (activeDraft.cardBorderColor ?? "").toLowerCase() === swatch;
+                      return (
+                        <SwatchButton
+                          key={swatch}
+                          title={swatch}
+                          selected={selected}
+                          style={{ backgroundColor: swatch }}
+                          onClick={() => setActiveDraft((d) => ({ ...d, cardBorderColor: swatch }))}
+                        >
+                          {selected && <Check className="h-3.5 w-3.5 text-foreground/70" />}
+                        </SwatchButton>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
 
               <section className="space-y-3" aria-labelledby="accent-heading">
