@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check, Activity } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import {
@@ -117,16 +118,18 @@ export function TeamPage({
           <ul className="grid gap-3 sm:grid-cols-2">
             {shipped.map((p) => (
               <li key={p.id}>
-                <Link
-                  to="/projects/$id"
-                  params={{ id: p.id }}
-                  className="block rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
-                >
-                  <span className="block truncate font-medium text-foreground">{p.title}</span>
-                  <span className="mt-1 block text-xs capitalize text-muted-foreground">
-                    {p.status}
-                  </span>
-                </Link>
+                <Card asChild>
+                  <Link
+                    to="/projects/$id"
+                    params={{ id: p.id }}
+                    className="block p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                  >
+                    <span className="block truncate font-medium text-foreground">{p.title}</span>
+                    <span className="mt-1 block text-xs capitalize text-muted-foreground">
+                      {p.status}
+                    </span>
+                  </Link>
+                </Card>
               </li>
             ))}
           </ul>

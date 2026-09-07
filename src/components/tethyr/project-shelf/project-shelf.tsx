@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion, useMotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight, Keyboard, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { ProjectShelfHeader, type ProjectView } from "./project-shelf-header";
 import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
 import { CoverGradient } from "./cover-gradient";
@@ -441,109 +442,115 @@ function ProjectListRow({
   const isOwn = project.profiles?.id === meId;
 
   return (
-    <button
-      onClick={onClick}
-      className="group flex w-full items-center gap-4 rounded-xl border card-border bg-surface p-3 text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm"
-      aria-label={`View ${project.title}`}
-    >
-      {/* Cover thumb */}
-      <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg">
-        <CoverGradient
-          tags={project.tags}
-          coverUrl={project.cover_url}
-          progress={project.progress_percent}
-          fit="cover"
-        />
-        <div className="absolute left-2 top-2 flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
-            <span className={cn("h-1 w-1 rounded-full", status.dot)} />
-            {status.label}
-          </span>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className="min-w-0 truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary"
-            title={project.title}
-          >
-            {project.title}
-          </p>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {isOwn && (
-              <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[10px] font-medium text-brand-green">
-                Your project
-              </span>
-            )}
-            {isContributor && (
-              <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[10px] font-medium text-brand-purple">
-                Contributing
-              </span>
-            )}
-            <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
-              {project.progress_percent}%
+    <Card asChild>
+      <button
+        onClick={onClick}
+        className="group flex w-full items-center gap-4 p-3 text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm"
+        aria-label={`View ${project.title}`}
+      >
+        {/* Cover thumb */}
+        <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg">
+          <CoverGradient
+            tags={project.tags}
+            coverUrl={project.cover_url}
+            progress={project.progress_percent}
+            fit="cover"
+          />
+          <div className="absolute left-2 top-2 flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
+              <span className={cn("h-1 w-1 rounded-full", status.dot)} />
+              {status.label}
             </span>
           </div>
         </div>
-        {project.profiles && (
-          <p className="truncate text-xs text-muted-foreground">
-            by {project.profiles.display_name || project.profiles.handle || "Member"}
-          </p>
-        )}
-        {project.description && (
-          <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-muted-foreground/85">
-            {project.description}
-          </p>
-        )}
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          {project.tags.slice(0, 3).map((t) => (
-            <span
-              key={t}
-              className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p
+              className="min-w-0 truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary"
+              title={project.title}
             >
-              {t}
-            </span>
-          ))}
-          {project.tags.length > 3 && (
-            <span className="text-[10px] text-muted-foreground/50">+{project.tags.length - 3}</span>
+              {project.title}
+            </p>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {isOwn && (
+                <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[10px] font-medium text-brand-green">
+                  Your project
+                </span>
+              )}
+              {isContributor && (
+                <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[10px] font-medium text-brand-purple">
+                  Contributing
+                </span>
+              )}
+              <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+                {project.progress_percent}%
+              </span>
+            </div>
+          </div>
+          {project.profiles && (
+            <p className="truncate text-xs text-muted-foreground">
+              by {project.profiles.display_name || project.profiles.handle || "Member"}
+            </p>
           )}
+          {project.description && (
+            <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-muted-foreground/85">
+              {project.description}
+            </p>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            {project.tags.slice(0, 3).map((t) => (
+              <span
+                key={t}
+                className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[10px] text-muted-foreground"
+              >
+                {t}
+              </span>
+            ))}
+            {project.tags.length > 3 && (
+              <span className="text-[10px] text-muted-foreground/50">
+                +{project.tags.length - 3}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+    </Card>
   );
 }
 
 /* Small peek card for prev/next previews */
 function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className="group relative w-full cursor-pointer overflow-hidden rounded-xl border card-border bg-surface text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
-    >
-      <div className="relative aspect-[3/4] w-full">
-        {project.cover_url ? (
-          <img
-            src={project.cover_url}
-            alt=""
-            width="400"
-            height="533"
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-contain opacity-70 group-hover:opacity-90 transition-opacity"
-            draggable={false}
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-surface-elevated to-surface-sunken" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 p-2">
-        <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">
-          {project.title}
-        </p>
-      </div>
-    </button>
+    <Card asChild>
+      <button
+        onClick={onClick}
+        className="group relative w-full cursor-pointer overflow-hidden text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+      >
+        <div className="relative aspect-[3/4] w-full">
+          {project.cover_url ? (
+            <img
+              src={project.cover_url}
+              alt=""
+              width="400"
+              height="533"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain opacity-70 group-hover:opacity-90 transition-opacity"
+              draggable={false}
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-surface-elevated to-surface-sunken" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-2">
+          <p className="truncate text-[11px] font-medium text-white drop-shadow-sm">
+            {project.title}
+          </p>
+        </div>
+      </button>
+    </Card>
   );
 }

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -32,104 +33,106 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
   const isOwn = project.profiles?.id === meId;
 
   return (
-    <button
-      onClick={onClick}
-      className="group relative w-full cursor-pointer overflow-hidden rounded-xl border card-border bg-surface text-left shadow-sm transition-spatial transition-shadow duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[var(--user-accent-border,var(--border-strong))]"
-      aria-label={`View ${project.title}`}
-    >
-      {/* Cover image — 16:9, object-contain to show the whole image */}
-      <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-        <CoverGradient
-          tags={project.tags}
-          coverUrl={project.cover_url}
-          progress={project.progress_percent}
-          fit="contain"
-        />
+    <Card asChild>
+      <button
+        onClick={onClick}
+        className="group relative w-full cursor-pointer overflow-hidden text-left shadow-sm transition-spatial transition-shadow duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[var(--user-accent-border,var(--border-strong))]"
+        aria-label={`View ${project.title}`}
+      >
+        {/* Cover image — 16:9, object-contain to show the whole image */}
+        <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+          <CoverGradient
+            tags={project.tags}
+            coverUrl={project.cover_url}
+            progress={project.progress_percent}
+            fit="contain"
+          />
 
-        {/* Subtle specular sheen on hover */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          {/* Subtle specular sheen on hover */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-        {/* Status badge */}
-        <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground">
-            <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
-            {status.label}
-          </span>
-          {isOwn && (
-            <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[11px] font-medium text-brand-green">
-              Your project
+          {/* Status badge */}
+          <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground">
+              <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
+              {status.label}
             </span>
-          )}
-          {isContributor && (
-            <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
-              Contributing
-            </span>
-          )}
-        </div>
-
-        {/* Progress bar at the bottom of the cover */}
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <ProgressBar progress={project.progress_percent} />
-        </div>
-      </div>
-
-      {/* Info panel */}
-      <div className="flex flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors"
-            title={project.title}
-          >
-            {project.title}
-          </p>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {project.looking_for_collaborators && (
-              <span className="inline-flex shrink-0 items-center rounded-full bg-brand-purple/15 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
-                Open
+            {isOwn && (
+              <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+                Your project
               </span>
             )}
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
-              {project.progress_percent}%
-            </span>
-          </div>
-        </div>
-
-        {project.profiles && (
-          <p
-            className="truncate text-xs text-muted-foreground"
-            title={`by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`}
-          >
-            by {project.profiles.display_name || project.profiles.handle || "Member"}
-            {" · "}
-            {status.label}
-          </p>
-        )}
-
-        {project.description && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/85">
-            {project.description}
-          </p>
-        )}
-
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-1">
-            {project.tags.slice(0, 4).map((t) => (
-              <span
-                key={t}
-                className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[11px] text-muted-foreground"
-              >
-                {t}
-              </span>
-            ))}
-            {project.tags.length > 4 && (
-              <span className="text-[11px] text-muted-foreground/50">
-                +{project.tags.length - 4}
+            {isContributor && (
+              <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
+                Contributing
               </span>
             )}
           </div>
+
+          {/* Progress bar at the bottom of the cover */}
+          <div className="absolute bottom-0 left-0 right-0 z-10">
+            <ProgressBar progress={project.progress_percent} />
+          </div>
         </div>
-      </div>
-    </button>
+
+        {/* Info panel */}
+        <div className="flex flex-col gap-1.5 border-t border-black/10 bg-gradient-to-b from-surface/60 to-surface p-4 dark:border-white/10">
+          <div className="flex items-start justify-between gap-2">
+            <p
+              className="min-w-0 text-sm font-bold text-foreground group-hover:text-primary transition-colors"
+              title={project.title}
+            >
+              {project.title}
+            </p>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {project.looking_for_collaborators && (
+                <span className="inline-flex shrink-0 items-center rounded-full bg-brand-purple/15 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
+                  Open
+                </span>
+              )}
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                {project.progress_percent}%
+              </span>
+            </div>
+          </div>
+
+          {project.profiles && (
+            <p
+              className="truncate text-xs text-muted-foreground"
+              title={`by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`}
+            >
+              by {project.profiles.display_name || project.profiles.handle || "Member"}
+              {" · "}
+              {status.label}
+            </p>
+          )}
+
+          {project.description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/85">
+              {project.description}
+            </p>
+          )}
+
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {project.tags.slice(0, 4).map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border card-border bg-surface-elevated/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                >
+                  {t}
+                </span>
+              ))}
+              {project.tags.length > 4 && (
+                <span className="text-[11px] text-muted-foreground/50">
+                  +{project.tags.length - 4}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </button>
+    </Card>
   );
 }
 
