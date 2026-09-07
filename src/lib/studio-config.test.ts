@@ -43,6 +43,8 @@ describe("normalizeStudioConfig", () => {
       ...raw,
       cardBorders: "neutral",
       cardBorderColor: "",
+      cardColor: "",
+      cardOpacity: 30,
       starterId: "focused",
     });
   });

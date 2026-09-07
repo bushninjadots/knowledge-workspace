@@ -261,12 +261,19 @@ function TeamAvatar({
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
     try {
-      const path = `${team.id}/avatar.${check.ext}`;
+      // Use a unique path so the signed URL changes and the browser never serves
+      // a stale cached copy when the crew picture is replaced.
+      const previousPath = team.avatar_url;
+      const path = `${team.id}/avatar-${Date.now()}.${check.ext}`;
       const { error: upErr } = await supabase.storage
         .from("team-avatars")
         .upload(path, file, { upsert: true, contentType: check.contentType });
       if (upErr) throw upErr;
       await updateTeam.mutateAsync({ avatar_url: path });
+      // Clean up the previous file — best-effort, don't block the UI.
+      if (previousPath && previousPath !== path) {
+        supabase.storage.from("team-avatars").remove([previousPath]);
+      }
       toast.success("Crew picture updated");
       onChanged();
     } catch (err: unknown) {

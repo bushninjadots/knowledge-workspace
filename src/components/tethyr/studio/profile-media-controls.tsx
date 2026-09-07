@@ -89,7 +89,10 @@ export function ProfileMediaControls({
     if (!check.ok) return toast.error(check.error);
     setUploading(kind);
     const bucket = kind === "avatar" ? "avatars" : "banners";
-    const path = `${ownerId}/${kind}.${check.ext}`;
+    const previousPath = kind === "avatar" ? avatarUrl : bannerUrl;
+    // Use a unique path so the signed URL changes and the browser never serves
+    // a stale cached copy when the media is replaced at the same extension.
+    const path = `${ownerId}/${kind}-${Date.now()}.${check.ext}`;
     try {
       const { error: uploadError } = await supabase.storage
         .from(bucket)
@@ -100,6 +103,14 @@ export function ProfileMediaControls({
         .update(kind === "avatar" ? { avatar_url: path } : { banner_url: path })
         .eq("id", ownerId);
       if (profileError) throw profileError;
+      // Clean up the previous file — best-effort, never fail the upload for it.
+      if (previousPath && previousPath !== path && !previousPath.startsWith("http")) {
+        try {
+          await supabase.storage.from(bucket).remove([previousPath]);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
       await queryClient.invalidateQueries({ queryKey: ["profile-header-block", ownerId] });
       await queryClient.invalidateQueries({ queryKey: ["current-user"] });
       toast.success(`${kind === "avatar" ? "Profile photo" : "Banner"} updated`);

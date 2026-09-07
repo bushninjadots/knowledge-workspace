@@ -73,6 +73,8 @@ export function applyStudioPersonality(
       accentColor: personality.appearance.accentColor,
       cardBorders: "neutral",
       cardBorderColor: "",
+      cardColor: "",
+      cardOpacity: 30,
       starterId: null,
       appBackground: "surface",
       publicBackground: "default",

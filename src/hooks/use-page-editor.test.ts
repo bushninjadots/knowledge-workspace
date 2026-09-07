@@ -91,6 +91,8 @@ describe("useApplyStudioComposition", () => {
           accentColor: "#3f8f8a",
           cardBorders: "neutral",
           cardBorderColor: "",
+          cardColor: "",
+          cardOpacity: 30,
           appBackground: "surface",
           publicBackground: "default",
         },

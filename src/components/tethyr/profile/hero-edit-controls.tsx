@@ -39,6 +39,7 @@ type HeroIdentity = {
   country: string | null;
   timezone: string | null;
   banner_caption?: string | null;
+  banner_url?: string | null;
   background?: ProfileBackground | null;
   public_background?: ProfileBackground | null;
 };
@@ -75,7 +76,10 @@ export function HeroEditControls({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
-    const path = `${userId}/banner.${check.ext}`;
+    // Use a unique path so the signed URL changes and the browser never serves
+    // a stale cached copy when the banner is replaced.
+    const previousPath = identity.banner_url;
+    const path = `${userId}/banner-${Date.now()}.${check.ext}`;
     const { error: upErr } = await supabase.storage
       .from("banners")
       .upload(path, file, { upsert: true, contentType: check.contentType });
@@ -86,6 +90,10 @@ export function HeroEditControls({
     const { error } = await supabase.from("profiles").update({ banner_url: path }).eq("id", userId);
     setUploading(false);
     if (error) return toast.error(friendlyError(error));
+    // Clean up the previous file — best-effort, don't block the UI.
+    if (previousPath && previousPath !== path) {
+      supabase.storage.from("banners").remove([previousPath]);
+    }
     toast.success("Banner updated");
     refresh();
   }
@@ -147,7 +155,6 @@ export function HeroEditControls({
           <Palette className="h-3.5 w-3.5" />
           Appearance
         </button>
-
       </div>
 
       <input

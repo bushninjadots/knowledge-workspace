@@ -15,7 +15,13 @@ import {
 } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
-import { cardBorderStyle, studioConfigToStyle, studioConfigToThemeTokens } from "@/lib/studio-config";
+import {
+  CARD_SURFACE_STYLE,
+  cardBorderStyle,
+  cardFillStyle,
+  studioConfigToStyle,
+  studioConfigToThemeTokens,
+} from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
@@ -211,8 +217,15 @@ export function PageShell({
       style["--border"] = "color-mix(in oklab, var(--foreground) 22%, transparent)";
       style["--border-strong"] = "color-mix(in oklab, var(--foreground) 36%, transparent)";
     }
+    // Profile Studios own their card fill — point the surface family at the
+    // configured fill (default: 30% translucent elevated) so blocks read like
+    // Dashboard panels on the published page too. `--studio-card-fill` is
+    // declared on the shell wrapper above this canvas to avoid a CSS cycle.
+    if (page && ownerType === "profile") {
+      Object.assign(style, CARD_SURFACE_STYLE);
+    }
     return style;
-  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent, page]);
+  }, [themeVars, effectiveTheme, isGlassTheme, blockContext.translucent, page, ownerType]);
 
   if (isLoading) {
     return (
@@ -288,7 +301,10 @@ export function PageShell({
     isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";
 
   return (
-    <div data-page-shell={`${ownerType}:${ownerId}`}>
+    <div
+      data-page-shell={`${ownerType}:${ownerId}`}
+      style={page && ownerType === "profile" ? cardFillStyle(page.config) : undefined}
+    >
       <div
         className={`${workspaceClass} ${isPreviewing || isEditing ? "studio-editor-workspace" : ""}`}
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}

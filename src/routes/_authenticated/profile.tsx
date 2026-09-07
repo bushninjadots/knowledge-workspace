@@ -382,6 +382,7 @@ function ProfileSetupForm({
               overlay={background?.bannerOverlay ?? "soft"}
               captionPosition={background?.bannerCaptionPosition ?? "right"}
               userId={userId}
+              bannerPath={profile.banner_url ?? null}
               onChange={refresh}
             />
           )}
@@ -396,7 +397,10 @@ function ProfileSetupForm({
                   if (!file) return;
                   const check = validateImageFile(file);
                   if (!check.ok) return toast.error(check.error);
-                  const path = `${userId}/avatar.${check.ext}`;
+                  // Use a unique path so the signed URL changes and the browser
+                  // never serves a stale cached copy when the avatar is replaced.
+                  const previousPath = profile?.avatar_url ?? null;
+                  const path = `${userId}/avatar-${Date.now()}.${check.ext}`;
                   setSaving(true);
                   try {
                     await supabase.storage
@@ -409,6 +413,10 @@ function ProfileSetupForm({
                     if (profileErr) {
                       setSaving(false);
                       return toast.error(friendlyError(profileErr));
+                    }
+                    // Clean up the previous file — best-effort, don't block the UI.
+                    if (previousPath && previousPath !== path) {
+                      supabase.storage.from("avatars").remove([previousPath]);
                     }
                   } catch (err) {
                     setSaving(false);

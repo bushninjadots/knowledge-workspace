@@ -98,6 +98,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
             country: data.country,
             timezone: data.timezone,
             banner_caption: data.banner_caption,
+            banner_url: data.banner_url,
             background: (data.background ?? null) as never,
             public_background: (data.public_background ?? null) as never,
           }}
