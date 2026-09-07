@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { hasGithubToken, listGithubRepos } from "@/lib/github-server";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   useProjectRepos,
@@ -42,7 +43,7 @@ function RepoCard({
     LANGUAGE_COLORS[meta.language?.toLowerCase() ?? ""] ?? "var(--muted-foreground)";
 
   return (
-    <div className="group flex items-start gap-3 rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <Card className="group flex items-start gap-3 p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
       <div className="mt-0.5 shrink-0">
         <Github className="h-5 w-5 text-foreground/70" />
       </div>
@@ -107,7 +108,7 @@ function RepoCard({
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

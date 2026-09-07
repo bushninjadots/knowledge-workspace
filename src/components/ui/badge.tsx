@@ -16,7 +16,7 @@ const badgeVariants = cva(
         learning: "border-transparent bg-learning-subtle text-learning",
         teaching: "border-transparent bg-teaching-subtle text-teaching",
         ai: "border-transparent bg-ai-subtle text-ai",
-        warning: "border-transparent bg-warning-subtle text-warning",
+        warning: "border-transparent bg-caution-subtle text-caution",
         destructive: "border-transparent bg-warning-subtle text-warning",
       },
     },

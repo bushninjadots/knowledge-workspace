@@ -1,5 +1,6 @@
 import { Users, UserPlus, Hourglass, Check, Lock, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import {
@@ -65,7 +66,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <div className="group flex w-full flex-col rounded-xl border card-border bg-surface p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm">
+    <Card className="group flex w-full flex-col p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm">
       <button
         type="button"
         onClick={() => onClick?.()}
@@ -134,6 +135,6 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           {buttonLabel}
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

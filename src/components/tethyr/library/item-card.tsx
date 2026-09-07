@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { FileText, Globe, Upload, Star, Pin, MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +66,7 @@ export function ItemCard({
 
   if (layout === "list") {
     return (
-      <div className="group relative flex items-center gap-4 rounded-xl border card-border bg-surface px-4 py-3 transition-lift duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
+      <Card className="group relative flex items-center gap-4 px-4 py-3 transition-lift duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-elevated">
           <Icon className={cn("h-4 w-4", iconColor)} />
         </div>
@@ -124,12 +125,12 @@ export function ItemCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="group relative flex flex-col rounded-xl border card-border bg-surface p-4 transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
+    <Card className="group relative flex flex-col p-4 transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
       {/* Top row: type icon + actions */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-elevated">
@@ -197,6 +198,6 @@ export function ItemCard({
         <span className="truncate">{item.type}</span>
         <span>{formatRelativeTime(item.updated_at)}</span>
       </div>
-    </div>
+    </Card>
   );
 }
