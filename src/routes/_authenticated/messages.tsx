@@ -298,7 +298,7 @@ function Thread({
                   className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${
                     mine
                       ? "bg-primary text-primary-foreground shadow-primary/10"
-                      : "border border-border/60 bg-surface-elevated shadow-soft"
+                      : "border border-border/60 bg-surface-elevated"
                   }`}
                 >
                   {m.body}

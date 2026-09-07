@@ -90,7 +90,7 @@ export function ProjectPeopleTab({
                     className="flex min-w-0 items-center gap-3 transition hover:opacity-80"
                     title={c.profile?.display_name || c.profile?.handle || undefined}
                   >
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gradient-brand">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-foreground text-background">
                       {avatarSigned[c.profile_id] ? (
                         <img
                           src={avatarSigned[c.profile_id]}

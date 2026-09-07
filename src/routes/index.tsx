@@ -148,13 +148,13 @@ function HomePage() {
           <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground animate-stagger">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-glow-green" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 Early access — now open
               </span>
               <h1 className="mt-8 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
                 Build together.
                 <br />
-                Get known for <span className="text-gradient-brand">what you make</span>
+                Get known for what you make
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl lg:mx-0">
                 The collaboration network where builders create projects together, grow through real
@@ -165,12 +165,7 @@ function HomePage() {
                   <div className="h-12 w-40 animate-pulse rounded-full bg-surface-elevated" />
                 ) : isAuthed ? (
                   <>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="default"
-                      className="shadow-glow-green transition-lift"
-                    >
+                    <Button asChild size="lg" variant="default" className="transition-lift">
                       <Link to="/dashboard">
                         Dashboard <ArrowRight className="h-4 w-4" />
                       </Link>
@@ -184,12 +179,7 @@ function HomePage() {
                   </>
                 ) : (
                   <>
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="default"
-                      className="shadow-glow-green transition-lift"
-                    >
+                    <Button asChild size="lg" variant="default" className="transition-lift">
                       <Link to="/signup">
                         Join Tethyr <ArrowRight className="h-4 w-4" />
                       </Link>
@@ -261,7 +251,7 @@ function HomePage() {
               />
               <div className="relative">
                 <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
-                  Ready to build something <span className="text-gradient-brand">together</span>?
+                  Ready to build something together?
                 </h2>
                 <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
                   Claim your handle, start a project, and join builders creating work that speaks
@@ -272,12 +262,7 @@ function HomePage() {
                     <div className="h-12 w-48 animate-pulse rounded-full bg-surface-elevated" />
                   ) : isAuthed ? (
                     <>
-                      <Button
-                        asChild
-                        size="lg"
-                        variant="default"
-                        className="shadow-glow-green transition-lift"
-                      >
+                      <Button asChild size="lg" variant="default" className="transition-lift">
                         <Link to="/dashboard">
                           Back to your workspace <ArrowRight className="h-4 w-4" />
                         </Link>
@@ -288,12 +273,7 @@ function HomePage() {
                     </>
                   ) : (
                     <>
-                      <Button
-                        asChild
-                        size="lg"
-                        variant="default"
-                        className="shadow-glow-green transition-lift"
-                      >
+                      <Button asChild size="lg" variant="default" className="transition-lift">
                         <Link to="/signup">
                           Create your profile <ArrowRight className="h-4 w-4" />
                         </Link>

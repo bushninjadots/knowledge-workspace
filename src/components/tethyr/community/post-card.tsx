@@ -516,7 +516,7 @@ export function PostCard({
           </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
             <div
-              className="h-full rounded-full bg-gradient-brand"
+              className="h-full rounded-full bg-foreground"
               style={{ width: `${Number(projectData.progress ?? 0)}%` }}
             />
           </div>

@@ -101,12 +101,7 @@
   --color-soft-ivory: var(--surface);
 
   /* --- Elevation: structure over decoration ------------------------------ */
-  --shadow-glow-green: none;
-  --shadow-glow-purple: none;
-  --shadow-glow-green-soft: none;
-  --shadow-glow-purple-soft: none;
-  --shadow-card: none;
-  --shadow-soft: none;
+  /* Shadows are dialog-only: --shadow-lifted is the only elevation token. */
   --shadow-lifted: 0 1px 3px 0 var(--shadow-tint); /* dialogs only */
 }
 
@@ -575,30 +570,6 @@
   background-size: 256px 256px;
   opacity: 0.35;
   z-index: -1;
-}
-
-@utility inner-glow {
-  box-shadow: none;
-}
-
-@utility text-gradient-brand {
-  background: none;
-  -webkit-background-clip: border-box;
-  background-clip: border-box;
-  color: var(--foreground);
-}
-
-@utility bg-gradient-brand {
-  background: var(--foreground);
-  color: var(--background);
-}
-
-@utility glow-green {
-  box-shadow: none;
-}
-
-@utility glow-purple {
-  box-shadow: none;
 }
 
 @utility card-border {

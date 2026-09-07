@@ -65,7 +65,7 @@ function Avatar({
   const initial = (name ?? "?").charAt(0).toUpperCase();
   return (
     <div
-      className={`shrink-0 overflow-hidden rounded-full bg-gradient-brand ${size} ${ring}`}
+      className={`shrink-0 overflow-hidden rounded-full bg-foreground text-background ${size} ${ring}`}
       title={name ?? undefined}
     >
       {src ? (
@@ -353,7 +353,7 @@ export function ProjectHeader({
         <div className="mt-4 flex items-center gap-3">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated">
             <div
-              className="h-full rounded-full bg-gradient-brand transition-all"
+              className="h-full rounded-full bg-foreground transition-all"
               style={{ width: `${project.progress_percent}%` }}
             />
           </div>

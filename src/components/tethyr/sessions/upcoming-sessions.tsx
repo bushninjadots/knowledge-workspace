@@ -111,7 +111,7 @@ function UpcomingCard({
                 {session.participants.slice(0, 3).map((p) => (
                   <span
                     key={p.id}
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-brand text-[8px] font-bold text-background ring-2 ring-surface"
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[8px] font-bold text-background ring-2 ring-surface"
                   >
                     {p.profiles?.display_name?.charAt(0) ?? "?"}
                   </span>

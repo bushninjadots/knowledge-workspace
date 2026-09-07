@@ -78,7 +78,7 @@ export function ProjectTimeline({
         {/* Connector line */}
         <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-border/60" />
         <div
-          className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-gradient-brand transition-all duration-500"
+          className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground transition-all duration-500"
           style={{ width: `${(currentIdx / (STAGES.length - 1)) * 100}%` }}
         />
 

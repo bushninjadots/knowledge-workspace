@@ -129,7 +129,7 @@ export function ItemCard({
   }
 
   return (
-    <div className="group relative flex flex-col rounded-xl border card-border bg-surface p-4 transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50 hover:shadow-soft">
+    <div className="group relative flex flex-col rounded-xl border card-border bg-surface p-4 transition-lift transition-shadow duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50">
       {/* Top row: type icon + actions */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-elevated">

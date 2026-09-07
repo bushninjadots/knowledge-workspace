@@ -284,7 +284,7 @@ function SectionHeading({ index, label }: { index: number; label: string }) {
 function Avatar({ name, src }: { name?: string | null; src?: string }) {
   const initial = (name ?? "?").charAt(0).toUpperCase();
   return (
-    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gradient-brand">
+    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-foreground text-background">
       {src ? (
         <img
           src={src}
