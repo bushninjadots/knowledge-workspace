@@ -64,6 +64,9 @@ import {
   BACKGROUND_OPTIONS,
   CARD_BORDER_OPTIONS,
   CARD_BORDER_SWATCHES,
+  CARD_FILL_SWATCHES,
+  CARD_SURFACE_STYLE,
+  cardFillStyle,
   EDITORIAL_HEADING_FONT,
   structureMaxWidth,
   cardBorderStyle,
@@ -244,6 +247,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     ...appearanceStyle(me?.background),
     // The Studio config owns card borders; the profile appearance must not win here.
     ...cardBorderStyle(props.config),
+    ...cardFillStyle(props.config),
   };
 
   const toggleCustomize = () => {
@@ -322,6 +326,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         <main
           className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
           aria-label="Studio canvas"
+          style={CARD_SURFACE_STYLE}
         >
           <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
           <div
@@ -1828,6 +1833,51 @@ function GCustomizePanel({
             ))}
           </div>
         )}
+        <div className="mb-4">
+          <p className="t-label mb-1.5">Card fill</p>
+          <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+            Colour and translucency of every block surface
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {CARD_FILL_SWATCHES.map((swatch) => (
+              <button
+                key={swatch.value || "auto"}
+                type="button"
+                title={swatch.label}
+                aria-label={`Card fill ${swatch.label}`}
+                aria-pressed={config.cardColor.toLowerCase() === swatch.value}
+                onClick={() => onChange({ cardColor: swatch.value })}
+                className={cn(
+                  "h-6 w-6 rounded-sm border-2 text-3xs",
+                  config.cardColor.toLowerCase() === swatch.value
+                    ? "border-foreground"
+                    : "border-border",
+                )}
+                style={
+                  swatch.value
+                    ? { backgroundColor: swatch.value }
+                    : { backgroundColor: "var(--surface-elevated)" }
+                }
+              >
+                {swatch.value ? "" : "A"}
+              </button>
+            ))}
+          </div>
+          <label className="mt-2 block">
+            <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+              Opacity <span>{config.cardOpacity}%</span>
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={config.cardOpacity}
+              onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
+              className="w-full accent-[var(--user-accent)]"
+            />
+          </label>
+        </div>
         <div className="mb-4 border-t border-border pt-3">
           <p className="t-label mb-1.5">Background</p>
           {(
