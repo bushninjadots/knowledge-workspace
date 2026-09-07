@@ -1,4 +1,5 @@
 import { Clock, Video, ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 import { safeHref } from "@/lib/validators";
@@ -30,9 +31,9 @@ function SessionCard({
   const participantCount = session.participants?.length ?? 0;
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
+      className="group flex items-start gap-4 bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
     >
       {/* Time column */}
       <div className="w-16 shrink-0 text-center">
@@ -104,13 +105,15 @@ function SessionCard({
         <button
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
           title="View details"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
+        >          <ExternalLink className="h-3.5 w-3.5" />
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
+
+
+
 
 export function TodaySchedule({
   sessions,

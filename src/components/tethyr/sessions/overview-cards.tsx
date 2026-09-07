@@ -1,4 +1,5 @@
 import { CalendarDays, CheckCircle, Clock, Users, CalendarClock } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { useSessionStats } from "@/hooks/use-sessions";
 
 type Stats = ReturnType<typeof useSessionStats>["data"];
@@ -40,9 +41,9 @@ export function OverviewCards({ stats }: { stats: Stats }) {
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <div
+          <Card
             key={card.label}
-            className="group rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50"
+            className="group bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -59,7 +60,7 @@ export function OverviewCards({ stats }: { stats: Stats }) {
                 <Icon className={`h-4 w-4 ${card.color}`} />
               </div>
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>

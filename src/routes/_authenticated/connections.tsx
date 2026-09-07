@@ -182,9 +182,10 @@ function ConnectionsPage() {
           />
         ) : view === "rows" ? (
           <div className="overflow-hidden rounded-xl border border-border/60">
-            <div className="hidden grid-cols-[1fr_auto] gap-3 border-b border-border/60 bg-surface/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid">
+            <div className="hidden grid-cols-[minmax(0,1fr)_130px_auto] gap-3 border-b border-border/60 bg-surface/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid">
               <span>Name</span>
-              <span>Actions</span>
+              <span>Connected</span>
+              <span className="text-right">Actions</span>
             </div>
             <div className="divide-y divide-border/60">
               {accepted.map((c) => (
@@ -267,7 +268,7 @@ function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
   const title = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-surface/40">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-surface/40 sm:grid-cols-[minmax(0,1fr)_130px_auto]">
       <div className="flex items-center gap-3 min-w-0">
         <Avatar conn={conn} />
         <div className="min-w-0">
@@ -277,7 +278,13 @@ function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <span
+        className="hidden shrink-0 text-xs text-muted-foreground tabular-nums sm:block"
+        title={conn.updated_at ? new Date(conn.updated_at).toLocaleString() : undefined}
+      >
+        {formatConnectedDate(conn.updated_at)}
+      </span>
+      <div className="flex items-center justify-end gap-1">
         {conn.other?.handle ? (
           <Link
             to="/u/$handle"
@@ -329,6 +336,20 @@ function FriendCard({ conn }: { conn: ConnectionWithProfile }) {
       </Button>
     </div>
   );
+}
+
+/* Compact “Connected” date: full month name when it's the current year,
+ * month + year otherwise (e.g. “Sep 7” vs “Sep 7, 2025”). */
+function formatConnectedDate(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: sameYear ? undefined : "numeric",
+  });
 }
 
 function RequestRow({

@@ -1,4 +1,5 @@
 import { Check, X, Clock, MessageSquare } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { SessionRequest } from "@/hooks/use-sessions";
 import { useRespondToRequest, useCancelSessionRequest } from "@/hooks/use-sessions";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
   }
 
   return (
-    <div className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
+    <Card className="group flex items-start gap-4 bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50">
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
         {otherUser?.display_name?.charAt(0) ?? otherUser?.handle?.charAt(0) ?? "?"}
@@ -108,7 +109,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
           </Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

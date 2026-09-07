@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
@@ -595,43 +596,44 @@ function ExplorePage() {
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {needs.slice(0, 6).map((n) => (
-                      <Link
-                        key={n.id}
-                        to="/projects/$id"
-                        params={{ id: n.projects!.id }}
-                        className="group flex items-start justify-between gap-3 rounded-xl border card-border bg-surface p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium group-hover:text-primary">
-                            {n.title}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {n.projects?.title}
-                            {n.projects?.profiles?.display_name
-                              ? ` · by ${n.projects.profiles.display_name}`
-                              : ""}
-                          </p>
-                          {n.skills?.name && (
-                            <span
-                              className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
-                                mySkillNames.has(n.skills.name.toLowerCase())
-                                  ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                  : "border-brand-purple/30 bg-brand-purple/5 text-brand-purple"
-                              }`}
-                            >
-                              {n.skills.name}
-                              {mySkillNames.has(n.skills.name.toLowerCase()) && (
-                                <BadgeCheck className="h-3 w-3" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        <span
-                          className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${NEED_BADGE[n.urgency]}`}
+                      <Card asChild key={n.id}>
+                        <Link
+                          to="/projects/$id"
+                          params={{ id: n.projects!.id }}
+                          className="group flex items-start justify-between gap-3 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
                         >
-                          {NEED_LABEL[n.urgency]}
-                        </span>
-                      </Link>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium group-hover:text-primary">
+                              {n.title}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {n.projects?.title}
+                              {n.projects?.profiles?.display_name
+                                ? ` · by ${n.projects.profiles.display_name}`
+                                : ""}
+                            </p>
+                            {n.skills?.name && (
+                              <span
+                                className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+                                  mySkillNames.has(n.skills.name.toLowerCase())
+                                    ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
+                                    : "border-brand-purple/30 bg-brand-purple/5 text-brand-purple"
+                                }`}
+                              >
+                                {n.skills.name}
+                                {mySkillNames.has(n.skills.name.toLowerCase()) && (
+                                  <BadgeCheck className="h-3 w-3" />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${NEED_BADGE[n.urgency]}`}
+                          >
+                            {NEED_LABEL[n.urgency]}
+                          </span>
+                        </Link>
+                      </Card>
                     ))}
                   </div>
                 </div>
@@ -779,9 +781,9 @@ function ExplorePage() {
                               .length
                           : 0;
                       return (
-                        <div
+                        <Card
                           key={opportunity.id}
-                          className="animate-room-enter group rounded-xl border card-border bg-surface p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                          className="animate-room-enter group p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
                           style={{ animationDelay: `${i * 50}ms` }}
                         >
                           <Link
@@ -872,7 +874,7 @@ function ExplorePage() {
                               myStatus={myRoleStatus[opportunity.id] ?? null}
                             />
                           </div>
-                        </div>
+                        </Card>
                       );
                     })}
                   </div>

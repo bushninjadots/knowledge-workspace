@@ -1,4 +1,5 @@
 import { CalendarDays, Video, MoreHorizontal, MapPin } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 import { safeHref } from "@/lib/validators";
@@ -41,9 +42,9 @@ function UpcomingCard({
   const participantCount = session.participants?.length ?? 0;
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="group flex items-start gap-4 rounded-xl border card-border bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
+      className="group flex items-start gap-4 bg-surface/30 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 cursor-pointer"
     >
       {/* Date badge */}
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
@@ -143,7 +144,7 @@ function UpcomingCard({
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
 
