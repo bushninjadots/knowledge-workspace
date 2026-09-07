@@ -335,10 +335,11 @@ export function NoteEditor({
       const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "_") || `image.${check.ext}`;
       // library-files is a private bucket whose RLS requires the owner's id as
       // the first path folder — use that and sign a short-lived URL to render.
+      // The path is unique per upload (no upsert), so a collision surfaces as an
+      // error instead of silently overwriting an image an existing note points to.
       const path = `${user.id}/library-images/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("library-files").upload(path, file, {
         contentType: check.contentType,
-        upsert: true,
       });
       if (upErr) throw upErr;
       // Store the storage *path*, not a signed URL — SignedImage signs it at

@@ -33,6 +33,18 @@ function looksLikeUrl(value: string): boolean {
   return /^https?:\/\/\S+$/.test(value.trim());
 }
 
+/** Turn a stored project-media public URL back into its storage path, or null
+ *  when the value isn't one of our public URLs (custom https:// links, etc.). */
+function pathFromPublicUrl(value: string, bucket: string): string | null {
+  if (!value) return null;
+  const marker = `/object/public/${bucket}/`;
+  const index = value.indexOf(marker);
+  if (index < 0) return null;
+  const path = value.slice(index + marker.length);
+  if (!path || path.includes("?")) return null;
+  return path;
+}
+
 export function InlineInspector({
   block,
   definition,
@@ -290,13 +302,22 @@ export function InlineInspector({
                 if (!check.ok) return toast.error(check.error);
                 setUploading(true);
                 try {
-                  const path = `${ownerId}/block-${block.id}.${check.ext}`;
+                  const bucket = "project-media";
+                  // Unique path per upload so the public URL changes and the
+                  // browser never serves a stale cached copy of a replaced image.
+                  const previousPath = pathFromPublicUrl(url, bucket);
+                  const path = `${ownerId}/block-${block.id}-${Date.now()}.${check.ext}`;
                   const { error: uploadError } = await supabase.storage
-                    .from("project-media")
+                    .from(bucket)
                     .upload(path, file, { upsert: true, contentType: check.contentType });
                   if (uploadError) throw uploadError;
-                  const { data } = supabase.storage.from("project-media").getPublicUrl(path);
+                  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
                   set(key, data.publicUrl);
+                  // Clean up the file we just replaced — best-effort, don't
+                  // block the UI on it.
+                  if (previousPath && previousPath !== path) {
+                    supabase.storage.from(bucket).remove([previousPath]);
+                  }
                   toast.success("Image uploaded");
                 } catch (error) {
                   toast.error(friendlyError(error as Error, "Image upload failed"));
