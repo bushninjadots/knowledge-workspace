@@ -415,23 +415,29 @@ export const CARD_FILL_SWATCHES: ReadonlyArray<{ value: string; label: string }>
 ];
 
 /**
- * Card fill → the surface variables every block reads. Blocks use `bg-surface`
- * / `bg-surface-elevated`, so tinting those two (plus `--card`) is what makes a
- * Studio block match a Dashboard panel: same colour, adjustable translucency.
+ * Card fill → a single resolved colour. Emitted on the *outer* Studio surface
+ * so the canvas can point --surface/--card at it without a self-referencing
+ * custom property (which CSS drops as a cycle).
  */
-export function cardSurfaceStyle(config: StudioConfig): React.CSSProperties {
-  const style = {} as React.CSSProperties & Record<string, string>;
+export function cardFillStyle(config: StudioConfig): React.CSSProperties {
   const base = /^#([0-9a-f]{6})$/i.test(config.cardColor)
     ? config.cardColor
     : "var(--surface-elevated)";
-  const opacity = Math.min(100, Math.max(0, config.cardOpacity));
-  const fill =
-    opacity >= 100 ? base : `color-mix(in oklab, ${base} ${opacity}%, transparent)`;
-  style["--surface"] = fill;
-  style["--surface-elevated"] = fill;
-  style["--card"] = fill;
-  return style;
+  const opacity = Math.min(100, Math.max(0, Math.round(config.cardOpacity)));
+  const fill = opacity >= 100 ? base : `color-mix(in oklab, ${base} ${opacity}%, transparent)`;
+  return { "--studio-card-fill": fill } as React.CSSProperties;
 }
+
+/**
+ * Applied to the canvas/content container. Blocks use `bg-surface`,
+ * `bg-surface-elevated` and `--card`, so pointing all three at the resolved
+ * fill is what makes a Studio block read like a Dashboard panel.
+ */
+export const CARD_SURFACE_STYLE = {
+  "--surface": "var(--studio-card-fill, var(--surface-elevated))",
+  "--surface-elevated": "var(--studio-card-fill, var(--surface-elevated))",
+  "--card": "var(--studio-card-fill, var(--surface-elevated))",
+} as React.CSSProperties;
 
 /** Card border options surfaced in the Studio customize panel. */
 export const CARD_BORDER_OPTIONS: ReadonlyArray<{ value: CardBorderPreference; label: string }> = [
