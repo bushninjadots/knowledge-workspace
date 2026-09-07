@@ -17,7 +17,9 @@ import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
 import {
+  CARD_SURFACE_STYLE,
   cardBorderStyle,
+  cardFillStyle,
   studioConfigToStyle,
   EDITORIAL_HEADING_FONT,
   structureMaxWidth,
@@ -101,6 +103,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     ...appearanceStyle(me?.background),
     // The Studio config owns card borders; the profile appearance must not win here.
     ...cardBorderStyle(config),
+    ...cardFillStyle(config),
   };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
@@ -158,7 +161,11 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         onOpenEditor={() => navigate({ to: "/studio" })}
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
       />
-      <main className="relative min-w-0 flex-1 overflow-y-auto bg-noise" aria-label="Studio">
+      <main
+        className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
+        aria-label="Studio"
+        style={CARD_SURFACE_STYLE}
+      >
         <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
         {mode === "preview" && profile?.handle ? (
           <iframe

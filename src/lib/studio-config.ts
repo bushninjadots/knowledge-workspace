@@ -65,6 +65,11 @@ export interface StudioConfig {
   cardBorders: CardBorderPreference;
   /** Custom card border hex, used when cardBorders === "custom". */
   cardBorderColor: string;
+  /** Card/block fill colour (hex). Empty = follow the page's elevated surface. */
+  cardColor: string;
+  /** Card/block fill opacity, 0–100. Lower values let the backdrop show through,
+   *  the way Dashboard panels do. */
+  cardOpacity: number;
   /** App shell background while editing. */
   appBackground: BackgroundId;
   /** Public Studio background. */
@@ -91,6 +96,8 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   accentColor: "#3f8f8a",
   cardBorders: "neutral",
   cardBorderColor: "",
+  cardColor: "",
+  cardOpacity: 30,
   appBackground: "surface",
   publicBackground: "default",
 };
@@ -257,6 +264,17 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
       typeof value.cardBorderColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardBorderColor)
         ? value.cardBorderColor
         : DEFAULT_STUDIO_CONFIG.cardBorderColor,
+    cardColor:
+      typeof value.cardColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardColor)
+        ? value.cardColor
+        : DEFAULT_STUDIO_CONFIG.cardColor,
+    cardOpacity:
+      typeof value.cardOpacity === "number" &&
+      Number.isFinite(value.cardOpacity) &&
+      value.cardOpacity >= 0 &&
+      value.cardOpacity <= 100
+        ? Math.round(value.cardOpacity)
+        : DEFAULT_STUDIO_CONFIG.cardOpacity,
   };
 }
 
@@ -385,6 +403,41 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
 
   return style;
 }
+
+/** Card fill swatches; "" means "follow the page surface". */
+export const CARD_FILL_SWATCHES: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "", label: "Auto" },
+  { value: "#ffffff", label: "Paper" },
+  { value: "#f6f8fa", label: "Mist" },
+  { value: "#1f2328", label: "Ink" },
+  { value: "#0d1117", label: "Midnight" },
+  { value: "#3f8f8a", label: "Teal" },
+];
+
+/**
+ * Card fill → a single resolved colour. Emitted on the *outer* Studio surface
+ * so the canvas can point --surface/--card at it without a self-referencing
+ * custom property (which CSS drops as a cycle).
+ */
+export function cardFillStyle(config: StudioConfig): React.CSSProperties {
+  const base = /^#([0-9a-f]{6})$/i.test(config.cardColor)
+    ? config.cardColor
+    : "var(--surface-elevated)";
+  const opacity = Math.min(100, Math.max(0, Math.round(config.cardOpacity)));
+  const fill = opacity >= 100 ? base : `color-mix(in oklab, ${base} ${opacity}%, transparent)`;
+  return { "--studio-card-fill": fill } as React.CSSProperties;
+}
+
+/**
+ * Applied to the canvas/content container. Blocks use `bg-surface`,
+ * `bg-surface-elevated` and `--card`, so pointing all three at the resolved
+ * fill is what makes a Studio block read like a Dashboard panel.
+ */
+export const CARD_SURFACE_STYLE = {
+  "--surface": "var(--studio-card-fill, var(--surface-elevated))",
+  "--surface-elevated": "var(--studio-card-fill, var(--surface-elevated))",
+  "--card": "var(--studio-card-fill, var(--surface-elevated))",
+} as React.CSSProperties;
 
 /** Card border options surfaced in the Studio customize panel. */
 export const CARD_BORDER_OPTIONS: ReadonlyArray<{ value: CardBorderPreference; label: string }> = [
