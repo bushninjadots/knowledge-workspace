@@ -93,9 +93,12 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
               </div>
             )}
             {config.showCaptions !== false && (
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <p className="text-[10px] text-white truncate">{item.title}</p>
-              </div>
+              <>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 on-media-scrim" />
+                <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <p className="text-[10px] text-white truncate">{item.title}</p>
+                </div>
+              </>
             )}
           </div>
         ))}

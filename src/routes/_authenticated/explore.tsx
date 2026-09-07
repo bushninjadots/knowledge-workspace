@@ -16,10 +16,7 @@ import {
   TrendingUp,
   Hash,
   Zap,
-  Hammer,
-  GraduationCap,
   Loader2,
-  MessageCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +26,7 @@ import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-appl
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
 import {
@@ -79,7 +77,6 @@ type Creator = {
 };
 
 type Tab = "projects" | "creators" | "opportunities";
-type ExploreIntent = "build" | "contribute" | "learn" | "feedback" | null;
 
 type OpportunityQueryRow = {
   id: string;
@@ -176,34 +173,6 @@ export const Route = createFileRoute("/_authenticated/explore")({
   component: ExplorePage,
 });
 
-function IntentButton({
-  icon,
-  label,
-  pressed,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  pressed: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition ${
-        pressed
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border/60 bg-surface/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
 function ExplorePage() {
   const navigate = useNavigate();
   const { tab: urlTab } = useSearch({ from: "/_authenticated/explore" });
@@ -237,11 +206,11 @@ function ExplorePage() {
     },
     [navigate],
   );
-  const [intent, setIntent] = useState<ExploreIntent>(null);
   const [q, setQ] = useState((savedOpp.q as string) ?? "");
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
   const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "match");
   const [activeNeed, setActiveNeed] = useState<string>((savedOpp.activeNeed as string) ?? "");
+  const [discoverOpen, setDiscoverOpen] = useState(false);
   const { data: skills = [] } = useSkillsCatalog();
 
   // Persist opportunity filters
@@ -470,7 +439,6 @@ function ExplorePage() {
   const filteredProjects = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (projects ?? []).filter((p) => {
-      if (intent === "feedback" && !p.looking_for_feedback) return false;
       if (category !== "All" && category !== "Projects") {
         if (!p.tags.some((t) => t.toLowerCase() === category.toLowerCase())) return false;
       }
@@ -483,7 +451,7 @@ function ExplorePage() {
         p.profiles?.handle?.toLowerCase().includes(needle)
       );
     });
-  }, [projects, q, category, intent]);
+  }, [projects, q, category]);
 
   const filteredOpportunities = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -571,76 +539,25 @@ function ExplorePage() {
       <div className="mx-auto flex max-w-[90rem] gap-6 px-4 py-6 sm:px-6 sm:py-8">
         {/* Main content */}
         <div className="min-w-0 flex-1">
-          <section
-            aria-labelledby="explore-intent-heading"
-            className="mb-6 border-b border-border/60 pb-5"
-          >
-            <p className="section-label">Choose a direction</p>
-            <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                {" "}
-                <h1
-                  id="explore-intent-heading"
-                  className="font-display text-2xl font-semibold tracking-tight"
-                >
-                  Find work, people, and openings
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Start with an intention, then find the work or people that make it possible.
-                </p>
-              </div>
-              {intent && (
-                <button
-                  type="button"
-                  onClick={() => setIntent(null)}
-                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                >
-                  Clear direction
-                </button>
-              )}
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Explore intentions">
-              <IntentButton
-                icon={<Hammer className="h-3.5 w-3.5" />}
-                label="Build something"
-                pressed={intent === "build"}
-                onClick={() => {
-                  setIntent("build");
-                  setTab("projects");
-                  setCategory("All");
-                }}
-              />
-              <IntentButton
-                icon={<Users className="h-3.5 w-3.5" />}
-                label="Contribute"
-                pressed={intent === "contribute"}
-                onClick={() => {
-                  setIntent("contribute");
-                  setTab("opportunities");
-                  setCategory("All");
-                }}
-              />
-              <IntentButton
-                icon={<GraduationCap className="h-3.5 w-3.5" />}
-                label="Learn with people"
-                pressed={intent === "learn"}
-                onClick={() => {
-                  setIntent("learn");
-                  setTab("creators");
-                  setCategory("All");
-                }}
-              />
-              <IntentButton
-                icon={<MessageCircle className="h-3.5 w-3.5" />}
-                label="Get feedback"
-                pressed={intent === "feedback"}
-                onClick={() => {
-                  setIntent("feedback");
-                  setTab("projects");
-                  setCategory("All");
-                }}
-              />
-            </div>
+          {/* Mobile discover panel trigger — sidebar content is hidden below lg */}
+          <div className="mb-4 lg:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDiscoverOpen(true)}
+              className="gap-1.5"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              Discover
+            </Button>
+          </div>
+          <section className="mb-6 border-b border-border/60 pb-5">
+            <h1 className="font-display text-2xl font-semibold tracking-tight">
+              Find work, people, and openings
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Browse projects, people, and open opportunities from the community.
+            </p>
           </section>
 
           {/* Tab bar */}
@@ -1072,6 +989,18 @@ function ExplorePage() {
           <DiscoverSidebar tab={tab} />
         </aside>
       </div>
+
+      {/* Mobile discover drawer — sidebar content accessible below lg */}
+      <Drawer open={discoverOpen} onOpenChange={setDiscoverOpen}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Discover</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-6">
+            <DiscoverSidebar tab={tab} />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

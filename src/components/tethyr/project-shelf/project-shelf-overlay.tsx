@@ -213,7 +213,9 @@ export function ProjectShelfOverlay({
                     )}
                   </div>
 
-                  {/* Title overlay */}
+                  {/* Title overlay — guaranteed scrim so white text is always
+                      readable over any cover image. */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 on-media-scrim" />
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className="text-xl font-bold text-white drop-shadow-lg">{project.title}</p>
                     {project.profiles && (

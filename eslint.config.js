@@ -54,6 +54,21 @@ export default tseslint.config(
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
+      // Motion policy (styles.css): name transition properties explicitly,
+      // never transition-all. Keep durations under 300ms.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/transition-all/]",
+          message:
+            "Avoid transition-all — name transition properties explicitly (transition-colors, transition-opacity, transition-[width], etc.) per the motion policy.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/transition-all/]",
+          message:
+            "Avoid transition-all — name transition properties explicitly (transition-colors, transition-opacity, transition-[width], etc.) per the motion policy.",
+        },
+      ],
     },
   },
   eslintPluginPrettier,

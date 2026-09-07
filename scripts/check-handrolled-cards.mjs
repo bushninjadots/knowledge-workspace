@@ -74,9 +74,7 @@ for (const file of files) {
   }
 }
 
-const baseline = existsSync(BASELINE_PATH)
-  ? JSON.parse(readFileSync(BASELINE_PATH, "utf8"))
-  : {};
+const baseline = existsSync(BASELINE_PATH) ? JSON.parse(readFileSync(BASELINE_PATH, "utf8")) : {};
 
 if (UPDATE) {
   writeFileSync(BASELINE_PATH, JSON.stringify(counts, null, 2) + "\n");

@@ -181,15 +181,21 @@ function ConnectionsPage() {
             actionHref="/explore"
           />
         ) : view === "rows" ? (
-          <div className="space-y-2">
-            {accepted.map((c) => (
-              <FriendRow key={c.id} conn={c} />
-            ))}
+          <div className="overflow-hidden rounded-xl border border-border/60">
+            <div className="hidden grid-cols-[1fr_auto] gap-3 border-b border-border/60 bg-surface/60 px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:grid">
+              <span>Name</span>
+              <span>Actions</span>
+            </div>
+            <div className="divide-y divide-border/60">
+              {accepted.map((c) => (
+                <FriendRow key={c.id} conn={c} />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {accepted.map((c) => (
-              <FriendRow key={c.id} conn={c} />
+              <FriendCard key={c.id} conn={c} />
             ))}
           </div>
         )}
@@ -257,6 +263,43 @@ function ConnectionsPage() {
 }
 
 function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
+  const name = conn.other?.display_name ?? conn.other?.handle ?? "Member";
+  const title = conn.other?.creator_title || conn.other?.category || "—";
+
+  return (
+    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-surface/40">
+      <div className="flex items-center gap-3 min-w-0">
+        <Avatar conn={conn} />
+        <div className="min-w-0">
+          <Name conn={conn} />
+          <p className="truncate text-xs text-muted-foreground" title={title}>
+            {title}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        {conn.other?.handle ? (
+          <Link
+            to="/u/$handle"
+            params={{ handle: conn.other.handle }}
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            Profile
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        ) : null}
+        <Button size="icon" variant="ghost" asChild aria-label={`Message ${name}`}>
+          <Link to="/messages" search={{ c: conn.id }}>
+            <MessageSquare className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* Card variant used by the gallery layout. */
+function FriendCard({ conn }: { conn: ConnectionWithProfile }) {
   const name = conn.other?.display_name ?? conn.other?.handle ?? "Member";
   const title = conn.other?.creator_title || conn.other?.category || "—";
 

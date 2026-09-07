@@ -68,7 +68,7 @@ export function DragDropFileInput({
       onDrop={handleDrop}
       onClick={() => !disabled && inputRef.current?.click()}
       className={cn(
-        "relative cursor-pointer transition-all",
+        "relative cursor-pointer transition-colors",
         isDragOver && "ring-2 ring-[var(--user-accent,var(--trust))]/40",
         disabled && "cursor-not-allowed opacity-50",
         className,
@@ -137,7 +137,7 @@ export function InlineDropZone({
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
       className={cn(
-        "flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-all",
+        "flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-colors",
         isDragOver
           ? "border-brand-green bg-brand-green/5"
           : "border-border/40 hover:border-border/60",

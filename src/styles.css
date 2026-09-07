@@ -576,6 +576,18 @@
   border-color: var(--card-border-color, var(--user-accent-border, var(--border)));
 }
 
+/* Guaranteed scrim behind text placed on user-supplied images. Always dark
+   enough for white text regardless of the underlying image. */
+@utility on-media-scrim {
+  background: linear-gradient(
+    to top,
+    oklch(0 0 0 / 0.78) 0%,
+    oklch(0 0 0 / 0.45) 35%,
+    oklch(0 0 0 / 0.12) 65%,
+    transparent 100%
+  );
+}
+
 /* Shared containment contract for independent cards and workspace content. */
 @utility content-safe {
   min-width: 0;
@@ -709,54 +721,6 @@
   .marquee-half[aria-hidden="true"] {
     display: none;
   }
-}
-
-/* Animated accent border glow — rotates a conic gradient behind the element,
-   visible through a 1px transparent gap. Used on hero cards and sidebars. */
-@keyframes accent-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@utility animate-border-glow {
-  position: relative;
-}
-
-.animate-border-glow::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 0deg,
-    var(--user-accent, var(--trust)),
-    var(--ai),
-    var(--user-accent, var(--trust))
-  );
-  animation: accent-spin 8s linear infinite;
-  animation-play-state: paused;
-  opacity: 0;
-  transition: opacity 400ms ease;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  padding: 1px;
-}
-
-.animate-border-glow:hover::before,
-.group:hover .animate-border-glow::before {
-  opacity: 0.5;
-  animation-play-state: running;
 }
 
 @utility animate-fold-up {
