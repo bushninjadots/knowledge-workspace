@@ -3,7 +3,7 @@
 // milestones, updates, discussions and open roles all carry public SELECT
 // policies. Repository-workspace layout: compact header → sticky tab bar
 // (README as homepage, with Files / Activity / People / Discussions) below.
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   createFileRoute,
   notFound,
@@ -46,13 +46,6 @@ import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
-
-// Block system — registers project blocks and renders them via PageShell.
-import "@/components/tethyr/blocks/register-all";
-import { PageShell } from "@/components/tethyr/page/page-shell";
-import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
-import { useProjectPage } from "@/hooks/use-project-page";
-import { themeTokensToStyle } from "@/lib/theme-tokens";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -453,24 +446,6 @@ function ProjectPage() {
 
   const isOwner = !!me?.userId && data?.project.profile_id === me?.userId;
 
-  // Fetch or auto-create the project's page (block-based presentation).
-  const { page: projectPage } = useProjectPage({
-    projectId: id,
-    isOwner,
-  });
-
-  // Apply page theme as CSS vars on the outer wrapper so the entire project
-  // (header, workbench, pulse, blocks, README, tabs) gets themed.
-  const pageThemeStyle = useMemo(
-    () => themeTokensToStyle(projectPage?.theme ?? {}),
-    [projectPage?.theme],
-  );
-
-  // When blocks are active they become the page — hide legacy presentation
-  // sections that duplicate what blocks already show. Interactive tools
-  // (workbench, file upload, milestone editors, session scheduling) stay.
-  const blocksArePage = !!projectPage && (projectPage.layout?.sections?.length ?? 0) > 0;
-
   if (isLoading) {
     return (
       <Shell>
@@ -537,33 +512,30 @@ function ProjectPage() {
   });
 
   return (
-    <Shell accentColor={accent} pageThemeStyle={pageThemeStyle}>
-      {/* Legacy header — hidden when blocks render the page */}
-      {!blocksArePage && (
-        <ProjectHeader
-          project={project}
-          coverSigned={coverSigned}
-          creator={creator}
-          contributors={contributors}
-          avatarSigned={avatarSigned}
-          links={links}
-          repoStats={repoStats}
-          communityPostCount={communityPostCount}
-          openNeedCount={needs.filter((need) => !need.is_filled).length}
-          onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
-          onSignIn={isSignedOut ? signInToJoin : undefined}
-          onPostUpdate={
-            isOwner || isContributor
-              ? () => {
-                  setTab("activity", { scrollToTop: false });
-                  setTimeout(() => scrollToSection("project-activity"), 80);
-                }
-              : undefined
-          }
-          onOpenDiscussions={() => scrollToSection("project-discussions")}
-          onOpenNeeds={() => scrollToSection("project-needs")}
-        />
-      )}
+    <Shell accentColor={accent}>
+      <ProjectHeader
+        project={project}
+        coverSigned={coverSigned}
+        creator={creator}
+        contributors={contributors}
+        avatarSigned={avatarSigned}
+        links={links}
+        repoStats={repoStats}
+        communityPostCount={communityPostCount}
+        openNeedCount={needs.filter((need) => !need.is_filled).length}
+        onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
+        onSignIn={isSignedOut ? signInToJoin : undefined}
+        onPostUpdate={
+          isOwner || isContributor
+            ? () => {
+                setTab("activity", { scrollToTop: false });
+                setTimeout(() => scrollToSection("project-activity"), 80);
+              }
+            : undefined
+        }
+        onOpenDiscussions={() => scrollToSection("project-discussions")}
+        onOpenNeeds={() => scrollToSection("project-needs")}
+      />
 
       <ProjectWorkbench
         project={project}
@@ -596,283 +568,204 @@ function ProjectPage() {
         presentationSaveState={presentationSaveState}
       />
 
-      {/* Legacy pulse — hidden when blocks render the page */}
-      {!blocksArePage && (
-        <ProjectPulse
-          project={project}
-          isOwner={isOwner}
-          editing={false}
-          onEditingChange={() => {}}
-          gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
-          milestones={milestones}
-          openNeedCount={needs.filter((need) => !need.is_filled).length}
-        />
-      )}
+      <ProjectPulse
+        project={project}
+        isOwner={isOwner}
+        editing={false}
+        onEditingChange={() => {}}
+        gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
+        milestones={milestones}
+        openNeedCount={needs.filter((need) => !need.is_filled).length}
+      />
 
-      {/* Block system — replaces legacy presentation when active.
-          When blocks exist they ARE the page; legacy duplicate sections hide. */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-8">
-        <EditModeProvider>
-          <PageShell ownerId={id} ownerType="project" isOwner={isOwner} />
-        </EditModeProvider>
-      </div>
+      {/* The interactive workspace IS the canonical project page — README,
+          files/activity tools, current work, people, conversation, and evidence
+          all render here for every project. */}
+      <div className="animate-room-enter min-h-screen bg-noise">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
+          <section aria-labelledby="project-homepage-heading" className="pt-6">
+            <h2 id="project-homepage-heading" className="sr-only">
+              Project homepage
+            </h2>
+            <ProjectReadmeTab
+              project={project}
+              skills={skills}
+              projectFiles={projectFiles}
+              isOwner={isOwner}
+              presentationPreset={presentation.id}
+            />
+          </section>
 
-      {/* Legacy sections remain available only as the data-backed fallback for
-          pages that have not yet received a canonical layout. Preview routes
-          always show the canonical renderer and never mount the legacy tree. */}
-      {!blocksArePage && (
-        <div className="animate-room-enter min-h-screen bg-noise">
-          <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 sm:px-8">
-            <section aria-labelledby="project-homepage-heading" className="pt-6">
-              <h2 id="project-homepage-heading" className="sr-only">
-                Project homepage
-              </h2>
-              <ProjectReadmeTab
-                project={project}
-                skills={skills}
-                projectFiles={projectFiles}
-                isOwner={isOwner}
-                presentationPreset={presentation.id}
-              />
-            </section>
+          <ProjectSectionNav sectionOrder={presentation.sectionOrder} />
 
-            <ProjectSectionNav sectionOrder={presentation.sectionOrder} />
-
-            {/* Files + activity live right under the README so the workspace tools
+          {/* Files + activity live right under the README so the workspace tools
               (upload files, see what changed) are reachable without scrolling
               past the whole story. */}
-            <div role="group" aria-label="Project files and activity" className="mt-6">
-              <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
-            </div>
+          <div role="group" aria-label="Project files and activity" className="mt-6">
+            <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
+          </div>
 
-            <div className="pt-6">
-              {tab === "files" && (
-                <section aria-label="Project files">
-                  <Suspense fallback={<Skeleton className="h-48" />}>
-                    <ProjectFilesExplorer
-                      projectId={id}
-                      projectFiles={projectFiles}
-                      isOwner={isOwner}
-                      preselectPath={preselectPath}
-                      preselectNonce={preselectNonce}
-                    />
-                  </Suspense>
-                </section>
-              )}
-              {tab === "activity" && (
-                <section id="project-activity" aria-label="Project activity">
-                  <Suspense fallback={<Skeleton className="h-48" />}>
-                    <ProjectActivityTab
-                      projectId={id}
-                      milestones={milestones}
-                      updates={updates}
-                      discussions={discussions}
-                      projectFiles={projectFiles}
-                      repos={repos}
-                      isContributor={isContributor}
-                      isOwner={isOwner}
-                      openWeeklyPrompt={searchParams.focus === "weekly"}
-                    />
-                  </Suspense>
-                </section>
-              )}
-            </div>
+          <div className="pt-6">
+            {tab === "files" && (
+              <section aria-label="Project files">
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <ProjectFilesExplorer
+                    projectId={id}
+                    projectFiles={projectFiles}
+                    isOwner={isOwner}
+                    preselectPath={preselectPath}
+                    preselectNonce={preselectNonce}
+                  />
+                </Suspense>
+              </section>
+            )}
+            {tab === "activity" && (
+              <section id="project-activity" aria-label="Project activity">
+                <Suspense fallback={<Skeleton className="h-48" />}>
+                  <ProjectActivityTab
+                    projectId={id}
+                    milestones={milestones}
+                    updates={updates}
+                    discussions={discussions}
+                    projectFiles={projectFiles}
+                    repos={repos}
+                    isContributor={isContributor}
+                    isOwner={isOwner}
+                    openWeeklyPrompt={searchParams.focus === "weekly"}
+                  />
+                </Suspense>
+              </section>
+            )}
+          </div>
 
-            <div className="flex min-w-0 flex-col">
-              {/* Current work — the README's natural follow-up: what's done, in
+          <div className="flex min-w-0 flex-col">
+            {/* Current work — the README's natural follow-up: what's done, in
                 progress, and up next. (Milestones previously had no home on the
                 page; they only surfaced as completed events in Activity.) */}
-              <div className="min-w-0" style={sectionStyle("work")}>
-                <section
-                  id="project-current-work"
-                  aria-labelledby="project-current-work-heading"
-                  className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-                >
-                  <div>
-                    <h2
-                      id="project-current-work-heading"
-                      className="font-display text-lg font-semibold tracking-tight"
-                    >
-                      Current work
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Milestones the team is moving through — what's done, in progress, and up next.
-                    </p>
-                  </div>
-                  <div className="mt-4">
-                    <Suspense fallback={<Skeleton className="h-32" />}>
-                      <MilestonesTimeline
-                        milestones={milestones}
-                        projectId={id}
-                        isOwner={isOwner}
-                      />
-                    </Suspense>
-                  </div>
-                </section>
-              </div>
-
-              <div className="min-w-0" style={sectionStyle("work")}>
-                <Suspense fallback={<Skeleton className="h-24" />}>
-                  <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
-                </Suspense>
-              </div>
-
-              {/* People & roles */}
-              <div className="min-w-0" style={sectionStyle("people")}>
-                <section
-                  id="project-people"
-                  aria-labelledby="project-people-heading"
-                  className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-                >
+            <div className="min-w-0" style={sectionStyle("work")}>
+              <section
+                id="project-current-work"
+                aria-labelledby="project-current-work-heading"
+                className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+              >
+                <div>
                   <h2
-                    id="project-people-heading"
+                    id="project-current-work-heading"
                     className="font-display text-lg font-semibold tracking-tight"
                   >
-                    People
+                    Current work
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Who's building this, and the roles they're looking to fill.
+                    Milestones the team is moving through — what's done, in progress, and up next.
                   </p>
-                  <div className="mt-4">
-                    <Suspense fallback={<Skeleton className="h-48" />}>
-                      <ProjectPeopleTab
-                        projectId={id}
-                        projectTitle={project.title}
-                        contributors={contributors}
-                        avatarSigned={avatarSigned}
-                        openRoles={openRoles}
-                        isOwner={isOwner}
-                        isContributor={isContributor}
-                      />
-                    </Suspense>
-                  </div>
-                </section>
-              </div>
-
-              {/* Sessions — live working time on this project, visible to the team. */}
-              {isContributor && (
-                <div className="min-w-0" style={sectionStyle("work")}>
-                  <section
-                    id="project-sessions"
-                    aria-labelledby="project-sessions-heading"
-                    className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h2
-                          id="project-sessions-heading"
-                          className="font-display text-lg font-semibold tracking-tight"
-                        >
-                          Sessions
-                        </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Live working time on this project — past, present, and next.
-                        </p>
-                      </div>
-                      {isContributor && (
-                        <button
-                          type="button"
-                          onClick={() => setScheduleOpen(true)}
-                          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
-                        >
-                          <CalendarPlus className="h-3 w-3" />
-                          Schedule session
-                        </button>
-                      )}
-                    </div>
-
-                    {projectSessions.length === 0 ? (
-                      <p className="mt-4 text-sm text-muted-foreground">
-                        No sessions scheduled for this project yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-4 divide-y divide-border/50">
-                        {projectSessions.map((s) => (
-                          <li key={s.id}>
-                            <Link
-                              to="/sessions/$id"
-                              params={{ id: s.id }}
-                              className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium">{s.title}</p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                  {s.starts_at
-                                    ? new Date(s.starts_at).toLocaleString(undefined, {
-                                        month: "short",
-                                        day: "numeric",
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                      })
-                                    : "Unscheduled"}
-                                  {s.organizer?.display_name
-                                    ? ` · ${s.organizer.display_name}`
-                                    : ""}
-                                </p>
-                              </div>
-                              <span className="shrink-0 text-[11px] uppercase tracking-wider text-muted-foreground">
-                                {s.status.replace(/_/g, " ")}
-                              </span>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
                 </div>
-              )}
+                <div className="mt-4">
+                  <Suspense fallback={<Skeleton className="h-32" />}>
+                    <MilestonesTimeline milestones={milestones} projectId={id} isOwner={isOwner} />
+                  </Suspense>
+                </div>
+              </section>
+            </div>
 
-              {/* Challenges — structured builds tied to this project. */}
+            <div className="min-w-0" style={sectionStyle("work")}>
+              <Suspense fallback={<Skeleton className="h-24" />}>
+                <ProjectNeeds needs={needs} projectId={id} canManage={isOwner || isContributor} />
+              </Suspense>
+            </div>
+
+            {/* People & roles */}
+            <div className="min-w-0" style={sectionStyle("people")}>
+              <section
+                id="project-people"
+                aria-labelledby="project-people-heading"
+                className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+              >
+                <h2
+                  id="project-people-heading"
+                  className="font-display text-lg font-semibold tracking-tight"
+                >
+                  People
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Who's building this, and the roles they're looking to fill.
+                </p>
+                <div className="mt-4">
+                  <Suspense fallback={<Skeleton className="h-48" />}>
+                    <ProjectPeopleTab
+                      projectId={id}
+                      projectTitle={project.title}
+                      contributors={contributors}
+                      avatarSigned={avatarSigned}
+                      openRoles={openRoles}
+                      isOwner={isOwner}
+                      isContributor={isContributor}
+                    />
+                  </Suspense>
+                </div>
+              </section>
+            </div>
+
+            {/* Sessions — live working time on this project, visible to the team. */}
+            {isContributor && (
               <div className="min-w-0" style={sectionStyle("work")}>
                 <section
-                  id="project-challenges"
-                  aria-labelledby="project-challenges-heading"
+                  id="project-sessions"
+                  aria-labelledby="project-sessions-heading"
                   className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2
-                        id="project-challenges-heading"
+                        id="project-sessions-heading"
                         className="font-display text-lg font-semibold tracking-tight"
                       >
-                        Challenges
+                        Sessions
                       </h2>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Structured builds tied to this project — join one to level up and earn
-                        evidence.
+                        Live working time on this project — past, present, and next.
                       </p>
                     </div>
                     {isContributor && (
-                      <Suspense fallback={null}>
-                        <CreateChallengeDialog projectId={id} />
-                      </Suspense>
+                      <button
+                        type="button"
+                        onClick={() => setScheduleOpen(true)}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                      >
+                        <CalendarPlus className="h-3 w-3" />
+                        Schedule session
+                      </button>
                     )}
                   </div>
 
-                  {projectChallenges.length === 0 ? (
+                  {projectSessions.length === 0 ? (
                     <p className="mt-4 text-sm text-muted-foreground">
-                      No challenges tied to this project yet.
+                      No sessions scheduled for this project yet.
                     </p>
                   ) : (
                     <ul className="mt-4 divide-y divide-border/50">
-                      {projectChallenges.map((c) => (
-                        <li key={c.id}>
+                      {projectSessions.map((s) => (
+                        <li key={s.id}>
                           <Link
-                            to="/challenges/$id"
-                            params={{ id: c.id }}
+                            to="/sessions/$id"
+                            params={{ id: s.id }}
                             className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
                           >
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">{c.title}</p>
+                              <p className="truncate text-sm font-medium">{s.title}</p>
                               <p className="mt-0.5 text-xs text-muted-foreground">
-                                {c.difficulty}
-                                {c.end_date
-                                  ? ` · ends ${new Date(c.end_date).toLocaleDateString()}`
-                                  : ""}
+                                {s.starts_at
+                                  ? new Date(s.starts_at).toLocaleString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  : "Unscheduled"}
+                                {s.organizer?.display_name ? ` · ${s.organizer.display_name}` : ""}
                               </p>
                             </div>
-                            <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] capitalize text-muted-foreground">
-                              {c.type.replace(/_/g, " ")}
+                            <span className="shrink-0 text-[11px] uppercase tracking-wider text-muted-foreground">
+                              {s.status.replace(/_/g, " ")}
                             </span>
                           </Link>
                         </li>
@@ -881,58 +774,111 @@ function ProjectPage() {
                   )}
                 </section>
               </div>
+            )}
 
-              {/* Conversation */}
-              <div className="min-w-0" style={sectionStyle("conversation")}>
-                <section
-                  id="project-discussions"
-                  aria-labelledby="project-discussions-heading"
-                  className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
-                >
-                  <h2
-                    id="project-discussions-heading"
-                    className="font-display text-lg font-semibold tracking-tight"
-                  >
-                    Conversation
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Questions, feedback, and updates from the team.
-                  </p>
-                  <div className="mt-4 space-y-6">
-                    <Suspense fallback={<Skeleton className="h-32" />}>
-                      <ProjectDiscussions
-                        discussions={discussions}
-                        projectId={id}
-                        isContributor={isContributor}
-                        isOwner={isOwner}
-                      />
-                    </Suspense>
-                    <Suspense fallback={<Skeleton className="h-24" />}>
-                      <ProjectCommunityPosts projectId={id} />
-                    </Suspense>
+            {/* Challenges — structured builds tied to this project. */}
+            <div className="min-w-0" style={sectionStyle("work")}>
+              <section
+                id="project-challenges"
+                aria-labelledby="project-challenges-heading"
+                className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2
+                      id="project-challenges-heading"
+                      className="font-display text-lg font-semibold tracking-tight"
+                    >
+                      Challenges
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Structured builds tied to this project — join one to level up and earn
+                      evidence.
+                    </p>
                   </div>
-                </section>
-              </div>
+                  {isContributor && (
+                    <Suspense fallback={null}>
+                      <CreateChallengeDialog projectId={id} />
+                    </Suspense>
+                  )}
+                </div>
 
-              {/* Evidence */}
-              <div className="min-w-0" style={sectionStyle("evidence")}>
-                <section id="project-evidence" className="scroll-mt-24">
-                  <Suspense fallback={<Skeleton className="h-24" />}>
-                    <ProjectCredits projectId={id} />
+                {projectChallenges.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    No challenges tied to this project yet.
+                  </p>
+                ) : (
+                  <ul className="mt-4 divide-y divide-border/50">
+                    {projectChallenges.map((c) => (
+                      <li key={c.id}>
+                        <Link
+                          to="/challenges/$id"
+                          params={{ id: c.id }}
+                          className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{c.title}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {c.difficulty}
+                              {c.end_date
+                                ? ` · ends ${new Date(c.end_date).toLocaleDateString()}`
+                                : ""}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] capitalize text-muted-foreground">
+                            {c.type.replace(/_/g, " ")}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+
+            {/* Conversation */}
+            <div className="min-w-0" style={sectionStyle("conversation")}>
+              <section
+                id="project-discussions"
+                aria-labelledby="project-discussions-heading"
+                className="mt-10 scroll-mt-24 border-t border-border/60 pt-8"
+              >
+                <h2
+                  id="project-discussions-heading"
+                  className="font-display text-lg font-semibold tracking-tight"
+                >
+                  Conversation
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Questions, feedback, and updates from the team.
+                </p>
+                <div className="mt-4 space-y-6">
+                  <Suspense fallback={<Skeleton className="h-32" />}>
+                    <ProjectDiscussions
+                      discussions={discussions}
+                      projectId={id}
+                      isContributor={isContributor}
+                      isOwner={isOwner}
+                    />
                   </Suspense>
-                </section>
-              </div>
+                  <Suspense fallback={<Skeleton className="h-24" />}>
+                    <ProjectCommunityPosts projectId={id} />
+                  </Suspense>
+                </div>
+              </section>
+            </div>
+
+            {/* Evidence */}
+            <div className="min-w-0" style={sectionStyle("evidence")}>
+              <section id="project-evidence" className="scroll-mt-24">
+                <Suspense fallback={<Skeleton className="h-24" />}>
+                  <ProjectCredits projectId={id} />
+                </Suspense>
+              </section>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Interactive tools — always available regardless of block state */}
-      {blocksArePage && (
-        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-8">
-          <ProjectTabs active={tab} onSelect={setTab} counts={{ files: projectFiles.length }} />
-        </div>
-      )}
+      </div>
 
       {joinModalOpen && (
         <Suspense fallback={null}>
@@ -1008,18 +954,15 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
 function Shell({
   children,
   accentColor,
-  pageThemeStyle,
 }: {
   children: React.ReactNode;
   accentColor?: string | null;
-  pageThemeStyle?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
   const accentStyle: React.CSSProperties = {
     ...(accentColor
       ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
       : {}),
-    ...(pageThemeStyle ?? {}),
   };
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>

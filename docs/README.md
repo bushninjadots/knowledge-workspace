@@ -30,6 +30,13 @@ If a change should alter product direction or a binding rule, update the appropr
 | [`TETHYR_REDESIGN_ARCHITECTURE.md`](./TETHYR_REDESIGN_ARCHITECTURE.md) | Redesign data model, component ownership, and migration strategy                 |
 | [`../AGENTS.md`](../AGENTS.md)                                         | Binding constitution and project-wide agent guardrails                           |
 
+## Living Trackers, Known Issues & Active Plans
+
+- [`TETHYR_ISSUE_TRACKER.md`](./TETHYR_ISSUE_TRACKER.md) — living functional/security issue tracker with per-item status (open · fixed · deferred)
+- [`KNOWN_ISSUES.md`](./KNOWN_ISSUES.md) — known gotchas and migration foot-guns
+- [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md) — launch environment checklist and open items
+- [`studio-integration-plan.md`](./studio-integration-plan.md) — active Studio convergence plan (project/profile page composition)
+
 ## Context Documents
 
 - [`TETHYR_REDESIGN_SPEC.md`](./TETHYR_REDESIGN_SPEC.md) — major redesign specification
@@ -49,3 +56,5 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`MEDIA_STORAGE_MAINTENANCE.md`](./MEDIA_STORAGE_MAINTENANCE.md) — storage upload conventions, orphaned-media prune tool + registry contract, and bucket-growth monitoring
 
 Dated documents should be read for relevant context, but their recommendations may be complete, stale, or superseded. Check dates and compare them against the current source before acting.
+
+Serial full-site/forensic audits that were superseded by a retained later audit of the same scope were pruned on 2026-09-07 (`TETHYR_FULL_SITE_AUDIT_2026-08-16/19`, `TETHYR_FORENSIC_AUDIT_2026-08-22`, and the obsolete `PAGES_TO_CREATE.md` planning artifact); the newest audit of each scope — `FULL_SITE_AUDIT_2026-08-26.md` and the `TETHYR_REDESIGN_*` audits — remains authoritative.

@@ -66,6 +66,8 @@ export type TeachSkillMeta = {
 
 export type CurrentUserData = {
   userId: string;
+  email: string | null;
+  emailVerified: boolean;
   profile: Profile | null;
   avatarSigned: string | null;
   bannerSigned: string | null;
@@ -124,6 +126,9 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   if (!userId) return null;
+  const email = userData.user?.email ?? null;
+  // No email (rare, e.g. some OAuth edge) → nothing to confirm, never nag.
+  const emailVerified = !email || !!userData.user?.email_confirmed_at;
 
   const profile = await fetchProfile(userId);
 
@@ -235,6 +240,8 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
 
   return {
     userId,
+    email,
+    emailVerified,
     profile: (profile ?? null) as Profile | null,
     avatarSigned,
     bannerSigned,

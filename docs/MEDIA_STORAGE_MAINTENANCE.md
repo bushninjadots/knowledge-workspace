@@ -51,16 +51,16 @@ The function decides "referenced" by checking each bucket's objects against a
 if its path appears anywhere in one of those columns (path columns, public
 URLs that embed the path, JSON arrays, and rich-text bodies all match):
 
-| Bucket                | Reference sources (schema.table.column)                                        |
-| --------------------- | ------------------------------------------------------------------------------ |
-| `avatars`             | `profiles.avatar_url`                                                          |
-| `banners`             | `profiles.banner_url`                                                          |
-| `team-avatars`        | `teams.avatar_url`                                                             |
-| `backgrounds`         | `profiles.background`, `profiles.public_background` (jsonb)                    |
-| `skill-proofs`        | `profile_skills_teach.proof_url`                                               |
-| `challenge-submissions` | `challenge_participants.submission_url`                                        |
-| `library-files`       | `library_items.file_url`, `library_items.content`                              |
-| `project-media`       | `projects.cover_url`, `projects.gallery`, `projects.resources`, `projects.uploaded_files`, `projects.readme`, `layouts.sections`, `pages.config` |
+| Bucket                  | Reference sources (schema.table.column)                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `avatars`               | `profiles.avatar_url`                                                                                                                            |
+| `banners`               | `profiles.banner_url`                                                                                                                            |
+| `team-avatars`          | `teams.avatar_url`                                                                                                                               |
+| `backgrounds`           | `profiles.background`, `profiles.public_background` (jsonb)                                                                                      |
+| `skill-proofs`          | `profile_skills_teach.proof_url`                                                                                                                 |
+| `challenge-submissions` | `challenge_participants.submission_url`                                                                                                          |
+| `library-files`         | `library_items.file_url`, `library_items.content`                                                                                                |
+| `project-media`         | `projects.cover_url`, `projects.gallery`, `projects.resources`, `projects.uploaded_files`, `projects.readme`, `layouts.sections`, `pages.config` |
 
 **Whenever you add a new upload site, add its reference source to the registry
 in `20260907120000_media_prune_tooling.sql`.** The only failure mode that can

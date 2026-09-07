@@ -608,7 +608,8 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag any block to move it — it snaps to the grid and nearby blocks when Snap is on · pull an edge or corner to resize · arrow keys nudge a selected block
+            Drag any block to move it — it snaps to the grid and nearby blocks when Snap is on ·
+            pull an edge or corner to resize · arrow keys nudge a selected block
           </span>
         </div>
       )}
@@ -818,7 +819,7 @@ export function snapGridPlacement(
 /** After RGL settles a drag inside a section, re-align the block onto a nearby
  *  neighbour edge when block-edge snapping is enabled. Returns an updated grid
  *  when the dropped cell moved, otherwise null (caller keeps the RGL result). */
-export function settleGridSnap(
+function settleGridSnap(
   grid: LayoutGridItem[],
   blockId: string,
   enabled: boolean,
@@ -847,7 +848,7 @@ export function settleGridSnap(
 
 /** Minimum whole grid rows whose pixel box (h × row + (h−1) × margin) can hold
  *  `contentPx` pixels. Auto-grow uses this so editing never clips content. */
-export function minRowsForContent(
+function minRowsForContent(
   contentPx: number,
   rowHeight: number,
   marginY: number,
@@ -860,7 +861,7 @@ export function minRowsForContent(
 /** Grow a block's rows to fit its measured content, pushing any neighbours it
  *  would now overlap downward so the grid never ends up with overlapping
  *  blocks. Returns the updated grid or null when no change is needed. */
-export function growGridItemToContent(
+function growGridItemToContent(
   grid: LayoutGridItem[],
   blockId: string,
   contentPx: number,
@@ -872,9 +873,7 @@ export function growGridItemToContent(
   const rows = minRowsForContent(contentPx, rowHeight, marginY, item.minH ?? 1);
   if (rows <= item.h) return null;
   const grown = { ...item, h: rows };
-  const updated = grid.map((candidate) =>
-    candidate.i === blockId ? grown : candidate,
-  );
+  const updated = grid.map((candidate) => (candidate.i === blockId ? grown : candidate));
   return pushDownOverlaps(updated);
 }
 
@@ -882,7 +881,7 @@ export function growGridItemToContent(
  *  never overlapping. Only items that actually collide move — deliberate
  *  whitespace gaps elsewhere survive. The item array order (and therefore block
  *  positions) is preserved. */
-export function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
+function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
   const items = grid.map((item) => ({ ...item }));
   let changed = true;
   let guard = 0;
@@ -909,7 +908,6 @@ export function pushDownOverlaps(grid: LayoutGridItem[]): LayoutGridItem[] {
   }
   return items;
 }
-
 
 function GSectionBand({
   section,
@@ -1034,10 +1032,7 @@ function GSectionBand({
     <section
       data-section-id={section.id}
       aria-label={sectionTitle}
-      className={cn(
-        "relative",
-        section.visible === false && editing && "opacity-60",
-      )}
+      className={cn("relative", section.visible === false && editing && "opacity-60")}
       onClick={(event) => event.stopPropagation()}
     >
       {editing ? (
@@ -1359,8 +1354,6 @@ const GBlockFrame = forwardRef<
       observer.disconnect();
       window.cancelAnimationFrame(frame);
     };
-    // Re-observe when the measured element or the reporter changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing, fluid, block.id, reportContentHeight]);
   if (bare) {
     return (

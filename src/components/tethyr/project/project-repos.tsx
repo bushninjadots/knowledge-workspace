@@ -37,7 +37,7 @@ function RepoCard({
 }) {
   const refreshMeta = useRefreshRepoMetadata();
 
-  const meta = repo.metadata;
+  const meta = repo.metadata ?? {};
   const langColor =
     LANGUAGE_COLORS[meta.language?.toLowerCase() ?? ""] ?? "var(--muted-foreground)";
 

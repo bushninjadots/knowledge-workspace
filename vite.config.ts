@@ -12,7 +12,16 @@ export default defineConfig({
     // TanStack Start (router and Tiptap core). The client/editor chunks stay
     // below the default threshold; keep the warning focused on real client
     // regressions instead of repeating an unavoidable SSR vendor warning.
-    build: { chunkSizeWarningLimit: 650 },
+    build: {
+      chunkSizeWarningLimit: 650,
+      rollupOptions: {
+        output: {
+          advancedChunks: {
+            groups: [{ name: "toaster", test: /node_modules\/sonner/ }],
+          },
+        },
+      },
+    },
     // Base44 serves the dev server through a proxy whose Host header is an
     // internal hostname that can't be allow-listed ahead of time, so permit
     // any host (dev only — this has no effect on production builds).

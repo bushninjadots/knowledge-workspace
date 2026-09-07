@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
+import { MailWarning, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/tethyr/auth-shell";
 import { OAuthButtons } from "@/components/tethyr/oauth-buttons";
@@ -56,6 +57,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -74,15 +77,41 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast.error(getAuthErrorMessage(error));
+        const code =
+          (error as { code?: string } | null)?.code ??
+          (/email not confirmed/i.test(error.message) ? "email_not_confirmed" : undefined);
+        if (code === "email_not_confirmed") {
+          setUnconfirmedEmail(true);
+        } else {
+          toast.error(getAuthErrorMessage(error));
+        }
         return;
       }
+      setUnconfirmedEmail(false);
       toast.success("Welcome back");
       navigate({ to: redirectTarget });
     } catch (err) {
       toast.error(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!email.trim()) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}${redirectTarget}` },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email sent — check your inbox");
+    } catch (err) {
+      toast.error(getAuthErrorMessage(err, "Couldn't send the confirmation email"));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -146,6 +175,7 @@ function LoginPage() {
             onChange={(e) => {
               setEmail(e.target.value);
               if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+              if (unconfirmedEmail) setUnconfirmedEmail(false);
             }}
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
             aria-invalid={!!fieldErrors.email}
@@ -178,6 +208,26 @@ function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        {unconfirmedEmail && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning-subtle/60 px-3 py-2.5 text-sm text-foreground/90">
+            <MailWarning className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">This email hasn't been confirmed yet</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Check your inbox for the confirmation link — or have us send a fresh one.
+              </p>
+              <button
+                type="button"
+                onClick={resendConfirmation}
+                disabled={resending}
+                className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-warning transition-colors hover:underline disabled:opacity-50"
+              >
+                <RotateCw className={`h-3 w-3 ${resending ? "animate-spin" : ""}`} />
+                {resending ? "Sending…" : "Resend confirmation email"}
+              </button>
+            </div>
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in..." : "Log in"}
         </Button>

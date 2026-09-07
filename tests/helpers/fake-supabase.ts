@@ -97,7 +97,28 @@ export function createFakeSupabase(): FakeSupabaseHandle {
       gt() {
         return builder;
       },
+      gte() {
+        return builder;
+      },
+      lt() {
+        return builder;
+      },
+      lte() {
+        return builder;
+      },
       is() {
+        return builder;
+      },
+      not() {
+        return builder;
+      },
+      or() {
+        return builder;
+      },
+      contains() {
+        return builder;
+      },
+      textSearch() {
         return builder;
       },
       order() {

@@ -19,6 +19,7 @@ import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
+import { EmailVerificationBanner } from "./email-verification-banner";
 
 /**
  * Shared layout for all authenticated routes.
@@ -107,6 +108,8 @@ export function AuthenticatedShell() {
             </Suspense>
           </div>
         </header>
+
+        <EmailVerificationBanner />
 
         <main id="main-content" className="flex-1 pb-16 md:pb-0">
           <Outlet />

@@ -152,9 +152,6 @@ export const DISCUSSION_REPLIES_KEY = (discussionId: string) =>
   ["discussion-replies", discussionId] as const;
 export const OPEN_ROLES_KEY = (projectId: string) => ["open-roles", projectId] as const;
 export const PROJECT_ACTIVITY_KEY = (projectId: string) => ["project-activity", projectId] as const;
-const PROJECT_COMMUNITY_POSTS_KEY = (projectId: string) =>
-  ["project-community-posts", projectId] as const;
-
 // ============================================================
 // Milestones
 // ============================================================
@@ -454,7 +451,11 @@ export function useDiscussions(projectId: string) {
 
 export function useProjectCommunityPostCount(projectId: string) {
   return useQuery({
-    queryKey: PROJECT_COMMUNITY_POSTS_KEY(projectId),
+    // Distinct from PROJECT_COMMUNITY_POSTS_KEY — this query caches a count
+    // (number), while the community-posts component caches an array of posts
+    // under the shared key. Sharing a key between two data shapes lets one
+    // poison the other's cache (posts.map crashes on a count).
+    queryKey: ["project-community-post-count", projectId],
     queryFn: async () => {
       const { count, error } = await sb
         .from("posts")
