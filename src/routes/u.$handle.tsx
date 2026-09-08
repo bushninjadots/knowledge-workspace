@@ -30,7 +30,34 @@ type PublicProfile = {
   public_background: ProfileBackground | null;
 };
 
+async function fetchPublicProfile(handle: string) {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("id, handle, display_name, background, public_background")
+    .eq("handle", handle)
+    .maybeSingle();
+  if (error) throw error;
+  if (!profile) throw notFound();
+
+  const publicBg = (profile.public_background ?? profile.background) as ProfileBackground | null;
+  return {
+    profile: profile as PublicProfile,
+    publicBackground: publicBg ?? null,
+    backgroundImageUrl: await backgroundImageSignedUrl(
+      publicBg?.mode === "image" ? publicBg.image_url : null,
+    ),
+  };
+}
+
 export const Route = createFileRoute("/u/$handle")({
+  loader: async ({ params, context: { queryClient } }) => {
+    await queryClient.prefetchQuery({
+      queryKey: ["public-profile", params.handle],
+      queryFn: () => fetchPublicProfile(params.handle),
+      staleTime: 60_000,
+    });
+    return {};
+  },
   validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
   head: ({ params }) => ({
     meta: [
@@ -61,25 +88,8 @@ function PublicProfileRoute() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-profile", handle],
-    queryFn: async () => {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("id, handle, display_name, background, public_background")
-        .eq("handle", handle)
-        .maybeSingle();
-      if (error) throw error;
-      if (!profile) throw notFound();
-
-      const publicBg = (profile.public_background ?? profile.background) as
-        ProfileBackground | null | undefined;
-      return {
-        profile: profile as PublicProfile,
-        publicBackground: publicBg ?? null,
-        backgroundImageUrl: await backgroundImageSignedUrl(
-          publicBg?.mode === "image" ? publicBg.image_url : null,
-        ),
-      };
-    },
+    queryFn: () => fetchPublicProfile(handle),
+    staleTime: 60_000,
   });
 
   const { data: me } = useCurrentUser();

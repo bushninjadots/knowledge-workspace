@@ -31,7 +31,7 @@ export type RadiusId = "sharp" | "soft";
 export type AccentMode = "auto" | "custom" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
-export type CardBorderWidth = "thin" | "medium" | "thick";
+type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
 

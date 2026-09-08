@@ -23,6 +23,7 @@ export function useSpaceReportedPostCounts(spaceId: string) {
       const { data, error } = await sb
         .from("post_reports")
         .select("post_id")
+        .eq("space_id_snapshot", spaceId)
         .eq("status", "open")
         .limit(1000);
 
@@ -52,7 +53,7 @@ export function usePostReports() {
       const { data, error } = await sb
         .from("post_reports")
         .select(
-          "id, post_id, reporter_id, reason, details, status, moderator_note, resolved_at, post_title_snapshot, created_at",
+          "id, post_id, reporter_id, reason, details, status, moderator_note, resolved_at, post_title_snapshot, space_id_snapshot, created_at",
         )
         .eq("status", "open")
         .order("created_at", { ascending: false })
@@ -129,6 +130,7 @@ export function useSpaceReportHistory(spaceId: string) {
         .select(
           "id, post_id, reporter_id, reason, details, status, moderator_note, resolved_at, post_title_snapshot, space_id_snapshot, created_at",
         )
+        .eq("space_id_snapshot", spaceId)
         .order("created_at", { ascending: false })
         .limit(500);
 
@@ -224,8 +226,9 @@ export function useSpacePostReports(spaceId: string) {
       const { data, error } = await sb
         .from("post_reports")
         .select(
-          "id, post_id, reporter_id, reason, details, status, moderator_note, resolved_at, post_title_snapshot, created_at",
+          "id, post_id, reporter_id, reason, details, status, moderator_note, resolved_at, post_title_snapshot, space_id_snapshot, created_at",
         )
+        .eq("space_id_snapshot", spaceId)
         .eq("status", "open")
         .order("created_at", { ascending: false })
         .limit(50);
@@ -241,16 +244,14 @@ export function useSpacePostReports(spaceId: string) {
       const postIds = [
         ...new Set(reports.map((r) => r.post_id).filter((id): id is string => !!id)),
       ];
-      const { data: posts } = await supabase
-        .from("posts")
-        .select("id, title, space_id")
-        .in("id", postIds);
+      const { data: posts } =
+        postIds.length > 0
+          ? await supabase.from("posts").select("id, title, space_id").in("id", postIds)
+          : { data: [] };
       const postMap = new Map(
         (posts ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
       );
-      const inSpace = reports.filter(
-        (r) => r.post_id != null && postMap.get(r.post_id)?.space_id === spaceId,
-      );
+      const inSpace = reports;
 
       const reporterIds = [...new Set(inSpace.map((r) => r.reporter_id))];
       const { data: reporters } =

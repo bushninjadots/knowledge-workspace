@@ -3,20 +3,18 @@
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { computeMatchScore, type SkillMeta, type AvailabilityStatus } from "@/lib/skill-match";
 import { ConnectButton } from "./connect-button";
 import { EmptyState } from "./empty-state";
 import { ProfileLink } from "./profile-link";
+import { supabase } from "@/integrations/supabase/client";
 
 type CandidateSkills = {
-  profile_id: string;
   skill_id: string;
   name: string;
   category: string;
-  experience_level: string;
-  verification_level: string;
+  experience_level?: string;
+  verification_level?: string;
 };
 
 export const SuggestedCreators = memo(function SuggestedCreators({
@@ -31,100 +29,21 @@ export const SuggestedCreators = memo(function SuggestedCreators({
     queryFn: async () => {
       if (!me) return [];
 
-      const targetLearnIds = new Set(me.learnIds);
-      const targetTeachIds = new Set(me.teachIds);
-      const targetAvail = me.profile?.availability as AvailabilityStatus;
-      const targetLangs = me.profile?.languages ?? [];
+      const { data, error } = await supabase.rpc("match_creators", {
+        p_user_id: me.userId,
+        p_limit: 100,
+      });
+      if (error) throw error;
 
-      // Fetch candidate profiles (exclude self, must have a name)
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select(
-          "id, handle, display_name, creator_title, category, avatar_url, availability, languages",
-        )
-        .not("display_name", "is", null)
-        .neq("id", me.userId)
-        .limit(200);
-
-      if (!profiles || profiles.length === 0) return [];
-
-      const candidateIds = profiles.map((p) => p.id);
-
-      // Fetch teach + learn skills for all candidates in parallel
-      const [teachRes, learnRes] = await Promise.all([
-        supabase
-          .from("profile_skills_teach")
-          .select(
-            "profile_id, skill_id, experience_level, verification_level, skills(name, category)",
-          )
-          .in("profile_id", candidateIds),
-        supabase
-          .from("profile_skills_learn")
-          .select("profile_id, skill_id, skills(name, category)")
-          .in("profile_id", candidateIds),
-      ]);
-
-      // Group skills by profile
-      const teachMap = new Map<string, CandidateSkills[]>();
-      for (const row of teachRes.data ?? []) {
-        const skills = row.skills as { name: string; category: string } | null;
-        if (!skills) continue;
-        const entry: CandidateSkills = {
-          profile_id: row.profile_id,
-          skill_id: row.skill_id,
-          name: skills.name,
-          category: skills.category,
-          experience_level: row.experience_level,
-          verification_level: row.verification_level,
-        };
-        const list = teachMap.get(row.profile_id) ?? [];
-        list.push(entry);
-        teachMap.set(row.profile_id, list);
-      }
-
-      const learnMap = new Map<string, SkillMeta[]>();
-      for (const row of learnRes.data ?? []) {
-        const skills = row.skills as { name: string; category: string } | null;
-        if (!skills) continue;
-        const entry: SkillMeta = {
-          skill_id: row.skill_id,
-          name: skills.name,
-          category: skills.category,
-        };
-        const list = learnMap.get(row.profile_id) ?? [];
-        list.push(entry);
-        learnMap.set(row.profile_id, list);
-      }
-
-      // Score each candidate
-      const scored = profiles
-        .map((p) => {
-          const teach = teachMap.get(p.id) ?? [];
-          const learn = learnMap.get(p.id) ?? [];
-          const { score, reasons } = computeMatchScore({
-            candidateTeach: teach,
-            candidateLearn: learn,
-            candidateAvail: p.availability as AvailabilityStatus,
-            candidateLangs: (p.languages as string[]) ?? [],
-            targetLearnIds,
-            targetTeachIds,
-            targetAvail,
-            targetLangs,
-          });
-
-          return {
-            ...p,
-            teachSkills: teach,
-            learnSkills: learn,
-            matchScore: score,
-            matchReasons: reasons,
-          };
-        })
-        .filter((c) => c.matchScore > 0)
-        .sort((a, b) => b.matchScore - a.matchScore)
+      return (data ?? [])
+        .map((candidate) => ({
+          ...candidate,
+          teachSkills: (candidate.teach_skills ?? []) as CandidateSkills[],
+          learnSkills: (candidate.learn_skills ?? []) as CandidateSkills[],
+          matchScore: Number(candidate.match_score),
+          matchReasons: candidate.match_reasons ?? [],
+        }))
         .slice(0, limit);
-
-      return scored;
     },
     staleTime: 60_000,
     enabled: !!me,

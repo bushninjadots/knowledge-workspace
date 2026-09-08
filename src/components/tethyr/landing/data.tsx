@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { animate, useInView, useReducedMotion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PostRow, PostType } from "@/hooks/use-community";
+import { fetchPostEngagement } from "@/lib/post-engagement";
 
 const sb = supabase;
 
@@ -14,9 +14,24 @@ type LandingCountTable =
 /** Counts up from 0 to a real stat value once it scrolls into view. */
 export function AnimatedStat({ value }: { value: number }) {
   const ref = useRef<HTMLParagraphElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  const prefersReducedMotion = useReducedMotion();
-  const [display, setDisplay] = useState(prefersReducedMotion ? value : 0);
+  const [inView, setInView] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(media.matches);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setInView(true);
+        observer.disconnect();
+      },
+      { rootMargin: "-40px" },
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!inView) return;
@@ -24,13 +39,17 @@ export function AnimatedStat({ value }: { value: number }) {
       setDisplay(value);
       return;
     }
-    const controls = animate(0, value, {
-      duration: 1.2,
-      ease: "easeOut",
-      onUpdate: (v) => setDisplay(Math.round(v)),
-    });
-    return () => controls.stop();
-  }, [inView, value, prefersReducedMotion]);
+    const startedAt = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min((now - startedAt) / 1200, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      setDisplay(Math.round(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [inView, prefersReducedMotion, value]);
 
   return (
     <p ref={ref} className="numeric font-display text-xl font-semibold leading-none">
@@ -180,21 +199,8 @@ export async function fetchRecentActivity(): Promise<LandingActivityPost[]> {
     ]),
   );
 
-  // Counts (posts, comments, post_actions are all viewable by everyone)
   const postIds = posts.map((p) => p.id);
-  const [{ data: rawLikes }, { data: rawComments }] = await Promise.all([
-    sb.from("post_actions").select("post_id").eq("action", "like").in("post_id", postIds),
-    sb.from("comments").select("post_id").in("post_id", postIds),
-  ]);
-
-  const likeCount = new Map<string, number>();
-  for (const a of (rawLikes ?? []) as { post_id: string }[]) {
-    likeCount.set(a.post_id, (likeCount.get(a.post_id) ?? 0) + 1);
-  }
-  const commentCount = new Map<string, number>();
-  for (const c of (rawComments ?? []) as { post_id: string }[]) {
-    commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
-  }
+  const engagement = await fetchPostEngagement(postIds, null);
 
   return posts.map((p): LandingActivityPost => ({
     id: p.id,
@@ -207,8 +213,8 @@ export async function fetchRecentActivity(): Promise<LandingActivityPost[]> {
       handle: null,
       avatar_url: null,
     },
-    likes: likeCount.get(p.id) ?? 0,
-    comments: commentCount.get(p.id) ?? 0,
+    likes: engagement.get(p.id)?.likes ?? 0,
+    comments: engagement.get(p.id)?.comment_count ?? 0,
   }));
 }
 

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPostEngagement } from "@/lib/post-engagement";
+import type { PostRow, PostWithAuthor } from "@/hooks/use-community";
 
 const sb = supabase;
 
@@ -126,8 +128,6 @@ export function useUnfollowUser() {
   });
 }
 
-import type { PostRow, PostWithAuthor } from "@/hooks/use-community";
-
 export function useFollowingFeed() {
   return useQuery({
     queryKey: FOLLOWING_FEED_KEY,
@@ -185,39 +185,7 @@ export function useFollowingFeed() {
       );
 
       const postIds = posts.map((p) => p.id);
-      const { data: rawActions } = await sb
-        .from("post_actions")
-        .select("post_id, action, user_id")
-        .in("post_id", postIds);
-      const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
-
-      const myActions = actions.filter((a) => a.user_id === me.user.id);
-
-      const statsMap = new Map<
-        string,
-        { likes: number; helpful: number; saves: number; offers: number }
-      >();
-      for (const a of actions) {
-        if (!statsMap.has(a.post_id)) {
-          statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
-        }
-        const s = statsMap.get(a.post_id)!;
-        if (a.action === "like") s.likes++;
-        if (a.action === "helpful") s.helpful++;
-        if (a.action === "save") s.saves++;
-        if (a.action === "offer") s.offers++;
-      }
-
-      const commentCountMap = new Map<string, number>();
-      if (postIds.length > 0) {
-        const { data: rawCommentRows } = await sb
-          .from("comments")
-          .select("post_id")
-          .in("post_id", postIds);
-        for (const c of (rawCommentRows ?? []) as { post_id: string }[]) {
-          commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) ?? 0) + 1);
-        }
-      }
+      const engagement = await fetchPostEngagement(postIds, me.user.id);
 
       return posts.map((p): PostWithAuthor => ({
         ...p,
@@ -229,10 +197,13 @@ export function useFollowingFeed() {
           avatar_url: null,
         },
         stats: {
-          ...(statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 }),
-          comment_count: commentCountMap.get(p.id) ?? 0,
+          likes: engagement.get(p.id)?.likes ?? 0,
+          helpful: engagement.get(p.id)?.helpful ?? 0,
+          saves: engagement.get(p.id)?.saves ?? 0,
+          offers: engagement.get(p.id)?.offers ?? 0,
+          comment_count: engagement.get(p.id)?.comment_count ?? 0,
         },
-        myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+        myActions: engagement.get(p.id)?.myActions ?? [],
       }));
     },
     staleTime: 30_000,

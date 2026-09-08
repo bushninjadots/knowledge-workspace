@@ -4,10 +4,9 @@ import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Folder, ArrowRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { scoreProjectMatch } from "@/lib/skill-match";
 import { EmptyState } from "./empty-state";
+import { supabase } from "@/integrations/supabase/client";
 
 type ProjectCandidate = {
   id: string;
@@ -50,55 +49,20 @@ export const SuggestedProjects = memo(function SuggestedProjects({
     queryFn: async (): Promise<ProjectCandidate[]> => {
       if (!me) return [];
 
-      const targetLearnIds = new Set(me.learnIds);
-      const targetTeachIds = new Set(me.teachIds);
+      const { data, error } = await supabase.rpc("match_projects", {
+        p_user_id: me.userId,
+        p_limit: 100,
+      });
+      if (error) throw error;
 
-      const { data: projects } = await supabase
-        .from("projects")
-        .select(
-          "id, title, description, stage, looking_for_collaborators, looking_for_feedback, profile_id",
-        )
-        .neq("profile_id", me.userId)
-        .in("stage", ["planning", "building", "testing", "launch", "growing"])
-        .order("updated_at", { ascending: false })
-        .limit(100);
-
-      if (!projects || projects.length === 0) return [];
-
-      // Fetch skills for all candidate projects
-      const { data: projectSkills } = await supabase
-        .from("project_skills")
-        .select("project_id, skill_id")
-        .in(
-          "project_id",
-          projects.map((p) => p.id),
-        );
-
-      const skillMap = new Map<string, string[]>();
-      for (const row of (projectSkills ?? []) as { project_id: string; skill_id: string }[]) {
-        const list = skillMap.get(row.project_id) ?? [];
-        list.push(row.skill_id);
-        skillMap.set(row.project_id, list);
-      }
-
-      // Score each project
-      const scored = projects
-        .map((p) => {
-          const projectSkillIds = skillMap.get(p.id) ?? [];
-          const { score, reasons } = scoreProjectMatch({
-            projectSkillIds,
-            userLearnIds: targetLearnIds,
-            userTeachIds: targetTeachIds,
-            lookingForCollaborators: p.looking_for_collaborators,
-            lookingForFeedback: p.looking_for_feedback,
-          });
-          return { ...p, skill_ids: projectSkillIds, score, reasons };
-        })
-        .filter((p) => p.score > 0)
-        .sort((a, b) => b.score - a.score)
+      return (data ?? [])
+        .map((project) => ({
+          ...project,
+          skill_ids: project.skill_ids ?? [],
+          score: Number(project.score),
+          reasons: project.reasons ?? [],
+        }))
         .slice(0, limit);
-
-      return scored;
     },
     staleTime: 60_000,
     enabled: !!me,

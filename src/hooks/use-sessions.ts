@@ -128,7 +128,8 @@ async function fetchParticipatingSessionIds(userId: string): Promise<string[]> {
   const { data, error } = await sb
     .from("session_participants")
     .select("session_id")
-    .eq("profile_id", userId);
+    .eq("profile_id", userId)
+    .limit(1000);
   if (error) throw error;
   return (data ?? []).map((r) => r.session_id);
 }
@@ -159,15 +160,17 @@ async function fetchSessionsForProject(projectId: string): Promise<SessionWithPa
     .select(SESSION_SELECT)
     .eq("project_id", projectId)
     .not("status", "eq", "cancelled")
-    .order("starts_at", { ascending: true });
+    .order("starts_at", { ascending: true })
+    .limit(100);
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
 }
 
-async function fetchTodaySessions(_userId: string): Promise<SessionWithParticipants[]> {
+async function fetchTodaySessions(userId: string): Promise<SessionWithParticipants[]> {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
 
   const { data, error } = await sb
     .from("sessions")
@@ -175,18 +178,22 @@ async function fetchTodaySessions(_userId: string): Promise<SessionWithParticipa
     .gte("starts_at", startOfDay)
     .lt("starts_at", endOfDay)
     .not("status", "eq", "cancelled")
-    .order("starts_at", { ascending: true });
+    .or(sessionsForUserFilter(userId, participantSessionIds))
+    .order("starts_at", { ascending: true })
+    .limit(50);
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
 }
 
-async function fetchUpcomingSessions(_userId: string): Promise<SessionWithParticipants[]> {
+async function fetchUpcomingSessions(userId: string): Promise<SessionWithParticipants[]> {
   const now = new Date().toISOString();
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
   const { data, error } = await sb
     .from("sessions")
     .select(SESSION_SELECT)
     .gte("starts_at", now)
     .not("status", "eq", "cancelled")
+    .or(sessionsForUserFilter(userId, participantSessionIds))
     .order("starts_at", { ascending: true })
     .limit(50);
   if (error) throw error;
@@ -247,7 +254,8 @@ async function fetchRequests(userId: string): Promise<SessionRequest[]> {
 `,
     )
     .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
   if (error) throw error;
   return (data ?? []) as SessionRequest[];
 }
@@ -257,7 +265,8 @@ async function fetchAvailability(userId: string) {
     .from("session_availability")
     .select("*")
     .eq("profile_id", userId)
-    .order("day_of_week");
+    .order("day_of_week")
+    .limit(100);
   if (error) throw error;
   return data ?? [];
 }
@@ -301,7 +310,8 @@ export function useSessionResources(sessionId: string) {
         .from("session_resources")
         .select("*")
         .eq("session_id", sessionId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data ?? [];
     },
@@ -317,7 +327,8 @@ export function useSessionNotes(sessionId: string) {
         .from("session_notes")
         .select("*")
         .eq("session_id", sessionId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data ?? [];
     },

@@ -105,15 +105,14 @@ function SessionCard({
         <button
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
           title="View details"
-        >          <ExternalLink className="h-3.5 w-3.5" />
+        >
+          {" "}
+          <ExternalLink className="h-3.5 w-3.5" />
         </button>
       </div>
     </Card>
   );
 }
-
-
-
 
 export function TodaySchedule({
   sessions,

@@ -2918,6 +2918,68 @@ export type Database = {
           space_id: string;
         }[];
       };
+      post_engagement_counts: {
+        Args: { p_post_ids: string[] };
+        Returns: {
+          post_id: string;
+          likes: number;
+          helpful: number;
+          saves: number;
+          offers: number;
+          comment_count: number;
+          user_actions: string[];
+        }[];
+      };
+      discussion_reply_counts: {
+        Args: { p_discussion_ids: string[] };
+        Returns: {
+          discussion_id: string;
+          reply_count: number;
+        }[];
+      };
+      trending_skills: {
+        Args: { p_limit?: number };
+        Returns: {
+          id: string;
+          slug: string;
+          name: string;
+          category: string;
+          description: string | null;
+          usage_count: number;
+        }[];
+      };
+      match_projects: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          stage: Database["public"]["Enums"]["project_stage"];
+          looking_for_collaborators: boolean;
+          looking_for_feedback: boolean;
+          profile_id: string;
+          skill_ids: string[];
+          score: number;
+          reasons: string[];
+        }[];
+      };
+      match_creators: {
+        Args: { p_limit?: number; p_user_id: string };
+        Returns: {
+          id: string;
+          handle: string | null;
+          display_name: string | null;
+          creator_title: string | null;
+          category: string | null;
+          avatar_url: string | null;
+          availability: Database["public"]["Enums"]["availability_status"] | null;
+          languages: string[];
+          teach_skills: Json;
+          learn_skills: Json;
+          match_score: number;
+          match_reasons: string[];
+        }[];
+      };
       decline_project_role_application: {
         Args: {
           p_application_id: string;

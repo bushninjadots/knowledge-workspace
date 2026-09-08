@@ -42,7 +42,7 @@ equal-weight cards instead of deciding what the user came for.
 The healthiest layer in the codebase. The token system is coherent, dual-theme, and
 genuinely used — the problems are dead weight around it, not the system itself.
 
-### F01 · Token system is real and actually consumed — *Strength*
+### F01 · Token system is real and actually consumed — _Strength_
 
 - `src/styles.css:29` — Tailwind v4 CSS-first `@theme inline`, no JS config in the live app
 - `src/styles.css:116-277` — light `:root` and `.dark` palettes fully parallel, OKLCH
@@ -57,7 +57,7 @@ this size have visible drift here; this one does not.
 **Recommendation.** Nothing to fix. Protect it — the remaining findings in this section are
 about what surrounds it.
 
-### F02 · A second, contradicting design system ships in the repo — *High*
+### F02 · A second, contradicting design system ships in the repo — _High_
 
 - `tethyr-main/g/` contains a legacy v3 `tailwind.config.js` + `index.css`
 - Different fonts (Geist), different naming (`brand-green`, `brand-purple`), and active
@@ -70,7 +70,7 @@ inconsistency.
 **Recommendation.** Delete `g/`, or move it to a clearly-dated `/archive` with a README
 stating it is not the design system.
 
-### F03 · Dead tokens advertise effects the design refuses — *Medium*
+### F03 · Dead tokens advertise effects the design refuses — _Medium_
 
 - `--shadow-glow-*`, `--shadow-card`, `--shadow-soft` all resolve to `none`; only
   `--shadow-lifted` is real
@@ -83,7 +83,7 @@ glow and gradient hooks in place invites someone to "turn them back on" and brea
 **Recommendation.** Remove the no-op glow/gradient/shadow tokens and utilities entirely.
 Keep `--shadow-lifted` for dialogs and document that shadows are dialog-only.
 
-### F04 · shadcn config points somewhere the app never goes — *Medium*
+### F04 · shadcn config points somewhere the app never goes — _Medium_
 
 - `components.json` — style `new-york`, baseColor `slate`, `cssVariables true`
 - No slate/gray classes exist in `src`, so `baseColor` is inert; the tight radius scale in
@@ -95,7 +95,7 @@ radii, and has to be hand-corrected. That is how radius drift (F05) got in.
 **Recommendation.** Align `components.json` to the real token names so `shadcn add` output
 lands on-system on the first pass.
 
-### F05 · Heading scale is hardcoded in a base layer, not a type scale — *Medium*
+### F05 · Heading scale is hardcoded in a base layer, not a type scale — _Medium_
 
 - `src/styles.css:279-337` — `h1` 22px/600, `h2` 17px/600, `h3` 15px/600 set in `@layer base`
 
@@ -112,7 +112,7 @@ one cramped scale, and a hero cannot be big without opting out of semantics.
 The primitives exist. The feature layer mostly ignores them. This is where the product
 visibly loses coherence.
 
-### F06 · The Card primitive is imported by exactly one file — *Critical*
+### F06 · The Card primitive is imported by exactly one file — _Critical_
 
 - `src/components/ui/card.tsx` exists; only `community/challenge-card.tsx:22` imports it
 - ~54+ hand-rolled `rounded-xl border card-border bg-surface` divs stand in for it —
@@ -131,7 +131,7 @@ Explore, Library, and Sessions.
 call sites to it, then add a lint rule banning `rounded-xl border` in
 `components/tethyr/**`.
 
-### F07 · Four navigation implementations, no shared source of truth — *High*
+### F07 · Four navigation implementations, no shared source of truth — _High_
 
 - `navbar.tsx` — marketing header with its own hamburger + slide-down panel
 - `dashboard-sidebar.tsx` — fixed w-60, desktop only, no collapse or rail mode
@@ -146,7 +146,7 @@ workspace).
 **Recommendation.** One nav manifest (label, icon, href, badge) consumed by all three
 renderers. Add a collapsed rail state to the sidebar for studio and project routes.
 
-### F08 · Two modal systems with different behaviour — *High*
+### F08 · Two modal systems with different behaviour — _High_
 
 - Radix Dialog used in 21 files
 - Hand-rolled `fixed inset-0 z-50` modals with manual `role`/`aria-modal`:
@@ -159,7 +159,7 @@ two, so some dialogs are keyboard-hostile and none of them animate alike.
 **Recommendation.** Port the four hand-rolled modals onto Dialog. Where the overlay is
 genuinely a full-bleed canvas (`project-shelf`), build it once as a Dialog variant.
 
-### F09 · Two tab languages for one interaction — *Medium*
+### F09 · Two tab languages for one interaction — _Medium_
 
 - `notifications.tsx:7,89-95` is the only route using shadcn `Tabs`
 - Everywhere else uses the custom `SegmentedControl` — `explore.tsx:648`,
@@ -170,7 +170,7 @@ genuinely a full-bleed canvas (`project-shelf`), build it once as a Dialog varia
 **Recommendation.** Pick `SegmentedControl` (it is the majority and fits the flat aesthetic),
 convert notifications, and delete `ui/tabs`.
 
-### F10 · Two badge semantics render identically — *Medium*
+### F10 · Two badge semantics render identically — _Medium_
 
 - `ui/badge.tsx:19-20` — `destructive` and `warning` variants carry the same classes
 
@@ -179,7 +179,7 @@ convert notifications, and delete `ui/tabs`.
 **Recommendation.** Give `warning` the `caution` token and reserve the red for destructive
 only.
 
-### F11 · 284 raw buttons versus the Button primitive — *Medium*
+### F11 · 284 raw buttons versus the Button primitive — _Medium_
 
 - 284 `<button>` matches across ~70 files; `Button` is largely reserved for primary CTAs
 - `Button` already covers 8 variants and 4 sizes including `icon` (`ui/button.tsx:8-38`)
@@ -198,20 +198,20 @@ Leave genuinely bespoke canvas controls (studio) alone and document them as an e
 The recurring failure: equal-weight card grids used as a default layout, so no screen tells
 the user what matters. **No screen in the app has decided what wins.**
 
-### F12 · The dashboard is a filing cabinet, not a workspace — *Critical*
+### F12 · The dashboard is a filing cabinet, not a workspace — _Critical_
 
 - `dashboard.tsx:64-67` — loading skeleton is 6 identical h-44 tiles in a 1/2/3-col grid
 - `WorkspaceGrid` renders `DASHBOARD_MODULES` at uniform weight inside `max-w-7xl` (line 594)
 - 921 lines in one route file
 
-**Impact.** A builder opening Tethyr has one question — *what needs me today*. Six same-size
+**Impact.** A builder opening Tethyr has one question — _what needs me today_. Six same-size
 tiles answer it no faster than a nav menu would.
 
 **Recommendation.** Promote one module to a 2-column, larger-type primary panel (active
 project or today's commitments). Demote the rest to a compact single-column list of rows,
 not tiles.
 
-### F13 · Not a single table exists in the app — *High*
+### F13 · Not a single table exists in the app — _High_
 
 - `<table` returns 0 matches across all of `src/routes`
 - Challenges (`challenges.tsx:204/261/277/299`), templates, connections
@@ -225,7 +225,7 @@ have to read every card.
 Challenges, with the card grid kept as an optional gallery toggle. Right-align and
 tabularise the numerics using the existing `numeric` utility.
 
-### F14 · Profile stacks five different content types at identical weight — *High*
+### F14 · Profile stacks five different content types at identical weight — _High_
 
 - `profile.tsx:548, 609, 623, 638, 827` — the same `grid gap-4 sm:grid-cols-2` block repeated
   for info, skills, availability, and more
@@ -238,7 +238,7 @@ interchangeable blocks means nothing about the person leads.
 evidence band (projects/contributions), then a quiet metadata rail. Extract each band into
 `components/profile/*`.
 
-### F15 · Dead visual paths still live inside the project workspace — *High*
+### F15 · Dead visual paths still live inside the project workspace — _High_
 
 - `projects.$id.tsx:541` — "Legacy header — hidden when blocks render the page"
 - `projects.$id.tsx:599` — "Legacy pulse", `:620` — "Legacy sections remain available only
@@ -251,7 +251,7 @@ which one a visitor sees depends on data state. That is untestable visually.
 **Recommendation.** Commit to the block renderer, backfill the fallback data, and delete the
 legacy header/pulse/sections in the same change.
 
-### F16 · Nine route files over 500 lines — *Medium*
+### F16 · Nine route files over 500 lines — _Medium_
 
 - explore **1227** · projects.$id **1048** · profile **1005** · spaces.$slug.settings **924**
   · dashboard **921** · challenges.$id **780** · skills.$slug **727** · sessions.$id **651**
@@ -269,7 +269,7 @@ Explore, profile, and dashboard first — they carry the most repeated markup.
 
 Explore is the clearest case of shipping the feature list instead of designing the screen.
 
-### F17 · Explore competes with itself above the fold — *Critical*
+### F17 · Explore competes with itself above the fold — _Critical_
 
 - `explore.tsx:574-667` — a 4-button intent picker, a segmented control, and a create button
   all render before any results
@@ -283,7 +283,7 @@ see anything to react to. Discovery should start with content.
 results immediately with a sensible default scope, and let filters be a collapsible panel
 that remembers its state.
 
-### F18 · Landing page is the only surface using progressive loading well — *Strength*
+### F18 · Landing page is the only surface using progressive loading well — _Strength_
 
 - `routes/index.tsx` — 317 lines: hero + stats, then lazy sections behind `Suspense` with
   `SectionSkeleton`
@@ -301,7 +301,7 @@ explore.
 Most screens adapt. Two do not, and one of them silently removes functionality instead of
 relocating it.
 
-### F19 · Filters disappear entirely below `lg` — *Critical*
+### F19 · Filters disappear entirely below `lg` — _Critical_
 
 - `explore.tsx:1071` — `<aside className="hidden w-64 shrink-0 lg:block">`
 
@@ -311,7 +311,7 @@ functional gap dressed as a responsive rule.
 **Recommendation.** Move filters into a Drawer triggered by a Filters button below `lg`,
 with an active-filter count on the trigger.
 
-### F20 · Teams is a mobile stack served to desktop — *High*
+### F20 · Teams is a mobile stack served to desktop — _High_
 
 - `teams.tsx` — zero `md:`/`lg:` classes in the entire file
 - `teams.tsx:128-171` — single-column `<ul className="space-y-2">` inside `max-w-5xl`
@@ -329,7 +329,7 @@ aligning with the table view proposed in F13.
 
 A shared `Skeleton` exists and two routes use it. Everything else improvises.
 
-### F21 · Five different loading treatments across the app — *High*
+### F21 · Five different loading treatments across the app — _High_
 
 - Only `templates.tsx:9,107-110` and `templates.$id.tsx:10,44-49` use the shared `Skeleton`
 - `challenges.$id`, `sessions.$id`, `library.$id`, `skills.$slug`, `teams.$slug`,
@@ -345,7 +345,7 @@ about the layout causes a visible jump on load.
 **Recommendation.** Co-locate a `Skeleton` with each surface component so the two cannot
 drift, standardise on `animate-gentle-pulse`, and delete per-route pulse divs.
 
-### F22 · Empty states are inconsistently reached for — *Medium*
+### F22 · Empty states are inconsistently reached for — _Medium_
 
 - An `EmptyState` component exists in `components/tethyr`
 - `community.tsx:53` only mentions empty states in a comment; dashboard, profile, and the
@@ -364,7 +364,7 @@ require `EmptyState` wherever a collection can be length 0.
 A written motion policy exists in `styles.css` and the code partly ignores it.
 Reduced-motion handling, though, is better than most codebases.
 
-### F23 · Reduced motion is genuinely respected — *Strength*
+### F23 · Reduced motion is genuinely respected — _Strength_
 
 - `styles.css:797-809` — global `prefers-reduced-motion` zeroes animation and transition
   durations
@@ -375,7 +375,7 @@ Reduced-motion handling, though, is better than most codebases.
 
 **Recommendation.** Nothing. Keep the global override in place as the safety net.
 
-### F24 · `transition-all` and long durations violate the stated policy — *High*
+### F24 · `transition-all` and long durations violate the stated policy — _High_
 
 - `styles.css:18` documents "restrained motion: 120-180ms colour/opacity transitions only"
   and ships `transition-lift` / `-spatial` / `-fade` at 120ms
@@ -391,7 +391,7 @@ lag.
 element under 300ms: press 100-160ms, popovers 125-200ms, dropdowns 150-250ms, modals
 200-300ms.
 
-### F25 · Two animation systems with no rule for choosing — *Medium*
+### F25 · Two animation systems with no rule for choosing — _Medium_
 
 - framer-motion confined to `landing/data.tsx`, `project-shelf/*`, `section-reveal.tsx`
 - Everything else uses Tailwind transitions and `animate-*` utilities
@@ -409,7 +409,7 @@ only for orchestration, gesture, and layout. Enforce in review.
 Accessibility is a strength — 362 aria attributes and real keyboard handling. The gap is
 text placed over content the app does not control.
 
-### F26 · White text over user-supplied images with no guaranteed scrim — *Critical*
+### F26 · White text over user-supplied images with no guaranteed scrim — _Critical_
 
 - `blocks/profile/gallery-block.tsx:97`
 - `project-shelf-overlay.tsx:208-210`, `project-shelf-thumbnails.tsx:66`,
@@ -423,7 +423,7 @@ immediately.
 **Recommendation.** One `on-media` wrapper that always applies a scrim behind the text band
 and uses a tokenised `on-media` foreground, rather than bare `text-white`.
 
-### F27 · ARIA and keyboard coverage are above average — *Strength*
+### F27 · ARIA and keyboard coverage are above average — _Strength_
 
 - 362 `aria-*` occurrences; `aria-current`, `aria-expanded`, `aria-pressed`, `aria-hidden`
   all used correctly
@@ -436,7 +436,7 @@ and uses a tokenised `on-media` foreground, rather than bare `text-white`.
 **Recommendation.** Hold the line: spot-check the unverified raw buttons in
 `studio/g-studio-surface.tsx` and `workspace-grid.tsx` for labels.
 
-### F28 · Avatars are all decorative — *Medium*
+### F28 · Avatars are all decorative — _Medium_
 
 - Avatar `<img>` tags consistently use `alt=""` with an initials fallback
 
@@ -454,31 +454,31 @@ Every route, its layout shape, and what is flagged on it. Rendered as a table on
 this is exactly the comparable, multi-attribute content the app currently forces into card
 grids.
 
-| Route                          | Area   | Lines | Layout shape                       | Flags                                     |
-| ------------------------------ | ------ | ----- | ---------------------------------- | ----------------------------------------- |
-| `/`                            | Public | 317   | Hero + stats grid, lazy sections   | Best-in-app loading pattern               |
-| `/login` · `/signup` · `/reset-password` | Auth | 84 | Centered max-w-md card via `AuthShell` | –                                    |
-| `/privacy` · `/terms`          | Public | 86    | Static legal prose                  | –                                         |
-| `/projects/$id`                | Public | 1048  | Block renderer + legacy header/pulse/sections | Oversized · Dead visual paths |
-| `/skills/$slug`                | Public | 727   | Workshop page, `SegmentedControl` tabs | Oversized · Ad-hoc loading              |
-| `/teams/$slug`                 | Public | 84    | Team profile                        | Ad-hoc loading                             |
-| `/u/$handle`                   | Public | 240   | Studio profile                      | Ad-hoc loading                             |
-| `/dashboard`                   | App    | 921   | Banner + uniform `WorkspaceGrid` modules | Oversized · No hierarchy · Skeleton mismatch |
-| `/explore`                     | App    | 1227  | Intent picker + tabs + card grids + filter aside | Oversized · Overloaded fold · Filters lost below `lg` |
-| `/community`                   | App    | 196   | Sidebar + feed + mobile bottom nav  | No `EmptyState`                           |
-| `/community/spaces/$slug/settings` | Nested | 924 | max-w-3xl single-column form     | Oversized                                  |
-| `/community/spaces/$slug/reports` | Nested | 459 | max-w-3xl list                    | –                                         |
-| `/connections`                 | App    | 334   | Equal-weight card grid              | Should be a row/table view                |
-| `/messages`                    | App    | 387   | List + thread                       | –                                         |
-| `/notifications`               | App    | 107   | shadcn `Tabs`                       | Only route using `ui/tabs`                |
-| `/profile`                     | App    | 1005  | Banner + five identical 2-col blocks | Oversized · No hierarchy                |
-| `/settings`                    | App    | 444   | Thin route → `settings-page.tsx`    | –                                         |
-| `/studio`                      | App    | 74    | Thin route → `CreationStudio`       | Sidebar cannot collapse                   |
-| `/teams`                       | App    | 241   | Single-column `ul` in max-w-5xl     | Zero breakpoints · Mobile stack on desktop |
-| `/library` · `/library/$id`    | App    | 570   | Card grid → single-column detail    | Oversized detail · Should be a row/table view |
-| `/sessions` · `/sessions/$id`  | App    | 651   | Layout → detail document            | Oversized detail                          |
-| `/challenges` · `/challenges/$id` | App | 780 | Repeated 3-col card grids → detail | Oversized detail · Should be a row/table view |
-| `/templates` · `/templates/$id` | App   | 324   | Card grid → detail                  | Only route using shared `Skeleton`        |
+| Route                                    | Area   | Lines | Layout shape                                     | Flags                                                 |
+| ---------------------------------------- | ------ | ----- | ------------------------------------------------ | ----------------------------------------------------- |
+| `/`                                      | Public | 317   | Hero + stats grid, lazy sections                 | Best-in-app loading pattern                           |
+| `/login` · `/signup` · `/reset-password` | Auth   | 84    | Centered max-w-md card via `AuthShell`           | –                                                     |
+| `/privacy` · `/terms`                    | Public | 86    | Static legal prose                               | –                                                     |
+| `/projects/$id`                          | Public | 1048  | Block renderer + legacy header/pulse/sections    | Oversized · Dead visual paths                         |
+| `/skills/$slug`                          | Public | 727   | Workshop page, `SegmentedControl` tabs           | Oversized · Ad-hoc loading                            |
+| `/teams/$slug`                           | Public | 84    | Team profile                                     | Ad-hoc loading                                        |
+| `/u/$handle`                             | Public | 240   | Studio profile                                   | Ad-hoc loading                                        |
+| `/dashboard`                             | App    | 921   | Banner + uniform `WorkspaceGrid` modules         | Oversized · No hierarchy · Skeleton mismatch          |
+| `/explore`                               | App    | 1227  | Intent picker + tabs + card grids + filter aside | Oversized · Overloaded fold · Filters lost below `lg` |
+| `/community`                             | App    | 196   | Sidebar + feed + mobile bottom nav               | No `EmptyState`                                       |
+| `/community/spaces/$slug/settings`       | Nested | 924   | max-w-3xl single-column form                     | Oversized                                             |
+| `/community/spaces/$slug/reports`        | Nested | 459   | max-w-3xl list                                   | –                                                     |
+| `/connections`                           | App    | 334   | Equal-weight card grid                           | Should be a row/table view                            |
+| `/messages`                              | App    | 387   | List + thread                                    | –                                                     |
+| `/notifications`                         | App    | 107   | shadcn `Tabs`                                    | Only route using `ui/tabs`                            |
+| `/profile`                               | App    | 1005  | Banner + five identical 2-col blocks             | Oversized · No hierarchy                              |
+| `/settings`                              | App    | 444   | Thin route → `settings-page.tsx`                 | –                                                     |
+| `/studio`                                | App    | 74    | Thin route → `CreationStudio`                    | Sidebar cannot collapse                               |
+| `/teams`                                 | App    | 241   | Single-column `ul` in max-w-5xl                  | Zero breakpoints · Mobile stack on desktop            |
+| `/library` · `/library/$id`              | App    | 570   | Card grid → single-column detail                 | Oversized detail · Should be a row/table view         |
+| `/sessions` · `/sessions/$id`            | App    | 651   | Layout → detail document                         | Oversized detail                                      |
+| `/challenges` · `/challenges/$id`        | App    | 780   | Repeated 3-col card grids → detail               | Oversized detail · Should be a row/table view         |
+| `/templates` · `/templates/$id`          | App    | 324   | Card grid → detail                               | Only route using shared `Skeleton`                    |
 
 Line counts in **red** exceed 500 — nine route files do.
 
@@ -535,5 +535,5 @@ you go.
 
 ---
 
-*Audit of `bushninjdots/tethyr-main` — visual, layout, and UI consistency only.*
-*28 findings across 8 categories · 23 route groups.*
+_Audit of `bushninjdots/tethyr-main` — visual, layout, and UI consistency only._
+_28 findings across 8 categories · 23 route groups._

@@ -7,8 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
-import * as Sentry from "@sentry/react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { initSentry } from "@/lib/sentry";
@@ -74,12 +73,11 @@ function ErrorFallback({ error: _error, reset }: { error: Error; reset: () => vo
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <Sentry.ErrorBoundary
-      onError={(err) => Sentry.captureException(err)}
-      fallback={<ErrorFallback error={error} reset={reset} />}
-    >
-      <ErrorFallback error={error} reset={reset} />
-    </Sentry.ErrorBoundary>
+    <Suspense fallback={<ErrorFallback error={error} reset={reset} />}>
+      <LazySentryErrorBoundary fallback={<ErrorFallback error={error} reset={reset} />}>
+        <ErrorFallback error={error} reset={reset} />
+      </LazySentryErrorBoundary>
+    </Suspense>
   );
 }
 
@@ -87,6 +85,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 // origin (configurable via VITE_PUBLIC_SITE_URL, falling back to a relative
 // path in dev).
 const ogImageUrl = `${getConfiguredSiteUrl() ?? ""}/og-image.png`;
+const LazySentryErrorBoundary = lazy(() =>
+  import("@/components/tethyr/sentry-error-boundary").then((m) => ({
+    default: m.SentryErrorBoundary,
+  })),
+);
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({

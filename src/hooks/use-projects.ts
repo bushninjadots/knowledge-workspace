@@ -410,16 +410,16 @@ export function useDiscussions(projectId: string) {
         } | null;
       })[];
 
-      // Fetch reply counts (can't be joined via PostgREST — requires aggregation)
       const discussionIds = discussions.map((d) => d.id);
-      const { data: replyCounts } = await sb
-        .from("discussion_replies")
-        .select("discussion_id")
-        .in("discussion_id", discussionIds);
+      const { data: replyCounts, error: replyCountError } =
+        discussionIds.length > 0
+          ? await sb.rpc("discussion_reply_counts", { p_discussion_ids: discussionIds })
+          : { data: [], error: null };
+      if (replyCountError) throw replyCountError;
 
       const countMap = new Map<string, number>();
-      for (const r of (replyCounts ?? []) as { discussion_id: string }[]) {
-        countMap.set(r.discussion_id, (countMap.get(r.discussion_id) ?? 0) + 1);
+      for (const r of replyCounts ?? []) {
+        countMap.set(r.discussion_id, Number(r.reply_count));
       }
 
       return discussions.map((d): DiscussionRow => ({

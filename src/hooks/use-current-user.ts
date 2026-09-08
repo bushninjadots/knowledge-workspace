@@ -307,32 +307,17 @@ export function useTrendingSkills() {
   return useQuery({
     queryKey: ["trending-skills"],
     queryFn: async (): Promise<DiscoverableSkill[]> => {
-      const [skillsRes, teachRes, learnRes, projectRes] = await Promise.all([
-        supabase.from("skills").select("id, slug, name, category, description"),
-        supabase.from("profile_skills_teach").select("skill_id"),
-        supabase.from("profile_skills_learn").select("skill_id"),
-        supabase.from("project_skills").select("skill_id"),
-      ]);
+      const { data, error } = await supabase.rpc("trending_skills", { p_limit: 100 });
+      if (error) throw error;
 
-      const firstError = [skillsRes, teachRes, learnRes, projectRes].find((result) => result.error);
-      if (firstError?.error) throw firstError.error;
-
-      const usage = new Map<string, number>();
-      for (const row of [
-        ...(teachRes.data ?? []),
-        ...(learnRes.data ?? []),
-        ...(projectRes.data ?? []),
-      ] as { skill_id: string }[]) {
-        usage.set(row.skill_id, (usage.get(row.skill_id) ?? 0) + 1);
-      }
-
-      return ((skillsRes.data ?? []) as Skill[])
-        .map((skill) => ({ ...skill, usageCount: usage.get(skill.id) ?? 0 }))
-        .sort(
-          (a, b) =>
-            b.usageCount - a.usageCount ||
-            a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-        );
+      return (data ?? []).map((skill) => ({
+        id: skill.id,
+        slug: skill.slug,
+        name: skill.name,
+        category: skill.category,
+        description: skill.description,
+        usageCount: Number(skill.usage_count),
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });

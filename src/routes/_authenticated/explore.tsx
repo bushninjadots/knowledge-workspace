@@ -232,6 +232,8 @@ function ExplorePage() {
     return names;
   }, [me, skills]);
 
+  type ExploreCursor = { created_at: string; id: string };
+  type CreatorCursor = { updated_at: string; id: string };
   const PROJECTS_PAGE_SIZE = 40;
   const {
     data: projectsPages,
@@ -248,8 +250,13 @@ function ExplorePage() {
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)
         .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
         .limit(PROJECTS_PAGE_SIZE);
-      if (pageParam) query = query.lt("created_at", pageParam);
+      if (pageParam) {
+        query = query.or(
+          `created_at.lt.${pageParam.created_at},and(created_at.eq.${pageParam.created_at},id.lt.${pageParam.id})`,
+        );
+      }
       const { data, error } = await query;
       if (error) throw error;
       const rows = data ?? [];
@@ -268,9 +275,14 @@ function ExplorePage() {
       }
       return rows;
     },
-    initialPageParam: null as string | null,
+    initialPageParam: null as ExploreCursor | null,
     getNextPageParam: (lastPage) =>
-      lastPage.length < PROJECTS_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1].created_at,
+      lastPage.length < PROJECTS_PAGE_SIZE
+        ? undefined
+        : {
+            created_at: lastPage[lastPage.length - 1].created_at,
+            id: lastPage[lastPage.length - 1].id,
+          },
     staleTime: 60_000,
   });
   const projects = projectsPages?.pages.flat() ?? undefined;
@@ -312,9 +324,17 @@ function ExplorePage() {
         .from("project_open_roles")
         .select<typeof OPPORTUNITIES_SELECT, OpportunityQueryRow>(OPPORTUNITIES_SELECT)
         .eq("is_filled", false)
+        // Filter the embedded project before pagination so a page cannot be
+        // shortened by closed/paused projects and produce a bad cursor.
+        .in("projects.status", ["planning", "active"])
         .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
         .limit(OPPORTUNITIES_PAGE_SIZE);
-      if (pageParam) query = query.lt("created_at", pageParam);
+      if (pageParam) {
+        query = query.or(
+          `created_at.lt.${pageParam.created_at},and(created_at.eq.${pageParam.created_at},id.lt.${pageParam.id})`,
+        );
+      }
       const { data, error } = await query;
       if (error) throw error;
 
@@ -341,11 +361,14 @@ function ExplorePage() {
         ];
       });
     },
-    initialPageParam: null as string | null,
+    initialPageParam: null as ExploreCursor | null,
     getNextPageParam: (lastPage) =>
       lastPage.length < OPPORTUNITIES_PAGE_SIZE
         ? undefined
-        : lastPage[lastPage.length - 1].created_at,
+        : {
+            created_at: lastPage[lastPage.length - 1].created_at,
+            id: lastPage[lastPage.length - 1].id,
+          },
     enabled: tab === "opportunities",
     staleTime: 60_000,
   });
@@ -354,13 +377,21 @@ function ExplorePage() {
   // One batched query for my application status across all visible roles —
   // avoids each Apply button firing its own query on the Opportunities tab.
   const { data: myRoleStatus = {} } = useQuery({
-    queryKey: ["my-role-applications", "batch", meId ?? "anon"],
+    queryKey: [
+      "my-role-applications",
+      "batch",
+      meId ?? "anon",
+      opportunities.map((opportunity) => opportunity.id).join(","),
+    ],
     queryFn: async (): Promise<Record<string, string>> => {
-      if (!meId) return {};
+      if (!meId || opportunities.length === 0) return {};
+      const visibleRoleIds = opportunities.map((opportunity) => opportunity.id);
       const { data, error } = await supabase
         .from("project_role_applications")
         .select("role_id, status")
-        .eq("profile_id", meId);
+        .eq("profile_id", meId)
+        .in("role_id", visibleRoleIds)
+        .limit(500);
       if (error) return {};
       const map: Record<string, string> = {};
       for (const row of (data ?? []) as { role_id: string; status: string }[]) {
@@ -368,7 +399,7 @@ function ExplorePage() {
       }
       return map;
     },
-    enabled: !!meId && tab === "opportunities",
+    enabled: !!meId && tab === "opportunities" && opportunities.length > 0,
     staleTime: 30_000,
   });
 
@@ -418,16 +449,26 @@ function ExplorePage() {
         .select("id, handle, display_name, creator_title, category, country, updated_at")
         .not("display_name", "is", null)
         .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
         .limit(CREATORS_PAGE_SIZE);
-      if (pageParam) query = query.lt("updated_at", pageParam);
+      if (pageParam) {
+        query = query.or(
+          `updated_at.lt.${pageParam.updated_at},and(updated_at.eq.${pageParam.updated_at},id.lt.${pageParam.id})`,
+        );
+      }
       if (meId) query = query.neq("id", meId);
       const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as Creator[];
     },
-    initialPageParam: null as string | null,
+    initialPageParam: null as CreatorCursor | null,
     getNextPageParam: (lastPage) =>
-      lastPage.length < CREATORS_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1].updated_at,
+      lastPage.length < CREATORS_PAGE_SIZE
+        ? undefined
+        : {
+            updated_at: lastPage[lastPage.length - 1].updated_at,
+            id: lastPage[lastPage.length - 1].id,
+          },
     staleTime: 60_000,
   });
   const creators = (creatorsPages?.pages ?? []).flat();

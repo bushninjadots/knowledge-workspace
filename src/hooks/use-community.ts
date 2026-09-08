@@ -1,6 +1,9 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { fetchPostEngagement } from "@/lib/post-engagement";
+
+export { fetchPostEngagement } from "@/lib/post-engagement";
 
 const sb = supabase;
 
@@ -210,47 +213,8 @@ export function flattenPosts(pages: PostsPage[] | undefined): PostWithAuthor[] {
 async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
   if (rawPosts.length === 0) return [];
 
-  // Fetch action counts for all posts
   const postIds = rawPosts.map((p) => p.id);
-  const { data: rawActions } = await sb
-    .from("post_actions")
-    .select("post_id, action, user_id")
-    .in("post_id", postIds);
-  const actions = (rawActions ?? []) as { post_id: string; action: string; user_id: string }[];
-
-  // Get current user's actions
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const myActions = actions.filter((a) => a.user_id === user?.id);
-
-  // Aggregate stats
-  const statsMap = new Map<
-    string,
-    { likes: number; helpful: number; saves: number; offers: number }
-  >();
-  for (const a of actions) {
-    if (!statsMap.has(a.post_id)) {
-      statsMap.set(a.post_id, { likes: 0, helpful: 0, saves: 0, offers: 0 });
-    }
-    const s = statsMap.get(a.post_id)!;
-    if (a.action === "like") s.likes++;
-    if (a.action === "helpful") s.helpful++;
-    if (a.action === "save") s.saves++;
-    if (a.action === "offer") s.offers++;
-  }
-
-  // Comment counts so the card can show them without opening the thread.
-  const commentCountMap = new Map<string, number>();
-  if (postIds.length > 0) {
-    const { data: rawCommentRows } = await sb
-      .from("comments")
-      .select("post_id")
-      .in("post_id", postIds);
-    for (const c of (rawCommentRows ?? []) as { post_id: string }[]) {
-      commentCountMap.set(c.post_id, (commentCountMap.get(c.post_id) ?? 0) + 1);
-    }
-  }
+  const engagement = await fetchPostEngagement(postIds);
 
   return rawPosts.map((p): PostWithAuthor => ({
     ...p,
@@ -262,10 +226,13 @@ async function hydratePosts(rawPosts: PostRow[]): Promise<PostWithAuthor[]> {
       avatar_url: null,
     },
     stats: {
-      ...(statsMap.get(p.id) ?? { likes: 0, helpful: 0, saves: 0, offers: 0 }),
-      comment_count: commentCountMap.get(p.id) ?? 0,
+      likes: engagement.get(p.id)?.likes ?? 0,
+      helpful: engagement.get(p.id)?.helpful ?? 0,
+      saves: engagement.get(p.id)?.saves ?? 0,
+      offers: engagement.get(p.id)?.offers ?? 0,
+      comment_count: engagement.get(p.id)?.comment_count ?? 0,
     },
-    myActions: myActions.filter((a) => a.post_id === p.id).map((a) => a.action),
+    myActions: engagement.get(p.id)?.myActions ?? [],
   }));
 }
 
@@ -408,7 +375,8 @@ export function useComments(postId: string) {
         .from("comments")
         .select("*, author:profiles!author_id(display_name, handle, creator_title, avatar_url)")
         .eq("post_id", postId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(200);
 
       if (error) {
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {
