@@ -13,7 +13,7 @@ export function CommunitySpaces() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-32 animate-pulse rounded-xl border border-border/60 bg-surface"
+              className="h-32 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
             />
           ))}
         </div>

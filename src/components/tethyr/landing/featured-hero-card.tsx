@@ -18,7 +18,7 @@ export function FeaturedHeroCard() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse overflow-hidden rounded-xl bg-surface-elevated/30">
+      <div className="animate-gentle-pulse overflow-hidden rounded-xl bg-surface-elevated/30">
         <div className="h-36 bg-surface-sunken" />
         <div className="space-y-3 p-5">
           <div className="h-3 w-28 rounded bg-surface-elevated" />

@@ -184,7 +184,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
         {isLoadingSkills ? (
           <div className="flex flex-wrap gap-1.5">
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className="h-5 w-16 animate-pulse rounded-full bg-surface-elevated" />
+              <span key={i} className="h-5 w-16 animate-gentle-pulse rounded-full bg-surface-elevated" />
             ))}
           </div>
         ) : trendingSkills.length === 0 ? (

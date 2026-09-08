@@ -9,7 +9,7 @@ export function HeroActivityPanel() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse rounded-xl bg-surface-elevated/30 p-5">
+      <div className="animate-gentle-pulse rounded-xl bg-surface-elevated/30 p-5">
         <div className="mb-4 h-4 w-44 rounded bg-surface-elevated" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="mb-4 flex items-center gap-3">

@@ -15,7 +15,7 @@ export function RecentActivity() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-40 animate-pulse rounded-xl border border-border/60 bg-surface"
+              className="h-40 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
             />
           ))}
         </div>

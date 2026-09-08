@@ -317,7 +317,7 @@ function ChallengesContent() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-64 animate-pulse rounded-xl border border-border/50 bg-surface/60"
+                  className="h-64 animate-gentle-pulse rounded-xl border border-border/50 bg-surface/60"
                 />
               ))}
             </div>
@@ -326,7 +326,7 @@ function ChallengesContent() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-14 animate-pulse rounded-xl border border-border/50 bg-surface/60"
+                  className="h-14 animate-gentle-pulse rounded-xl border border-border/50 bg-surface/60"
                 />
               ))}
             </div>

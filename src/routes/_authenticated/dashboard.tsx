@@ -632,7 +632,7 @@ function DashboardContent({
               Your active work, collaboration signals, discovery, and contribution evidence.
             </p>
           </div>
-          <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-surface" />}>
+          <Suspense fallback={<div className="h-64 animate-gentle-pulse rounded-xl bg-surface" />}>
             <WorkspaceGrid
               page="dashboard"
               userId={data?.userId}
@@ -800,7 +800,7 @@ function ProjectReturnShelf() {
       </div>
       {isLoading ? (
         <div
-          className="mt-3 h-12 animate-pulse rounded-lg bg-surface"
+          className="mt-3 h-12 animate-gentle-pulse rounded-lg bg-surface"
           aria-label="Loading project changes"
         />
       ) : (
@@ -839,8 +839,8 @@ function DashboardModuleLoading({ title }: { title: string }) {
   return (
     <SectionCard icon={<Clock className="h-4 w-4" />} title={title}>
       <div className="space-y-2" aria-label={`Loading ${title}`}>
-        <div className="h-3 w-2/3 animate-pulse rounded bg-surface-elevated" />
-        <div className="h-3 w-1/2 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-2/3 animate-gentle-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-1/2 animate-gentle-pulse rounded bg-surface-elevated" />
       </div>
     </SectionCard>
   );

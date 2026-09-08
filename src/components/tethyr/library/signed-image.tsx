@@ -43,7 +43,7 @@ function SignedImageView({
     return (
       <span
         contentEditable={false}
-        className="my-2 block h-40 w-full animate-pulse rounded-xl border border-border/60 bg-surface"
+        className="my-2 block h-40 w-full animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
       />
     );
   }

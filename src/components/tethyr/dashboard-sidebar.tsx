@@ -88,7 +88,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex h-full w-60 flex-col border-r border-border bg-surface relative">
       {/* Animated accent bar on right edge */}
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-px opacity-0 transition-opacity duration-700 hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 right-0 w-px opacity-0 transition-opacity duration-200 hover:opacity-100"
         style={{
           background:
             "linear-gradient(to bottom, transparent, var(--user-accent, var(--trust)) 30%, var(--ai) 70%, transparent)",
@@ -103,7 +103,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
           fallback={
             <div
               aria-hidden="true"
-              className="h-9 animate-pulse rounded-xl border border-border/40 bg-surface-elevated/50"
+              className="h-9 animate-gentle-pulse rounded-xl border border-border/40 bg-surface-elevated/50"
             />
           }
         >

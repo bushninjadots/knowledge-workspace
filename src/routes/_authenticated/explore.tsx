@@ -580,7 +580,7 @@ function ExplorePage() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 animate-pulse rounded-xl bg-surface" />
+                <div key={i} className="h-48 animate-gentle-pulse rounded-xl bg-surface" />
               ))}
             </div>
           ) : tab === "opportunities" ? (

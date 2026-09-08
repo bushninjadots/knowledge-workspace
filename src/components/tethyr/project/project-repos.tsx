@@ -233,7 +233,7 @@ export function ProjectReposSection({
           {loadingRepos ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-9 animate-pulse rounded-lg bg-surface/60" />
+                <div key={i} className="h-9 animate-gentle-pulse rounded-lg bg-surface/60" />
               ))}
             </div>
           ) : githubRepos.length === 0 ? (
@@ -285,7 +285,7 @@ export function ProjectReposSection({
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-xl bg-surface/60" />
+            <div key={i} className="h-16 animate-gentle-pulse rounded-xl bg-surface/60" />
           ))}
         </div>
       ) : repos.length === 0 ? (

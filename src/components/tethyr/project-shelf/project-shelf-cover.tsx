@@ -49,7 +49,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
           />
 
           {/* Subtle specular sheen on hover */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
           {/* Status badge */}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">

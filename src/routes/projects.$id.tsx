@@ -449,7 +449,7 @@ function ProjectPage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
+        <div className="animate-gentle-pulse space-y-6 p-8" aria-hidden="true">
           <div className="h-40 rounded-xl bg-surface" />
           <div className="h-8 w-2/3 rounded bg-surface" />
           <div className="h-4 w-full rounded bg-surface" />

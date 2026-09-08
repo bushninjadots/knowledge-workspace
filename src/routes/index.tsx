@@ -50,14 +50,14 @@ function SectionSkeleton() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6" aria-hidden="true">
       <div className="mb-10 space-y-3">
-        <div className="h-3 w-24 animate-pulse rounded bg-surface-elevated" />
-        <div className="h-8 w-72 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-24 animate-gentle-pulse rounded bg-surface-elevated" />
+        <div className="h-8 w-72 animate-gentle-pulse rounded bg-surface-elevated" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="h-44 animate-pulse rounded-xl border border-border/60 bg-surface"
+            className="h-44 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
           />
         ))}
       </div>
@@ -162,7 +162,7 @@ function HomePage() {
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 {!ctaReady ? (
-                  <div className="h-12 w-40 animate-pulse rounded-full bg-surface-elevated" />
+                  <div className="h-12 w-40 animate-gentle-pulse rounded-full bg-surface-elevated" />
                 ) : isAuthed ? (
                   <>
                     <Button asChild size="lg" variant="default" className="transition-lift">
@@ -259,7 +259,7 @@ function HomePage() {
                 </p>
                 <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                   {!ctaReady ? (
-                    <div className="h-12 w-48 animate-pulse rounded-full bg-surface-elevated" />
+                    <div className="h-12 w-48 animate-gentle-pulse rounded-full bg-surface-elevated" />
                   ) : isAuthed ? (
                     <>
                       <Button asChild size="lg" variant="default" className="transition-lift">
