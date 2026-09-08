@@ -120,7 +120,7 @@ function SkillPage() {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl p-8">
-          <div className="h-40 animate-pulse rounded-xl bg-surface/60" />
+          <div className="h-40 animate-gentle-pulse rounded-xl bg-surface/60" />
         </div>
       </Shell>
     );
@@ -472,7 +472,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-xl bg-surface/60" />
+          <div key={i} className="h-24 animate-gentle-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );
@@ -546,7 +546,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-xl bg-surface/60" />
+          <div key={i} className="h-24 animate-gentle-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );
@@ -618,7 +618,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-xl bg-surface/60" />
+          <div key={i} className="h-28 animate-gentle-pulse rounded-xl bg-surface/60" />
         ))}
       </div>
     );

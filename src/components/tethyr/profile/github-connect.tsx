@@ -234,7 +234,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
   if (isLoading) {
     return (
       <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-        <div className="h-16 animate-pulse rounded-lg bg-surface/60" />
+        <div className="h-16 animate-gentle-pulse rounded-lg bg-surface/60" />
       </div>
     );
   }

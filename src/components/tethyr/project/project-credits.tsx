@@ -42,7 +42,7 @@ export function CreditsRoll({
   if (isLoading) {
     return (
       <section className="mt-14" aria-hidden="true">
-        <div className="animate-pulse space-y-4">
+        <div className="animate-gentle-pulse space-y-4">
           <div className="h-4 w-24 rounded bg-surface" />
           <div className="h-3 w-2/3 rounded bg-surface" />
           <div className="h-3 w-1/2 rounded bg-surface" />

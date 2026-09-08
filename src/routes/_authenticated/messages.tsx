@@ -69,7 +69,7 @@ function MessagesPage() {
         </header>
         <div className="flex-1 overflow-y-auto bg-noise">
           {isLoading ? (
-            <div className="m-2 h-16 animate-pulse rounded-xl bg-surface" />
+            <div className="m-2 h-16 animate-gentle-pulse rounded-xl bg-surface" />
           ) : accepted.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -287,7 +287,7 @@ function Thread({
           </div>
         )}
         {isLoading ? (
-          <div className="h-12 animate-pulse rounded-xl bg-surface" />
+          <div className="h-12 animate-gentle-pulse rounded-xl bg-surface" />
         ) : messages.length > 0 ? (
           messages.map((m) => {
             const mine = m.sender_id === meId;

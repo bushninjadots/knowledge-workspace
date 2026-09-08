@@ -37,7 +37,7 @@ export function FeaturedProjects() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-64 animate-pulse rounded-xl border border-border/60 bg-surface"
+              className="h-64 animate-gentle-pulse rounded-xl border border-border/60 bg-surface"
             />
           ))}
         </div>

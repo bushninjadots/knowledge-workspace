@@ -129,7 +129,7 @@ function PublicProfileRoute() {
   if (isLoading) {
     return (
       <Shell background={null} pageThemeStyle={pageThemeStyle}>
-        <div className="animate-pulse space-y-6 p-8" aria-hidden="true">
+        <div className="animate-gentle-pulse space-y-6 p-8" aria-hidden="true">
           <div className="h-48 rounded-xl bg-surface" />
           <div className="flex items-center gap-4">
             <div className="h-28 w-28 rounded-full bg-surface" />

@@ -181,8 +181,8 @@ function TeamsPage() {
           </div>
           {teamsLoading || invitesLoading ? (
             <div className="grid gap-3 sm:grid-cols-2" aria-label="Loading teams">
-              <div className="h-20 animate-pulse bg-surface" />
-              <div className="h-20 animate-pulse bg-surface" />
+              <div className="h-20 animate-gentle-pulse bg-surface" />
+              <div className="h-20 animate-gentle-pulse bg-surface" />
             </div>
           ) : isError ? (
             <p

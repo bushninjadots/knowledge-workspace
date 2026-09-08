@@ -62,7 +62,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                 </Button>
               </>
             ) : (
-              <div className="h-8 w-20 animate-pulse rounded-full bg-surface-elevated" />
+              <div className="h-8 w-20 animate-gentle-pulse rounded-full bg-surface-elevated" />
             )
           ) : isAuthed ? (
             <>

@@ -377,7 +377,7 @@ function LibraryItemPage() {
               <Suspense
                 fallback={
                   <div
-                    className="min-h-[60vh] animate-pulse bg-surface/30"
+                    className="min-h-[60vh] animate-gentle-pulse bg-surface/30"
                     aria-label="Loading editor"
                   />
                 }

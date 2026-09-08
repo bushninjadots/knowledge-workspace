@@ -643,14 +643,14 @@ function EditorSkeleton() {
     >
       <div className="flex items-center gap-1.5 border-b border-border/40 px-4 py-2">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-7 w-7 animate-pulse rounded-lg bg-surface-elevated" />
+          <div key={i} className="h-7 w-7 animate-gentle-pulse rounded-lg bg-surface-elevated" />
         ))}
       </div>
       <div className="space-y-3 px-6 py-5">
-        <div className="h-3 w-2/3 animate-pulse rounded bg-surface-elevated" />
-        <div className="h-3 w-full animate-pulse rounded bg-surface-elevated" />
-        <div className="h-3 w-5/6 animate-pulse rounded bg-surface-elevated" />
-        <div className="h-3 w-1/2 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-2/3 animate-gentle-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-full animate-gentle-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-5/6 animate-gentle-pulse rounded bg-surface-elevated" />
+        <div className="h-3 w-1/2 animate-gentle-pulse rounded bg-surface-elevated" />
       </div>
     </div>
   );

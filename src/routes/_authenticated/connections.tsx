@@ -162,13 +162,13 @@ function ConnectionsPage() {
           view === "rows" ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-elevated/40" />
+                <div key={i} className="h-16 animate-gentle-pulse rounded-xl bg-surface-elevated/40" />
               ))}
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-elevated/40" />
+                <div key={i} className="h-20 animate-gentle-pulse rounded-xl bg-surface-elevated/40" />
               ))}
             </div>
           )

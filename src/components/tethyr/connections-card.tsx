@@ -34,7 +34,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
   if (isLoading) {
     return (
       <div className="h-full rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-        <div className="h-6 w-32 animate-pulse rounded bg-surface-elevated" />
+        <div className="h-6 w-32 animate-gentle-pulse rounded bg-surface-elevated" />
       </div>
     );
   }

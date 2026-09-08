@@ -94,10 +94,10 @@ export function DashboardStateBoundary({
         <div className="hidden w-60 shrink-0 md:block" />
         <div className="flex-1 p-4 sm:p-8">
           <div className="space-y-4" role="status" aria-label="Loading your dashboard">
-            <div className="h-24 animate-pulse rounded-xl bg-surface/60" />
+            <div className="h-24 animate-gentle-pulse rounded-xl bg-surface/60" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-xl bg-surface/60" />
+                <div key={i} className="h-32 animate-gentle-pulse rounded-xl bg-surface/60" />
               ))}
             </div>
           </div>

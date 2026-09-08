@@ -102,7 +102,7 @@ export function BannerStrip({
 
   const banner = (
     <div
-      className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-500 sm:-m-8 sm:mb-8 sm:h-72"
+      className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-200 sm:-m-8 sm:mb-8 sm:h-72"
       style={{ borderColor: accentColor ?? "transparent" }}
     >
       {bannerSigned ? (
