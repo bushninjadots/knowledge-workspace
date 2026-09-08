@@ -149,7 +149,7 @@ The app is a TanStack Start (SSR) + Vite + React frontend backed by **Supabase**
 ### Running it
 
 - Start command: `bash scripts/base44-start.sh` (recorded in `.base44/environment.json`).
-  It runs `npx supabase start` (brings up the full local Supabase stack and applies all 142 migrations + the demo seed on first init), captures the live API keys from `supabase status`, writes them to the gitignored `.env.supabase-runtime`, then runs `docker compose -f docker-compose.base44.yml up -d --build`.
+  It runs `npx supabase start` (brings up the full local Supabase stack and applies all 172 migrations + the demo seed on first init), captures the live API keys from `supabase status`, writes them to the gitignored `.env.supabase-runtime`, then runs `docker compose -f docker-compose.base44.yml up -d --build`.
 - The web service (`docker-compose.base44.yml`) runs the cloned source on `node:22` with `npm run dev` (Vite live reload), bind-mounted at `/app` with a named volume for `node_modules`. It maps host port `3000` → container `8080` (the Lovable Vite config forces port 8080 / host `::`).
 - No external/user secrets are required — Supabase runs locally and its keys are generated per instance by the CLI.
 
