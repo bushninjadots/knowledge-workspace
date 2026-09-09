@@ -146,7 +146,7 @@ function SignupPage() {
         </div>
       </div>
       <form className="mt-4 space-y-4" onSubmit={onSubmit}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input

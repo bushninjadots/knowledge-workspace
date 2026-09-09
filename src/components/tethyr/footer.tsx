@@ -15,7 +15,7 @@ export function Footer() {
             contributions, and become known for what they make — not what they claim.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-green animate-gentle-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-green" aria-hidden="true" />
             Active community
           </div>
         </div>
