@@ -43,6 +43,7 @@ import {
 } from "@/components/tethyr/project/project-workbench";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
+import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
@@ -248,6 +249,23 @@ function ProjectPage() {
     },
     [scrollToSection, setTab],
   );
+
+  // "Link repository" from the README code panel — jump to the Files tab's
+  // connected-repositories section so the GitHub import is one click away.
+  const linkRepo = useCallback(() => {
+    setTab("files", { scrollToTop: false });
+    let attempts = 0;
+    const tryScroll = () => {
+      attempts += 1;
+      const el = document.getElementById("project-repos");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (attempts < 10) {
+        setTimeout(tryScroll, 150);
+      }
+    };
+    setTimeout(tryScroll, 120);
+  }, [setTab]);
 
   const jumpToDiscussion = useCallback((discussionId: string) => {
     // Discussions are inline now, so jump straight to the thread.
@@ -502,11 +520,13 @@ function ProjectPage() {
   };
   const links = Object.entries(project.links ?? {}).filter(([, url]) => !!url);
   const projectFiles = (project.uploaded_files ?? []) as ProjectFile[];
-  const repoStats = repos[0]?.metadata
+  const repoStats = repos[0]
     ? {
-        language: repos[0].metadata.language ?? null,
-        stars: repos[0].metadata.stargazers_count ?? undefined,
-        forks: repos[0].metadata.forks_count ?? undefined,
+        language: repos[0].metadata?.language ?? null,
+        stars: repos[0].metadata?.stargazers_count ?? undefined,
+        forks: repos[0].metadata?.forks_count ?? undefined,
+        url: repos[0].url ?? null,
+        name: getRepoFullName(repos[0]) ?? null,
       }
     : undefined;
   const sectionRank = new Map(
@@ -598,6 +618,7 @@ function ProjectPage() {
               projectFiles={projectFiles}
               isOwner={isOwner}
               presentationPreset={presentation.id}
+              onLinkRepo={linkRepo}
             />
           </section>
 

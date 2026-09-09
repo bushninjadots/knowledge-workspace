@@ -53,12 +53,14 @@ export function ProjectReadmeTab({
   projectFiles,
   isOwner,
   presentationPreset = "story-first",
+  onLinkRepo,
 }: {
   project: ProjectDetail;
   skills: SkillLite[];
   projectFiles: ProjectFile[];
   isOwner: boolean;
   presentationPreset?: ProjectPresentationPreset;
+  onLinkRepo?: () => void;
 }) {
   const updateReadme = useUpdateProjectReadme();
   const updateContent = useUpdateProjectContent();
@@ -404,7 +406,12 @@ export function ProjectReadmeTab({
               <aside className="hidden lg:block" aria-label="README navigation">
                 <div className="sticky top-44 max-h-[calc(100vh-12rem)] space-y-6 overflow-y-auto border-l border-border/40 py-5 pl-5 pr-1">
                   <ReadmeToc sections={readmeSections} />
-                  <ProjectCodePanel project={project} repos={repos} isOwner={isOwner} />
+                  <ProjectCodePanel
+                    project={project}
+                    repos={repos}
+                    isOwner={isOwner}
+                    onLinkRepo={onLinkRepo}
+                  />
                 </div>
               </aside>
             </div>
@@ -419,6 +426,7 @@ export function ProjectReadmeTab({
           project={project}
           repos={repos}
           isOwner={isOwner}
+          onLinkRepo={onLinkRepo}
           className="rounded-xl border card-border bg-surface px-5 py-5 lg:hidden"
         />
       )}

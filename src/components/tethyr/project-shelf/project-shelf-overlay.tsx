@@ -17,7 +17,7 @@ interface ProjectShelfOverlayProps {
 
 const STATUS_STYLES: Record<string, { label: string; dot: string; badge: string }> = {
   active: { label: "Active", dot: "bg-brand-green", badge: "bg-brand-green/15 text-brand-green" },
-  planning: { label: "Planning", dot: "bg-teaching", badge: "bg-teaching text-teaching" },
+  planning: { label: "Planning", dot: "bg-teaching", badge: "bg-teaching/10 text-teaching" },
   paused: {
     label: "Paused",
     dot: "bg-muted-foreground/40",

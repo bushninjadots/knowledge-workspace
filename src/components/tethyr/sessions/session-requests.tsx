@@ -81,7 +81,7 @@ function RequestCard({ request }: { request: SessionRequest }) {
           <button
             onClick={() => handleRespond("declined")}
             disabled={respondToRequest.isPending}
-            className="rounded-lg bg-warning p-2 text-warning transition-colors hover:bg-warning disabled:opacity-50"
+            className="rounded-lg bg-warning/10 p-2 text-warning transition-colors hover:bg-warning/20 disabled:opacity-50"
             title="Decline"
           >
             <X className="h-3.5 w-3.5" />

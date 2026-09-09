@@ -240,14 +240,14 @@ function ChallengeDetailPage() {
                   {challenge.difficulty}
                 </Badge>
                 {isVerified && (
-                  <Badge variant="outline" className="bg-trust text-trust border-trust/40 gap-1">
+                  <Badge variant="outline" className="bg-trust/10 text-trust border-trust/40 gap-1">
                     <CheckCircle2 className="h-3 w-3" /> Challenge Completed!
                   </Badge>
                 )}
                 {isPendingVerification && myReview === "submitted" && (
                   <Badge
                     variant="outline"
-                    className="bg-teaching text-teaching border-teaching/40 gap-1"
+                    className="bg-teaching/10 text-teaching border-teaching/40 gap-1"
                   >
                     <Clock className="h-3 w-3" /> Under review
                   </Badge>
@@ -263,7 +263,7 @@ function ChallengeDetailPage() {
                 {isPendingVerification && !myReview && (
                   <Badge
                     variant="outline"
-                    className="bg-teaching text-teaching border-teaching/40 gap-1"
+                    className="bg-teaching/10 text-teaching border-teaching/40 gap-1"
                   >
                     <Clock className="h-3 w-3" /> Marked complete — pending verification
                   </Badge>
@@ -628,9 +628,9 @@ function ChallengeDetailPage() {
                     variant="outline"
                     className={`text-[11px] capitalize ${
                       part.review_status === "passed"
-                        ? "bg-trust text-trust border-trust/40"
+                        ? "bg-trust/10 text-trust border-trust/40"
                         : part.review_status === "submitted"
-                          ? "bg-teaching text-teaching border-teaching/40"
+                          ? "bg-teaching/10 text-teaching border-teaching/40"
                           : part.review_status === "rejected"
                             ? "bg-destructive/10 text-destructive border-destructive/30"
                             : "bg-secondary text-muted-foreground"

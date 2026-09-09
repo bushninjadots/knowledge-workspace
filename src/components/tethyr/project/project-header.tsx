@@ -11,9 +11,11 @@ import {
   Lock,
   Globe2,
   Zap,
+  Github,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
+import { cn } from "@/lib/utils";
 import type { ProjectDetail } from "@/hooks/use-projects";
 import {
   PROJECT_STATUS_LABEL,
@@ -84,7 +86,14 @@ export function ProjectHeader({
   avatarSigned: Record<string, string>;
   links: [string, string][];
   /** Cached GitHub stats from the first linked repository. */
-  repoStats?: { language?: string | null; stars?: number; forks?: number };
+  repoStats?: {
+    language?: string | null;
+    stars?: number;
+    forks?: number;
+    /** Original GitHub URL of the primary repo, when one is linked. */
+    url?: string | null;
+    name?: string | null;
+  };
   communityPostCount: number;
   openNeedCount: number;
   onJoin?: () => void;
@@ -100,6 +109,9 @@ export function ProjectHeader({
   const langColor = repoStats?.language
     ? (LANGUAGE_COLORS[repoStats.language.toLowerCase()] ?? "var(--muted-foreground)")
     : null;
+  const repoHref = repoStats?.url ? safeHref(repoStats.url) : null;
+  const repoChipClass =
+    "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground transition hover:text-foreground";
 
   const copyLink = () => {
     if (navigator.clipboard?.writeText) {
@@ -229,24 +241,72 @@ export function ProjectHeader({
                   {t}
                 </span>
               ))}
+              {repoStats?.name && (
+                <a
+                  href={repoHref ?? undefined}
+                  target={repoHref ? "_blank" : undefined}
+                  rel="noreferrer"
+                  className={cn(
+                    repoChipClass,
+                    "font-mono",
+                    repoHref && "hover:border-[var(--user-accent-border,var(--border-strong))]",
+                  )}
+                  aria-label={
+                    repoHref ? `Open source repository ${repoStats.name} on GitHub` : undefined
+                  }
+                >
+                  <Github className="h-3 w-3 text-muted-foreground" />
+                  {repoStats.name}
+                </a>
+              )}
               {repoStats?.language && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                <a
+                  href={repoHref ?? undefined}
+                  target={repoHref ? "_blank" : undefined}
+                  rel="noreferrer"
+                  className={cn(
+                    repoChipClass,
+                    repoHref && "hover:border-[var(--user-accent-border,var(--border-strong))]",
+                  )}
+                  aria-label={
+                    repoHref
+                      ? `Open source repository for ${repoStats.name ?? "this project"} on GitHub`
+                      : undefined
+                  }
+                >
+                  {repoHref && <Github className="h-3 w-3 text-muted-foreground" />}
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: langColor ?? undefined }}
                   />
                   {repoStats.language}
-                </span>
+                </a>
               )}
               {repoStats?.stars != null && repoStats.stars > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                <a
+                  href={repoHref ?? undefined}
+                  target={repoHref ? "_blank" : undefined}
+                  rel="noreferrer"
+                  className={cn(
+                    repoChipClass,
+                    repoHref && "hover:border-[var(--user-accent-border,var(--border-strong))]",
+                  )}
+                >
                   <Star className="h-3 w-3" /> {repoStats.stars.toLocaleString()}
-                </span>
+                </a>
               )}
               {repoStats?.forks != null && repoStats.forks > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                <a
+                  href={repoHref ?? undefined}
+                  target={repoHref ? "_blank" : undefined}
+                  rel="noreferrer"
+                  className={cn(
+                    repoChipClass,
+                    repoHref && "hover:border-[var(--user-accent-border,var(--border-strong))]",
+                  )}
+                >
                   <GitBranch className="h-3 w-3" /> {repoStats.forks.toLocaleString()}
-                </span>
+                </a>
               )}
               {links.map(([key, url]) => {
                 const meta = PROJECT_LINK_KEYS.find((l) => l.key === key);

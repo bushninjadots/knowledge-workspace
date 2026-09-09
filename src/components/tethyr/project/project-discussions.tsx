@@ -87,7 +87,7 @@ function DiscussionThread({
               <Link
                 to="/community"
                 search={{ post: discussion.community_post_id } as Record<string, string>}
-                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning px-2 py-0.5 text-[11px] font-medium text-learning transition hover:bg-learning"
+                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning/10 px-2 py-0.5 text-[11px] font-medium text-learning transition hover:bg-learning/20"
               >
                 <Users className="h-2.5 w-2.5" />
                 Also on Community

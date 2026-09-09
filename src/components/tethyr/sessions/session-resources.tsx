@@ -178,7 +178,7 @@ export function SessionResources({
                   onClick={() => handleDelete(resource.id)}
                   busy={deleteResource.isPending}
                   aria-label={`Remove ${resource.title}`}
-                  className="text-muted-foreground hover:bg-warning hover:text-warning"
+                  className="text-muted-foreground hover:bg-warning/10 hover:text-warning"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

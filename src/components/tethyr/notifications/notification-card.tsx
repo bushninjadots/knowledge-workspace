@@ -194,7 +194,7 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-[11px] text-trust hover:text-trust hover:bg-trust"
+                className="h-6 px-2 text-[11px] text-trust hover:text-trust hover:bg-trust/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAccept();

@@ -318,7 +318,7 @@ export function PostCard({
               </button>
             )}
             {shared_from_space && (
-              <span className="rounded-full border border-learning/40 bg-learning px-1.5 py-0 text-[11px] text-learning">
+              <span className="rounded-full border border-learning/40 bg-learning/10 px-1.5 py-0 text-[11px] text-learning">
                 Shared from {shared_from_space}
               </span>
             )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link2, Lock, RefreshCw } from "lucide-react";
+import { Link2, Lock, Plus, RefreshCw, Settings2 } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ type ProjectCodePanelProps = {
   repos: ProjectRepo[] | undefined;
   isOwner: boolean;
   className?: string;
+  onLinkRepo?: () => void;
 };
 
 /**
@@ -21,7 +22,13 @@ type ProjectCodePanelProps = {
  * and a one-click "Sync README" for owners. On desktop it lives in the sticky
  * rail beside the README; on mobile it renders as a full-width band below it.
  */
-export function ProjectCodePanel({ project, repos, isOwner, className }: ProjectCodePanelProps) {
+export function ProjectCodePanel({
+  project,
+  repos,
+  isOwner,
+  className,
+  onLinkRepo,
+}: ProjectCodePanelProps) {
   const updateReadme = useUpdateProjectReadme();
   const [syncing, setSyncing] = useState(false);
 
@@ -61,11 +68,23 @@ export function ProjectCodePanel({ project, repos, isOwner, className }: Project
       </h3>
 
       {!primary || !getRepoFullName(primary) ? (
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
-          {isOwner
-            ? "Link a GitHub repository to show your code source and let visitors pull your README."
-            : "The team hasn't linked a source repository yet."}
-        </p>
+        <div className="space-y-2.5">
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            {isOwner
+              ? "Link a GitHub repository to show your code source and let visitors pull your README."
+              : "The team hasn't linked a source repository yet."}
+          </p>
+          {isOwner && (
+            <button
+              type="button"
+              onClick={onLinkRepo}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition hover:bg-surface-elevated"
+            >
+              <Plus className="h-3 w-3" />
+              Link repository
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2.5">
           <div className="flex min-w-0 items-center gap-2">
@@ -142,15 +161,27 @@ export function ProjectCodePanel({ project, repos, isOwner, className }: Project
           )}
 
           {isOwner && primary && (
-            <button
-              type="button"
-              onClick={syncReadme}
-              disabled={syncing}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-surface-elevated disabled:opacity-60"
-            >
-              <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
-              {syncing ? "Pulling…" : "Sync README"}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={syncReadme}
+                disabled={syncing}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-surface-elevated disabled:opacity-60"
+              >
+                <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
+                {syncing ? "Pulling…" : "Sync README"}
+              </button>
+              {onLinkRepo && (
+                <button
+                  type="button"
+                  onClick={onLinkRepo}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Settings2 className="h-3 w-3" />
+                  Manage repositories
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

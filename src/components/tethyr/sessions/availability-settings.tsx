@@ -26,8 +26,8 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
   available: { bg: "bg-brand-green/10", text: "text-brand-green", border: "border-brand-green/30" },
-  unavailable: { bg: "bg-warning", text: "text-warning", border: "border-warning/40" },
-  tentative: { bg: "bg-teaching", text: "text-teaching", border: "border-teaching/40" },
+  unavailable: { bg: "bg-warning/10", text: "text-warning", border: "border-warning/40" },
+  tentative: { bg: "bg-teaching/10", text: "text-teaching", border: "border-teaching/40" },
 };
 
 interface SlotInput {
