@@ -387,7 +387,7 @@ function DashboardContent({
           return (
             <section
               aria-labelledby="today-heading"
-              className="rounded-xl bg-surface-elevated/30 p-5"
+              className="rounded-xl border border-[var(--user-accent,var(--trust))]/20 bg-surface-elevated/40 p-5"
             >
               <p id="today-heading" className="section-label mb-1">
                 Your next move
