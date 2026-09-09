@@ -1,14 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Compass, Home, MessageSquare, MoreHorizontal, UserRound } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import { isNavItemActive, mobilePrimaryNav } from "./navigation-manifest";
 
-// Labels match the app sidebar (Dashboard / Your Studio) so the same
-// destination isn't called two different names on desktop vs mobile.
-const ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: Home },
-  { to: "/explore", label: "Explore", icon: Compass },
-  { to: "/profile", label: "Your Studio", icon: UserRound },
-  { to: "/messages", label: "Messages", icon: MessageSquare },
-] as const;
+const ITEMS = mobilePrimaryNav;
 
 export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -21,8 +15,7 @@ export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {ITEMS.map((item) => {
           const Icon = item.icon;
-          const active =
-            item.to === "/dashboard" ? pathname === item.to : pathname.startsWith(item.to);
+          const active = isNavItemActive(pathname, item.to);
           return (
             <Link
               key={item.to}
