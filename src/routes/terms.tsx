@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
+  head: () => ({
+    meta: [{ title: "Terms of Service — Tethyr" }, ...robotsMeta()],
+    links: canonicalLinks("/terms"),
+  }),
   component: TermsOfService,
 });
 

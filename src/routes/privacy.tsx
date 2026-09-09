@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
+  head: () => ({
+    meta: [{ title: "Privacy Policy — Tethyr" }, ...robotsMeta()],
+    links: canonicalLinks("/privacy"),
+  }),
   component: PrivacyPolicy,
 });
 

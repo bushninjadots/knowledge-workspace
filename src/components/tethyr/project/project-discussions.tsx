@@ -21,7 +21,7 @@ const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
     "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   idea: "border-brand-green/40 bg-brand-green/10 text-brand-green",
   feedback: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
-  announcement: "border-teaching/40 bg-teaching text-teaching",
+  announcement: "border-teaching/40 bg-teaching-subtle text-foreground",
 };
 
 const CATEGORY_LABEL: Record<DiscussionRow["category"], string> = {

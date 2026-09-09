@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
@@ -74,7 +75,45 @@ function DashboardPage() {
       </div>
     );
   }
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
+        <div className="max-w-md text-center">
+          <p className="section-label">Workspace unavailable</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold">
+            We couldn&apos;t load your workspace.
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Refresh the page or return to the sign-in flow to reconnect your Tethyr space.
+          </p>
+          <div className="mt-5 flex justify-center gap-2">
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Refresh
+            </Button>
+            <Button asChild>
+              <Link to="/login">Go to login</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!data.profile) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
+        <div className="max-w-md text-center">
+          <p className="section-label">One step to go</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold">Set up your Studio.</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Add your name and what you make so people can recognize the work behind your account.
+          </p>
+          <Button asChild className="mt-5">
+            <Link to="/profile">Open Your Studio</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return <DashboardContent data={data} />;
 }
 

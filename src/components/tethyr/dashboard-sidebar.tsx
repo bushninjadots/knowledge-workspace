@@ -1,19 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import {
-  Home,
-  FolderOpen,
-  Compass,
-  User,
-  Users,
-  MessageSquare,
-  Trophy,
-  LogOut,
-  Bell,
-  Swords,
-  Link2,
-  Settings,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,40 +17,9 @@ const GlobalSearch = lazy(() =>
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { CreateProjectButton } from "./create-project-button";
 
-const groups = [
-  {
-    label: "Workspace",
-    items: [
-      { to: "/dashboard", label: "Dashboard", icon: Home },
-      { to: "/library", label: "Library", icon: FolderOpen },
-    ],
-  },
-  {
-    label: "Discover",
-    items: [
-      { to: "/explore", label: "Explore", icon: Compass },
-      { to: "/challenges", label: "Challenges", icon: Swords },
-      { to: "/sessions", label: "Sessions", icon: Trophy },
-    ],
-  },
-  {
-    label: "Network",
-    items: [
-      { to: "/community", label: "Community", icon: Users },
-      { to: "/teams", label: "Teams", icon: Users },
-      { to: "/connections", label: "Connections", icon: Link2 },
-      { to: "/messages", label: "Messages", icon: MessageSquare },
-      { to: "/notifications", label: "Notifications", icon: Bell },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      { to: "/profile", label: "Your Studio", icon: User },
-      { to: "/settings", label: "Settings", icon: Settings },
-    ],
-  },
-] as const;
+import { navigationGroups, isNavItemActive } from "./navigation-manifest";
+
+const groups = navigationGroups;
 
 export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -132,10 +88,7 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <div className="flex flex-col">
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const isActive =
-                  item.to === "/dashboard"
-                    ? pathname === "/dashboard"
-                    : pathname.startsWith(item.to);
+                const isActive = isNavItemActive(pathname, item.to);
 
                 const badge =
                   item.label === "Messages" && unread && unread.total > 0
