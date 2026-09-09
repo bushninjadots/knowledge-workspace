@@ -23,7 +23,7 @@ export function LandingStats() {
   ) {
     return null;
   }
-  const items = [
+  const allItems = [
     { value: stats.members, label: "Members", icon: Users },
     { value: stats.projects, label: "Projects", icon: FolderKanban },
     { value: stats.spaces, label: "Community spaces", icon: Boxes },
@@ -32,6 +32,9 @@ export function LandingStats() {
     { value: stats.comments, label: "Comments shared", icon: MessageCircle },
     { value: stats.challenges, label: "Challenges", icon: Trophy },
   ];
+  // Only show stats that have real data — avoids a wall of "0" on a fresh
+  // community where some tables are populated but others aren't.
+  const items = allItems.filter((item) => item.value > 0);
   return (
     <section className="group border-y border-border/60 bg-surface/40">
       <div className="marquee-viewport overflow-hidden">

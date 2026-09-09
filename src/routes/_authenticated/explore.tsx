@@ -626,6 +626,59 @@ function ExplorePage() {
             </div>
           ) : tab === "opportunities" ? (
             <>
+              {/* Search + Sort — at the top so users can filter before scrolling past results */}
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search roles, skills, or projects…"
+                    className="border-0 bg-transparent focus-visible:ring-0"
+                  />
+                </div>
+                <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
+                  <button
+                    type="button"
+                    aria-pressed={oppSort === "latest"}
+                    onClick={() => setOppSort("latest")}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                      oppSort === "latest"
+                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Latest
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={oppSort === "popular"}
+                    onClick={() => setOppSort("popular")}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                      oppSort === "popular"
+                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <TrendingUp className="mr-1 inline h-3 w-3" />
+                    Popular
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={oppSort === "match"}
+                    onClick={() => setOppSort("match")}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                      oppSort === "match"
+                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Star className="mr-1 inline h-3 w-3" />
+                    Best match
+                  </button>
+                </div>
+              </div>
+
               {needs.length > 0 && (
                 <div className="mb-6">
                   <div className="mb-3 flex items-center gap-2">
@@ -658,7 +711,7 @@ function ExplorePage() {
                                 className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
                                   mySkillNames.has(n.skills.name.toLowerCase())
                                     ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                    : "border-brand-purple/30 bg-brand-purple/5 text-brand-purple"
+                                    : "border-[var(--user-accent,var(--ai))]/30 bg-[var(--user-accent,var(--ai))]/5 text-[var(--user-accent,var(--ai))]"
                                 }`}
                               >
                                 {n.skills.name}
@@ -711,59 +764,6 @@ function ExplorePage() {
                           Need {need.label}
                         </button>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* Search + Sort */}
-                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="Search roles, skills, or projects…"
-                        className="border-0 bg-transparent focus-visible:ring-0"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
-                      <button
-                        type="button"
-                        aria-pressed={oppSort === "latest"}
-                        onClick={() => setOppSort("latest")}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                          oppSort === "latest"
-                            ? "bg-surface-elevated text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        Latest
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={oppSort === "popular"}
-                        onClick={() => setOppSort("popular")}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                          oppSort === "popular"
-                            ? "bg-surface-elevated text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <TrendingUp className="mr-1 inline h-3 w-3" />
-                        Popular
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={oppSort === "match"}
-                        onClick={() => setOppSort("match")}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
-                          oppSort === "match"
-                            ? "bg-surface-elevated text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <Star className="mr-1 inline h-3 w-3" />
-                        Best match
-                      </button>
                     </div>
                   </div>
 
@@ -836,7 +836,7 @@ function ExplorePage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs uppercase tracking-wider text-brand-purple">
+                                  <span className="text-xs uppercase tracking-wider text-[var(--user-accent,var(--ai))]">
                                     <Briefcase className="mr-1 inline h-3.5 w-3.5" />
                                     Open role
                                   </span>
@@ -995,7 +995,7 @@ function ExplorePage() {
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--user-accent,var(--ai))] text-sm font-semibold text-background">
                           {initial}
                         </div>
                         <div className="min-w-0">
