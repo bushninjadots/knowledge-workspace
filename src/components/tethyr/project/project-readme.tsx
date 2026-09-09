@@ -21,11 +21,14 @@ import type { ProjectDetail, GalleryItem, ResourceItem } from "@/hooks/use-proje
 import type { ProjectPresentationPreset } from "@/lib/project-presentation";
 import { useUpdateProjectReadme, useUpdateProjectContent } from "@/hooks/use-projects";
 import { useProjectRepos } from "@/hooks/use-project-repos";
-import { fetchRepoReadmeServer } from "@/lib/github-server";
-import { absolutizeRelativeLinks, getRepoFullName } from "@/lib/github";
+import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-readme-source";
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
+import { CodeBlock } from "./code-block";
+import { ProjectCodePanel } from "./project-code-panel";
+import { ReadmeToc, ReadmeTocCollapsed } from "./readme-toc";
+import { ReadingProgress, README_ARTICLE_ID } from "./reading-progress";
 import { GallerySection, ProjectLibrarySection, ResourcesSection } from "./project-resources";
 import type { ProjectFile } from "./project-files";
 
@@ -92,47 +95,17 @@ export function ProjectReadmeTab({
     }
   };
 
-  // Shared loader: fetch the linked repo's README and surface failures as toasts.
-  // Returns the text, or null when nothing usable came back.
-  const loadRepoReadme = async (): Promise<string | null> => {
-    const repo = repos[0];
-    if (!repo) {
-      toast.error("Link a repository first — the README is imported from there");
-      return null;
-    }
-    const fullName = getRepoFullName(repo);
-    const { text, rateLimited, unauthorized } = await fetchRepoReadmeServer({
-      data: { fullName },
-    });
-    if (unauthorized) {
-      toast.error("GitHub rejected the saved token — check it and try again");
-      return null;
-    }
-    if (rateLimited) {
-      toast.error("GitHub is rate-limited right now — try again in a minute");
-      return null;
-    }
-    if (text === null) {
-      toast.error("No README found in the linked repository");
-      return null;
-    }
-    // Relative links and screenshots (docs/screenshots/*.png, DEPLOYMENT.md)
-    // would 404 against Tethyr's routes — point them at the source repo. Use
-    // the linked repo's default branch when we know it, else HEAD.
-    const branch = repo.metadata?.default_branch ?? "HEAD";
-    return absolutizeRelativeLinks(text, fullName, branch);
-  };
-
   const pullFromGitHub = async () => {
     setPulling(true);
     try {
-      const text = await loadRepoReadme();
-      if (text === null) return;
-      setDraft(text);
+      const result = await fetchProjectReadmeSource(repos[0]);
+      if (!result.ok) {
+        toast.error(readmeSourceMessage(result.reason));
+        return;
+      }
+      setDraft(result.text);
       setEditing(true);
       toast.success("README imported — review it, then save");
-    } catch {
-      toast.error("Couldn't reach GitHub — try again");
     } finally {
       setPulling(false);
     }
@@ -141,12 +114,12 @@ export function ProjectReadmeTab({
   const previewFromGitHub = async () => {
     setPreviewing(true);
     try {
-      const text = await loadRepoReadme();
-      if (text === null) return;
-      const fullName = repos[0] ? getRepoFullName(repos[0]) : "";
-      setPreview({ text, fullName });
-    } catch {
-      toast.error("Couldn't reach GitHub — try again");
+      const result = await fetchProjectReadmeSource(repos[0]);
+      if (!result.ok) {
+        toast.error(readmeSourceMessage(result.reason));
+        return;
+      }
+      setPreview({ text: result.text, fullName: result.fullName });
     } finally {
       setPreviewing(false);
     }
@@ -207,6 +180,13 @@ export function ProjectReadmeTab({
   }, [project.readme, fallbackDoc]);
   const headingComponents = useMemo(() => makeHeadingComponents(readmeSections), [readmeSections]);
 
+  // Read-mode markdown renderer: anchored headings + fenced code blocks become
+  // copyable, highlighted CodeBlocks while inline code keeps the theme's look.
+  const markdownComponents = useMemo(
+    () => ({ ...headingComponents, code: MarkdownCode }),
+    [headingComponents],
+  );
+
   // Live word/char stats for the editor footer; warn past 400 words (roughly
   // a long README) so authors notice before publishing a wall of text.
   const stats = useMemo(() => {
@@ -238,6 +218,7 @@ export function ProjectReadmeTab({
   return (
     <div className="content-safe min-w-0 max-w-full space-y-8">
       {presentationPreset === "demo-first" && mediaSection}
+      <ReadingProgress />
 
       {/* README document */}
       <section className="content-safe min-w-0 max-w-full rounded-xl border card-border bg-surface">
@@ -379,39 +360,68 @@ export function ProjectReadmeTab({
               </div>
             </div>
           </div>
-        ) : project.readme ? (
-          <div className="prose-custom px-5 py-5 sm:px-6">
-            <Markdown remarkPlugins={[remarkGfm]} components={headingComponents}>
-              {project.readme}
-            </Markdown>
-          </div>
-        ) : fallbackDoc ? (
-          <div className="prose-custom px-5 py-5 sm:px-6">
-            <Markdown remarkPlugins={[remarkGfm]} components={headingComponents}>
-              {fallbackDoc}
-            </Markdown>
-          </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-            <FileText className="h-8 w-8 text-muted-foreground/40" />
-            <p className="text-sm font-medium">No README yet</p>
-            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-              {isOwner
-                ? "This is your project's home. Write a README to tell people what you're building, why, and how it works."
-                : "The builder hasn't written a README yet. Check back soon."}
-            </p>
-            {isOwner && (
-              <button
-                onClick={startEdit}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-background transition hover:opacity-90"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Write a README
-              </button>
-            )}
-          </div>
+          <>
+            <ReadmeTocCollapsed sections={readmeSections} />
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem]">
+              <div id={README_ARTICLE_ID} className="min-w-0">
+                {project.readme ? (
+                  <div className="prose-custom px-5 py-5 sm:px-6">
+                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      {project.readme}
+                    </Markdown>
+                  </div>
+                ) : fallbackDoc ? (
+                  <div className="prose-custom px-5 py-5 sm:px-6">
+                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      {fallbackDoc}
+                    </Markdown>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
+                    <FileText className="h-8 w-8 text-muted-foreground/40" />
+                    <p className="text-sm font-medium">No README yet</p>
+                    <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+                      {isOwner
+                        ? "This is your project's home. Write a README to tell people what you're building, why, and how it works."
+                        : "The builder hasn't written a README yet. Check back soon."}
+                    </p>
+                    {isOwner && (
+                      <button
+                        onClick={startEdit}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-background transition hover:opacity-90"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Write a README
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop rail — scroll-spy TOC + code source. Sticky below the
+                  sticky workbench so both stay reachable while reading. */}
+              <aside className="hidden lg:block" aria-label="README navigation">
+                <div className="sticky top-44 max-h-[calc(100vh-12rem)] space-y-6 overflow-y-auto border-l border-border/40 py-5 pl-5 pr-1">
+                  <ReadmeToc sections={readmeSections} />
+                  <ProjectCodePanel project={project} repos={repos} isOwner={isOwner} />
+                </div>
+              </aside>
+            </div>
+          </>
         )}
       </section>
+
+      {/* Mobile code source — the rail above is desktop-only, so owners and
+          visitors still get the GitHub surface on small screens. */}
+      {!editing && (
+        <ProjectCodePanel
+          project={project}
+          repos={repos}
+          isOwner={isOwner}
+          className="rounded-xl border card-border bg-surface px-5 py-5 lg:hidden"
+        />
+      )}
 
       {/* Live repo README preview — import-on-demand, never auto-saves */}
       {preview && !editing && (
@@ -633,6 +643,30 @@ function makeHeadingComponents(sections: { id: string; text: string; level: numb
       <HeadingWithId level={6} sections={sections} {...props} />
     ),
   };
+}
+
+// Fenced code blocks become copyable CodeBlocks (highlighting is code-split);
+// inline `code` keeps the theme's chip treatment.
+function MarkdownCode({
+  inline,
+  className,
+  children,
+}: {
+  inline?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  if (!inline) {
+    const language =
+      typeof className === "string" ? /language-([\w-]+)/.exec(className)?.[1] : undefined;
+    const text = Array.isArray(children)
+      ? children.filter((c): c is string => typeof c === "string").join("")
+      : typeof children === "string"
+        ? children
+        : "";
+    return <CodeBlock code={text.replace(/\n$/, "")} language={language} />;
+  }
+  return <code className={className}>{children}</code>;
 }
 
 function EditorSkeleton() {

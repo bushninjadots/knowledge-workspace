@@ -36,7 +36,7 @@ If a change should alter product direction or a binding rule, update the appropr
 - [`KNOWN_ISSUES.md`](./KNOWN_ISSUES.md) — known gotchas and migration foot-guns
 - [`LAUNCH_READINESS.md`](./LAUNCH_READINESS.md) — launch environment checklist and open items
 - [`studio-integration-plan.md`](./studio-integration-plan.md) — active Studio convergence plan (project/profile page composition)
-- [`TETHYR_VISUAL_UI_AUDIT_2026-09-07.md`](./TETHYR_VISUAL_UI_AUDIT_2026-09-07.md) — visual/layout/UI consistency audit (2026-09-07): 28 findings across 8 categories, prioritized P0–P2 for fix ordering
+- [`TETHYR_VISUAL_UI_AUDIT_2026-09-09.md`](./TETHYR_VISUAL_UI_AUDIT_2026-09-09.md) — full-site visual/UI/UX re-audit (2026-09-09): supersedes the 2026-09-07 audit of the same scope; 22 findings (1 critical · 9 high) prioritized P0–P2
 
 ## Context Documents
 

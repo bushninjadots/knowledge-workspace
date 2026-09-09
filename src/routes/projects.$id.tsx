@@ -85,6 +85,11 @@ const ProjectCommunityPosts = lazy(() =>
     default: m.ProjectCommunityPosts,
   })),
 );
+const RelatedProjectsSection = lazy(() =>
+  import("@/components/tethyr/project/project-related").then((m) => ({
+    default: m.RelatedProjectsSection,
+  })),
+);
 const ProjectJoinModal = lazy(() =>
   import("@/components/tethyr/project/project-join-modal").then((m) => ({
     default: m.ProjectJoinModal,
@@ -699,6 +704,10 @@ function ProjectPage() {
                       openRoles={openRoles}
                       isOwner={isOwner}
                       isContributor={isContributor}
+                      openNeedCount={needs.filter((need) => !need.is_filled).length}
+                      onJoin={canJoin ? () => setJoinModalOpen(true) : undefined}
+                      onSignIn={isSignedOut ? signInToJoin : undefined}
+                      onOpenNeeds={() => scrollToSection("project-needs")}
                     />
                   </Suspense>
                 </div>
@@ -877,6 +886,13 @@ function ProjectPage() {
               </section>
             </div>
           </div>
+
+          {/* Related projects — discovery surface at the end of the story */}
+          <RelatedProjectsSection
+            project={{ id, tags: project.tags, profile_id: project.profile_id }}
+            skills={skills}
+            contributors={contributors}
+          />
         </div>
       </div>
 

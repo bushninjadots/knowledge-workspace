@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type PrimaryNavItem = {
+type PrimaryNavItem = {
   to: string;
   label: string;
   icon: LucideIcon;

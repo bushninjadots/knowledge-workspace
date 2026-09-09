@@ -831,6 +831,8 @@
     margin-top: 1em;
     margin-bottom: 0.4em;
     letter-spacing: -0.01em;
+    /* Anchor jumps (TOC, project search) clear the sticky workbench + rail */
+    scroll-margin-top: 12rem;
   }
   & h1 {
     font-size: 1.125rem;
@@ -867,6 +869,96 @@
     border-radius: var(--radius);
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * README code blocks — CodeBlock overrides the generic pre styling above so
+ * fenced code gets a header row (language + copy) and its own quiet fill,
+ * while inline code keeps the theme's chip treatment.
+ * ------------------------------------------------------------------------ */
+.prose-custom .code-block {
+  & pre {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    margin: 0;
+    font-size: 0.75rem;
+  }
+  & pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Code syntax colours — highlight.js tokens mapped onto the semantic palette
+ * so highlighting follows light/dark and the user's identity without new raw
+ * colours. Scoped to .code-block so editor code and other surfaces stay clean.
+ * ------------------------------------------------------------------------ */
+.code-block {
+  /* Comments, blockquotes */
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+  /* Keywords, control flow, types */
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-type,
+  .hljs-name {
+    color: var(--teaching);
+  }
+  /* Strings, regex, added lines */
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition,
+  .hljs-attribute {
+    color: var(--learning);
+  }
+  /* Function/method/class titles */
+  .hljs-title,
+  .hljs-title.function_,
+  .hljs-title.class_,
+  .hljs-section {
+    color: var(--ai);
+  }
+  /* Numbers, booleans, literals */
+  .hljs-number,
+  .hljs-literal,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: var(--teaching);
+  }
+  /* Built-ins, variables, properties */
+  .hljs-built_in,
+  .hljs-variable,
+  .hljs-attr,
+  .hljs-property,
+  .hljs-params {
+    color: var(--caution);
+  }
+  /* Tags, meta, other */
+  .hljs-tag,
+  .hljs-selector-id,
+  .hljs-selector-class,
+  .hljs-meta {
+    color: var(--learning);
+  }
+  /* Deleted lines */
+  .hljs-deletion {
+    color: var(--destructive);
+  }
+  /* Emphasis + strong inside code */
+  .hljs-emphasis {
+    font-style: italic;
+  }
+  .hljs-strong {
+    font-weight: 600;
   }
 }
 
