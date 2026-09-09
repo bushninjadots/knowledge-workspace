@@ -193,7 +193,7 @@ export const ConnectionsCard = memo(function ConnectionsCard() {
           <div className="divide-y divide-border/50">
             {accepted.slice(0, 6).map((c) => (
               <div key={c.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-purple text-sm font-semibold text-background">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--user-accent,var(--ai))] text-sm font-semibold text-background">
                   {avatarInitial(c.other?.display_name ?? c.other?.handle)}
                 </div>
                 <div className="min-w-0 flex-1">

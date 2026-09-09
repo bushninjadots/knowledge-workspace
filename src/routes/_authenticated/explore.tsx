@@ -617,7 +617,7 @@ function ExplorePage() {
                                 className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
                                   mySkillNames.has(n.skills.name.toLowerCase())
                                     ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                                    : "border-brand-purple/30 bg-brand-purple/5 text-brand-purple"
+                                    : "border-[var(--user-accent,var(--ai))]/30 bg-[var(--user-accent,var(--ai))]/5 text-[var(--user-accent,var(--ai))]"
                                 }`}
                               >
                                 {n.skills.name}
@@ -795,7 +795,7 @@ function ExplorePage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs uppercase tracking-wider text-brand-purple">
+                                  <span className="text-xs uppercase tracking-wider text-[var(--user-accent,var(--ai))]">
                                     <Briefcase className="mr-1 inline h-3.5 w-3.5" />
                                     Open role
                                   </span>
@@ -954,7 +954,7 @@ function ExplorePage() {
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--user-accent,var(--ai))] text-sm font-semibold text-background">
                           {initial}
                         </div>
                         <div className="min-w-0">

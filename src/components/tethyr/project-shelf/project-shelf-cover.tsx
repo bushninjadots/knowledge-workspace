@@ -63,7 +63,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
               </span>
             )}
             {isContributor && (
-              <span className="rounded-full bg-brand-purple/25 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
+              <span className="rounded-full bg-[var(--user-accent,var(--ai))]/25 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
                 Contributing
               </span>
             )}
@@ -86,7 +86,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               {project.looking_for_collaborators && (
-                <span className="inline-flex shrink-0 items-center rounded-full bg-brand-purple/15 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
+                <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--user-accent,var(--ai))]/15 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
                   Open
                 </span>
               )}
