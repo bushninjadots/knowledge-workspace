@@ -43,6 +43,7 @@ import {
 } from "@/components/tethyr/project/project-workbench";
 import { ProjectTabs, type ProjectTab } from "@/components/tethyr/project/project-tabs";
 import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
+import { ProjectLiveRoom } from "@/components/tethyr/project/project-live-room";
 import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Contributor } from "@/components/tethyr/project/project-main-content";
@@ -494,6 +495,15 @@ function ProjectPage() {
   const creator = contributors.find((c) => c.role === "creator");
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
   const canJoin = !!me?.userId && !isOwner && !isContributor;
+  const hasOpenWork =
+    needs.some((need) => !need.is_filled) || openRoles.some((role) => !role.is_filled);
+  const roomIdentity = me?.userId
+    ? {
+        userId: me.userId,
+        name: me.profile?.display_name ?? me.profile?.handle ?? "A builder",
+        handle: me.profile?.handle ?? null,
+      }
+    : null;
   const isSignedOut = !me?.userId && !isOwner && !isContributor;
   const signInToJoin = () =>
     navigate({
@@ -734,6 +744,21 @@ function ProjectPage() {
                 </div>
               </section>
             </div>
+
+            {/* Live "jump in" room — real-time co-presence for projects that are
+                actively looking for help. Ephemeral presence + scratch chat that
+                can be formalized into a real session. */}
+            {hasOpenWork && (
+              <div className="min-w-0" style={sectionStyle("work")}>
+                <ProjectLiveRoom
+                  projectId={id}
+                  me={roomIdentity}
+                  canStartSession={isContributor}
+                  onStartSession={() => setScheduleOpen(true)}
+                  onSignIn={isSignedOut ? signInToJoin : undefined}
+                />
+              </div>
+            )}
 
             {/* Sessions — live working time on this project, visible to the team. */}
             {isContributor && (
