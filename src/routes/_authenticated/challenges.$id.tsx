@@ -227,12 +227,15 @@ function ChallengeDetailPage() {
                     <Sparkles className="h-3 w-3" /> Starter · Curated by Tethyr
                   </Badge>
                 )}
-                <Badge variant="outline" className="capitalize bg-ai text-ai border-ai/40">
+                <Badge
+                  variant="outline"
+                  className="capitalize bg-ai-subtle text-foreground border-ai/40"
+                >
                   {challenge.type} Challenge
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="capitalize bg-teaching text-teaching border-teaching/40"
+                  className="capitalize bg-teaching-subtle text-foreground border-teaching/40"
                 >
                   {challenge.difficulty}
                 </Badge>

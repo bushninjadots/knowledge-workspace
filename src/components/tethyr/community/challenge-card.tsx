@@ -24,15 +24,15 @@ import { useJoinChallenge, useLeaveChallenge, type ChallengeRow } from "@/hooks/
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 const TYPE_COLORS: Record<string, string> = {
-  skill: "bg-brand-purple/10 text-brand-purple border-brand-purple/20",
-  project: "bg-primary/10 text-primary border-primary/20",
-  learning: "bg-brand-green/10 text-brand-green border-brand-green/20",
+  skill: "bg-brand-purple/10 text-foreground border-brand-purple/30",
+  project: "bg-primary/10 text-foreground border-primary/30",
+  learning: "bg-brand-green/10 text-foreground border-brand-green/30",
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-brand-green/10 text-brand-green border-brand-green/20",
-  intermediate: "bg-teaching text-teaching border-teaching/40",
-  advanced: "bg-warning text-warning border-warning/40",
+  beginner: "bg-brand-green/10 text-foreground border-brand-green/30",
+  intermediate: "bg-teaching-subtle text-foreground border-teaching/40",
+  advanced: "bg-caution-subtle text-foreground border-caution/40",
 };
 
 export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {

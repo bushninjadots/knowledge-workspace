@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { Menu, Search, X, ArrowUp, Bell } from "lucide-react";
+import { Menu, Search, ArrowUp, Bell } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -20,6 +20,7 @@ import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * Shared layout for all authenticated routes.
@@ -53,25 +54,15 @@ export function AuthenticatedShell() {
         <DashboardSidebar />
       </div>
 
-      {/* Mobile overlay */}
-      {open && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-foreground/20 transition-opacity duration-200"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute inset-y-0 left-0 transition-transform duration-200 ease-out">
-            <DashboardSidebar onNavigate={() => setOpen(false)} />
-          </div>
-          <button
-            className="absolute right-3 top-3 rounded-md border border-border bg-background p-1.5 transition-transform duration-150 active:scale-95"
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="left-0 top-0 h-full w-[min(20rem,85vw)] translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none border-r border-border p-0 md:hidden">
+          <DialogTitle className="sr-only">Tethyr navigation</DialogTitle>
+          <DialogDescription className="sr-only">
+            Navigate to a different area of Tethyr.
+          </DialogDescription>
+          <DashboardSidebar onNavigate={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background px-3 sm:px-4">
