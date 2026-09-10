@@ -8,7 +8,8 @@ import {
   studioConfigToThemeTokens,
   structureMaxWidth,
   densityMetrics,
-  RADIUS_OPTIONS,
+  RADIUS_MAX,
+  RADIUS_MIN,
   PERSONALITY_OPTIONS,
   STRUCTURE_OPTIONS,
   DENSITY_OPTIONS,
@@ -33,16 +34,13 @@ describe("normalizeStudioConfig", () => {
       radius: "soft",
       accentMode: "custom",
       accentColor: "#123456",
-      cardBorders: "neutral",
-      cardBorderColor: "",
       appBackground: "sunken",
       publicBackground: "surface",
       starterId: "focused",
     };
     expect(normalizeStudioConfig(raw)).toEqual({
       ...raw,
-      cardBorders: "neutral",
-      cardBorderColor: "",
+      radius: 12,
       cardBorderWidth: "thin",
       cardColor: "",
       cardOpacity: 30,
@@ -61,7 +59,16 @@ describe("normalizeStudioConfig", () => {
     expect(config.structure).toBe("sidebar");
     expect(config.personality).toBe("technical");
     expect(config.accentMode).toBe("custom");
-    expect(config.radius).toBe("soft");
+    expect(config.radius).toBe(12);
+  });
+
+  it("normalizes the corner radius to a px number", () => {
+    expect(normalizeStudioConfig({ radius: 8 }).radius).toBe(8);
+    expect(normalizeStudioConfig({ radius: 99 }).radius).toBe(RADIUS_MAX);
+    expect(normalizeStudioConfig({ radius: -5 }).radius).toBe(RADIUS_MIN);
+    expect(normalizeStudioConfig({ radius: "sharp" }).radius).toBe(6);
+    expect(normalizeStudioConfig({ radius: "soft" }).radius).toBe(12);
+    expect(normalizeStudioConfig({ radius: "garbage" }).radius).toBe(DEFAULT_STUDIO_CONFIG.radius);
   });
 
   it("migrates legacy typography classic → technical", () => {
@@ -83,29 +90,29 @@ describe("normalizeStudioConfig", () => {
 });
 
 describe("studioConfigToThemeTokens", () => {
-  it("maps every radius treatment to the full radius scale", () => {
-    expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: "sharp" }).borders?.radius)
+  it("maps every radius value to a proportional full radius scale", () => {
+    expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: 6 }).borders?.radius)
       .toMatchInlineSnapshot(`
       {
-        "2xl": "4px",
-        "3xl": "5px",
-        "4xl": "6px",
-        "lg": "3px",
-        "md": "2px",
-        "sm": "1px",
-        "xl": "4px",
-      }
-    `);
-    expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: "soft" }).borders?.radius)
-      .toMatchInlineSnapshot(`
-      {
-        "2xl": "5px",
-        "3xl": "6px",
-        "4xl": "8px",
-        "lg": "4px",
+        "2xl": "8px",
+        "3xl": "9px",
+        "4xl": "10px",
+        "lg": "6px",
         "md": "3px",
         "sm": "2px",
-        "xl": "5px",
+        "xl": "7px",
+      }
+    `);
+    expect(studioConfigToThemeTokens({ ...DEFAULT_STUDIO_CONFIG, radius: 12 }).borders?.radius)
+      .toMatchInlineSnapshot(`
+      {
+        "2xl": "14px",
+        "3xl": "15px",
+        "4xl": "16px",
+        "lg": "12px",
+        "md": "5px",
+        "sm": "4px",
+        "xl": "13px",
       }
     `);
   });
@@ -132,12 +139,12 @@ describe("studioConfigToThemeTokens", () => {
     });
   });
 
-  it("technical down-shifts the display scale without changing fonts", () => {
+  it("technical uses the JetBrains Mono display stack and a smaller display scale", () => {
     const tokens = studioConfigToThemeTokens({
       ...DEFAULT_STUDIO_CONFIG,
       personality: "technical",
     });
-    expect(tokens.typography?.headingFont).toBeUndefined();
+    expect(tokens.typography?.headingFont).toContain("JetBrains Mono");
     expect(tokens.typography?.scale?.heading1?.fontSize).toBe("clamp(1.875rem, 3.5vw, 2.5rem)");
   });
 
@@ -199,13 +206,21 @@ describe("studioConfigToStyle", () => {
     expect(style["--card-border-width"]).toBe("2px");
   });
 
+  it("does not emit a card border colour — that is owned by the member's appearance", () => {
+    const style = studioConfigToStyle({
+      ...DEFAULT_STUDIO_CONFIG,
+      cardBorderWidth: "thick",
+    }) as Record<string, string>;
+    expect(style["--card-border-color"]).toBeUndefined();
+  });
+
   it("emits studio tokens for density and radius", () => {
     const style = studioConfigToStyle({
       ...DEFAULT_STUDIO_CONFIG,
       density: "comfortable",
-      radius: "soft",
+      radius: 12,
     }) as Record<string, string>;
-    expect(style["--studio-radius"]).toBe("5px");
+    expect(style["--studio-radius"]).toBe("12px");
     expect(style["--studio-gap"]).toBe("14px");
     expect(style["--studio-pad"]).toBe("16px");
   });
@@ -231,7 +246,6 @@ describe("option catalogs", () => {
   it("enumerate every treatment value exactly once", () => {
     const values = <T extends string>(opts: ReadonlyArray<{ value: T; label: string }>) =>
       opts.map((o) => o.value);
-    expect(values(RADIUS_OPTIONS)).toEqual(["sharp", "soft"]);
     expect(values(PERSONALITY_OPTIONS)).toEqual(["editorial", "modern", "technical"]);
     expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide"]);
     expect(values(DENSITY_OPTIONS)).toEqual(["compact", "comfortable", "spacious"]);

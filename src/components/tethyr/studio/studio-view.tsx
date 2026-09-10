@@ -26,10 +26,10 @@ import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
 import {
   CARD_SURFACE_STYLE,
-  cardBorderStyle,
   cardFillStyle,
   studioConfigToStyle,
   EDITORIAL_HEADING_FONT,
+  TECHNICAL_HEADING_FONT,
   structureMaxWidth,
   DEFAULT_STUDIO_CONFIG,
   type StudioConfig,
@@ -145,8 +145,6 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const surfaceStyle = {
     ...studioSurfaceStyle(config),
     ...appearanceStyle(me?.background),
-    // The Studio config owns card borders; the profile appearance must not win here.
-    ...cardBorderStyle(config),
     ...cardFillStyle(config),
   };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
@@ -521,10 +519,7 @@ function StudioViewBlock({
       className={SPAN_CLASS[span] ?? "md:col-span-12"}
       style={{ borderRadius: "var(--studio-radius)" }}
     >
-      <div
-        className="relative h-full min-h-0 overflow-hidden rounded-[inherit] bg-[var(--surface)]"
-        style={{ borderRadius: "var(--studio-radius)" }}
-      >
+      <div className="relative h-full min-h-0 overflow-hidden rounded-[inherit] studio-block">
         <BlockRenderer
           type={block.type}
           config={block.config}
@@ -680,6 +675,9 @@ function studioSurfaceStyle(config: StudioConfig): React.CSSProperties {
   if (config.personality === "editorial") {
     style["--font-display"] = EDITORIAL_HEADING_FONT;
     style["--font-title"] = EDITORIAL_HEADING_FONT;
+  } else if (config.personality === "technical") {
+    style["--font-display"] = TECHNICAL_HEADING_FONT;
+    style["--font-title"] = TECHNICAL_HEADING_FONT;
   }
   return style;
 }

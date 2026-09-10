@@ -16,7 +16,6 @@ import type {
   BackgroundId,
   DensityId,
   PersonalityId,
-  RadiusId,
   StarterId,
   StructureId,
   StudioConfig,
@@ -33,7 +32,7 @@ interface StarterConfigStamp {
   structure: StructureId;
   personality: PersonalityId;
   density: DensityId;
-  radius: RadiusId;
+  radius: number;
   appBackground: BackgroundId;
   publicBackground: BackgroundId;
 }
@@ -98,7 +97,7 @@ export const STARTERS: Starter[] = [
       structure: "single",
       personality: "modern",
       density: "comfortable",
-      radius: "soft",
+      radius: 12,
       appBackground: "surface",
       publicBackground: "default",
     },
@@ -116,7 +115,7 @@ export const STARTERS: Starter[] = [
       structure: "single",
       personality: "editorial",
       density: "spacious",
-      radius: "sharp",
+      radius: 6,
       appBackground: "default",
       publicBackground: "surface",
     },
@@ -134,7 +133,7 @@ export const STARTERS: Starter[] = [
       structure: "wide",
       personality: "technical",
       density: "compact",
-      radius: "sharp",
+      radius: 6,
       appBackground: "sunken",
       publicBackground: "default",
     },
@@ -153,7 +152,7 @@ export const STARTERS: Starter[] = [
       structure: "single",
       personality: "modern",
       density: "spacious",
-      radius: "sharp",
+      radius: 6,
       appBackground: "default",
       publicBackground: "default",
     },
@@ -171,7 +170,7 @@ export const STARTERS: Starter[] = [
       structure: "wide",
       personality: "editorial",
       density: "compact",
-      radius: "soft",
+      radius: 12,
       appBackground: "sunken",
       publicBackground: "sunken",
     },

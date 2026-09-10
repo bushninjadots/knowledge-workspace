@@ -17,7 +17,6 @@ import { useTheme } from "@/hooks/use-theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import {
   CARD_SURFACE_STYLE,
-  cardBorderStyle,
   cardFillStyle,
   studioConfigToStyle,
   studioConfigToThemeTokens,
@@ -210,17 +209,6 @@ export function PageShell({
       } else if (bannerAccent) {
         style["--user-accent"] = bannerAccent;
         style["--user-accent-border"] = withAlpha(bannerAccent, 0.3) ?? "var(--border)";
-      }
-      // Card borders are their own decision — apply them whatever the accent mode.
-      Object.assign(style, cardBorderStyle(page.config));
-      if (
-        page.config.accentMode === "auto" &&
-        bannerAccent &&
-        page.config.cardBorders !== "neutral"
-      ) {
-        style["--card-border-color"] =
-          withAlpha(bannerAccent, page.config.cardBorders === "accent" ? 0.34 : 0.22) ??
-          "var(--border)";
       }
     }
     if (isGlassTheme || blockContext.translucent) {

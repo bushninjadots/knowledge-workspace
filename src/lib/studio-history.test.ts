@@ -7,12 +7,10 @@ const snapshot: StudioSnapshot = {
     starterId: null,
     structure: "wide",
     personality: "modern",
-    radius: "soft",
+    radius: 12,
     density: "comfortable",
     accentMode: "auto",
     accentColor: "#3f8f8a",
-    cardBorders: "neutral",
-    cardBorderColor: "",
     cardColor: "",
     cardOpacity: 30,
     appBackground: "surface",
@@ -43,11 +41,11 @@ describe("studio history", () => {
     const history = createStudioHistory();
     const first: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "sharp" },
+      config: { ...snapshot.config, radius: 6 },
     };
     const second: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "soft" },
+      config: { ...snapshot.config, radius: 12 },
     };
 
     history.record(first);
@@ -62,11 +60,11 @@ describe("studio history", () => {
     const history = createStudioHistory(2);
     const first: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "sharp" },
+      config: { ...snapshot.config, radius: 6 },
     };
     const second: StudioSnapshot = {
       ...snapshot,
-      config: { ...snapshot.config, radius: "soft" },
+      config: { ...snapshot.config, radius: 12 },
     };
     const third: StudioSnapshot = {
       ...snapshot,

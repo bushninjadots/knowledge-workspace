@@ -17,6 +17,8 @@ import {
   type GStudioMode,
 } from "@/components/tethyr/studio/g-studio-surface";
 import { usePage } from "@/hooks/use-page";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useApplyStudioComposition,
   useCreatePage,
@@ -26,6 +28,7 @@ import {
 import { createBlockInstance } from "@/lib/block-registry";
 import type { StudioStarter } from "@/components/tethyr/studio/starter-picker";
 import { applyStarter, starterConfig } from "@/data/starters";
+import { withCardBorderPreference, type CardBorderPreference } from "@/lib/background-themes";
 import type {
   BlockConfig,
   LayoutBlockInstance,
@@ -74,6 +77,14 @@ export function CreationStudio({
   const autosaveSnapshotRef = useRef<string | null>(null);
   const createAttempted = useRef(false);
   const touchedGridRef = useRef<Set<string>>(new Set());
+  const [cardBorders, setCardBorders] = useState<CardBorderPreference>("neutral");
+  const [cardBorderColor, setCardBorderColor] = useState("");
+  const cardBorderSeededRef = useRef(false);
+  const persistedBordersRef = useRef<{
+    cardBorders: CardBorderPreference;
+    cardBorderColor: string;
+  } | null>(null);
+  const { data: me, refresh: refreshMe } = useCurrentUser();
 
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const createPage = useCreatePage();
@@ -128,6 +139,14 @@ export function CreationStudio({
     );
   }, [createPage, page, pageQuery.isError, pageQuery.isLoading, userId]);
 
+  const bordersDirty = useMemo(
+    () =>
+      !!persistedBordersRef.current &&
+      (persistedBordersRef.current.cardBorders !== cardBorders ||
+        persistedBordersRef.current.cardBorderColor !== (cardBorderColor || "")),
+    [cardBorderColor, cardBorders],
+  );
+
   const dirty = useMemo(
     () =>
       !!layout &&
@@ -135,9 +154,25 @@ export function CreationStudio({
       !!config &&
       !!savedConfig &&
       (JSON.stringify(normalizeLayout(layout)) !== JSON.stringify(savedLayout) ||
-        JSON.stringify(config) !== JSON.stringify(savedConfig)),
-    [config, layout, savedConfig, savedLayout],
+        JSON.stringify(config) !== JSON.stringify(savedConfig) ||
+        bordersDirty),
+    [bordersDirty, config, layout, savedConfig, savedLayout],
   );
+
+  // Card-border preference lives on the member's appearance, not the page
+  // config. Seed once from the profile; the canvas previews drafts and the
+  // save path persists them to `profiles.background`.
+  useEffect(() => {
+    if (!me || cardBorderSeededRef.current) return;
+    cardBorderSeededRef.current = true;
+    const seeded = {
+      cardBorders: me.background?.cardBorders ?? "neutral",
+      cardBorderColor: me.background?.cardBorderColor ?? "",
+    };
+    setCardBorders(seeded.cardBorders);
+    setCardBorderColor(seeded.cardBorderColor);
+    persistedBordersRef.current = seeded;
+  }, [me]);
 
   // g/'s `hasUnpublishedChanges`: the working layout differs from the latest
   // published snapshot. Page versions snapshot layout + theme (not config),
@@ -611,6 +646,28 @@ export function CreationStudio({
     [page, rollbackPage, saving, userId],
   );
 
+  // Writes the card-border preference to the member's appearance. Silent and
+  // non-blocking: failures surface on the next edit/save attempt.
+  const persistBorderPreference = useCallback(async () => {
+    if (!persistedBordersRef.current) return;
+    const next = { cardBorders, cardBorderColor: cardBorderColor || "" };
+    if (
+      persistedBordersRef.current.cardBorders === next.cardBorders &&
+      persistedBordersRef.current.cardBorderColor === next.cardBorderColor
+    ) {
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        background: withCardBorderPreference(me?.background, cardBorders, cardBorderColor),
+      })
+      .eq("id", userId);
+    if (error) return;
+    persistedBordersRef.current = next;
+    void refreshMe();
+  }, [cardBorderColor, cardBorders, me?.background, refreshMe, userId]);
+
   const save = useCallback(
     async ({ announce = true }: { announce?: boolean } = {}) => {
       if (!page || !layout || !config || saving || !dirty) return;
@@ -633,6 +690,7 @@ export function CreationStudio({
           ownerId: userId,
           ownerType: "profile",
         });
+        await persistBorderPreference();
         // Do not mark newer edits as saved when they happened while this
         // request was in flight. The autosave effect will persist those next.
         if (
@@ -650,7 +708,7 @@ export function CreationStudio({
         setSaving(false);
       }
     },
-    [applyComposition, config, dirty, layout, page, saving, userId],
+    [applyComposition, config, dirty, layout, page, persistBorderPreference, saving, userId],
   );
 
   // Persist the current draft after a short pause, rather than making every
@@ -666,7 +724,17 @@ export function CreationStudio({
       void save({ announce: false });
     }, 1000);
     return () => window.clearTimeout(timer);
-  }, [config, dirty, layout, page, save, saving]);
+  }, [
+    cardBorderColor,
+    cardBorders,
+    config,
+    dirty,
+    layout,
+    page,
+    persistBorderPreference,
+    save,
+    saving,
+  ]);
 
   // Protect against closing or refreshing the tab with a draft still in the
   // editor. The explicit Studio exit is guarded separately below.
@@ -710,6 +778,7 @@ export function CreationStudio({
           ownerId: userId,
           ownerType: "profile",
         });
+        await persistBorderPreference();
         setSavedLayout(cloneLayout(snapshotLayout));
         setSavedConfig(cloneConfig(config));
       }
@@ -720,7 +789,17 @@ export function CreationStudio({
     } finally {
       setSaving(false);
     }
-  }, [applyComposition, config, dirty, layout, page, publishPage, saving, userId]);
+  }, [
+    applyComposition,
+    config,
+    dirty,
+    layout,
+    page,
+    persistBorderPreference,
+    publishPage,
+    saving,
+    userId,
+  ]);
 
   const requestPublish = useCallback(() => {
     if (!page || !layout || !config || saving) return;
@@ -784,6 +863,10 @@ export function CreationStudio({
         onDragTypeChange={setDragType}
         onPaletteTargetChange={setPaletteTarget}
         onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
+        cardBorders={cardBorders}
+        cardBorderColor={cardBorderColor}
+        onCardBordersChange={setCardBorders}
+        onCardBorderColorChange={setCardBorderColor}
         onSave={() => void save()}
         onPublish={requestPublish}
         onRollback={rollback}

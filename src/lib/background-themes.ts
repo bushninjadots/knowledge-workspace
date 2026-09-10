@@ -273,6 +273,21 @@ export function emptyBackground(): ProfileBackground {
   };
 }
 
+/**
+ * Resolve a card-border preference into a full appearance document. Used by
+ * the Studio builder to preview its card-border draft on the canvas and to
+ * persist the same choice into the member's appearance, so the dashboard, the
+ * editor, and the public Studio all honour one value.
+ */
+export function withCardBorderPreference(
+  background: ProfileBackground | null | undefined,
+  cardBorders: CardBorderPreference,
+  cardBorderColor: string,
+): ProfileBackground {
+  const base = background ?? emptyBackground();
+  return { ...base, cardBorders, cardBorderColor: cardBorderColor || null };
+}
+
 export function hasAppearanceSettings(background: ProfileBackground | null | undefined): boolean {
   if (!background) return false;
   if (background.mode != null) return true;

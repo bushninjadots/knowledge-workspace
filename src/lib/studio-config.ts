@@ -3,21 +3,22 @@
 //   STRUCTURE  — how the Studio is arranged (single column, balanced, wide)
 //   PERSONALITY — typography + visual character (editorial, modern, technical)
 //   DENSITY    — spacing rhythm (compact, comfortable, spacious)
-//   RADIUS     — corner treatment (sharp, soft)
+//   RADIUS     — corner roundness in pixels (0–24, exposed as a slider)
 //   ACCENT     — user identity colour (auto from banner, custom pick, none)
 //
 // Two outputs are produced:
 //   • studioConfigToThemeTokens  → merged into the page's ThemeTokens so it
 //     flows through the existing theme-token → CSS variable pipeline.
 //   • studioConfigToStyle        → page-local custom properties (--user-accent-*
-//     family, density gap, structure max-width, studio radius/gap/pad).
+//     family, density gap, structure max-width, studio radius/gap/pad, and the
+//     Studio-owned --card-border-width). Card border *colour* is the member's
+//     appearance (ProfileBackground.cardBorders), not a Studio decision.
 //
 // Legacy fields (compositionId, vibeId, personalityId, typography) are accepted
 // on read via normalizeStudioConfig and silently migrated. New writes never
 // produce them.
 
 import type { ThemeTokens } from "@/lib/page-blocks";
-import type { CardBorderPreference } from "@/lib/background-themes";
 
 // ── Dimension Types ───────────────────────────────────────────────────────────
 
@@ -26,7 +27,6 @@ export type StructureId = "single" | "sidebar" | "wide";
 /** PERSONALITY — typography + visual character. */
 export type PersonalityId = "editorial" | "modern" | "technical";
 export type DensityId = "compact" | "comfortable" | "spacious";
-export type RadiusId = "sharp" | "soft";
 /** ACCENT — user identity colour. */
 export type AccentMode = "auto" | "custom" | "none";
 /** BACKGROUND — app shell vs public Studio. */
@@ -35,10 +35,34 @@ type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
 
+// ── Radius range & defaults ────────────────────────────────────────────────────
+
+/** Slider bounds for corner roundness, in px. */
+export const RADIUS_MIN = 0;
+export const RADIUS_MAX = 24;
+/** Legacy "soft" treatment is the default. */
+export const DEFAULT_RADIUS = 12;
+
+/**
+ * Normalize a stored radius value to a px number. Numeric values are clamped to
+ * the 0–24 range; legacy string treatments migrate to their closest px values
+ * ("sharp" 6px, "soft"/"rounded" the default).
+ */
+export function normalizeRadius(raw: unknown): number {
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return Math.min(RADIUS_MAX, Math.max(RADIUS_MIN, Math.round(raw)));
+  }
+  if (typeof raw === "string") {
+    if (raw === "sharp") return 6;
+    if (raw === "soft" || raw === "rounded") return DEFAULT_RADIUS;
+  }
+  return DEFAULT_RADIUS;
+}
+
 // ── Legacy Types (accepted on read, never produced on write) ──────────────────
 
-/** @deprecated Use StructureId instead. */
-export type RadiusTreatment = RadiusId | "rounded";
+/** @deprecated Use the px radius number on StudioConfig instead. */
+export type RadiusTreatment = "sharp" | "soft" | "rounded";
 /** @deprecated Use PersonalityId instead. */
 export type TypographyTreatment = "editorial" | "modern" | "classic";
 /** @deprecated Use DensityId instead. */
@@ -56,17 +80,14 @@ export interface StudioConfig {
   personality: PersonalityId;
   /** Spacing rhythm. */
   density: DensityId;
-  /** Corner treatment. */
-  radius: RadiusId;
+  /** Corner roundness in px (0 = sharp, 24 = very soft). */
+  radius: number;
   /** User identity colour mode. */
   accentMode: AccentMode;
   /** Accent hex colour (used when accentMode === "custom"). */
   accentColor: string;
-  /** Card border preference (mirrors the member's ProfileBackground.cardBorders). */
-  cardBorders: CardBorderPreference;
-  /** Custom card border hex, used when cardBorders === "custom". */
-  cardBorderColor: string;
-  /** Border weight shared by cards and panels. */
+  /** Border weight shared by cards and panels. (Colour is owned by the member's
+   *  appearance — see ProfileBackground.cardBorders.) */
   cardBorderWidth?: CardBorderWidth;
   /** Card/block fill colour (hex). Empty = follow the page's elevated surface. */
   cardColor?: string;
@@ -94,11 +115,9 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   structure: "wide",
   personality: "modern",
   density: "comfortable",
-  radius: "soft",
+  radius: DEFAULT_RADIUS,
   accentMode: "auto",
   accentColor: "#3f8f8a",
-  cardBorders: "neutral",
-  cardBorderColor: "",
   cardBorderWidth: "thin",
   cardColor: "",
   cardOpacity: 30,
@@ -131,11 +150,6 @@ export const DENSITY_OPTIONS: ReadonlyArray<{ value: DensityId; label: string }>
   { value: "spacious", label: "Spacious" },
 ];
 
-export const RADIUS_OPTIONS: ReadonlyArray<{ value: RadiusId; label: string }> = [
-  { value: "sharp", label: "Sharp" },
-  { value: "soft", label: "Soft" },
-];
-
 export const ACCENT_OPTIONS: ReadonlyArray<{ value: AccentMode; label: string }> = [
   { value: "auto", label: "From banner" },
   { value: "custom", label: "Pick" },
@@ -151,7 +165,6 @@ export const BACKGROUND_OPTIONS: ReadonlyArray<{ value: BackgroundId; label: str
 const STRUCTURE_VALUES = new Set(STRUCTURE_OPTIONS.map((o) => o.value));
 const PERSONALITY_VALUES = new Set(PERSONALITY_OPTIONS.map((o) => o.value));
 const DENSITY_VALUES = new Set(DENSITY_OPTIONS.map((o) => o.value));
-const RADIUS_VALUES = new Set(RADIUS_OPTIONS.map((o) => o.value));
 const ACCENT_VALUES = new Set(ACCENT_OPTIONS.map((o) => o.value));
 const BACKGROUND_VALUES = new Set(BACKGROUND_OPTIONS.map((o) => o.value));
 const CARD_BORDER_WIDTH_VALUES = new Set<CardBorderWidth>(["thin", "medium", "thick"]);
@@ -164,8 +177,8 @@ const isOneOf =
 /**
  * Map legacy personality/composition IDs to the new clean model.
  * Handles: compositionId → structure, vibeId/personalityId → personality,
- * typography "classic" → "technical", accentMode "person" → "custom",
- * radius "rounded" → "soft".
+ * typography "classic" → "technical", accentMode "person" → "custom".
+ * Radius string treatments are normalized separately by normalizeRadius().
  */
 function migrateLegacy(value: Record<string, unknown>): Partial<StudioConfig> {
   const patch: Partial<StudioConfig> = {};
@@ -195,11 +208,6 @@ function migrateLegacy(value: Record<string, unknown>): Partial<StudioConfig> {
     if (value.typography === "editorial") patch.personality = "editorial";
     else if (value.typography === "modern") patch.personality = "modern";
     else if (value.typography === "classic") patch.personality = "technical";
-  }
-
-  // Radius: "rounded" → "soft"
-  if (value.radius === "rounded") {
-    patch.radius = "soft";
   }
 
   // AccentMode: "person" → "custom"
@@ -237,9 +245,7 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
         ? value.personality
         : DEFAULT_STUDIO_CONFIG.personality),
     density: isOneOf(DENSITY_VALUES)(value.density) ? value.density : DEFAULT_STUDIO_CONFIG.density,
-    radius:
-      legacy.radius ??
-      (isOneOf(RADIUS_VALUES)(value.radius) ? value.radius : DEFAULT_STUDIO_CONFIG.radius),
+    radius: normalizeRadius(value.radius),
     accentMode:
       legacy.accentMode ??
       (isOneOf(ACCENT_VALUES)(value.accentMode)
@@ -255,20 +261,6 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
     publicBackground: isOneOf(BACKGROUND_VALUES)(value.publicBackground)
       ? value.publicBackground
       : DEFAULT_STUDIO_CONFIG.publicBackground,
-    // Card border preference (accepted from ProfileBackground; Studio panels
-    // mirror the same choice so the canvas honours it without a separate table).
-    cardBorders:
-      typeof value.cardBorders === "string" &&
-      (value.cardBorders === "accent" ||
-        value.cardBorders === "neutral" ||
-        value.cardBorders === "none" ||
-        value.cardBorders === "custom")
-        ? (value.cardBorders as CardBorderPreference)
-        : DEFAULT_STUDIO_CONFIG.cardBorders,
-    cardBorderColor:
-      typeof value.cardBorderColor === "string" && /^#([0-9a-f]{6})$/i.test(value.cardBorderColor)
-        ? value.cardBorderColor
-        : DEFAULT_STUDIO_CONFIG.cardBorderColor,
     cardBorderWidth: isOneOf(CARD_BORDER_WIDTH_VALUES)(value.cardBorderWidth)
       ? value.cardBorderWidth
       : DEFAULT_STUDIO_CONFIG.cardBorderWidth,
@@ -319,12 +311,28 @@ export function densityMetrics(density: DensityId): DensityMetrics {
 
 // ── Treatment → Theme Tokens ──────────────────────────────────────────────────
 
-const RADIUS_SCALE: Record<RadiusId, Record<string, string>> = {
-  sharp: { sm: "1px", md: "2px", lg: "3px", xl: "4px", "2xl": "4px", "3xl": "5px", "4xl": "6px" },
-  soft: { sm: "2px", md: "3px", lg: "4px", xl: "5px", "2xl": "5px", "3xl": "6px", "4xl": "8px" },
-};
+/**
+ * Derive the full --radius-* scale from the corner-roundness slider value so
+ * the tile/card/panel systems stay coherent with the Studio block frames:
+ * lg (the surface radius) matches the slider exactly; smaller elements scale
+ * down proportionally, larger overlays grow a notch per step.
+ */
+function radiusScale(radius: number): Record<string, string> {
+  const n = normalizeRadius(radius);
+  return {
+    sm: `${Math.round(n * 0.3)}px`,
+    md: `${Math.round(n * 0.45)}px`,
+    lg: `${n}px`,
+    xl: `${n + 1}px`,
+    "2xl": `${n + 2}px`,
+    "3xl": `${n + 3}px`,
+    "4xl": `${n + 4}px`,
+  };
+}
 
 export const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
+export const TECHNICAL_HEADING_FONT =
+  "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace";
 
 const DENSITY_SECTION: Record<DensityId, string> = {
   compact: "2.5rem",
@@ -339,7 +347,7 @@ const DENSITY_SECTION: Record<DensityId, string> = {
  */
 export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
   const tokens: ThemeTokens = {
-    borders: { radius: { ...RADIUS_SCALE[config.radius] } },
+    borders: { radius: radiusScale(config.radius) },
     spacing: { section: DENSITY_SECTION[config.density] },
   };
 
@@ -352,6 +360,7 @@ export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
     };
   } else if (config.personality === "technical") {
     tokens.typography = {
+      headingFont: TECHNICAL_HEADING_FONT,
       scale: {
         heading1: {
           fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
@@ -385,7 +394,7 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
   style["--content-density-padding"] = densityGap;
 
   // Studio-specific tokens (used by g-studio-surface)
-  style["--studio-radius"] = config.radius === "sharp" ? "2px" : "5px";
+  style["--studio-radius"] = `${config.radius}px`;
   style["--studio-gap"] = `${gap}px`;
   style["--studio-pad"] = `${pad}px`;
 
@@ -407,7 +416,15 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
     style["--user-accent-glow"] = "color-mix(in oklab, var(--primary) 6%, transparent)";
   }
 
-  Object.assign(style, cardBorderStyle(config));
+  // Border weight shared by cards and panels. The border colour itself is
+  // owned by the member's appearance (ProfileBackground) so the same choice
+  // drives the dashboard, editor, and public Studio.
+  style["--card-border-width"] =
+    config.cardBorderWidth === "thick"
+      ? "2px"
+      : config.cardBorderWidth === "medium"
+        ? "1.5px"
+        : "1px";
 
   return style;
 }
@@ -445,50 +462,6 @@ export const CARD_SURFACE_STYLE = {
   "--surface-elevated": "var(--studio-card-fill, var(--surface-elevated))",
   "--card": "var(--studio-card-fill, var(--surface-elevated))",
 } as React.CSSProperties;
-
-/** Card border options surfaced in the Studio customize panel. */
-export const CARD_BORDER_OPTIONS: ReadonlyArray<{ value: CardBorderPreference; label: string }> = [
-  { value: "neutral", label: "Neutral" },
-  { value: "accent", label: "Dynamic" },
-  { value: "custom", label: "Custom" },
-  { value: "none", label: "None" },
-];
-
-/** Swatches offered when cardBorders === "custom". */
-export const CARD_BORDER_SWATCHES: ReadonlyArray<string> = [
-  "#d0d7de",
-  "#8c959f",
-  "#1f2328",
-  "#3f8f8a",
-  "#2f6fd0",
-  "#b4632a",
-];
-
-/**
- * Card border preference → the `--card-border*` family every Studio surface
- * reads. Emitted from studioConfigToStyle so the editor canvas, the Studio
- * page, and the published page all resolve borders the same way.
- */
-export function cardBorderStyle(config: StudioConfig): React.CSSProperties {
-  const style = {} as React.CSSProperties & Record<string, string>;
-  const color =
-    config.cardBorders === "none"
-      ? "transparent"
-      : config.cardBorders === "neutral"
-        ? "var(--border)"
-        : config.cardBorders === "custom" && /^#([0-9a-f]{6})$/i.test(config.cardBorderColor)
-          ? config.cardBorderColor
-          : "var(--user-accent-border, var(--border))";
-  style["--card-border-color"] = color;
-  style["--card-border"] = color;
-  style["--card-border-width"] =
-    config.cardBorderWidth === "thick"
-      ? "2px"
-      : config.cardBorderWidth === "medium"
-        ? "1.5px"
-        : "1px";
-  return style;
-}
 
 /**
  * Pick a readable foreground for the accent color (dark text on light colors,

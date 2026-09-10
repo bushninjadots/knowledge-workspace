@@ -39,7 +39,12 @@ import { ReactGridLayout as LegacyGridLayout, WidthProvider } from "react-grid-l
 import "react-grid-layout/css/styles.css";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
-import { appearanceStyle } from "@/lib/background-themes";
+import {
+  appearanceStyle,
+  BORDER_SWATCHES,
+  withCardBorderPreference,
+  type CardBorderPreference,
+} from "@/lib/background-themes";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
@@ -62,15 +67,15 @@ import {
 } from "@/components/tethyr/studio/starter-picker";
 import {
   BACKGROUND_OPTIONS,
-  CARD_BORDER_OPTIONS,
-  CARD_BORDER_SWATCHES,
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
   cardFillStyle,
   EDITORIAL_HEADING_FONT,
+  RADIUS_MAX,
+  RADIUS_MIN,
   structureMaxWidth,
-  cardBorderStyle,
   studioConfigToStyle,
+  TECHNICAL_HEADING_FONT,
   type StudioConfig,
 } from "@/lib/studio-config";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
@@ -141,6 +146,12 @@ interface GStudioSurfaceProps {
   onDragTypeChange: (type: string | null) => void;
   onPaletteTargetChange: (id: string) => void;
   onCustomizeChange: (patch: Partial<GStudioConfig>) => void;
+  /** Live card-border preference: the member's appearance, editable in
+   *  Customize and persisted to `profiles.background` by the creator. */
+  cardBorders: CardBorderPreference;
+  cardBorderColor: string;
+  onCardBordersChange: (cardBorders: CardBorderPreference) => void;
+  onCardBorderColorChange: (color: string) => void;
   onSave: () => void;
   onPublish: () => void;
   onRollback: (version: number) => void;
@@ -377,11 +388,18 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
   const maxWidth = structureMaxWidth(props.config);
   const sections = props.layout.sections;
+  // Card borders live on the member's appearance. For live canvas preview the
+  // builder composes the current draft preference over the saved background.
+  const borderPreview = useMemo(
+    () =>
+      me?.background
+        ? withCardBorderPreference(me.background, props.cardBorders, props.cardBorderColor)
+        : undefined,
+    [me?.background, props.cardBorders, props.cardBorderColor],
+  );
   const surfaceStyle = {
     ...studioSurfaceStyle(props.config),
-    ...appearanceStyle(me?.background),
-    // The Studio config owns card borders; the profile appearance must not win here.
-    ...cardBorderStyle(props.config),
+    ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
   };
 
@@ -446,6 +464,10 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             layout={props.layout}
             compact={mobilePanel === "left"}
             onChange={props.onCustomizeChange}
+            cardBorders={props.cardBorders}
+            cardBorderColor={props.cardBorderColor}
+            onCardBordersChange={props.onCardBordersChange}
+            onCardBorderColorChange={props.onCardBorderColorChange}
             onToggleSection={props.onToggleSection}
             onBlockAction={props.onBlockAction}
             onSelect={props.onSelect}
@@ -1511,10 +1533,9 @@ const GBlockFrame = forwardRef<
       <div
         ref={contentRef}
         className={cn(
-          "relative overflow-x-hidden rounded-[inherit] bg-[var(--surface)]",
+          "relative overflow-x-hidden rounded-[inherit] studio-block",
           !fluid && "h-full min-h-0 overflow-y-auto",
         )}
-        style={{ borderRadius: "var(--studio-radius)" }}
       >
         <div className={cn("flex [&>*]:min-w-0 [&>*]:flex-1", !fluid && "min-h-full")}>
           <BlockRenderer
@@ -2152,6 +2173,10 @@ function GCustomizePanel({
   layout,
   compact,
   onChange,
+  cardBorders,
+  cardBorderColor,
+  onCardBordersChange,
+  onCardBorderColorChange,
   onToggleSection,
   onBlockAction,
   onSelect,
@@ -2165,6 +2190,10 @@ function GCustomizePanel({
   layout: PageLayout;
   compact: boolean;
   onChange: (patch: Partial<GStudioConfig>) => void;
+  cardBorders: CardBorderPreference;
+  cardBorderColor: string;
+  onCardBordersChange: (cardBorders: CardBorderPreference) => void;
+  onCardBorderColorChange: (color: string) => void;
   onToggleSection: (id: string) => void;
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
@@ -2268,15 +2297,25 @@ function GCustomizePanel({
               ]}
               onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
             />
-            <Choice
-              label="Corners"
-              value={config.radius}
-              options={[
-                ["sharp", "Sharp"],
-                ["soft", "Soft"],
-              ]}
-              onChange={(value) => onChange({ radius: value as GStudioConfig["radius"] })}
-            />
+            <div className="mb-4">
+              <div className="mb-1.5 flex items-center justify-between">
+                <p className="t-label">Corners</p>
+                <span className="t-label tabular-nums">{config.radius}px</span>
+              </div>
+              <p className="mb-1.5 text-[0.6875rem] leading-snug text-muted-foreground">
+                Roundness of card corners, from sharp to generously soft.
+              </p>
+              <input
+                type="range"
+                min={RADIUS_MIN}
+                max={RADIUS_MAX}
+                step={1}
+                value={config.radius}
+                aria-label="Corner radius in pixels"
+                onChange={(event) => onChange({ radius: Number(event.target.value) })}
+                className="studio-slider w-full"
+              />
+            </div>
             <Choice
               label="Accent"
               value={config.accentMode}
@@ -2310,9 +2349,14 @@ function GCustomizePanel({
             <Choice
               label="Card borders"
               hint="Outlines around cards and panels"
-              value={config.cardBorders}
-              options={CARD_BORDER_OPTIONS.map((o) => [o.value, o.label] as [string, string])}
-              onChange={(value) => onChange({ cardBorders: value as GStudioConfig["cardBorders"] })}
+              value={cardBorders}
+              options={[
+                ["neutral", "Neutral"],
+                ["accent", "Dynamic"],
+                ["custom", "Custom"],
+                ["none", "None"],
+              ]}
+              onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
             />
             <Choice
               label="Border weight"
@@ -2327,18 +2371,18 @@ function GCustomizePanel({
                 onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
               }
             />
-            {config.cardBorders === "custom" && (
+            {cardBorders === "custom" && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {CARD_BORDER_SWATCHES.map((swatch) => (
+                {BORDER_SWATCHES.map((swatch) => (
                   <button
                     key={swatch}
                     type="button"
                     aria-label={`Card border ${swatch}`}
-                    aria-pressed={config.cardBorderColor.toLowerCase() === swatch}
-                    onClick={() => onChange({ cardBorderColor: swatch })}
+                    aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                    onClick={() => onCardBorderColorChange(swatch)}
                     className={cn(
                       "h-6 w-6 rounded-sm border-2",
-                      config.cardBorderColor.toLowerCase() === swatch
+                      cardBorderColor.toLowerCase() === swatch
                         ? "border-foreground"
                         : "border-border",
                     )}
@@ -2890,11 +2934,15 @@ function studioSurfaceStyle(config: GStudioConfig): CSSProperties {
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
   // Match the public page's font mapping (studioConfigToThemeTokens): an
-  // editorial page flips --font-display/title to Space Grotesk, so the canvas
-  // must render the same face the published page will.
+  // editorial page flips --font-display/title to Space Grotesk and a technical
+  // page to JetBrains Mono, so the canvas renders the face the published page
+  // will.
   if (config.personality === "editorial") {
     style["--font-display"] = EDITORIAL_HEADING_FONT;
     style["--font-title"] = EDITORIAL_HEADING_FONT;
+  } else if (config.personality === "technical") {
+    style["--font-display"] = TECHNICAL_HEADING_FONT;
+    style["--font-title"] = TECHNICAL_HEADING_FONT;
   }
   return style;
 }

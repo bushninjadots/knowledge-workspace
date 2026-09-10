@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { BackgroundLayer } from "./background-layer";
-import { appearanceStyle, hasAppearanceSettings } from "@/lib/background-themes";
+import {
+  appearanceStyle,
+  emptyBackground,
+  hasAppearanceSettings,
+  withCardBorderPreference,
+} from "@/lib/background-themes";
 
 describe("BackgroundLayer", () => {
   it("renders nothing when there is no active background", () => {
@@ -112,5 +117,29 @@ describe("BackgroundLayer", () => {
       />,
     );
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("withCardBorderPreference", () => {
+  it("composes a draft from a missing background", () => {
+    const draft = withCardBorderPreference(null, "accent", "");
+    expect(draft).toMatchObject({ ...emptyBackground(), cardBorders: "accent" });
+    expect(draft.cardBorderColor).toBeNull();
+  });
+
+  it("keeps existing appearance fields and sets the custom colour", () => {
+    const base = {
+      ...emptyBackground(),
+      mode: "color" as const,
+      color: "#38bdf8",
+      density: "compact" as const,
+    };
+    const draft = withCardBorderPreference(base, "custom", "#123456");
+    expect(draft).toMatchObject({ ...base, cardBorders: "custom", cardBorderColor: "#123456" });
+  });
+
+  it("nulls an empty colour so custom borders fall back to the accent", () => {
+    const draft = withCardBorderPreference(emptyBackground(), "custom", "");
+    expect(draft.cardBorderColor).toBeNull();
   });
 });

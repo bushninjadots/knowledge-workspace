@@ -464,6 +464,15 @@
   border-radius: var(--radius-lg);
 }
 
+/* Studio block surface — the frame around content blocks on the Studio
+   canvas, the creator view, and their peers. Honors the member's unified
+   card-border colour/width and the continuous corner-radius slider. */
+@utility studio-block {
+  background-color: var(--surface);
+  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
+  border-radius: var(--studio-radius, var(--radius-lg));
+}
+
 /* Each child inside surface-section gets a hairline separator. */
 .surface-divide > * + * {
   border-top: 2px solid var(--user-accent-border, var(--border));
@@ -514,6 +523,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground-subtle);
+  font-family: var(--studio-label-font, var(--font-sans));
 }
 
 /* Legacy name for the same micro-label treatment used across the Studio
@@ -535,6 +545,38 @@
 @utility mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum" 1;
+}
+
+/* Corners slider (Studio Customize). Minimal native range control tinted with
+   the page's user accent so it reads as part of the member's palette. */
+.studio-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--user-accent, var(--border)) 30%, transparent);
+  outline: none;
+  cursor: pointer;
+}
+
+.studio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  border: 2px solid var(--surface-elevated);
+  background: var(--user-accent, var(--foreground));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.studio-slider::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  border: 2px solid var(--surface-elevated);
+  background: var(--user-accent, var(--foreground));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
 }
 
 /* ---------------------------------------------------------------------------

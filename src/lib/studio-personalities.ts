@@ -71,8 +71,6 @@ export function applyStudioPersonality(
       radius: personality.appearance.radius,
       accentMode: personality.appearance.accentMode,
       accentColor: personality.appearance.accentColor,
-      cardBorders: "neutral",
-      cardBorderColor: "",
       cardColor: "",
       cardOpacity: 30,
       starterId: null,
@@ -145,7 +143,7 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     label: "Minimal",
     description: "One calm column. Text-led and quiet, with nothing clamoring for attention.",
     appearance: {
-      radius: "sharp",
+      radius: 6,
       personality: "technical",
       density: "spacious",
       accentMode: "auto",
@@ -179,7 +177,7 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     label: "Creative",
     description: "Gallery-led and image-first. Asymmetric spreads that feel like a portfolio.",
     appearance: {
-      radius: "soft",
+      radius: 12,
       personality: "editorial",
       density: "comfortable",
       accentMode: "auto",
@@ -221,7 +219,7 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     label: "Professional",
     description: "Structured and trustworthy. A clean hierarchy built for credibility.",
     appearance: {
-      radius: "sharp",
+      radius: 6,
       personality: "modern",
       density: "compact",
       accentMode: "none",
@@ -268,7 +266,7 @@ export const STUDIO_PERSONALITIES: StudioPersonality[] = [
     label: "Artistic",
     description: "Confident and experimental. Big type, rounded corners, a personal accent.",
     appearance: {
-      radius: "soft",
+      radius: 12,
       personality: "editorial",
       density: "spacious",
       accentMode: "custom",

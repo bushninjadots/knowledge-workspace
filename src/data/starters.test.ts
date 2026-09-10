@@ -120,7 +120,7 @@ describe("starterConfig", () => {
     expect(next.structure).toBe("wide");
     expect(next.personality).toBe("technical");
     expect(next.density).toBe("compact");
-    expect(next.radius).toBe("sharp");
+    expect(next.radius).toBe(6);
     expect(next.appBackground).toBe("sunken");
     expect(next.starterId).toBe("project-first");
     // Fields not in the stamp are untouched.

@@ -28,11 +28,9 @@ const studioConfig: StudioConfig = {
   structure: "wide",
   personality: "modern",
   density: "comfortable",
-  radius: "soft",
+  radius: 12,
   accentMode: "auto",
   accentColor: "#3f8f8a",
-  cardBorders: "neutral",
-  cardBorderColor: "",
   cardColor: "",
   cardOpacity: 30,
   appBackground: "surface",
@@ -41,8 +39,8 @@ const studioConfig: StudioConfig = {
 
 describe("Creation Studio history snapshots", () => {
   it("captures appearance before the next config is applied", () => {
-    const previous = { ...studioConfig, radius: "sharp" as const };
-    const next = { ...studioConfig, radius: "soft" as const };
+    const previous = { ...studioConfig, radius: 6 };
+    const next = { ...studioConfig, radius: 12 };
     const entry = makeHistoryEntry({ sections: [] }, previous);
 
     expect(entry.config).toEqual(previous);
