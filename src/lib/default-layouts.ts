@@ -69,6 +69,8 @@ export function createDefaultProjectLayout(): PageLayout {
 export function createDefaultProfileLayout(): PageLayout {
   // The default is an editorial composition: identity first, then the work,
   // with supporting context arranged around it instead of a long card stack.
+  // Chapter titles frame multi-block sections; self-titled blocks (About,
+  // Gallery) intentionally keep none so the page doesn't repeat itself.
   return {
     sections: [
       { id: nid(), position: 0, layout: "full", blocks: [blk("profile-header", 0)] },
@@ -76,6 +78,7 @@ export function createDefaultProfileLayout(): PageLayout {
         id: nid(),
         position: 1,
         layout: "feature",
+        title: "Featured Work",
         blocks: [blk("profile-projects", 0), blk("profile-direction", 1)],
       },
       {
@@ -88,6 +91,7 @@ export function createDefaultProfileLayout(): PageLayout {
         id: nid(),
         position: 3,
         layout: "two_column",
+        title: "Skills & Experience",
         blocks: [blk("profile-skills", 0), blk("profile-experience", 1)],
       },
       { id: nid(), position: 4, layout: "full", blocks: [blk("profile-gallery", 0)] },
@@ -95,6 +99,7 @@ export function createDefaultProfileLayout(): PageLayout {
         id: nid(),
         position: 5,
         layout: "two_column",
+        title: "Tools & Achievements",
         blocks: [blk("profile-tools", 0), blk("profile-achievements", 1)],
       },
     ],

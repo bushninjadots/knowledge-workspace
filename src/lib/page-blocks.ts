@@ -111,11 +111,15 @@ export interface BlockField {
   /** Human-readable label shown in the inspector. */
   label: string;
   /** The type of form control to render. */
-  type: "text" | "textarea" | "toggle" | "select" | "image" | "color";
+  type: "text" | "textarea" | "toggle" | "select" | "image" | "color" | "range";
   /** Placeholder text for text/textarea inputs. */
   placeholder?: string;
   /** Options for select-type fields. */
   options?: Array<{ label: string; value: string }>;
+  /** Min/max/step for range-type fields. */
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 // ---------------------------------------------------------------------------

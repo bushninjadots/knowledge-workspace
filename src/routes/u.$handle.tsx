@@ -2,8 +2,16 @@
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
 import { useEffect, useMemo } from "react";
-import { createFileRoute, notFound, useParams, useNavigate, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  notFound,
+  useParams,
+  useNavigate,
+  useSearch,
+  Link,
+} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalLinks } from "@/lib/seo";
@@ -58,7 +66,9 @@ export const Route = createFileRoute("/u/$handle")({
     });
     return {};
   },
-  validateSearch: (search: Record<string, unknown>) => search as Record<string, string | undefined>,
+  validateSearch: z.object({
+    embed: z.coerce.boolean().optional().default(false),
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `@${params.handle} — Tethyr` },
@@ -84,6 +94,7 @@ export const Route = createFileRoute("/u/$handle")({
 
 function PublicProfileRoute() {
   const { handle } = useParams({ from: "/u/$handle" });
+  const { embed } = useSearch({ from: "/u/$handle" });
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -169,8 +180,9 @@ function PublicProfileRoute() {
       background={data.publicBackground}
       backgroundImageUrl={data.backgroundImageUrl}
       pageThemeStyle={pageThemeStyle}
+      embed={embed}
     >
-      {isOwner && (
+      {isOwner && !embed && (
         <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-2 px-4 pt-4 sm:px-8">
           <span className="text-xs text-muted-foreground">
             This is your public Studio, exactly as visitors see it.
@@ -210,11 +222,13 @@ function Shell({
   background,
   backgroundImageUrl,
   pageThemeStyle,
+  embed,
 }: {
   children: React.ReactNode;
   background?: ProfileBackground | null;
   backgroundImageUrl?: string | null;
   pageThemeStyle?: React.CSSProperties;
+  embed?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -224,25 +238,27 @@ function Shell({
       style={{ ...appearanceStyle(background), ...(pageThemeStyle ?? {}) }}
     >
       <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
-        <button
-          type="button"
-          onClick={() =>
-            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
-          }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
-          aria-label="Go back"
-          title="Back"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back
-        </button>
-        <Link to="/" className="font-display text-lg font-semibold text-foreground">
-          Tethyr
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-sm text-muted-foreground">Studio</span>
-      </header>
+      {!embed && (
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() =>
+              window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            aria-label="Go back"
+            title="Back"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </button>
+          <Link to="/" className="font-display text-lg font-semibold text-foreground">
+            Tethyr
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm text-muted-foreground">Studio</span>
+        </header>
+      )}
       <main className="flex-1">{children}</main>
     </div>
   );

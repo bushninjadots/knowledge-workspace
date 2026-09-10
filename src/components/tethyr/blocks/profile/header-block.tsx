@@ -1,15 +1,18 @@
 // ── Profile Header Block ─────────────────────────────────────────────────────
 // Renders the profile identity: avatar, display name, handle, category, location,
-// timezone, languages, and reputation score. Fetches directly from profiles table.
+// timezone, languages, a "currently building" hook, collaboration status, and
+// reputation as a tier + progress. Fetches directly from profiles table.
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Languages, Sparkles, CheckCircle2 } from "lucide-react";
+import { MapPin, Clock, Languages, Sparkles, Hammer, CheckCircle2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { isSafeUrl } from "@/lib/validators";
 import { registerBlock } from "@/lib/block-registry";
+import { getTierProgress } from "@/lib/reputation";
 import { HeroEditControls } from "@/components/tethyr/profile/hero-edit-controls";
 import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 import type { BlockProps } from "@/lib/page-blocks";
@@ -28,8 +31,17 @@ type ProfileHeaderData = {
   reputation_score: number | null;
   banner_caption: string | null;
   bio: string | null;
+  availability: string | null;
   background: unknown;
   public_background: unknown;
+};
+
+type ActiveProject = { id: string; title: string } | null;
+
+const AVAIL_META: Record<string, { label: string; dot: string }> = {
+  available: { label: "Open to collaboration", dot: "bg-trust" },
+  busy: { label: "Focused on current work", dot: "bg-teaching" },
+  away: { label: "Taking a step back", dot: "bg-muted-foreground" },
 };
 
 function ProfileHeaderBlock({ config, context }: BlockProps) {
@@ -42,11 +54,29 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
       const { data } = await supabase
         .from("profiles")
         .select(
-          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score, banner_caption, bio, background, public_background",
+          "id, display_name, handle, creator_title, avatar_url, banner_url, category, country, timezone, languages, reputation_score, banner_caption, bio, availability, background, public_background",
         )
         .eq("id", profileId)
         .maybeSingle();
       return data as unknown as ProfileHeaderData | null;
+    },
+    enabled: !!profileId,
+  });
+
+  const { data: activeProject } = useQuery({
+    queryKey: ["profile-header-active-project", profileId],
+    queryFn: async (): Promise<ActiveProject> => {
+      if (!profileId) return null;
+      const { data } = await supabase
+        .from("projects")
+        .select("id, title")
+        .eq("profile_id", profileId)
+        .eq("visibility", "public")
+        .in("status", ["planning", "active"])
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data ? { id: data.id, title: data.title } : null;
     },
     enabled: !!profileId,
   });
@@ -77,6 +107,8 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const showLocation = config.showLocation !== false;
   const showReputation = config.showReputation !== false;
   const showBanner = config.showBanner !== false;
+  const showBuilding = config.showBuilding !== false;
+  const showAvailability = config.showAvailability !== false;
   // Profile editing belongs to Studio editor mode. View mode stays presentation-only,
   // including on the owner's public-facing Studio route.
   const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
@@ -132,9 +164,25 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               {data.display_name || "Untitled"}
             </h1>
             {showTitle && data.creator_title && (
-              <p className="mt-0.5 text-sm text-foreground/80">{data.creator_title}</p>
+              <p className="mt-0.5 text-base font-medium text-foreground/85">
+                {data.creator_title}
+              </p>
             )}
             {showHandle && <p className="text-sm text-muted-foreground">@{data.handle ?? "—"}</p>}
+
+            {showBuilding && activeProject && (
+              <Link
+                to="/projects/$id"
+                params={{ id: activeProject.id }}
+                className="group mt-2 inline-flex max-w-full items-center gap-1.5 text-sm"
+              >
+                <Hammer className="h-3.5 w-3.5 shrink-0 text-[var(--user-accent,var(--muted-foreground))]" />
+                <span className="text-muted-foreground">Currently building</span>
+                <span className="truncate font-medium text-foreground underline decoration-muted-foreground/40 decoration-[1.5px] underline-offset-4 transition-colors group-hover:decoration-[var(--user-accent-border,var(--primary))]">
+                  {activeProject.title}
+                </span>
+              </Link>
+            )}
 
             {/* Metadata chips */}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -158,12 +206,54 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   <Languages className="h-3.5 w-3.5" /> {data.languages.join(", ")}
                 </span>
               )}
-              {showReputation && data.reputation_score != null && data.reputation_score > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2.5 py-0.5 text-trust">
-                  <Sparkles className="h-3 w-3" /> {data.reputation_score} rep
+              {showAvailability && data.availability && AVAIL_META[data.availability] && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-2.5 py-0.5">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${AVAIL_META[data.availability].dot}`}
+                  />
+                  {AVAIL_META[data.availability].label}
                 </span>
               )}
             </div>
+
+            {showReputation &&
+              data.reputation_score != null &&
+              data.reputation_score > 0 &&
+              (() => {
+                const { current, next, progress } = getTierProgress(data.reputation_score!);
+                return (
+                  <div className="mt-3 flex w-fit items-center gap-2 rounded-md border border-trust/25 bg-trust/5 px-2.5 py-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-trust" />
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-[11px] leading-none">
+                        <span className="font-medium text-trust">{current.name}</span>
+                        {next && (
+                          <>
+                            <span className="text-muted-foreground/60">→</span>
+                            <span className="text-muted-foreground">{next.name}</span>
+                          </>
+                        )}
+                        <span className="text-muted-foreground/60">
+                          {data.reputation_score} rep
+                        </span>
+                      </div>
+                      <div
+                        className="h-1 w-28 overflow-hidden rounded-full bg-trust/15"
+                        role="progressbar"
+                        aria-valuenow={progress}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Progress to ${next?.name ?? "top tier"}`}
+                      >
+                        <div
+                          className="h-full rounded-full bg-trust"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
             {canEdit &&
               profileCompleteness !== null &&
@@ -196,7 +286,7 @@ registerBlock({
   type: "profile-header",
   category: "people",
   label: "Profile Header",
-  description: "Avatar, name, handle, category, location, timezone, languages, and reputation.",
+  description: "Avatar, name, title, what you're building, availability, and reputation progress.",
   icon: "User",
   defaults: {
     showTitle: true,
@@ -204,11 +294,15 @@ registerBlock({
     showLocation: true,
     showReputation: true,
     showBanner: true,
+    showBuilding: true,
+    showAvailability: true,
     bannerUrl: "",
   },
   fields: [
     { key: "showTitle", label: "Show title", type: "toggle" },
     { key: "showHandle", label: "Show handle", type: "toggle" },
+    { key: "showBuilding", label: "Show active project", type: "toggle" },
+    { key: "showAvailability", label: "Show collaboration status", type: "toggle" },
     { key: "showLocation", label: "Show location", type: "toggle" },
     { key: "showReputation", label: "Show reputation", type: "toggle" },
     { key: "showBanner", label: "Show banner image", type: "toggle" },

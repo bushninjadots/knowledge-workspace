@@ -4,15 +4,23 @@
 // controls (banner, profile photo, caption, identity, appearance) available
 // without opening the full block editor. "Open editor" launches the builder.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Pencil, Sparkles, X } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
-import { useCreatePage } from "@/hooks/use-page-editor";
+import { cn } from "@/lib/utils";
+import { normalizeStudioConfig } from "@/lib/studio-config";
+import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
+import {
+  nextSteps,
+  setupCompletenessPercent,
+  showcaseCompletenessPercent,
+  type Section,
+} from "@/lib/profile-completeness";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { Button } from "@/components/ui/button";
@@ -67,8 +75,44 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const { data: me } = useCurrentUser();
   const createPage = useCreatePage();
+  const publishPage = usePublishPage();
   const createAttempted = useRef(false);
   const page = pageQuery.data;
+
+  const handlePublish = useCallback(() => {
+    if (!page?.id) return;
+    publishPage.mutate(
+      { pageId: page.id, ownerId: userId, ownerType: "profile" },
+      {
+        onSuccess: () => toast.success("Your Studio is now live"),
+        onError: () => toast.error("Could not publish your Studio"),
+      },
+    );
+  }, [page?.id, publishPage, userId]);
+
+  // The creator's own Studio answers "what should I work on next?" — compute the
+  // incomplete profile steps from data that's already loaded (no extra queries).
+  const completenessInput = useMemo(
+    () => ({
+      profile: me?.profile ?? null,
+      teachCount: (me?.teachIds ?? []).length,
+      learnCount: (me?.learnIds ?? []).length,
+      projectsCount: (me?.projects ?? []).length,
+    }),
+    [me?.profile, me?.teachIds, me?.learnIds, me?.projects],
+  );
+  const setupPercent = useMemo(
+    () => (me ? setupCompletenessPercent(completenessInput) : 0),
+    [me, completenessInput],
+  );
+  const showcasePercent = useMemo(
+    () => (me ? showcaseCompletenessPercent(completenessInput) : 0),
+    [me, completenessInput],
+  );
+  const studioSteps = useMemo(
+    () => (me ? nextSteps(completenessInput, 4) : []),
+    [me, completenessInput],
+  );
 
   // Auto-provision a Studio draft the first time the owner lands here, so the
   // view is never stuck on an empty state. Mirrors the editor's behaviour.
@@ -161,6 +205,12 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         onOpenEditor={() => navigate({ to: "/studio" })}
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
       />
+      <StudioPublishStrip
+        published={page?.status === "published"}
+        hasContent={(layout?.sections.length ?? 0) > 0}
+        publishing={publishPage.isPending}
+        onPublish={handlePublish}
+      />
       <main
         className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
         aria-label="Studio"
@@ -170,35 +220,176 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         {mode === "preview" && profile?.handle ? (
           <iframe
             title="Public Studio preview"
-            src={`/u/${profile.handle}`}
+            src={`/u/${profile.handle}?embed=1`}
             className="h-full w-full border-0 bg-background"
             data-studio-preview-frame
           />
         ) : (
-          <div className="mx-auto w-full px-4 pb-24 pt-6 sm:px-6" style={{ maxWidth }}>
-            {!layout || layout.sections.length === 0 ? (
-              <div className="flex min-h-[30vh] items-center justify-center text-center">
-                <div>
-                  <p className="text-sm text-muted-foreground">Your Studio is empty.</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Open Customize to add blocks and arrange your space.
+          <div className="mx-auto flex w-full items-start justify-center gap-6 px-4 pb-24 pt-6 sm:px-6">
+            <div className="w-full min-w-0" style={{ maxWidth }}>
+              <StudioOnboardingChecklist
+                ready={!!me}
+                starterChosen={
+                  page?.config ? normalizeStudioConfig(page.config).starterId !== null : false
+                }
+                hasProjects={(me?.projects?.length ?? 0) > 0}
+                hasBio={!!me?.profile?.bio?.trim()}
+                hasBanner={!!me?.profile?.banner_url}
+                published={page?.status === "published"}
+                isPublishing={publishPage.isPending}
+                onChooseFeel={() => navigate({ to: "/studio" })}
+                onAddProject={() => navigate({ to: "/dashboard" })}
+                onCompleteProfile={onCompleteProfile}
+                onPublish={handlePublish}
+              />
+              {!layout || layout.sections.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    No blocks yet — add them in Customize to build your Studio.
                   </p>
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col" style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}>
-                {layout.sections
-                  .slice()
-                  .sort((a, b) => a.position - b.position)
-                  .filter((section) => shouldRenderSectionInView(section, emptyBlocks))
-                  .map((section) => (
-                    <StudioViewSection key={section.id} section={section} context={blockContext} />
-                  ))}
-              </div>
-            )}
+              ) : (
+                <div
+                  className="flex flex-col"
+                  style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}
+                >
+                  {layout.sections
+                    .slice()
+                    .sort((a, b) => a.position - b.position)
+                    .filter((section) => shouldRenderSectionInView(section, emptyBlocks))
+                    .map((section) => (
+                      <StudioViewSection
+                        key={section.id}
+                        section={section}
+                        context={blockContext}
+                      />
+                    ))}
+                </div>
+              )}
+            </div>
+            <StudioNextStepsRail
+              setup={setupPercent}
+              showcase={showcasePercent}
+              items={studioSteps}
+              onCompleteProfile={onCompleteProfile}
+              onOpenEditor={() => navigate({ to: "/studio" })}
+            />
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+/** Slim draft notice with a one-click Publish action. This is the creator's
+ *  home surface — the single most important action here is making the Studio
+ *  live, and it shouldn't require opening the full editor. */
+function StudioPublishStrip({
+  published,
+  hasContent,
+  publishing,
+  onPublish,
+}: {
+  published: boolean;
+  hasContent: boolean;
+  publishing: boolean;
+  onPublish: () => void;
+}) {
+  if (published || !hasContent) return null;
+  return (
+    <div className="border-b border-caution/25 bg-caution/5 px-4 py-2">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-2">
+        <p className="text-xs text-caution">Draft — visitors can&apos;t see your Studio yet.</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto h-7 shrink-0 border-caution/40 text-caution hover:bg-caution/10 hover:text-caution"
+          onClick={onPublish}
+          disabled={publishing}
+        >
+          {publishing ? "Publishing…" : "Publish now"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Compact "what's next" rail for the creator's own Studio. Reuses the profile
+ *  completeness model; every row routes into the setup form, which is the same
+ *  surface the top bar already opens. Hidden below 2xl so the canvas keeps its
+ *  configured width on smaller screens. */
+function StudioNextStepsRail({
+  setup,
+  showcase,
+  items,
+  onCompleteProfile,
+  onOpenEditor,
+}: {
+  setup: number;
+  showcase: number;
+  items: Section[];
+  onCompleteProfile?: () => void;
+  onOpenEditor: () => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <aside className="sticky top-6 hidden w-72 shrink-0 2xl:block">
+      <div className="rounded-xl border border-border/60 bg-surface/60 p-4">
+        <header className="flex items-center justify-between">
+          <span className="t-label">Studio steps</span>
+          <span className="text-xs text-muted-foreground">
+            {items.length}
+            {items.length === 1 ? " step" : " steps"} left
+          </span>
+        </header>
+        <div className="mt-3 space-y-2">
+          <CompletenessBar label="Setup" value={setup} />
+          <CompletenessBar label="Showcase" value={showcase} />
+        </div>
+        <ul className="mt-3 space-y-1 border-t border-border/40 pt-3">
+          {items.map((step) => (
+            <li key={step.key}>
+              <button
+                type="button"
+                onClick={onCompleteProfile}
+                className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+              >
+                <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="text-xs leading-snug text-foreground/90">{step.label}</span>
+                <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-60" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <Button variant="ghost" size="sm" className="mt-3 w-full" onClick={onOpenEditor}>
+          <Pencil className="h-3 w-3" />
+          Open Customize
+        </Button>
+      </div>
+    </aside>
+  );
+}
+
+function CompletenessBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-16 shrink-0 text-2xs text-muted-foreground">{label}</span>
+      <div
+        className="h-1 flex-1 overflow-hidden rounded-full bg-border/60"
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${label} completeness ${value}%`}
+      >
+        <div
+          className="h-full rounded-full bg-[var(--user-accent,var(--primary))]"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className="w-8 shrink-0 text-right font-mono text-3xs text-muted-foreground">
+        {value}%
+      </span>
     </div>
   );
 }
@@ -294,10 +485,10 @@ function StudioViewSection({
 
   return (
     <section aria-label={section.title ?? section.layout} className="relative">
-      {section.layout === "feature" && (
+      {section.title && !/^area\s+\d+$/i.test(section.title) && (
         <header className="mb-2 flex items-center gap-2">
           <span className="h-3 w-0.5" style={{ backgroundColor: "var(--user-accent)" }} />
-          <span className="t-label">{section.title ?? section.layout}</span>
+          <span className="t-label">{section.title}</span>
           <span className="t-rule flex-1" />
         </header>
       )}
@@ -341,6 +532,141 @@ function StudioViewBlock({
           onChange={() => undefined}
         />
       </div>
+    </div>
+  );
+}
+
+/** First-session onboarding checklist. Derived entirely from data already loaded
+ *  by the parent (no new queries). Shows a dismissable list of content wins;
+ *  disappears once 3/5 are done — at that point the publish strip and next-steps
+ *  rail carry the remaining journey. Dismissal persisted in localStorage. */
+function StudioOnboardingChecklist({
+  ready,
+  starterChosen,
+  hasProjects,
+  hasBio,
+  hasBanner,
+  published,
+  isPublishing,
+  onChooseFeel,
+  onAddProject,
+  onCompleteProfile,
+  onPublish,
+}: {
+  ready: boolean;
+  starterChosen: boolean;
+  hasProjects: boolean;
+  hasBio: boolean;
+  hasBanner: boolean;
+  published: boolean;
+  isPublishing: boolean;
+  onChooseFeel: () => void;
+  onAddProject: () => void;
+  onCompleteProfile?: () => void;
+  onPublish: () => void;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setDismissed(window.localStorage.getItem("studio-onboarding-dismissed") === "1");
+  }, []);
+  const dismiss = useCallback(() => {
+    setDismissed(true);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem("studio-onboarding-dismissed", "1");
+  }, []);
+
+  if (!ready || dismissed) return null;
+
+  const steps = [
+    {
+      key: "feel",
+      label: "Choose a starting feel",
+      done: starterChosen,
+      action: onChooseFeel,
+    },
+    {
+      key: "project",
+      label: "Add your first project",
+      done: hasProjects,
+      action: onAddProject,
+    },
+    {
+      key: "bio",
+      label: "Write a short bio",
+      done: hasBio,
+      action: onCompleteProfile,
+    },
+    {
+      key: "banner",
+      label: "Upload a banner",
+      done: hasBanner,
+      action: onCompleteProfile,
+    },
+    {
+      key: "publish",
+      label: "Publish your Studio",
+      done: published,
+      action: isPublishing ? undefined : onPublish,
+    },
+  ];
+
+  const doneCount = steps.filter((s) => s.done).length;
+  if (doneCount >= 3) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-border/60 bg-surface/60 p-4">
+      <header className="flex items-center justify-between gap-2">
+        <span className="t-label">Make it yours</span>
+        <div className="flex items-center gap-2">
+          <span className="text-2xs text-muted-foreground">
+            {doneCount}/{steps.length}
+          </span>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Dismiss"
+            className="rounded p-0.5 text-muted-foreground transition hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </header>
+      <p className="mt-1 text-2xs text-muted-foreground-subtle">
+        A few quick wins to make your Studio a place you'd be happy to share.
+      </p>
+      <ul className="mt-3 space-y-1">
+        {steps.map((step) => (
+          <li key={step.key}>
+            <button
+              type="button"
+              disabled={step.done || !step.action}
+              onClick={step.action}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition",
+                step.done
+                  ? "cursor-default text-foreground/70"
+                  : "hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]",
+              )}
+            >
+              {step.done ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-trust" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              )}
+              <span
+                className={cn(
+                  "text-xs leading-snug",
+                  step.done && "line-through decoration-foreground/30",
+                )}
+              >
+                {step.label}
+              </span>
+              {!step.done && <ArrowRight className="ml-auto h-3 w-3 text-muted-foreground" />}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

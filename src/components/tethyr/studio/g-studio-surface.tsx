@@ -214,6 +214,141 @@ const SECTION_LAYOUT_OPTIONS: Array<{ value: LayoutSection["layout"]; label: str
   { value: "side_by_side", label: "Side by side" },
 ];
 
+/** Tiny SVG wireframe showing a section's column arrangement. */
+function LayoutThumbnail({ layout }: { layout: LayoutSection["layout"] }) {
+  const w = 36;
+  const h = 24;
+  const p = 2;
+  const inner = { x: p, y: p, w: w - p * 2, h: h - p * 2 };
+  const stroke = "var(--border-strong)";
+  const accent = "var(--user-accent,var(--primary))";
+  const rects: Array<{ x: number; y: number; w: number; h: number; fill?: string }> = [];
+
+  switch (layout) {
+    case "full":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w, h: inner.h });
+      break;
+    case "two_column":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w / 2 - 1, h: inner.h });
+      rects.push({ x: inner.x + inner.w / 2 + 1, y: inner.y, w: inner.w / 2 - 1, h: inner.h });
+      break;
+    case "three_column":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w / 3 - 1, h: inner.h });
+      rects.push({ x: inner.x + inner.w / 3 + 0.5, y: inner.y, w: inner.w / 3 - 1, h: inner.h });
+      rects.push({
+        x: inner.x + (inner.w / 3) * 2 + 1,
+        y: inner.y,
+        w: inner.w / 3 - 1,
+        h: inner.h,
+      });
+      break;
+    case "sidebar_left":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w * 0.3, h: inner.h });
+      rects.push({ x: inner.x + inner.w * 0.3 + 2, y: inner.y, w: inner.w * 0.7 - 2, h: inner.h });
+      break;
+    case "sidebar_right":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w * 0.7 - 2, h: inner.h });
+      rects.push({ x: inner.x + inner.w * 0.7, y: inner.y, w: inner.w * 0.3, h: inner.h });
+      break;
+    case "feature":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w * 0.65 - 1, h: inner.h, fill: accent });
+      rects.push({
+        x: inner.x + inner.w * 0.65 + 1,
+        y: inner.y,
+        w: inner.w * 0.35 - 1,
+        h: inner.h,
+      });
+      break;
+    case "side_by_side":
+      rects.push({ x: inner.x, y: inner.y, w: inner.w / 2 - 1, h: inner.h });
+      rects.push({ x: inner.x + inner.w / 2 + 1, y: inner.y, w: inner.w / 2 - 1, h: inner.h });
+      break;
+    default:
+      rects.push({ x: inner.x, y: inner.y, w: inner.w, h: inner.h });
+  }
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0">
+      {rects.map((r, i) => (
+        <rect
+          key={i}
+          x={r.x}
+          y={r.y}
+          width={r.w}
+          height={r.h}
+          rx={1.5}
+          fill={r.fill ?? "none"}
+          stroke={r.fill ? "none" : stroke}
+          strokeWidth={0.8}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Popover grid of layout thumbnails replacing the native <select>. Shows tiny
+ *  wireframe diagrams for each layout option so the creator sees what they're
+ *  choosing instead of reading abstract labels. */
+function SectionLayoutPicker({
+  value,
+  onChange,
+}: {
+  value: LayoutSection["layout"];
+  onChange: (layout: LayoutSection["layout"]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+  const current = SECTION_LAYOUT_OPTIONS.find((o) => o.value === value)?.label ?? value;
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        title="Change area layout"
+        className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)]"
+      >
+        {current}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-border bg-background p-2 shadow-lg">
+          <div className="grid grid-cols-4 gap-1.5">
+            {SECTION_LAYOUT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "group flex flex-col items-center gap-1 rounded-md border p-1.5 transition-colors",
+                  option.value === value
+                    ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
+                    : "border-transparent hover:border-border hover:bg-surface/50",
+                )}
+                title={option.label}
+              >
+                <LayoutThumbnail layout={option.value} />
+                <span className="text-[9px] leading-none text-muted-foreground group-hover:text-foreground">
+                  {option.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function GStudioSurface(props: GStudioSurfaceProps) {
   const { data: me } = useCurrentUser();
   // Customization is the whole point of this view, so the panel starts open on
@@ -1076,25 +1211,10 @@ function GSectionBand({
           <span className="font-mono text-3xs text-muted-foreground-subtle">
             {blocks.length} {blocks.length === 1 ? "block" : "blocks"}
           </span>
-          <select
-            aria-label="Area layout"
+          <SectionLayoutPicker
             value={section.layout}
-            onChange={(event) =>
-              props.onSectionLayoutChange(section.id, event.target.value as LayoutSection["layout"])
-            }
-            className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)]"
-          >
-            {!SECTION_LAYOUT_OPTIONS.some((option) => option.value === section.layout) && (
-              <option value={section.layout} disabled>
-                {section.layout}
-              </option>
-            )}
-            {SECTION_LAYOUT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(layout) => props.onSectionLayoutChange(section.id, layout)}
+          />
           <div className="ml-auto flex gap-0.5">
             <IconButton
               label="Move area up"
@@ -1478,6 +1598,275 @@ function GInspectorRail(
   );
 }
 
+/** 36×24 wireframe sketch shown next to each block in the palette. Type-level
+ *  sketches communicate what a block renders at a glance; unknown or new types
+ *  fall back to a category sketch so the palette never looks broken. */
+function BlockGlyph({ type, category }: { type: string; category: BlockCategory }) {
+  const stroke = "var(--border-strong)";
+  const accent = "var(--user-accent,var(--primary))";
+  const line = (y: number, x = 2, w = 32, h = 1.6) => (
+    <rect x={x} y={y} width={w} height={h} rx={0.8} fill="var(--border)" />
+  );
+  const chip = (y: number, x: number, w = 12, h = 4) => (
+    <rect x={x} y={y} width={w} height={h} rx={2} fill="var(--border-soft,var(--border))" />
+  );
+  const card = (x: number, y: number, w: number, h: number) => (
+    <rect
+      x={x}
+      y={y}
+      width={w}
+      height={h}
+      rx={1.5}
+      fill="var(--surface-sunken)"
+      stroke={stroke}
+      strokeWidth={0.8}
+    />
+  );
+  switch (type) {
+    case "profile-header":
+      return (
+        <>
+          <circle
+            cx={8}
+            cy={9}
+            r={5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          <rect x={16} y={4} width={18} height={2.4} rx={1.2} fill={accent} />
+          {line(9, 16, 14)}
+          {line(12.5, 16, 18)}
+          {line(16, 16, 12)}
+        </>
+      );
+    case "profile-projects":
+      return (
+        <>
+          {card(2, 3, 15, 18)}
+          {line(5.5, 5, 9)}
+          {line(9.5, 5, 9)}
+          {line(15, 5, 9)}
+          {card(19, 3, 15, 18)}
+          {line(22.5, 22, 9)}
+          {line(26.5, 22, 9)}
+        </>
+      );
+    case "profile-skills":
+      return (
+        <>
+          {chip(3, 2, 12, 5)}
+          {line(4.5, 18, 16)}
+          {chip(9.5, 2, 8, 5)}
+          {line(11, 18, 16)}
+          {chip(16, 2, 10, 5)}
+          {line(17.5, 18, 16)}
+        </>
+      );
+    case "profile-tools":
+      return (
+        <>
+          {chip(3, 2, 14, 5)}
+          {chip(10, 2, 10, 5)}
+          {chip(3, 19, 12, 5)}
+          {chip(10, 19, 12, 5)}
+          {chip(17, 19, 8, 5)}
+          {chip(20, 2, 6, 5)}
+        </>
+      );
+    case "profile-gallery":
+      return (
+        <>
+          {card(2, 2, 15, 9)}
+          {card(19, 2, 15, 9)}
+          {card(2, 13, 15, 9)}
+          {card(19, 13, 15, 9)}
+        </>
+      );
+    case "profile-experience":
+      return (
+        <>
+          <rect
+            x={8}
+            y={2}
+            width={1.4}
+            height={20}
+            rx={0.7}
+            fill="var(--border-soft,var(--border))"
+          />
+          <circle cx={8.9} cy={6} r={1.8} fill={accent} />
+          <circle
+            cx={8.9}
+            cy={12}
+            r={1.8}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          <circle
+            cx={8.9}
+            cy={18}
+            r={1.8}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          {line(5, 15, 19)}
+          {line(11, 15, 15)}
+          {line(17, 15, 17)}
+        </>
+      );
+    case "profile-achievements":
+      return (
+        <>
+          <rect
+            x={2}
+            y={3}
+            width={14}
+            height={18}
+            rx={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.8}
+          />
+          <rect x={6} y={7} width={6} height={1.6} rx={0.8} fill={accent} />
+          {line(11, 6, 6)}
+          {line(14.5, 6, 6)}
+          {line(18, 6, 6)}
+        </>
+      );
+    case "profile-direction":
+      return (
+        <>
+          <circle
+            cx={7}
+            cy={9}
+            r={5.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          <rect
+            x={10}
+            y={12}
+            width={5}
+            height={1.4}
+            rx={0.7}
+            fill="var(--border-soft,var(--border))"
+            transform="rotate(45 12.5 12.7)"
+          />
+          <rect
+            x={4.5}
+            y={6.5}
+            width={5}
+            height={1.4}
+            rx={0.7}
+            fill="var(--border-soft,var(--border))"
+            transform="rotate(45 7 7.2)"
+          />
+          <circle
+            cx={7}
+            cy={9}
+            r={1.4}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.8}
+          />
+          {line(6, 17, 17)}
+          {line(12, 17, 12)}
+          {line(18, 17, 9)}
+        </>
+      );
+    case "content-divider":
+      return (
+        <rect
+          x={2}
+          y={11}
+          width={32}
+          height={1.4}
+          rx={0.7}
+          fill="var(--border-strong,var(--border))"
+        />
+      );
+    case "content-heading":
+      return (
+        <>
+          <rect x={2} y={3} width={26} height={3} rx={1.2} fill={accent} />
+          {line(10, 2, 30)}
+          {line(14, 2, 26)}
+          {line(18, 2, 18)}
+        </>
+      );
+    case "profile-bio":
+    case "content-text":
+    case "content-markdown":
+      return (
+        <>
+          {line(4, 2, 32)}
+          {line(9, 2, 28)}
+          {line(14, 2, 32)}
+          {line(19, 2, 20)}
+        </>
+      );
+    case "profile-links":
+      return (
+        <>
+          {line(4, 9, 25)}
+          <circle
+            cx={6}
+            cy={4.8}
+            r={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          {line(9, 9, 25)}
+          <circle
+            cx={6}
+            cy={9.8}
+            r={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          {line(14, 9, 25)}
+          <circle
+            cx={6}
+            cy={14.8}
+            r={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+        </>
+      );
+    default:
+      if (category === "project" || category === "community") {
+        return (
+          <>
+            <rect x={2} y={3} width={32} height={4} rx={1.5} fill={accent} />
+            {line(11, 2, 30)}
+            {line(16, 2, 24)}
+          </>
+        );
+      }
+      return (
+        <>
+          <circle
+            cx={8}
+            cy={8}
+            r={5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          {line(17, 16, 18)}
+          {line(21, 16, 18)}
+        </>
+      );
+  }
+}
+
 function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const sections = props.layout.sections;
@@ -1537,9 +1926,12 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
             }}
             onDragEnd={() => props.onDragTypeChange(null)}
             onClick={() => props.onAdd(def.type, target)}
-            className="group/item mb-1 flex w-full cursor-grab items-start gap-2 border border-border bg-[var(--surface)] px-2 py-1.5 text-left hover:border-[var(--user-accent-border)]"
+            className="group/item mb-1 flex w-full cursor-grab items-center gap-2 border border-border bg-[var(--surface)] px-2 py-1.5 text-left hover:border-[var(--user-accent-border)]"
           >
-            <GripHorizontal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground-subtle" />
+            <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-sm border border-border/60 bg-[var(--surface-sunken)] py-0.5">
+              <BlockGlyph type={def.type} category={def.category} />
+            </span>
+            <GripHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground-subtle" />
             <span className="min-w-0">
               <span className="block text-xs font-medium text-foreground">{def.label}</span>
               <span className="block text-2xs text-muted-foreground-subtle">{def.description}</span>
@@ -1582,52 +1974,136 @@ function GBlockInspector({
         </IconButton>
       </header>
       <div className="space-y-3 py-3">
-        {(def.fields ?? []).map((field) => (
-          <label key={field.key} className="block text-xs text-muted-foreground">
-            {field.label}
-            {field.type === "toggle" ? (
-              <input
-                className="ml-2"
-                type="checkbox"
-                checked={Boolean(block.config[field.key] ?? def.defaults[field.key])}
-                onChange={(event) =>
-                  props.onUpdateBlockConfig(block.id, {
-                    ...block.config,
-                    [field.key]: event.target.checked,
-                  })
-                }
-              />
-            ) : field.type === "select" ? (
-              <select
-                className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                value={String(block.config[field.key] ?? def.defaults[field.key] ?? "")}
-                onChange={(event) =>
-                  props.onUpdateBlockConfig(block.id, {
-                    ...block.config,
-                    [field.key]: event.target.value,
-                  })
-                }
+        {(def.fields ?? []).map((field) => {
+          const value = block.config[field.key] ?? def.defaults[field.key];
+          const update = (v: unknown) =>
+            props.onUpdateBlockConfig(block.id, { ...block.config, [field.key]: v });
+
+          if (field.type === "toggle") {
+            return (
+              <label
+                key={field.key}
+                className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
               >
-                {field.options?.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <textarea
-                className="mt-1 min-h-16 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
-                value={String(block.config[field.key] ?? def.defaults[field.key] ?? "")}
-                onChange={(event) =>
-                  props.onUpdateBlockConfig(block.id, {
-                    ...block.config,
-                    [field.key]: event.target.value,
-                  })
-                }
+                {field.label}
+                <input
+                  type="checkbox"
+                  checked={Boolean(value)}
+                  onChange={(event) => update(event.target.checked)}
+                  className="h-4 w-4 rounded-sm"
+                />
+              </label>
+            );
+          }
+
+          if (field.type === "select") {
+            return (
+              <label key={field.key} className="block text-xs text-muted-foreground">
+                {field.label}
+                <select
+                  className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
+                  value={String(value ?? "")}
+                  onChange={(event) => update(event.target.value)}
+                >
+                  {field.options?.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          }
+
+          if (field.type === "range") {
+            const raw = typeof value === "number" ? value : Number(value);
+            const num = Number.isNaN(raw) ? (field.min ?? 0) : raw;
+            return (
+              <label key={field.key} className="block text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  {field.label}
+                  <span className="font-mono text-2xs text-muted-foreground">{num}</span>
+                </div>
+                <input
+                  type="range"
+                  min={field.min ?? 0}
+                  max={field.max ?? 100}
+                  step={field.step ?? 1}
+                  value={num}
+                  onChange={(event) => update(Number(event.target.value))}
+                  className="mt-1 w-full accent-[var(--user-accent,var(--primary))]"
+                />
+              </label>
+            );
+          }
+
+          if (field.type === "color") {
+            return (
+              <label
+                key={field.key}
+                className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+              >
+                {field.label}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-2xs text-muted-foreground">
+                    {String(value ?? "") || "—"}
+                  </span>
+                  <input
+                    type="color"
+                    value={String(value || "#333333")}
+                    onChange={(event) => update(event.target.value)}
+                    className="h-6 w-8 cursor-pointer rounded-sm border border-border bg-transparent p-0.5"
+                  />
+                </div>
+              </label>
+            );
+          }
+
+          if (field.type === "image") {
+            return (
+              <div key={field.key} className="text-xs text-muted-foreground">
+                <span className="mb-1 block">{field.label}</span>
+                {typeof value === "string" && value.startsWith("http") && (
+                  <div className="relative mb-1.5 overflow-hidden rounded-sm border border-border/50">
+                    <img src={value} alt="" className="h-16 w-full object-cover" />
+                  </div>
+                )}
+                <input
+                  className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
+                  placeholder={field.placeholder ?? "https://…"}
+                  value={String(value ?? "")}
+                  onChange={(event) => update(event.target.value)}
+                />
+              </div>
+            );
+          }
+
+          if (field.type === "textarea") {
+            return (
+              <label key={field.key} className="block text-xs text-muted-foreground">
+                {field.label}
+                <textarea
+                  className="mt-1 min-h-16 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
+                  value={String(value ?? "")}
+                  onChange={(event) => update(event.target.value)}
+                />
+              </label>
+            );
+          }
+
+          // text (default)
+          return (
+            <label key={field.key} className="block text-xs text-muted-foreground">
+              {field.label}
+              <input
+                className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
+                placeholder={field.placeholder}
+                value={String(value ?? "")}
+                onChange={(event) => update(event.target.value)}
               />
-            )}
-          </label>
-        ))}
+            </label>
+          );
+        })}
       </div>
       <div className="border-t border-border pt-3">
         <p className="t-label mb-2">Actions</p>
@@ -1668,6 +2144,7 @@ function GBlockInspector({
 }
 
 const ACCENT_SWATCHES = ["#3f8f8a", "#2f6fd0", "#7a4ecf", "#b4632a", "#2f7d4a", "#1f2328"];
+const STUDIO_CUSTOMIZE_ADVANCED_KEY = "studio-customize-advanced-open";
 
 function GCustomizePanel({
   config,
@@ -1699,6 +2176,21 @@ function GCustomizePanel({
   const starter = starterId
     ? (STUDIO_STARTERS.find((item) => item.id === starterId) ?? null)
     : null;
+  // Progressive disclosure: the three "feel" decisions stay on top for every
+  // visitor; fine-tuning lives under "More options" and remembers its state.
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setAdvancedOpen(window.localStorage.getItem(STUDIO_CUSTOMIZE_ADVANCED_KEY) === "open");
+  }, []);
+  const toggleAdvanced = useCallback(() => {
+    setAdvancedOpen((open) => {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(STUDIO_CUSTOMIZE_ADVANCED_KEY, open ? "closed" : "open");
+      }
+      return !open;
+    });
+  }, []);
   return (
     <aside
       className={cn(
@@ -1749,247 +2241,265 @@ function GCustomizePanel({
           ]}
           onChange={(value) => onChange({ personality: value as GStudioConfig["personality"] })}
         />
-        <Choice
-          label="Density"
-          hint="Spacing rhythm between blocks"
-          value={config.density}
-          options={[
-            ["compact", "Compact"],
-            ["comfortable", "Comfortable"],
-            ["spacious", "Spacious"],
-          ]}
-          onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
-        />
-        <Choice
-          label="Corners"
-          value={config.radius}
-          options={[
-            ["sharp", "Sharp"],
-            ["soft", "Soft"],
-          ]}
-          onChange={(value) => onChange({ radius: value as GStudioConfig["radius"] })}
-        />
-        <Choice
-          label="Accent"
-          value={config.accentMode}
-          options={[
-            ["auto", "From banner"],
-            ["custom", "Pick"],
-            ["none", "None"],
-          ]}
-          onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
-        />
-        {config.accentMode === "custom" && (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {ACCENT_SWATCHES.map((swatch) => (
-              <button
-                key={swatch}
-                type="button"
-                aria-label={`Accent ${swatch}`}
-                aria-pressed={config.accentColor.toLowerCase() === swatch}
-                onClick={() => onChange({ accentColor: swatch })}
-                className={cn(
-                  "h-6 w-6 rounded-sm border-2",
-                  config.accentColor.toLowerCase() === swatch
-                    ? "border-foreground"
-                    : "border-border",
-                )}
-                style={{ backgroundColor: swatch }}
-              />
-            ))}
-          </div>
-        )}
-        <Choice
-          label="Card borders"
-          hint="Outlines around cards and panels"
-          value={config.cardBorders}
-          options={CARD_BORDER_OPTIONS.map((o) => [o.value, o.label] as [string, string])}
-          onChange={(value) => onChange({ cardBorders: value as GStudioConfig["cardBorders"] })}
-        />
-        <Choice
-          label="Border weight"
-          hint="Control how much the card outline carries"
-          value={config.cardBorderWidth ?? "thin"}
-          options={[
-            ["thin", "Thin"],
-            ["medium", "Medium"],
-            ["thick", "Thick"],
-          ]}
-          onChange={(value) =>
-            onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-          }
-        />
-        {config.cardBorders === "custom" && (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {CARD_BORDER_SWATCHES.map((swatch) => (
-              <button
-                key={swatch}
-                type="button"
-                aria-label={`Card border ${swatch}`}
-                aria-pressed={config.cardBorderColor.toLowerCase() === swatch}
-                onClick={() => onChange({ cardBorderColor: swatch })}
-                className={cn(
-                  "h-6 w-6 rounded-sm border-2",
-                  config.cardBorderColor.toLowerCase() === swatch
-                    ? "border-foreground"
-                    : "border-border",
-                )}
-                style={{ backgroundColor: swatch }}
-              />
-            ))}
-          </div>
-        )}
-        <div className="mb-4">
-          <p className="t-label mb-1.5">Card fill</p>
-          <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-            Colour and translucency of every block surface
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {CARD_FILL_SWATCHES.map((swatch) => (
-              <button
-                key={swatch.value || "auto"}
-                type="button"
-                title={swatch.label}
-                aria-label={`Card fill ${swatch.label}`}
-                aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
-                onClick={() => onChange({ cardColor: swatch.value })}
-                className={cn(
-                  "h-6 w-6 rounded-sm border-2 text-3xs",
-                  (config.cardColor ?? "").toLowerCase() === swatch.value
-                    ? "border-foreground"
-                    : "border-border",
-                )}
-                style={
-                  swatch.value
-                    ? { backgroundColor: swatch.value }
-                    : { backgroundColor: "var(--surface-elevated)" }
-                }
-              >
-                {swatch.value ? "" : "A"}
-              </button>
-            ))}
-          </div>
-          <label className="mt-2 block">
-            <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-              Opacity <span>{config.cardOpacity}%</span>
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={config.cardOpacity}
-              onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
-              className="w-full accent-[var(--user-accent)]"
+        <button
+          type="button"
+          onClick={toggleAdvanced}
+          aria-expanded={advancedOpen}
+          className="mb-3 flex w-full items-center justify-between gap-2 border-t border-border pt-3 text-left"
+        >
+          <span className="t-label">More options</span>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
+              advancedOpen && "rotate-180",
+            )}
+          />
+        </button>
+        {advancedOpen && (
+          <>
+            <Choice
+              label="Density"
+              hint="Spacing rhythm between blocks"
+              value={config.density}
+              options={[
+                ["compact", "Compact"],
+                ["comfortable", "Comfortable"],
+                ["spacious", "Spacious"],
+              ]}
+              onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
             />
-          </label>
-        </div>
-        <div className="mb-4 border-t border-border pt-3">
-          <p className="t-label mb-1.5">Background</p>
-          {(
-            [
-              ["While editing", "appBackground"],
-              ["Public Studio", "publicBackground"],
-            ] as const
-          ).map(([label, key]) => (
-            <div key={key} className="mb-2">
-              <p className="mb-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-                {label}
-              </p>
-              <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
-                {BACKGROUND_OPTIONS.map((option) => (
+            <Choice
+              label="Corners"
+              value={config.radius}
+              options={[
+                ["sharp", "Sharp"],
+                ["soft", "Soft"],
+              ]}
+              onChange={(value) => onChange({ radius: value as GStudioConfig["radius"] })}
+            />
+            <Choice
+              label="Accent"
+              value={config.accentMode}
+              options={[
+                ["auto", "From banner"],
+                ["custom", "Pick"],
+                ["none", "None"],
+              ]}
+              onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
+            />
+            {config.accentMode === "custom" && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {ACCENT_SWATCHES.map((swatch) => (
                   <button
-                    key={option.value}
+                    key={swatch}
                     type="button"
-                    aria-pressed={config[key] === option.value}
-                    onClick={() => onChange({ [key]: option.value } as Partial<GStudioConfig>)}
+                    aria-label={`Accent ${swatch}`}
+                    aria-pressed={config.accentColor.toLowerCase() === swatch}
+                    onClick={() => onChange({ accentColor: swatch })}
                     className={cn(
-                      "rounded-sm px-1 py-1 text-2xs",
-                      config[key] === option.value
-                        ? "bg-[var(--surface-elevated)] text-foreground"
-                        : "text-muted-foreground",
+                      "h-6 w-6 rounded-sm border-2",
+                      config.accentColor.toLowerCase() === swatch
+                        ? "border-foreground"
+                        : "border-border",
                     )}
+                    style={{ backgroundColor: swatch }}
+                  />
+                ))}
+              </div>
+            )}
+            <Choice
+              label="Card borders"
+              hint="Outlines around cards and panels"
+              value={config.cardBorders}
+              options={CARD_BORDER_OPTIONS.map((o) => [o.value, o.label] as [string, string])}
+              onChange={(value) => onChange({ cardBorders: value as GStudioConfig["cardBorders"] })}
+            />
+            <Choice
+              label="Border weight"
+              hint="Control how much the card outline carries"
+              value={config.cardBorderWidth ?? "thin"}
+              options={[
+                ["thin", "Thin"],
+                ["medium", "Medium"],
+                ["thick", "Thick"],
+              ]}
+              onChange={(value) =>
+                onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+              }
+            />
+            {config.cardBorders === "custom" && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {CARD_BORDER_SWATCHES.map((swatch) => (
+                  <button
+                    key={swatch}
+                    type="button"
+                    aria-label={`Card border ${swatch}`}
+                    aria-pressed={config.cardBorderColor.toLowerCase() === swatch}
+                    onClick={() => onChange({ cardBorderColor: swatch })}
+                    className={cn(
+                      "h-6 w-6 rounded-sm border-2",
+                      config.cardBorderColor.toLowerCase() === swatch
+                        ? "border-foreground"
+                        : "border-border",
+                    )}
+                    style={{ backgroundColor: swatch }}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="mb-4">
+              <p className="t-label mb-1.5">Card fill</p>
+              <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+                Colour and translucency of every block surface
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {CARD_FILL_SWATCHES.map((swatch) => (
+                  <button
+                    key={swatch.value || "auto"}
+                    type="button"
+                    title={swatch.label}
+                    aria-label={`Card fill ${swatch.label}`}
+                    aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
+                    onClick={() => onChange({ cardColor: swatch.value })}
+                    className={cn(
+                      "h-6 w-6 rounded-sm border-2 text-3xs",
+                      (config.cardColor ?? "").toLowerCase() === swatch.value
+                        ? "border-foreground"
+                        : "border-border",
+                    )}
+                    style={
+                      swatch.value
+                        ? { backgroundColor: swatch.value }
+                        : { backgroundColor: "var(--surface-elevated)" }
+                    }
                   >
-                    {option.label}
+                    {swatch.value ? "" : "A"}
                   </button>
                 ))}
               </div>
+              <label className="mt-2 block">
+                <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+                  Opacity <span>{config.cardOpacity}%</span>
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={config.cardOpacity}
+                  onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
+                  className="w-full accent-[var(--user-accent)]"
+                />
+              </label>
             </div>
-          ))}
-        </div>
-        <div className="border-t border-border pt-3">
-          <p className="t-label mb-1.5">Content</p>
-          <ul className="space-y-2">
-            {layout.sections.map((section) => (
-              <li key={section.id}>
-                <button
-                  type="button"
-                  onClick={() => onToggleSection(section.id)}
-                  aria-label={
-                    section.visible === false
-                      ? `Show ${sectionLabel(section)}`
-                      : `Hide ${sectionLabel(section)}`
-                  }
-                  className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
-                >
-                  {section.visible === false ? (
-                    <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                  ) : (
-                    <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  )}
-                  <span
-                    className={cn(
-                      "truncate text-xs",
-                      section.visible === false
-                        ? "text-muted-foreground-subtle line-through"
-                        : "text-foreground",
-                    )}
-                  >
-                    {sectionLabel(section)}
-                  </span>
-                </button>
-                <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
-                  {section.blocks.map((block) => (
-                    <li key={block.id}>
+            <div className="mb-4 border-t border-border pt-3">
+              <p className="t-label mb-1.5">Background</p>
+              {(
+                [
+                  ["While editing", "appBackground"],
+                  ["Public Studio", "publicBackground"],
+                ] as const
+              ).map(([label, key]) => (
+                <div key={key} className="mb-2">
+                  <p className="mb-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+                    {label}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
+                    {BACKGROUND_OPTIONS.map((option) => (
                       <button
+                        key={option.value}
                         type="button"
-                        onClick={() => {
-                          onSelect(block.id);
-                          onBlockAction(block.id, { visible: block.visible === false });
-                        }}
-                        className="flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
-                      >
-                        {block.visible === false ? (
-                          <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                        ) : (
-                          <Eye className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                        aria-pressed={config[key] === option.value}
+                        onClick={() => onChange({ [key]: option.value } as Partial<GStudioConfig>)}
+                        className={cn(
+                          "rounded-sm px-1 py-1 text-2xs",
+                          config[key] === option.value
+                            ? "bg-[var(--surface-elevated)] text-foreground"
+                            : "text-muted-foreground",
                         )}
-                        <span
-                          className={cn(
-                            "truncate text-2xs",
-                            block.visible === false
-                              ? "text-muted-foreground-subtle line-through"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {getBlock(block.type)?.label ?? block.type}
-                        </span>
+                      >
+                        {option.label}
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {onCompleteProfile && (
-          <button
-            type="button"
-            onClick={onCompleteProfile}
-            className="mt-4 border-t border-border pt-3 text-left text-xs text-primary"
-          >
-            Complete your profile
-          </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-3">
+              <p className="t-label mb-1.5">Content</p>
+              <ul className="space-y-2">
+                {layout.sections.map((section) => (
+                  <li key={section.id}>
+                    <button
+                      type="button"
+                      onClick={() => onToggleSection(section.id)}
+                      aria-label={
+                        section.visible === false
+                          ? `Show ${sectionLabel(section)}`
+                          : `Hide ${sectionLabel(section)}`
+                      }
+                      className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
+                    >
+                      {section.visible === false ? (
+                        <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                      ) : (
+                        <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      )}
+                      <span
+                        className={cn(
+                          "truncate text-xs",
+                          section.visible === false
+                            ? "text-muted-foreground-subtle line-through"
+                            : "text-foreground",
+                        )}
+                      >
+                        {sectionLabel(section)}
+                      </span>
+                    </button>
+                    <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
+                      {section.blocks.map((block) => (
+                        <li key={block.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelect(block.id);
+                              onBlockAction(block.id, { visible: block.visible === false });
+                            }}
+                            className="flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
+                          >
+                            {block.visible === false ? (
+                              <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                            ) : (
+                              <Eye className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                            )}
+                            <span
+                              className={cn(
+                                "truncate text-2xs",
+                                block.visible === false
+                                  ? "text-muted-foreground-subtle line-through"
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              {getBlock(block.type)?.label ?? block.type}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {onCompleteProfile && (
+              <button
+                type="button"
+                onClick={onCompleteProfile}
+                className="mt-4 border-t border-border pt-3 text-left text-xs text-primary"
+              >
+                Complete your profile
+              </button>
+            )}
+          </>
         )}
       </div>
       <footer className="border-t border-border p-3">

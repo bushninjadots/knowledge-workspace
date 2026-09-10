@@ -294,6 +294,31 @@ export function InlineInspector({
               );
             }
 
+            if (field.type === "range") {
+              const raw = typeof value === "number" ? value : Number(value);
+              const num = Number.isNaN(raw) ? (field.min ?? 0) : raw;
+              return (
+                <div key={key} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
+                      {label}
+                    </Label>
+                    <span className="font-mono text-[11px] text-muted-foreground">{num}</span>
+                  </div>
+                  <input
+                    id={`${block.id}-${key}`}
+                    type="range"
+                    min={field.min ?? 0}
+                    max={field.max ?? 100}
+                    step={field.step ?? 1}
+                    value={num}
+                    onChange={(e) => debouncedSet(key, Number(e.target.value))}
+                    className="w-full accent-[var(--user-accent,var(--primary))]"
+                  />
+                </div>
+              );
+            }
+
             if (field.type === "image") {
               const url = stringFieldValue(key);
               const upload = async (file: File) => {
