@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -68,9 +69,12 @@ function ProfileSkillsBlock({ context, config }: BlockProps) {
   if (teach.length === 0 && learn.length === 0) {
     if (context.isEditing) {
       return (
-        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
-          Skills block — add the skills you share or are growing.
-        </div>
+        <BlockEmptyState
+          label="Skills"
+          detail="Add the skills you share or are growing."
+          actionLabel="Add your skills"
+          onAction={context.onCompleteProfile}
+        />
       );
     }
     return null;

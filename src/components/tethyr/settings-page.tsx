@@ -435,6 +435,7 @@ export function SettingsPage() {
           background={bg ?? null}
           publicBackground={publicBg ?? null}
           userId={me.userId}
+          bannerUrl={me.bannerSigned ?? null}
           onSaved={refreshUser}
         />
       )}

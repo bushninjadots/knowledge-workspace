@@ -41,14 +41,14 @@ export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | 
 export const RADIUS_MIN = 0;
 export const RADIUS_MAX = 24;
 /** Legacy "soft" treatment is the default. */
-export const DEFAULT_RADIUS = 12;
+const DEFAULT_RADIUS = 12;
 
 /**
  * Normalize a stored radius value to a px number. Numeric values are clamped to
  * the 0–24 range; legacy string treatments migrate to their closest px values
  * ("sharp" 6px, "soft"/"rounded" the default).
  */
-export function normalizeRadius(raw: unknown): number {
+function normalizeRadius(raw: unknown): number {
   if (typeof raw === "number" && Number.isFinite(raw)) {
     return Math.min(RADIUS_MAX, Math.max(RADIUS_MIN, Math.round(raw)));
   }

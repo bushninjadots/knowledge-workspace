@@ -26,6 +26,23 @@ describe("BackgroundLayer", () => {
     expect(layer.style.backgroundColor).toContain("color-mix");
   });
 
+  it("tints from the banner when the colour follows it", () => {
+    const { container } = render(
+      <BackgroundLayer
+        background={{
+          mode: "color",
+          color: null,
+          colorSource: "banner",
+          pattern: null,
+          image_url: null,
+        }}
+        bannerColor="rgb(20, 40, 60)"
+      />,
+    );
+    const layer = container.querySelector("[aria-hidden=true]") as HTMLElement;
+    expect(layer.style.backgroundColor).toContain("rgb(20, 40, 60)");
+  });
+
   it("renders the pattern layers for a pattern choice", () => {
     const { container } = render(
       <BackgroundLayer

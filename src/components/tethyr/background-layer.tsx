@@ -14,11 +14,18 @@ import {
 export function BackgroundLayer({
   background,
   imageUrl,
+  bannerColor,
 }: {
   background: ProfileBackground | null | undefined;
   imageUrl?: string | null;
+  /** Dominant colour resolved from the member's banner — used when the
+   *  background tint is set to follow the banner (`colorSource: "banner"`). */
+  bannerColor?: string | null;
 }) {
-  const style = useMemo(() => backgroundStyle(background, imageUrl), [background, imageUrl]);
+  const style = useMemo(
+    () => backgroundStyle(background, imageUrl, bannerColor),
+    [background, imageUrl, bannerColor],
+  );
   const isImage = background?.mode === "image";
 
   if (!isBackgroundActive(background) || Object.keys(style).length === 0) return null;

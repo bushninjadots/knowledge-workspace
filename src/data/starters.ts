@@ -23,7 +23,8 @@ import type {
 import type { LayoutSection, PageLayout } from "@/lib/page-blocks";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
-type SectionMarker = "identity" | "projects" | "bio" | "skills" | "gallery" | "tools" | "links";
+type SectionMarker =
+  "identity" | "projects" | "bio" | "readme" | "skills" | "gallery" | "tools" | "links";
 
 type ProfileProjectsPresentation =
   "spotlight" | "editorial-grid" | "horizontal-scroll" | "minimal-list";
@@ -59,6 +60,7 @@ const MARKER_BLOCKS: Record<SectionMarker, string[]> = {
   identity: ["profile-header"],
   projects: ["profile-projects"],
   bio: ["profile-bio"],
+  readme: ["profile-readme"],
   skills: ["profile-skills"],
   gallery: ["profile-gallery"],
   tools: ["profile-tools", "profile-experience"],
@@ -69,6 +71,7 @@ const MARKER_ORDER: SectionMarker[] = [
   "identity",
   "projects",
   "bio",
+  "readme",
   "skills",
   "gallery",
   "tools",
@@ -102,7 +105,7 @@ export const STARTERS: Starter[] = [
       publicBackground: "default",
     },
     presentation: "spotlight",
-    sectionOrder: ["projects", "identity", "bio", "skills"],
+    sectionOrder: ["projects", "identity", "bio", "readme", "skills"],
     collapsedSections: [],
     sketch: [[12], [12], [7, 5], [12]],
   },
@@ -120,7 +123,7 @@ export const STARTERS: Starter[] = [
       publicBackground: "surface",
     },
     presentation: "editorial-grid",
-    sectionOrder: ["identity", "projects", "bio", "skills", "gallery"],
+    sectionOrder: ["identity", "projects", "bio", "readme", "skills", "gallery"],
     collapsedSections: [],
     sketch: [[12], [8, 4], [12], [6, 6]],
   },
@@ -138,7 +141,7 @@ export const STARTERS: Starter[] = [
       publicBackground: "default",
     },
     presentation: "spotlight",
-    sectionOrder: ["projects", "identity", "skills", "bio"],
+    sectionOrder: ["projects", "identity", "skills", "bio", "readme"],
     collapsedSections: [],
     sketch: [[12], [6, 6], [4, 4, 4], [12]],
   },
@@ -157,7 +160,7 @@ export const STARTERS: Starter[] = [
       publicBackground: "default",
     },
     presentation: "minimal-list",
-    sectionOrder: ["identity", "projects", "bio", "links"],
+    sectionOrder: ["identity", "projects", "bio", "readme", "links"],
     collapsedSections: ["tools", "gallery"],
     sketch: [[12], [12], [12], [12]],
   },
@@ -175,7 +178,7 @@ export const STARTERS: Starter[] = [
       publicBackground: "sunken",
     },
     presentation: "horizontal-scroll",
-    sectionOrder: ["identity", "projects", "bio", "gallery"],
+    sectionOrder: ["identity", "projects", "bio", "readme", "gallery"],
     collapsedSections: [],
     sketch: [[12], [5, 7], [3, 5, 4], [7, 5]],
   },

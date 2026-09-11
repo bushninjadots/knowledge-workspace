@@ -202,6 +202,10 @@ export function PageShell({
         Record<string, string>;
       style["--content-density-gap"] = configStyle["--content-density-gap"];
       style["--content-density-padding"] = configStyle["--content-density-padding"];
+      // Card border weight is Studio-owned; apply it whatever the accent mode.
+      style["--card-border-width"] =
+        (configStyle["--card-border-width"] as string | undefined) ??
+        "var(--card-border-width, 1px)";
       // Auto follows the creator's inherited Tethyr palette; explicit accent
       // modes are page-local and should override it.
       if (page.config.accentMode !== "auto") {

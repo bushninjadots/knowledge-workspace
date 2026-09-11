@@ -6,12 +6,27 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Pencil, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  ExternalLink,
+  Monitor,
+  Pencil,
+  Smartphone,
+  Sparkles,
+  Tablet,
+  X,
+} from "lucide-react";
 import { usePage } from "@/hooks/use-page";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { CURRENT_USER_KEY, useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
+import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
+import { useUserPalette } from "@/lib/dominant-color";
 import { cn } from "@/lib/utils";
 import { normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
@@ -52,6 +67,15 @@ interface StudioViewProps {
   onCompleteProfile?: () => void;
 }
 
+type PreviewDevice = "desktop" | "tablet" | "mobile";
+
+/** iframe widths mirroring the editor's device frames (md grid = 996px). */
+const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, number | undefined> = {
+  desktop: undefined,
+  tablet: 996,
+  mobile: 390,
+};
+
 /** Tailwind span classes for each grid width (1–12). Declared as literals so
  *  Tailwind's scanner generates every variant. */
 const SPAN_CLASS: Record<number, string> = {
@@ -72,8 +96,13 @@ const SPAN_CLASS: Record<number, string> = {
 export function StudioView({ userId, profile, onBack, onCompleteProfile }: StudioViewProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const { data: me } = useCurrentUser();
+  const palette = useUserPalette(me?.bannerSigned ?? null);
+  const { data: allSkills = [] } = useSkillsCatalog();
+  const queryClient = useQueryClient();
   const createPage = useCreatePage();
   const publishPage = usePublishPage();
   const createAttempted = useRef(false);
@@ -166,6 +195,8 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     quickEdit: mode === "view",
     data: profile ? { profile } : undefined,
     onBlockEmptyChange: handleBlockEmpty,
+    onCompleteProfile,
+    onAddProject: () => setProjectDialogOpen(true),
   };
 
   if (pageQuery.isLoading) {
@@ -198,10 +229,12 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         profile={profile}
         published={page?.status === "published"}
         mode={mode}
+        device={previewDevice}
         onBack={onBack}
         onCompleteProfile={onCompleteProfile}
         onOpenEditor={() => navigate({ to: "/studio" })}
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
+        onDeviceChange={setPreviewDevice}
       />
       <StudioPublishStrip
         published={page?.status === "published"}
@@ -209,19 +242,35 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         publishing={publishPage.isPending}
         onPublish={handlePublish}
       />
+      <StudioHiddenSectionsStrip
+        count={layout?.sections.filter((section) => section.visible === false).length ?? 0}
+        onEdit={() => navigate({ to: "/studio" })}
+      />
       <main
         className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
         aria-label="Studio"
         style={CARD_SURFACE_STYLE}
       >
-        <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
+        <BackgroundLayer
+          background={me?.background}
+          imageUrl={me?.backgroundImageUrl}
+          bannerColor={palette?.dominant ?? null}
+        />
         {mode === "preview" && profile?.handle ? (
-          <iframe
-            title="Public Studio preview"
-            src={`/u/${profile.handle}?embed=1`}
-            className="h-full w-full border-0 bg-background"
-            data-studio-preview-frame
-          />
+          <div className="flex h-full w-full justify-center overflow-y-auto bg-noise">
+            <iframe
+              title="Public Studio preview"
+              src={`/u/${profile.handle}?embed=true`}
+              className="h-full w-full border-0 bg-background"
+              style={{
+                maxWidth: PREVIEW_DEVICE_WIDTHS[previewDevice],
+                borderLeft: previewDevice !== "desktop" ? "1px solid var(--border)" : undefined,
+                borderRight: previewDevice !== "desktop" ? "1px solid var(--border)" : undefined,
+              }}
+              data-studio-preview-frame
+              data-preview-device={previewDevice}
+            />
+          </div>
         ) : (
           <div className="mx-auto flex w-full items-start justify-center gap-6 px-4 pb-24 pt-6 sm:px-6">
             <div className="w-full min-w-0" style={{ maxWidth }}>
@@ -236,7 +285,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 published={page?.status === "published"}
                 isPublishing={publishPage.isPending}
                 onChooseFeel={() => navigate({ to: "/studio" })}
-                onAddProject={() => navigate({ to: "/dashboard" })}
+                onAddProject={() => setProjectDialogOpen(true)}
                 onCompleteProfile={onCompleteProfile}
                 onPublish={handlePublish}
               />
@@ -260,6 +309,15 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                         key={section.id}
                         section={section}
                         context={blockContext}
+                        onEdit={() =>
+                          navigate({
+                            to: "/studio",
+                            search: {
+                              section: section.id,
+                              block: section.blocks[0]?.id ?? undefined,
+                            },
+                          })
+                        }
                       />
                     ))}
                 </div>
@@ -275,6 +333,41 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
           </div>
         )}
       </main>
+      <ProjectDialog
+        project={null}
+        userId={userId}
+        allSkills={allSkills}
+        initialSkillIds={[]}
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+        onSaved={() => {
+          setProjectDialogOpen(false);
+          queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        }}
+      />
+    </div>
+  );
+}
+
+/** Quiet line when some areas are hidden: the creator's view shows sections the
+ *  public can't see yet, so hiding one shouldn't look like a deletion. */
+function StudioHiddenSectionsStrip({ count, onEdit }: { count: number; onEdit: () => void }) {
+  if (count === 0) return null;
+  return (
+    <div className="border-b border-border/40 bg-[var(--surface-sunken)]/60 px-4 py-1.5">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-2">
+        <p className="text-xs text-muted-foreground">
+          {count} hidden {count === 1 ? "area" : "areas"} — not visible to visitors.
+        </p>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="ml-auto inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium text-foreground transition hover:bg-[var(--surface-elevated)]"
+        >
+          <Pencil className="h-3 w-3" />
+          Edit in Customize
+        </button>
+      </div>
     </div>
   );
 }
@@ -396,18 +489,22 @@ function StudioViewTopBar({
   profile,
   published,
   mode,
+  device,
   onBack,
   onCompleteProfile,
   onOpenEditor,
   onToggleMode,
+  onDeviceChange,
 }: {
   profile: { display_name: string | null; handle: string | null } | null;
   published: boolean;
   mode: "view" | "preview";
+  device: PreviewDevice;
   onBack?: () => void;
   onCompleteProfile?: () => void;
   onOpenEditor: () => void;
   onToggleMode: () => void;
+  onDeviceChange: (device: PreviewDevice) => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
@@ -455,6 +552,51 @@ function StudioViewTopBar({
               {mode === "view" ? "View as visitor" : "Back to quick edit"}
             </span>
           </Button>
+          {mode === "preview" && (
+            <div
+              className="flex border border-border p-0.5"
+              role="radiogroup"
+              aria-label="Preview device"
+            >
+              {(
+                [
+                  ["desktop", Monitor, "Desktop preview"],
+                  ["tablet", Tablet, "Tablet preview"],
+                  ["mobile", Smartphone, "Mobile preview"],
+                ] as Array<[PreviewDevice, typeof Monitor, string]>
+              ).map(([item, Icon, label]) => (
+                <button
+                  key={item}
+                  type="button"
+                  role="radio"
+                  aria-checked={device === item}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => onDeviceChange(item)}
+                  className={cn(
+                    "flex h-6 w-7 items-center justify-center rounded-sm text-muted-foreground transition",
+                    device === item
+                      ? "border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
+                      : "border border-transparent hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
+            </div>
+          )}
+          {profile?.handle && (
+            <a
+              href={`/u/${profile.handle}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:bg-[var(--surface-sunken)] hover:text-foreground"
+              title="Open your public page"
+              aria-label="Open your public page"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
           <Button variant="default" size="sm" onClick={onOpenEditor}>
             <Pencil className="h-3 w-3" />
             Customize
@@ -468,9 +610,11 @@ function StudioViewTopBar({
 function StudioViewSection({
   section,
   context,
+  onEdit,
 }: {
   section: LayoutSection;
   context: BlockContext;
+  onEdit: () => void;
 }) {
   const blocks = section.blocks
     .slice()
@@ -482,12 +626,21 @@ function StudioViewSection({
   const gridMap = new Map((section.grid ?? []).map((item) => [item.i, item]));
 
   return (
-    <section aria-label={section.title ?? section.layout} className="relative">
+    <section aria-label={section.title ?? section.layout} className="group/section relative">
       {section.title && !/^area\s+\d+$/i.test(section.title) && (
         <header className="mb-2 flex items-center gap-2">
           <span className="h-3 w-0.5" style={{ backgroundColor: "var(--user-accent)" }} />
           <span className="t-label">{section.title}</span>
           <span className="t-rule flex-1" />
+          <button
+            type="button"
+            onClick={onEdit}
+            title="Edit this area in Customize"
+            aria-label="Edit this area in Customize"
+            className="flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground opacity-0 transition hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100 group-hover/section:opacity-100"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
         </header>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
@@ -519,7 +672,7 @@ function StudioViewBlock({
       className={SPAN_CLASS[span] ?? "md:col-span-12"}
       style={{ borderRadius: "var(--studio-radius)" }}
     >
-      <div className="relative h-full min-h-0 overflow-hidden rounded-[inherit] studio-block">
+      <div className="relative h-full min-h-0 overflow-hidden studio-block">
         <BlockRenderer
           type={block.type}
           config={block.config}

@@ -8,6 +8,12 @@ import "@/components/tethyr/blocks/register-all";
 
 export const Route = createFileRoute("/_authenticated/studio")({
   component: StudioRoute,
+  validateSearch: (search: Record<string, unknown>): { block?: string; section?: string } => ({
+    // Deep links from the Studio view: select + reveal a specific block/section.
+    block: typeof search.block === "string" && search.block.length > 0 ? search.block : undefined,
+    section:
+      typeof search.section === "string" && search.section.length > 0 ? search.section : undefined,
+  }),
   head: () => ({
     meta: [{ title: "Customize your Studio — Tethyr" }],
   }),
@@ -15,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/studio")({
 
 function StudioRoute() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const { data: me, isLoading: meLoading } = useCurrentUser();
   const { data: studioData, isLoading: dataLoading } = useQuery({
     queryKey: ["studio-profile", me?.userId],
@@ -68,6 +75,8 @@ function StudioRoute() {
       profile={studioData ?? null}
       onCompleteProfile={() => navigate({ to: "/profile" })}
       onExit={() => navigate({ to: "/profile" })}
+      initialBlockId={search.block}
+      initialSectionId={search.section}
     />
   );
 }

@@ -80,6 +80,37 @@ describe("backgroundStyle", () => {
     );
   });
 
+  it("follows the banner colour when the tint source is the banner", () => {
+    const style = backgroundStyle(
+      { mode: "color", color: null, colorSource: "banner", pattern: null, image_url: null },
+      null,
+      "rgb(20, 40, 60)",
+    );
+    expect(style.backgroundColor).toContain(
+      `color-mix(in oklab, rgb(20, 40, 60) ${BACKGROUND_DEFAULT_STRENGTH}%, var(--background))`,
+    );
+  });
+
+  it("falls back to the stored colour until the banner colour resolves", () => {
+    const style = backgroundStyle(
+      { mode: "color", color: "#38bdf8", colorSource: "banner", pattern: null, image_url: null },
+      null,
+      null,
+    );
+    expect(style.backgroundColor).toContain("#38bdf8");
+  });
+
+  it("uses the plain theme background for a banner tint with no colour to fall back on", () => {
+    const style = backgroundStyle({
+      mode: "color",
+      color: null,
+      colorSource: "banner",
+      pattern: null,
+      image_url: null,
+    });
+    expect(style.backgroundColor).toBe("var(--background)");
+  });
+
   it("clamps out-of-range strengths into the allowed band", () => {
     expect(clampStrength(5)).toBe(BACKGROUND_MIN_STRENGTH);
     expect(clampStrength(200)).toBe(BACKGROUND_MAX_STRENGTH);

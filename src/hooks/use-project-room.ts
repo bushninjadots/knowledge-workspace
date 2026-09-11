@@ -20,7 +20,7 @@ export type RoomOccupant = {
   joinedAt: number;
 };
 
-export type RoomMessage = {
+type RoomMessage = {
   id: string;
   userId: string;
   name: string;

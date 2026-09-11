@@ -137,7 +137,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
       // Query 4: Get published versions (newest first). Publicly readable via RLS.
       const { data: versionRows } = await supabasePending
         .from("page_versions")
-        .select("id, version, layout, published_at")
+        .select("id, version, layout, published_at, note")
         .eq("page_id", pageRow.id)
         .order("version", { ascending: false });
 
@@ -151,6 +151,7 @@ export function usePage({ ownerId, ownerType, includeDraft = false }: FetchPageP
           version: row.version,
           layout: { sections: parseVersionLayoutSections(row.layout as unknown) },
           publishedAt: row.published_at,
+          note: typeof row.note === "string" && row.note.length > 0 ? row.note : null,
         };
       });
 

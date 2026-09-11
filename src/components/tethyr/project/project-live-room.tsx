@@ -229,13 +229,7 @@ function LiveBadge({ isLive, count }: { isLive: boolean; count: number }) {
   );
 }
 
-function PresenceRail({
-  occupants,
-  meId,
-}: {
-  occupants: RoomOccupant[];
-  meId: string | null;
-}) {
+function PresenceRail({ occupants, meId }: { occupants: RoomOccupant[]; meId: string | null }) {
   return (
     <div className="lg:border-r lg:border-border/40 lg:pr-5">
       <div className="flex items-center gap-1.5">

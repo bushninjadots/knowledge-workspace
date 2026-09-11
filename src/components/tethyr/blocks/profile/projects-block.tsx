@@ -89,6 +89,8 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
         <BlockEmptyState
           label="Projects"
           detail="Show the work you are building with other people."
+          actionLabel="Add your first project"
+          onAction={context.onAddProject}
         />
       );
     }

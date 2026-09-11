@@ -49,7 +49,11 @@ export function AuthenticatedShell() {
       className={`relative isolate flex min-h-screen ${me?.background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={themeStyle}
     >
-      <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
+      <BackgroundLayer
+        background={me?.background}
+        imageUrl={me?.backgroundImageUrl}
+        bannerColor={palette?.dominant ?? null}
+      />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <DashboardSidebar />
       </div>

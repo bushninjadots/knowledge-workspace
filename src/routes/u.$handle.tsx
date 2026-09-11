@@ -22,6 +22,7 @@ import {
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useDominantColor } from "@/lib/dominant-color";
 
 // Block system — profile blocks via PageShell.
 import "@/components/tethyr/blocks/register-all";
@@ -34,6 +35,7 @@ type PublicProfile = {
   id: string;
   handle: string | null;
   display_name: string | null;
+  banner_url: string | null;
   background: ProfileBackground | null;
   public_background: ProfileBackground | null;
 };
@@ -41,19 +43,25 @@ type PublicProfile = {
 async function fetchPublicProfile(handle: string) {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, handle, display_name, background, public_background")
+    .select("id, handle, display_name, banner_url, background, public_background")
     .eq("handle", handle)
     .maybeSingle();
   if (error) throw error;
   if (!profile) throw notFound();
 
   const publicBg = (profile.public_background ?? profile.background) as ProfileBackground | null;
+  const [backgroundImageUrl, banner] = await Promise.all([
+    backgroundImageSignedUrl(publicBg?.mode === "image" ? publicBg.image_url : null),
+    profile.banner_url
+      ? supabase.storage.from("banners").createSignedUrl(profile.banner_url, 60 * 60 * 24)
+      : Promise.resolve({ data: null }),
+  ]);
   return {
     profile: profile as PublicProfile,
     publicBackground: publicBg ?? null,
-    backgroundImageUrl: await backgroundImageSignedUrl(
-      publicBg?.mode === "image" ? publicBg.image_url : null,
-    ),
+    backgroundImageUrl,
+    // Needed when the backdrop tint follows the banner (`colorSource: "banner"`).
+    bannerSigned: banner.data?.signedUrl ?? null,
   };
 }
 
@@ -105,6 +113,7 @@ function PublicProfileRoute() {
 
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
+  const bannerColor = useDominantColor(data?.bannerSigned ?? null);
 
   useEffect(() => {
     const profileId = data?.profile?.id;
@@ -179,6 +188,7 @@ function PublicProfileRoute() {
     <Shell
       background={data.publicBackground}
       backgroundImageUrl={data.backgroundImageUrl}
+      bannerColor={bannerColor}
       pageThemeStyle={pageThemeStyle}
       embed={embed}
     >
@@ -221,12 +231,14 @@ function Shell({
   children,
   background,
   backgroundImageUrl,
+  bannerColor,
   pageThemeStyle,
   embed,
 }: {
   children: React.ReactNode;
   background?: ProfileBackground | null;
   backgroundImageUrl?: string | null;
+  bannerColor?: string | null;
   pageThemeStyle?: React.CSSProperties;
   embed?: boolean;
 }) {
@@ -237,7 +249,11 @@ function Shell({
       className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={{ ...appearanceStyle(background), ...(pageThemeStyle ?? {}) }}
     >
-      <BackgroundLayer background={background} imageUrl={backgroundImageUrl} />
+      <BackgroundLayer
+        background={background}
+        imageUrl={backgroundImageUrl}
+        bannerColor={bannerColor}
+      />
       {!embed && (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
           <button

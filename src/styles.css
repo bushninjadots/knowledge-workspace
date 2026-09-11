@@ -105,6 +105,21 @@
   --shadow-lifted: 0 1px 3px 0 var(--shadow-tint); /* dialogs only */
 }
 
+/* Display typeface must honour the runtime --font-display variable (personality
+ * fonts on Studio surfaces) instead of the value baked in by `@theme inline`.
+ * Unlayered author CSS beats the layered Tailwind `font-display` utility. */
+.font-display {
+  font-family: var(
+    --font-display,
+    "Inter",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+}
+
 /* ---------------------------------------------------------------------------
  * Light theme — the default workspace
  * ------------------------------------------------------------------------ */

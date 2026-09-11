@@ -48,11 +48,14 @@ export function HeroEditControls({
   userId,
   identity,
   hasBanner,
+  bannerSigned,
   onChanged,
 }: {
   userId: string;
   identity: HeroIdentity;
   hasBanner: boolean;
+  /** Resolved banner URL, so the appearance editor can preview a banner-derived tint. */
+  bannerSigned?: string | null;
   onChanged?: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -226,6 +229,7 @@ export function HeroEditControls({
         background={identity.background ?? null}
         publicBackground={identity.public_background ?? null}
         userId={userId}
+        bannerUrl={bannerSigned ?? null}
         onSaved={() => {
           setAppearanceOpen(false);
           refresh();

@@ -76,6 +76,9 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const profileQuery = useCurrentUser();
   const skillsQuery = useSkillsCatalog();
+  // Resolved once at the route level so the setup form's backdrop can follow
+  // the banner colour (see `colorSource: "banner"`).
+  const setupPalette = useUserPalette(profileQuery.data?.bannerSigned ?? null);
   const refresh = profileQuery.refresh;
 
   const { github: githubParam } = useSearch({ strict: false }) as {
@@ -157,6 +160,7 @@ function ProfilePage() {
         <BackgroundLayer
           background={setupBackground}
           imageUrl={profileQuery.data.backgroundImageUrl}
+          bannerColor={setupPalette?.dominant ?? null}
         />
         {setupForm()}
       </div>
@@ -919,6 +923,7 @@ function ProfileSetupForm({
         background={background}
         publicBackground={publicBackground}
         userId={userId}
+        bannerUrl={bannerSigned}
         onSaved={() => {
           setBgOpen(false);
           onSaved();

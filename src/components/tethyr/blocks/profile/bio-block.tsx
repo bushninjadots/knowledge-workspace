@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -42,9 +43,12 @@ function ProfileBioBlock({ config, context }: BlockProps) {
   if (!hasBio) {
     if (context.isEditing) {
       return (
-        <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground">
-          Bio block — your bio will appear here once set.
-        </div>
+        <BlockEmptyState
+          label="About / Bio"
+          detail="A few lines about what you make and how people can work with you."
+          actionLabel="Write your bio"
+          onAction={context.onCompleteProfile}
+        />
       );
     }
     return null;

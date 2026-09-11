@@ -90,14 +90,21 @@ export function createDefaultProfileLayout(): PageLayout {
       {
         id: nid(),
         position: 3,
+        layout: "full",
+        title: "README",
+        blocks: [blk("profile-readme", 0)],
+      },
+      {
+        id: nid(),
+        position: 4,
         layout: "two_column",
         title: "Skills & Experience",
         blocks: [blk("profile-skills", 0), blk("profile-experience", 1)],
       },
-      { id: nid(), position: 4, layout: "full", blocks: [blk("profile-gallery", 0)] },
+      { id: nid(), position: 5, layout: "full", blocks: [blk("profile-gallery", 0)] },
       {
         id: nid(),
-        position: 5,
+        position: 6,
         layout: "two_column",
         title: "Tools & Achievements",
         blocks: [blk("profile-tools", 0), blk("profile-achievements", 1)],

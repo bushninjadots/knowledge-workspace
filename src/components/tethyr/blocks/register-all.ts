@@ -29,6 +29,7 @@ import "./profile/header-block";
 import "./profile/skills-block";
 import "./profile/projects-block";
 import "./profile/bio-block";
+import "./profile/readme-block";
 import "./profile/tools-block";
 import "./profile/links-block";
 import "./profile/experience-block";

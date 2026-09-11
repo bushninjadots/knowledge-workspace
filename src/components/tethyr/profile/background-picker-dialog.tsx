@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Ban, Check, ImagePlus, LoaderCircle, RotateCcw, Trash2 } from "lucide-react";
+import { Ban, Check, ImagePlus, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +34,7 @@ import {
   type ContentDensity,
   type ProfileBackground,
 } from "@/lib/background-themes";
+import { useDominantColor } from "@/lib/dominant-color";
 import { BannerOverlayPicker } from "./banner-overlay";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +79,7 @@ export function BackgroundPickerDialog({
   publicBackground,
   userId,
   onSaved,
+  bannerUrl,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -85,6 +87,9 @@ export function BackgroundPickerDialog({
   publicBackground: ProfileBackground | null;
   userId: string;
   onSaved: () => void;
+  /** Signed banner image URL (or custom banner URL). Lets the colour preview
+   *  follow the banner so the "From banner" swatch shows the exact tint. */
+  bannerUrl?: string | null;
 }) {
   const [tab, setTab] = useState<BgTab>("app");
   const [appDraft, setAppDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
@@ -116,16 +121,18 @@ export function BackgroundPickerDialog({
     staleTime: 60 * 60 * 1000,
   });
 
+  const bannerColor = useDominantColor(bannerUrl ?? null);
+
   const previewStyle = useMemo(() => {
     const style = {
       ...appearanceStyle(activeDraft),
-      ...backgroundStyle(activeDraft, draftImageUrl),
+      ...backgroundStyle(activeDraft, draftImageUrl, bannerColor),
     };
     // Mirror the real layer's dimming so the preview shows exactly what ships.
     return activeDraft.mode === "image"
       ? { ...style, opacity: imageOpacityFor(activeDraft.strength), filter: "saturate(0.9)" }
       : style;
-  }, [activeDraft, draftImageUrl]);
+  }, [activeDraft, draftImageUrl, bannerColor]);
 
   async function handleFiles(files: File[]) {
     const file = files[0];
@@ -569,6 +576,10 @@ export function BackgroundPickerDialog({
                 >
                   Colour
                 </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pick a tint, or follow the colour in your banner image so the backdrop keeps in
+                  step with it.
+                </p>
                 <div
                   className="mt-2 flex flex-wrap gap-2"
                   role="group"
@@ -581,8 +592,40 @@ export function BackgroundPickerDialog({
                   >
                     <Ban className="h-3.5 w-3.5 text-muted-foreground" />
                   </SwatchButton>
+                  <SwatchButton
+                    title={
+                      bannerColor
+                        ? "From your banner — follows the banner image"
+                        : "From your banner — add a banner image to see the tint"
+                    }
+                    selected={activeDraft.mode === "color" && activeDraft.colorSource === "banner"}
+                    style={
+                      bannerColor
+                        ? {
+                            backgroundColor: `color-mix(in oklab, ${bannerColor} ${clampStrength(activeDraft.strength)}%, var(--background))`,
+                          }
+                        : undefined
+                    }
+                    onClick={() =>
+                      setActiveDraft((d) => ({ ...d, mode: "color", colorSource: "banner" }))
+                    }
+                  >
+                    {activeDraft.mode === "color" && activeDraft.colorSource === "banner" ? (
+                      <Check className="h-3.5 w-3.5 text-foreground/70" />
+                    ) : (
+                      <Sparkles
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          bannerColor ? "text-foreground/70" : "text-muted-foreground",
+                        )}
+                      />
+                    )}
+                  </SwatchButton>
                   {BACKGROUND_COLORS.map((c) => {
-                    const selected = activeDraft.mode === "color" && activeDraft.color === c.color;
+                    const selected =
+                      activeDraft.colorSource !== "banner" &&
+                      activeDraft.mode === "color" &&
+                      activeDraft.color === c.color;
                     return (
                       <SwatchButton
                         key={c.id}
@@ -592,7 +635,12 @@ export function BackgroundPickerDialog({
                           backgroundColor: `color-mix(in oklab, ${c.color} ${clampStrength(activeDraft.strength)}%, var(--background))`,
                         }}
                         onClick={() =>
-                          setActiveDraft((d) => ({ ...d, mode: "color", color: c.color }))
+                          setActiveDraft((d) => ({
+                            ...d,
+                            mode: "color",
+                            color: c.color,
+                            colorSource: null,
+                          }))
                         }
                       >
                         {selected && <Check className="h-3.5 w-3.5 text-foreground/70" />}
@@ -633,10 +681,17 @@ export function BackgroundPickerDialog({
                             : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
                         )}
                         style={{
-                          ...backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id }),
+                          ...backgroundStyle(
+                            { ...activeDraft, mode: "pattern", pattern: p.id },
+                            null,
+                            bannerColor,
+                          ),
                           backgroundColor:
-                            backgroundStyle({ ...activeDraft, mode: "pattern", pattern: p.id })
-                              .backgroundColor ?? "var(--background)",
+                            backgroundStyle(
+                              { ...activeDraft, mode: "pattern", pattern: p.id },
+                              null,
+                              bannerColor,
+                            ).backgroundColor ?? "var(--background)",
                         }}
                       />
                     );

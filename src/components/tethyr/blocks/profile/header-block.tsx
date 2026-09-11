@@ -121,6 +121,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         <HeroEditControls
           userId={data.id}
           hasBanner={!!bannerSrc}
+          bannerSigned={bannerSrc}
           identity={{
             display_name: data.display_name,
             handle: data.handle,

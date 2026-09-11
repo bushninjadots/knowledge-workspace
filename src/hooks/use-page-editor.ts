@@ -48,6 +48,8 @@ interface UpdateConfigParams extends OwnerScope {
 
 interface PublishParams extends OwnerScope {
   pageId: string;
+  /** Optional changelog line persisted to the new version. */
+  note?: string;
 }
 
 interface ApplyStudioCompositionParams extends OwnerScope {
@@ -200,9 +202,10 @@ export function usePublishPage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ pageId }: PublishParams) => {
+    mutationFn: async ({ pageId, note }: PublishParams) => {
       const { error } = await supabasePending.rpc("publish_page_version", {
         _page_id: pageId,
+        _note: note?.trim() || null,
       });
       if (error) throw error;
     },

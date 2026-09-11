@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ProjectDialog } from "@/components/tethyr/profile";
+import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +29,8 @@ import {
   usePublishPage,
   useRollbackPageVersion,
 } from "@/hooks/use-page-editor";
-import { createBlockInstance } from "@/lib/block-registry";
-import type { StudioStarter } from "@/components/tethyr/studio/starter-picker";
+import { createBlockInstance, getBlock } from "@/lib/block-registry";
+import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
 import { applyStarter, starterConfig } from "@/data/starters";
 import { withCardBorderPreference, type CardBorderPreference } from "@/lib/background-themes";
 import type {
@@ -46,7 +50,12 @@ interface CreationStudioProps {
   onCompleteProfile?: () => void;
   /** Return to the Studio view (read-only) — keeps the two pages connected. */
   onExit?: () => void;
+  /** Deep link: select and reveal a specific block/section from the Studio view. */
+  initialBlockId?: string | null;
+  initialSectionId?: string | null;
 }
+
+const STUDIO_STARTER_INTRO_KEY = "studio-starter-intro-dismissed";
 
 type HistoryEntry = { layout: PageLayout; config: GStudioConfig };
 
@@ -55,6 +64,8 @@ export function CreationStudio({
   profile,
   onCompleteProfile,
   onExit,
+  initialBlockId,
+  initialSectionId,
 }: CreationStudioProps) {
   const [mode, setMode] = useState<GStudioMode>("edit");
   const [device, setDevice] = useState<GStudioDevice>("desktop");
@@ -70,7 +81,12 @@ export function CreationStudio({
   const [saving, setSaving] = useState(false);
   const [gridInteraction, setGridInteraction] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [publishNote, setPublishNote] = useState("");
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [introStarterOpen, setIntroStarterOpen] = useState(false);
   const [renameFocusId, setRenameFocusId] = useState<string | null>(null);
+  const introStarterShownRef = useRef(false);
   const pageIdRef = useRef<string | null>(null);
   const layoutRef = useRef<PageLayout | null>(null);
   const configRef = useRef<GStudioConfig | null>(null);
@@ -85,6 +101,8 @@ export function CreationStudio({
     cardBorderColor: string;
   } | null>(null);
   const { data: me, refresh: refreshMe } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const { data: allSkills = [] } = useSkillsCatalog();
 
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const createPage = useCreatePage();
@@ -138,6 +156,49 @@ export function CreationStudio({
       },
     );
   }, [createPage, page, pageQuery.isError, pageQuery.isLoading, userId]);
+
+  // First-run "choose a starting feel": when the Studio has never picked a
+  // starter, is still a draft, and this browser hasn't dismissed the prompt,
+  // open the starter picker before the default canvas so the creator decides
+  // the feel first. One show per browser — localStorage persists dismissal.
+  useEffect(() => {
+    if (!config || config.starterId) return;
+    if (page?.status === "published") return;
+    if (introStarterShownRef.current) return;
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(STUDIO_STARTER_INTRO_KEY) === "1") return;
+    introStarterShownRef.current = true;
+    setIntroStarterOpen(true);
+  }, [config, page?.status]);
+
+  // Deep link from the Studio view (?block= / ?section=): select the target
+  // block and bring its area into view once the canvas has rendered.
+  useEffect(() => {
+    if (!layout) return;
+    const sectionId = initialSectionId;
+    const blockId = initialBlockId;
+    if (!sectionId && !blockId) return;
+    const timer = window.setTimeout(() => {
+      let target = blockId;
+      const targetSection = sectionId;
+      if (!target && targetSection) {
+        const section = layout.sections.find((candidate) => candidate.id === targetSection);
+        target = section?.blocks[0]?.id ?? null;
+        if (!target && targetSection) {
+          document
+            .querySelector(`[data-section-id="${CSS.escape(targetSection)}"]`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+      if (target) setSelectedBlockId(target);
+      const sectionEl = targetSection
+        ? document.querySelector(`[data-section-id="${CSS.escape(targetSection)}"]`)
+        : null;
+      sectionEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [initialBlockId, initialSectionId, layout]);
 
   const bordersDirty = useMemo(
     () =>
@@ -702,6 +763,7 @@ export function CreationStudio({
           setSavedConfig({ ...snapshotConfig });
         }
         if (announce) toast.success("Draft saved");
+        setLastSavedAt(Date.now());
       } catch {
         if (announce) toast.error("Could not save your Studio draft");
       } finally {
@@ -759,52 +821,102 @@ export function CreationStudio({
   const exit = useCallback(() => leave(onExit), [leave, onExit]);
   const completeProfile = useCallback(() => leave(onCompleteProfile), [leave, onCompleteProfile]);
 
-  const doPublish = useCallback(async () => {
-    if (!page || !layout || !config || saving) return;
-    setSaving(true);
-    try {
-      if (dirty) {
-        const snapshotLayout = normalizeLayout(layout);
-        await applyComposition.mutateAsync({
+  const doPublish = useCallback(
+    async (note?: string) => {
+      if (!page || !layout || !config || saving) return;
+      setSaving(true);
+      try {
+        if (dirty) {
+          const snapshotLayout = normalizeLayout(layout);
+          await applyComposition.mutateAsync({
+            pageId: page.id,
+            layoutId: page.layoutId,
+            layout: {
+              ...snapshotLayout,
+              sections: snapshotLayout.sections.map((section) =>
+                !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
+              ),
+            },
+            config: toTethyrConfig(config, page.config),
+            ownerId: userId,
+            ownerType: "profile",
+          });
+          await persistBorderPreference();
+          setSavedLayout(cloneLayout(snapshotLayout));
+          setSavedConfig(cloneConfig(config));
+        }
+        await publishPage.mutateAsync({
           pageId: page.id,
-          layoutId: page.layoutId,
-          layout: {
-            ...snapshotLayout,
-            sections: snapshotLayout.sections.map((section) =>
-              !touchedGridRef.current.has(section.id) ? { ...section, grid: undefined } : section,
-            ),
-          },
-          config: toTethyrConfig(config, page.config),
           ownerId: userId,
           ownerType: "profile",
+          note,
         });
-        await persistBorderPreference();
-        setSavedLayout(cloneLayout(snapshotLayout));
-        setSavedConfig(cloneConfig(config));
+        toast.success("Studio published");
+        setLastSavedAt(Date.now());
+        setPublishNote("");
+      } catch {
+        toast.error("Could not publish your Studio");
+      } finally {
+        setSaving(false);
       }
-      await publishPage.mutateAsync({ pageId: page.id, ownerId: userId, ownerType: "profile" });
-      toast.success("Studio published");
-    } catch {
-      toast.error("Could not publish your Studio");
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    applyComposition,
-    config,
-    dirty,
-    layout,
-    page,
-    persistBorderPreference,
-    publishPage,
-    saving,
-    userId,
-  ]);
+    },
+    [
+      applyComposition,
+      config,
+      dirty,
+      layout,
+      page,
+      persistBorderPreference,
+      publishPage,
+      saving,
+      userId,
+    ],
+  );
 
   const requestPublish = useCallback(() => {
     if (!page || !layout || !config || saving) return;
+    setPublishNote("");
     setPublishConfirmOpen(true);
   }, [config, layout, page, saving]);
+
+  /** What will change for visitors when this draft goes live — shown in the
+   *  publish dialog so publishing is deliberate, not blind. */
+  const publishChanges = useMemo(() => {
+    if (!layout) return [];
+    if (!latestPublishedLayout) return ["First publish — your Studio goes live."];
+    const current = normalizeLayout(layout);
+    const previous = normalizeLayout(latestPublishedLayout);
+    const lines: string[] = [];
+    const currentSectionIds = new Set(current.sections.map((s) => s.id));
+    const previousSectionIds = new Set(previous.sections.map((s) => s.id));
+    const addedSections = current.sections.filter((s) => !previousSectionIds.has(s.id)).length;
+    const removedSections = previous.sections.filter((s) => !currentSectionIds.has(s.id)).length;
+    if (addedSections) lines.push(`Added ${addedSections} area${addedSections === 1 ? "" : "s"}`);
+    if (removedSections)
+      lines.push(`Removed ${removedSections} area${removedSections === 1 ? "" : "s"}`);
+    const blockCounts = (sections: PageLayout["sections"]) => {
+      const map = new Map<string, number>();
+      for (const section of sections) {
+        for (const block of section.blocks) {
+          const label = getBlock(block.type)?.label ?? block.type;
+          map.set(label, (map.get(label) ?? 0) + 1);
+        }
+      }
+      return map;
+    };
+    const currentBlocks = blockCounts(current.sections);
+    const previousBlocks = blockCounts(previous.sections);
+    for (const [label, count] of currentBlocks) {
+      const delta = count - (previousBlocks.get(label) ?? 0);
+      if (delta > 0) lines.push(`Added ${delta} ${label} block${delta === 1 ? "" : "s"}`);
+    }
+    for (const [label, count] of previousBlocks) {
+      const delta = count - (currentBlocks.get(label) ?? 0);
+      if (delta > 0) lines.push(`Removed ${delta} ${label} block${delta === 1 ? "" : "s"}`);
+    }
+    if (lines.length === 0) lines.push("Arrangement and appearance changes");
+    return lines.slice(0, 4);
+  }, [latestPublishedLayout, layout]);
 
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {
@@ -874,7 +986,9 @@ export function CreationStudio({
         onUndo={undo}
         onRedo={redo}
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
+        onAddProject={() => setProjectDialogOpen(true)}
         onExit={onExit ? exit : undefined}
+        lastSavedAt={lastSavedAt}
         autoRenameId={renameFocusId}
         onRenameFocusHandled={() => setRenameFocusId(null)}
         onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
@@ -888,13 +1002,37 @@ export function CreationStudio({
               arrangement, blocks, and appearance.
             </DialogDescription>
           </DialogHeader>
+          <div className="rounded-lg border border-border/60 bg-surface/50 px-3 py-2.5">
+            <p className="t-label mb-1.5">What changes</p>
+            <ul className="space-y-1">
+              {publishChanges.map((line) => (
+                <li key={line} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--user-accent,var(--primary))]" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <label className="block">
+            <span className="t-label mb-1.5 block">Note for this publish (optional)</span>
+            <Textarea
+              rows={2}
+              value={publishNote}
+              onChange={(event) => setPublishNote(event.target.value)}
+              placeholder="e.g. Reworked the projects area and added a gallery"
+              className="text-xs"
+            />
+            <span className="mt-1 block text-2xs text-muted-foreground-subtle">
+              Saved with the version — visible in your publish history.
+            </span>
+          </label>
           <DialogFooter className="gap-2 sm:justify-start">
             <Button
               variant="default"
               size="sm"
               onClick={() => {
                 setPublishConfirmOpen(false);
-                void doPublish();
+                void doPublish(publishNote);
               }}
             >
               Publish
@@ -905,6 +1043,38 @@ export function CreationStudio({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ProjectDialog
+        project={null}
+        userId={userId}
+        allSkills={allSkills}
+        initialSkillIds={[]}
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+        onSaved={() => {
+          setProjectDialogOpen(false);
+          queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        }}
+      />
+      {introStarterOpen && (
+        <StarterPicker
+          currentId={config.starterId}
+          canUndo={history.length > 0}
+          onUndo={undo}
+          onChoose={(starter) => {
+            chooseStarter(starter);
+            setIntroStarterOpen(false);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
+            }
+          }}
+          onClose={() => {
+            setIntroStarterOpen(false);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
+            }
+          }}
+        />
+      )}
     </>
   );
 }

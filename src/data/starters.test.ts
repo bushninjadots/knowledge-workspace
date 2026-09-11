@@ -44,8 +44,9 @@ describe("sectionMarker", () => {
     expect(sectionMarker(sections[0])).toBe("identity"); // profile-header
     expect(sectionMarker(sections[1])).toBe("projects"); // profile-projects
     expect(sectionMarker(sections[2])).toBe("bio"); // profile-bio
-    expect(sectionMarker(sections[3])).toBe("skills"); // profile-skills
-    expect(sectionMarker(sections[4])).toBe("gallery"); // profile-gallery
+    expect(sectionMarker(sections[3])).toBe("readme"); // profile-readme
+    expect(sectionMarker(sections[4])).toBe("skills"); // profile-skills
+    expect(sectionMarker(sections[5])).toBe("gallery"); // profile-gallery
   });
 });
 

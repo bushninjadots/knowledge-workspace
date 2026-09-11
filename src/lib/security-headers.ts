@@ -2,7 +2,7 @@ const isDevelopment = import.meta.env.DEV === true || process.env.NODE_ENV === "
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
+  "X-Frame-Options": "SAMEORIGIN",
   "X-XSS-Protection": "0",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
@@ -21,7 +21,10 @@ const SECURITY_HEADERS: Record<string, string> = {
     // *.ingest.sentry.io + regional ingest hosts: without these, CSP silently
     // blocks every Sentry envelope and error tracking is dead in production.
     "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co https://raw.githubusercontent.com https://api.github.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
-    "frame-ancestors 'none'",
+    // Same-origin framing only: the Studio View's visitor preview embeds the
+    // public page in an iframe. External embedding stays blocked, so this does
+    // not weaken clickjacking protection.
+    "frame-ancestors 'self'",
   ].join("; "),
 };
 

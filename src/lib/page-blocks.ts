@@ -59,6 +59,8 @@ export interface BlockContext {
   /** Optional profile-header completion action supplied by the profile route. */
   profileCompleteness?: number;
   onCompleteProfile?: () => void;
+  /** Optional first-project creation action (Studio editor/view only). */
+  onAddProject?: () => void;
 }
 
 /** Props every block component must accept. */
@@ -303,6 +305,8 @@ export interface PageVersion {
   /** The layout sections that were live at publish time. */
   layout: PageLayout;
   publishedAt: string;
+  /** Optional changelog line the creator attached at publish time. */
+  note?: string | null;
 }
 
 /** Row from the `pages` table (joined with layout + theme). */

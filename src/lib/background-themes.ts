@@ -12,10 +12,20 @@ export type CardBorderPreference = "accent" | "neutral" | "none" | "custom";
 export type AccentMode = "dynamic" | "custom";
 export type ContentDensity = "comfortable" | "compact";
 
+/** Where a colour background's tint comes from. */
+type BackgroundColorSource = "banner";
+
 export type ProfileBackground = {
   mode: "color" | "pattern" | "image" | "gradient" | null;
   /** Base tint color (CSS color string) used by color and pattern modes. */
   color: string | null;
+  /**
+   * When `"banner"`, the tint follows the dominant colour extracted from the
+   * member's banner image (the same source as the dynamic accent), so the
+   * backdrop restyles itself whenever the banner changes. `color` is kept as
+   * the fallback for when no banner colour can be resolved.
+   */
+  colorSource?: BackgroundColorSource | null;
   /** Pattern id from BACKGROUND_PATTERNS. */
   pattern: string | null;
   /** Gradient id from BACKGROUND_GRADIENTS (gradient mode). */
@@ -260,6 +270,7 @@ export function emptyBackground(): ProfileBackground {
   return {
     mode: null,
     color: null,
+    colorSource: null,
     pattern: null,
     gradient: null,
     image_url: null,
@@ -362,6 +373,7 @@ export function clampStrength(strength: number | null | undefined): number {
 export function backgroundStyle(
   background: ProfileBackground | null | undefined,
   imageUrl: string | null = null,
+  bannerColor: string | null = null,
 ): CSSProperties {
   if (!background?.mode) return {};
   // Strong enough to be clearly visible as a personal backdrop, but still a
@@ -369,8 +381,13 @@ export function backgroundStyle(
   // in both light and dark mode.
   const strength = clampStrength(background.strength);
   const patternPct = Math.round(strength * 0.22);
-  const base = background.color
-    ? `color-mix(in oklab, ${background.color} ${strength}%, var(--background))`
+  // `colorSource: "banner"` resolves at render time so the backdrop follows
+  // the banner image. With no banner (or before it loads) it falls back to the
+  // stored colour, then to the plain theme background.
+  const tintSource =
+    background.colorSource === "banner" ? (bannerColor ?? background.color) : background.color;
+  const base = tintSource
+    ? `color-mix(in oklab, ${tintSource} ${strength}%, var(--background))`
     : "var(--background)";
 
   switch (background.mode) {

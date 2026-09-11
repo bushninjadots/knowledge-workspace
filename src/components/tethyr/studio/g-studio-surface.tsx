@@ -46,12 +46,14 @@ import {
   type CardBorderPreference,
 } from "@/lib/background-themes";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useUserPalette } from "@/lib/dominant-color";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
 import type {
   BlockCategory,
   BlockConfig,
+  BlockContext,
   LayoutBlockInstance,
   LayoutGridItem,
   LayoutSection,
@@ -162,6 +164,11 @@ interface GStudioSurfaceProps {
   onReset: () => void;
   /** Leave customization and return to the Studio view. */
   onExit?: () => void;
+  /** Open the first-project creation dialog (used by empty block guidance). */
+  onAddProject?: () => void;
+  /** Timestamp (ms) of the last successful draft save/publish — shown as a
+   *  quiet "Saved just now" stamp in the top bar once the draft is clean. */
+  lastSavedAt?: number | null;
   /** Tracks blocks whose content is empty (preview only) so empty sections
    *  collapse like they do on the published page. */
   onBlockEmptyChange?: (blockId: string, isEmpty: boolean) => void;
@@ -184,6 +191,7 @@ const DEVICE_WIDTHS: Record<GStudioDevice, number | undefined> = {
 const BLOCK_SIZES: Record<string, [number, number, number, number]> = {
   "profile-header": [12, 4, 6, 3],
   "profile-bio": [7, 3, 3, 2],
+  "profile-readme": [8, 6, 4, 4],
   "profile-direction": [5, 3, 3, 2],
   "profile-projects": [12, 5, 4, 3],
   "profile-needs": [5, 4, 3, 2],
@@ -362,6 +370,7 @@ function SectionLayoutPicker({
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
   const { data: me } = useCurrentUser();
+  const palette = useUserPalette(me?.bannerSigned ?? null);
   // Customization is the whole point of this view, so the panel starts open on
   // desktop instead of hiding behind a toggle the owner has to discover.
   const [customizeOpen, setCustomizeOpen] = useState(
@@ -428,6 +437,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         published={props.published}
         hasUnpublishedChanges={props.hasUnpublishedChanges}
         publishedVersion={props.publishedVersion}
+        lastSavedAt={props.lastSavedAt}
         canUndo={props.canUndo}
         canRedo={props.canRedo}
         historyOpen={historyOpen}
@@ -485,7 +495,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           aria-label="Studio canvas"
           style={CARD_SURFACE_STYLE}
         >
-          <BackgroundLayer background={me?.background} imageUrl={me?.backgroundImageUrl} />
+          <BackgroundLayer
+            background={me?.background}
+            imageUrl={me?.backgroundImageUrl}
+            bannerColor={palette?.dominant ?? null}
+          />
           <div
             className="mx-auto w-full"
             style={{
@@ -545,6 +559,7 @@ function GStudioTopBar({
   published,
   hasUnpublishedChanges,
   publishedVersion,
+  lastSavedAt,
   canUndo,
   canRedo,
   historyOpen,
@@ -573,6 +588,7 @@ function GStudioTopBar({
   published: boolean;
   hasUnpublishedChanges: boolean;
   publishedVersion: number | null;
+  lastSavedAt?: number | null;
   canUndo: boolean;
   canRedo: boolean;
   historyOpen: boolean;
@@ -632,6 +648,11 @@ function GStudioTopBar({
                     ? `Live · v${publishedVersion ?? 1}`
                     : "Draft"}
           </span>
+          {lastSavedAt && !saving && !dirty && (
+            <span className="hidden font-mono text-2xs text-muted-foreground-subtle sm:inline">
+              saved {timeAgo(new Date(lastSavedAt).toISOString())}
+            </span>
+          )}
         </div>
         <div
           className="mx-auto flex rounded-sm border border-border bg-[var(--surface-sunken)] p-0.5"
@@ -811,6 +832,11 @@ function VersionPopover({
                 <span className="font-mono text-2xs text-muted-foreground-subtle">
                   v{version.version} · {timeAgo(version.publishedAt)}
                 </span>
+                {version.note && (
+                  <span className="mt-0.5 block truncate text-2xs text-muted-foreground">
+                    {version.note}
+                  </span>
+                )}
               </span>
               <Button
                 size="sm"
@@ -1475,7 +1501,9 @@ const GBlockFrame = forwardRef<
     isOwner: true,
     data: props.profile ? { profile: props.profile } : undefined,
     onBlockEmptyChange: editing ? undefined : props.onBlockEmptyChange,
-  };
+    onCompleteProfile: props.onCompleteProfile,
+    onAddProject: props.onAddProject,
+  } as BlockContext;
   // Watch the content box of an editing block and report its natural height so
   // the grid can grow the row count instead of clipping the block's content.
   useEffect(() => {
@@ -1533,7 +1561,7 @@ const GBlockFrame = forwardRef<
       <div
         ref={contentRef}
         className={cn(
-          "relative overflow-x-hidden rounded-[inherit] studio-block",
+          "relative overflow-x-hidden studio-block",
           !fluid && "h-full min-h-0 overflow-y-auto",
         )}
       >
@@ -1591,7 +1619,7 @@ const GBlockFrame = forwardRef<
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 z-10 rounded-[inherit] ring-1 ring-inset",
+          "pointer-events-none absolute inset-0 z-10 rounded-[var(--studio-radius)] ring-1 ring-inset",
           selected
             ? "ring-[var(--user-accent)]"
             : "ring-transparent group-hover/frame:ring-border-strong",

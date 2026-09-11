@@ -1,26 +1,37 @@
 # Tethyr Studio & Creator UX Improvements (2026-09-10)
 
 > **Scope:** the Studio / creator surface (Studio editor, the creator's Studio View, and the
-> public Studio) plus the block-inspector and section/palette tooling that power it. Ten
-> improvement items were proposed and implemented this session. Every item is verified:
-> `tsc --noEmit` clean, ESLint clean on changed files, and the full Vitest suite (74 files,
-> 582 tests) passing. Read alongside [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md) and
+> public Studio) plus the block-inspector and section/palette tooling that power it. Eighteen
+> improvement items were implemented across two passes this day — a first pass of ten
+> (sections 01–10) and a second pass of eight (sections 13–20), plus two fixes found while
+> verifying the second pass (section 21). Every item is verified: `tsc --noEmit` clean,
+> ESLint clean on changed files, the full Vitest suite (74 files, 587 tests) passing, and the
+> second pass additionally walked end to end in the browser on a seeded account and a fresh
+> signup. Read alongside [`TETHYR_UX_RULES.md`](./TETHYR_UX_RULES.md) and
 > [`AGENTS.md`](../AGENTS.md). This is a record of completed work, not a standing audit.
 
 ## Verdict
 
-**The creator story now leads with work, momentum, and clear next steps — without new data or new schema.**
+**The creator story now leads with work, momentum, and clear next steps — and the creator can act on all of it without leaving the Studio.**
 
 The Studio surface previously read as a generic identity card (LinkedIn header), a static
-read-only canvas (Studio View), and a flat equal-weight grid (public Studio). All three now
+read-only canvas (Studio View), and a flat equal-weight grid (public Studio). Both passes
 carry Tethyr's work-first character: the header leads with what the person is building and
-their reputation momentum; the creator's home offers one-click publish, a next-steps rail, and
-a first-session checklist; the public page has editorial chapter hierarchy; and the editor
-tooling communicates through visuals (layout thumbnails, block glyphs, real field controls)
-instead of abstract labels. No migrations were required — every change is client-side and
-reuses the existing blocks, page, and completeness systems.
+their reputation momentum; the creator's home offers one-click publish, a next-steps rail, a
+first-session checklist, device-accurate visitor preview, and hidden-area visibility; the
+public page has editorial chapter hierarchy; and the editor tooling communicates through
+visuals (layout thumbnails, block glyphs, real field controls) instead of abstract labels.
+
+The second pass closes the loop from "prompted" to "done": the first project can be created
+inside the Studio, the starting feel is a first-run moment rather than a buried control,
+publishing is deliberate (diff + changelog note), empty blocks teach with real actions, and
+the creator's view links back into the exact block to edit. Only the publish-note feature
+needed schema (one additive migration); everything else reuses the existing blocks, page, and
+completeness systems.
 
 ## Contents
+
+**Pass one — identity, hierarchy, and editing tooling**
 
 - [01 · Creator profile header](#01--creator-profile-header)
 - [02 · Studio View as the creator's home](#02--studio-view-as-the-creators-home)
@@ -32,6 +43,21 @@ reuses the existing blocks, page, and completeness systems.
 - [08 · Seamless "view as visitor"](#08--seamless-view-as-visitor)
 - [09 · Empty state simplification](#09--empty-state-simplification)
 - [10 · Block palette previews](#10--block-palette-previews)
+
+**Pass two — Studio creation, publishing, and acting on guidance**
+
+- [13 · Create your first project inside the Studio](#13--create-your-first-project-inside-the-studio)
+- [14 · First-run "choose a feel"](#14--first-run-choose-a-feel)
+- [15 · Publish diff and version notes](#15--publish-diff-and-version-notes)
+- [16 · Device parity in the visitor preview](#16--device-parity-in-the-visitor-preview)
+- [17 · Deep links into the editor](#17--deep-links-into-the-editor)
+- [18 · Autosave confirmation](#18--autosave-confirmation)
+- [19 · Hidden areas are visible to the creator](#19--hidden-areas-are-visible-to-the-creator)
+- [20 · Actionable empty states](#20--actionable-empty-states)
+- [21 · Fixes found while verifying](#21--fixes-found-while-verifying)
+
+**Reference**
+
 - [11 · Files touched](#11--files-touched)
 - [12 · Scope notes](#12--scope-notes)
 
@@ -91,10 +117,10 @@ The public Studio rendered sections in a flat equal-weight grid. The default pro
 **Changes:**
 
 - **Chapter titles in the default layout:** `Featured Work` (projects + direction), `Skills &
-  Experience`, `Tools & Achievements`. The header, About/Links, and Gallery sections
+Experience`, `Tools & Achievements`. The header, About/Links, and Gallery sections
   deliberately stay untitled because those blocks already self-label — the page never repeats
   itself.
-- **Creator view parity.** `StudioViewSection` now renders the chapter header for *any* titled
+- **Creator view parity.** `StudioViewSection` now renders the chapter header for _any_ titled
   section (with the same `area N` auto-title suppression the public renderer uses), fixing a
   leftover artifact where the creator's view printed the literal layout name (`feature`).
 
@@ -168,18 +194,139 @@ broken as the registry grows. Uses the same wireframe vocabulary as `LayoutThumb
 
 ---
 
+# Pass two — Studio creation, publishing, and acting on guidance
+
+## 13 · Create your first project inside the Studio
+
+The onboarding checklist sent new creators to `/dashboard` to add a project — a full context
+switch at the exact moment they had momentum, and the top follow-up the pass-one notes
+flagged. Creating work is the primary loop; it should not require leaving the creator's home.
+
+**Changes:**
+
+- **Reused the existing `ProjectDialog`** (`src/components/tethyr/profile/project-dialog.tsx`)
+  rather than inventing a lightweight form — same three-step Basics → Direction → Share flow,
+  same skill catalog and cover upload, same persistence.
+- **Two entry points, both in place:** the Studio View checklist's _Add your first project_
+  opens the dialog instead of navigating to the dashboard, and the editor's empty **Featured
+  Projects** block opens it from the canvas (section 20).
+- Saving invalidates `CURRENT_USER_KEY`, so the header's "currently building" hook and the
+  creator's completeness rail reflect the new project immediately; the projects block refetches
+  on its next mount.
+
+## 14 · First-run "choose a feel"
+
+The starter picker — five wireframe-previewed directions — was reachable only from the
+Customize panel's _Starting point_ control or the toolbar, i.e. after the creator had already
+met a default canvas.
+
+**Change:** a new Studio (no `starterId`, still a draft) opens the starter picker as its first
+screen, so the feel is chosen before the default arrangement is judged. One show per browser —
+dismissal (or choosing) persists under `studio-starter-intro-dismissed`, SSR-guarded, and the
+_Starting point_ control remains for later visits. Applying a starter stays non-destructive and
+one undo away.
+
+## 15 · Publish diff and version notes
+
+Publishing was a blind confirm: the creator saw a generic paragraph and had no record of what
+changed or when. Version rollback existed but versions were anonymous numbers.
+
+**Changes:**
+
+- **"What changes" summary** in the publish dialog: first publish, or the areas and blocks
+  added/removed since the last published version (counted by block label, capped at four
+  lines), with an "arrangement and appearance changes" fallback.
+- **Optional publish note** persisted with the version and shown in the version-history
+  popover next to each entry, so "Restore v3" means something.
+- **Schema (the one migration in either pass):** `page_versions.note` plus a
+  `publish_page_version(uuid, text)` **overload**. The original `publish_page_version(uuid)`
+  signature is untouched, so the RLS regression assertions that check its grants still pass;
+  the two overloads resolve unambiguously because neither declares defaults.
+
+## 16 · Device parity in the visitor preview
+
+The editor had desktop/tablet/mobile preview frames, but the Studio View's "view as visitor"
+iframe was desktop-only — the one place a creator checks the phone rendering had no phone.
+
+**Change:** the preview now carries the same desktop/tablet/mobile radio group, capping the
+iframe at the editor's frame widths (996px / 390px) with hairline edges at the frame so the
+boundary is legible against the page background. An "open your public page" icon link was
+added beside it for a real new-tab check.
+
+## 17 · Deep links into the editor
+
+The Studio View and the editor behaved as two modes: "Customize" always opened a fresh canvas
+with nothing selected, so acting on something you just spotted cost a second hunt.
+
+**Changes:**
+
+- **`/studio?section=<id>&block=<id>`** (route `validateSearch`, keys optional so every
+  existing `navigate({ to: "/studio" })` and link keeps working). The editor selects the target
+  block — opening its inspector — and scrolls the area into view once the canvas has rendered.
+- **Per-area edit affordance** in the Studio View: each titled area header reveals a pencil on
+  hover that deep-links to that area (and its first block).
+
+## 18 · Autosave confirmation
+
+Draft saves are debounced and silent, and the top-bar status pill only ever said _Saving_ or
+_Unsaved changes_ — so a clean draft looked identical to a draft that had never been touched.
+
+**Change:** once a save or publish lands and nothing is dirty, the top bar shows a quiet
+`saved just now / 12m ago` stamp beside the status pill (reusing `timeAgo`). The pill continues
+to carry the authoritative state (`Live · v1`, `Unpublished changes`, `Draft`).
+
+## 19 · Hidden areas are visible to the creator
+
+Areas can be hidden without being deleted, but the creator's own view simply omitted them —
+indistinguishable from a deletion.
+
+**Change:** a slim strip under the publish notice reports `N hidden area(s) — not visible to
+visitors` with an _Edit in Customize_ action. It renders nothing at zero, so it never adds
+chrome to a Studio with nothing hidden.
+
+## 20 · Actionable empty states
+
+The data-driven profile blocks already rendered edit-mode placeholders, but the copy was
+static ("Show the work you are building…") and the owner had to work out where the data lived.
+
+**Change:** the three work-first blocks now teach with real actions, using the existing
+`BlockEmptyState` action slot and two new `BlockContext` callbacks the canvas supplies:
+
+| Block             | Action                   | Leads to                           |
+| ----------------- | ------------------------ | ---------------------------------- |
+| Featured Projects | _Add your first project_ | in-Studio project dialog (item 13) |
+| About / Bio       | _Write your bio_         | the profile-completion flow        |
+| Skills            | _Add your skills_        | the profile-completion flow        |
+
+## 21 · Fixes found while verifying
+
+Browser verification of the second pass surfaced two real defects in the _existing_ "view as
+visitor" preview (pass-one item 08), both fixed:
+
+- **The preview iframe could never load.** The response CSP set `frame-ancestors 'none'` and
+  `X-Frame-Options: DENY`, so the app blocked _itself_ from being framed and the browser
+  showed "localhost refused to connect". Both now allow same-origin framing only
+  (`frame-ancestors 'self'` / `SAMEORIGIN`), which leaves third-party embedding blocked and so
+  does not weaken clickjacking protection.
+- **`?embed=1` triggered a search-normalization redirect** (`307` to `?embed=true`) whose
+  intermediate response produced a hydration mismatch inside the framed page. The iframe now
+  requests the canonical `?embed=true` form directly, avoiding the redirect hop and hydrating
+  cleanly.
+
+---
+
 ## 11 · Files touched
 
-| File | Items |
-| ---- | ----- |
-| `src/components/tethyr/blocks/profile/header-block.tsx` | 01 |
-| `src/components/tethyr/studio/studio-view.tsx` | 02, 05, 09 |
-| `src/components/tethyr/studio/g-studio-surface.tsx` | 03, 06, 07, 10 |
-| `src/components/tethyr/studio/inline-inspector.tsx` | 06 |
-| `src/components/tethyr/blocks/content/divider-block.tsx` | 06 |
-| `src/lib/default-layouts.ts` | 04 |
-| `src/lib/page-blocks.ts` | 06 |
-| `src/routes/u.$handle.tsx` | 08 |
+| File                                                     | Items          |
+| -------------------------------------------------------- | -------------- |
+| `src/components/tethyr/blocks/profile/header-block.tsx`  | 01             |
+| `src/components/tethyr/studio/studio-view.tsx`           | 02, 05, 09     |
+| `src/components/tethyr/studio/g-studio-surface.tsx`      | 03, 06, 07, 10 |
+| `src/components/tethyr/studio/inline-inspector.tsx`      | 06             |
+| `src/components/tethyr/blocks/content/divider-block.tsx` | 06             |
+| `src/lib/default-layouts.ts`                             | 04             |
+| `src/lib/page-blocks.ts`                                 | 06             |
+| `src/routes/u.$handle.tsx`                               | 08             |
 
 ## 12 · Scope notes
 
