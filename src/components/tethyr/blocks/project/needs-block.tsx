@@ -69,6 +69,7 @@ registerBlock({
     { key: "showNotes", label: "Show notes", type: "toggle" },
     { key: "showFilled", label: "Show filled needs", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectNeedsBlock,
 });
 export { ProjectNeedsBlock };

@@ -1930,9 +1930,11 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
   const target = props.paletteTarget ?? selectedSectionId ?? sections[0]?.id;
   const blocks = useMemo(
     () =>
-      getAllBlocks().filter((block) =>
-        `${block.label} ${block.description}`.toLowerCase().includes(query.toLowerCase()),
-      ),
+      getAllBlocks()
+        .filter((block) => block.ownerContext !== "project")
+        .filter((block) =>
+          `${block.label} ${block.description}`.toLowerCase().includes(query.toLowerCase()),
+        ),
     [query],
   );
   return (
@@ -2782,7 +2784,9 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
               </select>
             </label>
             {BLOCK_CATEGORY_ORDER.map((category) => {
-              const defs = getAllBlocks().filter((def) => def.category === category);
+              const defs = getAllBlocks().filter(
+                (def) => def.category === category && def.ownerContext !== "project",
+              );
               if (defs.length === 0) return null;
               return (
                 <div key={category}>

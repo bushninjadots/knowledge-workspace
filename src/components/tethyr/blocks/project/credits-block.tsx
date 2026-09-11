@@ -58,6 +58,7 @@ registerBlock({
   icon: "Heart",
   defaults: { showCreditText: true },
   fields: [{ key: "showCreditText", label: "Show credit descriptions", type: "toggle" }],
+  ownerContext: "project",
   component: ProjectCreditsBlock,
 });
 export { ProjectCreditsBlock };

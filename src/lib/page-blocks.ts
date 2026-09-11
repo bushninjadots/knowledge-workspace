@@ -15,6 +15,9 @@ export type BlockType = string;
 /** Category groups for the block picker and library browsing. */
 export type BlockCategory = "content" | "media" | "project" | "people" | "community" | "utility";
 
+/** The page owner context a block can render in. Omit (or "both") to allow everywhere. */
+export type BlockOwnerContext = "profile" | "project" | "both";
+
 // ---------------------------------------------------------------------------
 // Block Configuration
 // ---------------------------------------------------------------------------
@@ -96,6 +99,8 @@ export interface BlockDefinition {
   defaults: BlockConfig;
   /** Whether the block expects to control its own container (e.g. full-width hero). */
   containerless?: boolean;
+  /** Owner contexts this block can render in. Omit (or "both") to allow everywhere. */
+  ownerContext?: BlockOwnerContext;
   /**
    * Editable fields exposed in the Studio inspector.
    * Each entry generates a form control in the block inspector panel.

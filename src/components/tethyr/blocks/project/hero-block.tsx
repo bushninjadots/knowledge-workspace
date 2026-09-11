@@ -204,6 +204,7 @@ registerBlock({
     { key: "showOwner", label: "Show owner", type: "toggle" },
   ],
   containerless: true,
+  ownerContext: "project",
   component: ProjectHeroBlock,
 });
 

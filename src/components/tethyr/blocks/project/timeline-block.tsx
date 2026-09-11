@@ -86,6 +86,7 @@ registerBlock({
     { key: "showKind", label: "Show event type", type: "toggle" },
     { key: "showTimestamps", label: "Show timestamps", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectTimelineBlock,
 });
 export { ProjectTimelineBlock };

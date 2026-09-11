@@ -3,6 +3,7 @@
 // timezone, languages, a "currently building" hook, collaboration status, and
 // reputation as a tier + progress. Fetches directly from profiles table.
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Clock, Languages, Sparkles, Hammer, CheckCircle2 } from "lucide-react";
@@ -45,6 +46,7 @@ const AVAIL_META: Record<string, { label: string; dot: string }> = {
 };
 
 function ProfileHeaderBlock({ config, context }: BlockProps) {
+  const { blockId, isEditing, onBlockEmptyChange, ownerType } = context;
   const profileId = context.ownerType === "profile" ? context.ownerId : null;
 
   const { data, isLoading } = useQuery({
@@ -83,6 +85,13 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
   const { data: avatarSigned } = useSignedStorageUrl("avatars", data?.avatar_url);
   const { data: bannerSigned } = useSignedStorageUrl("banners", data?.banner_url);
+
+  // Report emptiness so the public Studio collapses the band when the
+  // profile has no identity data to show.
+  useEffect(() => {
+    if (isLoading || isEditing || !blockId || ownerType !== "profile") return;
+    onBlockEmptyChange?.(blockId, !data);
+  }, [blockId, data, isEditing, isLoading, onBlockEmptyChange, ownerType]);
 
   if (isLoading) {
     return (

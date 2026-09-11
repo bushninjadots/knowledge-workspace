@@ -72,6 +72,7 @@ registerBlock({
     { key: "showSkills", label: "Show required skills", type: "toggle" },
     { key: "showDescriptions", label: "Show descriptions", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectRolesBlock,
 });
 export { ProjectRolesBlock };

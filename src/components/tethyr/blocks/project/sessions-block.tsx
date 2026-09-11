@@ -82,6 +82,7 @@ registerBlock({
     { key: "showType", label: "Show session type", type: "toggle" },
     { key: "showDates", label: "Show dates", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectSessionsBlock,
 });
 export { ProjectSessionsBlock };

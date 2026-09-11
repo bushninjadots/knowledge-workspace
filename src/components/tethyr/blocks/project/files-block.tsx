@@ -76,6 +76,7 @@ registerBlock({
   icon: "FileText",
   defaults: { showSizes: true },
   fields: [{ key: "showSizes", label: "Show file sizes", type: "toggle" }],
+  ownerContext: "project",
   component: ProjectFilesBlock,
 });
 export { ProjectFilesBlock };

@@ -89,6 +89,7 @@ registerBlock({
     { key: "showDescriptions", label: "Show descriptions", type: "toggle" },
     { key: "showDueDates", label: "Show due dates", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectMilestonesBlock,
 });
 export { ProjectMilestonesBlock };

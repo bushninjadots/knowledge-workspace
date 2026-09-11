@@ -91,6 +91,7 @@ registerBlock({
   icon: "Camera",
   defaults: { showDescriptions: true },
   fields: [{ key: "showDescriptions", label: "Show descriptions", type: "toggle" }],
+  ownerContext: "project",
   component: ProjectEvidenceBlock,
 });
 export { ProjectEvidenceBlock };

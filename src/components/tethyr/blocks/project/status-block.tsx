@@ -134,6 +134,7 @@ registerBlock({
     { key: "showStage", label: "Show current stage", type: "toggle" },
     { key: "showTools", label: "Show tool stack", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectStatusBlock,
 });
 

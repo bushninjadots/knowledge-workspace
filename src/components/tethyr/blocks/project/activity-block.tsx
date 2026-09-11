@@ -94,6 +94,7 @@ registerBlock({
   icon: "Clock",
   defaults: { showTimestamps: true },
   fields: [{ key: "showTimestamps", label: "Show timestamps", type: "toggle" }],
+  ownerContext: "project",
   component: ProjectActivityBlock,
 });
 

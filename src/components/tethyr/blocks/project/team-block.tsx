@@ -133,6 +133,7 @@ registerBlock({
     { key: "showRoles", label: "Show roles", type: "toggle" },
     { key: "showAvatars", label: "Show avatars", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectTeamBlock,
 });
 

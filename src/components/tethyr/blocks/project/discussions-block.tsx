@@ -69,6 +69,7 @@ registerBlock({
     { key: "showPreviews", label: "Show message previews", type: "toggle" },
     { key: "showAuthors", label: "Show authors", type: "toggle" },
   ],
+  ownerContext: "project",
   component: ProjectDiscussionsBlock,
 });
 export { ProjectDiscussionsBlock };
