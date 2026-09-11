@@ -384,6 +384,11 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const [snapToBlocks, setSnapToBlocks] = useState(true);
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
     setEmptyBlocks((previous) => {
+      // Every block reports its emptiness from a mount effect, so this runs a
+      // lot. Returning `previous` when nothing changed lets React bail out of
+      // the re-render; allocating a fresh Set unconditionally would make each
+      // report a guaranteed render of the whole canvas.
+      if (previous.has(blockId) === isEmpty) return previous;
       const next = new Set(previous);
       if (isEmpty) next.add(blockId);
       else next.delete(blockId);
