@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(108);
+SELECT plan(110);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -1189,6 +1189,33 @@ SELECT is(
   has_function_privilege('authenticated', 'public.unread_message_counts()', 'EXECUTE'),
   true,
   '108. authenticated can execute unread_message_counts'
+);
+
+-- ---------------------------------------------------------------------------
+-- 15. Regression pin: team-avatars keeps its upload gate.
+--     Tests 83/84 covered banners/backgrounds, but team-avatars shared the same
+--     gate and had no test — so when 20260906100554 recreated its policies
+--     without public.is_allowed_storage_upload(), the bucket silently accepted
+--     any extension up to the 8 MB cap. 20260911130000 restored the gate; these
+--     pin it so another replay that drops it fails loudly.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: alice leads this team (section 13), so the folder check passes and
+-- only the gate can reject the upload.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('team-avatars', 'b0b0b0b0-0000-4000-8000-000000000001/logo.svg',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '109. team-avatars reject SVG'
+);
+
+-- EXPECT: a genuine crew picture still lands.
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('team-avatars', 'b0b0b0b0-0000-4000-8000-000000000001/logo.png',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  '110. team-avatars accept a valid PNG'
 );
 
 
