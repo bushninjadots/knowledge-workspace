@@ -54,6 +54,7 @@ import type {
   BlockCategory,
   BlockConfig,
   BlockContext,
+  BlockDefinition,
   LayoutBlockInstance,
   LayoutGridItem,
   LayoutSection,
@@ -1921,6 +1922,17 @@ function BlockGlyph({ type, category }: { type: string; category: BlockCategory 
   }
 }
 
+/**
+ * "About / README" (project-about) and "README" (profile-readme) both write the
+ * same `profiles.readme` document. On a studio page only one should be offered:
+ * the one already in the layout wins, the other is hidden.
+ */
+function dedupeSharedReadmeBlocks(blockType: string, usedTypes: Set<string>): boolean {
+  if (blockType === "profile-readme") return !usedTypes.has("project-about");
+  if (blockType === "project-about") return !usedTypes.has("profile-readme");
+  return true;
+}
+
 function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const sections = props.layout.sections;
@@ -1928,14 +1940,43 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
     ? findSection(props.layout, props.selectedBlockId)?.id
     : undefined;
   const target = props.paletteTarget ?? selectedSectionId ?? sections[0]?.id;
+  const usedTypes = useMemo(
+    () => new Set(sections.flatMap((s) => s.blocks.map((b) => b.type))),
+    [sections],
+  );
   const blocks = useMemo(
     () =>
       getAllBlocks()
         .filter((block) => block.ownerContext !== "project")
+        .filter((block) => dedupeSharedReadmeBlocks(block.type, usedTypes))
         .filter((block) =>
           `${block.label} ${block.description}`.toLowerCase().includes(query.toLowerCase()),
         ),
-    [query],
+    [query, usedTypes],
+  );
+  const blockItem = (def: BlockDefinition) => (
+    <button
+      key={def.type}
+      type="button"
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.setData("text/plain", def.type);
+        event.dataTransfer.effectAllowed = "copy";
+        props.onDragTypeChange(def.type);
+      }}
+      onDragEnd={() => props.onDragTypeChange(null)}
+      onClick={() => props.onAdd(def.type, target)}
+      className="group/item mb-1 flex w-full cursor-grab items-center gap-2 border border-border bg-[var(--surface)] px-2 py-1.5 text-left hover:border-[var(--user-accent-border)]"
+    >
+      <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-sm border border-border/60 bg-[var(--surface-sunken)] py-0.5">
+        <BlockGlyph type={def.type} category={def.category} />
+      </span>
+      <GripHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground-subtle" />
+      <span className="min-w-0">
+        <span className="block text-xs font-medium text-foreground">{def.label}</span>
+        <span className="block text-2xs text-muted-foreground-subtle">{def.description}</span>
+      </span>
+    </button>
   );
   return (
     <aside aria-label="Add blocks" className="flex min-h-full w-full flex-col">
@@ -1970,30 +2011,24 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
         </label>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
-        {blocks.map((def) => (
-          <button
-            key={def.type}
-            type="button"
-            draggable
-            onDragStart={(event) => {
-              event.dataTransfer.setData("text/plain", def.type);
-              event.dataTransfer.effectAllowed = "copy";
-              props.onDragTypeChange(def.type);
-            }}
-            onDragEnd={() => props.onDragTypeChange(null)}
-            onClick={() => props.onAdd(def.type, target)}
-            className="group/item mb-1 flex w-full cursor-grab items-center gap-2 border border-border bg-[var(--surface)] px-2 py-1.5 text-left hover:border-[var(--user-accent-border)]"
-          >
-            <span className="flex h-7 w-9 shrink-0 items-center justify-center rounded-sm border border-border/60 bg-[var(--surface-sunken)] py-0.5">
-              <BlockGlyph type={def.type} category={def.category} />
-            </span>
-            <GripHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground-subtle" />
-            <span className="min-w-0">
-              <span className="block text-xs font-medium text-foreground">{def.label}</span>
-              <span className="block text-2xs text-muted-foreground-subtle">{def.description}</span>
-            </span>
-          </button>
-        ))}
+        {query.trim() ? (
+          blocks.map((def) => blockItem(def))
+        ) : (
+          <>
+            {BLOCK_CATEGORY_ORDER.map((category) => {
+              const categoryBlocks = blocks.filter((b) => b.category === category);
+              if (categoryBlocks.length === 0) return null;
+              return (
+                <div key={category}>
+                  <p className="t-label mb-1 mt-3 text-2xs text-[var(--user-accent)] first:mt-0">
+                    {BLOCK_CATEGORY_LABELS[category]}
+                  </p>
+                  {categoryBlocks.map((def) => blockItem(def))}
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
     </aside>
   );
@@ -2638,6 +2673,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
   const [tab, setTab] = useState<"arrange" | "add" | "feel">("arrange");
   const [open, setOpen] = useState(true);
   const [targetArea, setTargetArea] = useState<string | undefined>(props.layout.sections[0]?.id);
+  const usedBlockTypes = new Set(props.layout.sections.flatMap((s) => s.blocks.map((b) => b.type)));
   if (!open)
     return (
       <button
@@ -2785,7 +2821,10 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
             </label>
             {BLOCK_CATEGORY_ORDER.map((category) => {
               const defs = getAllBlocks().filter(
-                (def) => def.category === category && def.ownerContext !== "project",
+                (def) =>
+                  def.category === category &&
+                  def.ownerContext !== "project" &&
+                  dedupeSharedReadmeBlocks(def.type, usedBlockTypes),
               );
               if (defs.length === 0) return null;
               return (
