@@ -45,6 +45,9 @@ const CommunitySpaces = lazy(() =>
     default: m.CommunitySpaces,
   })),
 );
+const Faq = lazy(() =>
+  import("@/components/tethyr/landing/faq").then((m) => ({ default: m.Faq })),
+);
 
 function SectionSkeleton() {
   return (
@@ -194,7 +197,7 @@ function HomePage() {
           type="button"
           onClick={scrollToContent}
           aria-label="Scroll to content"
-          className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2.5 text-muted-foreground/80 transition hover:text-foreground md:flex"
+          className="absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-muted-foreground/80 transition hover:text-foreground"
         >
           <span className="text-[11px] font-medium tracking-[0.25em] uppercase">Scroll</span>
           <span className="h-9 w-px animate-scroll-line bg-gradient-to-b from-muted-foreground/80 to-transparent" />
@@ -203,29 +206,34 @@ function HomePage() {
 
       <LandingStats />
       <main id="landing-content">
-        <SectionReveal>
+        <SectionReveal id="how-it-works">
           <Suspense fallback={<SectionSkeleton />}>
             <HowItWorks />
           </Suspense>
         </SectionReveal>
-        <SectionReveal>
+        <SectionReveal id="trending-skills">
           <Suspense fallback={<SectionSkeleton />}>
             <TrendingSkills />
           </Suspense>
         </SectionReveal>
-        <SectionReveal>
+        <SectionReveal id="featured-projects">
           <Suspense fallback={<SectionSkeleton />}>
             <FeaturedProjects />
           </Suspense>
         </SectionReveal>
-        <SectionReveal>
+        <SectionReveal id="recent-activity">
           <Suspense fallback={<SectionSkeleton />}>
             <RecentActivity />
           </Suspense>
         </SectionReveal>
-        <SectionReveal>
+        <SectionReveal id="community-spaces">
           <Suspense fallback={<SectionSkeleton />}>
             <CommunitySpaces />
+          </Suspense>
+        </SectionReveal>
+        <SectionReveal>
+          <Suspense fallback={<SectionSkeleton />}>
+            <Faq />
           </Suspense>
         </SectionReveal>
       </main>

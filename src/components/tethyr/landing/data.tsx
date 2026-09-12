@@ -21,6 +21,15 @@ export function AnimatedStat({ value }: { value: number }) {
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(media.matches);
+    // If the stat is already in the viewport on mount (e.g. above the fold),
+    // start animating immediately instead of flashing "0" until the observer fires.
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        setInView(true);
+        return;
+      }
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;

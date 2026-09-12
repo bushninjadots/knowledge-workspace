@@ -61,6 +61,39 @@ export function Footer() {
               </ul>
             </div>
           )}
+          {!isAuthed && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
+                Discover
+              </h3>
+              <ul className="space-y-2.5 text-sm">
+                <li>
+                  <a
+                    href="/#how-it-works"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    How it works
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/#featured-projects"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Featured projects
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/#community-spaces"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Community spaces
+                  </a>
+                </li>
+              </ul>
+            </div>
+          )}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground/60">
               {isAuthed ? "Connect" : "Get started"}

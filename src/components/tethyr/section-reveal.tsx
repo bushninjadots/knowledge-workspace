@@ -8,18 +8,25 @@ import { motion, useReducedMotion } from "framer-motion";
 export function SectionReveal({
   children,
   className,
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
 
   if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>;
+    return (
+      <div id={id} className={className}>
+        {children}
+      </div>
+    );
   }
 
   return (
     <motion.div
+      id={id}
       className={className}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
