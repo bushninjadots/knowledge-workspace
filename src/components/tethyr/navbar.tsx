@@ -107,48 +107,64 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             </>
           )}
         </div>
-        {!publicOnly && (
-          <div className="flex items-center gap-1 md:hidden">
-            <ThemeToggle />
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="rounded-md p-2 transition-colors hover:bg-surface md:hidden"
-              aria-label="Toggle menu"
-              aria-expanded={open}
-              aria-controls="mobile-menu"
-            >
-              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-1 md:hidden">
+          {!publicOnly && <ThemeToggle />}
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="rounded-md p-2 transition-colors hover:bg-surface md:hidden"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
-      {open && !publicOnly && (
+      {open && (
         <div
           id="mobile-menu"
           className="border-t border-border/60 bg-background/95 backdrop-blur-xl md:hidden"
         >
           <div className="flex flex-col gap-1 px-4 py-4">
-            <Link
-              to="/"
-              onClick={() => setOpen(false)}
-              className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-            >
-              Home
-            </Link>
             {publicOnly ? (
-              <div className="mt-2 flex gap-2">
-                <Button asChild variant="outline" className="flex-1">
-                  <Link to="/login" onClick={() => setOpen(false)}>
-                    Log in
-                  </Link>
-                </Button>
-                <Button asChild variant="default" className="flex-1 rounded-full">
-                  <Link to="/signup" onClick={() => setOpen(false)}>
-                    Join Tethyr
-                  </Link>
-                </Button>
-              </div>
-            ) : isAuthed ? (
+              <>
+                {[
+                  { label: "How it works", href: "/#how-it-works" },
+                  { label: "Projects", href: "/#featured-projects" },
+                  { label: "Community", href: "/#community-spaces" },
+                ].map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <div className="mt-2 flex gap-2">
+                  <Button asChild variant="outline" className="flex-1">
+                    <Link to="/login" onClick={() => setOpen(false)}>
+                      Log in
+                    </Link>
+                  </Button>
+                  <Button asChild variant="default" className="flex-1 rounded-full">
+                    <Link to="/signup" onClick={() => setOpen(false)}>
+                      Join Tethyr
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+                >
+                  Home
+                </Link>
+                {isAuthed ? (
               <div className="mt-2 space-y-2">
                 <CreateProjectButton
                   size="default"
@@ -179,6 +195,8 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                   </Link>
                 </Button>
               </div>
+            )}
+              </>
             )}
           </div>
         </div>

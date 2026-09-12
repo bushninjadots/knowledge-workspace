@@ -47,8 +47,7 @@ export function FeaturedProjects() {
   if (projects.length === 0) return null;
 
   return (
-    <section className="border-y border-border/60 bg-surface/40">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <p className="section-label mb-3">Featured projects</p>
@@ -114,7 +113,6 @@ export function FeaturedProjects() {
             );
           })}
         </div>
-      </div>
     </section>
   );
 }

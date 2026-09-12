@@ -247,6 +247,10 @@ function HomePage() {
           <section className="px-4 py-24 sm:px-6">
             <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-border/60 bg-surface p-12 text-center sm:p-20">
               <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
+              <div
+                className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full opacity-10 blur-3xl"
+                style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }}
+              />
               <div className="relative">
                 <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
                   Ready to build something together?

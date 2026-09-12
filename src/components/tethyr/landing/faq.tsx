@@ -23,7 +23,8 @@ const FAQS = [
 
 export function Faq() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
+    <section className="border-y border-border/60 bg-surface/40">
+      <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
       <div className="mb-10 text-center">
         <p className="section-label mb-3">FAQ</p>
         <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -44,6 +45,7 @@ export function Faq() {
             </div>
           </details>
         ))}
+      </div>
       </div>
     </section>
   );

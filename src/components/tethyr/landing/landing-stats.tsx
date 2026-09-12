@@ -37,7 +37,9 @@ export function LandingStats() {
   const items = allItems.filter((item) => item.value > 0);
   return (
     <section className="group border-y border-border/60 bg-surface/40">
-      <div className="marquee-viewport overflow-hidden">
+      <div className="marquee-viewport relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
         <div className="marquee-track mx-auto flex w-max animate-marquee items-center py-8 group-hover:[animation-play-state:paused]">
           {[false, true].map((duplicate) => (
             <div
