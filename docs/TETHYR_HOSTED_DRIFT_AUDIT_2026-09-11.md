@@ -206,6 +206,21 @@ skipped — good. Two things the remediation should state:
 F1 is "still fully exposed via direct URL" rather than "partially mitigated."
 This is the single highest-leverage unknown in the report.
 
+**Local state (verified 2026-09-12):** `SELECT id, public FROM storage.buckets`
+on the local database confirms `skill-proofs` is `public = false` — and so is
+every other bucket (`avatars`, `project-media`, `team-avatars`). This means
+`getPublicUrl()` returns a URL that 403s in local development, confirming the
+upload path was already broken locally. The signed-URL fix (replacing
+`getPublicUrl` with `createSignedUrl` in `skill-editing.tsx`,
+`inline-inspector.tsx`, and `badges.tsx`) resolves this. The hosted value
+remains unverified — run `supabase db query --linked "SELECT id, public FROM
+storage.buckets WHERE id = 'skill-proofs'"` to check.
+
+**Forward repair migration:**
+[`20260912130000_repair_hosted_drift_findings.sql`](../supabase/migrations/20260912130000_repair_hosted_drift_findings.sql)
+restores all F1–F4 objects on hosted. Apply it via `supabase db push` (it is
+new, so the history rows won't block it).
+
 ## Recommended follow-up
 
 No fix has been applied. The three security-relevant divergences (F1, F2, F3) need a single forward
