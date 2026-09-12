@@ -16,9 +16,34 @@
 
 ---
 
-## 3. Migration history out of sync with remote DB
+## 3. Migration history out of sync with remote DB (ACTIVE RISK)
 
-**Status:** Documented. When applying migrations via Supabase SQL Editor or `supabase db push`, ensure new migrations are applied sequentially without re-running older applied migrations.
+**Status:** Active. This failure mode has recurred twice — first documented below, then again
+on 2026-09-11 with more damage (see the
+[hosted drift audit](./TETHYR_HOSTED_DRIFT_AUDIT_2026-09-11.md)). Two migrations
+(`20260705022445`, `20260706100000`) are recorded as applied on hosted but their objects are
+absent — including the `connections_immutable` trigger and the `skill-proofs` SELECT policy.
+The root cause is out-of-order application of agent-generated migrations whose timestamps
+don't match the order they were actually pushed. See the audit's "Untrustworthy migration
+history rows" section for the specific row set that must not be trusted.
+
+**Guards now in place:**
+
+- `npm run check:migration-order` — fails CI if any migration timestamp is ≤ the preceding one
+  (prevents a new file that can never apply in order). Runs on every PR and push.
+- `npm run check:db-drift` — nightly CI job that diffs triggers, policies, and grants between
+  local and hosted, and checks the expected-objects manifest (`.audit/expected-objects.json`)
+  against both. Runs on schedule only so forked PRs never see hosted credentials.
+- `supabase/tests/hardening_invariants.sql` — extended with a SELECT-policy role-clause sweep
+  and trigger + function existence assertions.
+
+**Guidance for new migrations:** prefer additive, forward-only migrations that fail loudly
+rather than no-op'ing. Avoid `IF NOT EXISTS` / `IF EXISTS` and drop-then-recreate patterns —
+they are silently order-dependent, which is exactly how this drift went undetected.
+
+**Until resolved:** any tooling that trusts `supabase_migrations.schema_migrations` (including
+`db push`) will skip the two affected migrations. Only a new forward migration can restore
+their objects.
 
 ---
 

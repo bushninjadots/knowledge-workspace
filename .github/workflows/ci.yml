@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # Nightly at 06:00 UTC — catches hosted drift without exposing hosted
+    # credentials to forked PRs.
+    - cron: '0 6 * * *'
 
 jobs:
   verify:
@@ -22,6 +26,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      # Fail CI if any migration timestamp is ≤ the preceding one — prevents
+      # a new file that can never apply in order (drift audit root cause).
+      - run: npm run check:migration-order
       - run: npm run build
       # Fail CI if any built chunk exceeds the bundle budget (e.g. a large
       # editor/dependency leaking back into a route's initial chunk).
@@ -47,4 +54,28 @@ jobs:
       - run: supabase test db
       # Security migrations and pgTAP coverage are mandatory for every DB change.
       - run: supabase db lint
+      - run: supabase stop --no-backup
+
+  # Nightly drift check — diffs triggers, policies, and grants between the
+  # local database (what migrations produce) and the hosted database. Also
+  # checks the expected-objects manifest against both. Runs on schedule only
+  # so forked PRs never see hosted credentials.
+  db-drift:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      - run: supabase db reset
+      - name: Install psql
+        run: sudo apt-get install -y postgresql-client
+      - run: node scripts/db-drift-check.mjs
+        env:
+          DB_HOSTED_URL: ${{ secrets.SUPABASE_DB_URL }}
       - run: supabase stop --no-backup

@@ -1,0 +1,15 @@
+{
+  "_comment": "Roles whose grants are platform-managed by Supabase and should be excluded from the drift diff. anon and authenticated are intentionally KEPT — they are the security boundary. sandbox_exec is Base44 scaffolding that exists only locally. Add roles here when the drift diff shows platform noise.",
+  "ignored_grantees": [
+    "postgres",
+    "service_role",
+    "dashboard_user",
+    "supabase_admin",
+    "supabase_storage_admin",
+    "supabase_read_only_observer",
+    "supabase_replica_admin",
+    "supabase_auth_admin",
+    "supabase_functions_admin",
+    "sandbox_exec"
+  ]
+}

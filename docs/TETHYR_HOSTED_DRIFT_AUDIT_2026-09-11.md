@@ -139,7 +139,11 @@ exactly the opposite. Two effects are now proven on the hosted database:
 - **Triggers are not in these dumps.** `supabase db dump` emits no trigger DDL for either database
   (verified: the local database has 91 non-internal triggers in `public`/`storage`, the dumps
   contain zero `CREATE TRIGGER` statements). Trigger drift on the hosted database is therefore
-  **unmeasured** by this audit. F2 is inferred from the missing trigger function.
+  **unmeasured** by this audit's dump-based method. F2 is inferred from the missing trigger
+  function. **This blind spot is now closed** by `scripts/db-drift-check.mjs`, which queries
+  `pg_trigger` directly (no dump needed) and diffs the result between local and hosted. The
+  expected-objects manifest (`.audit/expected-objects.json`) also pins the `connections_immutable`
+  trigger and its function.
 - **Row data is out of scope.** `storage.buckets.public`, `file_size_limit`, and the
   `supabase_migrations` history itself are rows, not schema.
 - **The local database is a proxy** for "what migrations produce". Where the two disagree, this
@@ -149,6 +153,58 @@ exactly the opposite. Two effects are now proven on the hosted database:
 - **`sandbox_exec` grants appear local-only** (≈40 statements). That role is Base44/Freebuff
   scaffolding that exists locally; the hosted project does not have it, so those statements do not
   reproduce there. Not a finding.
+
+## Untrustworthy migration history rows
+
+The hosted `supabase_migrations.schema_migrations` table still records
+`20260705022445` and `20260706100000` as applied. Their objects are absent
+(see F2 and F1/F4). Any tooling that trusts the history — a smarter `db push`,
+a fresh clone-from-history, or the drift check script — will skip these
+migrations and never repair the objects. The forward migration
+`20260911130000_restore_clobbered_hardening.sql` repaired the objects it
+covered (connected_accounts, project-media, team-avatars) but did **not**
+address F1, F2, F3, or F4. Those remain unrepaired on hosted.
+
+Until the history rows are repaired or the objects are restored via a new
+forward migration, treat these two rows as untrustworthy:
+
+| version        | recorded | objects present on hosted                                           |
+| -------------- | -------- | ------------------------------------------------------------------- |
+| 20260705022445 | yes      | no — trigger function, trigger, tightened policy all absent         |
+| 20260706100000 | yes      | no — skill-proofs policy, four indexes absent; bucket flag unverified |
+
+This is recorded here explicitly so it is not rediscovered as a new finding
+by the next audit.
+
+## F1 — scope clarification
+
+The migration (`20260706100000`) is honest that the bucket flag was deliberately
+skipped — good. Two things the remediation should state:
+
+1. **The SELECT restriction removed enumeration, not public read.** If
+   `storage.buckets.public = true` on hosted (unverified — it is a row, not
+   schema), `getPublicUrl()` output stored as `proof_url`
+   (`src/components/tethyr/profile/skill-editing.tsx:521`) still serves to
+   anyone holding the URL. The hardening is a real improvement but narrower
+   than "world-readable — high" implies — it blocks anonymous listing, not
+   anonymous access to a known path.
+
+2. **The product decision has a clean fork:**
+   - **Private bucket + signed URLs** — touch `skill-editing.tsx:521` and
+     `studio/inline-inspector.tsx:339`, both of which call `getPublicUrl`.
+     Replace with `createSignedUrl` and a short expiry.
+   - **Keep public and drop the private intent** — accept that proof URLs
+     are shareable and document it.
+
+   Note: the audit's own evidence that every bucket is `public = false` locally
+   means the upload path is already broken locally — `getPublicUrl` on a
+   private bucket returns a URL that 403s. This may be a live bug, not just a
+   policy question.
+
+**Highest-leverage unknown:** whether `storage.buckets.public` is actually
+`true` on hosted. It is a row and outside the schema dump. If it is `true`,
+F1 is "still fully exposed via direct URL" rather than "partially mitigated."
+This is the single highest-leverage unknown in the report.
 
 ## Recommended follow-up
 
@@ -164,4 +220,22 @@ migration that re-asserts the intended state — the same shape as today's
 
 Beyond the immediate fix, two things would stop this recurring: a `db push` discipline that never
 ships files whose timestamps precede the newest applied migration, and a way to see trigger drift,
-which the current dump-based method cannot.
+which the current dump-based method cannot. Both are now implemented:
+
+- **`scripts/migration-order-check.mjs`** (`npm run check:migration-order`) — fails CI if any
+  migration timestamp is ≤ the preceding one. Runs on every PR and push.
+- **`scripts/db-drift-check.mjs`** (`npm run check:db-drift`) — diffs triggers, policies, and
+  grants between local and hosted, and checks the expected-objects manifest against both. Runs
+  as a nightly CI job (`.github/workflows/ci.yml` `db-drift`) so forked PRs never see hosted
+  credentials.
+- **`supabase/tests/hardening_invariants.sql`** — extended with a SELECT-policy role-clause
+  sweep (test 5) and trigger + function existence assertions (tests 6–7).
+
+### Replay-fragile migration patterns
+
+The root cause is out-of-order application of agent-generated migrations that guard with
+`IF NOT EXISTS` / `IF EXISTS` or drop-then-recreate a policy. These patterns are silently
+order-dependent — exactly why `20260705022445` and `20260706100000` have history rows and no
+objects. New migrations should be additive and forward-only: fail loudly rather than no-op'ing.
+`ALTER POLICY ... TO <role>` (used in `20260912120000_align_contributor_policy.sql`) is an
+example of a forward-only change that fails if the policy is absent.

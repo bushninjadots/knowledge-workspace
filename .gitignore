@@ -36,6 +36,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Drift audit schema dumps — generated, high-churn, no review value.
+# Only the expected-object manifest and diff are committed.
+.audit/*.sql
+
 # TanStack Router regenerates this from src/routes/** on every dev/build run —
 # committing it just causes perpetual, noisy diffs.
 src/routeTree.gen.ts

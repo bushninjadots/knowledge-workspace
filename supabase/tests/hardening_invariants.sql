@@ -12,6 +12,12 @@
 --     team-avatars upload policies without is_allowed_storage_upload(), leaving
 --     only the bucket size cap. Only some buckets were covered by tests, so
 --     team-avatars slipped through entirely.
+--   * 20260706100000's skill-proofs SELECT policy was missing its TO clause on
+--     hosted (drift audit F1). The sweep now covers SELECT policies on non-public
+--     buckets, not just INSERT/UPDATE.
+--   * 20260705022445's connections_immutable trigger function was absent on
+--     hosted while its migration was recorded as applied (drift audit F2). The
+--     suite pinned the trigger's behaviour but never its existence.
 --
 -- All three were restored in 20260911130000_restore_clobbered_hardening.sql.
 -- An object pin would not have caught them: the new policy carried the *same
@@ -25,7 +31,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(4);
+SELECT plan(7);
 
 -- ---------------------------------------------------------------------------
 -- 1. Every storage INSERT/UPDATE policy enforces the upload gate.
@@ -90,6 +96,64 @@ SELECT ok(
     AND has_table_privilege('service_role', 'public.connected_accounts', 'INSERT')
     AND has_table_privilege('service_role', 'public.connected_accounts', 'UPDATE'),
   'service_role retains full table access including secrets'
+);
+
+-- ---------------------------------------------------------------------------
+-- 5. No SELECT policy on a non-public storage bucket may omit TO <role>.
+--    F1 in the drift audit was a SELECT policy on the skill-proofs bucket
+--    that had no role clause — so anon could enumerate every proof object.
+--    A non-public bucket must never have a world-readable SELECT policy.
+--    polroles IS NULL means the policy applies to PUBLIC (all roles).
+-- ---------------------------------------------------------------------------
+SELECT is_empty(
+  $$
+    SELECT p.polname
+    FROM pg_policy p
+    CROSS JOIN storage.buckets b
+    WHERE p.polrelid = 'storage.objects'::regclass
+      AND p.polcmd = 'r'                       -- SELECT
+      AND b.public = false
+      AND pg_get_expr(p.polqual, p.polrelid)
+          LIKE '%bucket_id = ''' || b.id || '''%'
+      AND p.polroles IS NULL                   -- no TO clause = all roles
+  $$,
+  'no SELECT policy on a non-public bucket omits TO <role>'
+);
+
+-- ---------------------------------------------------------------------------
+-- 6. The connections immutability trigger function exists.
+--    F2 in the drift audit found the function missing on hosted while its
+--    migration was recorded as applied. The local suite pinned the trigger's
+--    behaviour (rls_regression.sql test 4) but never its existence — so the
+--    function could drift away without any test going red.
+-- ---------------------------------------------------------------------------
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE p.proname = 'trg_connections_immutable_fields'
+      AND n.nspname = 'public'
+  ),
+  'trg_connections_immutable_fields function exists in public schema'
+);
+
+-- ---------------------------------------------------------------------------
+-- 7. The connections_immutable trigger itself exists.
+--    The function can exist without the trigger being attached; both are
+--    needed for the guard to fire. Asserting separately pinpoints which is
+--    missing if the test fails.
+-- ---------------------------------------------------------------------------
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    WHERE t.tgname = 'connections_immutable'
+      AND c.relname = 'connections'
+      AND NOT t.tgisinternal
+  ),
+  'connections_immutable trigger exists on connections table'
 );
 
 SELECT * FROM finish();

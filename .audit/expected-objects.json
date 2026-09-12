@@ -1,0 +1,19 @@
+{
+  "_comment": "Critical security objects that must exist on both local and hosted. Derived from the 2026-09-11 drift audit findings F1, F2, F4. Checked by scripts/db-drift-check.mjs against both databases.",
+  "functions": [
+    { "schema": "public", "name": "trg_connections_immutable_fields" }
+  ],
+  "triggers": [
+    { "schema": "public", "table": "connections", "name": "connections_immutable" }
+  ],
+  "policies": [
+    { "schema": "public", "table": "connections", "name": "Addressee can respond" },
+    { "schema": "storage", "table": "objects", "name": "Skill proof files readable by authenticated users" }
+  ],
+  "indexes": [
+    { "schema": "public", "table": "profile_skills_teach", "name": "profile_skills_teach_profile_idx" },
+    { "schema": "public", "table": "profile_skills_learn", "name": "profile_skills_learn_profile_idx" },
+    { "schema": "public", "table": "profile_skills_wishlist", "name": "profile_skills_wishlist_profile_idx" },
+    { "schema": "public", "table": "skill_endorsements", "name": "skill_endorsements_skill_idx" }
+  ]
+}
