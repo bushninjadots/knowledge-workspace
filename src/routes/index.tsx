@@ -140,7 +140,11 @@ function HomePage() {
 
       <section className="relative overflow-hidden bg-noise">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-        <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-44 sm:px-6 sm:pt-32">
+        <div
+          className="pointer-events-none absolute -top-40 left-1/4 h-96 w-96 rounded-full opacity-20 blur-3xl"
+          style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-32 sm:px-6 sm:pt-32">
           <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground animate-stagger">

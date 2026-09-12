@@ -32,7 +32,7 @@ export function Faq() {
       </div>
       <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60 bg-surface/40">
         {FAQS.map((item) => (
-          <details key={item.q} className="group">
+          <details key={item.q} className="group open:bg-surface-elevated/20">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-sm font-medium transition hover:bg-surface-elevated/30">
               {item.q}
               <span className="mt-0.5 shrink-0 text-muted-foreground transition-transform duration-150 group-open:rotate-45">

@@ -18,7 +18,7 @@ export function SectionReveal({
 
   if (prefersReducedMotion) {
     return (
-      <div id={id} className={className}>
+      <div id={id} className={`scroll-mt-20 ${className ?? ""}`}>
         {children}
       </div>
     );
@@ -27,7 +27,7 @@ export function SectionReveal({
   return (
     <motion.div
       id={id}
-      className={className}
+      className={`scroll-mt-20 ${className ?? ""}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
