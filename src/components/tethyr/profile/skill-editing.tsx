@@ -518,8 +518,10 @@ function ProofDialog({
       .upload(path, file, { contentType: check.contentType });
     setUploading(false);
     if (upErr) return toast.error(friendlyError(upErr));
-    const { data } = supabase.storage.from("skill-proofs").getPublicUrl(path);
-    setUrl(data.publicUrl);
+    // Store the storage path, not a public URL — the skill-proofs bucket is
+    // private (public=false), so getPublicUrl would return a URL that 403s.
+    // The path is resolved to a signed URL at display time by VerificationBadge.
+    setUrl(path);
     toast.success("File uploaded");
   }
 

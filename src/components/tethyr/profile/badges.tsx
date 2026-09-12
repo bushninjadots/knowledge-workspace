@@ -2,6 +2,7 @@ import { Trophy, Check } from "lucide-react";
 import { EXPERIENCE_LABEL, VERIFICATION_LABEL, VERIFICATION_STYLE } from "./types";
 import type { SkillVerificationLevel, SkillExperienceLevel } from "@/hooks/use-current-user";
 import { safeHref } from "@/lib/validators";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 export function ExperienceBadge({ level }: { level: SkillExperienceLevel }) {
   return (
@@ -28,9 +29,22 @@ export function VerificationBadge({
       {VERIFICATION_LABEL[level]}
     </span>
   );
+  // If proofUrl is a storage path (not an HTTP URL), generate a signed URL
+  // — the skill-proofs bucket is private, so getPublicUrl would 403.
+  // If it's an HTTP URL (external link or legacy public URL), use it directly.
+  // The hook must be called unconditionally (React rules of hooks); when
+  // proofUrl is null or an HTTP URL, we pass null so it stays disabled.
+  const isHttpUrl = proofUrl ? /^https?:\/\//.test(proofUrl) : false;
+  const { data: signedUrl } = useSignedStorageUrl(
+    "skill-proofs",
+    !isHttpUrl && proofUrl ? proofUrl : null,
+  );
+
   if (level === "proof_certified" && proofUrl) {
+    const href = isHttpUrl ? proofUrl : signedUrl;
+    if (!href) return content;
     return (
-      <a href={safeHref(proofUrl)} target="_blank" rel="noreferrer" className="hover:opacity-80">
+      <a href={safeHref(href)} target="_blank" rel="noreferrer" className="hover:opacity-80">
         {content}
       </a>
     );

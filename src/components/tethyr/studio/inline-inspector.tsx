@@ -16,6 +16,7 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProfileMediaControls } from "@/components/tethyr/studio/profile-media-controls";
+import { ImageFieldPreview } from "@/components/tethyr/studio/image-field-preview";
 
 interface InlineInspectorProps {
   block: LayoutBlockInstance;
@@ -321,23 +322,28 @@ export function InlineInspector({
 
             if (field.type === "image") {
               const url = stringFieldValue(key);
+              const bucket = "project-media";
               const upload = async (file: File) => {
                 if (!ownerId) return toast.error("You must own this page to upload images.");
                 const check = validateImageFile(file);
                 if (!check.ok) return toast.error(check.error);
                 setUploading(true);
                 try {
-                  const bucket = "project-media";
-                  // Unique path per upload so the public URL changes and the
-                  // browser never serves a stale cached copy of a replaced image.
-                  const previousPath = pathFromPublicUrl(url, bucket);
+                  // Unique path per upload so a replaced image gets a fresh
+                  // path and the browser never serves a stale cached copy.
+                  // previousPath handles both legacy public URLs and new paths.
+                  const previousPath = url
+                    ? (looksLikeUrl(url) ? pathFromPublicUrl(url, bucket) : url)
+                    : null;
                   const path = `${ownerId}/block-${block.id}-${Date.now()}.${check.ext}`;
                   const { error: uploadError } = await supabase.storage
                     .from(bucket)
                     .upload(path, file, { upsert: true, contentType: check.contentType });
                   if (uploadError) throw uploadError;
-                  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-                  set(key, data.publicUrl);
+                  // Store the storage path, not a public URL — the bucket is
+                  // private, so getPublicUrl would 403. The ImageFieldPreview
+                  // component resolves the path to a signed URL at render time.
+                  set(key, path);
                   // Clean up the file we just replaced — best-effort, don't
                   // block the UI on it.
                   if (previousPath && previousPath !== path) {
@@ -355,19 +361,12 @@ export function InlineInspector({
                   <Label htmlFor={`${block.id}-${key}`} className="text-[11px] font-medium">
                     {label}
                   </Label>
-                  {looksLikeUrl(url) && (
-                    <div className="relative overflow-hidden rounded-lg border border-border/50">
-                      <img src={url} alt="" className="h-20 w-full object-cover" />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1 h-6 w-6 rounded-md bg-surface/80"
-                        aria-label="Clear image"
-                        onClick={() => set(key, "")}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
+                  {url && (
+                    <ImageFieldPreview
+                      bucket={bucket}
+                      value={url}
+                      onClear={() => set(key, "")}
+                    />
                   )}
                   <DragDropFileInput
                     accept="image/*"
