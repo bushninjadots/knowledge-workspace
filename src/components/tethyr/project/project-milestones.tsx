@@ -5,17 +5,18 @@ import type { MilestoneRow } from "@/hooks/use-projects";
 import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-projects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
-const STATUS_ICON: Record<MilestoneRow["status"], typeof Circle> = {
-  done: CheckCircle2,
-  in_progress: Clock,
-  pending: Circle,
-};
+const COLUMNS: { status: MilestoneRow["status"]; label: string; icon: typeof Circle }[] = [
+  { status: "pending", label: "Up next", icon: Circle },
+  { status: "in_progress", label: "In motion", icon: Clock },
+  { status: "done", label: "Complete", icon: CheckCircle2 },
+];
 
 const STATUS_STYLE: Record<MilestoneRow["status"], string> = {
-  done: "text-trust",
-  in_progress: "text-primary",
   pending: "text-muted-foreground",
+  in_progress: "text-primary",
+  done: "text-trust",
 };
 
 export function MilestonesTimeline({
@@ -35,8 +36,7 @@ export function MilestonesTimeline({
   const deleteMutation = useDeleteMilestone();
 
   const doneCount = milestones.filter((m) => m.status === "done").length;
-  const total = milestones.length;
-  const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+  const progress = milestones.length ? Math.round((doneCount / milestones.length) * 100) : 0;
 
   const handleAdd = async () => {
     if (!title.trim()) return;
@@ -55,19 +55,10 @@ export function MilestonesTimeline({
     }
   };
 
-  const handleToggle = async (m: MilestoneRow) => {
-    const next = m.status === "done" ? "pending" : "done";
+  const moveMilestone = async (milestone: MilestoneRow, status: MilestoneRow["status"]) => {
+    if (milestone.status === status) return;
     try {
-      await updateMutation.mutateAsync({ id: m.id, projectId, status: next });
-    } catch {
-      toast.error("Failed to update milestone");
-    }
-  };
-
-  const handleAdvance = async (m: MilestoneRow) => {
-    const next = m.status === "pending" ? "in_progress" : "done";
-    try {
-      await updateMutation.mutateAsync({ id: m.id, projectId, status: next });
+      await updateMutation.mutateAsync({ id: milestone.id, projectId, status });
     } catch {
       toast.error("Failed to update milestone");
     }
@@ -84,54 +75,53 @@ export function MilestonesTimeline({
 
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium text-foreground/80">Milestones</h3>
-          {total > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {doneCount} of {total} complete ({progress}%)
-            </p>
-          )}
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium text-foreground/80">Roadmap</h3>
+            <Badge variant="secondary" className="rounded-full text-[10px]">
+              {doneCount}/{milestones.length} complete
+            </Badge>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            A shared view of what the team is moving through next.
+          </p>
         </div>
         {isOwner && (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setShowAdd(!showAdd)}
+            onClick={() => setShowAdd((value) => !value)}
             aria-expanded={showAdd}
-            className="rounded-full"
           >
-            <Plus className="h-3 w-3" />
-            Add
+            <Plus data-icon="inline-start" />
+            Add milestone
           </Button>
         )}
       </div>
 
       {showAdd && (
-        <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
+        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-border/60 bg-background/40 p-3">
           <Input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Milestone title"
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="What are you building toward?"
             aria-label="Milestone title"
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) {
+                void handleAdd();
+              }
+            }}
           />
           <Input
             value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            placeholder="Description (optional)"
+            onChange={(event) => setDesc(event.target.value)}
+            placeholder="A little context (optional)"
             aria-label="Milestone description"
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
           <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleAdd}
-              busy={createMutation.isPending}
-              disabled={!title.trim()}
-            >
+            <Button type="button" size="sm" onClick={() => void handleAdd()} disabled={!title.trim() || createMutation.isPending}>
               Save milestone
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => setShowAdd(false)}>
@@ -141,77 +131,70 @@ export function MilestonesTimeline({
         </div>
       )}
 
-      {total > 0 && (
-        <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
-          <div
-            className="h-full rounded-full bg-foreground transition-[width]"
-            style={{ width: `${progress}%` }}
-          />
+      {milestones.length > 0 && (
+        <div className="mt-4 flex items-center gap-3">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated" aria-label={`${progress}% complete`}>
+            <div className="h-full rounded-full bg-foreground transition-[width]" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="text-xs tabular-nums text-muted-foreground">{progress}%</span>
         </div>
       )}
 
       {milestones.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No milestones yet.</p>
+        <div className="mt-5 rounded-lg border border-dashed border-border/70 px-4 py-8 text-center">
+          <p className="text-sm text-muted-foreground">No milestones yet.</p>
+          {isOwner && <p className="mt-1 text-xs text-muted-foreground">Add the first marker for the team&apos;s next move.</p>}
+        </div>
       ) : (
-        <div className="space-y-3">
-          {milestones.map((m) => {
-            const Icon = STATUS_ICON[m.status];
+        <div className="mt-5 grid gap-3 lg:grid-cols-3" aria-label="Project roadmap board">
+          {COLUMNS.map(({ status, label, icon: Icon }) => {
+            const items = milestones.filter((milestone) => milestone.status === status);
             return (
-              <div key={m.id} className="flex items-start gap-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => isOwner && handleToggle(m)}
-                  disabled={!isOwner || updateMutation.isPending}
-                  aria-label={`${m.status === "done" ? "Reopen" : "Complete"} milestone ${m.title}`}
-                  className={`mt-0.5 h-6 w-6 shrink-0 ${STATUS_STYLE[m.status]} ${isOwner ? "hover:opacity-70" : ""}`}
-                >
-                  <Icon className="h-4 w-4" />
-                </Button>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={`text-sm ${m.status === "done" ? "text-muted-foreground line-through" : ""}`}
-                  >
-                    {m.title}
-                  </p>
-                  {m.description && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{m.description}</p>
-                  )}
-                  {m.due_date && (
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      Due {new Date(m.due_date).toLocaleDateString()}
-                    </p>
+              <section key={status} aria-labelledby={`roadmap-${status}`} className="min-h-44 rounded-lg bg-background/45 p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className={`h-4 w-4 ${STATUS_STYLE[status]}`} />
+                    <h4 id={`roadmap-${status}`} className="text-sm font-medium">{label}</h4>
+                  </div>
+                  <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
+                </div>
+                <div className="mt-3 flex flex-col gap-2">
+                  {items.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-muted-foreground">Nothing here yet.</p>
+                  ) : (
+                    items.map((milestone) => (
+                      <article key={milestone.id} className="rounded-lg border border-border/60 bg-surface-elevated/35 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h5 className={`text-sm ${status === "done" ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                              {milestone.title}
+                            </h5>
+                            {milestone.description && <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{milestone.description}</p>}
+                            {milestone.due_date && <p className="mt-2 text-[11px] text-muted-foreground">Due {new Date(milestone.due_date).toLocaleDateString()}</p>}
+                          </div>
+                          {isOwner && (
+                            <Button type="button" size="icon" variant="ghost" className="size-7 shrink-0" onClick={() => void handleDelete(milestone.id)} disabled={deleteMutation.isPending} aria-label={`Delete milestone ${milestone.title}`}>
+                              <Trash2 data-icon="inline-start" />
+                            </Button>
+                          )}
+                        </div>
+                        {isOwner && (
+                          <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2">
+                            <span className="text-[11px] text-muted-foreground">Move to</span>
+                            <div className="flex gap-1">
+                              {COLUMNS.filter((column) => column.status !== status).map((column) => (
+                                <Button key={column.status} type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => void moveMilestone(milestone, column.status)} disabled={updateMutation.isPending}>
+                                  {column.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    ))
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  {isOwner && m.status !== "done" && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleAdvance(m)}
-                      busy={updateMutation.isPending}
-                      className="h-7 px-2 text-[11px] text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
-                    >
-                      {m.status === "pending" ? "Start" : "Complete"}
-                    </Button>
-                  )}
-                  {isOwner && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDelete(m.id)}
-                      busy={deleteMutation.isPending}
-                      aria-label={`Delete milestone ${m.title}`}
-                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+              </section>
             );
           })}
         </div>
@@ -219,3 +202,6 @@ export function MilestonesTimeline({
     </div>
   );
 }
+
+export const ProjectMilestones = MilestonesTimeline;
+export const MilestoneBoard = MilestonesTimeline;
