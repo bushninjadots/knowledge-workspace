@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CheckCircle2, Circle, Clock, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CheckCircle2, Circle, Clock, ListFilter, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { MilestoneRow } from "@/hooks/use-projects";
 import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-projects";
@@ -29,6 +29,7 @@ export function MilestonesTimeline({
   isOwner: boolean;
 }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [view, setView] = useState<"all" | "active">("all");
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const createMutation = useCreateMilestone();
@@ -37,6 +38,10 @@ export function MilestonesTimeline({
 
   const doneCount = milestones.filter((m) => m.status === "done").length;
   const progress = milestones.length ? Math.round((doneCount / milestones.length) * 100) : 0;
+  const visibleMilestones = useMemo(
+    () => (view === "active" ? milestones.filter((milestone) => milestone.status !== "done") : milestones),
+    [milestones, view],
+  );
 
   const handleAdd = async () => {
     if (!title.trim()) return;
@@ -133,13 +138,22 @@ export function MilestonesTimeline({
       )}
 
       {milestones.length > 0 && (
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated" aria-label={`${progress}% complete`}>
-            <div className="h-full rounded-full bg-foreground transition-[width]" style={{ width: `${progress}%` }} />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2" aria-label="Roadmap view">
+            <ListFilter className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={view === "all" ? "text-xs font-medium text-foreground" : "text-xs text-muted-foreground hover:text-foreground"}>All work</button>
+            <span className="text-muted-foreground/50">/</span>
+            <button type="button" onClick={() => setView("active")} aria-pressed={view === "active"} className={view === "active" ? "text-xs font-medium text-foreground" : "text-xs text-muted-foreground hover:text-foreground"}>Now & next</button>
           </div>
-          <span className="text-xs tabular-nums text-muted-foreground">{progress}%</span>
+          <div className="flex min-w-[12rem] flex-1 items-center justify-end gap-3">
+            <div className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-surface-elevated" aria-label={`${progress}% complete`}>
+              <div className="h-full rounded-full bg-foreground transition-[width]" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="text-xs tabular-nums text-muted-foreground">{progress}%</span>
+          </div>
         </div>
       )}
+
 
       {milestones.length === 0 ? (
         <div className="mt-5 rounded-lg border border-dashed border-border/70 px-4 py-8 text-center">
@@ -150,7 +164,7 @@ export function MilestonesTimeline({
         <div className="mt-5 -mx-1 overflow-x-auto px-1 pb-2" aria-label="Project roadmap board">
           <div className="grid min-w-[48rem] grid-cols-3 gap-3">
             {COLUMNS.map(({ status, label, icon: Icon }) => {
-            const items = milestones.filter((milestone) => milestone.status === status);
+            const items = visibleMilestones.filter((milestone) => milestone.status === status);
             return (
               <section key={status} aria-labelledby={`roadmap-${status}`} className="min-h-44 rounded-lg bg-background/45 p-3">
                 <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-3">
