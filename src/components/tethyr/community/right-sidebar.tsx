@@ -87,8 +87,10 @@ function DigestRow({
  */
 export const CommunityRightSidebar = memo(function CommunityRightSidebar({
   mobile = false,
+  fixed = false,
 }: {
   mobile?: boolean;
+  fixed?: boolean;
 }) {
   const { data: challenges = [] } = useChallenges("active");
   const { data: trendingSkills = [], isLoading: isLoadingSkills } = useTrendingSkills();
@@ -119,7 +121,13 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
 
   return (
     <aside
-      className={`${mobile ? "flex flex-col gap-3" : "hidden w-72 shrink-0 flex-col gap-3 xl:flex"}`}
+      className={`${
+        mobile
+          ? "flex flex-col gap-3"
+          : fixed
+            ? "fixed right-4 top-12 z-20 hidden h-[calc(100vh-3rem)] w-60 flex-col gap-3 overflow-y-auto py-4 md:right-8 xl:flex"
+            : "hidden w-72 shrink-0 flex-col gap-3 xl:flex"
+      }`}
     >
       {/* Today — one digest instead of three separate widgets */}
       <RailCard title="Today" icon={<Target className="h-3.5 w-3.5 text-primary" />}>

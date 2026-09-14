@@ -133,7 +133,7 @@ function CommunityPage() {
           <span className="text-xs text-muted-foreground">Community</span>
         </div>
       </div>
-      <div className="mx-auto flex gap-6 px-4 pb-24 md:px-8 lg:pb-8">
+      <div className="mx-auto flex gap-6 px-4 pb-24 md:px-8 lg:pb-8 xl:pr-72">
         <CommunityLeftSidebar active={nav} onSelect={setNav} className="hidden lg:block" />
 
         <div className="min-w-0 flex-1">
@@ -160,9 +160,9 @@ function CommunityPage() {
             onOpenSpace={openSpace}
           />
         </div>
-
-        {nav !== "communities" && <CommunityRightSidebar />}
       </div>
+
+      <CommunityRightSidebar fixed />
 
       <Drawer open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <DrawerContent className="max-h-[85vh]">
