@@ -44,7 +44,7 @@ export function HowItWorks() {
         {steps.map((step) => (
           <div
             key={step.n}
-            className="group relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 transition-lift hover:bg-surface-elevated/50"
+            className="group relative overflow-hidden rounded-xl border border-transparent bg-surface-elevated/30 p-6 transition-lift hover:border-border/60 hover:bg-surface-elevated/50"
           >
             <span className="numeric text-xs font-medium text-muted-foreground-subtle">
               {step.n}

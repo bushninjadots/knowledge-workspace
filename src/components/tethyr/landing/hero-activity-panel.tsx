@@ -27,7 +27,7 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-5 transition-lift hover:bg-surface-elevated/50">
+    <div className="rounded-xl border border-border/40 bg-surface-elevated/30 p-5 transition-lift hover:border-border/60 hover:bg-surface-elevated/50">
       <div className="mb-3 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-trust opacity-60" />

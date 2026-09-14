@@ -38,7 +38,7 @@ export function FeaturedHeroCard() {
     <Link
       to="/projects/$id"
       params={{ id: project.id }}
-      className="group overflow-hidden rounded-xl bg-surface-elevated/30 transition-lift hover:bg-surface-elevated/50"
+      className="group overflow-hidden rounded-xl border border-transparent bg-surface-elevated/30 transition-lift hover:border-border/60 hover:bg-surface-elevated/50"
     >
       <div className="relative h-36 overflow-hidden bg-surface-sunken">
         {coverUrl ? (

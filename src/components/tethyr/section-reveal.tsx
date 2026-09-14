@@ -8,19 +8,26 @@ import { motion, useReducedMotion } from "framer-motion";
 export function SectionReveal({
   children,
   className,
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
 
   if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>;
+    return (
+      <div id={id} className={`scroll-mt-20 ${className ?? ""}`}>
+        {children}
+      </div>
+    );
   }
 
   return (
     <motion.div
-      className={className}
+      id={id}
+      className={`scroll-mt-20 ${className ?? ""}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
