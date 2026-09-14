@@ -213,12 +213,16 @@ export function SpaceHeader({
         </p>
       )}
 
+      {space.description && (
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          {space.description}
+        </p>
+      )}
+
       {space.rules && space.rules.length > 0 && (
-        <div className="mt-4 rounded-xl border card-border bg-background/40 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Community rules
-          </p>
-          <ol className="mt-2 space-y-1.5">
+        <div className="mt-3 rounded-lg bg-surface-elevated/20 p-4">
+          <p className="section-label mb-2">Community rules</p>
+          <ol className="space-y-1.5">
             {space.rules.map((rule, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-semibold text-muted-foreground">
@@ -231,18 +235,12 @@ export function SpaceHeader({
         </div>
       )}
 
-      {space.description && (
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {space.description}
-        </p>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <span className="section-label">Room view</span>
         <div
           role="group"
           aria-label="Sort room discussion"
-          className="flex items-center gap-1 rounded-lg bg-surface-elevated/50 p-1"
+          className="flex items-center gap-0.5 rounded-lg bg-surface-elevated/40 p-0.5"
         >
           {(
             [
@@ -255,9 +253,9 @@ export function SpaceHeader({
               key={value}
               type="button"
               onClick={() => onSortModeChange(value)}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 sortMode === value
-                  ? "bg-surface text-foreground"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

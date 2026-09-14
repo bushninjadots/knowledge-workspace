@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { Plus, Search, Users, TrendingUp, Clock } from "lucide-react";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { CommunityCard } from "@/components/tethyr/community/community-card";
+import { ActivityCharts } from "@/components/tethyr/community/activity-charts";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
 import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,8 @@ export const CommunitiesSection = memo(function CommunitiesSection({
 
   return (
     <div>
+      <ActivityCharts />
+
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -100,11 +103,19 @@ export const CommunitiesSection = memo(function CommunitiesSection({
           onAction={() => setCreateOpen(true)}
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {sortedSpaces.map((space: CommunitySpace) => (
-            <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
-          ))}
-        </div>
+        <>
+          {sortedSpaces.length > 0 && (
+            <p className="mb-3 text-xs text-muted-foreground">
+              {sortedSpaces.length} {sortedSpaces.length !== 1 ? "spaces" : "space"}
+              {search.trim() && ` matching "${search}"`}
+            </p>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {sortedSpaces.map((space: CommunitySpace) => (
+              <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
+            ))}
+          </div>
+        </>
       )}
       <CreateSpaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

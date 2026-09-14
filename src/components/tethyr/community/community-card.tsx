@@ -120,7 +120,7 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
           </div>
           {space.description && (
             <p
-              className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
+              className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
               title={space.description ?? undefined}
             >
               {space.description}
@@ -129,10 +129,10 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         </div>
       </button>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" />
-            {space.member_count ?? 0} {(space.member_count ?? 0) !== 1 ? "members" : "member"}
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/50 px-2 py-0.5 font-medium text-muted-foreground">
+            <Users className="h-3 w-3" />
+            {space.member_count ?? 0}
           </span>
         </div>
         <Button
