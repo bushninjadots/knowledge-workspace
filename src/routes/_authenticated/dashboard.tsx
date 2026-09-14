@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { ArrowRight, Sparkles, Folder, UserPlus, Award, Plus } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -121,23 +121,6 @@ function DashboardContent({
   const { data: connections = [] } = useConnections();
   const queryClient = useQueryClient();
   const { data: unreadData } = useUnreadCounts();
-
-  const { data: todayOpps = [] } = useQuery({
-    queryKey: ["today-opportunities", data?.userId],
-    queryFn: async () => {
-      const { data: roles, error } = await supabase
-        .from("project_open_roles")
-        .select("id, title, skills, projects(title, id, status)")
-        .eq("is_filled", false)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) return [];
-      return (roles ?? []).filter(
-        (r) => r.projects && ["planning", "active"].includes(r.projects.status),
-      );
-    },
-    staleTime: 60_000,
-  });
 
   // DB triggers (trg_award_earned_achievements) award achievements primarily;
   // this client call is a backstop/recompute for sessions/streak-tracked ones.
@@ -354,9 +337,6 @@ function DashboardContent({
               queryKey: ["current-user"],
             })}
             firstName={firstName}
-            pendingSessionCount={pendingSessionCount}
-            activeProjectId={activeProjects[0]?.id ?? null}
-            hasOpenRole={todayOpps.length > 0}
             reputationScore={data?.profile?.reputation_score ?? null}
           />
           {renderModule("today")}
@@ -409,9 +389,6 @@ function DashboardWelcomeBanner({
   userId,
   onBannerChange,
   firstName,
-  pendingSessionCount,
-  activeProjectId,
-  hasOpenRole,
   reputationScore,
 }: {
   bannerSigned: string | null;
@@ -421,9 +398,6 @@ function DashboardWelcomeBanner({
   userId: string;
   onBannerChange: () => void;
   firstName: string;
-  pendingSessionCount: number;
-  activeProjectId: string | null;
-  hasOpenRole: boolean;
   reputationScore: number | null;
 }) {
   return (
@@ -451,41 +425,12 @@ function DashboardWelcomeBanner({
             <span className="text-[var(--user-accent,var(--trust))]">what&apos;s next?</span>
           </h1>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {pendingSessionCount > 0 ? (
-            <Link
-              to="/sessions"
-              search={{ tab: "requests" }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-            >
-              Review requests <ArrowRight className="h-3 w-3" />
-            </Link>
-          ) : activeProjectId ? (
-            <Link
-              to="/projects/$id"
-              params={{ id: activeProjectId }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-            >
-              Continue building <ArrowRight className="h-3 w-3" />
-            </Link>
-          ) : hasOpenRole ? (
-            <Link
-              to="/explore"
-              search={{ tab: "opportunities" }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
-            >
-              Find a role <ArrowRight className="h-3 w-3" />
-            </Link>
-          ) : (
-            <CreateProjectButton size="sm" variant="default" className="rounded-full" />
-          )}
-          {reputationScore != null && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
-              <Award className="h-3.5 w-3.5" />
-              {reputationScore} rep
-            </span>
-          )}
-        </div>
+        {reputationScore != null && (
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
+            <Award className="h-3.5 w-3.5" />
+            {reputationScore} rep
+          </span>
+        )}
       </div>
     </section>
   );
