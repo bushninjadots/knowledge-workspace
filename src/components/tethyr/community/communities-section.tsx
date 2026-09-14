@@ -86,8 +86,8 @@ export const CommunitiesSection = memo(function CommunitiesSection({
         </div>
       </div>
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3].map((i) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
               className="animate-gentle-pulse rounded-xl border card-border bg-surface h-32 p-5"
@@ -110,7 +110,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
               {search.trim() && ` matching "${search}"`}
             </p>
           )}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {sortedSpaces.map((space: CommunitySpace) => (
               <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
             ))}

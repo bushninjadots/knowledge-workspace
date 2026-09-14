@@ -214,7 +214,7 @@ export function SpaceHeader({
       )}
 
       {space.description && (
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {space.description}
         </p>
       )}
