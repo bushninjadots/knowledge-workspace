@@ -92,12 +92,39 @@ export async function fetchLandingStats() {
   return { members, projects, spaces, skills, posts, comments, challenges };
 }
 
+/**
+ * True only after the first client render (post-hydration).
+ */
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  return hydrated;
+}
+
+/**
+ * Hydration parity for the landing sections. The route streams its HTML and
+ * serializes the query cache at different moments, so the server paints these
+ * sections in their loading/empty state (dehydrate also only includes queries
+ * that have already succeeded). A warm client cache can then resolve *during*
+ * concurrent hydration and render real content where the server rendered a
+ * skeleton, which React reports as a hydration mismatch. Withholding the data
+ * until after mount keeps the client's first render identical to the server's,
+ * then the real content appears in the same tick the effect runs.
+ */
+function useHydrationStableQuery<T extends { data: unknown; isLoading: boolean }>(query: T): T {
+  const hydrated = useHydrated();
+  if (hydrated) return query;
+  return { ...query, data: undefined, isLoading: true } as T;
+}
+
 export function useLandingStats() {
-  return useQuery({
-    queryKey: ["landing-stats"],
-    queryFn: fetchLandingStats,
-    staleTime: 5 * 60 * 1000,
-  });
+  return useHydrationStableQuery(
+    useQuery({
+      queryKey: ["landing-stats"],
+      queryFn: fetchLandingStats,
+      staleTime: 5 * 60 * 1000,
+    }),
+  );
 }
 
 export type LandingProject = {
@@ -133,11 +160,13 @@ export async function fetchFeaturedProjects(): Promise<LandingProject[]> {
 }
 
 export function useFeaturedProjects() {
-  return useQuery({
-    queryKey: ["landing-featured-projects"],
-    queryFn: fetchFeaturedProjects,
-    staleTime: 60_000,
-  });
+  return useHydrationStableQuery(
+    useQuery({
+      queryKey: ["landing-featured-projects"],
+      queryFn: fetchFeaturedProjects,
+      staleTime: 60_000,
+    }),
+  );
 }
 
 export function useContributorCount(projectId: string | null | undefined) {
@@ -228,11 +257,13 @@ export async function fetchRecentActivity(): Promise<LandingActivityPost[]> {
 }
 
 export function useRecentActivity() {
-  return useQuery({
-    queryKey: ["landing-activity"],
-    queryFn: fetchRecentActivity,
-    staleTime: 60_000,
-  });
+  return useHydrationStableQuery(
+    useQuery({
+      queryKey: ["landing-activity"],
+      queryFn: fetchRecentActivity,
+      staleTime: 60_000,
+    }),
+  );
 }
 
 export function ActivityAuthor({
