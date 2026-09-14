@@ -61,7 +61,11 @@ export function SegmentedControl<T extends string>({
       ref={tablistRef}
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex gap-1 rounded-xl bg-surface-elevated/40 ${compact ? "p-0.5" : "p-1"} ${className ?? ""}`}
+      // `max-w-full overflow-x-auto scrollbar-none` keeps a long set of labels
+      // (e.g. Explore's Projects/People/Opportunities) scrolling inside the
+      // control instead of forcing the whole page wider on narrow phones.
+      // Same treatment as the project tab strip.
+      className={`scrollbar-none flex max-w-full gap-1 overflow-x-auto rounded-xl bg-surface-elevated/40 ${compact ? "p-0.5" : "p-1"} ${className ?? ""}`}
     >
       {options.map((option, index) => {
         const Icon = option.icon;
