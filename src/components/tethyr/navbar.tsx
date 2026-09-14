@@ -15,8 +15,6 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
 
-  // Close the mobile menu on Escape — a menu that can't be dismissed by
-  // keyboard is a focus trap.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -37,35 +35,20 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 bg-noise backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
+
+        {/* Desktop: single most important section link for public visitors */}
         {publicOnly && (
           <nav aria-label="Section navigation" className="hidden items-center gap-1 md:flex">
-            {[
-              { label: "How it works", href: "/#how-it-works" },
-              { label: "Projects", href: "/#featured-projects" },
-              { label: "Community", href: "/#community-spaces" },
-            ].map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-        )}
-        {!publicOnly && (
-          <nav aria-label="Main navigation" className="hidden items-center gap-1 md:flex">
-            <Link
-              to="/"
+            <a
+              href="/#how-it-works"
               className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
-              activeProps={{ className: "text-foreground bg-surface" }}
-              activeOptions={{ exact: true }}
             >
-              Home
-            </Link>
+              How it works
+            </a>
           </nav>
         )}
+
+        {/* Desktop: right-side actions */}
         <div className="hidden items-center gap-2 md:flex">
           {!publicOnly && <ThemeToggle />}
           {publicOnly || isLoading ? (
@@ -107,11 +90,13 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             </>
           )}
         </div>
+
+        {/* Mobile: hamburger */}
         <div className="flex items-center gap-1 md:hidden">
           {!publicOnly && <ThemeToggle />}
           <button
             onClick={() => setOpen((v) => !v)}
-            className="rounded-md p-2 transition-colors hover:bg-surface md:hidden"
+            className="rounded-md p-2 transition-colors hover:bg-surface"
             aria-label="Toggle menu"
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -120,6 +105,8 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
       {open && (
         <div
           id="mobile-menu"
@@ -128,21 +115,14 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           <div className="flex flex-col gap-1 px-4 py-4">
             {publicOnly ? (
               <>
-                {[
-                  { label: "How it works", href: "/#how-it-works" },
-                  { label: "Projects", href: "/#featured-projects" },
-                  { label: "Community", href: "/#community-spaces" },
-                ].map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-                <div className="mt-2 flex gap-2">
+                <a
+                  href="/#how-it-works"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  How it works
+                </a>
+                <div className="mt-3 flex gap-2">
                   <Button asChild variant="outline" className="flex-1">
                     <Link to="/login" onClick={() => setOpen(false)}>
                       Log in
@@ -155,17 +135,8 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                   </Button>
                 </div>
               </>
-            ) : (
-              <>
-                <Link
-                  to="/"
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-                >
-                  Home
-                </Link>
-                {isAuthed ? (
-              <div className="mt-2 space-y-2">
+            ) : isAuthed ? (
+              <div className="flex flex-col gap-2">
                 <CreateProjectButton
                   size="default"
                   label="Create project"
@@ -177,13 +148,13 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                     Dashboard
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full rounded-full" onClick={handleSignOut}>
-                  <LogOut className="mr-1 h-4 w-4" />
+                <Button variant="ghost" className="w-full" onClick={handleSignOut}>
+                  <LogOut className="mr-1.5 h-4 w-4" />
                   Sign out
                 </Button>
               </div>
             ) : (
-              <div className="mt-2 flex gap-2">
+              <div className="flex gap-2">
                 <Button asChild variant="outline" className="flex-1">
                   <Link to="/login" onClick={() => setOpen(false)}>
                     Log in
@@ -191,12 +162,10 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                 </Button>
                 <Button asChild variant="default" className="flex-1 rounded-full">
                   <Link to="/signup" onClick={() => setOpen(false)}>
-                    Join
+                    Join Tethyr
                   </Link>
                 </Button>
               </div>
-            )}
-              </>
             )}
           </div>
         </div>
