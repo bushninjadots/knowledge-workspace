@@ -604,7 +604,7 @@ function ExplorePage() {
           </div>
           <section className="mb-6 border-b border-border/60 pb-5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-elevated">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-elevated">
                 <Compass className="h-4.5 w-4.5 text-muted-foreground" />
               </div>
               <div>
@@ -721,7 +721,7 @@ function ExplorePage() {
 
               {needs.length > 0 && (
                 <div className="mb-6">
-                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-destructive/5 px-3 py-2">
+                  <div className="mb-3 flex items-center gap-2">
                     <Zap className="h-4 w-4 text-destructive" />
                     <h2 className="text-sm font-semibold">Needs now</h2>
                     <span className="text-xs text-muted-foreground">
