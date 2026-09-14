@@ -603,12 +603,19 @@ function ExplorePage() {
             </Button>
           </div>
           <section className="mb-6 border-b border-border/60 pb-5">
-            <h1 className="font-display text-2xl font-semibold tracking-tight">
-              Find work, people, and openings
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Browse projects, people, and open opportunities from the community.
-            </p>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-elevated">
+                <Compass className="h-4.5 w-4.5 text-muted-foreground" />
+              </div>
+              <div>
+                <h1 className="font-display text-2xl font-semibold tracking-tight">
+                  Find work, people, and openings
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Browse projects, people, and open opportunities from the community.
+                </p>
+              </div>
+            </div>
           </section>
 
           {/* Tab bar */}
@@ -714,7 +721,7 @@ function ExplorePage() {
 
               {needs.length > 0 && (
                 <div className="mb-6">
-                  <div className="mb-3 flex items-center gap-2">
+                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-destructive/5 px-3 py-2">
                     <Zap className="h-4 w-4 text-destructive" />
                     <h2 className="text-sm font-semibold">Needs now</h2>
                     <span className="text-xs text-muted-foreground">
@@ -1147,7 +1154,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
       )}
 
       {/* Contextual hint based on tab */}
-      <div className="rounded-xl border border-dashed border-border/40 bg-surface/30 p-4">
+      <div className="rounded-xl border border-border/40 bg-surface/30 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           {tab === "projects"
             ? "Browse projects from the community. Use the shelf to flip through covers, or search for something specific."
