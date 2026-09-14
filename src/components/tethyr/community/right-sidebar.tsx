@@ -30,8 +30,8 @@ function RailCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-3.5">
-      <p className="section-label mb-2 flex items-center gap-1.5 px-1">
+    <div className="rounded-xl bg-surface-elevated/30 p-3.5 transition-colors hover:bg-surface-elevated/50">
+      <p className="section-label mb-2.5 flex items-center gap-1.5 px-1">
         {icon}
         {title}
       </p>
@@ -60,8 +60,8 @@ function DigestRow({
       to={to}
       className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-elevated/60"
     >
-      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tint}`}>
-        <Icon className="h-3.5 w-3.5" />
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tint} transition-transform group-hover:scale-105`}>
+        <Icon className="h-4 w-4" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-xs font-medium text-foreground group-hover:text-primary">
@@ -72,7 +72,7 @@ function DigestRow({
         )}
       </span>
       {count != null && count > 0 && (
-        <span className="numeric shrink-0 text-[11px] font-semibold text-muted-foreground">
+        <span className="numeric shrink-0 rounded-full bg-surface-elevated px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
           {count}
         </span>
       )}
@@ -198,9 +198,9 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
           <div className="flex flex-wrap gap-1.5">
             {trendingSkills.slice(0, 6).map((skill: DiscoverableSkill) => (
               <Link key={skill.id} to="/skills/$slug" params={{ slug: skill.slug }}>
-                <Badge variant="secondary" className="text-xs px-2 py-0.5 hover:bg-secondary">
+                <span className="inline-flex items-center rounded-full border border-border/50 bg-surface-elevated/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-brand-green/40 hover:bg-brand-green/10 hover:text-brand-green">
                   #{skill.name}
-                </Badge>
+                </span>
               </Link>
             ))}
           </div>
@@ -244,19 +244,43 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
       </RailCard>
 
       {/* One clear CTA — complete the profile / set learning goals */}
-      <RailCard title="Your Tethyr" icon={<Target className="h-3.5 w-3.5 text-primary" />}>
-        <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-          {needsCompletion
-            ? `Your profile is ${completeness}% complete. Finishing it makes you findable for collabs and mentorships.`
-            : "Set your growth goals so people with the right skills can find you."}
-        </p>
-        <Button size="sm" asChild className="mt-3 w-full rounded-full">
-          <Link to="/profile">
-            {needsCompletion ? "Complete your profile" : "Set learning goals"}
-            <ArrowRight className="ml-1 h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      </RailCard>
+      {needsCompletion != null && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+          <div className="mb-2 flex items-center gap-1.5 px-1">
+            <Target className="h-3.5 w-3.5 text-primary" />
+            <p className="section-label">Your Tethyr</p>
+          </div>
+          {needsCompletion ? (
+            <>
+              <div className="mb-2 px-1">
+                <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Profile completeness</span>
+                  <span className="font-semibold text-foreground">{completeness}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-elevated/60">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${completeness}%` }}
+                  />
+                </div>
+              </div>
+              <p className="mb-3 px-1 text-[11px] leading-relaxed text-muted-foreground">
+                Finishing your profile makes you findable for collabs and mentorships.
+              </p>
+            </>
+          ) : (
+            <p className="mb-3 px-1 text-xs leading-relaxed text-muted-foreground">
+              Set your growth goals so people with the right skills can find you.
+            </p>
+          )}
+          <Button size="sm" asChild className="w-full rounded-full">
+            <Link to="/profile">
+              {needsCompletion ? "Complete your profile" : "Set learning goals"}
+              <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </aside>
   );
 });

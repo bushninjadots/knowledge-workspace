@@ -39,23 +39,23 @@ export const CommunitiesSection = memo(function CommunitiesSection({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search spaces..."
-            className="h-9 rounded-xl border card-border bg-surface pr-4 pl-9 text-sm"
+            className="h-10 rounded-lg border card-border bg-surface pr-4 pl-9 text-sm"
           />
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-lg border card-border bg-surface p-0.5">
             <button
               onClick={() => setSortMode("popular")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
                 sortMode === "popular"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by member count"
@@ -65,9 +65,9 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             </button>
             <button
               onClick={() => setSortMode("newest")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
                 sortMode === "newest"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by newest first"

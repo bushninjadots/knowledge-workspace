@@ -62,24 +62,38 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
 
   const initial = space.name.charAt(0).toUpperCase();
 
+  const accentColor =
+    space.visibility === "private"
+      ? "var(--brand-purple)"
+      : space.join_type === "review"
+        ? "var(--primary)"
+        : "var(--brand-green)";
+
   // Keep the open-space action separate from the Join/Leave button. This
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <Card className="group flex w-full flex-col p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm">
+    <Card className="group relative flex w-full flex-col overflow-hidden p-5 text-left transition-spatial duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]">
+      <span
+        className="absolute inset-x-0 top-0 h-0.5 opacity-60 transition-opacity group-hover:opacity-100"
+        style={{ background: accentColor }}
+      />
       <button
         type="button"
         onClick={() => onClick?.()}
         className="flex w-full items-start gap-3 text-left"
         aria-label={`Open ${space.name}`}
       >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
+        <div
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-xl font-semibold"
+          style={{ background: `color-mix(in oklch, ${accentColor} 12%, transparent)`, color: accentColor }}
+        >
           {avatarUrl ? (
             <img
               src={avatarUrl}
               alt=""
-              width="48"
-              height="48"
+              width="56"
+              height="56"
               loading="lazy"
               decoding="async"
               className="h-full w-full rounded-xl object-cover"
@@ -90,14 +104,23 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         </div>
         <div className="min-w-0 flex-1">
           <h3
-            className="truncate font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors"
+            className="truncate font-display text-base font-semibold text-foreground transition-colors group-hover:text-primary"
             title={space.name}
           >
             {space.name}
           </h3>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+              style={{ background: `color-mix(in oklch, ${accentColor} 12%, transparent)`, color: accentColor }}
+            >
+              {space.visibility === "private" ? <Lock className="h-2.5 w-2.5" /> : <MessageCircle className="h-2.5 w-2.5" />}
+              {space.visibility === "private" ? "Private" : space.join_type === "review" ? "Approval" : "Open"}
+            </span>
+          </div>
           {space.description && (
             <p
-              className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
+              className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground"
               title={space.description ?? undefined}
             >
               {space.description}
@@ -106,22 +129,10 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
         </div>
       </button>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
-            {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            {space.visibility === "private" ? (
-              <Lock className="h-3.5 w-3.5" />
-            ) : (
-              <MessageCircle className="h-3.5 w-3.5" />
-            )}
-            {space.visibility === "private"
-              ? "Private"
-              : space.join_type === "review"
-                ? "Approval"
-                : "Open room"}
+            {space.member_count ?? 0} {(space.member_count ?? 0) !== 1 ? "members" : "member"}
           </span>
         </div>
         <Button

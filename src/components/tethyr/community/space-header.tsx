@@ -84,6 +84,13 @@ export function SpaceHeader({
   const initial = space.name.charAt(0).toUpperCase();
   const canManage = myRole === "owner" || myRole === "moderator";
 
+  const accentColor =
+    space.visibility === "private"
+      ? "var(--brand-purple)"
+      : space.join_type === "review"
+        ? "var(--primary)"
+        : "var(--brand-green)";
+
   return (
     <div className="mb-8">
       {/* Breadcrumb — Communities / space name */}
@@ -104,54 +111,64 @@ export function SpaceHeader({
         <span className="truncate font-medium text-foreground/80">{space.name}</span>
       </nav>
 
-      {/* Page title row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                width="56"
-                height="56"
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              initial
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
-                {space.name}
-              </h1>
-              {space.visibility === "private" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[11px] text-muted-foreground">
-                  <Lock className="h-3 w-3" />
-                  Private
-                </span>
-              )}
-              {space.is_member && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-green">
-                  <Check className="h-3.5 w-3.5" />
-                  Joined
-                </span>
+      {/* Space header — tinted background band by space type */}
+      <div
+        className="rounded-xl border border-border/40 p-5"
+        style={{ background: `color-mix(in oklch, ${accentColor} 5%, var(--background))` }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl font-bold"
+              style={{ background: `color-mix(in oklch, ${accentColor} 12%, transparent)`, color: accentColor }}
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initial
               )}
             </div>
-            <p className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <MessageCircle className="h-3.5 w-3.5" />
-                Room discussion
-              </span>
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
+                  {space.name}
+                </h1>
+                {space.visibility === "private" && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    style={{ background: `color-mix(in oklch, ${accentColor} 12%, transparent)`, color: accentColor }}
+                  >
+                    <Lock className="h-3 w-3" />
+                    Private
+                  </span>
+                )}
+                {space.is_member && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+                    <Check className="h-3 w-3" />
+                    Joined
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  {space.member_count ?? 0} {(space.member_count ?? 0) !== 1 ? "members" : "member"}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <MessageCircle className="h-3 w-3" />
+                  Room discussion
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
 
         <div className="flex shrink-0 items-center gap-2">
           {canManage && (
@@ -185,6 +202,7 @@ export function SpaceHeader({
             <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
             {buttonLabel}
           </Button>
+        </div>
         </div>
       </div>
 
