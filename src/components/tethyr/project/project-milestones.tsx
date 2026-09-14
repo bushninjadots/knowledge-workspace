@@ -6,6 +6,13 @@ import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/ho
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const COLUMNS: { status: MilestoneRow["status"]; label: string; icon: typeof Circle }[] = [
   { status: "pending", label: "Up next", icon: Circle },
@@ -32,6 +39,7 @@ export function MilestonesTimeline({
   const [view, setView] = useState<"all" | "active">("all");
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+  const [selectedMilestone, setSelectedMilestone] = useState<MilestoneRow | null>(null);
   const createMutation = useCreateMilestone();
   const updateMutation = useUpdateMilestone();
   const deleteMutation = useDeleteMilestone();
@@ -72,9 +80,20 @@ export function MilestonesTimeline({
   const handleDelete = async (id: string) => {
     try {
       await deleteMutation.mutateAsync({ id, projectId });
+      setSelectedMilestone(null);
       toast.success("Milestone removed");
     } catch {
       toast.error("Failed to delete milestone");
+    }
+  };
+
+  const handlePanelStatus = async (status: MilestoneRow["status"]) => {
+    if (!selectedMilestone || selectedMilestone.status === status) return;
+    try {
+      await updateMutation.mutateAsync({ id: selectedMilestone.id, projectId, status });
+      setSelectedMilestone({ ...selectedMilestone, status });
+    } catch {
+      toast.error("Failed to update milestone");
     }
   };
 
@@ -179,7 +198,19 @@ export function MilestonesTimeline({
                     <p className="py-4 text-center text-xs text-muted-foreground">Nothing here yet.</p>
                   ) : (
                     items.map((milestone) => (
-                      <article key={milestone.id} className="rounded-lg border border-border/60 bg-surface-elevated/35 p-3">
+                      <article
+                        key={milestone.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedMilestone(milestone)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedMilestone(milestone);
+                          }
+                        }}
+                        className="cursor-pointer rounded-lg border border-border/60 bg-surface-elevated/35 p-3 transition-colors hover:border-border hover:bg-surface-elevated/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <h5 className={`text-sm ${status === "done" ? "text-muted-foreground line-through" : "text-foreground"}`}>
@@ -216,6 +247,60 @@ export function MilestonesTimeline({
           </div>
         </div>
       )}
+
+      <Dialog open={selectedMilestone !== null} onOpenChange={(open) => !open && setSelectedMilestone(null)}>
+        <DialogContent className="max-w-lg gap-0 overflow-hidden p-0">
+          {selectedMilestone && (
+            <>
+              <DialogHeader className="border-b border-border/60 px-5 py-5 text-left">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="rounded-full text-[10px]">
+                    {COLUMNS.find((column) => column.status === selectedMilestone.status)?.label}
+                  </Badge>
+                  {selectedMilestone.due_date && (
+                    <span className="text-xs text-muted-foreground">
+                      Due {new Date(selectedMilestone.due_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <DialogTitle className="pt-1 text-xl tracking-tight">{selectedMilestone.title}</DialogTitle>
+                <DialogDescription>
+                  {selectedMilestone.description || "Add context to help collaborators understand this piece of work."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-5 px-5 py-5">
+                <section aria-labelledby="work-status-heading">
+                  <h4 id="work-status-heading" className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Move this work</h4>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {COLUMNS.map(({ status, label, icon: Icon }) => (
+                      <Button
+                        key={status}
+                        type="button"
+                        variant={selectedMilestone.status === status ? "default" : "outline"}
+                        className="h-auto flex-col gap-1 px-2 py-3 text-xs"
+                        onClick={() => void handlePanelStatus(status)}
+                        disabled={updateMutation.isPending}
+                      >
+                        <Icon data-icon="inline-start" className={STATUS_STYLE[status]} />
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </section>
+                {isOwner && (
+                  <div className="flex items-center justify-between border-t border-border/60 pt-4">
+                    <p className="text-xs text-muted-foreground">This work is part of the project roadmap.</p>
+                    <Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => void handleDelete(selectedMilestone.id)} disabled={deleteMutation.isPending}>
+                      <Trash2 data-icon="inline-start" />
+                      Remove
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
