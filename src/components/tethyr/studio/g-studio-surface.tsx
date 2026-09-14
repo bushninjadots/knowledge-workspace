@@ -2614,7 +2614,7 @@ function GCustomizePanel({
                 onClick={onCompleteProfile}
                 className="mt-4 border-t border-border pt-3 text-left text-xs text-primary"
               >
-                Complete your profile
+                Edit details
               </button>
             )}
           </>

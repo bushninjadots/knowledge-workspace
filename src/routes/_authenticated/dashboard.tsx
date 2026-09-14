@@ -15,6 +15,7 @@ import {
   ChallengesModuleRow,
   ConnectionsModuleRow,
   ProjectsModuleRow,
+  RoadmapModuleRow,
   SuggestedCreatorsModuleRow,
   SuggestedProjectsModuleRow,
   TrendingSkillsModuleRow,
@@ -199,6 +200,9 @@ function DashboardContent({
 
         case "challenges":
           return <ChallengesModuleRow />;
+
+        case "roadmap":
+          return <RoadmapModuleRow />;
 
         case "connections":
           return <ConnectionsModuleRow />;

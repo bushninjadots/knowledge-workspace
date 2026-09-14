@@ -273,7 +273,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               context.onCompleteProfile && (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-3">
                   <p className="text-xs text-muted-foreground">
-                    Complete your profile so people can understand what you make and how to work
+                    Flesh out your details so people can understand what you make and how to work
                     with you.
                   </p>
                   <button
@@ -282,7 +282,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                     className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--card-border))] bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-lift hover:bg-background"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Complete profile
+                    Edit details
                     <span className="text-muted-foreground">{profileCompleteness}%</span>
                   </button>
                 </div>

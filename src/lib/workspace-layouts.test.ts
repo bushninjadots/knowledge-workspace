@@ -32,13 +32,14 @@ describe("dashboard hierarchy", () => {
     expect(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))).toEqual([
       // Work → collaboration → discovery → evidence, two rows per line.
       { i: "projects", x: 0, y: 0, w: 6, h: 3 },
-      { i: "applications", x: 6, y: 0, w: 6, h: 3 },
-      { i: "challenges", x: 0, y: 4, w: 6, h: 3 },
-      { i: "connections", x: 6, y: 4, w: 6, h: 3 },
-      { i: "suggested-projects", x: 0, y: 8, w: 6, h: 3 },
-      { i: "suggested-creators", x: 6, y: 8, w: 6, h: 3 },
-      { i: "trending-skills", x: 0, y: 12, w: 6, h: 3 },
-      { i: "activity", x: 6, y: 12, w: 6, h: 3 },
+      { i: "roadmap", x: 6, y: 0, w: 6, h: 3 },
+      { i: "applications", x: 0, y: 4, w: 6, h: 3 },
+      { i: "challenges", x: 6, y: 4, w: 6, h: 3 },
+      { i: "connections", x: 0, y: 8, w: 6, h: 3 },
+      { i: "suggested-projects", x: 6, y: 8, w: 6, h: 3 },
+      { i: "suggested-creators", x: 0, y: 12, w: 6, h: 3 },
+      { i: "trending-skills", x: 6, y: 12, w: 6, h: 3 },
+      { i: "activity", x: 0, y: 16, w: 6, h: 3 },
     ]);
   });
 

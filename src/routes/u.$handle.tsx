@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalLinks } from "@/lib/seo";
 import {
@@ -36,6 +36,15 @@ type PublicProfile = {
   handle: string | null;
   display_name: string | null;
   banner_url: string | null;
+  avatar_url: string | null;
+  creator_title: string | null;
+  category: string | null;
+  country: string | null;
+  timezone: string | null;
+  bio: string | null;
+  languages: string[] | null;
+  social_links: Record<string, string> | null;
+  portfolio_links: { label: string; url: string }[] | null;
   background: ProfileBackground | null;
   public_background: ProfileBackground | null;
 };
@@ -43,17 +52,22 @@ type PublicProfile = {
 async function fetchPublicProfile(handle: string) {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, handle, display_name, banner_url, background, public_background")
+    .select(
+      "id, handle, display_name, banner_url, avatar_url, creator_title, category, country, timezone, bio, languages, social_links, portfolio_links, background, public_background",
+    )
     .eq("handle", handle)
     .maybeSingle();
   if (error) throw error;
   if (!profile) throw notFound();
 
   const publicBg = (profile.public_background ?? profile.background) as ProfileBackground | null;
-  const [backgroundImageUrl, banner] = await Promise.all([
+  const [backgroundImageUrl, banner, avatar] = await Promise.all([
     backgroundImageSignedUrl(publicBg?.mode === "image" ? publicBg.image_url : null),
     profile.banner_url
       ? supabase.storage.from("banners").createSignedUrl(profile.banner_url, 60 * 60 * 24)
+      : Promise.resolve({ data: null }),
+    profile.avatar_url
+      ? supabase.storage.from("avatars").createSignedUrl(profile.avatar_url, 60 * 60 * 24)
       : Promise.resolve({ data: null }),
   ]);
   return {
@@ -62,6 +76,7 @@ async function fetchPublicProfile(handle: string) {
     backgroundImageUrl,
     // Needed when the backdrop tint follows the banner (`colorSource: "banner"`).
     bannerSigned: banner.data?.signedUrl ?? null,
+    avatarSigned: avatar.data?.signedUrl ?? null,
   };
 }
 
@@ -214,14 +229,7 @@ function PublicProfileRoute() {
           />
         </EditModeProvider>
       ) : (
-        <div className="animate-room-enter mx-auto w-full max-w-2xl px-4 py-24 text-center sm:px-8">
-          <p className="section-label">Personal creative space</p>
-          <h1 className="mt-1 font-display text-2xl font-semibold">Studio</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {profile.display_name || `@${profile.handle ?? "this member"}`} hasn&apos;t published
-            their studio yet.
-          </p>
-        </div>
+        <BasicProfile profile={profile} avatarSigned={data.avatarSigned} />
       )}
     </Shell>
   );
@@ -276,6 +284,128 @@ function Shell({
         </header>
       )}
       <main className="flex-1">{children}</main>
+    </div>
+  );
+}
+
+const SOCIAL_ICONS: Record<string, typeof Globe> = {
+  website: Globe,
+  github: Github,
+  x: Twitter,
+  twitter: Twitter,
+  instagram: Instagram,
+  youtube: Youtube,
+  twitch: Twitch,
+};
+
+/** Fallback for people who haven't published a Studio yet. Everyone gets a
+ *  published page only once they customize + publish, so this is the honest
+ *  "basic profile" placeholder: their identity, wherever they are, and how to
+ *  reach them — not a dead empty state. */
+function BasicProfile({
+  profile,
+  avatarSigned,
+}: {
+  profile: PublicProfile;
+  avatarSigned: string | null;
+}) {
+  const handle = profile.handle ?? "this member";
+  const name = profile.display_name || `@${handle}`;
+  const initial = name.charAt(0).toUpperCase();
+
+  const chips = [
+    profile.category,
+    profile.country,
+    profile.timezone,
+    profile.languages && profile.languages.length > 0 ? profile.languages.join(", ") : null,
+  ].filter((c): c is string => !!c);
+
+  const portfolio = profile.portfolio_links ?? [];
+  const social = Object.entries(profile.social_links ?? {}).filter(([, url]) => !!url);
+
+  return (
+    <div className="animate-room-enter mx-auto w-full max-w-2xl px-4 py-24 text-center sm:px-8">
+      <p className="section-label">Personal creative space</p>
+
+      <div className="mx-auto mt-6 h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface">
+        {avatarSigned ? (
+          <img
+            src={avatarSigned}
+            alt={`${name} avatar`}
+            width="112"
+            height="112"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-background">
+            {initial}
+          </div>
+        )}
+      </div>
+
+      <h1 className="mt-4 font-display text-2xl font-semibold break-words">{name}</h1>
+      <p className="text-sm text-muted-foreground">@{handle}</p>
+      {profile.creator_title && (
+        <p className="mt-1 text-sm text-foreground/80 break-words">{profile.creator_title}</p>
+      )}
+
+      {chips.length > 0 && (
+        <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+          {chips.map((chip) => (
+            <span
+              key={chip}
+              className="rounded-full border border-border/60 bg-background/60 px-3 py-1"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {profile.bio && (
+        <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground whitespace-pre-wrap break-words">
+          {profile.bio}
+        </p>
+      )}
+
+      {(portfolio.length > 0 || social.length > 0) && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          {portfolio.map((link) => (
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs transition-lift hover:border-[var(--user-accent-border)]"
+            >
+              <Link2 className="h-3 w-3" />
+              {link.label}
+            </a>
+          ))}
+          {social.map(([key, url]) => {
+            const Icon = SOCIAL_ICONS[key] ?? Globe;
+            return (
+              <a
+                key={key}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={key}
+                title={key}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/60 bg-background/60 text-muted-foreground transition-lift hover:text-foreground"
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </a>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="mt-10 text-xs text-muted-foreground">
+        {name} hasn&apos;t published their Studio yet — here&apos;s what they&apos;ve shared so far.
+      </p>
     </div>
   );
 }

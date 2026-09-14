@@ -548,7 +548,7 @@ function StudioViewTopBar({
               className="hidden sm:inline-flex"
               onClick={onCompleteProfile}
             >
-              Complete profile
+              Edit details
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={onToggleMode} title="Toggle preview">

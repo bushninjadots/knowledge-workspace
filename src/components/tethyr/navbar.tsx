@@ -36,9 +36,15 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
 
-        {/* Desktop: single most important section link for public visitors */}
+        {/* Desktop: key section links for public visitors */}
         {publicOnly && (
           <nav aria-label="Section navigation" className="hidden items-center gap-1 md:flex">
+            <Link
+              to="/explore"
+              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+            >
+              Explore
+            </Link>
             <a
               href="/#how-it-works"
               className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
@@ -115,6 +121,13 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           <div className="flex flex-col gap-1 px-4 py-4">
             {publicOnly ? (
               <>
+                <Link
+                  to="/explore"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  Explore
+                </Link>
                 <a
                   href="/#how-it-works"
                   onClick={() => setOpen(false)}

@@ -5,9 +5,10 @@
 // line of real content, and the one action that leads to the surface where that
 // content lives in full. Rows fetch their own data, so a hidden module costs
 // nothing.
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Clock, Folder, Sparkles, Swords, Ticket, Users } from "lucide-react";
+import { Clock, Folder, Kanban, Sparkles, Swords, Ticket, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { describeActivity, relativeActivityTime } from "@/components/tethyr/activity-timeline";
@@ -15,6 +16,7 @@ import type { ActivityRow, ProjectRow } from "@/components/tethyr/profile-sectio
 import { useChallenges } from "@/hooks/use-challenges";
 import { useConnections } from "@/hooks/use-connections";
 import { useCurrentUser, useTrendingSkills } from "@/hooks/use-current-user";
+import { useMyProjects } from "@/hooks/use-projects";
 import { supabase } from "@/integrations/supabase/client";
 
 /** Secondary row actions share one weight so the demoted rows read as one list. */
@@ -174,6 +176,86 @@ export function ApplicationsModuleRow() {
         >
           {applications.length === 0 ? "Find open roles →" : "View"}
         </Link>
+      }
+    >
+      {preview && <Preview text={preview} />}
+    </ModuleRow>
+  );
+}
+
+/** The member's milestone boards, summarized — the one place that points at the
+ *  per-project Roadmap surface most people don't know exists yet. */
+export function RoadmapModuleRow() {
+  const { data: projects = [], isLoading: loadingProjects } = useMyProjects();
+  const projectIds = useMemo(() => projects.map((project) => project.id), [projects]);
+
+  const { data: milestoneRows = [], isLoading: loadingMilestones } = useQuery({
+    queryKey: ["my-milestone-summary", projectIds],
+    queryFn: async () => {
+      if (projectIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("project_milestones")
+        .select("project_id, status")
+        .in("project_id", projectIds);
+      if (error) return [];
+      return (data ?? []) as { project_id: string; status: string }[];
+    },
+    enabled: projectIds.length > 0,
+    staleTime: 30_000,
+  });
+
+  if (loadingProjects || loadingMilestones) return <ModuleRowLoading title="Roadmap" />;
+
+  const active = projects.filter(
+    (project) => project.status === "active" || project.status === "planning",
+  );
+  const anchored = active[0];
+  const counts = new Map<string, { total: number; done: number }>();
+  for (const row of milestoneRows) {
+    const entry = counts.get(row.project_id) ?? { total: 0, done: 0 };
+    entry.total += 1;
+    if (row.status === "done") entry.done += 1;
+    counts.set(row.project_id, entry);
+  }
+  const projectsWithRoadmaps = active.filter((project) => (counts.get(project.id)?.total ?? 0) > 0);
+  const totalMilestones = [...counts.values()].reduce((sum, c) => sum + c.total, 0);
+
+  const preview =
+    projectsWithRoadmaps.length > 0
+      ? projectsWithRoadmaps
+          .slice(0, 3)
+          .map((project) => {
+            const c = counts.get(project.id)!;
+            return `${project.title} ${Math.round((c.done / c.total) * 100)}%`;
+          })
+          .join(" · ")
+      : active.length > 0
+        ? "Milestones on a project page become a board"
+        : null;
+
+  return (
+    <ModuleRow
+      icon={<Kanban className="h-4 w-4" />}
+      title="Roadmap"
+      subtitle={
+        projectsWithRoadmaps.length > 0
+          ? `${totalMilestones} milestones across ${projectsWithRoadmaps.length} project${projectsWithRoadmaps.length === 1 ? "" : "s"}`
+          : active.length > 0
+            ? "Add milestones to build a board"
+            : "No projects yet"
+      }
+      action={
+        active.length === 0 ? (
+          <CreateProjectButton label="Start a project" variant="outline" />
+        ) : projectsWithRoadmaps.length > 0 && anchored ? (
+          <Link to="/projects/$id" params={{ id: anchored.id }} className={ROW_ACTION}>
+            Open board
+          </Link>
+        ) : anchored ? (
+          <Link to="/projects/$id" params={{ id: anchored.id }} className={ROW_ACTION}>
+            Add milestones →
+          </Link>
+        ) : undefined
       }
     >
       {preview && <Preview text={preview} />}

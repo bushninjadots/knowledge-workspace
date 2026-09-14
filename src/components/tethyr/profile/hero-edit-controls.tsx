@@ -147,7 +147,7 @@ export function HeroEditControls({
           className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Pencil className="h-3.5 w-3.5" />
-          Edit identity
+          Edit details
         </button>
 
         <button
@@ -279,7 +279,7 @@ function IdentityDialog({
       .eq("id", userId);
     setSaving(false);
     if (error) return toast.error(friendlyError(error));
-    toast.success("Identity updated");
+    toast.success("Details updated");
     onOpenChange(false);
     onSaved();
   }
@@ -288,7 +288,7 @@ function IdentityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit identity</DialogTitle>
+          <DialogTitle>Edit details</DialogTitle>
           <DialogDescription>
             How you're introduced across Tethyr. Your work still speaks first.
           </DialogDescription>

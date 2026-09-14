@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Compass,
   Search,
   User,
   GraduationCap,
@@ -27,6 +28,139 @@ type ProjectHit = { id: string; title: string; description: string | null; tags:
 type LibraryHit = { id: string; title: string; content: string; type: string };
 type PostHit = { id: string; title: string; body: string; type: string };
 type SessionHit = { id: string; title: string; description: string | null; session_type: string };
+
+type SearchRoute =
+  | { to: "/dashboard" }
+  | { to: "/profile" }
+  | { to: "/explore" }
+  | { to: "/challenges" }
+  | { to: "/sessions" }
+  | { to: "/community" }
+  | { to: "/templates" }
+  | { to: "/studio" }
+  | { to: "/library" }
+  | { to: "/teams" }
+  | { to: "/connections" }
+  | { to: "/messages" }
+  | { to: "/notifications" }
+  | { to: "/u/$handle"; params: { handle: string } }
+  | { to: "/skills/$slug"; params: { slug: string } }
+  | { to: "/projects/$id"; params: { id: string } }
+  | { to: "/library/$id"; params: { id: string } }
+  | { to: "/community"; search: { post: string } }
+  | { to: "/sessions/$id"; params: { id: string } };
+
+// Feature destinations make the search a discovery tool: people who don't yet
+// know a surface exists can type its name and land on it. Keywords are the
+// everyday words members use for a feature, not just its title.
+const DESTINATIONS: ReadonlyArray<{
+  label: string;
+  description: string;
+  keywords: readonly string[];
+  to: () => SearchRoute;
+}> = [
+  {
+    label: "Your Studio",
+    description: "Build and manage your profile and layout",
+    keywords: [
+      "studio",
+      "profile",
+      "builder",
+      "layout",
+      "blocks",
+      "customize",
+      "design",
+      "edit",
+      "portfolio",
+      "public",
+      "handle",
+    ],
+    to: () => ({ to: "/profile" }),
+  },
+  {
+    label: "Explore",
+    description: "Projects, people, and open roles",
+    keywords: ["explore", "discover", "browse", "projects", "people", "hire", "recruit"],
+    to: () => ({ to: "/explore" }),
+  },
+  {
+    label: "Roadmap",
+    description: "Your projects' work tracked as a board",
+    keywords: ["roadmap", "kanban", "board", "milestones", "track", "progress"],
+    to: () => ({ to: "/dashboard" }),
+  },
+  {
+    label: "Challenges",
+    description: "Build in public against a brief",
+    keywords: ["challenge", "compete", "contest", "hackathon"],
+    to: () => ({ to: "/challenges" }),
+  },
+  {
+    label: "Sessions",
+    description: "Book and run sessions with builders",
+    keywords: ["session", "meet", "book", "schedule", "call"],
+    to: () => ({ to: "/sessions" }),
+  },
+  {
+    label: "Templates",
+    description: "Start a project from a ready-made shape",
+    keywords: ["template", "starter", "reuse", "remix", "made with"],
+    to: () => ({ to: "/templates" }),
+  },
+  {
+    label: "Community",
+    description: "Posts and conversation across the network",
+    keywords: ["community", "posts", "discussion", "forum", "feed"],
+    to: () => ({ to: "/community" }),
+  },
+  {
+    label: "Teams",
+    description: "Join or start a crew",
+    keywords: ["team", "crew", "group", "collective"],
+    to: () => ({ to: "/teams" }),
+  },
+  {
+    label: "Connections",
+    description: "People you know and collaborate with",
+    keywords: ["connections", "connect", "network", "follow"],
+    to: () => ({ to: "/connections" }),
+  },
+  {
+    label: "Library",
+    description: "Saved work, notes, and resources",
+    keywords: ["library", "saved", "notes", "resources", "learn"],
+    to: () => ({ to: "/library" }),
+  },
+  {
+    label: "Messages",
+    description: "Chat with collaborators",
+    keywords: ["messages", "chat", "dm", "inbox"],
+    to: () => ({ to: "/messages" }),
+  },
+  {
+    label: "Notifications",
+    description: "Alerts about your work and network",
+    keywords: ["notifications", "alerts", "updates", "bell"],
+    to: () => ({ to: "/notifications" }),
+  },
+  {
+    label: "Dashboard",
+    description: "Your workspace hub",
+    keywords: ["dashboard", "home", "workspace", "overview"],
+    to: () => ({ to: "/dashboard" }),
+  },
+];
+
+function destinationHitsFor(term: string, limit = 4): Array<(typeof DESTINATIONS)[number]> {
+  if (!term) return [];
+  const needle = term.toLowerCase();
+  return DESTINATIONS.filter(
+    (d) =>
+      d.label.toLowerCase().includes(needle) ||
+      d.description.toLowerCase().includes(needle) ||
+      d.keywords.some((k) => k.includes(needle)),
+  ).slice(0, limit);
+}
 
 function useDebounced<T>(value: T, ms = 200): T {
   const [v, setV] = useState(value);
@@ -224,6 +358,7 @@ export function GlobalSearch({
   const libraryHits = libraryItems.data ?? [];
   const postHits = posts.data ?? [];
   const sessionHits = sessions.data ?? [];
+  const destinationHits = destinationHitsFor(debounced);
 
   const isLoading =
     profiles.isLoading ||
@@ -235,6 +370,7 @@ export function GlobalSearch({
   const noResults =
     enabled &&
     !isLoading &&
+    destinationHits.length === 0 &&
     profileHits.length === 0 &&
     skillHits.length === 0 &&
     projectHits.length === 0 &&
@@ -244,6 +380,7 @@ export function GlobalSearch({
 
   function flatItems() {
     const items: Array<{ type: string }> = [];
+    destinationHits.forEach(() => items.push({ type: "destination" }));
     profileHits.forEach(() => items.push({ type: "profile" }));
     skillHits.forEach(() => items.push({ type: "skill" }));
     projectHits.forEach(() => items.push({ type: "project" }));
@@ -289,16 +426,9 @@ export function GlobalSearch({
     }
   }
 
-  type SearchRoute =
-    | { to: "/u/$handle"; params: { handle: string } }
-    | { to: "/skills/$slug"; params: { slug: string } }
-    | { to: "/projects/$id"; params: { id: string } }
-    | { to: "/library/$id"; params: { id: string } }
-    | { to: "/community"; search: { post: string } }
-    | { to: "/sessions/$id"; params: { id: string } };
-
   function activateItem(index: number) {
     const allHits: Array<{ to: () => SearchRoute | null }> = [
+      ...destinationHits.map((d) => ({ to: d.to })),
       ...profileHits.map((h) => ({
         to: () => (h.handle ? { to: "/u/$handle" as const, params: { handle: h.handle } } : null),
       })),
@@ -354,6 +484,30 @@ export function GlobalSearch({
         id: `${resultsId}-opt-${flatIndex}`,
         "aria-selected": isSelected(type, flatIndex - resultOffset(type)),
       };
+    }
+
+    if (destinationHits.length > 0) {
+      items.push(sectionHeader("Jump to"));
+      destinationHits.forEach((d) => {
+        const i = idx++;
+        items.push(
+          <button
+            key={`destination-${d.label}`}
+            type="button"
+            onClick={() => activateItem(i)}
+            {...optionProps("destination", i)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("destination", i - resultOffset("destination")) ? "bg-surface" : ""}`}
+          >
+            <Compass className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="truncate text-sm" title={d.description}>
+                {d.label}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{d.description}</p>
+            </div>
+          </button>,
+        );
+      });
     }
 
     if (profileHits.length > 0) {
@@ -595,7 +749,8 @@ export function GlobalSearch({
             renderResults()
           ) : (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Search people, skills, projects, library items, community posts, and sessions…
+              Search for people, projects, skills, and sessions — or jump to a feature like “Your
+              Studio”, “Templates”, or “Roadmap”.
             </p>
           )}
         </div>

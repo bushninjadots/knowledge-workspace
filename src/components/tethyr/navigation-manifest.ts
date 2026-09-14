@@ -3,6 +3,7 @@ import {
   Compass,
   FolderOpen,
   Home,
+  LayoutTemplate,
   Link2,
   MessageSquare,
   Settings,
@@ -46,9 +47,10 @@ export const navigationGroups = [
     ],
   },
   {
-    label: "Account",
+    label: "You",
     items: [
       { to: "/profile", label: "Your Studio", icon: User },
+      { to: "/templates", label: "Templates", icon: LayoutTemplate },
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },

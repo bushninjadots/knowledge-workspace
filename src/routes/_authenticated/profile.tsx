@@ -32,12 +32,7 @@ import { BannerStrip } from "@/components/tethyr/profile-sections";
 import { FavoriteBadge } from "@/components/tethyr/achievements";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateImageFile } from "@/lib/validators";
 import { SkillEditingSection } from "@/components/tethyr/profile/skill-editing";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
@@ -150,26 +145,28 @@ function ProfilePage() {
   );
 
   // The Studio is the primary profile surface, including for incomplete
-  // accounts. Identity completion stays available from the editor's header
-  // action instead of replacing the Studio with the legacy setup form.
-  if (showSetup) {
-    return (
-      <div
-        className={`relative isolate min-h-screen ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
-        style={{ ...appearanceStyle(setupBackground) }}
-      >
-        <BackgroundLayer
-          background={setupBackground}
-          imageUrl={profileQuery.data.backgroundImageUrl}
-          bannerColor={setupPalette?.dominant ?? null}
-        />
-        {setupForm()}
-      </div>
-    );
-  }
-
+  // accounts. Identity completion stays available as an "Edit details" dialog
+  // over the Studio instead of replacing it with the legacy setup form.
   return (
-    <StudioView userId={userId} profile={profile} onCompleteProfile={() => setShowSetup(true)} />
+    <>
+      <StudioView userId={userId} profile={profile} onCompleteProfile={() => setShowSetup(true)} />
+      <Dialog open={showSetup} onOpenChange={setShowSetup}>
+        <DialogContent className="max-h-[90vh] max-w-4xl gap-0 overflow-y-auto p-0 md:max-w-5xl">
+          <DialogTitle className="sr-only">Edit details</DialogTitle>
+          <div
+            className={`relative isolate ${setupBackground?.density === "compact" ? "tethyr-density-compact" : ""}`}
+            style={{ ...appearanceStyle(setupBackground) }}
+          >
+            <BackgroundLayer
+              background={setupBackground}
+              imageUrl={profileQuery.data.backgroundImageUrl}
+              bannerColor={setupPalette?.dominant ?? null}
+            />
+            {setupForm()}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -477,20 +474,15 @@ function ProfileSetupForm({
                   )}
                   <p className="text-sm text-muted-foreground">@{form.handle ?? "—"}</p>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="shrink-0">
-                      <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                      Edit identity
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-48">
-                    <DropdownMenuItem onClick={() => setBgOpen(true)}>
-                      <Link2 className="mr-2 h-3.5 w-3.5" />
-                      Change appearance
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setBgOpen(true)}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Change appearance
+                </Button>
               </div>
 
               {form.bio && (

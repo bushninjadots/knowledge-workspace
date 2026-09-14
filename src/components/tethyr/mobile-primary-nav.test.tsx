@@ -42,7 +42,7 @@ describe("MobilePrimaryNav", () => {
     expect(screen.getByRole("link", { name: "Explore" })).not.toHaveAttribute("aria-current");
   });
 
-  it("marks the profile tab active on any profile route", () => {
+  it("marks the your studio tab active on the studio route", () => {
     vi.mocked(useRouterState).mockReturnValue("/profile" as never);
     render(<MobilePrimaryNav onOpenMore={() => {}} />);
     expect(screen.getByRole("link", { name: "Your Studio" })).toHaveAttribute(
