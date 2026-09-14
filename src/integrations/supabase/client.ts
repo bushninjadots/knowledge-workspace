@@ -30,12 +30,29 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+/**
+ * Resolve the Supabase endpoint for the runtime we are in.
+ *
+ * The browser must use the browser-facing `VITE_` URL, but SSR must prefer the
+ * server-only variables: in a containerised setup the browser URL points at the
+ * browser's localhost or a public proxy, which the SSR runtime cannot reach.
+ * Preferring the `VITE_` value on the server made every server-side Supabase
+ * read fail, so data-dependent routes rendered loading states and then
+ * disagreed with the hydrated client. `isServer` is injectable so the
+ * precedence can be tested without faking `window`.
+ */
+export function resolveSupabaseEnv(isServer: boolean = typeof window === "undefined") {
+  const viteUrl = import.meta.env["VITE_SUPABASE_URL"];
+  const viteKey = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  if (!isServer) return { url: viteUrl, key: viteKey };
+  return {
+    url: process.env["SUPABASE_URL"] || viteUrl,
+    key: process.env["SUPABASE_PUBLISHABLE_KEY"] || viteKey,
+  };
+}
+
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
-  const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || process.env["SUPABASE_PUBLISHABLE_KEY"];
+  const { url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY } = resolveSupabaseEnv();
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
