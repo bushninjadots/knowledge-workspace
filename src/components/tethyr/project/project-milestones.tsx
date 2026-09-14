@@ -75,15 +75,15 @@ export function MilestonesTimeline({
 
   return (
     <div className="rounded-xl bg-surface-elevated/30 p-3 sm:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium text-foreground/80">Roadmap</h3>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-semibold tracking-tight text-foreground">Roadmap</h3>
             <Badge variant="secondary" className="rounded-full text-[10px]">
               {doneCount}/{milestones.length} complete
             </Badge>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
             A shared view of what the team is moving through next.
           </p>
         </div>
@@ -94,15 +94,16 @@ export function MilestonesTimeline({
             variant="outline"
             onClick={() => setShowAdd((value) => !value)}
             aria-expanded={showAdd}
+            aria-controls="add-milestone-form"
           >
             <Plus data-icon="inline-start" />
-            Add milestone
+            {showAdd ? "Close" : "Add milestone"}
           </Button>
         )}
       </div>
 
       {showAdd && (
-        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-border/60 bg-background/40 p-3">
+        <div id="add-milestone-form" className="mt-4 flex flex-col gap-2 rounded-lg border border-border/60 bg-background/40 p-3">
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -146,8 +147,9 @@ export function MilestonesTimeline({
           {isOwner && <p className="mt-1 text-xs text-muted-foreground">Add the first marker for the team&apos;s next move.</p>}
         </div>
       ) : (
-        <div className="mt-5 grid gap-3 lg:grid-cols-3" aria-label="Project roadmap board">
-          {COLUMNS.map(({ status, label, icon: Icon }) => {
+        <div className="mt-5 -mx-1 overflow-x-auto px-1 pb-2" aria-label="Project roadmap board">
+          <div className="grid min-w-[48rem] grid-cols-3 gap-3">
+            {COLUMNS.map(({ status, label, icon: Icon }) => {
             const items = milestones.filter((milestone) => milestone.status === status);
             return (
               <section key={status} aria-labelledby={`roadmap-${status}`} className="min-h-44 rounded-lg bg-background/45 p-3">
@@ -195,8 +197,9 @@ export function MilestonesTimeline({
                   )}
                 </div>
               </section>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
