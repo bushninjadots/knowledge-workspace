@@ -96,7 +96,8 @@ describe("ProjectNeeds", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /add need/i }));
     await userEvent.type(screen.getByLabelText(/need title/i), "A video editor");
-    await userEvent.selectOptions(screen.getByLabelText(/related skill/i), "skill-dev");
+    await userEvent.click(screen.getByRole("combobox", { name: /related skill/i }));
+    await userEvent.click(await screen.findByRole("option", { name: "Development" }));
     await userEvent.click(screen.getByRole("button", { name: /post need/i }));
 
     await waitFor(() => expect(mocks.createNeed).toHaveBeenCalledTimes(1));

@@ -34,24 +34,16 @@ let prev = null;
 
 for (const { file, ts } of timestamps) {
   if (prev && ts <= prev.ts) {
-    console.error(
-      `✗ ${file} (timestamp ${ts}) ≤ ${prev.file} (timestamp ${prev.ts})`,
-    );
+    console.error(`✗ ${file} (timestamp ${ts}) ≤ ${prev.file} (timestamp ${prev.ts})`);
     failures++;
   }
   prev = { file, ts };
 }
 
 if (failures > 0) {
-  console.error(
-    `\n✗ Migration order check FAILED: ${failures} out-of-order migration(s)`,
-  );
-  console.error(
-    "  A migration with a timestamp ≤ an earlier file can never apply in order",
-  );
-  console.error(
-    "  on a database that has already passed that point. Use a timestamp",
-  );
+  console.error(`\n✗ Migration order check FAILED: ${failures} out-of-order migration(s)`);
+  console.error("  A migration with a timestamp ≤ an earlier file can never apply in order");
+  console.error("  on a database that has already passed that point. Use a timestamp");
   console.error("  later than the newest existing migration.");
   process.exit(1);
 } else {

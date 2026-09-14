@@ -51,7 +51,7 @@ export const NEED_LABEL: Record<NeedUrgency, string> = {
 /** Badge classes per urgency level. */
 export const NEED_BADGE: Record<NeedUrgency, string> = {
   high: "border-destructive/30 bg-destructive/5 text-destructive",
-  normal: "border-brand-green/30 bg-brand-green/5 text-brand-green",
+  normal: "border-trust/30 bg-trust/5 text-trust",
   low: "border-border/60 bg-surface text-muted-foreground",
 };
 

@@ -25,6 +25,13 @@ import {
   PROJECT_PRESENTATION_OPTIONS,
   type ProjectPresentationPreset,
 } from "@/lib/project-presentation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type ProjectWorkbenchAction =
   | "demonstrations"
@@ -125,7 +132,7 @@ export function ProjectWorkbench({
               type="button"
               onClick={watch}
               disabled={toggleWatch.isPending}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground disabled:cursor-wait disabled:opacity-60"
             >
               {watchStatus.data ? (
                 <EyeOff className="h-3.5 w-3.5" />
@@ -139,7 +146,7 @@ export function ProjectWorkbench({
             <button
               type="button"
               onClick={onShapeDirection}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
             >
               <Pencil className="h-3.5 w-3.5" />
               Shape direction
@@ -148,30 +155,34 @@ export function ProjectWorkbench({
           <button
             type="button"
             onClick={() => onAction(next.action)}
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
           >
             {next.cta}
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
         {isOwner && onPresentationChange && (
-          <label className="inline-flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="inline-flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
             <span>Presentation</span>
-            <select
-              aria-label="Project presentation preset"
+            <Select
               value={getProjectPresentationOption(project.presentation_preset).id}
-              onChange={(event) =>
-                onPresentationChange(event.target.value as ProjectPresentationPreset)
-              }
+              onValueChange={(value) => onPresentationChange(value as ProjectPresentationPreset)}
               disabled={presentationSaveState === "saving"}
-              className="max-w-40 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs text-foreground outline-none transition focus:border-[var(--user-accent-border,var(--border-strong))] disabled:cursor-wait disabled:opacity-60"
             >
-              {PROJECT_PRESENTATION_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label="Project presentation preset"
+                className="h-7 w-40 px-2 text-xs"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROJECT_PRESENTATION_OPTIONS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span
               role="status"
               aria-live="polite"
@@ -179,7 +190,7 @@ export function ProjectWorkbench({
                 presentationSaveState === "error"
                   ? "text-destructive"
                   : presentationSaveState === "saved"
-                    ? "text-brand-green"
+                    ? "text-trust"
                     : "text-muted-foreground"
               }
             >
@@ -191,7 +202,7 @@ export function ProjectWorkbench({
                     ? "Couldn't save"
                     : null}
             </span>
-          </label>
+          </div>
         )}
       </div>
       <div

@@ -10,6 +10,7 @@ import {
 } from "@/hooks/use-projects";
 import { ApplyToRoleButton, RoleApplicationsList } from "./project-role-applications";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function OpenRolesSection({
   roles,
@@ -83,23 +84,23 @@ export function OpenRolesSection({
 
       {showAdd && (
         <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
-          <input
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Role title (e.g. React Developer)"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Role title"
           />
-          <input
+          <Input
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             placeholder="What this role involves (optional)"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Role description"
           />
-          <input
+          <Input
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
             placeholder="Skills needed (comma-separated)"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Skills needed"
           />
           <div className="flex gap-2">
             <Button
@@ -125,7 +126,7 @@ export function OpenRolesSection({
           {unfilledRoles.map((r) => (
             <div key={r.id} className="rounded-xl bg-background/40 p-3">
               <div className="flex items-start gap-3">
-                <HandHeart className="mt-0.5 h-4 w-4 shrink-0 text-brand-purple" />
+                <HandHeart className="mt-0.5 h-4 w-4 shrink-0 text-ai" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{r.title}</p>
                   {r.description && (

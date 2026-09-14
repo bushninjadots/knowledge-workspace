@@ -179,7 +179,7 @@ export const CommunityHeader = memo(function CommunityHeader({
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search the community"
           placeholder="Search projects, skills, people, or ideas..."
-          className="h-10 rounded-md border-border/60 bg-surface pl-9 pr-9 text-sm transition-shadow focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+          className="h-10 rounded-md border-border/60 bg-surface pl-9 pr-9 text-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
         />
         {isSearching && (
           <button
@@ -236,9 +236,9 @@ export const CommunityHeader = memo(function CommunityHeader({
               type="button"
               aria-pressed={mySkillsOnly}
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
-              className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
+              className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-150 ${
                 mySkillsOnly
-                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))] shadow-sm"
+                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -251,9 +251,9 @@ export const CommunityHeader = memo(function CommunityHeader({
                 type="button"
                 aria-pressed={sortMode === opt.value}
                 onClick={() => onSortModeChange(opt.value)}
-                className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-200 ${
+                className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-150 ${
                   sortMode === opt.value
-                    ? "bg-surface-elevated text-foreground shadow-sm"
+                    ? "bg-surface-elevated text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -268,9 +268,9 @@ export const CommunityHeader = memo(function CommunityHeader({
               type="button"
               aria-pressed={focusFilter === "all"}
               onClick={() => onFocusFilterChange("all")}
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
+              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
                 focusFilter === "all"
-                  ? "bg-surface-elevated text-foreground shadow-sm font-medium"
+                  ? "bg-surface-elevated text-foreground font-medium"
                   : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
               }`}
             >
@@ -282,9 +282,9 @@ export const CommunityHeader = memo(function CommunityHeader({
                 type="button"
                 aria-pressed={focusFilter === f}
                 onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
                   focusFilter === f
-                    ? "bg-surface-elevated text-foreground shadow-sm font-medium"
+                    ? "bg-surface-elevated text-foreground font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >
@@ -301,9 +301,9 @@ export const CommunityHeader = memo(function CommunityHeader({
                 type="button"
                 aria-pressed={nav === filter.value}
                 onClick={() => onNavChange(filter.value)}
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-200 ${
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
                   nav === filter.value
-                    ? "bg-surface-elevated font-medium text-foreground shadow-sm"
+                    ? "bg-surface-elevated font-medium text-foreground"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >

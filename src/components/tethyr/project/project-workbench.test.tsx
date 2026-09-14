@@ -166,7 +166,7 @@ describe("Project Workbench", () => {
     expect(next).toMatchObject({ action: "discussions", cta: "Offer feedback" });
   });
 
-  it("exposes the presentation choice only to the owner", () => {
+  it("exposes the presentation choice only to the owner", async () => {
     const onPresentationChange = vi.fn();
     const props = {
       project: makeProject(),
@@ -182,10 +182,13 @@ describe("Project Workbench", () => {
 
     renderWithProviders(<ProjectWorkbench {...props} />);
 
-    expect(screen.getByRole("combobox", { name: /project presentation preset/i })).toHaveValue(
-      "story-first",
-    );
-    expect(screen.getByRole("option", { name: "Demo first" })).toBeInTheDocument();
+    const trigger = screen.getByRole("combobox", { name: /project presentation preset/i });
+    expect(trigger).toHaveTextContent("Story first");
+    expect(screen.queryByRole("option", { name: "Demo first" })).not.toBeInTheDocument();
+
+    // The options live in a portal, so they only exist once the select opens.
+    await userEvent.click(trigger);
+    expect(await screen.findByRole("option", { name: "Demo first" })).toBeInTheDocument();
   });
 
   it("surfaces the current season as a chip", () => {

@@ -79,7 +79,7 @@ export function ProjectShelfHeader({
         </AnimatePresence>
 
         <div
-          className="hidden items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5 md:flex"
+          className="hidden items-center gap-0.5 rounded-md border border-border/60 bg-background/60 p-0.5 md:flex"
           role="group"
           aria-label="Project view"
         >
@@ -92,9 +92,9 @@ export function ProjectShelfHeader({
               title={label}
               onClick={() => onViewChange(value)}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg transition",
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-lift",
                 view === value
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

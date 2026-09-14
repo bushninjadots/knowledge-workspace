@@ -14,13 +14,22 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { timeAgo } from "@/lib/time";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CATEGORY_STYLE: Record<DiscussionRow["category"], string> = {
   general: "border-border/60 bg-background/60 text-muted-foreground",
   question:
     "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
-  idea: "border-brand-green/40 bg-brand-green/10 text-brand-green",
-  feedback: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
+  idea: "border-trust/40 bg-trust/10 text-trust",
+  feedback: "border-ai/40 bg-ai/10 text-ai",
   announcement: "border-teaching/40 bg-teaching-subtle text-foreground",
 };
 
@@ -87,7 +96,7 @@ function DiscussionThread({
               <Link
                 to="/community"
                 search={{ post: discussion.community_post_id } as Record<string, string>}
-                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning/10 px-2 py-0.5 text-[11px] font-medium text-learning transition hover:bg-learning/20"
+                className="inline-flex items-center gap-1 rounded-full border border-learning/40 bg-learning/10 px-2 py-0.5 text-[11px] font-medium text-learning transition-lift hover:bg-learning/20"
               >
                 <Users className="h-2.5 w-2.5" />
                 Also on Community
@@ -161,11 +170,12 @@ function DiscussionThread({
 
           {isContributor && (
             <div className="flex gap-2">
-              <input
+              <Input
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
                 placeholder="Write a reply..."
-                className="flex-1 rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                aria-label="Write a reply"
+                className="flex-1"
                 onKeyDown={(e) => e.key === "Enter" && handleReply()}
               />
               <Button
@@ -243,30 +253,36 @@ export function ProjectDiscussions({
       {showAdd && (
         <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
           <div className="flex gap-2">
-            <input
+            <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Thread title"
-              className="flex-1 rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              aria-label="Thread title"
+              className="flex-1"
             />
-            <select
+            <Select
               value={category}
-              onChange={(e) => setCategory(e.target.value as DiscussionRow["category"])}
-              className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              onValueChange={(value) => setCategory(value as DiscussionRow["category"])}
             >
-              <option value="general">General</option>
-              <option value="question">Question</option>
-              <option value="idea">Idea</option>
-              <option value="feedback">Feedback</option>
-              <option value="announcement">Announcement</option>
-            </select>
+              <SelectTrigger aria-label="Thread category" className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="question">Question</SelectItem>
+                <SelectItem value="idea">Idea</SelectItem>
+                <SelectItem value="feedback">Feedback</SelectItem>
+                <SelectItem value="announcement">Announcement</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <textarea
+          <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Start the conversation... (Markdown supported)"
+            aria-label="Thread body"
             rows={3}
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+            className="min-h-0 resize-none"
           />
           <div className="flex gap-2">
             <Button

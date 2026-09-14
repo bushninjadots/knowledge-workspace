@@ -16,7 +16,7 @@ export type BlockType = string;
 export type BlockCategory = "content" | "media" | "project" | "people" | "community" | "utility";
 
 /** The page owner context a block can render in. Omit (or "both") to allow everywhere. */
-export type BlockOwnerContext = "profile" | "project" | "both";
+type BlockOwnerContext = "profile" | "project" | "both";
 
 // ---------------------------------------------------------------------------
 // Block Configuration

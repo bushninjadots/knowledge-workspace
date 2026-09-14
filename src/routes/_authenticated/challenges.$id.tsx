@@ -220,10 +220,7 @@ function ChallengeDetailPage() {
             <div className="space-y-3 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 {challenge.is_starter && (
-                  <Badge
-                    variant="outline"
-                    className="gap-1 bg-brand-purple/10 text-brand-purple border-brand-purple/30"
-                  >
+                  <Badge variant="outline" className="gap-1 bg-ai/10 text-ai border-ai/30">
                     <Sparkles className="h-3 w-3" /> Starter · Curated by Tethyr
                   </Badge>
                 )}

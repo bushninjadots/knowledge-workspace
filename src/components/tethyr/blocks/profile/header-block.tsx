@@ -16,6 +16,7 @@ import { registerBlock } from "@/lib/block-registry";
 import { getTierProgress } from "@/lib/reputation";
 import { HeroEditControls } from "@/components/tethyr/profile/hero-edit-controls";
 import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
+import { ConnectButton } from "@/components/tethyr/connect-button";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -123,6 +124,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
   const profileCompleteness =
     typeof context.profileCompleteness === "number" ? context.profileCompleteness : null;
+  const showConnect = ownerType === "profile" && !canEdit;
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-surface">
@@ -277,7 +279,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   <button
                     type="button"
                     onClick={context.onCompleteProfile}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--card-border))] bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-background"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--card-border))] bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-lift hover:bg-background"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Complete profile
@@ -285,6 +287,12 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   </button>
                 </div>
               )}
+
+            {showConnect && (
+              <div className="mt-4 border-t border-border/40 pt-3">
+                <ConnectButton targetId={data.id} targetName={data.display_name} />
+              </div>
+            )}
           </div>
         </div>
       </div>

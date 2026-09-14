@@ -161,11 +161,11 @@ export function NotificationCard({ notification, onNavigate }: NotificationCardP
       tabIndex={isConnectionRequest ? -1 : 0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-lift transition-shadow transition-transform duration-200 ${
+      className={`group relative flex items-start gap-3 rounded-xl border p-4 transition-spatial duration-150 ${
         isUnread
           ? "border-l-2 border-l-primary border-border/40 bg-surface-elevated/50"
           : "border-border/40 bg-surface/40 opacity-75 hover:opacity-100"
-      } ${!isConnectionRequest ? "cursor-pointer hover:shadow-lifted hover:-translate-y-0.5" : ""} ${!hasEntity && !isConnectionRequest ? "opacity-50 cursor-not-allowed" : ""}`}
+      } ${!isConnectionRequest ? "cursor-pointer hover:-translate-y-0.5" : ""} ${!hasEntity && !isConnectionRequest ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       <div
         className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface ${config.color}`}

@@ -17,6 +17,7 @@ import { Markdown } from "@tiptap/markdown";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 import {
   Bold,
   Italic,
@@ -71,7 +72,7 @@ function ToolbarButton({
       size="icon"
       className={cn(
         "h-8 w-8 shrink-0 rounded-lg",
-        isActive && "bg-surface-elevated text-brand-green",
+        isActive && "bg-surface-elevated text-trust",
         !isActive && "text-muted-foreground hover:text-foreground",
       )}
       onClick={onClick}
@@ -226,6 +227,9 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
         <CodeSquare className="h-4 w-4" />
       </ToolbarButton>
       {editor.isActive("codeBlock") && (
+        // Native select on purpose: the shared primitive renders in a portal
+        // that takes focus out of the editor while a language is being picked.
+        // eslint-disable-next-line no-restricted-syntax
         <select
           value={activeLanguage === "" ? "none" : activeLanguage}
           onChange={(e) => {
@@ -237,7 +241,7 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
               .run();
           }}
           aria-label="Code block language"
-          className="h-8 rounded-lg border border-border/50 bg-background px-2 text-xs text-foreground outline-none"
+          className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground transition-colors hover:border-border-strong focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none"
         >
           {CODE_LANGUAGE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -283,7 +287,7 @@ export function NoteEditor({
         }),
         Link.configure({
           openOnClick: false,
-          HTMLAttributes: { class: "text-brand-green underline" },
+          HTMLAttributes: { class: "text-trust underline" },
         }),
         TaskList,
         TaskItem.configure({ nested: true }),
@@ -294,7 +298,7 @@ export function NoteEditor({
         TableHeader,
         ExternalImage,
         SignedImage,
-        Dropcursor.configure({ color: "var(--brand-green)", width: 2 }),
+        Dropcursor.configure({ color: "var(--trust)", width: 2 }),
         ...(format === "markdown" ? [Markdown] : []),
       ] as never[],
       content,
@@ -425,9 +429,9 @@ export function NoteEditor({
   if (!editor) return null;
 
   return (
-    <div className="rounded-xl border card-border bg-surface/40">
+    <Card className="bg-surface/40">
       {editable && <Toolbar editor={editor} />}
       <EditorContent editor={editor} />
-    </div>
+    </Card>
   );
 }

@@ -538,10 +538,8 @@ export function ComposerBar({
 
   return (
     <div
-      className={`card-border border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-shadow ${
-        focused
-          ? "shadow-[0_0_0_1px_oklch(0.92_0.23_142/20%),0_0_20px_-4px_oklch(0.92_0.23_142/15%)]"
-          : ""
+      className={`card-border border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 ${
+        focused ? "shadow-[0_0_0_1px_oklch(0.92_0.23_142/20%)]" : ""
       }`}
     >
       {isEditing && (
@@ -559,7 +557,7 @@ export function ComposerBar({
       )}
 
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -611,7 +609,7 @@ export function ComposerBar({
               <button
                 onClick={() => removeImage(i)}
                 aria-label="Remove image"
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface text-foreground shadow-md"
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -640,7 +638,7 @@ export function ComposerBar({
                       selected ? current.filter((value) => value !== tag) : [...current, tag],
                     )
                   }
-                  className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                  className={`rounded-full border px-2.5 py-1 text-[11px] transition-lift ${
                     selected
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border/60 bg-background/40 text-muted-foreground hover:text-foreground"
@@ -685,7 +683,7 @@ export function ComposerBar({
                     type="button"
                     className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors active:scale-95 ${
                       targetSpaceId
-                        ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
+                        ? "border-ai/40 bg-ai/10 text-ai"
                         : "border-border bg-background/60 text-muted-foreground hover:text-foreground"
                     }`}
                   >

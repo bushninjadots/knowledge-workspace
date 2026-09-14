@@ -367,7 +367,7 @@ function StudioHiddenSectionsStrip({ count, onEdit }: { count: number; onEdit: (
         <button
           type="button"
           onClick={onEdit}
-          className="ml-auto inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium text-foreground transition hover:bg-[var(--surface-elevated)]"
+          className="ml-auto inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium text-foreground transition-lift hover:bg-[var(--surface-elevated)]"
         >
           <Pencil className="h-3 w-3" />
           Edit in Customize
@@ -448,11 +448,11 @@ function StudioNextStepsRail({
               <button
                 type="button"
                 onClick={onCompleteProfile}
-                className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
               >
                 <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="text-xs leading-snug text-foreground/90">{step.label}</span>
-                <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-60" />
+                <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-fade group-hover:opacity-60" />
               </button>
             </li>
           ))}
@@ -579,7 +579,7 @@ function StudioViewTopBar({
                   title={label}
                   onClick={() => onDeviceChange(item)}
                   className={cn(
-                    "flex h-6 w-7 items-center justify-center rounded-sm text-muted-foreground transition",
+                    "flex h-6 w-7 items-center justify-center rounded-sm text-muted-foreground transition-lift",
                     device === item
                       ? "border border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
                       : "border border-transparent hover:text-foreground",
@@ -642,7 +642,7 @@ function StudioViewSection({
             onClick={onEdit}
             title="Edit this area in Customize"
             aria-label="Edit this area in Customize"
-            className="flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground opacity-0 transition hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100 group-hover/section:opacity-100"
+            className="flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground opacity-0 transition-lift hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100 group-hover/section:opacity-100"
           >
             <Pencil className="h-3 w-3" />
           </button>
@@ -779,7 +779,7 @@ function StudioOnboardingChecklist({
             type="button"
             onClick={dismiss}
             aria-label="Dismiss"
-            className="rounded p-0.5 text-muted-foreground transition hover:text-foreground"
+            className="rounded p-0.5 text-muted-foreground transition-lift hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -796,7 +796,7 @@ function StudioOnboardingChecklist({
               disabled={step.done || !step.action}
               onClick={step.action}
               className={cn(
-                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition",
+                "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-lift",
                 step.done
                   ? "cursor-default text-foreground/70"
                   : "hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]",

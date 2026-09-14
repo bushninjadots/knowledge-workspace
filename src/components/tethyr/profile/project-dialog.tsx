@@ -358,7 +358,7 @@ export function ProjectDialog({
                     key={s}
                     type="button"
                     onClick={() => setStatus(s)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
                       status === s
                         ? PROJECT_STATUS_STYLE[s]
                         : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -377,7 +377,7 @@ export function ProjectDialog({
                     key={v}
                     type="button"
                     onClick={() => setVisibility(v)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
                       visibility === v
                         ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
                         : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -428,7 +428,7 @@ export function ProjectDialog({
                         else next.add(s.id);
                         setSkillIds(next);
                       }}
-                      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
+                      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-lift ${
                         on
                           ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
                           : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -660,12 +660,12 @@ function Toggle({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`h-6 w-10 shrink-0 rounded-full transition ${
+        className={`h-6 w-10 shrink-0 rounded-full transition-lift ${
           checked ? "bg-primary" : "bg-border"
         }`}
       >
         <span
-          className={`block h-5 w-5 translate-y-0.5 rounded-full bg-background transition ${
+          className={`block h-5 w-5 translate-y-0.5 rounded-full bg-background transition-spatial ${
             checked ? "translate-x-5" : "translate-x-0.5"
           }`}
         />

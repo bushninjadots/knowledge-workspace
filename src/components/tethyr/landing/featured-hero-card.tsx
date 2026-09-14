@@ -48,7 +48,7 @@ export function FeaturedHeroCard() {
             width="640"
             height="144"
             decoding="async"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-spatial duration-150 group-hover:scale-[1.03]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">

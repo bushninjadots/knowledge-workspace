@@ -2,7 +2,7 @@ import type { ProjectSeason } from "@/hooks/use-projects";
 
 export type SeasonMeta = { id: ProjectSeason; label: string; description: string };
 
-export const SEASONS: SeasonMeta[] = [
+const SEASONS: SeasonMeta[] = [
   { id: "research", label: "Research", description: "Understanding the problem and people." },
   { id: "prototype", label: "Prototype", description: "Making the first shape of the work." },
   { id: "feedback", label: "Feedback", description: "Learning from people around the work." },

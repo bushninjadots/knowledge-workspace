@@ -107,7 +107,7 @@ export function SpaceHeader({
       {/* Page title row */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-purple/10 text-xl font-bold text-brand-purple">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-ai/10 text-xl font-bold text-ai">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -134,7 +134,7 @@ export function SpaceHeader({
                 </span>
               )}
               {space.is_member && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-green">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-trust">
                   <Check className="h-3.5 w-3.5" />
                   Joined
                 </span>

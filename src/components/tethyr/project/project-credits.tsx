@@ -98,7 +98,7 @@ export function CreditsRoll({
                   type="button"
                   onClick={() => setShowThanks((v) => !v)}
                   aria-expanded={showThanks}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 transition hover:text-foreground"
+                  className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 transition-lift hover:text-foreground"
                 >
                   {showThanks ? (
                     <ChevronDown className="h-3 w-3" />

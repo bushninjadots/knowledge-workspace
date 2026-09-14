@@ -80,7 +80,7 @@ function ChallengeListRow({ challenge }: { challenge: ChallengeRow }) {
       <Link
         to="/challenges/$id"
         params={{ id: challenge.id }}
-        className="group flex items-center gap-4 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+        className="group flex items-center gap-4 px-4 py-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
       >
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
@@ -262,7 +262,7 @@ function ChallengesContent() {
                   <button
                     key={f.value}
                     onClick={() => setTypeFilter(f.value)}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-lift ${
                       typeFilter === f.value
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -280,7 +280,7 @@ function ChallengesContent() {
                 <button
                   key={f.value}
                   onClick={() => setDifficultyFilter(f.value)}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-lift ${
                     difficultyFilter === f.value
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -297,7 +297,7 @@ function ChallengesContent() {
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-lift ${
                     statusFilter === f.value
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -370,7 +370,7 @@ function ChallengesContent() {
                   Start here
                   <Badge
                     variant="outline"
-                    className="gap-1 border-brand-purple/30 bg-brand-purple/10 text-brand-purple text-xs font-medium"
+                    className="gap-1 border-ai/30 bg-ai/10 text-ai text-xs font-medium"
                   >
                     <Sparkles className="h-3 w-3" /> Curated by Tethyr
                   </Badge>

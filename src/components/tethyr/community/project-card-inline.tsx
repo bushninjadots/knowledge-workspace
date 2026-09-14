@@ -72,7 +72,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
           className="h-10 w-10 shrink-0 rounded-xl object-cover"
         />
       ) : (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust/10 text-trust">
           <FolderOpen className="h-4 w-4" />
         </div>
       )}
@@ -100,7 +100,7 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
   if (!project_id && !snapshot) return null;
 
   const cardClass =
-    "rounded-xl border border-border/60 bg-background/40 p-3 block transition hover:bg-surface-elevated";
+    "rounded-xl border border-border/60 bg-background/40 p-3 block transition-lift hover:bg-surface-elevated";
 
   if (isExternal && snapshot?.url) {
     return (

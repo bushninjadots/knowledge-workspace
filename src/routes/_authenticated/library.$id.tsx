@@ -21,7 +21,15 @@ import {
   Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   useLibraryItem,
   useUpdateItem,
@@ -32,6 +40,7 @@ import {
 } from "@/hooks/use-library";
 import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
 import { GithubLinkDialog } from "@/components/tethyr/library/github-link-dialog";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { lazy, Suspense } from "react";
 const NoteEditor = lazy(() =>
   import("@/components/tethyr/library/note-editor").then((m) => ({ default: m.NoteEditor })),
@@ -41,6 +50,9 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
+
+// Radix Select reserves the empty string, so "not linked" needs its own value.
+const NO_PROJECT = "none";
 
 export const Route = createFileRoute("/_authenticated/library/$id")({
   head: () => ({
@@ -276,11 +288,7 @@ function LibraryItemPage() {
             onClick={() => togglePin.mutate({ id: item.id, is_pinned: !item.is_pinned })}
             aria-label={item.is_pinned ? "Unpin" : "Pin to top"}
           >
-            <Pin
-              className={`h-4 w-4 ${
-                item.is_pinned ? "text-brand-purple" : "text-muted-foreground"
-              }`}
-            />
+            <Pin className={`h-4 w-4 ${item.is_pinned ? "text-ai" : "text-muted-foreground"}`} />
           </Button>
 
           <Button
@@ -320,14 +328,14 @@ function LibraryItemPage() {
         {/* Editor / code-doc workspace */}
         {(item.type === "note" || item.type === "document") && (
           <>
-            <div className="mb-4 rounded-xl border border-brand-green/20 bg-brand-green/5 p-4">
+            <div className="mb-4 rounded-xl border border-trust/20 bg-trust/5 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     {workspaceMode === "code" ? (
-                      <FileCode2 className="h-4 w-4 text-brand-green" />
+                      <FileCode2 className="h-4 w-4 text-trust" />
                     ) : (
-                      <Code2 className="h-4 w-4 text-brand-purple" />
+                      <Code2 className="h-4 w-4 text-ai" />
                     )}
                     {workspaceMode === "code" ? "Code workspace" : "Docs workspace"}
                   </div>
@@ -337,25 +345,22 @@ function LibraryItemPage() {
                       : "Explain the idea, decisions, and next steps. Add code blocks whenever a reader needs the implementation."}
                   </p>
                 </div>
-                <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-background/50 p-1">
-                  <button
-                    type="button"
-                    onClick={() => handleModeSwitch("docs")}
-                    className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "docs" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
-                  >
-                    Docs
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleModeSwitch("code")}
-                    className={`rounded-md px-2.5 py-1 text-xs ${workspaceMode === "code" ? "bg-surface-elevated text-foreground" : "text-muted-foreground"}`}
-                  >
-                    Code
-                  </button>
+                <div className="flex items-center gap-2">
+                  <SegmentedControl
+                    value={workspaceMode}
+                    onChange={handleModeSwitch}
+                    ariaLabel="Workspace mode"
+                    size="sm"
+                    className="w-fit"
+                    options={[
+                      { value: "docs", label: "Docs", icon: Code2 },
+                      { value: "code", label: "Code", icon: FileCode2 },
+                    ]}
+                  />
                   <button
                     type="button"
                     onClick={() => setPreview((value) => !value)}
-                    className="rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+                    className="rounded-md px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {preview ? "Edit" : "Preview"}
                   </button>
@@ -364,14 +369,18 @@ function LibraryItemPage() {
             </div>
             {preview ? (
               workspaceMode === "code" ? (
-                <article className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-                </article>
+                <Card asChild>
+                  <article className="prose-custom min-h-[60vh] bg-surface/40 px-4 py-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                  </article>
+                </Card>
               ) : (
-                <article
-                  className="prose-custom min-h-[60vh] rounded-xl border card-border bg-surface/40 px-4 py-6"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
-                />
+                <Card asChild>
+                  <article
+                    className="prose-custom min-h-[60vh] bg-surface/40 px-4 py-6"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+                  />
+                </Card>
               )
             ) : (
               <Suspense
@@ -392,27 +401,27 @@ function LibraryItemPage() {
           </>
         )}
         {item.type === "link" && item.url ? (
-          <div className="rounded-xl border card-border bg-surface/40 p-6">
+          <Card className="bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
               <Globe className="h-5 w-5 text-teaching" />
               <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-brand-green underline hover:opacity-80"
+                className="text-sm text-trust underline hover:opacity-80"
               >
                 {item.url}
               </a>
             </div>
-          </div>
+          </Card>
         ) : item.type === "upload" && fileUrl ? (
-          <div className="rounded-xl border card-border bg-surface/40 p-6">
+          <Card className="bg-surface/40 p-6">
             <div className="flex items-center gap-3 mb-4">
               <Upload className="h-5 w-5 text-ai" />
               <a
                 href={fileUrl}
                 download={item.title || undefined}
-                className="text-sm text-brand-green underline hover:opacity-80"
+                className="text-sm text-trust underline hover:opacity-80"
               >
                 {item.file_type ?? "File"}
               </a>
@@ -422,7 +431,7 @@ function LibraryItemPage() {
                 </span>
               )}
             </div>
-          </div>
+          </Card>
         ) : null}
 
         {/* Tags */}
@@ -447,22 +456,29 @@ function LibraryItemPage() {
             <label htmlFor="library-project" className="shrink-0 text-muted-foreground">
               Link to project
             </label>
-            <select
-              id="library-project"
-              value={projectId ?? ""}
-              onChange={(e) => {
-                setProjectId(e.target.value || null);
+            <Select
+              value={projectId ?? NO_PROJECT}
+              onValueChange={(value) => {
+                setProjectId(value === NO_PROJECT ? null : value);
                 setHasChanges(true);
               }}
-              className="min-w-0 flex-1 rounded-lg border border-border/60 bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
             >
-              <option value="">None</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
+              {" "}
+              <SelectTrigger
+                id="library-project"
+                className="h-7 min-w-0 flex-1 px-2 text-xs sm:max-w-64"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_PROJECT}>None</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
         {(item.type === "note" || item.type === "document") && isOwner && (

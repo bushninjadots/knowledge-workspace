@@ -118,6 +118,38 @@ describe("SegmentedControl", () => {
     expect(tab.querySelector("svg")).toBeInTheDocument();
   });
 
+  it("renders compact sizing for view switchers", () => {
+    render(
+      <SegmentedControl
+        value="grid"
+        onChange={vi.fn()}
+        ariaLabel="Library layout"
+        size="sm"
+        options={[
+          { value: "grid", label: "", icon: Star, ariaLabel: "Grid view" },
+          { value: "list", label: "", icon: Star, ariaLabel: "List view" },
+        ]}
+      />,
+    );
+    const tab = screen.getByRole("tab", { name: "Grid view" });
+    expect(tab).toHaveClass("rounded-md", "px-2", "text-xs");
+    expect(screen.getByRole("tablist", { name: "Library layout" })).toHaveClass("p-0.5");
+  });
+
+  it("omits the label element for icon-only options", () => {
+    render(
+      <SegmentedControl
+        value="grid"
+        onChange={vi.fn()}
+        ariaLabel="Library layout"
+        size="sm"
+        options={[{ value: "grid", label: "", icon: Star, ariaLabel: "Grid view" }]}
+      />,
+    );
+    const tab = screen.getByRole("tab", { name: "Grid view" });
+    expect(tab.querySelector("span")).toBeNull();
+  });
+
   it("hides labels on mobile when requested", () => {
     render(
       <SegmentedControl

@@ -254,7 +254,7 @@ function HitRow({
       onMouseEnter={onHover}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition",
+        "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift",
         selected ? "bg-[var(--user-accent-subtle,var(--surface-elevated))]" : "hover:bg-surface",
       )}
     >

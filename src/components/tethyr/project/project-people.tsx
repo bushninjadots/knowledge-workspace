@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Users as UsersIcon, Briefcase, HandHeart, MessageSquare, Zap } from "lucide-react";
 import { ProfileLink } from "@/components/tethyr/profile-link";
-import type { Contributor } from "./project-main-content";
-import type { OpenRoleRow } from "@/hooks/use-projects";
+import type { Contributor, OpenRoleRow } from "@/hooks/use-projects";
 import { OpenRolesSection } from "./project-open-roles";
 import { useProjectTeams } from "@/hooks/use-teams";
 import { useConnections } from "@/hooks/use-connections";
@@ -103,7 +102,7 @@ export function ProjectPeopleTab({
             <button
               type="button"
               onClick={onJoin}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--user-accent,var(--trust))] px-3.5 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--user-accent,var(--trust))] px-3.5 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               <HandHeart className="h-3.5 w-3.5" />
               {joinLabel}
@@ -112,7 +111,7 @@ export function ProjectPeopleTab({
             <button
               type="button"
               onClick={onSignIn}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--user-accent,var(--trust))] px-3.5 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--user-accent,var(--trust))] px-3.5 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               <HandHeart className="h-3.5 w-3.5" />
               Sign in to join
@@ -157,7 +156,7 @@ export function ProjectPeopleTab({
               return (
                 <li
                   key={c.profile_id}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 transition hover:bg-surface-elevated/40 sm:flex-nowrap"
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 transition-lift hover:bg-surface-elevated/40 sm:flex-nowrap"
                 >
                   <ProfileLink
                     handle={c.profile?.handle}
@@ -221,7 +220,7 @@ export function ProjectPeopleTab({
                           project: projectId,
                           projectName: projectTitle,
                         }}
-                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground"
+                        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
                         aria-label={`Message ${
                           c.profile?.display_name || c.profile?.handle || "member"
                         }`}
@@ -240,7 +239,7 @@ export function ProjectPeopleTab({
       {/* Looking for */}
       <section>
         <div className="mb-3 flex items-center gap-2 px-1">
-          <Briefcase className="h-4 w-4 text-brand-purple" />
+          <Briefcase className="h-4 w-4 text-ai" />
           <h2 className="text-sm font-medium text-foreground/80">Looking for</h2>
           {unfilledRoles.length > 0 && (
             <span className="text-xs text-muted-foreground">

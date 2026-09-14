@@ -160,7 +160,16 @@ function humanizeKind(kind: string): string {
     .join(" ");
 }
 
-function relative(iso: string): string {
+/**
+ * Human label for one activity/contribution kind. Shared so compact surfaces
+ * (the dashboard rows) describe events exactly as the timeline does.
+ */
+export function describeActivity(kind: string, metadata?: Record<string, unknown> | null): string {
+  return (LABELS[kind] ?? (() => humanizeKind(kind)))(metadata ?? {});
+}
+
+/** Short relative timestamp ("4h ago"), shared with compact surfaces. */
+export function relativeActivityTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const s = Math.round(diff / 1000);
   if (s < 60) return `${s}s ago`;
@@ -242,7 +251,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
         <span className="absolute left-[10px] top-2 bottom-2 w-px bg-border/70" aria-hidden />
         {rows.map((e) => {
           const Icon = ICONS[e.kind] ?? Sparkles;
-          const label = (LABELS[e.kind] ?? (() => humanizeKind(e.kind)))(e.metadata ?? {});
+          const label = describeActivity(e.kind, e.metadata);
           const points = e.metadata?.points as number | undefined;
           return (
             <li key={e.id} className="relative">
@@ -260,11 +269,13 @@ export const ActivityTimeline = memo(function ActivityTimeline({
                 </p>
                 <div className="flex items-center gap-2">
                   {points != null && points > 0 && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full border border-brand-green/30 bg-brand-green/5 px-1.5 py-0.5 text-[11px] font-medium text-brand-green">
+                    <span className="inline-flex items-center gap-0.5 rounded-full border border-trust/30 bg-trust/5 px-1.5 py-0.5 text-[11px] font-medium text-trust">
                       <Zap className="h-2.5 w-2.5" />+{points}
                     </span>
                   )}
-                  <p className="shrink-0 text-xs text-muted-foreground">{relative(e.created_at)}</p>
+                  <p className="shrink-0 text-xs text-muted-foreground">
+                    {relativeActivityTime(e.created_at)}
+                  </p>
                 </div>
               </div>
             </li>
@@ -275,7 +286,7 @@ export const ActivityTimeline = memo(function ActivityTimeline({
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
         >
           Show more ({groups.length - limit})
         </button>

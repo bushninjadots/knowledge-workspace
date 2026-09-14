@@ -93,13 +93,6 @@
   --color-caution-foreground: var(--caution-foreground);
   --color-caution-subtle: var(--caution-subtle);
 
-  /* --- Legacy aliases (kept so existing markup keeps compiling) ----------- */
-  --color-brand-green: var(--trust);
-  --color-brand-purple: var(--ai);
-  --color-deep-forest: var(--trust-subtle);
-  --color-dark-slate: var(--surface-elevated);
-  --color-soft-ivory: var(--surface);
-
   /* --- Elevation: structure over decoration ------------------------------ */
   /* Shadows are dialog-only: --shadow-lifted is the only elevation token. */
   --shadow-lifted: 0 1px 3px 0 var(--shadow-tint); /* dialogs only */
@@ -198,10 +191,6 @@
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
   --spacing-section: 4rem;
-
-  /* Brand shorthand — used in inline SVGs, gradients, and Tailwind arbitrary values */
-  --brand-green: var(--trust);
-  --brand-purple: var(--ai);
 }
 
 /* ---------------------------------------------------------------------------
@@ -282,10 +271,6 @@
   --content-density-gap: 1rem;
   --content-density-padding: 1rem;
   --spacing-section: 4rem;
-
-  /* Brand shorthand — used in inline SVGs, gradients, and Tailwind arbitrary values */
-  --brand-green: var(--trust);
-  --brand-purple: var(--ai);
 }
 
 @layer base {

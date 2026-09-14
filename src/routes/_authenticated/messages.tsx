@@ -141,17 +141,17 @@ function ConversationRow({
   return (
     <button
       onClick={onSelect}
-      className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-lift duration-200 ease-out ${
+      className={`group flex w-full items-center gap-3 px-4 py-3.5 text-left transition-lift duration-150 ease-out ${
         active
           ? "border-l-2 border-l-primary bg-surface"
           : "border-l-2 border-l-transparent hover:border-l-primary/50 hover:bg-surface/50"
       }`}
     >
       <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-200 ${
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors duration-150 ${
           active
             ? "bg-primary text-primary-foreground"
-            : "bg-brand-purple text-background group-hover:bg-brand-purple/90"
+            : "bg-ai text-background group-hover:bg-ai/90"
         }`}
       >
         {name.charAt(0).toUpperCase()}
@@ -167,7 +167,7 @@ function ConversationRow({
         <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
       </div>
       {unreadCount > 0 && (
-        <span className="shrink-0 rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-sm">
+        <span className="shrink-0 rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
           {unreadCount}
         </span>
       )}
@@ -232,7 +232,7 @@ function Thread({
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-purple text-sm font-semibold text-background shadow-sm">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ai text-sm font-semibold text-background">
           {name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
@@ -282,7 +282,7 @@ function Thread({
           </div>
         )}
         {conn.intro_message && (
-          <div className="mx-auto max-w-md rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 text-center text-xs text-muted-foreground shadow-sm">
+          <div className="mx-auto max-w-md rounded-xl border border-[var(--user-accent-border,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] px-4 py-3 text-center text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Intro note:</span> {conn.intro_message}
           </div>
         )}
@@ -295,9 +295,9 @@ function Thread({
             return (
               <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                 <div
-                  className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${
+                  className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm ${
                     mine
-                      ? "bg-primary text-primary-foreground shadow-primary/10"
+                      ? "bg-primary text-primary-foreground"
                       : "border border-border/60 bg-surface-elevated"
                   }`}
                 >
@@ -339,7 +339,7 @@ function Thread({
         )}
         {otherTyping && (
           <div className="flex items-start">
-            <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-elevated px-3.5 py-2.5 shadow-sm">
+            <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-elevated px-3.5 py-2.5">
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" />
@@ -351,7 +351,7 @@ function Thread({
 
       <div className="border-t border-border/60 p-3">
         <div className="flex items-end gap-2">
-          <div className="flex-1 rounded-xl border border-border/60 bg-surface/80 transition-shadow duration-300 focus-within:border-primary/30 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0),0_0_12px_-3px_var(--user-accent,var(--trust))]">
+          <div className="flex-1 rounded-xl border border-border/60 bg-surface/80 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/30">
             <Textarea
               value={draft}
               onChange={(e) => {
@@ -373,7 +373,7 @@ function Thread({
           <Button
             onClick={submit}
             disabled={send.isPending || !draft.trim()}
-            className="h-11 w-11 shrink-0 gap-1.5 rounded-xl shadow-sm transition-transform duration-150 active:scale-95"
+            className="h-11 w-11 shrink-0 gap-1.5 rounded-xl transition-transform duration-150 active:scale-95"
             size="icon"
             aria-label="Send message"
           >

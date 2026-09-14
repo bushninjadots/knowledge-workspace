@@ -142,9 +142,9 @@ export function ReadmeEditorDialog({
               onClick={() => setView(id)}
               aria-pressed={view === id}
               className={cn(
-                "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-lift",
                 view === id
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground shadow-sm"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

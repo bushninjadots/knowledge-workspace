@@ -83,7 +83,7 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
       <button
         type="button"
         onClick={dismiss}
-        className="absolute right-3 top-3 rounded-md p-1.5 text-muted-foreground transition hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="absolute right-3 top-3 rounded-md p-1.5 text-muted-foreground transition-lift hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Dismiss onboarding"
       >
         <X className="h-4 w-4" />
@@ -118,7 +118,7 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
               type="button"
               aria-pressed={selected}
               onClick={() => setIntent(option.id)}
-              className={`flex min-h-16 items-center gap-2 rounded-lg border px-3 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`flex min-h-16 items-center gap-2 rounded-lg border px-3 py-3 text-left text-sm transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 selected
                   ? "border-primary bg-background text-foreground"
                   : "border-border/60 bg-background/50 text-muted-foreground hover:border-primary/40 hover:bg-background hover:text-foreground"
@@ -150,7 +150,7 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
               to={
                 intent === "connect" ? "/explore" : intent === "learn" ? "/challenges" : "/explore"
               }
-              className="group inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-fade hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={dismiss}
             >
               {intent === "connect" ? (
@@ -159,7 +159,7 @@ export function FirstSessionOnboarding({ data }: { data: CurrentUserData }) {
                 <Search className="h-3.5 w-3.5" />
               )}
               {intentCopy[intent].primary}
-              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              <ArrowRight className="h-3.5 w-3.5 transition-spatial group-hover:translate-x-0.5" />
             </Link>
           )}
         </div>

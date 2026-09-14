@@ -24,13 +24,13 @@ import { useJoinChallenge, useLeaveChallenge, type ChallengeRow } from "@/hooks/
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 
 const TYPE_COLORS: Record<string, string> = {
-  skill: "bg-brand-purple/10 text-foreground border-brand-purple/30",
+  skill: "bg-ai/10 text-foreground border-ai/30",
   project: "bg-primary/10 text-foreground border-primary/30",
-  learning: "bg-brand-green/10 text-foreground border-brand-green/30",
+  learning: "bg-trust/10 text-foreground border-trust/30",
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: "bg-brand-green/10 text-foreground border-brand-green/30",
+  beginner: "bg-trust/10 text-foreground border-trust/30",
   intermediate: "bg-teaching-subtle text-foreground border-teaching/40",
   advanced: "bg-caution-subtle text-foreground border-caution/40",
 };
@@ -61,7 +61,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
   return (
     <Card
       onClick={() => navigate({ to: "/challenges/$id", params: { id: challenge.id } })}
-      className="group relative cursor-pointer hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 hover:shadow-md transition-spatial transition-shadow duration-300"
+      className="group relative cursor-pointer hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 transition-spatial duration-150"
     >
       <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3">
@@ -70,7 +70,7 @@ export function ChallengeCard({ challenge }: { challenge: ChallengeRow }) {
               {challenge.is_starter && (
                 <Badge
                   variant="outline"
-                  className="gap-1 border-brand-purple/30 bg-brand-purple/10 text-brand-purple text-xs font-medium"
+                  className="gap-1 border-ai/30 bg-ai/10 text-ai text-xs font-medium"
                 >
                   <Sparkles className="h-3 w-3" /> Starter
                 </Badge>
@@ -246,10 +246,7 @@ function ReviewStatusBadge({
 }) {
   if (status === "passed") {
     return (
-      <Badge
-        variant="outline"
-        className="gap-1 border-brand-green/30 text-brand-green bg-brand-green/10 text-xs"
-      >
+      <Badge variant="outline" className="gap-1 border-trust/30 text-trust bg-trust/10 text-xs">
         <CheckCircle2 className="h-3.5 w-3.5" /> Passed
       </Badge>
     );
@@ -285,10 +282,7 @@ function ReviewStatusBadge({
     );
   }
   return (
-    <Badge
-      variant="outline"
-      className="gap-1 border-brand-green/30 text-brand-green bg-brand-green/10 text-xs"
-    >
+    <Badge variant="outline" className="gap-1 border-trust/30 text-trust bg-trust/10 text-xs">
       <CheckCircle2 className="h-3.5 w-3.5" /> Joined
     </Badge>
   );

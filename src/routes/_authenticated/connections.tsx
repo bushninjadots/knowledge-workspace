@@ -136,9 +136,9 @@ function ConnectionsPage() {
               type="button"
               aria-pressed={view === "rows"}
               onClick={() => setView("rows")}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-lift ${
                 view === "rows"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -148,9 +148,9 @@ function ConnectionsPage() {
               type="button"
               aria-pressed={view === "gallery"}
               onClick={() => setView("gallery")}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-lift ${
                 view === "gallery"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -274,7 +274,7 @@ function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
   const title = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-surface/40 sm:grid-cols-[minmax(0,1fr)_130px_auto]">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2.5 transition-lift hover:bg-surface/40 sm:grid-cols-[minmax(0,1fr)_130px_auto]">
       <div className="flex items-center gap-3 min-w-0">
         <Avatar conn={conn} />
         <div className="min-w-0">
@@ -295,7 +295,7 @@ function FriendRow({ conn }: { conn: ConnectionWithProfile }) {
           <Link
             to="/u/$handle"
             params={{ handle: conn.other.handle }}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
           >
             Profile
             <ArrowRight className="h-3 w-3" />
@@ -317,7 +317,7 @@ function FriendCard({ conn }: { conn: ConnectionWithProfile }) {
   const title = conn.other?.creator_title || conn.other?.category || "—";
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface-elevated/30 px-4 py-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]">
       <Avatar conn={conn} size="lg" />
       <div className="min-w-0 flex-1">
         <Name conn={conn} />
@@ -329,7 +329,7 @@ function FriendCard({ conn }: { conn: ConnectionWithProfile }) {
         <Link
           to="/u/$handle"
           params={{ handle: conn.other.handle }}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
         >
           Profile
           <ArrowRight className="h-3 w-3" />
@@ -413,7 +413,7 @@ function Avatar({ conn, size = "md" }: { conn: ConnectionWithProfile; size?: "md
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-purple font-semibold text-background ${dims}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-ai font-semibold text-background ${dims}`}
     >
       {signedUrl ? (
         <img

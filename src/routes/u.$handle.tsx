@@ -261,7 +261,7 @@ function Shell({
             onClick={() =>
               window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
             }
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
             aria-label="Go back"
             title="Back"
           >

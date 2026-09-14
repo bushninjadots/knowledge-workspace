@@ -28,6 +28,7 @@ import {
   useProjectNeeds,
   useUpdateProjectPresentation,
   useProjectCommunityPostCount,
+  type Contributor,
   type ProjectDetail,
 } from "@/hooks/use-projects";
 import { getProjectPresentationOption, type ProjectSectionKey } from "@/lib/project-presentation";
@@ -35,7 +36,6 @@ import { useProjectRepos } from "@/hooks/use-project-repos";
 import { useProjectSessions } from "@/hooks/use-sessions";
 import { useProjectChallenges } from "@/hooks/use-challenges";
 import { ProjectHeader } from "@/components/tethyr/project/project-header";
-import { ProjectPulse } from "@/components/tethyr/project/project-pulse";
 import { useMarkProjectVisited } from "@/hooks/use-project-loop";
 import {
   ProjectWorkbench,
@@ -46,7 +46,6 @@ import { ProjectReadmeTab } from "@/components/tethyr/project/project-readme";
 import { ProjectLiveRoom } from "@/components/tethyr/project/project-live-room";
 import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Contributor } from "@/components/tethyr/project/project-main-content";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 
 const ProjectNeeds = lazy(() =>
@@ -603,16 +602,6 @@ function ProjectPage() {
         presentationSaveState={presentationSaveState}
       />
 
-      <ProjectPulse
-        project={project}
-        isOwner={isOwner}
-        editing={false}
-        onEditingChange={() => {}}
-        gallery={(project.gallery ?? []) as ProjectDetail["gallery"]}
-        milestones={milestones}
-        openNeedCount={needs.filter((need) => !need.is_filled).length}
-      />
-
       {/* The interactive workspace IS the canonical project page — README,
           files/activity tools, current work, people, conversation, and evidence
           all render here for every project. */}
@@ -784,7 +773,7 @@ function ProjectPage() {
                       <button
                         type="button"
                         onClick={() => setScheduleOpen(true)}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground"
                       >
                         <CalendarPlus className="h-3 w-3" />
                         Schedule session
@@ -803,7 +792,7 @@ function ProjectPage() {
                           <Link
                             to="/sessions/$id"
                             params={{ id: s.id }}
-                            className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
+                            className="flex items-center justify-between gap-4 py-3 transition-lift hover:bg-surface-elevated/40"
                           >
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium">{s.title}</p>
@@ -869,7 +858,7 @@ function ProjectPage() {
                         <Link
                           to="/challenges/$id"
                           params={{ id: c.id }}
-                          className="flex items-center justify-between gap-4 py-3 transition hover:bg-surface-elevated/40"
+                          className="flex items-center justify-between gap-4 py-3 transition-lift hover:bg-surface-elevated/40"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{c.title}</p>
@@ -1002,7 +991,7 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
             <a
               key={section.id}
               href={`#${section.id}`}
-              className="shrink-0 text-sm text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
+              className="shrink-0 text-sm text-muted-foreground underline-offset-4 transition-lift hover:text-foreground hover:underline"
             >
               {section.label}
             </a>
@@ -1033,7 +1022,7 @@ function Shell({
           onClick={() =>
             window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
           }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
           aria-label="Go back"
           title="Back"
         >

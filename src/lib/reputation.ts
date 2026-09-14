@@ -61,14 +61,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "First Project",
     description: "Published your first project",
     icon: "first_project",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "first_milestone",
     label: "First Milestone",
     description: "Completed your first milestone",
     icon: "first_milestone",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "first_endorsement",
@@ -96,14 +96,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Community Recognized",
     description: "A skill was endorsed 3+ times and upgraded",
     icon: "community_recognized",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "mentor",
     label: "Mentor",
     description: "Contributed to a project as a mentor",
     icon: "mentor",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "collaborator",
@@ -117,7 +117,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Prolific Sharer",
     description: "Teaching 5+ skills",
     icon: "prolific_teacher",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "project_builder",
@@ -131,14 +131,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Community Builder",
     description: "Created 10+ community posts",
     icon: "community_builder",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "reliable_collaborator",
     label: "Reliable Collaborator",
     description: "Active for 30+ days",
     icon: "reliable_collaborator",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "helped_ten_people",
@@ -159,7 +159,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Challenge Winner",
     description: "Passed a challenge review",
     icon: "challenge_winner",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "crew_founder",
@@ -173,14 +173,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Team Player",
     description: "Joined a crew",
     icon: "team_player",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "milestone_master",
     label: "Milestone Master",
     description: "Completed 3 milestones",
     icon: "milestone_master",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "helping_hand",
@@ -201,7 +201,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Role Filler",
     description: "Accepted into an open role",
     icon: "role_filler",
-    color: "text-brand-green",
+    color: "text-trust",
   },
   {
     type: "first_session",
@@ -215,14 +215,14 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     label: "Session Teacher",
     description: "Organized 5+ completed sessions",
     icon: "session_teacher",
-    color: "text-brand-purple",
+    color: "text-ai",
   },
   {
     type: "streak_4_weeks",
     label: "4-Week Streak",
     description: "Active for 4 consecutive weeks",
     icon: "streak_4_weeks",
-    color: "text-brand-green",
+    color: "text-trust",
   },
 ];
 
@@ -249,10 +249,10 @@ export function computeCategoryBreakdown(
 
   const defs: { name: string; label: string; color: string }[] = [
     { name: "collaboration", label: "Collaboration", color: "text-primary" },
-    { name: "teaching", label: "Skills I share", color: "text-brand-green" },
-    { name: "learning", label: "Skills I’m growing", color: "text-brand-purple" },
+    { name: "teaching", label: "Skills I share", color: "text-trust" },
+    { name: "learning", label: "Skills I’m growing", color: "text-ai" },
     { name: "community", label: "Community", color: "text-teaching" },
-    { name: "project_impact", label: "Project Impact", color: "text-brand-green" },
+    { name: "project_impact", label: "Project Impact", color: "text-trust" },
     { name: "reliability", label: "Reliability", color: "text-primary" },
   ];
 
@@ -298,14 +298,14 @@ export const TIERS: ReputationTier[] = [
   {
     name: "Builder",
     minScore: 50,
-    color: "text-brand-green",
-    gradient: "from-brand-green/20 to-brand-green/10",
+    color: "text-trust",
+    gradient: "from-trust/20 to-trust/10",
   },
   {
     name: "Mentor",
     minScore: 100,
-    color: "text-brand-purple",
-    gradient: "from-brand-purple/20 to-brand-purple/10",
+    color: "text-ai",
+    gradient: "from-ai/20 to-ai/10",
   },
   {
     name: "Leader",
@@ -316,8 +316,8 @@ export const TIERS: ReputationTier[] = [
   {
     name: "Legend",
     minScore: 500,
-    color: "text-brand-green",
-    gradient: "from-brand-green/30 to-brand-purple/20",
+    color: "text-trust",
+    gradient: "from-trust/30 to-ai/20",
   },
 ];
 

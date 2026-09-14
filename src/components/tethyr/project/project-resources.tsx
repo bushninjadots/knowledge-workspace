@@ -20,6 +20,14 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useProjectLibraryItems } from "@/hooks/use-library";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const sb = supabase;
 
@@ -90,7 +98,7 @@ export function ResourcesSection({
         {isOwner && (
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
           >
             <Plus className="h-3 w-3" />
             Add
@@ -100,34 +108,35 @@ export function ResourcesSection({
 
       {showAdd && (
         <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
-          <input
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Resource title"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Resource title"
           />
-          <input
+          <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Resource URL"
           />
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as ResourceItem["type"])}
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          >
-            <option value="article">Article</option>
-            <option value="tool">Tool</option>
-            <option value="video">Video</option>
-            <option value="doc">Document</option>
-            <option value="other">Other</option>
-          </select>
+          <Select value={type} onValueChange={(value) => setType(value as ResourceItem["type"])}>
+            <SelectTrigger aria-label="Resource type" className="sm:w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="article">Article</SelectItem>
+              <SelectItem value="tool">Tool</SelectItem>
+              <SelectItem value="video">Video</SelectItem>
+              <SelectItem value="doc">Document</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
               disabled={!title.trim() || !url.trim() || saving}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -149,7 +158,7 @@ export function ResourcesSection({
             const Icon = RESOURCE_ICON[r.type] ?? Link2;
             return (
               <div key={idx} className="flex items-center gap-3 rounded-xl bg-background/40 p-3">
-                <Icon className="h-4 w-4 shrink-0 text-brand-purple" />
+                <Icon className="h-4 w-4 shrink-0 text-ai" />
                 <div className="min-w-0 flex-1">
                   <a
                     href={safeHref(r.url)}
@@ -167,7 +176,7 @@ export function ResourcesSection({
                   <button
                     onClick={() => handleRemove(idx)}
                     disabled={saving}
-                    className="shrink-0 rounded-lg p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                    className="shrink-0 rounded-lg p-1 text-muted-foreground transition-lift hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -213,9 +222,9 @@ export function ProjectLibrarySection({
             key={item.id}
             to="/library/$id"
             params={{ id: item.id }}
-            className="flex items-center gap-3 rounded-xl bg-background/40 p-3 transition hover:bg-surface-elevated/50"
+            className="flex items-center gap-3 rounded-xl bg-background/40 p-3 transition-lift hover:bg-surface-elevated/50"
           >
-            <BookOpen className="h-4 w-4 shrink-0 text-brand-green" />
+            <BookOpen className="h-4 w-4 shrink-0 text-trust" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium" title={item.title}>
                 {item.title}
@@ -387,7 +396,7 @@ export function GallerySection({
         {isOwner && (
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+            className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
           >
             <Plus className="h-3 w-3" />
             Add
@@ -413,7 +422,7 @@ export function GallerySection({
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground transition hover:text-foreground"
+                className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 py-2 text-xs text-muted-foreground transition-lift hover:text-foreground"
               >
                 {uploading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -426,16 +435,19 @@ export function GallerySection({
             <span className="py-2 text-xs text-muted-foreground">or</span>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <select
+            <Select
               value={mediaType}
-              onChange={(e) => setMediaType(e.target.value as GalleryItem["type"])}
-              className="rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary sm:w-36"
-              aria-label="Demonstration type"
+              onValueChange={(value) => setMediaType(value as GalleryItem["type"])}
             >
-              <option value="image">Image or GIF</option>
-              <option value="video">Video</option>
-            </select>
-            <input
+              <SelectTrigger aria-label="Demonstration type" className="sm:w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="image">Image or GIF</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder={
@@ -443,20 +455,21 @@ export function GallerySection({
                   ? "https://… paste video URL"
                   : "https://… paste image or GIF URL"
               }
-              className="min-w-0 flex-1 rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              aria-label="Demonstration URL"
+              className="min-w-0 flex-1"
             />
           </div>
-          <input
+          <Input
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Caption (optional)"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Demonstration caption"
           />
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
               disabled={!url.trim() || saving}
-              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -511,7 +524,7 @@ export function GallerySection({
                 <button
                   onClick={() => handleRemove(idx)}
                   disabled={saving}
-                  className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive disabled:opacity-40"
+                  className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-fade group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive disabled:opacity-40"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>

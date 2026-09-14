@@ -82,7 +82,7 @@ export function ReadmeTocCollapsed({ sections }: { sections: TocSection[] }) {
 
   return (
     <details className="lg:hidden border-b border-border/40">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 px-4 py-3 text-xs font-medium text-muted-foreground transition hover:text-foreground [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 px-4 py-3 text-xs font-medium text-muted-foreground transition-lift hover:text-foreground [&::-webkit-details-marker]:hidden">
         On this page
         <span className="ml-auto font-mono text-[10px] text-muted-foreground/60">
           {items.length} section{items.length !== 1 ? "s" : ""}
@@ -94,7 +94,7 @@ export function ReadmeTocCollapsed({ sections }: { sections: TocSection[] }) {
             <a
               href={`#${item.id}`}
               className={cn(
-                "block truncate text-[13px] text-muted-foreground transition hover:text-foreground",
+                "block truncate text-[13px] text-muted-foreground transition-lift hover:text-foreground",
                 item.level === 3 && "pl-3",
               )}
             >

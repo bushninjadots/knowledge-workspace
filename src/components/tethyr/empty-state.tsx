@@ -33,20 +33,12 @@ function WorkshopIllustration({
           strokeOpacity="0.2"
         />
         {/* Pinned notes */}
-        <rect x="60" y="30" width="35" height="25" rx="3" fill="var(--brand-green)" opacity="0.2" />
-        <rect
-          x="105"
-          y="28"
-          width="35"
-          height="30"
-          rx="3"
-          fill="var(--brand-purple)"
-          opacity="0.2"
-        />
+        <rect x="60" y="30" width="35" height="25" rx="3" fill="var(--trust)" opacity="0.2" />
+        <rect x="105" y="28" width="35" height="30" rx="3" fill="var(--ai)" opacity="0.2" />
         <rect x="75" y="58" width="50" height="22" rx="3" fill="currentColor" opacity="0.1" />
         {/* Pins */}
-        <circle cx="77" cy="30" r="2" fill="var(--brand-green)" opacity="0.6" />
-        <circle cx="122" cy="28" r="2" fill="var(--brand-purple)" opacity="0.6" />
+        <circle cx="77" cy="30" r="2" fill="var(--trust)" opacity="0.6" />
+        <circle cx="122" cy="28" r="2" fill="var(--ai)" opacity="0.6" />
         <circle cx="100" cy="58" r="2" fill="currentColor" opacity="0.4" />
         {/* Pencil */}
         <rect
@@ -55,7 +47,7 @@ function WorkshopIllustration({
           width="2"
           height="25"
           rx="1"
-          fill="var(--brand-purple)"
+          fill="var(--ai)"
           opacity="0.3"
           transform="rotate(-15 60 102)"
         />
@@ -75,62 +67,14 @@ function WorkshopIllustration({
         {/* Tool rack */}
         <rect x="40" y="30" width="120" height="60" rx="6" fill="currentColor" opacity="0.1" />
         {/* Tools hanging */}
-        <rect
-          x="55"
-          y="35"
-          width="3"
-          height="40"
-          rx="1.5"
-          fill="var(--brand-green)"
-          opacity="0.3"
-        />
-        <rect
-          x="75"
-          y="38"
-          width="3"
-          height="35"
-          rx="1.5"
-          fill="var(--brand-purple)"
-          opacity="0.3"
-        />
-        <rect
-          x="95"
-          y="33"
-          width="3"
-          height="42"
-          rx="1.5"
-          fill="var(--brand-green)"
-          opacity="0.3"
-        />
-        <rect
-          x="115"
-          y="40"
-          width="3"
-          height="30"
-          rx="1.5"
-          fill="var(--brand-purple)"
-          opacity="0.3"
-        />
+        <rect x="55" y="35" width="3" height="40" rx="1.5" fill="var(--trust)" opacity="0.3" />
+        <rect x="75" y="38" width="3" height="35" rx="1.5" fill="var(--ai)" opacity="0.3" />
+        <rect x="95" y="33" width="3" height="42" rx="1.5" fill="var(--trust)" opacity="0.3" />
+        <rect x="115" y="40" width="3" height="30" rx="1.5" fill="var(--ai)" opacity="0.3" />
         <rect x="135" y="36" width="3" height="38" rx="1.5" fill="currentColor" opacity="0.2" />
         {/* Book */}
-        <rect
-          x="60"
-          y="105"
-          width="25"
-          height="18"
-          rx="3"
-          fill="var(--brand-green)"
-          opacity="0.15"
-        />
-        <rect
-          x="90"
-          y="107"
-          width="25"
-          height="16"
-          rx="3"
-          fill="var(--brand-purple)"
-          opacity="0.15"
-        />
+        <rect x="60" y="105" width="25" height="18" rx="3" fill="var(--trust)" opacity="0.15" />
+        <rect x="90" y="107" width="25" height="16" rx="3" fill="var(--ai)" opacity="0.15" />
       </svg>
     ),
     community: (
@@ -143,10 +87,10 @@ function WorkshopIllustration({
         {/* Shared table */}
         <ellipse cx="100" cy="110" rx="70" ry="20" fill="currentColor" opacity="0.15" />
         {/* People silhouettes */}
-        <circle cx="50" cy="75" r="12" fill="var(--brand-green)" opacity="0.2" />
-        <circle cx="50" cy="100" r="8" fill="var(--brand-green)" opacity="0.15" />
-        <circle cx="100" cy="65" r="12" fill="var(--brand-purple)" opacity="0.2" />
-        <circle cx="100" cy="90" r="8" fill="var(--brand-purple)" opacity="0.15" />
+        <circle cx="50" cy="75" r="12" fill="var(--trust)" opacity="0.2" />
+        <circle cx="50" cy="100" r="8" fill="var(--trust)" opacity="0.15" />
+        <circle cx="100" cy="65" r="12" fill="var(--ai)" opacity="0.2" />
+        <circle cx="100" cy="90" r="8" fill="var(--ai)" opacity="0.15" />
         <circle cx="150" cy="75" r="12" fill="currentColor" opacity="0.15" />
         <circle cx="150" cy="100" r="8" fill="currentColor" opacity="0.1" />
         {/* Connection lines */}
@@ -155,7 +99,7 @@ function WorkshopIllustration({
           y1="75"
           x2="88"
           y2="65"
-          stroke="var(--brand-green)"
+          stroke="var(--trust)"
           strokeWidth="1"
           opacity="0.3"
           strokeDasharray="4 2"
@@ -165,7 +109,7 @@ function WorkshopIllustration({
           y1="65"
           x2="138"
           y2="75"
-          stroke="var(--brand-purple)"
+          stroke="var(--ai)"
           strokeWidth="1"
           opacity="0.3"
           strokeDasharray="4 2"
@@ -185,37 +129,13 @@ function WorkshopIllustration({
         {/* Meeting table */}
         <rect x="40" y="80" width="120" height="50" rx="12" fill="currentColor" opacity="0.15" />
         {/* Two people */}
-        <circle cx="70" cy="60" r="14" fill="var(--brand-green)" opacity="0.2" />
-        <circle cx="130" cy="60" r="14" fill="var(--brand-purple)" opacity="0.2" />
+        <circle cx="70" cy="60" r="14" fill="var(--trust)" opacity="0.2" />
+        <circle cx="130" cy="60" r="14" fill="var(--ai)" opacity="0.2" />
         {/* Chat lines */}
-        <rect x="55" y="40" width="40" height="4" rx="2" fill="var(--brand-green)" opacity="0.2" />
-        <rect
-          x="60"
-          y="48"
-          width="30"
-          height="3"
-          rx="1.5"
-          fill="var(--brand-green)"
-          opacity="0.15"
-        />
-        <rect
-          x="105"
-          y="38"
-          width="35"
-          height="4"
-          rx="2"
-          fill="var(--brand-purple)"
-          opacity="0.2"
-        />
-        <rect
-          x="110"
-          y="46"
-          width="25"
-          height="3"
-          rx="1.5"
-          fill="var(--brand-purple)"
-          opacity="0.15"
-        />
+        <rect x="55" y="40" width="40" height="4" rx="2" fill="var(--trust)" opacity="0.2" />
+        <rect x="60" y="48" width="30" height="3" rx="1.5" fill="var(--trust)" opacity="0.15" />
+        <rect x="105" y="38" width="35" height="4" rx="2" fill="var(--ai)" opacity="0.2" />
+        <rect x="110" y="46" width="25" height="3" rx="1.5" fill="var(--ai)" opacity="0.15" />
         {/* Connection */}
         <path
           d="M84 60 Q100 75 116 60"
@@ -246,7 +166,7 @@ function WorkshopIllustration({
           opacity="0.2"
           strokeLinecap="round"
         />
-        <circle cx="100" cy="42" r="6" fill="var(--brand-green)" opacity="0.15" />
+        <circle cx="100" cy="42" r="6" fill="var(--trust)" opacity="0.15" />
         {/* Note pinned */}
         <rect x="80" y="55" width="40" height="30" rx="4" fill="currentColor" opacity="0.1" />
         <line
@@ -267,7 +187,7 @@ function WorkshopIllustration({
           strokeWidth="1"
           opacity="0.1"
         />
-        <circle cx="100" cy="55" r="2" fill="var(--brand-purple)" opacity="0.4" />
+        <circle cx="100" cy="55" r="2" fill="var(--ai)" opacity="0.4" />
       </svg>
     ),
   };
@@ -294,7 +214,7 @@ export function EmptyState({
   variant?: "projects" | "skills" | "community" | "messages" | "default";
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed card-border bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/60 bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
       <WorkshopIllustration variant={variant} />
       <div className="space-y-2">
         <p className="font-display text-base font-medium text-foreground">{title}</p>

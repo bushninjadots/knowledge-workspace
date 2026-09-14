@@ -27,6 +27,8 @@ import {
   type ProjectActivityRow,
 } from "@/hooks/use-projects";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   RECOGNITION_LABELS,
   useCreateProjectContribution,
@@ -77,15 +79,15 @@ const KIND_ICON: Record<ActivityItem["kind"], typeof PenSquare> = {
 
 const KIND_TINT: Record<ActivityItem["kind"], string> = {
   update: "bg-primary/10 text-primary",
-  milestone: "bg-brand-green/10 text-brand-green",
-  discussion: "bg-brand-purple/10 text-brand-purple",
+  milestone: "bg-trust/10 text-trust",
+  discussion: "bg-ai/10 text-ai",
   file: "bg-learning/10 text-learning",
   repo: "bg-surface-elevated text-muted-foreground",
   github: "bg-surface-elevated text-foreground",
   contribution: "bg-primary/10 text-primary",
   contributor: "bg-teaching/10 text-teaching",
-  role: "bg-brand-purple/10 text-brand-purple",
-  founded: "bg-brand-green/10 text-brand-green",
+  role: "bg-ai/10 text-ai",
+  founded: "bg-trust/10 text-trust",
 };
 
 const KIND_LABEL: Record<ActivityItem["kind"], string> = {
@@ -473,26 +475,24 @@ export function ProjectActivityTab({
             <p className="text-xs font-medium text-foreground">
               {weeklyPrompt ? "Show your work this week" : "Record a contribution"}
             </p>
-            <input
+            <Input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="What changed?"
-              className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               aria-label="Contribution title"
             />
-            <textarea
+            <Textarea
               value={body}
               onChange={(event) => setBody(event.target.value)}
               placeholder="What did you make, test, improve, or clarify?"
               rows={3}
-              className="w-full resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="min-h-0 resize-none"
               aria-label="Contribution details"
             />
-            <input
+            <Input
               value={evidenceUrl}
               onChange={(event) => setEvidenceUrl(event.target.value)}
               placeholder="Evidence link (optional)"
-              className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               aria-label="Evidence link"
             />
             <div className="flex gap-2">
@@ -523,18 +523,19 @@ export function ProjectActivityTab({
 
         {showPost && (
           <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
-            <input
+            <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What did you get done?"
-              className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              aria-label="Update title"
             />
-            <textarea
+            <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Details, notes, links… (Markdown supported)"
               rows={4}
-              className="w-full resize-none rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="min-h-0 resize-none"
+              aria-label="Update details"
             />
             <div className="flex gap-2">
               <Button
@@ -641,7 +642,7 @@ export function ProjectActivityTab({
                                       kind,
                                     })
                                   }
-                                  className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground disabled:cursor-default disabled:opacity-60"
+                                  className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground disabled:cursor-default disabled:opacity-60"
                                 >
                                   {already
                                     ? `✓ ${RECOGNITION_LABELS[kind]}`

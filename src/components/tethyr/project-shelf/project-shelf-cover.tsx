@@ -4,7 +4,7 @@ import { CoverGradient, ProgressBar } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 export const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
-  active: { label: "Active", dot: "bg-brand-green" },
+  active: { label: "Active", dot: "bg-trust" },
   planning: { label: "Planning", dot: "bg-teaching" },
   paused: { label: "Paused", dot: "bg-muted-foreground/40" },
   completed: { label: "Completed", dot: "bg-primary" },
@@ -36,7 +36,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
     <Card asChild>
       <button
         onClick={onClick}
-        className="group relative w-full cursor-pointer overflow-hidden text-left shadow-sm transition-spatial transition-shadow duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[var(--user-accent-border,var(--border-strong))]"
+        className="group relative w-full cursor-pointer overflow-hidden text-left transition-spatial duration-150 hover:-translate-y-1 hover:border-[var(--user-accent-border,var(--border-strong))]"
         aria-label={`View ${project.title}`}
       >
         {/* Cover image — 16:9, object-contain to show the whole image */}
@@ -49,7 +49,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
           />
 
           {/* Subtle specular sheen on hover */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
 
           {/* Status badge */}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
@@ -58,7 +58,7 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
               {status.label}
             </span>
             {isOwn && (
-              <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+              <span className="rounded-full bg-trust/25 px-2 py-0.5 text-[11px] font-medium text-trust">
                 Your project
               </span>
             )}

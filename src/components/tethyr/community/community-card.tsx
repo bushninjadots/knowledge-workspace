@@ -66,14 +66,14 @@ export function CommunityCard({ space, onClick }: { space: CommunitySpace; onCli
   // avoids nested interactive elements and gives keyboard users one clear
   // target for opening the space.
   return (
-    <Card className="group flex w-full flex-col p-5 text-left transition-spatial transition-shadow duration-300 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))] hover:shadow-sm">
+    <Card className="group flex w-full flex-col p-5 text-left transition-spatial duration-150 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]">
       <button
         type="button"
         onClick={() => onClick?.()}
         className="flex w-full items-start gap-3 text-left"
         aria-label={`Open ${space.name}`}
       >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-lg font-semibold text-brand-purple">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-ai/10 text-lg font-semibold text-ai">
           {avatarUrl ? (
             <img
               src={avatarUrl}

@@ -42,7 +42,7 @@ export function Logo({ className = "", variant = "full", size = "md" }: LogoProp
           >
             Tethyr
           </span>
-          <span className="text-xs text-brand-green font-medium">Connected by what you know</span>
+          <span className="text-xs text-trust font-medium">Connected by what you know</span>
         </div>
       </Link>
     );

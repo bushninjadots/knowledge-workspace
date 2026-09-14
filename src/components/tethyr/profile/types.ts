@@ -16,8 +16,7 @@ export const PROJECT_STATUS_STYLE: Record<ProjectStatus, string> = {
   active:
     "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   paused: "border-teaching/40 bg-teaching text-teaching",
-  completed:
-    "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
+  completed: "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]",
 };
 
 export const VERIFICATION_LABEL: Record<SkillVerificationLevel, string> = {
@@ -30,8 +29,7 @@ export const VERIFICATION_STYLE: Record<SkillVerificationLevel, string> = {
   self_declared: "border-border/60 bg-background/40 text-muted-foreground",
   proof_certified:
     "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
-  community_recognized:
-    "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]",
+  community_recognized: "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]",
 };
 
 export const EXPERIENCE_LABEL: Record<SkillExperienceLevel, string> = {

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { MilestoneRow } from "@/hooks/use-projects";
 import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-projects";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const STATUS_ICON: Record<MilestoneRow["status"], typeof Circle> = {
   done: CheckCircle2,
@@ -12,7 +13,7 @@ const STATUS_ICON: Record<MilestoneRow["status"], typeof Circle> = {
 };
 
 const STATUS_STYLE: Record<MilestoneRow["status"], string> = {
-  done: "text-brand-green",
+  done: "text-trust",
   in_progress: "text-primary",
   pending: "text-muted-foreground",
 };
@@ -109,18 +110,18 @@ export function MilestonesTimeline({
 
       {showAdd && (
         <div className="mb-4 space-y-2 rounded-xl border border-border/60 bg-background/40 p-3">
-          <input
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Milestone title"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Milestone title"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
-          <input
+          <Input
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Milestone description"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
           <div className="flex gap-2">

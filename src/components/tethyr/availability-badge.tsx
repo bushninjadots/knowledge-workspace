@@ -40,11 +40,14 @@ export function AvailabilitySelector({
   current,
   onSave,
   openUp = false,
+  compact = false,
 }: {
   current: AvailabilityStatus;
   onSave: (status: AvailabilityStatus) => void;
   /** Open the menu above the trigger (for bottom-anchored placements like the sidebar). */
   openUp?: boolean;
+  /** Icon-only trigger for the collapsed sidebar rail; the label moves into the tooltip. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const currentDisplay = getStatusDisplay(current);
@@ -57,16 +60,25 @@ export function AvailabilitySelector({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label="Set availability status"
-        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:opacity-80 ${
+        aria-label={
+          compact
+            ? `Set availability status — ${currentDisplay?.label ?? "unset"}`
+            : "Set availability status"
+        }
+        title={compact ? (currentDisplay?.label ?? "Set status") : undefined}
+        className={`flex items-center border font-medium transition-fade hover:opacity-80 ${
+          compact
+            ? "h-8 w-8 justify-center rounded-full"
+            : "gap-1.5 rounded-full px-3 py-1.5 text-xs"
+        } ${
           currentDisplay
             ? `${currentDisplay.bg} ${currentDisplay.color}`
             : "border-border/60 bg-background text-muted-foreground"
         }`}
       >
-        <CurrentIcon className="h-3 w-3" />
-        {currentDisplay?.label ?? "Set status"}
-        <ChevronDown className="h-3 w-3" />
+        <CurrentIcon className={compact ? "h-3.5 w-3.5" : "h-3 w-3"} />
+        {compact ? null : (currentDisplay?.label ?? "Set status")}
+        {compact ? null : <ChevronDown className="h-3 w-3" />}
       </button>
 
       {open && (
@@ -75,9 +87,9 @@ export function AvailabilitySelector({
           <div
             role="listbox"
             aria-label="Availability statuses"
-            className={`absolute right-0 z-50 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl ${
-              openUp ? "bottom-full mb-1" : "top-full mt-1"
-            }`}
+            className={`absolute z-50 w-52 rounded-xl border border-border/60 bg-surface p-1.5 shadow-xl ${
+              compact ? "left-0" : "right-0"
+            } ${openUp ? "bottom-full mb-1" : "top-full mt-1"}`}
           >
             {AVAILABILITY_OPTIONS.map((opt) => {
               const Icon = opt.icon;
@@ -93,7 +105,7 @@ export function AvailabilitySelector({
                     setOpen(false);
                     toast.success(`Status set to ${opt.label}`);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs transition ${
+                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs transition-lift ${
                     isActive
                       ? `${opt.bg} ${opt.color} font-medium`
                       : "text-muted-foreground hover:bg-surface-elevated hover:text-foreground"

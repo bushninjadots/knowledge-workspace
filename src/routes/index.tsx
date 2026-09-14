@@ -194,7 +194,7 @@ function HomePage() {
           type="button"
           onClick={scrollToContent}
           aria-label="Scroll to content"
-          className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2.5 text-muted-foreground/80 transition hover:text-foreground md:flex"
+          className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2.5 text-muted-foreground/80 transition-lift hover:text-foreground md:flex"
         >
           <span className="text-[11px] font-medium tracking-[0.25em] uppercase">Scroll</span>
           <span className="h-9 w-px animate-scroll-line bg-gradient-to-b from-muted-foreground/80 to-transparent" />

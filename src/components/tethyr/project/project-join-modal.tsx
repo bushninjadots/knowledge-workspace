@@ -54,7 +54,7 @@ export function ProjectJoinModal({
                 <div
                   key={role.id}
                   ref={focused ? focusRef : undefined}
-                  className={`rounded-xl border bg-background/40 p-3 transition ${
+                  className={`rounded-xl border bg-background/40 p-3 transition-lift ${
                     focused
                       ? "border-[var(--user-accent,var(--primary))]/60 ring-2 ring-[var(--user-accent,var(--primary))]/20"
                       : "border-border/60"

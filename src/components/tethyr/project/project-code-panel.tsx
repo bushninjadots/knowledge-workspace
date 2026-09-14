@@ -78,7 +78,7 @@ export function ProjectCodePanel({
             <button
               type="button"
               onClick={onLinkRepo}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition hover:bg-surface-elevated"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-[12px] font-medium text-foreground transition-lift hover:bg-surface-elevated"
             >
               <Plus className="h-3 w-3" />
               Link repository

@@ -115,7 +115,7 @@ export function AttachProjectPanel({
     <div className="rounded-xl border border-border/60 bg-background/40 p-3">
       {currentAttachment ? (
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust/10 text-trust">
             <FolderOpen className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
@@ -169,9 +169,9 @@ export function AttachProjectPanel({
                         };
                         onAttach(p.id, snapshot);
                       }}
-                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-surface-elevated"
+                      className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-lift hover:bg-surface-elevated"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-green/10 text-xs font-semibold text-brand-green">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-trust/10 text-xs font-semibold text-trust">
                         {p.title.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -271,7 +271,7 @@ export function AttachProjectPanel({
             <button
               key={tag}
               onClick={() => toggleFeedbackTag(tag)}
-              className={`rounded-full border px-2 py-0.5 text-[11px] transition ${
+              className={`rounded-full border px-2 py-0.5 text-[11px] transition-lift ${
                 feedbackTags.includes(tag)
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"

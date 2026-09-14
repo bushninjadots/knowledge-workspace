@@ -412,6 +412,48 @@ text-<token>`) — the only true _broken_ visual in the build (G01).
 
 ---
 
+## 06 · Status as of 2026-09-12
+
+Re-verified against the working tree rather than assumed. Closed since the audit: **G01, G02–G04,
+G05–G07, G08, G09 (nav manifest), G10 (sidebar rail), G11 (legal page frame), G12 (OAuth grid),
+G13, G15, G17, G20 (legacy token names), G22**.
+
+- **G10** — the sidebar collapses to a 64px rail (`dashboard-sidebar.tsx`), remembered per browser
+  in `localStorage`, with the inline search moving to the shell header while the rail is on. The
+  mobile drawer always renders expanded.
+- **G11** — `PublicPageFrame` gives privacy/terms the marketing navbar and footer, so they are no
+  longer navigation dead-ends.
+- **G12** — OAuth is now a 2-up primary row (Google, GitHub) plus one 3-up row for the rest, which
+  lifts the email form back above the fold on mobile.
+- **G20** — `brand-green`/`brand-purple` are gone: every site uses `trust`/`ai`, and the unused
+  `deep-forest`/`dark-slate`/`soft-ivory` aliases were dropped from `styles.css`.
+
+Partially closed:
+
+- **G16** — the remaining full-page `Loader2` gates are down to a handful of routes
+  (`library`, `library.$id`, `sessions.$id`); most of the 22 `Loader2` uses are legitimate in-button
+  spinners. The real gap is now only that dashboard placeholders use `animate-gentle-pulse`
+  instead of the `Skeleton` primitive.
+- **G18** — the `shadow-sm` pill dialect is gone. What is left is the app's **view switcher**
+  vs. filter-chip rows; the former now all go through `SegmentedControl` (with a `size="sm"`
+  variant for icon toggles). Chip rows stay chips — they are filters, not tabs.
+- **G19** — closed for `<select>`: no raw `<select>` remains outside three documented exceptions
+  (see below), and the plain form fields on the project/team surfaces use `Input`/`Textarea`.
+  Community composer fields (inline, chrome-light by design), `rounded-full` filter pills, and the
+  studio's compact sunken controls (`--surface-sunken`) keep their local treatment deliberately.
+
+Enforcement added so the closed items stay closed — both live in `eslint.config.js` under
+`no-restricted-syntax`:
+
+- a raw `<select>` is flagged anywhere outside an explicitly disabled site (the two Tiptap
+  toolbars and the three studio-chrome selects);
+- the retired `brand-*` token names are flagged in string and template literals.
+
+Still open: **G14** (Explore control layers), **G21** (custom focus/aria gaps on interactive rows),
+plus the residue noted above in G16/G18.
+
+---
+
 _Audit of `tethyr` (Base44) — full-site visual, layout, and UI/UX consistency re-audit.
 Supersedes `TETHYR_VISUAL_UI_AUDIT_2026-09-07.md` for the same scope._
 _22 findings · 1 critical · 9 high · 8 medium · 4 low · 10 strengths · 23 route groups._

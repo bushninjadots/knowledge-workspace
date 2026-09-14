@@ -270,7 +270,7 @@ export function SettingsPage() {
                     type="button"
                     onClick={() => prefs.toggle(category)}
                     aria-pressed={muted}
-                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition ${
+                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-lift ${
                       muted
                         ? "border-border/60 bg-surface-elevated/40"
                         : "border-border/60 bg-background/40 hover:bg-surface-elevated/40"
@@ -278,7 +278,7 @@ export function SettingsPage() {
                   >
                     <span className="text-sm">{CATEGORY_LABELS[category]}</span>
                     <span
-                      className={`flex h-6 w-11 shrink-0 items-center rounded-full border px-0.5 transition ${
+                      className={`flex h-6 w-11 shrink-0 items-center rounded-full border px-0.5 transition-lift ${
                         muted
                           ? "justify-start border-border bg-surface-sunken"
                           : "justify-end border-primary/30 bg-primary"
@@ -315,14 +315,14 @@ export function SettingsPage() {
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <Link
                 to="/profile"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <User className="h-4 w-4 text-muted-foreground" />
                 Studio — identity, skills, links
               </Link>
               <Link
                 to="/profile"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <Palette className="h-4 w-4 text-muted-foreground" />
                 Studio — appearance
@@ -330,14 +330,14 @@ export function SettingsPage() {
               <Link
                 to="/sessions"
                 search={{ tab: "availability" }}
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 Sessions — weekly schedule
               </Link>
               <Link
                 to="/notifications"
-                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition hover:bg-surface-elevated/40"
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm transition-lift hover:bg-surface-elevated/40"
               >
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 Notifications page

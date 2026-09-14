@@ -148,7 +148,7 @@ export function ContributionGraph({
             <button
               type="button"
               onClick={() => setMode("events")}
-              className={`rounded-md px-2 py-0.5 transition ${
+              className={`rounded-md px-2 py-0.5 transition-lift ${
                 mode === "events"
                   ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -159,7 +159,7 @@ export function ContributionGraph({
             <button
               type="button"
               onClick={() => setMode("points")}
-              className={`rounded-md px-2 py-0.5 transition ${
+              className={`rounded-md px-2 py-0.5 transition-lift ${
                 mode === "points"
                   ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"

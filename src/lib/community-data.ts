@@ -36,11 +36,11 @@ export type ReputationBadge =
 // ============================================================
 
 export const BADGE_STYLES: Record<ReputationBadge, string> = {
-  "Helpful Mentor": "border-brand-green/40 bg-brand-green/10 text-brand-green",
+  "Helpful Mentor": "border-trust/40 bg-trust/10 text-trust",
   "Verified Sharer": "border-primary/40 bg-primary/10 text-primary",
-  "Project Builder": "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
+  "Project Builder": "border-ai/40 bg-ai/10 text-ai",
   "Community Contributor": "border-border bg-surface-elevated text-foreground",
-  Expert: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple",
+  Expert: "border-ai/40 bg-ai/10 text-ai",
   Learner: "border-border bg-surface-elevated text-muted-foreground",
 };
 
@@ -122,8 +122,8 @@ export const POST_FLAIRS: { label: string; value: string }[] = [
 
 const FLAIR_PALETTE = [
   "bg-primary/10 text-primary border-primary/30",
-  "bg-brand-purple/10 text-brand-purple border-brand-purple/30",
-  "bg-brand-green/10 text-brand-green border-brand-green/30",
+  "bg-ai/10 text-ai border-ai/30",
+  "bg-trust/10 text-trust border-trust/30",
   "bg-learning/10 text-learning border-learning/30",
   "bg-trust/10 text-trust border-trust/30",
   "bg-ai/10 text-ai border-ai/30",

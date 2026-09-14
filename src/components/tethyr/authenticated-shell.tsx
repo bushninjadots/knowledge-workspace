@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo, useEffect } from "react";
+import { lazy, Suspense, useCallback, useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { Menu, Search, ArrowUp, Bell } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
@@ -22,6 +22,39 @@ import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
+const SIDEBAR_STORAGE_KEY = "tethyr:sidebar-collapsed";
+
+/**
+ * Sidebar width preference, remembered per browser. Starts expanded so the
+ * server-rendered markup matches the first client render; the stored value is
+ * applied right after mount (same pattern as `useOnlineStatus`).
+ */
+function useSidebarRail() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "1");
+    } catch {
+      // Private mode or blocked storage — stay expanded.
+    }
+  }, []);
+
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? "1" : "0");
+      } catch {
+        // Preference simply won't persist.
+      }
+      return next;
+    });
+  }, []);
+
+  return { collapsed, toggle };
+}
+
 /**
  * Shared layout for all authenticated routes.
  * The sidebar + mobile menu lives here once — never remounts on navigation.
@@ -30,6 +63,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 export function AuthenticatedShell() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarRail();
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
   const themeStyle = useMemo(
@@ -55,7 +89,7 @@ export function AuthenticatedShell() {
         bannerColor={palette?.dominant ?? null}
       />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
-        <DashboardSidebar />
+        <DashboardSidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -79,9 +113,12 @@ export function AuthenticatedShell() {
           </button>
           <span className="text-[13px] font-semibold tracking-tight md:hidden">Tethyr</span>
           <div className="ml-auto flex items-center gap-1">
-            {/* Search lives in the sidebar (inline) on md+; the icon only shows on mobile */}
+            {/* Search lives in the sidebar (inline) on md+ — the icon covers
+                mobile, and the desktop rail where the field has no room. */}
             <button
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground md:hidden"
+              className={`rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground ${
+                sidebarCollapsed ? "" : "md:hidden"
+              }`}
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
             >
@@ -115,7 +152,7 @@ export function AuthenticatedShell() {
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface shadow-sm transition hover:scale-105 hover:bg-surface-elevated md:bottom-6 md:right-6"
+            className="fixed bottom-20 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full border card-border bg-surface transition-spatial hover:scale-105 hover:bg-surface-elevated md:bottom-6 md:right-6"
             aria-label="Scroll to top"
           >
             <ArrowUp className="h-4 w-4 text-muted-foreground" />

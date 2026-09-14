@@ -32,8 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..");
 
 const DB_LOCAL_URL =
-  process.env.DB_LOCAL_URL ||
-  "postgresql://postgres:postgres@localhost:54321/postgres";
+  process.env.DB_LOCAL_URL || "postgresql://postgres:postgres@localhost:54321/postgres";
 const DB_HOSTED_URL = process.env.DB_HOSTED_URL;
 
 // ---------------------------------------------------------------------------
@@ -88,9 +87,7 @@ const GRANT_QUERY = `
   SELECT table_schema, table_name, grantee, privilege_type
   FROM information_schema.table_privileges
   WHERE table_schema IN ('public','storage')
-    AND grantee NOT IN (${platformGrants.ignored_grantees
-      .map((r) => `'${r}'`)
-      .join(", ")})
+    AND grantee NOT IN (${platformGrants.ignored_grantees.map((r) => `'${r}'`).join(", ")})
   ORDER BY table_schema, table_name, grantee, privilege_type
 `;
 
@@ -116,11 +113,10 @@ const FUNCTION_GRANT_QUERY = `
 
 function runQuery(connectionString, sql) {
   try {
-    return execFileSync(
-      "psql",
-      [connectionString, "-qAt", "-F", "\t", "-c", sql],
-      { encoding: "utf8", timeout: 30_000 },
-    ).trim();
+    return execFileSync("psql", [connectionString, "-qAt", "-F", "\t", "-c", sql], {
+      encoding: "utf8",
+      timeout: 30_000,
+    }).trim();
   } catch (e) {
     console.error(`  Query failed: ${e.message.split("\n")[0]}`);
     return "";
@@ -149,14 +145,12 @@ function diff(label, local, hosted) {
   if (onlyLocal.length) {
     console.error(`    Only in local (${onlyLocal.length}):`);
     onlyLocal.slice(0, 20).forEach((l) => console.error(`      + ${l}`));
-    if (onlyLocal.length > 20)
-      console.error(`      ... and ${onlyLocal.length - 20} more`);
+    if (onlyLocal.length > 20) console.error(`      ... and ${onlyLocal.length - 20} more`);
   }
   if (onlyHosted.length) {
     console.error(`    Only in hosted (${onlyHosted.length}):`);
     onlyHosted.slice(0, 20).forEach((l) => console.error(`      - ${l}`));
-    if (onlyHosted.length > 20)
-      console.error(`      ... and ${onlyHosted.length - 20} more`);
+    if (onlyHosted.length > 20) console.error(`      ... and ${onlyHosted.length - 20} more`);
   }
   return 1;
 }
@@ -200,14 +194,10 @@ function checkExpectedObjects(connectionString, label) {
       `SELECT 1 FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE p.polname = '${pol.name.replace(/'/g, "''")}' AND c.relname = '${pol.table}' AND n.nspname = '${pol.schema}'`,
     );
     if (!result.includes("1")) {
-      console.error(
-        `  ✗ ${label}: missing policy "${pol.name}" on ${pol.schema}.${pol.table}`,
-      );
+      console.error(`  ✗ ${label}: missing policy "${pol.name}" on ${pol.schema}.${pol.table}`);
       failures++;
     } else {
-      console.log(
-        `  ✓ ${label}: policy "${pol.name}" on ${pol.schema}.${pol.table} exists`,
-      );
+      console.log(`  ✓ ${label}: policy "${pol.name}" on ${pol.schema}.${pol.table} exists`);
     }
   }
 

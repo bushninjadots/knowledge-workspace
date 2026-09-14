@@ -43,7 +43,7 @@ function RepoCard({
   const langColor = languageColor(meta.language) ?? "var(--muted-foreground)";
 
   return (
-    <Card className="group flex items-start gap-3 p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))]">
+    <Card className="group flex items-start gap-3 p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]">
       <div className="mt-0.5 shrink-0">
         <Github className="h-5 w-5 text-foreground/70" />
       </div>
@@ -57,7 +57,7 @@ function RepoCard({
           >
             {meta.full_name ?? repo.url.replace("https://github.com/", "").replace(/\/$/, "")}
           </a>
-          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-fade group-hover:opacity-100" />
         </div>
         {meta.description && (
           <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{meta.description}</p>
@@ -92,7 +92,7 @@ function RepoCard({
               })
             }
             disabled={refreshMeta.isPending}
-            className="ml-auto rounded-md p-1 text-muted-foreground/50 transition hover:text-muted-foreground disabled:opacity-30"
+            className="ml-auto rounded-md p-1 text-muted-foreground/50 transition-lift hover:text-muted-foreground disabled:opacity-30"
             title="Refresh metadata"
           >
             <RefreshCw className={`h-3 w-3 ${refreshMeta.isPending ? "animate-spin" : ""}`} />
@@ -100,7 +100,7 @@ function RepoCard({
           {isOwner && (
             <button
               onClick={onRemove}
-              className="rounded-md p-1 text-muted-foreground/50 transition hover:text-destructive"
+              className="rounded-md p-1 text-muted-foreground/50 transition-lift hover:text-destructive"
               title="Remove repository"
             >
               <Trash2 className="h-3 w-3" />
@@ -167,7 +167,7 @@ export function ProjectReposSection({
               to="/profile"
               search={{ github: "token" }}
               title="GitHub token — for private repos and to avoid rate limits. Managed once in your profile."
-              className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition ${
+              className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-lift ${
                 hasToken
                   ? "border-[var(--user-accent,var(--trust))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--trust))]"
                   : "border-border/60 text-muted-foreground hover:text-foreground"
@@ -178,18 +178,20 @@ export function ProjectReposSection({
             </Link>
             <button
               onClick={() => setShowAdd(!showAdd)}
-              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
             >
               <Plus className="h-3 w-3" />
               Link repo
             </button>
             <button
               onClick={() => setShowPicker((v) => !v)}
-              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+              className="flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
             >
               <Github className="h-3 w-3" />
               From GitHub
-              <ChevronDown className={`h-3 w-3 transition ${showPicker ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-3 w-3 transition-spatial ${showPicker ? "rotate-180" : ""}`}
+              />
             </button>
           </div>
         )}
@@ -222,7 +224,7 @@ export function ProjectReposSection({
                       )
                     }
                     disabled={addRepo.isPending}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                   >
                     <span className="min-w-0 flex-1 truncate">{r.full_name}</span>
                     {r.language && (

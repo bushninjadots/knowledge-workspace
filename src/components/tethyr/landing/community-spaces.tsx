@@ -54,7 +54,7 @@ function SpaceCard({ space }: { space: CommunitySpace }) {
   return (
     <Link
       to="/community"
-      className="group rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50"
+      className="group rounded-xl bg-surface-elevated/30 p-5 transition-lift hover:bg-surface-elevated/50"
     >
       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 bg-surface-elevated text-base font-semibold">
         {avatarUrl ? (

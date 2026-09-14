@@ -44,13 +44,13 @@ export function BannerOverlayPicker({
             aria-pressed={selected}
             onClick={() => onChange(option.id)}
             className={cn(
-              "min-w-0 overflow-hidden rounded-lg border text-left transition",
+              "min-w-0 overflow-hidden rounded-lg border text-left transition-lift",
               selected
                 ? "border-[var(--user-accent,var(--primary))]"
                 : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
             )}
           >
-            <span className="relative block h-10 w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)]">
+            <span className="relative block h-10 w-full bg-[linear-gradient(120deg,var(--ai)_0%,var(--trust)_100%)]">
               {style && <span aria-hidden="true" className="absolute inset-0" style={style} />}
             </span>
             <span className="block px-2 py-1.5">

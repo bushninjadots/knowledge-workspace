@@ -35,7 +35,7 @@ function PostRowCompact({
       }`}
     >
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-green text-xs font-semibold text-background">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-trust text-xs font-semibold text-background">
           {authorName.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -130,7 +130,7 @@ export function CommunityFeedSplitView({
       : undefined;
 
   return (
-    <div className="hidden min-h-[min(72vh,760px)] grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] overflow-hidden rounded-xl border card-border bg-surface/30 lg:grid">
+    <div className="hidden min-h-[min(72vh,760px)] grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] overflow-hidden rounded-xl border border-border/60 bg-surface/30 lg:grid">
       <aside className="min-h-0 overflow-y-auto border-r border-border/60" aria-label="Posts">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-surface/95 px-4 py-3 backdrop-blur-sm">
           <div>

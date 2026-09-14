@@ -220,7 +220,7 @@ export function ProjectShelf({
       />
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed card-border bg-surface/50 px-6 py-20 text-center">
+        <Card className="flex flex-col items-center justify-center gap-3 border-dashed bg-surface/50 px-6 py-20 text-center">
           <Folder className="h-10 w-10 text-muted-foreground/40" />
           <div>
             <p className="text-sm font-medium text-foreground">No projects match</p>
@@ -236,12 +236,12 @@ export function ProjectShelf({
                 setQ("");
                 setCategory("All");
               }}
-              className="rounded-full border card-border bg-background/60 px-4 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
+              className="rounded-full border card-border bg-background/60 px-4 py-1.5 text-xs font-medium text-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated"
             >
               Clear filters
             </button>
           )}
-        </div>
+        </Card>
       ) : isMobile ? (
         /* Mobile: stacked list of cards */
         <div className="space-y-3">
@@ -375,7 +375,7 @@ export function ProjectShelf({
                 onClick={() => navigate(-1)}
                 disabled={activeIndex <= 0}
                 aria-label="Previous project"
-                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
+                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition-lift hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -383,7 +383,7 @@ export function ProjectShelf({
                 onClick={() => navigate(1)}
                 disabled={activeIndex >= maxOffset}
                 aria-label="Next project"
-                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
+                className="flex h-9 w-9 items-center justify-center rounded-full border card-border bg-surface text-foreground transition-lift hover:bg-surface-elevated hover:border-[var(--user-accent-border,var(--border-strong))] disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -445,7 +445,7 @@ function ProjectListRow({
     <Card asChild>
       <button
         onClick={onClick}
-        className="group flex w-full items-center gap-4 p-3 text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-sm"
+        className="group flex w-full items-center gap-4 p-3 text-left transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
         aria-label={`View ${project.title}`}
       >
         {/* Cover thumb */}
@@ -475,7 +475,7 @@ function ProjectListRow({
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               {isOwn && (
-                <span className="rounded-full bg-brand-green/25 px-2 py-0.5 text-[10px] font-medium text-brand-green">
+                <span className="rounded-full bg-trust/25 px-2 py-0.5 text-[10px] font-medium text-trust">
                   Your project
                 </span>
               )}
@@ -526,7 +526,7 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
     <Card asChild>
       <button
         onClick={onClick}
-        className="group relative w-full cursor-pointer overflow-hidden text-left transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+        className="group relative w-full cursor-pointer overflow-hidden text-left transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
       >
         <div className="relative aspect-[3/4] w-full">
           {project.cover_url ? (

@@ -125,7 +125,7 @@ export function HeroEditControls({
             setEditingCaption(true);
             setTimeout(() => captionRef.current?.focus(), 0);
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Sparkles className="h-3.5 w-3.5" />
           {identity.banner_caption ? "Edit caption" : "Add caption"}
@@ -135,7 +135,7 @@ export function HeroEditControls({
           type="button"
           disabled={uploading}
           onClick={() => fileRef.current?.click()}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background disabled:opacity-50"
         >
           <Camera className="h-3.5 w-3.5" />
           {uploading ? "Uploading…" : hasBanner ? "Change banner" : "Add banner"}
@@ -144,7 +144,7 @@ export function HeroEditControls({
         <button
           type="button"
           onClick={() => setIdentityOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Pencil className="h-3.5 w-3.5" />
           Edit identity
@@ -153,7 +153,7 @@ export function HeroEditControls({
         <button
           type="button"
           onClick={() => setAppearanceOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-background"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Palette className="h-3.5 w-3.5" />
           Appearance

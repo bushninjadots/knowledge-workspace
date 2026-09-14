@@ -305,13 +305,13 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
                 <div className="flex shrink-0 items-center gap-3">
                   <button
                     onClick={() => setTokenEditing(true)}
-                    className="text-xs text-muted-foreground transition hover:text-primary"
+                    className="text-xs text-muted-foreground transition-lift hover:text-primary"
                   >
                     Update
                   </button>
                   <button
                     onClick={removeToken}
-                    className="text-xs text-muted-foreground transition hover:text-destructive"
+                    className="text-xs text-muted-foreground transition-lift hover:text-destructive"
                   >
                     Remove
                   </button>
@@ -319,7 +319,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
               ) : (
                 <button
                   onClick={() => setTokenEditing(true)}
-                  className="shrink-0 text-xs font-medium text-primary transition hover:opacity-80"
+                  className="shrink-0 text-xs font-medium text-primary transition-fade hover:opacity-80"
                 >
                   Add token
                 </button>
@@ -355,7 +355,7 @@ export function GitHubConnect({ autoOpenToken = false }: { autoOpenToken?: boole
                     setTokenEditing(false);
                     setTokenDraft("");
                   }}
-                  className="rounded-md p-1 text-muted-foreground transition hover:text-foreground"
+                  className="rounded-md p-1 text-muted-foreground transition-lift hover:text-foreground"
                   aria-label="Cancel token edit"
                 >
                   <X className="h-3.5 w-3.5" />

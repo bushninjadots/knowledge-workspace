@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { LibraryLayout } from "@/components/tethyr/library/library-layout";
+import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { ItemCard } from "@/components/tethyr/library/item-card";
 import { CollectionCard } from "@/components/tethyr/library/collection-card";
 import { FileUploadZone } from "@/components/tethyr/library/file-upload-zone";
@@ -147,33 +148,21 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
                 : `${items.length} ${items.length === 1 ? "item" : "items"}`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          {/* The controls wrap instead of overflowing on narrow screens. */}
+          <div className="flex flex-wrap items-center gap-2">
             <LibrarySearchBar value={search} onChange={setSearch} className="w-64 sm:w-72" />
 
-            <div className="flex rounded-lg border border-border/40 bg-surface/40 p-0.5">
-              <button
-                onClick={() => setLayout("grid")}
-                className={`rounded-md p-1.5 transition-colors ${
-                  layout === "grid"
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Grid view"
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setLayout("list")}
-                className={`rounded-md p-1.5 transition-colors ${
-                  layout === "list"
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="List view"
-              >
-                <List className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <SegmentedControl
+              value={layout}
+              onChange={setLayout}
+              ariaLabel="Library layout"
+              size="sm"
+              className="w-fit"
+              options={[
+                { value: "grid", label: "", icon: LayoutGrid, ariaLabel: "Grid view" },
+                { value: "list", label: "", icon: List, ariaLabel: "List view" },
+              ]}
+            />
 
             <Button
               size="sm"
@@ -248,7 +237,7 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="mt-3 gap-2 bg-brand-green text-background hover:bg-brand-green/90"
+                  className="mt-3 gap-2 bg-trust text-background hover:bg-trust/90"
                   onClick={onNewNote}
                 >
                   <Plus className="h-3.5 w-3.5" />

@@ -38,3 +38,8 @@ vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 
 // jsdom lacks scrollIntoView.
 Element.prototype.scrollIntoView = vi.fn();
+
+// jsdom lacks pointer capture, which Radix's Select/popper press handling needs.
+Element.prototype.hasPointerCapture ??= () => false;
+Element.prototype.setPointerCapture ??= () => {};
+Element.prototype.releasePointerCapture ??= () => {};

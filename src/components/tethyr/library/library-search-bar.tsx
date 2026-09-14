@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search, X, FileText, Globe, Upload } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { useLibrarySearch, type LibraryItem } from "@/hooks/use-library";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ const TYPE_ICONS: Record<string, typeof FileText> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  note: "text-brand-green",
+  note: "text-trust",
   document: "text-learning",
   link: "text-teaching",
   upload: "text-ai",
@@ -25,7 +26,7 @@ function highlightMatch(text: string, query: string) {
   const parts = text.split(regex);
   return parts.map((part, i) =>
     regex.test(part) ? (
-      <mark key={i} className="bg-brand-green/20 text-foreground">
+      <mark key={i} className="bg-trust/20 text-foreground">
         {part}
       </mark>
     ) : (
@@ -101,9 +102,9 @@ export function LibrarySearchBar({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "flex items-center gap-2 rounded-full border bg-surface/60 px-3 transition-lift transition-shadow duration-200",
+          "flex items-center gap-2 rounded-full border bg-surface/60 px-3 transition-lift duration-150",
           focused
-            ? "border-brand-green/40 shadow-[0_0_0_1px_oklch(0.92_0.23_142/15%)]"
+            ? "border-trust/40 shadow-[0_0_0_1px_oklch(0.92_0.23_142/15%)]"
             : "border-border/60",
         )}
       >
@@ -129,7 +130,7 @@ export function LibrarySearchBar({
       </div>
 
       {showDropdown && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border card-border bg-surface shadow-lg">
+        <Card className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden shadow-lg">
           {isLoading ? (
             <div className="px-4 py-3 text-xs text-muted-foreground">Searching…</div>
           ) : hasResults ? (
@@ -169,7 +170,7 @@ export function LibrarySearchBar({
           ) : (
             <div className="px-4 py-3 text-xs text-muted-foreground">No results found</div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

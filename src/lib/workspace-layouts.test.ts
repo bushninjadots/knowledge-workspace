@@ -27,18 +27,25 @@ const modules: WorkspaceModule[] = [
 ];
 
 describe("dashboard hierarchy", () => {
-  it("packs work, collaboration, discovery, and evidence into intentional rows", () => {
+  it("packs work, collaboration, discovery, and evidence into compact rows", () => {
     const layout = stackDefault(DASHBOARD_MODULES);
-    expect(layout.slice(0, 2).map(({ i, x, y }) => ({ i, x, y }))).toEqual([
-      { i: "projects", x: 0, y: 0 },
-      { i: "applications", x: 8, y: 0 },
+    expect(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))).toEqual([
+      // Work → collaboration → discovery → evidence, two rows per line.
+      { i: "projects", x: 0, y: 0, w: 6, h: 3 },
+      { i: "applications", x: 6, y: 0, w: 6, h: 3 },
+      { i: "challenges", x: 0, y: 4, w: 6, h: 3 },
+      { i: "connections", x: 6, y: 4, w: 6, h: 3 },
+      { i: "suggested-projects", x: 0, y: 8, w: 6, h: 3 },
+      { i: "suggested-creators", x: 6, y: 8, w: 6, h: 3 },
+      { i: "trending-skills", x: 0, y: 12, w: 6, h: 3 },
+      { i: "activity", x: 6, y: 12, w: 6, h: 3 },
     ]);
-    expect(layout.slice(2, 4).map(({ i, x, y }) => ({ i, x, y }))).toEqual([
-      { i: "challenges", x: 0, y: 10 },
-      { i: "connections", x: 6, y: 10 },
-    ]);
-    expect(layout.slice(4, 7).every(({ y }) => y === 19)).toBe(true);
-    expect(layout[7]).toMatchObject({ i: "activity", x: 0, y: 29, w: 12 });
+  });
+
+  it("clamps layouts saved before the compact rows down to the row scale", () => {
+    const result = mergeLayout(DASHBOARD_MODULES, [{ i: "projects", x: 0, y: 20, w: 8, h: 9 }]);
+
+    expect(result.items.find(({ i }) => i === "projects")).toMatchObject({ h: 4 });
   });
 });
 

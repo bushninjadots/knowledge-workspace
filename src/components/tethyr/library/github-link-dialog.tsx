@@ -16,6 +16,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Radix Select reserves the empty string for "no value", so the unset state
+// needs its own sentinel.
+const NO_REPO = "__none";
 
 export function GithubLinkDialog({
   open,
@@ -70,20 +81,22 @@ export function GithubLinkDialog({
                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading repositories…
               </div>
             ) : (repos.data?.length ?? 0) > 0 ? (
-              <select
-                id="gh-repo"
-                value={repo}
-                onChange={(e) => setRepo(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border/60 bg-background px-2 text-sm outline-none focus:border-primary"
+              <Select
+                value={repo || NO_REPO}
+                onValueChange={(value) => setRepo(value === NO_REPO ? "" : value)}
               >
-                <option value="">Choose a repository…</option>
-                {repos.data!.map((r) => (
-                  <option key={r.full_name} value={r.full_name}>
-                    {r.full_name}
-                    {r.private ? " (private)" : ""}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="gh-repo" className="w-full">
+                  <SelectValue placeholder="Choose a repository…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {repos.data!.map((r) => (
+                    <SelectItem key={r.full_name} value={r.full_name}>
+                      {r.full_name}
+                      {r.private ? " (private)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               <p className="text-xs text-muted-foreground">
                 No repositories found — connect GitHub in your profile first.

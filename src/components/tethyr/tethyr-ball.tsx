@@ -95,12 +95,12 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
       <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" overflow="visible">
         <defs>
           <linearGradient id="ball-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--brand-green)" />
-            <stop offset="100%" stopColor="var(--brand-purple)" />
+            <stop offset="0%" stopColor="var(--trust)" />
+            <stop offset="100%" stopColor="var(--ai)" />
           </linearGradient>
           <radialGradient id="ambient-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--brand-green)" stopOpacity="0.5" />
-            <stop offset="50%" stopColor="var(--brand-purple)" stopOpacity="0.15" />
+            <stop offset="0%" stopColor="var(--trust)" stopOpacity="0.5" />
+            <stop offset="50%" stopColor="var(--ai)" stopOpacity="0.15" />
             <stop offset="100%" stopColor="transparent" stopOpacity="0" />
           </radialGradient>
           <filter id="glow">
@@ -166,14 +166,14 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
           cx={cx + Math.cos(p1Angle) * orbR}
           cy={cy + Math.sin(p1Angle) * orbR * 0.55}
           r="2"
-          fill="var(--brand-green)"
+          fill="var(--trust)"
           opacity="0.65"
         />
         <circle
           cx={cx + Math.cos(p2Angle) * (orbR * 0.75)}
           cy={cy + Math.sin(p2Angle) * (orbR * 0.75) * 0.55}
           r="1.5"
-          fill="var(--brand-purple)"
+          fill="var(--ai)"
           opacity="0.55"
         />
         {/* Tiny sparkle */}
@@ -181,7 +181,7 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
           cx={cx + Math.cos(p1Angle + 1.5) * (orbR + 5)}
           cy={cy + Math.sin(p1Angle + 1.5) * (orbR + 5) * 0.5}
           r="0.8"
-          fill="var(--brand-green)"
+          fill="var(--trust)"
           opacity={0.25 + Math.sin(t * 2.5) * 0.25}
         />
       </svg>

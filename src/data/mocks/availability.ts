@@ -43,8 +43,8 @@ export const AVAILABILITY_OPTIONS: AvailabilityOption[] = [
     value: "looking_for_team",
     label: "Looking for Team",
     icon: Users,
-    color: "text-brand-purple",
-    bg: "bg-brand-purple/10 border-brand-purple/30",
+    color: "text-ai",
+    bg: "bg-ai/10 border-ai/30",
   },
   {
     value: "mentoring",

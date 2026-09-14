@@ -46,16 +46,16 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search spaces..."
-            className="h-9 rounded-xl border card-border bg-surface pr-4 pl-9 text-sm"
+            className="h-9 rounded-xl border border-border/60 bg-surface pr-4 pl-9 text-sm"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 rounded-xl border card-border bg-surface p-0.5">
+          <div className="flex items-center gap-0.5 rounded-xl bg-surface-elevated/40 p-0.5">
             <button
               onClick={() => setSortMode("popular")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "popular"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by member count"
@@ -65,9 +65,9 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             </button>
             <button
               onClick={() => setSortMode("newest")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "newest"
-                  ? "bg-surface-elevated text-foreground shadow-sm"
+                  ? "bg-surface-elevated text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by newest first"
@@ -87,7 +87,7 @@ export const CommunitiesSection = memo(function CommunitiesSection({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="animate-gentle-pulse rounded-xl border card-border bg-surface h-32 p-5"
+              className="animate-gentle-pulse rounded-xl border border-border/60 bg-surface h-32 p-5"
             />
           ))}
         </div>

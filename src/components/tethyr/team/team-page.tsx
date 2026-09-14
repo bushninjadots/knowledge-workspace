@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check, Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import {
@@ -67,7 +69,7 @@ export function TeamPage({
               onClick={() =>
                 respond.mutate({ inviteId: pendingInvite.id, teamId: team.id, accept: true })
               }
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90"
             >
               Accept
             </button>
@@ -75,7 +77,7 @@ export function TeamPage({
               onClick={() =>
                 respond.mutate({ inviteId: pendingInvite.id, teamId: team.id, accept: false })
               }
-              className="rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+              className="rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
             >
               Decline
             </button>
@@ -122,7 +124,7 @@ export function TeamPage({
                   <Link
                     to="/projects/$id"
                     params={{ id: p.id }}
-                    className="block p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
+                    className="block p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
                   >
                     <span className="block truncate font-medium text-foreground">{p.title}</span>
                     <span className="mt-1 block text-xs capitalize text-muted-foreground">
@@ -203,14 +205,14 @@ export function TeamPage({
                                 onClick={() =>
                                   setRole.mutate({ profileId: m.profile_id, role: "core" })
                                 }
-                                className="rounded-md px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground"
+                                className="rounded-md px-2 py-1 text-[11px] text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
                               >
                                 Make core
                               </button>
                             )}
                             <button
                               onClick={() => removeMember.mutate(m.profile_id)}
-                              className="rounded-md p-1 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                              className="rounded-md p-1 text-muted-foreground transition-lift hover:bg-destructive/10 hover:text-destructive"
                               aria-label="Remove member"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -315,7 +317,7 @@ function TeamAvatar({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105 disabled:opacity-50"
+            className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background transition-spatial hover:scale-105 disabled:opacity-50"
             aria-label="Change crew picture"
             title="Change crew picture"
           >
@@ -395,18 +397,19 @@ function Management({ team }: { team: TeamRow }) {
         </label>
         {editingDesc ? (
           <div className="space-y-2">
-            <textarea
+            <Textarea
               value={descDraft}
               onChange={(e) => setDescDraft(e.target.value.slice(0, 300))}
               rows={3}
               placeholder="What this crew builds and who it's for…"
-              className="w-full resize-y rounded-lg border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              aria-label="Crew description"
+              className="min-h-0 resize-y"
             />
             <div className="flex items-center gap-2">
               <button
                 onClick={saveDesc}
                 disabled={savingDesc}
-                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
               >
                 {savingDesc ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -420,7 +423,7 @@ function Management({ team }: { team: TeamRow }) {
                   setEditingDesc(false);
                   setDescDraft(team.description ?? "");
                 }}
-                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
               >
                 Cancel
               </button>
@@ -432,7 +435,7 @@ function Management({ team }: { team: TeamRow }) {
               setDescDraft(team.description ?? "");
               setEditingDesc(true);
             }}
-            className="block w-full rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+            className="block w-full rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
           >
             {team.description ? (
               <span className="whitespace-pre-wrap text-foreground/80">{team.description}</span>
@@ -449,16 +452,17 @@ function Management({ team }: { team: TeamRow }) {
           Invite by handle
         </label>
         <div className="flex gap-2">
-          <input
+          <Input
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             placeholder="e.g. maya"
-            className="w-full max-w-xs rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            aria-label="Invite by handle"
+            className="max-w-xs"
           />
           <button
             onClick={handleInvite}
             disabled={!handle.trim() || inviting}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
           >
             {inviting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             Invite
@@ -482,7 +486,7 @@ function Management({ team }: { team: TeamRow }) {
                 <button
                   onClick={() => handleAttach(p.id)}
                   disabled={attaching === p.id}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-left text-sm transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                 >
                   <span className="truncate">{p.title}</span>
                   {attaching === p.id && (

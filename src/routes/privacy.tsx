@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PublicPageFrame } from "@/components/tethyr/public-page-frame";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
@@ -11,11 +12,8 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPolicy() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="font-display text-3xl font-semibold">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: August 20, 2026</p>
-
-      <div className="prose prose-neutral dark:prose-invert mt-8 space-y-6 text-foreground">
+    <PublicPageFrame title="Privacy Policy" updated="August 20, 2026">
+      <>
         <section>
           <h2 className="font-display text-xl font-semibold">1. Information We Collect</h2>
           <p className="mt-2 text-muted-foreground">
@@ -84,7 +82,7 @@ function PrivacyPolicy() {
             platform or at the email associated with your account.
           </p>
         </section>
-      </div>
-    </div>
+      </>
+    </PublicPageFrame>
   );
 }

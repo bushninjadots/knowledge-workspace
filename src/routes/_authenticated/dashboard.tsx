@@ -1,31 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
-import {
-  ArrowRight,
-  Sparkles,
-  Clock,
-  Folder,
-  Users,
-  UserPlus,
-  TrendingUp,
-  Award,
-  Swords,
-  Ticket,
-  Plus,
-} from "lucide-react";
+import { ArrowRight, Sparkles, Folder, UserPlus, Award, Plus } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { completenessPercent, nextSteps, sections } from "@/lib/profile-completeness";
+import { completenessPercent, nextSteps, sections, type Section } from "@/lib/profile-completeness";
 import { NextStepsList } from "@/components/tethyr/next-steps";
-import { ActivityTimeline } from "@/components/tethyr/activity-timeline";
-import { SuggestedCreators } from "@/components/tethyr/suggested-creators";
-import { SuggestedProjects } from "@/components/tethyr/suggested-projects";
-import { DiscoverSkills } from "@/components/tethyr/discover-skills";
-import { ConnectionsCard } from "@/components/tethyr/connections-card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { FirstSessionOnboarding } from "@/components/tethyr/first-session-onboarding";
+import {
+  ActivityModuleRow,
+  ApplicationsModuleRow,
+  ChallengesModuleRow,
+  ConnectionsModuleRow,
+  ProjectsModuleRow,
+  SuggestedCreatorsModuleRow,
+  SuggestedProjectsModuleRow,
+  TrendingSkillsModuleRow,
+  selectActiveProjects,
+} from "@/components/tethyr/workspace/dashboard-module-rows";
 const WorkspaceGrid = lazy(() =>
   import("@/components/tethyr/workspace/workspace-grid").then((m) => ({
     default: m.WorkspaceGrid,
@@ -37,8 +31,6 @@ import { checkAndAwardAchievements } from "@/lib/reputation";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
-import type { ProjectRow } from "@/components/tethyr/profile-sections";
-import { useChallenges } from "@/hooks/use-challenges";
 import { useProjectReturnChanges } from "@/hooks/use-project-loop";
 import { supabase } from "@/integrations/supabase/client";
 import { seoMeta } from "@/lib/seo";
@@ -129,26 +121,7 @@ function DashboardContent({
   const queryClient = useQueryClient();
   const { data: unreadData } = useUnreadCounts();
 
-  const { data: myChallenges = [], isLoading: challengesLoading } = useChallenges("active");
-  const joinedChallenges = useMemo(() => myChallenges.filter((c) => c.is_joined), [myChallenges]);
-
-  const { data: myApplications = [], isLoading: applicationsLoading } = useQuery({
-    queryKey: ["my-applications", data?.userId],
-    queryFn: async () => {
-      const { data: apps, error } = await supabase
-        .from("project_role_applications")
-        .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
-        .eq("profile_id", data?.userId)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (error) return [];
-      return apps ?? [];
-    },
-    enabled: !!data?.userId,
-    staleTime: 30_000,
-  });
-
-  const { data: todayOpps = [], isLoading: opportunitiesLoading } = useQuery({
+  const { data: todayOpps = [] } = useQuery({
     queryKey: ["today-opportunities", data?.userId],
     queryFn: async () => {
       const { data: roles, error } = await supabase
@@ -183,15 +156,7 @@ function DashboardContent({
     }),
     [data?.profile, data?.teachIds, data?.learnIds, data?.projects],
   );
-  const myProjects = useMemo(
-    () =>
-      [...(data?.projects ?? [])].sort(
-        (a, b) =>
-          new Date(b.updated_at ?? b.created_at).getTime() -
-          new Date(a.updated_at ?? a.created_at).getTime(),
-      ),
-    [data?.projects],
-  );
+  const activity = useMemo(() => data?.activity ?? [], [data?.activity]);
   const pct = useMemo(() => (data ? completenessPercent(input) : 0), [data, input]);
   const remaining = useMemo(() => (data ? nextSteps(input, 5) : []), [data, input]);
   const totalSteps = useMemo(() => (data ? sections(input).length : 0), [data, input]);
@@ -219,208 +184,33 @@ function DashboardContent({
   );
   const unreadMessageCount = useMemo(() => unreadData?.total ?? 0, [unreadData]);
   const activeProjects = useMemo(
-    () => myProjects.filter((p: ProjectRow) => p.status === "active" || p.status === "planning"),
-    [myProjects],
+    () => selectActiveProjects(data?.projects ?? []),
+    [data?.projects],
   );
 
   const renderModule = useCallback(
     (id: string): React.ReactNode => {
       switch (id) {
         case "projects":
-          return (
-            <SectionCard
-              icon={<Folder className="h-4 w-4" />}
-              title="Your projects"
-              action={
-                <Link
-                  to="/profile"
-                  className="text-[11px] font-medium text-primary hover:underline"
-                >
-                  View all
-                </Link>
-              }
-            >
-              {activeProjects.length === 0 ? (
-                <DashboardModuleEmpty
-                  copy="Give people a clear place to find what you're building."
-                  action={<CreateProjectButton label="Start a project" variant="outline" />}
-                />
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {activeProjects.slice(0, 3).map((p) => (
-                    <Link
-                      key={p.id}
-                      to="/projects/$id"
-                      params={{ id: p.id }}
-                      className="group block py-3 first:pt-1 last:pb-1"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="truncate text-sm font-medium" title={p.title}>
-                          {p.title}
-                        </p>
-                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <Progress
-                          value={p.progress_percent ?? 0}
-                          className="h-1"
-                          aria-label={`Progress: ${p.progress_percent ?? 0}%`}
-                        />
-                        <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                          {p.progress_percent ?? 0}%
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          );
+          return <ProjectsModuleRow projects={activeProjects} />;
 
         case "applications":
-          if (applicationsLoading) return <DashboardModuleLoading title="Applications" />;
-          return (
-            <SectionCard
-              icon={<Ticket className="h-4 w-4" />}
-              title="Applications"
-              subtitle={`${myApplications.length} sent`}
-            >
-              {myApplications.length === 0 ? (
-                <DashboardModuleEmpty
-                  copy="Applications you send will stay visible here."
-                  action={
-                    <Link
-                      to="/explore"
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Find open roles →
-                    </Link>
-                  }
-                />
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {myApplications.slice(0, 4).map((app) => (
-                    <Link
-                      key={app.id}
-                      to="/projects/$id"
-                      params={{ id: app.project_open_roles?.projects?.id ?? "" }}
-                      search={{ tab: "people" } as Record<string, string>}
-                      className="flex items-center justify-between py-2.5 text-sm first:pt-1 last:pb-1"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {app.project_open_roles?.title ?? "Role"}
-                        </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {app.project_open_roles?.projects?.title ?? "Project"}
-                        </p>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          app.status === "accepted"
-                            ? "bg-trust/10 text-trust"
-                            : app.status === "declined"
-                              ? "bg-destructive/10 text-destructive"
-                              : "bg-surface-elevated text-muted-foreground"
-                        }`}
-                      >
-                        {app.status}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          );
+          return <ApplicationsModuleRow />;
 
         case "challenges":
-          if (challengesLoading) return <DashboardModuleLoading title="Challenges" />;
-          return (
-            <SectionCard
-              icon={<Swords className="h-4 w-4" />}
-              title="Challenges"
-              subtitle={`${joinedChallenges.length} joined`}
-            >
-              {joinedChallenges.length === 0 ? (
-                <DashboardModuleEmpty
-                  copy="Join a challenge to turn practice into visible contribution."
-                  action={
-                    <Link
-                      to="/challenges"
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Browse challenges →
-                    </Link>
-                  }
-                />
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {joinedChallenges.slice(0, 3).map((c) => (
-                    <Link
-                      key={c.id}
-                      to="/challenges/$id"
-                      params={{ id: c.id }}
-                      className="flex items-center justify-between py-2.5 text-sm first:pt-1 last:pb-1"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium" title={c.title}>
-                          {c.title}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground capitalize">
-                          {c.difficulty}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {c.my_participation?.review_status === "passed"
-                          ? "Verified"
-                          : c.my_participation?.status === "in_progress"
-                            ? "In progress"
-                            : c.my_participation?.status === "completed"
-                              ? "Pending verification"
-                              : "Joined"}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          );
+          return <ChallengesModuleRow />;
 
         case "connections":
-          return <ConnectionsCard />;
+          return <ConnectionsModuleRow />;
 
         case "suggested-projects":
-          return (
-            <SectionCard
-              icon={<Folder className="h-4 w-4" />}
-              title="Projects for you"
-              subtitle="Matched to your skills"
-            >
-              <SuggestedProjects />
-            </SectionCard>
-          );
+          return <SuggestedProjectsModuleRow />;
 
         case "suggested-creators":
-          return (
-            <SectionCard
-              icon={<Users className="h-4 w-4" />}
-              title="People you'd connect with"
-              subtitle="Complementary skills"
-            >
-              <SuggestedCreators />
-            </SectionCard>
-          );
+          return <SuggestedCreatorsModuleRow />;
 
         case "trending-skills":
-          return (
-            <SectionCard
-              icon={<Sparkles className="h-4 w-4" />}
-              title="Trending skills"
-              subtitle="Across the network"
-            >
-              <DiscoverSkills />
-            </SectionCard>
-          );
+          return <TrendingSkillsModuleRow />;
 
         case "today":
           return (
@@ -428,11 +218,12 @@ function DashboardContent({
               aria-labelledby="today-heading"
               className="rounded-xl border border-[var(--user-accent,var(--trust))]/20 bg-surface-elevated/40 p-5"
             >
-              <p id="today-heading" className="section-label mb-1">
+              <h2 id="today-heading" className="section-label mb-3">
                 Your next move
-              </p>
+              </h2>
               <div className="divide-y divide-border/50">
                 <TodayRow
+                  primary
                   icon={activeProjects.length > 0 ? Folder : Plus}
                   accent="var(--trust)"
                   foreground="var(--trust-foreground)"
@@ -440,8 +231,8 @@ function DashboardContent({
                   href={activeProjects.length > 0 ? `/projects/${activeProjects[0].id}` : undefined}
                 >
                   {activeProjects.length > 0 ? (
-                    <div className="flex items-center gap-3">
-                      <p className="truncate text-xs font-medium" title={activeProjects[0].title}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="truncate text-sm font-medium" title={activeProjects[0].title}>
                         {activeProjects[0].title}
                       </p>
                       <Progress
@@ -460,7 +251,7 @@ function DashboardContent({
                     </div>
                   ) : (
                     <>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Create your first project to start building in public.
                       </p>
                       <CreateProjectButton
@@ -520,116 +311,24 @@ function DashboardContent({
                     )}
                   </div>
                 </TodayRow>
-
-                <TodayRow
-                  icon={Users}
-                  accent="var(--ai)"
-                  foreground="var(--ai-foreground)"
-                  title="Find collaborators"
-                  href="/explore"
-                >
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Discover people with complementary skills who are open to team-ups.
-                  </p>
-                </TodayRow>
-
-                <TodayRow
-                  icon={TrendingUp}
-                  accent="var(--brand-purple)"
-                  foreground="var(--ai-foreground)"
-                  title={
-                    todayOpps.length > 0
-                      ? `${todayOpps.length} open role${todayOpps.length !== 1 ? "s" : ""}`
-                      : "Browse opportunities"
-                  }
-                  href="/explore"
-                >
-                  {opportunitiesLoading ? (
-                    <p className="mt-1 text-xs text-muted-foreground">Loading open roles…</p>
-                  ) : todayOpps.length > 0 ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {todayOpps
-                        .slice(0, 2)
-                        .map((opp) => `${opp.title} — ${opp.projects?.title}`)
-                        .join(" · ")}
-                      {todayOpps.length > 2 && (
-                        <span className="ml-1 text-[11px]">+{todayOpps.length - 2} more</span>
-                      )}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Check back as projects open new roles.
-                    </p>
-                  )}
-                </TodayRow>
               </div>
             </section>
           );
 
-        case "next-steps":
-          if (pct >= 100) {
-            return (
-              <div className="rounded-xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
-                <div className="flex items-center gap-2">
-                  <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-                  <h2 className="text-sm font-semibold">Profile complete!</h2>
-                  <span className="text-[11px] text-muted-foreground">
-                    — {doneSteps}/{totalSteps} done
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Your studio is fully set up. People can see everything you're about — projects,
-                  skills, and what you're building next.
-                </p>
-              </div>
-            );
-          }
-          if (remaining.length === 0) return null;
-          return (
-            <div className="rounded-xl border border-[var(--user-accent,var(--trust))]/30 bg-[var(--user-accent-subtle,var(--learning-subtle))] p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
-                <h2 className="text-sm font-semibold">Finish setting up your profile</h2>
-                <span className="text-[11px] text-muted-foreground">
-                  — {doneSteps}/{totalSteps} done
-                </span>
-              </div>
-              <NextStepsList items={remaining} />
-            </div>
-          );
-
         case "activity":
-          return (
-            <SectionCard
-              icon={<Clock className="h-4 w-4" />}
-              title="Recent activity"
-              subtitle="Every action builds your reputation."
-            >
-              <ActivityTimeline profileId={data?.userId} events={data?.activity} limit={6} />
-            </SectionCard>
-          );
+          return <ActivityModuleRow activity={activity} />;
 
         default:
           return null;
       }
     },
     [
-      data,
+      activity,
       activeProjects,
-      joinedChallenges,
-      myApplications,
-      pct,
-      remaining,
-      doneSteps,
-      totalSteps,
       pendingSessionCount,
       pendingConnectionCount,
       pendingInviteCount,
       unreadMessageCount,
-      todayOpps,
-      opportunitiesLoading,
-      applicationsLoading,
-      challengesLoading,
     ],
   );
 
@@ -658,8 +357,13 @@ function DashboardContent({
           />
           {renderModule("today")}
           <ProjectReturnShelf />
-          <WeeklyShowYourWorkPrompt projectId={activeProjects[0]?.id ?? null} />
-          {renderModule("next-steps")}
+          <FocusBand
+            projectId={activeProjects[0]?.id ?? null}
+            pct={pct}
+            remaining={remaining}
+            doneSteps={doneSteps}
+            totalSteps={totalSteps}
+          />
         </section>
 
         <section aria-labelledby="dashboard-modules-heading" className="space-y-6">
@@ -748,7 +452,7 @@ function DashboardWelcomeBanner({
             <Link
               to="/sessions"
               search={{ tab: "requests" }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               Review requests <ArrowRight className="h-3 w-3" />
             </Link>
@@ -756,7 +460,7 @@ function DashboardWelcomeBanner({
             <Link
               to="/projects/$id"
               params={{ id: activeProjectId }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               Continue building <ArrowRight className="h-3 w-3" />
             </Link>
@@ -764,7 +468,7 @@ function DashboardWelcomeBanner({
             <Link
               to="/explore"
               search={{ tab: "opportunities" }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent,var(--trust))] px-3 py-1.5 text-xs font-medium text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
             >
               Find a role <ArrowRight className="h-3 w-3" />
             </Link>
@@ -783,38 +487,92 @@ function DashboardWelcomeBanner({
   );
 }
 
-/* ── Today focus card ── */
+/* ── Focus band: weekly ritual + profile setup folded into one band ── */
 
-function WeeklyShowYourWorkPrompt({ projectId }: { projectId: string | null }) {
-  if (!projectId) return null;
+function FocusBand({
+  projectId,
+  pct,
+  remaining,
+  doneSteps,
+  totalSteps,
+}: {
+  projectId: string | null;
+  pct: number;
+  remaining: Section[];
+  doneSteps: number;
+  totalSteps: number;
+}) {
+  const showWeekly = !!projectId;
+  const showComplete = pct >= 100;
+  const showSetup = !showComplete && remaining.length > 0;
+  if (!showWeekly && !showComplete && !showSetup) return null;
+
+  const twoCol = showWeekly && (showComplete || showSetup);
 
   return (
     <section
-      aria-labelledby="weekly-show-your-work-heading"
+      aria-labelledby={showWeekly ? "weekly-show-your-work-heading" : "dashboard-focus-heading"}
       className="border-y border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] py-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
-          <div className="min-w-0">
-            <p className="section-label">Weekly ritual</p>
-            <h2 id="weekly-show-your-work-heading" className="mt-1 text-sm font-semibold">
-              What moved your work forward this week?
-            </h2>
-            <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-              One sentence, image, GIF, video, or link is enough. Leave a useful trace for the
-              people following along.
+      <div className={twoCol ? "grid gap-6 lg:grid-cols-2" : ""}>
+        {showWeekly && projectId && (
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
+              <div className="min-w-0">
+                <p className="section-label">Weekly ritual</p>
+                <h2 id="weekly-show-your-work-heading" className="mt-1 text-sm font-semibold">
+                  What moved your work forward this week?
+                </h2>
+                <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+                  One sentence, image, GIF, video, or link is enough. Leave a useful trace for the
+                  people following along.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/projects/$id"
+              params={{ id: projectId }}
+              search={{ tab: "activity", focus: "weekly" } as Record<string, string>}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+            >
+              Add this week’s evidence <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        )}
+
+        {showComplete && (
+          <div className={twoCol ? "min-w-0 lg:border-l lg:border-border/60 lg:pl-6" : "min-w-0"}>
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <h2 id="dashboard-focus-heading" className="text-sm font-semibold">
+                Profile complete!
+              </h2>
+              <span className="text-[11px] text-muted-foreground">
+                — {doneSteps}/{totalSteps} done
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Your studio is fully set up. People can see everything you're about — projects,
+              skills, and what you're building next.
             </p>
           </div>
-        </div>
-        <Link
-          to="/projects/$id"
-          params={{ id: projectId }}
-          search={{ tab: "activity", focus: "weekly" } as Record<string, string>}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--user-accent,var(--primary))] px-3 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition hover:opacity-90"
-        >
-          Add this week’s evidence <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+        )}
+
+        {showSetup && (
+          <div className={twoCol ? "min-w-0 lg:border-l lg:border-border/60 lg:pl-6" : "min-w-0"}>
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[var(--user-accent,var(--trust))]" />
+              <h2 id="dashboard-focus-heading" className="text-sm font-semibold">
+                Finish setting up your profile
+              </h2>
+              <span className="text-[11px] text-muted-foreground">
+                — {doneSteps}/{totalSteps} done
+              </span>
+            </div>
+            <NextStepsList items={remaining} />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -850,7 +608,7 @@ function ProjectReturnShelf() {
               to="/projects/$id"
               params={{ id: change.projectId }}
               search={{ tab: "activity" } as Record<string, string>}
-              className="min-w-0 rounded-lg border border-border/60 bg-surface/40 px-3 py-2.5 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
+              className="min-w-0 rounded-lg border border-border/60 bg-surface/40 px-3 py-2.5 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface"
             >
               <p className="truncate text-xs font-medium">{change.projectTitle}</p>
               <p className="mt-0.5 truncate text-sm text-foreground/85">{change.title}</p>
@@ -865,26 +623,6 @@ function ProjectReturnShelf() {
   );
 }
 
-function DashboardModuleEmpty({ copy, action }: { copy: string; action: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <p className="text-xs leading-relaxed text-muted-foreground">{copy}</p>
-      {action}
-    </div>
-  );
-}
-
-function DashboardModuleLoading({ title }: { title: string }) {
-  return (
-    <SectionCard icon={<Clock className="h-4 w-4" />} title={title}>
-      <div className="space-y-2" aria-label={`Loading ${title}`}>
-        <div className="h-3 w-2/3 animate-gentle-pulse rounded bg-surface-elevated" />
-        <div className="h-3 w-1/2 animate-gentle-pulse rounded bg-surface-elevated" />
-      </div>
-    </SectionCard>
-  );
-}
-
 function TodayRow({
   icon: Icon,
   accent,
@@ -892,6 +630,7 @@ function TodayRow({
   title,
   href,
   search,
+  primary = false,
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>;
@@ -900,22 +639,35 @@ function TodayRow({
   title: string;
   href?: string;
   search?: Record<string, string>;
+  primary?: boolean;
   children: React.ReactNode;
 }) {
   const content = (
-    <div className="flex items-start gap-3 py-3.5 first:pt-2 last:pb-1">
+    <div className={`flex items-start gap-3 ${primary ? "py-5" : "py-3.5 first:pt-2 last:pb-1"}`}>
       <span
-        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        className={`mt-0.5 flex shrink-0 items-center justify-center rounded-lg ${
+          primary ? "h-11 w-11" : "h-8 w-8"
+        }`}
         style={{ backgroundColor: accent, color: foreground }}
       >
-        <Icon className="h-3.5 w-3.5" />
+        <Icon className={primary ? "h-5 w-5" : "h-3.5 w-3.5"} />
       </span>
       <div className="min-w-0 flex-1">
-        <h3 className="text-sm font-medium">{title}</h3>
+        <h3
+          className={
+            primary ? "text-lg font-semibold leading-snug sm:text-xl" : "text-sm font-medium"
+          }
+        >
+          {title}
+        </h3>
         {children}
       </div>
       {href && (
-        <ArrowRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5" />
+        <ArrowRight
+          className={`${
+            primary ? "mt-3 h-4 w-4" : "mt-2 h-3.5 w-3.5"
+          } shrink-0 text-muted-foreground opacity-0 transition-spatial group-hover:opacity-100 group-hover:translate-x-0.5`}
+        />
       )}
     </div>
   );
@@ -926,39 +678,5 @@ function TodayRow({
     </Link>
   ) : (
     <div className="group block">{content}</div>
-  );
-}
-
-/* ── Section card ── */
-
-function SectionCard({
-  icon,
-  title,
-  subtitle,
-  action,
-  children,
-}: {
-  icon?: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="h-full rounded-xl bg-surface-elevated/30 p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
-          <h2 className="text-sm font-semibold truncate" title={title}>
-            {title}
-          </h2>
-          {subtitle && (
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">— {subtitle}</span>
-          )}
-        </div>
-        {action}
-      </div>
-      {children}
-    </div>
   );
 }

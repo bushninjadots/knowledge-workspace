@@ -29,7 +29,7 @@ export const DiscoverSkills = memo(function DiscoverSkills({ limit = 12 }: { lim
           to="/skills/$slug"
           params={{ slug: s.slug }}
           title={s.description ?? undefined}
-          className="text-muted-foreground transition hover:text-primary"
+          className="text-muted-foreground transition-lift hover:text-primary"
         >
           {s.name}
         </Link>

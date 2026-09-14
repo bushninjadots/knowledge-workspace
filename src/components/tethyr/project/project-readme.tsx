@@ -25,6 +25,7 @@ import { fetchProjectReadmeSource, readmeSourceMessage } from "@/lib/project-rea
 import { buildTree, treeToAscii } from "@/lib/file-tree";
 import { diffLines, diffStats } from "@/lib/line-diff";
 import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import { CodeBlock } from "./code-block";
 import { ProjectCodePanel } from "./project-code-panel";
 import { ReadmeToc, ReadmeTocCollapsed } from "./readme-toc";
@@ -223,7 +224,7 @@ export function ProjectReadmeTab({
       <ReadingProgress />
 
       {/* README document */}
-      <section className="content-safe min-w-0 max-w-full rounded-xl border card-border bg-surface">
+      <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -236,7 +237,7 @@ export function ProjectReadmeTab({
                   <button
                     onClick={previewFromGitHub}
                     disabled={previewing}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground disabled:opacity-50"
                   >
                     {previewing ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -248,7 +249,7 @@ export function ProjectReadmeTab({
                   <button
                     onClick={pullFromGitHub}
                     disabled={pulling}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground disabled:opacity-50"
                   >
                     {pulling ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -261,7 +262,7 @@ export function ProjectReadmeTab({
               )}
               <button
                 onClick={startEdit}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
               >
                 <Pencil className="h-3 w-3" />
                 Edit README
@@ -287,9 +288,9 @@ export function ProjectReadmeTab({
                   onClick={() => setEditorView(id)}
                   aria-pressed={editorView === id}
                   className={cn(
-                    "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                    "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-lift",
                     editorView === id
-                      ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground shadow-sm"
+                      ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -343,14 +344,14 @@ export function ProjectReadmeTab({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setEditing(false)}
-                  className="rounded-xl px-3 py-2 text-xs text-muted-foreground transition hover:text-foreground"
+                  className="rounded-xl px-3 py-2 text-xs text-muted-foreground transition-lift hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveReadme}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-medium text-background transition hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -391,7 +392,7 @@ export function ProjectReadmeTab({
                     {isOwner && (
                       <button
                         onClick={startEdit}
-                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-background transition hover:opacity-90"
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-background transition-fade hover:opacity-90"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         Write a README
@@ -417,18 +418,21 @@ export function ProjectReadmeTab({
             </div>
           </>
         )}
-      </section>
+      </Card>
 
       {/* Mobile code source — the rail above is desktop-only, so owners and
           visitors still get the GitHub surface on small screens. */}
       {!editing && (
-        <ProjectCodePanel
-          project={project}
-          repos={repos}
-          isOwner={isOwner}
-          onLinkRepo={onLinkRepo}
-          className="rounded-xl border card-border bg-surface px-5 py-5 lg:hidden"
-        />
+        <Card className="lg:hidden">
+          <CardContent className="px-5 py-5">
+            <ProjectCodePanel
+              project={project}
+              repos={repos}
+              isOwner={isOwner}
+              onLinkRepo={onLinkRepo}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Live repo README preview — import-on-demand, never auto-saves */}
@@ -445,14 +449,14 @@ export function ProjectReadmeTab({
             <div className="flex items-center gap-2">
               <button
                 onClick={usePreviewReadme}
-                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-background transition hover:opacity-90"
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90"
               >
                 <Download className="h-3 w-3" />
                 Use this README
               </button>
               <button
                 onClick={() => setPreview(null)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
               >
                 <X className="h-3 w-3" />
                 Dismiss
@@ -480,7 +484,7 @@ export function ProjectReadmeTab({
                   key={s.id}
                   to="/skills/$slug"
                   params={{ slug: s.slug }}
-                  className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition hover:opacity-80"
+                  className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary transition-fade hover:opacity-80"
                 >
                   {s.name}
                 </Link>
@@ -502,7 +506,7 @@ export function ProjectReadmeTab({
             {isOwner && !addingTool && tools.length < 12 && (
               <button
                 onClick={() => setAddingTool(true)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground transition hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground"
               >
                 <Plus className="h-3 w-3" />
                 Add
@@ -520,7 +524,7 @@ export function ProjectReadmeTab({
                   <button
                     onClick={() => toggleTool(t)}
                     aria-label={`Remove ${t}`}
-                    className="opacity-0 transition group-hover:opacity-100 hover:text-destructive"
+                    className="opacity-0 transition-fade group-hover:opacity-100 hover:text-destructive"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -714,7 +718,7 @@ function ChangesView({ before, after }: { before: string; after: string }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border/40 bg-background/40">
       <div className="flex items-center gap-3 border-b border-border/40 px-4 py-2 font-mono text-[11px]">
-        <span className="text-brand-green">+{added}</span>
+        <span className="text-trust">+{added}</span>
         <span className="text-destructive">-{removed}</span>
         <span className="ml-auto text-muted-foreground">README.md</span>
       </div>
@@ -724,7 +728,7 @@ function ChangesView({ before, after }: { before: string; after: string }) {
             key={i}
             className={cn(
               "flex gap-3 whitespace-pre-wrap break-words px-4 py-[1px]",
-              l.type === "add" && "bg-brand-green/10 text-brand-green",
+              l.type === "add" && "bg-trust/10 text-trust",
               l.type === "del" && "bg-destructive/10 text-destructive",
               l.type === "same" && "text-foreground/70",
             )}

@@ -221,7 +221,7 @@ function SpaceReportsPage() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
                           rep.status === "resolved"
-                            ? "border-brand-green/40 bg-brand-green/10 text-brand-green"
+                            ? "border-trust/40 bg-trust/10 text-trust"
                             : "border-border/60 bg-background/40 text-muted-foreground"
                         }`}
                       >

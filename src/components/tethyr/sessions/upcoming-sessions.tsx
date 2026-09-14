@@ -50,7 +50,7 @@ function UpcomingCard({
       <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-surface-elevated">
         {start ? (
           <>
-            <span className="text-[11px] font-semibold uppercase text-brand-green">
+            <span className="text-[11px] font-semibold uppercase text-trust">
               {start.toLocaleDateString(undefined, { weekday: "short" })}
             </span>
             <span className="text-lg font-bold tabular-nums text-foreground">
@@ -84,7 +84,7 @@ function UpcomingCard({
           </span>
           <span>{formatDuration(session.duration_minutes)}</span>
           {session.meeting_url && (
-            <span className="inline-flex items-center gap-1 text-brand-green">
+            <span className="inline-flex items-center gap-1 text-trust">
               <Video className="h-3 w-3" /> Online
             </span>
           )}
@@ -131,7 +131,7 @@ function UpcomingCard({
             href={safeHref(session.meeting_url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-brand-green/10 p-2 text-brand-green transition-colors hover:bg-brand-green/20"
+            className="rounded-lg bg-trust/10 p-2 text-trust transition-colors hover:bg-trust/20"
             title="Join"
           >
             <Video className="h-3.5 w-3.5" />
@@ -157,7 +157,7 @@ export function UpcomingSessions({
 }) {
   if (sessions.length === 0) {
     return (
-      <div className="rounded-xl border card-border bg-surface/20 p-12 text-center">
+      <div className="rounded-xl border border-border/60 bg-surface/20 p-12 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
           <CalendarDays className="h-5 w-5 text-muted-foreground" />
         </div>

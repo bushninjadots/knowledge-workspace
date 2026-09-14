@@ -89,12 +89,12 @@ export function NextSessionCountdown({
   timeStr += `${minutes}m`;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-brand-green/20 bg-brand-green/5 p-4">
-      <div className="rounded-xl bg-brand-green/10 p-2.5">
-        <CalendarClock className="h-5 w-5 text-brand-green" />
+    <div className="flex items-center gap-3 rounded-xl border border-trust/20 bg-trust/5 p-4">
+      <div className="rounded-xl bg-trust/10 p-2.5">
+        <CalendarClock className="h-5 w-5 text-trust" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-brand-green/80">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-trust/80">
           Next Session
         </p>
         <p className="truncate text-sm font-medium text-foreground" title={nextSession.title}>
@@ -102,7 +102,7 @@ export function NextSessionCountdown({
         </p>
       </div>
       <div className="text-right">
-        <p className="text-lg font-bold tabular-nums text-brand-green">{timeStr}</p>
+        <p className="text-lg font-bold tabular-nums text-trust">{timeStr}</p>
         <p className="text-[11px] text-muted-foreground">
           {start.toLocaleDateString(undefined, {
             weekday: "short",

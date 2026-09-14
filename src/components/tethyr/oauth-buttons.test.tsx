@@ -30,6 +30,24 @@ describe("OAuthButtons", () => {
     }
   });
 
+  it("puts the two common providers first and the rest in one compact row", () => {
+    render(<OAuthButtons />);
+    const google = screen.getByRole("button", { name: "Continue with Google" });
+    const github = screen.getByRole("button", { name: "Continue with GitHub" });
+    const apple = screen.getByRole("button", { name: "Continue with Apple" });
+    const discord = screen.getByRole("button", { name: "Continue with Discord" });
+
+    expect(google.parentElement).toBe(github.parentElement);
+    expect(google.parentElement).toHaveClass("grid-cols-2");
+    expect(apple.parentElement).toHaveClass("grid-cols-3");
+    expect(apple.parentElement).toBe(discord.parentElement);
+
+    // Visible text stays short so the grid works on a 390px viewport; the full
+    // action phrase remains the accessible name.
+    expect(google).toHaveTextContent("Google");
+    expect(google).not.toHaveTextContent("Continue with");
+  });
+
   it("starts an OAuth flow with the default redirect target", async () => {
     const user = userEvent.setup();
     render(<OAuthButtons />);

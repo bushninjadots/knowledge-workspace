@@ -119,7 +119,7 @@ export function ProjectCommunityPosts({ projectId }: { projectId: string }) {
                   ...(post.space_slug ? { space: post.space_slug } : {}),
                 } as Record<string, string>
               }
-              className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-surface-elevated"
+              className="flex items-center gap-3 rounded-xl p-2 transition-lift hover:bg-surface-elevated"
             >
               <span className="shrink-0 rounded-full border border-border/60 px-1.5 py-0 text-[11px] text-muted-foreground">
                 {POST_TYPE_LABEL[post.type] ?? post.type}

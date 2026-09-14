@@ -90,7 +90,7 @@ export function SessionResources({
       </div>
 
       {isAdding && (
-        <div className="rounded-xl border card-border bg-surface/30 p-3 space-y-2">
+        <div className="rounded-xl border border-border/60 bg-surface/30 p-3 space-y-2">
           <div className="space-y-1.5">
             <Label className="text-xs">Title</Label>
             <Input
@@ -123,7 +123,7 @@ export function SessionResources({
               onClick={handleAdd}
               busy={addResource.isPending}
               disabled={!title.trim()}
-              className="h-7 text-xs bg-brand-green text-background hover:bg-brand-green/90"
+              className="h-7 text-xs bg-trust text-background hover:bg-trust/90"
             >
               Add resource
             </Button>
@@ -138,7 +138,7 @@ export function SessionResources({
           {resources.map((resource) => (
             <div
               key={resource.id}
-              className="flex items-center gap-3 rounded-xl border card-border bg-surface/30 px-3 py-2"
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface/30 px-3 py-2"
             >
               <ResourceIcon type={resource.resource_type} />
               <div className="min-w-0 flex-1">

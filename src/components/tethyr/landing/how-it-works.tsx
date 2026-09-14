@@ -44,7 +44,7 @@ export function HowItWorks() {
         {steps.map((step) => (
           <div
             key={step.n}
-            className="group relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 transition hover:bg-surface-elevated/50"
+            className="group relative overflow-hidden rounded-xl bg-surface-elevated/30 p-6 transition-lift hover:bg-surface-elevated/50"
           >
             <span className="numeric text-xs font-medium text-muted-foreground-subtle">
               {step.n}
@@ -56,7 +56,7 @@ export function HowItWorks() {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
             <Link
               to={step.href}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition group-hover:gap-2.5"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-[gap] group-hover:gap-2.5"
             >
               {step.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>

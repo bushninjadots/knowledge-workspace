@@ -80,37 +80,37 @@ const RESOURCE_ICON: Record<string, typeof FileText> = {
 };
 
 export const TYPE_ACCENT: Record<PostType, string> = {
-  showcase: "text-brand-green",
+  showcase: "text-trust",
   question: "text-primary",
-  project_update: "text-brand-green",
-  tutorial: "text-brand-purple",
-  resource: "text-brand-purple",
-  achievement: "text-brand-green",
+  project_update: "text-trust",
+  tutorial: "text-ai",
+  resource: "text-ai",
+  achievement: "text-trust",
   discussion: "text-muted-foreground",
   help_request: "text-primary",
-  collaboration_request: "text-brand-purple",
-  progress_update: "text-brand-green",
-  lesson_learned: "text-brand-purple",
+  collaboration_request: "text-ai",
+  progress_update: "text-trust",
+  lesson_learned: "text-ai",
   feedback_request: "text-primary",
-  open_role: "text-brand-green",
-  poll: "text-brand-purple",
+  open_role: "text-trust",
+  poll: "text-ai",
 };
 
 const TYPE_BORDER: Record<PostType, string> = {
-  showcase: "border-l-brand-green",
+  showcase: "border-l-trust",
   question: "border-l-primary",
-  project_update: "border-l-brand-green",
-  tutorial: "border-l-brand-purple",
-  resource: "border-l-brand-purple",
-  achievement: "border-l-brand-green",
+  project_update: "border-l-trust",
+  tutorial: "border-l-ai",
+  resource: "border-l-ai",
+  achievement: "border-l-trust",
   discussion: "border-l-muted-foreground/40",
   help_request: "border-l-primary",
-  collaboration_request: "border-l-brand-purple",
-  progress_update: "border-l-brand-green",
-  lesson_learned: "border-l-brand-purple",
+  collaboration_request: "border-l-ai",
+  progress_update: "border-l-trust",
+  lesson_learned: "border-l-ai",
   feedback_request: "border-l-primary",
-  open_role: "border-l-brand-green",
-  poll: "border-l-brand-purple",
+  open_role: "border-l-trust",
+  poll: "border-l-ai",
 };
 
 export const TYPE_ICON: Record<PostType, typeof Heart> = {
@@ -227,17 +227,13 @@ export function PostCard({
 
   return (
     <article
-      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-200 ${TYPE_BORDER[post.type]} ${
-        autoDimmed
-          ? "opacity-70 saturate-50"
-          : highlighted
-            ? "ring-2 ring-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.3)]"
-            : ""
+      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-150 ${TYPE_BORDER[post.type]} ${
+        autoDimmed ? "opacity-70 saturate-50" : highlighted ? "ring-2 ring-primary/50" : ""
       }`}
     >
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-trust text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -255,7 +251,7 @@ export function PostCard({
               </HoverCardTrigger>
               <HoverCardContent className="w-64" side="top">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-green text-sm font-semibold text-background">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-trust text-sm font-semibold text-background">
                     {initial}
                   </div>
                   <div className="min-w-0">
@@ -283,7 +279,7 @@ export function PostCard({
               {POST_TYPE_LABEL[post.type]}
             </span>
             {post.space_id ? (
-              <span className="rounded-full border border-brand-purple/40 bg-brand-purple/10 px-1.5 py-0 text-[11px] uppercase tracking-wider text-brand-purple">
+              <span className="rounded-full border border-ai/40 bg-ai/10 px-1.5 py-0 text-[11px] uppercase tracking-wider text-ai">
                 Space
               </span>
             ) : (
@@ -383,7 +379,7 @@ export function PostCard({
       {post.type === "question" && questionData && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {!!questionData.solved && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+            <span className="inline-flex items-center gap-1 rounded-full border border-trust/40 bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
               <CheckCircle2 className="h-3 w-3" /> Solved
             </span>
           )}
@@ -396,14 +392,14 @@ export function PostCard({
       )}
       {post.type === "achievement" && achievementData && (
         <div className="mt-3">
-          <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+          <span className="inline-flex items-center gap-1 rounded-full border border-trust/40 bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
             <Trophy className="h-3 w-3" /> {String(achievementData.milestone)}
           </span>
         </div>
       )}
       {post.type === "progress_update" && progressData && (
         <div className="mt-3">
-          <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+          <span className="inline-flex items-center gap-1 rounded-full border border-trust/40 bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
             <Sparkles className="h-3 w-3" /> Progress in {String(progressData.skill)}
           </span>
         </div>
@@ -425,7 +421,7 @@ export function PostCard({
           {(collabData.roles_needed as string[] | undefined)?.map((role) => (
             <span
               key={role}
-              className="inline-flex items-center gap-1 rounded-full border border-brand-purple/40 bg-brand-purple/10 px-2 py-0.5 text-[11px] font-medium text-brand-purple"
+              className="inline-flex items-center gap-1 rounded-full border border-ai/40 bg-ai/10 px-2 py-0.5 text-[11px] font-medium text-ai"
             >
               <Handshake className="h-3 w-3" /> Looking for {role}
             </span>
@@ -435,7 +431,7 @@ export function PostCard({
 
       {/* Attached project */}
       {(post.project_id || post.project_snapshot) && (
-        <div className="mt-3 border-l-2 border-brand-green/60 pl-3">
+        <div className="mt-3 border-l-2 border-trust/60 pl-3">
           <p className="section-label mb-1">Project context</p>
           <ProjectCardInline
             project_id={post.project_id}
@@ -531,7 +527,7 @@ export function PostCard({
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 p-3 text-sm">
           {(() => {
             const Icon = RESOURCE_ICON[String(resourceData.kind)] ?? FileText;
-            return <Icon className="h-4 w-4 text-brand-purple" />;
+            return <Icon className="h-4 w-4 text-ai" />;
           })()}
           <span className="text-muted-foreground">{String(resourceData.kind)}</span>
         </div>
@@ -568,7 +564,7 @@ export function PostCard({
             </span>
           )}
           {matchedSkills.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/40 bg-brand-green/10 px-2 py-0.5 text-[11px] font-medium text-brand-green">
+            <span className="inline-flex items-center gap-1 rounded-full border border-trust/40 bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
               <BadgeCheck className="h-3 w-3" />
               {matchedSkills.length} skill{matchedSkills.length !== 1 ? "s" : ""} match
             </span>
@@ -591,7 +587,7 @@ export function PostCard({
           label="Appreciate"
           count={post.stats.likes}
           active={liked}
-          activeClass="text-brand-green"
+          activeClass="text-trust"
           onClick={() => onToggleAction?.("like")}
         />
         <ActionButton
@@ -607,7 +603,7 @@ export function PostCard({
           label="Save"
           count={post.stats.saves}
           active={post.myActions.includes("save")}
-          activeClass="text-brand-purple"
+          activeClass="text-ai"
           onClick={() => onToggleAction?.("save")}
         />
         <DropdownMenu>
@@ -822,7 +818,7 @@ function ReportPostDialog({
                 key={r}
                 type="button"
                 onClick={() => setReason(r)}
-                className={`rounded-full border px-3 py-1 text-xs transition ${
+                className={`rounded-full border px-3 py-1 text-xs transition-lift ${
                   reason === r
                     ? "border-destructive/40 bg-destructive/10 text-destructive"
                     : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -884,7 +880,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
   return (
     <div className="mt-3 rounded-xl border card-border bg-background/40 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <BarChart3 className="h-4 w-4 text-brand-purple" />
+        <BarChart3 className="h-4 w-4 text-ai" />
         <p className="text-sm font-semibold">{pollData.question}</p>
       </div>
       <div className="space-y-2">
@@ -897,9 +893,9 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
               key={i}
               onClick={() => handleVote(i)}
               disabled={!!myVote || votePoll.isPending || hasEnded}
-              className={`group relative w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+              className={`group relative w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-lift ${
                 isVoted
-                  ? "border-brand-purple/40 bg-brand-purple/10 text-brand-purple"
+                  ? "border-ai/40 bg-ai/10 text-ai"
                   : myVote
                     ? "border-border/60 bg-background/40 text-muted-foreground"
                     : "border-border/60 bg-background/40 text-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
@@ -916,7 +912,7 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
               {myVote && (
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
                   <div
-                    className="h-full rounded-full bg-brand-purple/40 transition-[width] duration-300"
+                    className="h-full rounded-full bg-ai/40 transition-[width] duration-150"
                     style={{ width: `${pct}%` }}
                   />
                 </div>

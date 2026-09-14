@@ -23,6 +23,20 @@ export type ProjectLineage = {
   label?: string | null;
 };
 
+export type Contributor = {
+  profile_id: string;
+  role: "creator" | "contributor" | "mentor";
+  contribution_score: number;
+  skills_used: string[];
+  profile: {
+    id: string;
+    handle: string | null;
+    display_name: string | null;
+    creator_title: string | null;
+    avatar_url: string | null;
+  } | null;
+};
+
 export type ProjectDetail = {
   id: string;
   profile_id: string;
@@ -368,19 +382,6 @@ export function useCreateProjectUpdate() {
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: PROJECT_UPDATES_KEY(variables.projectId) });
       qc.invalidateQueries({ queryKey: PROJECT_ACTIVITY_KEY(variables.projectId) });
-    },
-  });
-}
-
-export function useDeleteProjectUpdate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { id: string; projectId: string }) => {
-      const { error } = await sb.from("project_updates").delete().eq("id", input.id);
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: PROJECT_UPDATES_KEY(variables.projectId) });
     },
   });
 }

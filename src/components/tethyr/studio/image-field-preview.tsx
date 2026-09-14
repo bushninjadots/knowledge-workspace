@@ -22,10 +22,7 @@ export function ImageFieldPreview({
   onClear: () => void;
 }) {
   const isHttp = looksLikeUrl(value);
-  const { data: signedUrl } = useSignedStorageUrl(
-    bucket,
-    isHttp ? null : value,
-  );
+  const { data: signedUrl } = useSignedStorageUrl(bucket, isHttp ? null : value);
   const src = isHttp ? value : signedUrl;
 
   if (!src) return null;

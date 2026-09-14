@@ -168,9 +168,9 @@ address F1, F2, F3, or F4. Those remain unrepaired on hosted.
 Until the history rows are repaired or the objects are restored via a new
 forward migration, treat these two rows as untrustworthy:
 
-| version        | recorded | objects present on hosted                                           |
-| -------------- | -------- | ------------------------------------------------------------------- |
-| 20260705022445 | yes      | no — trigger function, trigger, tightened policy all absent         |
+| version        | recorded | objects present on hosted                                             |
+| -------------- | -------- | --------------------------------------------------------------------- |
+| 20260705022445 | yes      | no — trigger function, trigger, tightened policy all absent           |
 | 20260706100000 | yes      | no — skill-proofs policy, four indexes absent; bucket flag unverified |
 
 This is recorded here explicitly so it is not rediscovered as a new finding

@@ -31,7 +31,7 @@ export const SpaceChatMessage = memo(function SpaceChatMessage({
       className="border-b border-border/60 px-1 py-4 transition-colors first:pt-0 hover:bg-surface-elevated/30 sm:px-2"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-green text-xs font-semibold text-background">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-trust text-xs font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">

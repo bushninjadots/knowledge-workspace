@@ -95,7 +95,7 @@ export function SessionsSidebar({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ${
+            className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${
               isActive
                 ? "bg-surface-elevated text-foreground"
                 : "text-muted-foreground hover:bg-surface/60 hover:text-foreground"

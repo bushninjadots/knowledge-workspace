@@ -27,11 +27,11 @@ export function HeroActivityPanel() {
   const featured = posts.slice(0, 3);
 
   return (
-    <div className="rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50">
+    <div className="rounded-xl bg-surface-elevated/30 p-5 transition-lift hover:bg-surface-elevated/50">
       <div className="mb-3 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-green opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-green" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-trust opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-trust" />
         </span>
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Live from the community
@@ -46,7 +46,7 @@ export function HeroActivityPanel() {
             <Link
               key={post.id}
               to="/community"
-              className="group -mx-2 rounded-xl px-2 py-2.5 transition hover:bg-surface-elevated/60"
+              className="group -mx-2 rounded-xl px-2 py-2.5 transition-lift hover:bg-surface-elevated/60"
             >
               <div className="flex items-center gap-2.5">
                 <ActivityAuthor author={post.author} className="h-8 w-8" />
@@ -57,7 +57,7 @@ export function HeroActivityPanel() {
                       · {timeAgo(post.created_at)}
                     </span>
                   </div>
-                  <p className="truncate text-xs font-medium text-muted-foreground transition group-hover:text-primary">
+                  <p className="truncate text-xs font-medium text-muted-foreground transition-lift group-hover:text-primary">
                     {post.title}
                   </p>
                 </div>{" "}
@@ -70,7 +70,7 @@ export function HeroActivityPanel() {
 
       <Link
         to="/community"
-        className="mt-3 flex items-center justify-between rounded-xl border border-border/60 bg-surface-elevated/50 px-3 py-2 text-xs font-medium text-primary transition hover:bg-surface-elevated"
+        className="mt-3 flex items-center justify-between rounded-xl border border-border/60 bg-surface-elevated/50 px-3 py-2 text-xs font-medium text-primary transition-lift hover:bg-surface-elevated"
       >
         Open the community <ArrowRight className="h-3.5 w-3.5" />
       </Link>

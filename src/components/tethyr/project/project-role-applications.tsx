@@ -6,6 +6,7 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const sb = supabase;
 
@@ -189,7 +190,7 @@ export function ApplyToRoleButton({
     return (
       <Link
         to="/login"
-        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-brand-purple/40 hover:text-brand-purple"
+        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-lift hover:border-ai/40 hover:text-ai"
       >
         <HandHeart className="h-3 w-3" />
         Sign in to apply
@@ -204,7 +205,7 @@ export function ApplyToRoleButton({
     return (
       <span
         className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-          resolvedStatus === "accepted" ? "text-brand-green" : "text-muted-foreground"
+          resolvedStatus === "accepted" ? "text-trust" : "text-muted-foreground"
         }`}
       >
         {resolvedStatus === "accepted" ? (
@@ -243,13 +244,13 @@ export function ApplyToRoleButton({
             <li>Be clear about your availability and expectations.</li>
           </ul>
         )}
-        <textarea
+        <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="What would you contribute, and why is this project a good fit?"
           rows={4}
           aria-label="Application message"
-          className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs outline-none focus:border-primary resize-none"
+          className="min-h-0 resize-none text-xs"
         />
         <div className="flex gap-2">
           <Button
@@ -277,8 +278,8 @@ export function ApplyToRoleButton({
       onClick={() => setShowForm(true)}
       className={`rounded-full ${
         wasDeclined
-          ? "border-border/60 bg-background/40 text-muted-foreground hover:border-brand-purple/40 hover:text-brand-purple"
-          : "border-brand-purple/40 bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20"
+          ? "border-border/60 bg-background/40 text-muted-foreground hover:border-ai/40 hover:text-ai"
+          : "border-ai/40 bg-ai/10 text-ai hover:bg-ai/20"
       }`}
     >
       {wasDeclined ? <RotateCcw className="h-3 w-3" /> : <HandHeart className="h-3 w-3" />}
@@ -329,13 +330,13 @@ export function RoleApplicationsList({
               <div className="flex shrink-0 gap-1">
                 <button
                   onClick={() => onAccept?.(app.id, app.profile_id)}
-                  className="rounded-lg bg-brand-green/10 px-2 py-1 text-[11px] font-medium text-brand-green transition hover:bg-brand-green/20"
+                  className="rounded-lg bg-trust/10 px-2 py-1 text-[11px] font-medium text-trust transition-lift hover:bg-trust/20"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => onDecline?.(app.id)}
-                  className="rounded-lg bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive transition hover:bg-destructive/20"
+                  className="rounded-lg bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive transition-lift hover:bg-destructive/20"
                 >
                   Decline
                 </button>
@@ -344,7 +345,7 @@ export function RoleApplicationsList({
             {app.status !== "pending" && (
               <span
                 className={`text-[11px] font-medium ${
-                  app.status === "accepted" ? "text-brand-green" : "text-destructive"
+                  app.status === "accepted" ? "text-trust" : "text-destructive"
                 }`}
               >
                 {app.status}

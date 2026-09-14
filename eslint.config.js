@@ -54,10 +54,33 @@ export default tseslint.config(
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
-      // Motion policy (styles.css): name transition properties explicitly,
-      // never transition-all. Keep durations under 300ms.
       "no-restricted-syntax": [
         "error",
+        // One control grammar (docs/TETHYR_DESIGN_SYSTEM.md): form fields go
+        // through the shared primitives so focus rings, sizing, and error
+        // affordances can't drift per surface. Native selects survive only
+        // where a portalled popover would break the surface (the Tiptap editor
+        // toolbars, studio chrome) — each one carries an eslint-disable.
+        {
+          selector: "JSXOpeningElement[name.name='select']",
+          message:
+            "Use the shared Select primitive (@/components/ui/select) instead of a raw <select>. Native selects are only allowed where a portalled popover would break the surface (editor toolbars, studio chrome) — add an eslint-disable with the reason.",
+        },
+        // The retired `brand-*` token aliases are gone from styles.css: the
+        // semantic names are the only ones (trust/ai, trust-subtle, ...).
+        {
+          selector: "Literal[value=/brand-(green|purple|deep-forest|dark-slate|soft-ivory)/]",
+          message:
+            "Retired token name. Use the semantic token instead: --trust / --ai (was brand-green / brand-purple).",
+        },
+        {
+          selector:
+            "TemplateElement[value.raw=/brand-(green|purple|deep-forest|dark-slate|soft-ivory)/]",
+          message:
+            "Retired token name. Use the semantic token instead: --trust / --ai (was brand-green / brand-purple).",
+        },
+        // Motion policy (styles.css): name transition properties explicitly,
+        // never transition-all. Keep durations under 300ms.
         {
           selector: "Literal[value=/transition-all/]",
           message:

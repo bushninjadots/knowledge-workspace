@@ -80,13 +80,11 @@ function CommentNode({
   return (
     <div
       className={`rounded-xl p-3 ${
-        comment.is_best_answer
-          ? "border border-brand-green/30 bg-brand-green/5"
-          : "bg-background/40"
+        comment.is_best_answer ? "border border-trust/30 bg-trust/5" : "bg-background/40"
       }`}
     >
       <div className="flex items-start gap-2.5">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-green/80 text-[11px] font-semibold text-background">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-trust/80 text-[11px] font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">
@@ -107,7 +105,7 @@ function CommentNode({
           )}
           <div className="mt-1 flex flex-wrap items-center gap-2">
             {isQuestion && comment.is_best_answer && (
-              <span className="flex items-center gap-1 text-[11px] font-medium text-brand-green">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-trust">
                 <CheckCircle2 className="h-3 w-3" />
                 Best answer
               </span>

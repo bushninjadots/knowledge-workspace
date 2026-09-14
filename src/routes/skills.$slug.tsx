@@ -25,6 +25,7 @@ import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
+import { Card } from "@/components/ui/card";
 import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
 
 const sb = supabase;
@@ -81,13 +82,13 @@ const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
 ];
 
 const CATEGORY_BADGES: Record<string, { icon: typeof Wrench; color: string }> = {
-  Creative: { icon: Palette, color: "border-brand-purple/40 bg-brand-purple/10 text-brand-purple" },
+  Creative: { icon: Palette, color: "border-ai/40 bg-ai/10 text-ai" },
   Development: {
     icon: Hammer,
     color:
       "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]",
   },
-  Community: { icon: Users, color: "border-brand-green/40 bg-brand-green/10 text-brand-green" },
+  Community: { icon: Users, color: "border-trust/40 bg-trust/10 text-trust" },
 };
 
 const WORKSHOP_ICONS = [Wrench, Hammer, Palette, Sparkles, Globe];
@@ -154,12 +155,12 @@ function SkillPage() {
         <div className="flex items-center gap-3">
           <Link
             to="/explore"
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated text-muted-foreground transition hover:text-foreground"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-elevated text-muted-foreground transition-lift hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <WorkshopIcon className="h-6 w-6" />
             </div>
             <div>
@@ -178,7 +179,7 @@ function SkillPage() {
         </div>
 
         {/* Workshop divider */}
-        <div className="h-px bg-gradient-to-r from-primary/20 via-border to-brand-purple/20" />
+        <div className="h-px bg-gradient-to-r from-primary/20 via-border to-ai/20" />
 
         {/* Tabs — Workshop sections */}
         <div className="relative">
@@ -302,13 +303,13 @@ function SkillOverview({
           delay={0}
         />
         <StatCard
-          icon={<BookOpen className="h-5 w-5 text-brand-purple" />}
+          icon={<BookOpen className="h-5 w-5 text-ai" />}
           label="Growing"
           value={stats?.learners ?? 0}
           delay={1}
         />
         <StatCard
-          icon={<Folder className="h-5 w-5 text-brand-green" />}
+          icon={<Folder className="h-5 w-5 text-trust" />}
           label="Projects"
           value={stats?.projects ?? 0}
           delay={2}
@@ -337,7 +338,7 @@ function SkillOverview({
               {tools.map((t) => (
                 <span
                   key={t}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-elevated px-2.5 py-1 text-xs text-foreground transition hover:border-primary/40"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-elevated px-2.5 py-1 text-xs text-foreground transition-lift hover:border-primary/40"
                 >
                   <Wrench className="h-3 w-3 text-muted-foreground" />
                   {t}
@@ -350,7 +351,7 @@ function SkillOverview({
           <Link
             to="/explore"
             search={{ tab: "creators" }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20"
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-lift hover:bg-primary/20"
           >
             Find people sharing <ExternalLink className="h-3.5 w-3.5" />
           </Link>
@@ -369,7 +370,7 @@ function SkillOverview({
                 key={rs.id}
                 to="/skills/$slug"
                 params={{ slug: rs.slug }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
               >
                 {rs.name}
                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -394,14 +395,14 @@ function StatCard({
   delay: number;
 }) {
   return (
-    <div
-      className="card-border rounded-xl border bg-surface p-4 text-center shadow-sm transition hover:shadow-md animate-room-enter"
+    <Card
+      className="p-4 text-center animate-room-enter"
       style={{ animationDelay: `${delay * 75}ms` }}
     >
       <div className="flex justify-center">{icon}</div>
       <p className="mt-2 font-display text-2xl font-semibold">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -417,7 +418,7 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           type="button"
           aria-pressed={filter === "teachers"}
           onClick={() => setFilter("teachers")}
-          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-lift ${
             filter === "teachers"
               ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
               : "border-border text-muted-foreground hover:text-foreground"
@@ -430,9 +431,9 @@ function SkillPeople({ skillId, skillName }: { skillId: string; skillName: strin
           type="button"
           aria-pressed={filter === "learners"}
           onClick={() => setFilter("learners")}
-          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+          className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-lift ${
             filter === "learners"
-              ? "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]"
+              ? "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]"
               : "border-border text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -499,7 +500,7 @@ function SkillTeachers({ skillId, skillName }: { skillId: string; skillName: str
           <ProfileLink
             key={row.profile_id}
             handle={p.handle}
-            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="flex items-center gap-3 rounded-xl border border-transparent bg-surface-elevated/40 p-4 transition-spatial duration-150 hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 animate-room-enter"
             title={p.display_name || p.handle || undefined}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-background">
@@ -573,10 +574,10 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
           <ProfileLink
             key={row.profile_id}
             handle={p.handle}
-            className="card-border flex items-center gap-3 rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="flex items-center gap-3 rounded-xl border border-transparent bg-surface-elevated/40 p-4 transition-spatial duration-150 hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 animate-room-enter"
             title={p.display_name || p.handle || undefined}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-purple)] text-sm font-semibold text-background">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--ai)] text-sm font-semibold text-background">
               {initial}
             </div>
             <div className="min-w-0 flex-1">
@@ -590,7 +591,7 @@ function SkillLearners({ skillId, skillName }: { skillId: string; skillName: str
                 <AvailabilityBadge status={p.availability as AvailabilityStatus} size="xs" />
               </div>
             </div>
-            <div className="hidden h-6 w-px bg-brand-purple/20 sm:block" />
+            <div className="hidden h-6 w-px bg-ai/20 sm:block" />
           </ProfileLink>
         );
       })}
@@ -648,9 +649,9 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
   const STAGE_COLORS: Record<string, string> = {
     planning: "border-muted-foreground/30 bg-muted-foreground/5 text-muted-foreground",
     building: "border-primary/30 bg-primary/10 text-primary",
-    testing: "border-brand-purple/30 bg-brand-purple/10 text-brand-purple",
-    launch: "border-brand-green/30 bg-brand-green/10 text-brand-green",
-    growing: "border-brand-green/30 bg-brand-green/10 text-brand-green",
+    testing: "border-ai/30 bg-ai/10 text-ai",
+    launch: "border-trust/30 bg-trust/10 text-trust",
+    growing: "border-trust/30 bg-trust/10 text-trust",
   };
 
   return (
@@ -659,49 +660,54 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
         const proj = row.projects;
         if (!proj) return null;
         return (
-          <Link
+          <Card
+            asChild
             key={row.project_id}
-            to="/projects/$id"
-            params={{ id: proj.id }}
-            className="card-border rounded-xl border bg-surface p-4 transition-spatial duration-200 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md hover:-translate-y-0.5 animate-room-enter"
+            className="p-4"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="truncate text-sm font-medium" title={proj.title}>
-                {proj.title}
-              </p>
-              {proj.stage && (
-                <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
+            <Link
+              to="/projects/$id"
+              params={{ id: proj.id }}
+              className="transition-spatial duration-150 hover:border-[var(--user-accent-border,var(--border-strong))] hover:-translate-y-0.5 animate-room-enter"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="truncate text-sm font-medium" title={proj.title}>
+                  {proj.title}
+                </p>
+                {proj.stage && (
+                  <span
+                    className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_COLORS[proj.stage] ?? STAGE_COLORS.building}`}
+                  >
+                    {STAGE_LABELS[proj.stage] ?? proj.stage}
+                  </span>
+                )}
+              </div>
+              {proj.description && (
+                <p
+                  className="mt-1 line-clamp-2 text-xs text-muted-foreground"
+                  title={proj.description ?? undefined}
                 >
-                  {STAGE_LABELS[proj.stage] ?? proj.stage}
-                </span>
+                  {proj.description}
+                </p>
               )}
-            </div>
-            {proj.description && (
-              <p
-                className="mt-1 line-clamp-2 text-xs text-muted-foreground"
-                title={proj.description ?? undefined}
-              >
-                {proj.description}
-              </p>
-            )}
-            <div className="mt-2 flex flex-wrap gap-1">
-              {proj.looking_for_collaborators && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
-                  <Users className="h-2.5 w-2.5" />
-                  Seeking collaborators
-                </span>
-              )}
-              {proj.looking_for_feedback && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
-                  Wants feedback
-                </span>
-              )}
-            </div>
-            {/* Skill-project connection line */}
-            <div className="mt-3 h-px bg-gradient-to-r from-primary/20 to-transparent" />
-          </Link>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {proj.looking_for_collaborators && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2 py-0.5 text-[11px] text-trust">
+                    <Users className="h-2.5 w-2.5" />
+                    Seeking collaborators
+                  </span>
+                )}
+                {proj.looking_for_feedback && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-ai/30 bg-ai/5 px-2 py-0.5 text-[11px] text-ai">
+                    Wants feedback
+                  </span>
+                )}
+              </div>
+              {/* Skill-project connection line */}
+              <div className="mt-3 h-px bg-gradient-to-r from-primary/20 to-transparent" />
+            </Link>
+          </Card>
         );
       })}
     </div>

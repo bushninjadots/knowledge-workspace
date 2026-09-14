@@ -38,6 +38,7 @@ import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
 import { SessionResources } from "@/components/tethyr/sessions/session-resources";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
@@ -310,10 +311,7 @@ function InfoPanel({ session }: { session: SessionWithParticipants }) {
       {items.map((item, i) => {
         const Icon = item.icon;
         return (
-          <div
-            key={i}
-            className="flex items-center gap-3 rounded-xl border card-border bg-surface/30 px-4 py-3"
-          >
+          <Card key={i} className="flex items-center gap-3">
             <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0">
               <div className="text-[11px] text-muted-foreground">{item.label}</div>
@@ -330,7 +328,7 @@ function InfoPanel({ session }: { session: SessionWithParticipants }) {
                 <div className="truncate text-sm font-medium text-foreground">{item.value}</div>
               )}
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>
@@ -443,7 +441,7 @@ function ParticipantActions({
             )
           }
           disabled={onUpdateParticipantStatus.isPending}
-          className="bg-brand-green text-background hover:bg-brand-green/90"
+          className="bg-trust text-background hover:bg-trust/90"
         >
           <Check className="mr-1 h-3.5 w-3.5" />
           Accept
@@ -486,10 +484,7 @@ function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {participants.map((p) => (
-        <div
-          key={p.id}
-          className="flex items-center gap-3 rounded-xl border card-border bg-surface/30 px-4 py-2.5"
-        >
+        <Card key={p.id} className="flex items-center gap-3 px-4 py-2.5">
           <SessionParticipantAvatar p={p} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium text-foreground">
@@ -518,7 +513,7 @@ function ParticipantGrid({ session }: { session: SessionWithParticipants }) {
               Organizer
             </Badge>
           )}
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -576,7 +571,7 @@ function NotesSection({
       ) : (
         <div className="space-y-2">
           {notes.map((note) => (
-            <div key={note.id} className="rounded-xl border card-border bg-surface/30 px-4 py-3">
+            <Card key={note.id} className="px-4 py-3">
               <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
               <div className="mt-2 flex items-center justify-between">
                 <div className="text-[11px] text-muted-foreground">
@@ -591,7 +586,7 @@ function NotesSection({
                   </button>
                 )}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

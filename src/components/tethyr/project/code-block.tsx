@@ -85,9 +85,9 @@ export function CodeBlock({ code, language }: { code: string; language?: string 
           onClick={copy}
           aria-label="Copy code"
           title="Copy code"
-          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground transition hover:bg-surface-elevated hover:text-foreground"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
         >
-          {copied ? <Check className="h-3 w-3 text-brand-green" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-trust" /> : <Copy className="h-3 w-3" />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

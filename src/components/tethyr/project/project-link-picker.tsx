@@ -92,7 +92,7 @@ export function ProjectLinkPicker({
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition-lift hover:text-foreground"
             aria-label={`Clear ${ariaLabel}`}
           >
             <X className="h-3.5 w-3.5" />
@@ -114,7 +114,7 @@ export function ProjectLinkPicker({
                       setQuery("");
                       setOpen(false);
                     }}
-                    className="w-full px-3 py-1.5 text-left text-xs text-foreground transition hover:bg-surface-elevated/60"
+                    className="w-full px-3 py-1.5 text-left text-xs text-foreground transition-lift hover:bg-surface-elevated/60"
                   >
                     {project.title}
                   </button>

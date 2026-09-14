@@ -11,12 +11,15 @@ export function CreateProjectButton({
   size = "sm",
   className,
   label = "Create",
+  ariaLabel,
   onCreated,
 }: {
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "default" | "icon";
   className?: string;
   label?: string;
+  /** Accessible name for the icon-only form, which has no visible text. */
+  ariaLabel?: string;
   onCreated?: () => void;
 }) {
   const { data: me } = useCurrentUser();
@@ -28,7 +31,13 @@ export function CreateProjectButton({
 
   return (
     <>
-      <Button variant={variant} size={size} className={className} onClick={() => setOpen(true)}>
+      <Button
+        variant={variant}
+        size={size}
+        className={className}
+        aria-label={ariaLabel}
+        onClick={() => setOpen(true)}
+      >
         <Plus className={size === "icon" ? "h-4 w-4" : "mr-1.5 h-3.5 w-3.5"} />
         {size !== "icon" && label}
       </Button>

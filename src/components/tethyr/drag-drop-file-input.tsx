@@ -138,9 +138,7 @@ export function InlineDropZone({
       onClick={() => inputRef.current?.click()}
       className={cn(
         "flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-colors",
-        isDragOver
-          ? "border-brand-green bg-brand-green/5"
-          : "border-border/40 hover:border-border/60",
+        isDragOver ? "border-trust bg-trust/5" : "border-border/40 hover:border-border/60",
         className,
       )}
     >
@@ -155,7 +153,7 @@ export function InlineDropZone({
         <Upload
           className={cn(
             "h-4 w-4 transition-colors",
-            isDragOver ? "text-brand-green" : "text-muted-foreground",
+            isDragOver ? "text-trust" : "text-muted-foreground",
           )}
         />
         <span className="text-[11px] text-muted-foreground">

@@ -367,7 +367,7 @@ export function GlobalSearch({
             disabled={!p.handle}
             onClick={() => activateItem(i)}
             {...optionProps("profile", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface disabled:opacity-50 ${isSelected("profile", i - resultOffset("profile")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface disabled:opacity-50 ${isSelected("profile", i - resultOffset("profile")) ? "bg-surface" : ""}`}
           >
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
@@ -393,7 +393,7 @@ export function GlobalSearch({
             type="button"
             onClick={() => activateItem(i)}
             {...optionProps("skill", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("skill", i - resultOffset("skill")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("skill", i - resultOffset("skill")) ? "bg-surface" : ""}`}
           >
             <GraduationCap className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
@@ -417,7 +417,7 @@ export function GlobalSearch({
             type="button"
             onClick={() => activateItem(i)}
             {...optionProps("project", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("project", i - resultOffset("project")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("project", i - resultOffset("project")) ? "bg-surface" : ""}`}
           >
             <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
@@ -441,7 +441,7 @@ export function GlobalSearch({
             type="button"
             onClick={() => activateItem(i)}
             {...optionProps("library", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("library", i - resultOffset("library")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("library", i - resultOffset("library")) ? "bg-surface" : ""}`}
           >
             <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
@@ -465,7 +465,7 @@ export function GlobalSearch({
             type="button"
             onClick={() => activateItem(i)}
             {...optionProps("post", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("post", i - resultOffset("post")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("post", i - resultOffset("post")) ? "bg-surface" : ""}`}
           >
             <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">
@@ -487,7 +487,7 @@ export function GlobalSearch({
             type="button"
             onClick={() => activateItem(i)}
             {...optionProps("session", i)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-surface ${isSelected("session", i - resultOffset("session")) ? "bg-surface" : ""}`}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("session", i - resultOffset("session")) ? "bg-surface" : ""}`}
           >
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
             <div className="min-w-0">

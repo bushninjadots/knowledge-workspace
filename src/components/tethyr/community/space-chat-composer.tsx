@@ -65,7 +65,7 @@ export function SpaceChatComposer({
   return (
     <div className="card-border border bg-surface px-4 py-3.5 sm:px-5 sm:py-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green text-sm font-semibold text-background">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust text-sm font-semibold text-background">
           {initial}
         </div>
         <div className="min-w-0 flex-1">

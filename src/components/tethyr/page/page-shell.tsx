@@ -395,10 +395,10 @@ export function PageShell({
 function previewFrameClasses(device: PreviewDevice): string {
   switch (device) {
     case "mobile":
-      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-lg border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-[390px] overflow-hidden rounded-lg border border-border/60";
     case "tablet":
-      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-lg border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-[768px] overflow-hidden rounded-lg border border-border/60";
     default:
-      return "mx-auto w-full max-w-7xl overflow-hidden rounded-lg border border-border/60 shadow-sm";
+      return "mx-auto w-full max-w-7xl overflow-hidden rounded-lg border border-border/60";
   }
 }

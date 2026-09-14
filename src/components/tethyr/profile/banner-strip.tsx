@@ -102,7 +102,7 @@ export function BannerStrip({
 
   const banner = (
     <div
-      className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-200 sm:-m-8 sm:mb-8 sm:h-72"
+      className="relative -m-6 mb-6 h-48 overflow-hidden rounded-t-xl border border-b-0 transition-colors duration-150 sm:-m-8 sm:mb-8 sm:h-72"
       style={{ borderColor: accentColor ?? "transparent" }}
     >
       {bannerSigned ? (
@@ -117,7 +117,7 @@ export function BannerStrip({
           className="h-full w-full object-cover object-center"
         />
       ) : (
-        <div className="h-full w-full bg-[linear-gradient(120deg,var(--brand-purple)_0%,var(--brand-green)_100%)] opacity-40" />
+        <div className="h-full w-full bg-[linear-gradient(120deg,var(--ai)_0%,var(--trust)_100%)] opacity-40" />
       )}
       <BannerOverlay overlay={overlay} />
 
@@ -218,7 +218,7 @@ export function BannerStrip({
           bannerCaption && (
             <button
               onClick={openCaptionEditor}
-              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition hover:bg-background/80 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition-lift hover:bg-background/80 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
               title="Click to edit caption"
             >
               {bannerCaption}

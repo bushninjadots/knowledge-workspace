@@ -5,9 +5,9 @@ export type ProjectStage = "planning" | "building" | "testing" | "launch" | "gro
 const STAGES: { id: ProjectStage; label: string; icon: typeof Lightbulb; color: string }[] = [
   { id: "planning", label: "Planning", icon: Lightbulb, color: "text-muted-foreground" },
   { id: "building", label: "Building", icon: Hammer, color: "text-primary" },
-  { id: "testing", label: "Testing", icon: FlaskConical, color: "text-brand-purple" },
-  { id: "launch", label: "Launch", icon: Rocket, color: "text-brand-green" },
-  { id: "growing", label: "Growing", icon: Sprout, color: "text-brand-green" },
+  { id: "testing", label: "Testing", icon: FlaskConical, color: "text-ai" },
+  { id: "launch", label: "Launch", icon: Rocket, color: "text-trust" },
+  { id: "growing", label: "Growing", icon: Sprout, color: "text-trust" },
 ];
 
 export function ProjectTimeline({
@@ -37,7 +37,7 @@ export function ProjectTimeline({
                 if (isOwner && onStageChange) onStageChange(stage.id);
               }}
               disabled={!isOwner}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs transition ${
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs transition-lift ${
                 isOwner ? "cursor-pointer" : "cursor-default"
               } ${isActive ? "bg-primary/10" : "hover:bg-surface-elevated"}`}
             >
@@ -46,7 +46,7 @@ export function ProjectTimeline({
                   isActive
                     ? "border-primary text-primary"
                     : isPast
-                      ? "border-brand-green text-brand-green"
+                      ? "border-trust text-trust"
                       : "border-border/60 text-muted-foreground"
                 }`}
               >
@@ -54,11 +54,7 @@ export function ProjectTimeline({
               </div>
               <span
                 className={`font-medium ${
-                  isActive
-                    ? "text-foreground"
-                    : isPast
-                      ? "text-brand-green"
-                      : "text-muted-foreground"
+                  isActive ? "text-foreground" : isPast ? "text-trust" : "text-muted-foreground"
                 }`}
               >
                 {stage.label}
@@ -78,7 +74,7 @@ export function ProjectTimeline({
         {/* Connector line */}
         <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-border/60" />
         <div
-          className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground transition-colors duration-300"
+          className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-foreground transition-colors duration-150"
           style={{ width: `${(currentIdx / (STAGES.length - 1)) * 100}%` }}
         />
 
@@ -106,7 +102,7 @@ export function ProjectTimeline({
                   isActive
                     ? "border-primary bg-primary/10 text-primary"
                     : isPast
-                      ? "border-brand-green bg-brand-green/10 text-brand-green"
+                      ? "border-trust bg-trust/10 text-trust"
                       : "border-border/60 bg-surface text-muted-foreground"
                 } ${isFuture ? "opacity-50" : ""}`}
               >
@@ -114,11 +110,7 @@ export function ProjectTimeline({
               </div>
               <span
                 className={`text-[11px] font-medium ${
-                  isActive
-                    ? "text-foreground"
-                    : isPast
-                      ? "text-brand-green"
-                      : "text-muted-foreground"
+                  isActive ? "text-foreground" : isPast ? "text-trust" : "text-muted-foreground"
                 } ${isFuture ? "opacity-50" : ""}`}
               >
                 {stage.label}

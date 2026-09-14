@@ -493,7 +493,7 @@ export function WorkspaceGrid({
                         type="button"
                         title={preset.description}
                         onClick={() => applyPreset(preset)}
-                        className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                        className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                       >
                         {preset.label}
                       </button>
@@ -569,7 +569,7 @@ export function WorkspaceGrid({
               <a
                 key={module.id}
                 href={`#workspace-section-${module.id}`}
-                className="text-xs text-muted-foreground underline-offset-4 transition hover:text-foreground hover:underline"
+                className="text-xs text-muted-foreground underline-offset-4 transition-lift hover:text-foreground hover:underline"
               >
                 {module.title}
               </a>
@@ -642,7 +642,7 @@ export function WorkspaceGrid({
                   key={id}
                   type="button"
                   onClick={() => restoreModule(id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
                 >
                   <Plus className="h-3 w-3" />
                   {def.title}
@@ -686,7 +686,7 @@ function PresetPicker({
           type="button"
           title={preset.description}
           onClick={() => onSelect(preset)}
-          className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+          className="rounded-md border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
         >
           {preset.label}
         </button>
@@ -735,7 +735,7 @@ function ModuleShell({
     <div className="flex h-full flex-col overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-border/30">
       <div className="flex items-center gap-2 bg-surface-elevated/30 px-3 py-2">
         <span
-          className="ws-drag-handle flex shrink-0 cursor-grab items-center rounded-md p-0.5 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground active:cursor-grabbing"
+          className="ws-drag-handle flex shrink-0 cursor-grab items-center rounded-md p-0.5 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground active:cursor-grabbing"
           title="Drag to move"
         >
           <GripVertical className="h-4 w-4" />
@@ -752,7 +752,7 @@ function ModuleShell({
                 type="button"
                 aria-label={`Move ${module?.title ?? "module"} up`}
                 title="Move up"
-                className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
                 onClick={() => onMove(0, -1)}
               >
                 <ArrowUp className="h-3.5 w-3.5" />
@@ -761,7 +761,7 @@ function ModuleShell({
                 type="button"
                 aria-label={`Move ${module?.title ?? "module"} down`}
                 title="Move down"
-                className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
                 onClick={() => onMove(0, 1)}
               >
                 <ArrowDown className="h-3.5 w-3.5" />
@@ -770,7 +770,7 @@ function ModuleShell({
                 type="button"
                 aria-label="Move module"
                 title={`Move ${module?.title ?? "module"} with arrow keys`}
-                className="ws-drag-handle rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                className="ws-drag-handle rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
                 onKeyDown={(e) => {
                   // Arrow keys normally scroll the page — prevent that so the
                   // module moves cleanly without the viewport jumping.
@@ -798,7 +798,7 @@ function ModuleShell({
                 <button
                   type="button"
                   aria-label="Module options"
-                  className="rounded-md p-1 text-muted-foreground/70 transition hover:bg-surface hover:text-foreground"
+                  className="rounded-md p-1 text-muted-foreground/70 transition-lift hover:bg-surface hover:text-foreground"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>

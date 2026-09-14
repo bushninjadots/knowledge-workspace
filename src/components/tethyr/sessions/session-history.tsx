@@ -83,7 +83,7 @@ export function SessionHistory({
 
   if (sessions.length === 0) {
     return (
-      <div className="rounded-xl border card-border bg-surface/20 p-12 text-center">
+      <div className="rounded-xl border border-border/60 bg-surface/20 p-12 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
           <History className="h-5 w-5 text-muted-foreground" />
         </div>

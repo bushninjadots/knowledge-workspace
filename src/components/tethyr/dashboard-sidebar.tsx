@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Logo } from "./logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +21,21 @@ import { navigationGroups, isNavItemActive } from "./navigation-manifest";
 
 const groups = navigationGroups;
 
-export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
+/**
+ * Primary navigation. Collapsed ("rail") mode keeps the same destinations as
+ * icons so canvas-heavy screens (Studio, the project workspace) aren't paying
+ * 240px for chrome they aren't using. The mobile drawer always renders it
+ * expanded — there is no room to spare there either way.
+ */
+export function DashboardSidebar({
+  onNavigate,
+  collapsed = false,
+  onToggleCollapse,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { data: unread } = useUnreadCounts();
@@ -41,36 +55,72 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-surface relative">
+    <aside
+      id="app-sidebar"
+      className={`flex h-full flex-col border-r border-border bg-surface relative transition-[width] duration-150 ${
+        collapsed ? "w-16" : "w-60"
+      }`}
+    >
       {/* Animated accent bar on right edge */}
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-px opacity-0 transition-opacity duration-200 hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 right-0 w-px opacity-0 transition-opacity duration-150 hover:opacity-100"
         style={{
           background:
             "linear-gradient(to bottom, transparent, var(--user-accent, var(--trust)) 30%, var(--ai) 70%, transparent)",
         }}
       />
-      <div className="flex h-12 items-center border-b border-border px-3">
-        <Logo />
+      <div
+        className={`flex h-12 items-center border-b border-border ${
+          collapsed ? "justify-center px-2" : "gap-1 px-3"
+        }`}
+      >
+        {collapsed ? (
+          <Logo variant="icon" size="sm" />
+        ) : (
+          <>
+            <Logo />
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
+                aria-expanded
+                aria-controls="app-sidebar"
+                title="Collapse sidebar"
+                className="ml-auto rounded-sm p-1 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            )}
+          </>
+        )}
       </div>
 
-      <div className="px-3 py-3">
-        <Suspense
-          fallback={
-            <div
-              aria-hidden="true"
-              className="h-9 animate-gentle-pulse rounded-xl border border-border/40 bg-surface-elevated/50"
-            />
-          }
-        >
-          <GlobalSearch variant="inline" />
-        </Suspense>
-      </div>
+      {!collapsed && (
+        <div className="px-3 py-3">
+          <Suspense
+            fallback={
+              <div
+                aria-hidden="true"
+                className="h-9 animate-gentle-pulse rounded-xl border border-border/40 bg-surface-elevated/50"
+              />
+            }
+          >
+            <GlobalSearch variant="inline" />
+          </Suspense>
+        </div>
+      )}
 
       <div className="px-2 pb-2">
         <CreateProjectButton
           label="New project"
-          className="h-auto w-full justify-start rounded-sm px-2 py-1.5 text-[13px]"
+          size={collapsed ? "icon" : "sm"}
+          ariaLabel={collapsed ? "New project" : undefined}
+          className={
+            collapsed
+              ? "mx-auto flex h-8 w-8 items-center justify-center rounded-sm"
+              : "h-auto w-full justify-start rounded-sm px-2 py-1.5 text-[13px]"
+          }
         />
       </div>
 
@@ -78,13 +128,17 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav
         aria-label="Dashboard navigation"
-        className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pb-4"
+        className={`flex flex-1 flex-col overflow-y-auto px-2 pb-4 ${collapsed ? "gap-1" : "gap-5"}`}
       >
-        {groups.map((group) => (
+        {groups.map((group, groupIndex) => (
           <div key={group.label}>
-            <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {group.label}
-            </p>
+            {collapsed ? (
+              groupIndex > 0 && <div className="mx-2 mb-1 h-px bg-border/60" />
+            ) : (
+              <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {group.label}
+              </p>
+            )}
             <div className="flex flex-col">
               {group.items.map((item) => {
                 const Icon = item.icon;
@@ -97,17 +151,39 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
                       ? notifUnread
                       : null;
 
+                const stateClass = isActive
+                  ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
+                  : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground";
+
+                if (collapsed) {
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      onClick={onNavigate}
+                      aria-current={isActive ? "page" : undefined}
+                      aria-label={badge != null ? `${item.label}, ${badge} unread` : item.label}
+                      title={item.label}
+                      className={`relative mx-auto flex h-8 w-8 items-center justify-center rounded-sm transition-colors ${stateClass}`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {badge != null && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[var(--user-accent,var(--primary))]"
+                        />
+                      )}
+                    </Link>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.label}
                     to={item.to}
                     onClick={onNavigate}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
-                      isActive
-                        ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
-                        : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
-                    }`}
+                    className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${stateClass}`}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -125,17 +201,23 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-auto border-t border-border px-2 py-2">
-        <div className="px-2 pb-2">
+        <div className={collapsed ? "flex justify-center pb-2" : "px-2 pb-2"}>
           <AvailabilitySelector
             current={(me?.profile?.availability as AvailabilityStatus) ?? "available"}
             onSave={(s) => updateAvailability.mutate(s)}
             openUp
+            compact={collapsed}
           />
         </div>
 
-        <div className="flex items-center gap-2 rounded-sm px-2 py-1.5">
+        <div
+          className={`flex items-center rounded-sm py-1.5 ${
+            collapsed ? "justify-center px-0" : "gap-2 px-2"
+          }`}
+        >
           <Link
             to="/profile"
+            title={collapsed ? "Your Studio" : undefined}
             className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-surface-sunken text-[11px] font-semibold text-foreground"
             onClick={onNavigate}
           >
@@ -153,23 +235,43 @@ export function DashboardSidebar({ onNavigate }: { onNavigate?: () => void }) {
               initial
             )}
           </Link>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium leading-tight">
-              {me?.profile?.display_name || me?.profile?.handle || "Member"}
-            </p>
-            <p className="truncate text-[11px] leading-tight text-muted-foreground">
-              {me?.profile?.creator_title || "Member"}
-            </p>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium leading-tight">
+                {me?.profile?.display_name || me?.profile?.handle || "Member"}
+              </p>
+              <p className="truncate text-[11px] leading-tight text-muted-foreground">
+                {me?.profile?.creator_title || "Member"}
+              </p>
+            </div>
+          )}
         </div>
 
         <button
           onClick={handleSignOut}
-          className="flex h-7 w-full items-center gap-2 rounded-sm px-2 text-[13px] text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+          aria-label={collapsed ? "Sign out" : undefined}
+          title={collapsed ? "Sign out" : undefined}
+          className={`flex h-7 items-center rounded-sm text-[13px] text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground ${
+            collapsed ? "mx-auto w-8 justify-center" : "w-full gap-2 px-2"
+          }`}
         >
           <LogOut className="h-4 w-4" />
-          Sign out
+          {!collapsed && "Sign out"}
         </button>
+
+        {collapsed && onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label="Expand sidebar"
+            aria-expanded={false}
+            aria-controls="app-sidebar"
+            title="Expand sidebar"
+            className="mx-auto mt-1 flex h-7 w-8 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </aside>
   );

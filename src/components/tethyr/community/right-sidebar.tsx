@@ -142,10 +142,10 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
                 icon={index === 1 ? Flag : index === 2 ? Star : Trophy}
                 tint={
                   index === 1
-                    ? "bg-brand-purple/10 text-brand-purple"
+                    ? "bg-ai/10 text-ai"
                     : index === 2
                       ? "bg-primary/10 text-primary"
-                      : "bg-brand-green/10 text-brand-green"
+                      : "bg-trust/10 text-trust"
                 }
                 label={challenge.title}
                 detail={`${challenge.difficulty} · ${challenge.participant_count ?? 0} joined`}
@@ -165,7 +165,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
             {collabCount > 0 && (
               <DigestRow
                 icon={Handshake}
-                tint="bg-brand-purple/10 text-brand-purple"
+                tint="bg-ai/10 text-ai"
                 label="Collaborations"
                 detail="Open calls for teammates"
                 to="/community?nav=collab"
@@ -177,10 +177,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
       </RailCard>
 
       {/* Trending skills — inline chips, not a list */}
-      <RailCard
-        title="Trending skills"
-        icon={<TrendingUp className="h-3.5 w-3.5 text-brand-green" />}
-      >
+      <RailCard title="Trending skills" icon={<TrendingUp className="h-3.5 w-3.5 text-trust" />}>
         {isLoadingSkills ? (
           <div className="flex flex-wrap gap-1.5">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -207,10 +204,7 @@ export const CommunityRightSidebar = memo(function CommunityRightSidebar({
         )}
       </RailCard>
 
-      <RailCard
-        title="Useful resources"
-        icon={<BookOpen className="h-3.5 w-3.5 text-brand-purple" />}
-      >
+      <RailCard title="Useful resources" icon={<BookOpen className="h-3.5 w-3.5 text-ai" />}>
         {resources.length === 0 ? (
           <p className="px-1 text-xs leading-relaxed text-muted-foreground">
             Project guides, references, and tools shared by builders will appear here.

@@ -101,7 +101,7 @@ export function CreateSpaceDialog({
                 type="button"
                 onClick={() => setJoinType("auto")}
                 aria-pressed={joinType === "auto"}
-                className={`rounded-xl border p-3 text-left transition ${
+                className={`rounded-xl border p-3 text-left transition-lift ${
                   joinType === "auto"
                     ? "border-primary bg-primary/10"
                     : "border-border hover:bg-surface-elevated/60"
@@ -119,14 +119,14 @@ export function CreateSpaceDialog({
                 type="button"
                 onClick={() => setJoinType("review")}
                 aria-pressed={joinType === "review"}
-                className={`rounded-xl border p-3 text-left transition ${
+                className={`rounded-xl border p-3 text-left transition-lift ${
                   joinType === "review"
                     ? "border-primary bg-primary/10"
                     : "border-border hover:bg-surface-elevated/60"
                 }`}
               >
                 <span className="flex items-center gap-1.5 text-sm font-medium">
-                  <ShieldCheck className="h-4 w-4 text-brand-purple" />
+                  <ShieldCheck className="h-4 w-4 text-ai" />
                   Request to join
                 </span>
                 <span className="mt-1 block text-xs text-muted-foreground">

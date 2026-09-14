@@ -25,7 +25,7 @@ type Availability = NonNullable<Awaited<ReturnType<typeof useSessionAvailability
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  available: { bg: "bg-brand-green/10", text: "text-brand-green", border: "border-brand-green/30" },
+  available: { bg: "bg-trust/10", text: "text-trust", border: "border-trust/30" },
   unavailable: { bg: "bg-warning/10", text: "text-warning", border: "border-warning/40" },
   tentative: { bg: "bg-teaching/10", text: "text-teaching", border: "border-teaching/40" },
 };
@@ -148,15 +148,22 @@ function AvailabilityEditorDialog({
                         className="w-14 bg-transparent"
                         step="900"
                       />
-                      <select
+                      <Select
                         value={slot.status}
-                        onChange={(e) => updateSlot(globalIdx, "status", e.target.value)}
-                        className="w-16 bg-transparent text-xs"
+                        onValueChange={(value) => updateSlot(globalIdx, "status", value)}
                       >
-                        <option value="available">Free</option>
-                        <option value="tentative">Maybe</option>
-                        <option value="unavailable">Busy</option>
-                      </select>
+                        <SelectTrigger
+                          aria-label="Availability status"
+                          className="h-6 w-20 border-0 bg-transparent px-1 text-xs shadow-none"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="available">Free</SelectItem>
+                          <SelectItem value="tentative">Maybe</SelectItem>
+                          <SelectItem value="unavailable">Busy</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <button
                         onClick={() => removeSlot(globalIdx)}
                         className="text-muted-foreground hover:text-destructive"
@@ -201,7 +208,7 @@ export function AvailabilitySettings({
   if (availability.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border card-border bg-surface/20 p-8 text-center">
+        <div className="rounded-xl border border-border/60 bg-surface/20 p-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
@@ -218,7 +225,7 @@ export function AvailabilitySettings({
             {DAYS.map((day) => (
               <div
                 key={day}
-                className="flex flex-col items-center gap-2 rounded-xl border card-border bg-surface/30 p-3"
+                className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-surface/30 p-3"
               >
                 <span className="text-[11px] font-semibold text-muted-foreground">{day}</span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated text-[11px] text-muted-foreground">

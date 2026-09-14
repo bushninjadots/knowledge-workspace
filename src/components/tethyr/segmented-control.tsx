@@ -31,13 +31,17 @@ export function SegmentedControl<T extends string>({
   options,
   ariaLabel,
   className,
+  size = "md",
 }: {
   value: T;
   onChange: (value: T) => void;
   options: SegmentedOption<T>[];
   ariaLabel: string;
   className?: string;
+  /** `sm` is the compact view-switcher size (icon or short-label toggles). */
+  size?: "sm" | "md";
 }) {
+  const compact = size === "sm";
   const tablistRef = useRef<HTMLDivElement>(null);
 
   function handleKeyDown(e: KeyboardEvent, index: number) {
@@ -57,7 +61,7 @@ export function SegmentedControl<T extends string>({
       ref={tablistRef}
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex gap-1 rounded-xl border card-border bg-surface p-1 ${className ?? ""}`}
+      className={`flex gap-1 rounded-xl bg-surface-elevated/40 ${compact ? "p-0.5" : "p-1"} ${className ?? ""}`}
     >
       {options.map((option, index) => {
         const Icon = option.icon;
@@ -74,16 +78,20 @@ export function SegmentedControl<T extends string>({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
+            className={`flex flex-1 items-center justify-center gap-2 font-medium transition-lift ${
+              compact ? "rounded-md px-2 py-1.5 text-xs" : "rounded-xl px-4 py-2 text-sm"
+            } ${
               active
-                ? "bg-surface-elevated text-foreground shadow-sm"
+                ? "bg-surface-elevated text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {Icon ? <Icon className="h-4 w-4" /> : null}
-            <span className={option.hideLabelOnMobile ? "hidden sm:inline" : undefined}>
-              {option.label}
-            </span>
+            {Icon ? <Icon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} /> : null}
+            {option.label ? (
+              <span className={option.hideLabelOnMobile ? "hidden sm:inline" : undefined}>
+                {option.label}
+              </span>
+            ) : null}
           </button>
         );
       })}

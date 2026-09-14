@@ -13,6 +13,7 @@ import { SortableBlock } from "@/components/tethyr/page/sortable-block";
 import { InlineInspector } from "@/components/tethyr/studio/inline-inspector";
 import { StudioSectionGrid } from "@/components/tethyr/page/studio-section-grid";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -734,7 +735,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
       )}
 
       {resizingBlock && onLayoutChange && (
-        <div className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+        <Card className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -781,7 +782,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             Choose a width to change the block size. On single-column sections, blocks remain full
             width.
           </p>
-        </div>
+        </Card>
       )}
 
       {/* Inline block settings */}
@@ -851,7 +852,7 @@ function SectionLayoutPanel({
     ["side_by_side", "Side by side"],
   ];
   return (
-    <div className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 rounded-xl border border-card-border bg-surface-elevated p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
+    <Card className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 p-4 shadow-xl sm:inset-x-auto sm:right-3 sm:top-24 sm:bottom-auto sm:w-72">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Change section layout</h3>
@@ -884,7 +885,7 @@ function SectionLayoutPanel({
           </Button>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 

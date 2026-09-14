@@ -54,7 +54,7 @@ export function RecentActivity() {
               <Link
                 key={post.id}
                 to="/community"
-                className="group flex flex-col rounded-xl bg-surface-elevated/30 p-5 transition hover:bg-surface-elevated/50"
+                className="group flex flex-col rounded-xl bg-surface-elevated/30 p-5 transition-lift hover:bg-surface-elevated/50"
               >
                 <div className="flex items-center gap-2.5">
                   <ActivityAuthor author={post.author} className="h-9 w-9" />

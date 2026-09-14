@@ -173,7 +173,7 @@ function SkillsCard({
   const chipCls =
     accent === "green"
       ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-      : "border-[var(--brand-purple)]/40 bg-[var(--brand-purple)]/10 text-[var(--brand-purple)]";
+      : "border-[var(--ai)]/40 bg-[var(--ai)]/10 text-[var(--ai)]";
 
   return (
     <SectionCard
@@ -196,7 +196,7 @@ function SkillsCard({
               key={s.id}
               to="/skills/$slug"
               params={{ slug: s.slug }}
-              className={`rounded-full border px-3 py-1 text-xs transition hover:opacity-80 ${chipCls}`}
+              className={`rounded-full border px-3 py-1 text-xs transition-fade hover:opacity-80 ${chipCls}`}
             >
               {s.name}
             </Link>
@@ -237,7 +237,7 @@ function SkillsCard({
                           else next.add(s.id);
                           setDraft(next);
                         }}
-                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ${
+                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-lift ${
                           on
                             ? chipCls
                             : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -374,7 +374,7 @@ function TeachSkillsCard({
           {selected.map((s) => (
             <div
               key={s.id}
-              className="group flex flex-col items-start gap-1.5 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 transition hover:border-[var(--user-accent-border,var(--primary))]/70"
+              className="group flex flex-col items-start gap-1.5 rounded-xl border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-3 py-1.5 transition-lift hover:border-[var(--user-accent-border,var(--primary))]/70"
             >
               <button
                 type="button"
@@ -451,7 +451,7 @@ function TeachSkillsCard({
                             else next.add(s.id);
                             setDraft(next);
                           }}
-                          className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+                          className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-lift ${
                             on
                               ? "border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
                               : "border-border bg-background/40 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"

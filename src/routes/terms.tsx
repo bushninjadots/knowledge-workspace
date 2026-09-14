@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PublicPageFrame } from "@/components/tethyr/public-page-frame";
 import { canonicalLinks, robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
@@ -11,11 +12,8 @@ export const Route = createFileRoute("/terms")({
 
 function TermsOfService() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="font-display text-3xl font-semibold">Terms of Service</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: August 20, 2026</p>
-
-      <div className="prose prose-neutral dark:prose-invert mt-8 space-y-6 text-foreground">
+    <PublicPageFrame title="Terms of Service" updated="August 20, 2026">
+      <>
         <section>
           <h2 className="font-display text-xl font-semibold">1. Acceptance of Terms</h2>
           <p className="mt-2 text-muted-foreground">
@@ -83,7 +81,7 @@ function TermsOfService() {
             after changes constitutes acceptance of the new terms.
           </p>
         </section>
-      </div>
-    </div>
+      </>
+    </PublicPageFrame>
   );
 }

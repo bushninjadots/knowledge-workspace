@@ -7,6 +7,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePublicTemplates } from "@/hooks/use-templates";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Blocks, GitFork, LayoutGrid, Search, TrendingUp, User } from "lucide-react";
 
@@ -72,7 +73,7 @@ function TemplatesPage() {
               <button
                 key={opt.value}
                 type="button"
-                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium transition-lift ${
                   category === opt.value
                     ? "bg-[var(--user-accent,var(--trust))] text-[var(--user-accent-foreground,white)]"
                     : "bg-surface text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
@@ -90,7 +91,7 @@ function TemplatesPage() {
               <button
                 key={opt.value}
                 type="button"
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-lift ${
                   sort === opt.value
                     ? "bg-surface-elevated text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -138,63 +139,60 @@ function TemplatesPage() {
         {!isLoading && !isError && templates.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((t) => (
-              <Link
-                key={t.id}
-                to="/templates/$id"
-                params={{ id: t.id }}
-                className="group relative rounded-xl border border-card-border bg-surface p-4 transition-shadow hover:shadow-sm"
-              >
-                {/* Preview strip */}
-                <div className="mb-3 flex flex-col gap-1">
-                  {(t.sections ?? [])
-                    .slice(0, 3)
-                    .map((s: { id: string; layout: string }, i: number) => (
-                      <div
-                        key={s.id ?? i}
-                        className="h-1.5 rounded-sm bg-muted/60"
-                        style={{
-                          width:
-                            s.layout === "full"
-                              ? "100%"
-                              : s.layout?.includes("column")
-                                ? "48%"
-                                : "72%",
-                        }}
-                      />
-                    ))}
-                </div>
+              <Card asChild key={t.id}>
+                <Link to="/templates/$id" params={{ id: t.id }} className="group relative p-4">
+                  {/* Preview strip */}
+                  <div className="mb-3 flex flex-col gap-1">
+                    {(t.sections ?? [])
+                      .slice(0, 3)
+                      .map((s: { id: string; layout: string }, i: number) => (
+                        <div
+                          key={s.id ?? i}
+                          className="h-1.5 rounded-sm bg-muted/60"
+                          style={{
+                            width:
+                              s.layout === "full"
+                                ? "100%"
+                                : s.layout?.includes("column")
+                                  ? "48%"
+                                  : "72%",
+                          }}
+                        />
+                      ))}
+                  </div>
 
-                <h3 className="mb-0.5 text-sm font-semibold group-hover:text-[var(--user-accent,var(--trust))] transition-colors">
-                  {t.name}
-                </h3>
-                <p className="mb-0.5 text-[11px] text-muted-foreground capitalize">
-                  {t.type.replace(/_/g, " ")}
-                </p>
+                  <h3 className="mb-0.5 text-sm font-semibold group-hover:text-[var(--user-accent,var(--trust))] transition-lift">
+                    {t.name}
+                  </h3>
+                  <p className="mb-0.5 text-[11px] text-muted-foreground capitalize">
+                    {t.type.replace(/_/g, " ")}
+                  </p>
 
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Blocks className="h-3 w-3" />
-                    {(t.sections ?? []).reduce(
-                      (sum: number, s: { blocks: unknown[] }) => sum + (s.blocks?.length ?? 0),
-                      0,
-                    )}{" "}
-                    blocks
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {t.usageCount}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <GitFork className="h-3 w-3" />
-                    {t.forkCount}
-                  </span>
-                  {t.creatorHandle && (
-                    <span className="flex items-center gap-1 ml-auto truncate max-w-[100px]">
-                      <User className="h-3 w-3 shrink-0" />@{t.creatorHandle}
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Blocks className="h-3 w-3" />
+                      {(t.sections ?? []).reduce(
+                        (sum: number, s: { blocks: unknown[] }) => sum + (s.blocks?.length ?? 0),
+                        0,
+                      )}{" "}
+                      blocks
                     </span>
-                  )}
-                </div>
-              </Link>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {t.usageCount}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <GitFork className="h-3 w-3" />
+                      {t.forkCount}
+                    </span>
+                    {t.creatorHandle && (
+                      <span className="flex items-center gap-1 ml-auto truncate max-w-[100px]">
+                        <User className="h-3 w-3 shrink-0" />@{t.creatorHandle}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </Card>
             ))}
           </div>
         )}

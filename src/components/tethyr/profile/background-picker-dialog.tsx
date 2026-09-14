@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Ban, Check, ImagePlus, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -218,9 +219,9 @@ export function BackgroundPickerDialog({
               aria-selected={tab === id}
               onClick={() => setTab(id)}
               className={cn(
-                "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-lift",
                 tab === id
-                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground shadow-sm"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -232,7 +233,7 @@ export function BackgroundPickerDialog({
         <div className="space-y-5 py-2">
           {/* PUBLIC STUDIO: same-as-app state */}
           {tab === "public" && !publicSeparate && (
-            <div className="rounded-xl border card-border bg-surface/40 p-4">
+            <Card className="bg-surface/40 p-4">
               <p className="text-sm font-medium text-foreground">Same as your app</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Your public Studio currently uses the background from your app. You can give it its
@@ -241,7 +242,7 @@ export function BackgroundPickerDialog({
               <Button variant="outline" size="sm" className="mt-3" onClick={startSeparatePublic}>
                 Set a different one
               </Button>
-            </div>
+            </Card>
           )}
 
           {tab === "public" && publicSeparate && (
@@ -295,7 +296,7 @@ export function BackgroundPickerDialog({
                         }))
                       }
                       className={cn(
-                        "min-w-0 rounded-lg border p-3 text-left transition",
+                        "min-w-0 rounded-lg border p-3 text-left transition-lift",
                         (activeDraft.cardBorders ?? "neutral") === option.id
                           ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                           : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
@@ -352,7 +353,7 @@ export function BackgroundPickerDialog({
                       setActiveDraft((d) => ({ ...d, accentMode: "dynamic", accentColor: null }))
                     }
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-xs transition",
+                      "rounded-lg border px-3 py-2 text-xs transition-lift",
                       (activeDraft.accentMode ?? "dynamic") === "dynamic"
                         ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                         : "border-border/60 text-muted-foreground hover:text-foreground",
@@ -362,7 +363,7 @@ export function BackgroundPickerDialog({
                   </button>
                   <label
                     className={cn(
-                      "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition",
+                      "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-lift",
                       activeDraft.accentMode === "custom"
                         ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                         : "border-border/60 text-muted-foreground",
@@ -407,7 +408,7 @@ export function BackgroundPickerDialog({
                       aria-pressed={(activeDraft.density ?? "comfortable") === d}
                       onClick={() => setActiveDraft((prev) => ({ ...prev, density: d }))}
                       className={cn(
-                        "rounded-lg border px-3 py-2 text-xs transition",
+                        "rounded-lg border px-3 py-2 text-xs transition-lift",
                         (activeDraft.density ?? "comfortable") === d
                           ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                           : "border-border/60 text-muted-foreground hover:text-foreground",
@@ -453,7 +454,7 @@ export function BackgroundPickerDialog({
                         setActiveDraft((prev) => ({ ...prev, bannerCaptionPosition: position }))
                       }
                       className={cn(
-                        "rounded-lg border px-3 py-1.5 text-xs capitalize transition",
+                        "rounded-lg border px-3 py-1.5 text-xs capitalize transition-lift",
                         (activeDraft.bannerCaptionPosition ?? "right") === position
                           ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
                           : "border-border/60 text-muted-foreground hover:text-foreground",
@@ -551,7 +552,7 @@ export function BackgroundPickerDialog({
                           }))
                         }
                         className={cn(
-                          "h-10 w-14 rounded-md border transition",
+                          "h-10 w-14 rounded-md border transition-lift",
                           selected
                             ? "border-[var(--user-accent,var(--primary))] ring-2 ring-[var(--user-accent,var(--primary))]/40"
                             : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
@@ -675,7 +676,7 @@ export function BackgroundPickerDialog({
                           setActiveDraft((d) => ({ ...d, mode: "pattern", pattern: p.id }))
                         }
                         className={cn(
-                          "h-10 w-14 rounded-md border transition",
+                          "h-10 w-14 rounded-md border transition-lift",
                           selected
                             ? "border-[var(--user-accent,var(--primary))] ring-2 ring-[var(--user-accent,var(--primary))]/40"
                             : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
@@ -709,7 +710,7 @@ export function BackgroundPickerDialog({
                 </h3>
                 <div className="mt-2">
                   {activeDraft.mode === "image" && draftImageUrl ? (
-                    <div className="flex items-center gap-3 rounded-xl border card-border bg-surface/40 p-3">
+                    <Card className="flex items-center gap-3 bg-surface/40 p-3">
                       <img
                         src={draftImageUrl}
                         alt=""
@@ -729,10 +730,10 @@ export function BackgroundPickerDialog({
                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                         Remove
                       </Button>
-                    </div>
+                    </Card>
                   ) : (
                     <DragDropFileInput accept="image/*" onFiles={handleFiles} disabled={uploading}>
-                      <div className="flex h-24 items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-surface/30 text-xs text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground">
+                      <div className="flex h-24 items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-surface/30 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground">
                         {uploading ? (
                           <LoaderCircle className="h-4 w-4 animate-spin" />
                         ) : (
@@ -798,7 +799,7 @@ function SwatchButton({
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-md border transition",
+        "flex h-9 w-9 items-center justify-center rounded-md border transition-lift",
         selected
           ? "border-[var(--user-accent,var(--primary))] ring-2 ring-[var(--user-accent,var(--primary))]/40"
           : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",

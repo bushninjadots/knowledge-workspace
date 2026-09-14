@@ -21,6 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
@@ -41,6 +48,8 @@ import {
 import { jsonLd, seoMeta } from "@/lib/seo";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
+
+const ALL_NEEDS = "all-needs";
 
 type OppSortMode = "latest" | "match" | "popular";
 
@@ -626,25 +635,49 @@ function ExplorePage() {
             </div>
           ) : tab === "opportunities" ? (
             <>
-              {/* Search + Sort — at the top so users can filter before scrolling past results */}
+              {/* Search + sort + need scope — one row so the results surface right below the needs band */}
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div className="flex flex-1 items-center gap-2 rounded-xl border border-border/60 bg-surface px-3 py-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <Input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search roles, skills, or projects…"
                     className="border-0 bg-transparent focus-visible:ring-0"
                   />
+                  <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-border/60" />
+                  <Select
+                    value={activeNeed || ALL_NEEDS}
+                    onValueChange={(value) => setActiveNeed(value === ALL_NEEDS ? "" : value)}
+                  >
+                    <SelectTrigger
+                      aria-label="Filter roles by need"
+                      className={`h-8 w-auto shrink-0 gap-1 border-0 bg-transparent px-1.5 text-xs font-medium ${
+                        activeNeed
+                          ? "text-[var(--user-accent,var(--primary))]"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <SelectValue placeholder="All needs" />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      <SelectItem value={ALL_NEEDS}>All needs</SelectItem>
+                      {OPPORTUNITY_NEED_CHIPS.map((need) => (
+                        <SelectItem key={need.label} value={need.label}>
+                          Need {need.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center gap-1 rounded-xl border card-border bg-surface p-0.5">
+                <div className="flex items-center gap-1 rounded-xl bg-surface-elevated/40 p-0.5">
                   <button
                     type="button"
                     aria-pressed={oppSort === "latest"}
                     onClick={() => setOppSort("latest")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
                       oppSort === "latest"
-                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -654,9 +687,9 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "popular"}
                     onClick={() => setOppSort("popular")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
                       oppSort === "popular"
-                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -667,9 +700,9 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "match"}
                     onClick={() => setOppSort("match")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
                       oppSort === "match"
-                        ? "bg-surface-elevated text-foreground shadow-sm"
+                        ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -694,7 +727,7 @@ function ExplorePage() {
                         <Link
                           to="/projects/$id"
                           params={{ id: n.projects!.id }}
-                          className="group flex items-start justify-between gap-3 p-3 transition hover:border-[var(--user-accent-border,var(--border-strong))]"
+                          className="group flex items-start justify-between gap-3 p-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium group-hover:text-primary">
@@ -743,68 +776,43 @@ function ExplorePage() {
                 />
               ) : (
                 <>
-                  {/* Browse by need — quick chips */}
-                  <div className="mb-4">
-                    <p className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-                      Browse by need
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {OPPORTUNITY_NEED_CHIPS.map((need) => (
-                        <button
-                          key={need.label}
-                          type="button"
-                          aria-pressed={activeNeed === need.label}
-                          onClick={() => setActiveNeed(activeNeed === need.label ? "" : need.label)}
-                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                            activeNeed === need.label
-                              ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                              : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
-                          }`}
-                        >
-                          Need {need.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Applied filters */}
-                  {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
-                    <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                      {activeNeed && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
-                          Need {activeNeed}
-                          <button
-                            type="button"
-                            onClick={() => setActiveNeed("")}
-                            aria-label={`Remove ${activeNeed} filter`}
-                            className="ml-0.5"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )}
-                      {oppSort === "popular" && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-brand-green/30 bg-brand-green/5 px-2 py-0.5 text-[11px] text-brand-green">
-                          <TrendingUp className="h-3 w-3" />
-                          Popular first
-                        </span>
-                      )}
-                      {oppSort === "match" && (
-                        <span className="text-[11px] text-muted-foreground">
-                          Sorted by skill match
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mb-4 flex flex-wrap gap-2">
+                  {/* Applied filters + categories — one compact row so listings start right under the needs band */}
+                  <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                    {(activeNeed || oppSort !== "latest" || (q && tab === "opportunities")) && (
+                      <>
+                        {activeNeed && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--primary))]/40 bg-[var(--user-accent-subtle,var(--learning-subtle))] px-2 py-0.5 text-[11px] text-[var(--user-accent,var(--primary))]">
+                            Need {activeNeed}
+                            <button
+                              type="button"
+                              onClick={() => setActiveNeed("")}
+                              aria-label={`Remove ${activeNeed} filter`}
+                              className="ml-0.5"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        )}
+                        {oppSort === "popular" && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-trust/30 bg-trust/5 px-2 py-0.5 text-[11px] text-trust">
+                            <TrendingUp className="h-3 w-3" />
+                            Popular first
+                          </span>
+                        )}
+                        {oppSort === "match" && (
+                          <span className="text-[11px] text-muted-foreground">
+                            Sorted by skill match
+                          </span>
+                        )}
+                      </>
+                    )}
                     {EXPLORE_FILTER_CATEGORIES.map((c) => (
                       <button
                         key={c}
                         type="button"
                         aria-pressed={category === c}
                         onClick={() => setCategory(c)}
-                        className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                        className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
                           category === c
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -824,7 +832,7 @@ function ExplorePage() {
                       return (
                         <Card
                           key={opportunity.id}
-                          className="animate-room-enter group p-5 transition hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-md"
+                          className="animate-room-enter group p-5 transition-spatial hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]"
                           style={{ animationDelay: `${i * 50}ms` }}
                         >
                           <Link
@@ -854,7 +862,7 @@ function ExplorePage() {
                                   {opportunity.title}
                                 </h2>
                               </div>
-                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-spatial group-hover:translate-x-0.5 group-hover:text-primary" />
                             </div>
                             {opportunity.description && (
                               <p
@@ -955,7 +963,7 @@ function ExplorePage() {
           ) : (
             <>
               {/* People tab search bar */}
-              <div className="mb-4 flex items-center gap-2 rounded-xl border card-border bg-surface px-3 py-2">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-surface-elevated/40 px-3 py-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   value={q}
@@ -972,7 +980,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={category === c}
                     onClick={() => setCategory(c)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
                       category === c
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
@@ -987,34 +995,35 @@ function ExplorePage() {
                 {filteredCreators.map((c, i) => {
                   const initial = (c.display_name ?? c.handle ?? "?").charAt(0).toUpperCase();
                   return (
-                    <ProfileLink
-                      key={c.id}
-                      handle={c.handle}
-                      className="animate-room-enter rounded-xl border card-border bg-surface p-4 transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-                      title={c.display_name || c.handle || undefined}
-                      style={{ animationDelay: `${i * 40}ms` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--user-accent,var(--ai))] text-sm font-semibold text-background">
-                          {initial}
+                    <Card asChild key={c.id}>
+                      <ProfileLink
+                        handle={c.handle}
+                        className="animate-room-enter group p-4 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                        title={c.display_name || c.handle || undefined}
+                        style={{ animationDelay: `${i * 40}ms` }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--user-accent,var(--ai))] text-sm font-semibold text-background">
+                            {initial}
+                          </div>
+                          <div className="min-w-0">
+                            <p
+                              className="truncate text-sm font-medium"
+                              title={c.display_name || c.handle || undefined}
+                            >
+                              {c.display_name || c.handle || "Untitled member"}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {c.creator_title || c.category || "New member"}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p
-                            className="truncate text-sm font-medium"
-                            title={c.display_name || c.handle || undefined}
-                          >
-                            {c.display_name || c.handle || "Untitled member"}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {c.creator_title || c.category || "New member"}
-                          </p>
+                        <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
+                          {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
+                          {c.country && <span>{c.country}</span>}
                         </div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
-                        {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
-                        {c.country && <span>{c.country}</span>}
-                      </div>
-                    </ProfileLink>
+                      </ProfileLink>
+                    </Card>
                   );
                 })}
               </div>
@@ -1086,7 +1095,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
   return (
     <div className="sticky top-24 space-y-5">
       {/* Stats card */}
-      <div className="rounded-xl border card-border bg-surface/60 p-4">
+      <Card className="bg-surface/60 p-4">
         <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
           Quick stats
@@ -1113,11 +1122,11 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
             value={stats?.skills}
           />
         </div>
-      </div>
+      </Card>
 
       {/* Trending skills */}
       {trendingSkills && trendingSkills.length > 0 && (
-        <div className="rounded-xl border card-border bg-surface/60 p-4">
+        <Card className="bg-surface/60 p-4">
           <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Hash className="h-3.5 w-3.5" />
             Trending skills
@@ -1128,13 +1137,13 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
                 key={s.id}
                 to="/skills/$slug"
                 params={{ slug: s.slug }}
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
               >
                 {s.name}
               </Link>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Contextual hint based on tab */}

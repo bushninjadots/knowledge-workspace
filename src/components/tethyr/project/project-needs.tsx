@@ -9,6 +9,18 @@ import {
 } from "@/hooks/use-projects";
 import { useSkillsCatalog } from "@/hooks/use-current-user";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Radix Select reserves the empty string, so "no skill" needs its own value.
+const NO_SKILL = "none";
 
 const URGENCY_META: Record<
   ProjectNeedRow["urgency"],
@@ -21,8 +33,8 @@ const URGENCY_META: Record<
   },
   normal: {
     label: "Soon",
-    dot: "bg-brand-green",
-    badge: "border-brand-green/30 bg-brand-green/5 text-brand-green",
+    dot: "bg-trust",
+    badge: "border-trust/30 bg-trust/5 text-trust",
   },
   low: {
     label: "Whenever",
@@ -138,34 +150,36 @@ export function ProjectNeeds({
           }}
           className="mt-4 space-y-3 rounded-xl border border-border/60 bg-surface/40 p-4"
         >
-          <input
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What do you need? (e.g. A logo designer)"
             aria-label="Need title"
-            className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
-          <textarea
+          <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Why, and by when? (optional)"
             aria-label="Need details"
             rows={2}
-            className="w-full resize-none rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            className="min-h-0 resize-none"
           />
-          <select
-            value={skillId}
-            onChange={(e) => setSkillId(e.target.value)}
-            aria-label="Related skill (optional)"
-            className="w-full rounded-md border border-border/60 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          <Select
+            value={skillId || NO_SKILL}
+            onValueChange={(value) => setSkillId(value === NO_SKILL ? "" : value)}
           >
-            <option value="">No specific skill</option>
-            {sortedSkills.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Related skill (optional)" className="sm:w-72">
+              <SelectValue placeholder="No specific skill" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_SKILL}>No specific skill</SelectItem>
+              {sortedSkills.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1" role="group" aria-label="Urgency">
               {URGENCIES.map((u) => (
@@ -174,7 +188,7 @@ export function ProjectNeeds({
                   type="button"
                   aria-pressed={urgency === u}
                   onClick={() => setUrgency(u)}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-lift ${
                     urgency === u
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border/60 text-muted-foreground hover:text-foreground"
@@ -217,7 +231,7 @@ export function ProjectNeeds({
                     {URGENCY_META[n.urgency].label}
                   </span>
                   {n.skill_id && skillName(n.skill_id) && (
-                    <span className="rounded-full border border-brand-purple/30 bg-brand-purple/5 px-2 py-0.5 text-[11px] text-brand-purple">
+                    <span className="rounded-full border border-ai/30 bg-ai/5 px-2 py-0.5 text-[11px] text-ai">
                       {skillName(n.skill_id)}
                     </span>
                   )}
@@ -231,7 +245,7 @@ export function ProjectNeeds({
                     onClick={() => void handleFill(n)}
                     aria-label={`Mark "${n.title}" filled`}
                     title="Mark filled"
-                    className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-brand-green/10 hover:text-brand-green"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-lift hover:bg-trust/10 hover:text-trust"
                   >
                     <Check className="h-3.5 w-3.5" />
                   </button>
@@ -240,7 +254,7 @@ export function ProjectNeeds({
                     onClick={() => void handleDelete(n)}
                     aria-label={`Delete "${n.title}"`}
                     title="Delete"
-                    className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-lift hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>

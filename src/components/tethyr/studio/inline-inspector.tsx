@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import type { BlockConfig, BlockDefinition, LayoutBlockInstance } from "@/lib/page-blocks";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { validateImageFile } from "@/lib/validators";
@@ -111,10 +112,10 @@ export function InlineInspector({
   }
 
   return (
-    <div
+    <Card
       role="dialog"
       aria-label={`${definition.label} settings`}
-      className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto rounded-xl border border-card-border bg-surface-elevated px-4 py-3 shadow-xl sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-24 sm:w-72 sm:max-h-[70vh]"
+      className="studio-editor-chrome fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto bg-surface-elevated px-4 py-3 shadow-xl sm:inset-x-auto sm:bottom-auto sm:right-3 sm:top-24 sm:w-72 sm:max-h-[70vh]"
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -333,7 +334,9 @@ export function InlineInspector({
                   // path and the browser never serves a stale cached copy.
                   // previousPath handles both legacy public URLs and new paths.
                   const previousPath = url
-                    ? (looksLikeUrl(url) ? pathFromPublicUrl(url, bucket) : url)
+                    ? looksLikeUrl(url)
+                      ? pathFromPublicUrl(url, bucket)
+                      : url
                     : null;
                   const path = `${ownerId}/block-${block.id}-${Date.now()}.${check.ext}`;
                   const { error: uploadError } = await supabase.storage
@@ -362,11 +365,7 @@ export function InlineInspector({
                     {label}
                   </Label>
                   {url && (
-                    <ImageFieldPreview
-                      bucket={bucket}
-                      value={url}
-                      onClear={() => set(key, "")}
-                    />
+                    <ImageFieldPreview bucket={bucket} value={url} onClear={() => set(key, "")} />
                   )}
                   <DragDropFileInput
                     accept="image/*"
@@ -425,6 +424,6 @@ export function InlineInspector({
           Remove block
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

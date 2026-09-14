@@ -681,7 +681,7 @@ function GStudioTopBar({
               className={cn(
                 "flex h-6 items-center gap-1.5 rounded-sm px-2 text-xs",
                 mode === item
-                  ? "bg-[var(--surface-elevated)] text-foreground shadow-sm"
+                  ? "bg-[var(--surface-elevated)] text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -1997,6 +1997,8 @@ function GBlockPalette(props: GStudioSurfaceProps & { onClose: () => void }) {
         />
         <label className="block">
           <span className="t-label">Drop into</span>
+          {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
+          {/* eslint-disable-next-line no-restricted-syntax */}
           <select
             value={target ?? ""}
             onChange={(event) => props.onPaletteTargetChange(event.target.value)}
@@ -2091,6 +2093,8 @@ function GBlockInspector({
             return (
               <label key={field.key} className="block text-xs text-muted-foreground">
                 {field.label}
+                {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
+                {/* eslint-disable-next-line no-restricted-syntax */}
                 <select
                   className="mt-1 w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
                   value={String(value ?? "")}
@@ -2806,6 +2810,8 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
           <div className="space-y-3">
             <label className="block">
               <span className="t-label">Add to</span>
+              {/* Studio chrome keeps its compact sunken control instead of the app field grammar. */}
+              {/* eslint-disable-next-line no-restricted-syntax */}
               <select
                 aria-label="Target area"
                 value={targetArea}

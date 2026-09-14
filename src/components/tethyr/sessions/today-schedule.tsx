@@ -96,7 +96,7 @@ function SessionCard({
             href={safeHref(session.meeting_url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-brand-green/10 p-2 text-brand-green transition-colors hover:bg-brand-green/20"
+            className="rounded-lg bg-trust/10 p-2 text-trust transition-colors hover:bg-trust/20"
             title="Join meeting"
           >
             <Video className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ export function TodaySchedule({
 }) {
   if (sessions.length === 0) {
     return (
-      <div className="rounded-xl border card-border bg-surface/20 p-8 text-center">
+      <div className="rounded-xl border border-border/60 bg-surface/20 p-8 text-center">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated">
           <Clock className="h-5 w-5 text-muted-foreground" />
         </div>

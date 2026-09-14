@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -378,7 +379,7 @@ function ProfileSetupForm({
     >
       <div className="space-y-6">
         {/* BANNER + HEADER */}
-        <div className="relative overflow-hidden rounded-xl border card-border bg-surface p-5 sm:p-6">
+        <Card className="relative overflow-hidden p-5 sm:p-6">
           {profile && (
             <BannerStrip
               bannerSigned={bannerSigned}
@@ -431,7 +432,7 @@ function ProfileSetupForm({
                   onSaved();
                 }}
               >
-                <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface shadow-sm sm:h-32 sm:w-32">
+                <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface sm:h-32 sm:w-32">
                   {avatarSigned ? (
                     <img
                       src={avatarSigned}
@@ -452,7 +453,7 @@ function ProfileSetupForm({
                   type="button"
                   aria-label="Change avatar"
                   title="Change avatar"
-                  className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background shadow-sm transition hover:scale-105"
+                  className="absolute -bottom-2 -right-2 rounded-full bg-primary p-2 text-background transition-spatial hover:scale-105"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
@@ -519,6 +520,16 @@ function ProfileSetupForm({
                   </Chip>
                 )}
               </div>
+
+              {/* LOOKING FOR */}
+              <div className="mt-4 max-w-xl">
+                <LabeledInput
+                  label="Availability"
+                  value={form.availability}
+                  onChange={(v) => setForm((f) => ({ ...f, availability: v }))}
+                  placeholder="Weekdays, mornings"
+                />
+              </div>
             </div>
 
             {/* COMPLETENESS */}
@@ -529,7 +540,7 @@ function ProfileSetupForm({
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* CTA */}
         <div className="flex flex-col items-start justify-between gap-4 border-b border-border/60 pb-4 sm:flex-row">
@@ -545,11 +556,15 @@ function ProfileSetupForm({
           </div>
         </div>
 
+        {/* EVIDENCE — GITHUB */}
+        <GitHubConnect autoOpenToken />
+
+        {/* METADATA RAIL */}
         {/* IDENTITY FORM */}
-        <div className="rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-display text-lg font-semibold">Identity</h3>
+        <Card className="p-4">
+          <h3 className="mb-3 font-display text-base font-semibold">Identity</h3>
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <LabeledInput
                 label="Display name"
                 value={form.display_name}
@@ -610,7 +625,7 @@ function ProfileSetupForm({
                 </Button>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <LabeledInput
                 label="Title"
                 value={form.creator_title}
@@ -624,7 +639,7 @@ function ProfileSetupForm({
                 placeholder="Video Editing"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <LabeledInput
                 label="Years of experience"
                 type="number"
@@ -639,20 +654,12 @@ function ProfileSetupForm({
                 placeholder="UK"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <LabeledInput
-                label="Timezone"
-                value={form.timezone}
-                onChange={(v) => setForm((f) => ({ ...f, timezone: v }))}
-                placeholder="GMT"
-              />
-              <LabeledInput
-                label="Availability"
-                value={form.availability}
-                onChange={(v) => setForm((f) => ({ ...f, availability: v }))}
-                placeholder="Weekdays, mornings"
-              />
-            </div>
+            <LabeledInput
+              label="Timezone"
+              value={form.timezone}
+              onChange={(v) => setForm((f) => ({ ...f, timezone: v }))}
+              placeholder="GMT"
+            />
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                 Languages
@@ -715,67 +722,7 @@ function ProfileSetupForm({
               />
             </div>
           </div>
-        </div>
-
-        {/* TOOLS & STACK */}
-        <div className="rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-display text-lg font-semibold">Tools & software</h3>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Comma-separated list — e.g. "Figma, Notion, Webflow" or "Python, TypeScript,
-            PostgreSQL".
-          </p>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Favourite tools
-              </Label>
-              <Input
-                value={form.favourite_tools}
-                onChange={(e) => setForm((f) => ({ ...f, favourite_tools: e.target.value }))}
-                placeholder="Figma, Notion, Webflow"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Software stack
-              </Label>
-              <Input
-                value={form.software_stack}
-                onChange={(e) => setForm((f) => ({ ...f, software_stack: e.target.value }))}
-                placeholder="Python, TypeScript, PostgreSQL, React"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* TEACHING & LEARNING */}
-        <div className="rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-display text-lg font-semibold">How you work</h3>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Teaching style
-              </Label>
-              <Textarea
-                value={form.teaching_style}
-                onChange={(e) => setForm((f) => ({ ...f, teaching_style: e.target.value }))}
-                placeholder="How do you like to share your skills — pair programming, code reviews, written guides, live sessions?"
-                className="min-h-[60px] resize-y"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Learning goals
-              </Label>
-              <Textarea
-                value={form.learning_goals}
-                onChange={(e) => setForm((f) => ({ ...f, learning_goals: e.target.value }))}
-                placeholder="What do you want to get better at? What skills are you growing right now?"
-                className="min-h-[60px] resize-y"
-              />
-            </div>
-          </div>
-        </div>
+        </Card>
 
         {/* SKILLS */}
         <SkillEditingSection
@@ -787,12 +734,9 @@ function ProfileSetupForm({
           onChange={refresh}
         />
 
-        {/* GITHUB */}
-        <GitHubConnect autoOpenToken />
-
         {/* LINKS */}
-        <div className="rounded-xl border card-border bg-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-display text-lg font-semibold">Links</h3>
+        <Card className="p-4">
+          <h3 className="mb-3 font-display text-base font-semibold">Links</h3>
 
           {/* Portfolio links */}
           <div className="space-y-3">
@@ -828,7 +772,7 @@ function ProfileSetupForm({
             {form.portfolioLinks.length === 0 && (
               <p className="text-xs text-muted-foreground">No portfolio links added yet.</p>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Input
                 value={form.portfolio_label}
                 onChange={(e) => setForm((f) => ({ ...f, portfolio_label: e.target.value }))}
@@ -868,7 +812,7 @@ function ProfileSetupForm({
           </div>
 
           {/* Social links */}
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
             <h4 className="text-sm font-medium">Social links</h4>
           </div>
@@ -897,7 +841,67 @@ function ProfileSetupForm({
               );
             })}
           </div>
-        </div>
+        </Card>
+
+        {/* TOOLS & STACK */}
+        <Card className="p-4">
+          <h3 className="mb-3 font-display text-base font-semibold">Tools & software</h3>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Comma-separated list — e.g. "Figma, Notion, Webflow" or "Python, TypeScript,
+            PostgreSQL".
+          </p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Favourite tools
+              </Label>
+              <Input
+                value={form.favourite_tools}
+                onChange={(e) => setForm((f) => ({ ...f, favourite_tools: e.target.value }))}
+                placeholder="Figma, Notion, Webflow"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Software stack
+              </Label>
+              <Input
+                value={form.software_stack}
+                onChange={(e) => setForm((f) => ({ ...f, software_stack: e.target.value }))}
+                placeholder="Python, TypeScript, PostgreSQL, React"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* HOW YOU WORK */}
+        <Card className="p-4">
+          <h3 className="mb-3 font-display text-base font-semibold">How you work</h3>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Teaching style
+              </Label>
+              <Textarea
+                value={form.teaching_style}
+                onChange={(e) => setForm((f) => ({ ...f, teaching_style: e.target.value }))}
+                placeholder="How do you like to share your skills — pair programming, code reviews, written guides, live sessions?"
+                className="min-h-[60px] resize-y"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Learning goals
+              </Label>
+              <Textarea
+                value={form.learning_goals}
+                onChange={(e) => setForm((f) => ({ ...f, learning_goals: e.target.value }))}
+                placeholder="What do you want to get better at? What skills are you growing right now?"
+                className="min-h-[60px] resize-y"
+              />
+            </div>
+          </div>
+        </Card>
 
         {/* SAVE */}
         <div className="flex flex-wrap gap-3">

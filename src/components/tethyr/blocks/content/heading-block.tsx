@@ -5,6 +5,14 @@
 import { useCallback } from "react";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type HeadingLevel = 1 | 2 | 3 | 4;
 
@@ -39,23 +47,26 @@ function HeadingBlock({ config, onChange, context }: BlockProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        value={level}
-        onChange={(e) => onChange?.({ ...config, level: Number(e.target.value) as HeadingLevel })}
-        className="h-8 w-16 rounded-md border border-input bg-background px-1 text-xs text-foreground"
-        aria-label="Heading level"
+      <Select
+        value={String(level)}
+        onValueChange={(value) => onChange?.({ ...config, level: Number(value) as HeadingLevel })}
       >
-        <option value={1}>H1</option>
-        <option value={2}>H2</option>
-        <option value={3}>H3</option>
-        <option value={4}>H4</option>
-      </select>
-      <input
+        <SelectTrigger aria-label="Heading level" className="h-8 w-16 px-2 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">H1</SelectItem>
+          <SelectItem value="2">H2</SelectItem>
+          <SelectItem value="3">H3</SelectItem>
+          <SelectItem value="4">H4</SelectItem>
+        </SelectContent>
+      </Select>
+      <Input
         type="text"
         value={content}
         onChange={handleChange}
         placeholder="Heading text..."
-        className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="flex-1"
         aria-label="Heading content"
       />
     </div>

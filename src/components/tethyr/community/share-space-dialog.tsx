@@ -70,9 +70,9 @@ export function ShareSpaceDialog({
                     key={space.id}
                     onClick={() => handleShare(space.id)}
                     disabled={alreadyShared}
-                    className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition hover:bg-surface-elevated disabled:opacity-60"
+                    className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition-lift hover:bg-surface-elevated disabled:opacity-60"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-sm font-semibold text-brand-purple">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ai/10 text-sm font-semibold text-ai">
                       {space.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ export function ShareSpaceDialog({
                       </p>
                     </div>
                     {alreadyShared ? (
-                      <Check className="h-4 w-4 shrink-0 text-brand-green" />
+                      <Check className="h-4 w-4 shrink-0 text-trust" />
                     ) : (
                       <Share2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     )}

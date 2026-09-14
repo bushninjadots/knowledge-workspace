@@ -18,10 +18,8 @@ export function ComposerPoll({
   return (
     <div className="mt-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))]/60 bg-[var(--user-accent-subtle,var(--surface-elevated))] p-4">
       <div className="mb-3 flex items-center gap-2">
-        <BarChart3 className="h-4 w-4 text-brand-purple" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-purple">
-          Poll
-        </span>
+        <BarChart3 className="h-4 w-4 text-ai" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-ai">Poll</span>
       </div>
       <input
         value={question}

@@ -23,7 +23,7 @@ export function ProjectCardCover({ path }: { path: string | null }) {
       height="360"
       loading="lazy"
       decoding="async"
-      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+      className="h-full w-full object-cover transition-spatial duration-150 group-hover:scale-[1.03]"
     />
   );
 }
@@ -71,7 +71,7 @@ export function FeaturedProjects() {
                 key={p.id}
                 to="/projects/$id"
                 params={{ id: p.id }}
-                className="group flex flex-col overflow-hidden rounded-xl bg-surface-elevated/30 transition hover:bg-surface-elevated/50"
+                className="group flex flex-col overflow-hidden rounded-xl bg-surface-elevated/30 transition-lift hover:bg-surface-elevated/50"
               >
                 <div className="relative h-36 overflow-hidden bg-surface-sunken">
                   <ProjectCardCover path={p.cover_url} />
