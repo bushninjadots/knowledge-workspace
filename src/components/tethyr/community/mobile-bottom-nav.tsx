@@ -42,12 +42,18 @@ export function MobileBottomNav({
                 type="button"
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => onSelect(item.id)}
-                className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+                className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
                   isActive
                     ? "text-[var(--user-accent,var(--trust))] font-semibold"
                     : "text-muted-foreground active:text-foreground"
                 }`}
               >
+                {isActive && (
+                  <span
+                    className="absolute top-0 h-0.5 w-7 rounded-full"
+                    style={{ background: "var(--user-accent,var(--trust))" }}
+                  />
+                )}
                 <Icon
                   className={`h-5 w-5 ${isActive ? "fill-[var(--user-accent,var(--trust))]/15" : ""}`}
                 />

@@ -84,6 +84,13 @@ export function SpaceHeader({
   const initial = space.name.charAt(0).toUpperCase();
   const canManage = myRole === "owner" || myRole === "moderator";
 
+  const accentColor =
+    space.visibility === "private"
+      ? "var(--ai)"
+      : space.join_type === "review"
+        ? "var(--primary)"
+        : "var(--trust)";
+
   return (
     <div className="mb-8">
       {/* Breadcrumb — Communities / space name */}
@@ -104,87 +111,104 @@ export function SpaceHeader({
         <span className="truncate font-medium text-foreground/80">{space.name}</span>
       </nav>
 
-      {/* Page title row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-ai/10 text-xl font-bold text-ai">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                width="56"
-                height="56"
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              initial
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
-                {space.name}
-              </h1>
-              {space.visibility === "private" && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[11px] text-muted-foreground">
-                  <Lock className="h-3 w-3" />
-                  Private
-                </span>
-              )}
-              {space.is_member && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-trust">
-                  <Check className="h-3.5 w-3.5" />
-                  Joined
-                </span>
+      {/* Space header — tinted background band by space type */}
+      <div
+        className="rounded-xl border border-border/40 p-5"
+        style={{ background: `color-mix(in oklch, ${accentColor} 5%, var(--background))` }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl font-bold"
+              style={{
+                background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
+                color: accentColor,
+              }}
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initial
               )}
             </div>
-            <p className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {space.member_count ?? 0} member{(space.member_count ?? 0) !== 1 ? "s" : ""}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <MessageCircle className="h-3.5 w-3.5" />
-                Room discussion
-              </span>
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="font-display truncate text-2xl font-semibold tracking-tight">
+                  {space.name}
+                </h1>
+                {space.visibility === "private" && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    style={{
+                      background: `color-mix(in oklch, ${accentColor} 12%, transparent)`,
+                      color: accentColor,
+                    }}
+                  >
+                    <Lock className="h-3 w-3" />
+                    Private
+                  </span>
+                )}
+                {space.is_member && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-trust/10 px-2 py-0.5 text-[11px] font-medium text-trust">
+                    <Check className="h-3 w-3" />
+                    Joined
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  {space.member_count ?? 0} {(space.member_count ?? 0) !== 1 ? "members" : "member"}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <MessageCircle className="h-3 w-3" />
+                  Room discussion
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {canManage && (
-            <>
-              <Button size="sm" variant="outline" className="rounded-full" asChild>
-                <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
-                  <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
-                  Reports
-                </Link>
-              </Button>
-              <Button size="sm" variant="outline" className="rounded-full" asChild>
-                <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
-                  <Settings className="mr-1.5 h-3.5 w-3.5" />
-                  Settings
-                </Link>
-              </Button>
-            </>
-          )}
-          <Button
-            size="sm"
-            variant={space.is_member || space.has_pending_request ? "outline" : "default"}
-            className="rounded-full"
-            onClick={handleToggleMembership}
-            disabled={joinPending}
-            title={
-              space.join_type === "review" && !space.is_member
-                ? "Owner approval required to join"
-                : undefined
-            }
-          >
-            <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
-            {buttonLabel}
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            {canManage && (
+              <>
+                <Button size="sm" variant="outline" className="rounded-full" asChild>
+                  <Link to="/spaces/$slug/reports" params={{ slug: space.slug }}>
+                    <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
+                    Reports
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" asChild>
+                  <Link to="/spaces/$slug/settings" params={{ slug: space.slug }}>
+                    <Settings className="mr-1.5 h-3.5 w-3.5" />
+                    Settings
+                  </Link>
+                </Button>
+              </>
+            )}
+            <Button
+              size="sm"
+              variant={space.is_member || space.has_pending_request ? "outline" : "default"}
+              className="rounded-full"
+              onClick={handleToggleMembership}
+              disabled={joinPending}
+              title={
+                space.join_type === "review" && !space.is_member
+                  ? "Owner approval required to join"
+                  : undefined
+              }
+            >
+              <ButtonIcon className="mr-1.5 h-3.5 w-3.5" />
+              {buttonLabel}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -195,12 +219,14 @@ export function SpaceHeader({
         </p>
       )}
 
+      {space.description && (
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{space.description}</p>
+      )}
+
       {space.rules && space.rules.length > 0 && (
-        <div className="mt-4 rounded-xl border card-border bg-background/40 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Community rules
-          </p>
-          <ol className="mt-2 space-y-1.5">
+        <div className="mt-3 rounded-lg bg-surface-elevated/20 p-4">
+          <p className="section-label mb-2">Community rules</p>
+          <ol className="space-y-1.5">
             {space.rules.map((rule, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-[10px] font-semibold text-muted-foreground">
@@ -213,18 +239,12 @@ export function SpaceHeader({
         </div>
       )}
 
-      {space.description && (
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {space.description}
-        </p>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <span className="section-label">Room view</span>
         <div
           role="group"
           aria-label="Sort room discussion"
-          className="flex items-center gap-1 rounded-lg bg-surface-elevated/50 p-1"
+          className="flex items-center gap-0.5 rounded-lg bg-surface-elevated/40 p-0.5"
         >
           {(
             [
@@ -237,9 +257,9 @@ export function SpaceHeader({
               key={value}
               type="button"
               onClick={() => onSortModeChange(value)}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 sortMode === value
-                  ? "bg-surface text-foreground"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

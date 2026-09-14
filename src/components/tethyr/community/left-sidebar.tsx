@@ -38,10 +38,11 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
     <aside className={cn("w-64 shrink-0", className)}>
       <nav
         aria-label="Community navigation"
-        className="flex flex-col gap-5 rounded-xl bg-surface-elevated/30 p-3"
+        className="flex flex-col gap-4 rounded-xl bg-surface-elevated/30 p-3"
       >
-        {COMMUNITY_NAV_GROUPS.map((group) => (
+        {COMMUNITY_NAV_GROUPS.map((group, gi) => (
           <div key={group.label}>
+            {gi > 0 && <div className="mx-3 mb-4 border-t border-border/40" />}
             <p className="section-label mb-1.5 px-3">{group.label}</p>
             <div className="space-y-0.5">
               {group.items.map((item) => {
@@ -49,9 +50,9 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                 const isActive = active === item.id;
                 const count = countFor(item.id);
                 const rowClass = cn(
-                  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors",
+                  "relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors",
                   isActive
-                    ? "bg-surface-elevated font-medium text-foreground"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] font-medium text-foreground"
                     : "text-muted-foreground hover:bg-surface-elevated/60 hover:text-foreground",
                 );
 
@@ -65,7 +66,18 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                       aria-current={isActive ? "page" : undefined}
                       title={item.label}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
+                      {isActive && (
+                        <span
+                          className="absolute left-0 top-1/2 h-5 -translate-y-1/2 rounded-full bg-[var(--user-accent,var(--primary))]"
+                          style={{ width: 3 }}
+                        />
+                      )}
+                      <Icon
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isActive && "text-[var(--user-accent,var(--primary))]",
+                        )}
+                      />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     </Link>
                   );
@@ -82,7 +94,18 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                     className={rowClass}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    {isActive && (
+                      <span
+                        className="absolute left-0 top-1/2 h-5 -translate-y-1/2 rounded-full bg-[var(--user-accent,var(--primary))]"
+                        style={{ width: 3 }}
+                      />
+                    )}
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        isActive && "text-[var(--user-accent,var(--primary))]",
+                      )}
+                    />
                     <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
                     {count != null && count > 0 && (
                       <span className="numeric shrink-0 rounded-full bg-[var(--user-accent-subtle,var(--surface-elevated))] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--user-accent,var(--primary))]">
@@ -90,7 +113,7 @@ export const CommunityLeftSidebar = memo(function CommunityLeftSidebar({
                       </span>
                     )}
                     {isActive && (count == null || count === 0) && (
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--user-accent,var(--primary))]" />
                     )}
                   </button>
                 );

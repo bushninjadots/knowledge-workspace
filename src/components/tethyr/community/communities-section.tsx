@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { Plus, Search, Users, TrendingUp, Clock } from "lucide-react";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { CommunityCard } from "@/components/tethyr/community/community-card";
+import { ActivityCharts } from "@/components/tethyr/community/activity-charts";
 import { CreateSpaceDialog } from "@/components/tethyr/community/create-space-dialog";
 import { useCommunitySpaces, type CommunitySpace } from "@/hooks/use-community-spaces";
 import { Input } from "@/components/ui/input";
@@ -39,23 +40,25 @@ export const CommunitiesSection = memo(function CommunitiesSection({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <ActivityCharts />
+
+      <div className="mb-5 flex items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search spaces..."
-            className="h-9 rounded-xl border border-border/60 bg-surface pr-4 pl-9 text-sm"
+            className="h-10 rounded-lg border card-border bg-surface pr-4 pl-9 text-sm"
           />
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 rounded-xl bg-surface-elevated/40 p-0.5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 rounded-lg border card-border bg-surface p-0.5">
             <button
               onClick={() => setSortMode("popular")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-lift ${
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "popular"
-                  ? "bg-surface-elevated text-foreground"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by member count"
@@ -65,9 +68,9 @@ export const CommunitiesSection = memo(function CommunitiesSection({
             </button>
             <button
               onClick={() => setSortMode("newest")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-lift ${
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-lift ${
                 sortMode === "newest"
-                  ? "bg-surface-elevated text-foreground"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title="Sort by newest first"
@@ -83,8 +86,8 @@ export const CommunitiesSection = memo(function CommunitiesSection({
         </div>
       </div>
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3].map((i) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
               className="animate-gentle-pulse rounded-xl border border-border/60 bg-surface h-32 p-5"
@@ -100,11 +103,19 @@ export const CommunitiesSection = memo(function CommunitiesSection({
           onAction={() => setCreateOpen(true)}
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {sortedSpaces.map((space: CommunitySpace) => (
-            <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
-          ))}
-        </div>
+        <>
+          {sortedSpaces.length > 0 && (
+            <p className="mb-3 text-xs text-muted-foreground">
+              {sortedSpaces.length} {sortedSpaces.length !== 1 ? "spaces" : "space"}
+              {search.trim() && ` matching "${search}"`}
+            </p>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {sortedSpaces.map((space: CommunitySpace) => (
+              <CommunityCard key={space.id} space={space} onClick={() => onOpenSpace(space)} />
+            ))}
+          </div>
+        </>
       )}
       <CreateSpaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

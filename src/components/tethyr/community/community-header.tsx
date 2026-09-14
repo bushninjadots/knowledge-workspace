@@ -154,15 +154,18 @@ export const CommunityHeader = memo(function CommunityHeader({
   return (
     <header className="mb-8">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-primary/70">Community</p>
+        <div className="relative pl-4">
+          <span className="absolute left-0 top-1 h-[calc(100%-0.25rem)] w-1 rounded-full bg-[var(--user-accent,var(--primary))]/60" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60">
+            Community
+          </p>
           <h1 className="font-display text-2xl font-semibold tracking-tight">{navTitle(nav)}</h1>
           <p className="mt-1 max-w-lg text-sm text-muted-foreground">{navDescription(nav)}</p>
         </div>
         <button
           type="button"
           onClick={onOpenTrending}
-          className="flex min-h-11 items-center gap-2 rounded-md border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
+          className="flex min-h-11 items-center gap-2 rounded-lg border card-border bg-surface px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
         >
           <SlidersHorizontal className="h-4 w-4" />
           Trending
@@ -231,30 +234,31 @@ export const CommunityHeader = memo(function CommunityHeader({
       {showFeedControls && (
         <div className="sticky top-12 z-20 -mx-2 mb-5 space-y-2 border-b border-border/40 bg-background/95 px-2 py-3">
           {/* Row 1: sort + my-skills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               type="button"
               aria-pressed={mySkillsOnly}
               onClick={() => onMySkillsOnlyChange(!mySkillsOnly)}
-              className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-150 ${
+              className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                 mySkillsOnly
                   ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] text-[var(--user-accent,var(--primary))]"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
               }`}
             >
               <BookmarkCheck className="mr-1 inline h-3 w-3" />
               My skills
             </button>
+            <span className="h-3 w-px shrink-0 bg-border/40" />
             {SORT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 aria-pressed={sortMode === opt.value}
                 onClick={() => onSortModeChange(opt.value)}
-                className={`shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors duration-150 ${
+                className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                   sortMode === opt.value
-                    ? "bg-surface-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))]"
+                    : "text-muted-foreground hover:bg-surface-elevated/40 hover:text-foreground"
                 }`}
               >
                 {opt.label}
@@ -268,9 +272,9 @@ export const CommunityHeader = memo(function CommunityHeader({
               type="button"
               aria-pressed={focusFilter === "all"}
               onClick={() => onFocusFilterChange("all")}
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                 focusFilter === "all"
-                  ? "bg-surface-elevated text-foreground font-medium"
+                  ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
                   : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
               }`}
             >
@@ -282,9 +286,9 @@ export const CommunityHeader = memo(function CommunityHeader({
                 type="button"
                 aria-pressed={focusFilter === f}
                 onClick={() => onFocusFilterChange(focusFilter === f ? "all" : f)}
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                   focusFilter === f
-                    ? "bg-surface-elevated text-foreground font-medium"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >
@@ -301,9 +305,9 @@ export const CommunityHeader = memo(function CommunityHeader({
                 type="button"
                 aria-pressed={nav === filter.value}
                 onClick={() => onNavChange(filter.value)}
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] transition-colors duration-150 ${
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-colors duration-150 ${
                   nav === filter.value
-                    ? "bg-surface-elevated font-medium text-foreground"
+                    ? "bg-[var(--user-accent-subtle,var(--surface-elevated))] text-[var(--user-accent,var(--primary))] font-medium"
                     : "text-muted-foreground hover:bg-surface-elevated/30 hover:text-foreground"
                 }`}
               >
