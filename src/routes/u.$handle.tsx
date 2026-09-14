@@ -12,7 +12,17 @@ import {
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
+import {
+  ArrowLeft,
+  Github,
+  Globe,
+  Instagram,
+  Link2,
+  Pencil,
+  Twitch,
+  Twitter,
+  Youtube,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalLinks } from "@/lib/seo";
 import {
@@ -212,7 +222,11 @@ function PublicProfileRoute() {
           <span className="text-xs text-muted-foreground">
             This is your public Studio, exactly as visitors see it.
           </span>
-          <Link to="/studio" className="ml-auto text-xs font-medium text-primary hover:underline">
+          <Link
+            to="/studio"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1 text-xs font-medium text-foreground transition-lift hover:bg-[var(--surface-elevated)]"
+          >
+            <Pencil className="h-3 w-3" />
             Customize
           </Link>
         </div>
