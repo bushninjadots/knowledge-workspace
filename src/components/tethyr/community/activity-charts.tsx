@@ -27,7 +27,7 @@ function MiniBarChart({
   label: string;
   icon: typeof TrendingUp;
 }) {
-  const { bars, maxVal, total } = useMemo(() => {
+  const { bars, total } = useMemo(() => {
     const values = data.map((d) => (label === "joins" ? d.joins : d.posts));
     const max = Math.max(1, ...values);
     return {
@@ -36,7 +36,6 @@ function MiniBarChart({
         height: (v / max) * 100,
         date: data[i].date,
       })),
-      maxVal: max,
       total: values.reduce((a, b) => a + b, 0),
     };
   }, [data, label]);

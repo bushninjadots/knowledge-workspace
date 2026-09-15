@@ -16,7 +16,6 @@ import { useTrendingSkills, useCurrentUser } from "@/hooks/use-current-user";
 import { useInfinitePosts, flattenPosts } from "@/hooks/use-community";
 import type { DiscoverableSkill } from "@/hooks/use-current-user";
 import { completenessPercent } from "@/lib/profile-completeness";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { safeHref } from "@/lib/validators";
 

@@ -53,7 +53,6 @@
   "src/components/tethyr/reputation-display.tsx → ReputationScore",
   "src/components/tethyr/reputation-display.tsx → ReputationTierBadge",
   "src/components/tethyr/segmented-control.tsx → SegmentedOption",
-  "src/components/tethyr/sessions/request-session-dialog.tsx → RequestSessionDialog",
   "src/components/tethyr/templates/made-with-tethyr.tsx → MadeWithTethyr",
   "src/components/tethyr/tethyr-ball.tsx → TethyrBallFull",
   "src/data/mocks/availability.ts → AvailabilityOption",
