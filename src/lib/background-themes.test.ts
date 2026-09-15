@@ -4,6 +4,9 @@ import {
   clampStrength,
   imageOpacityFor,
   isBackgroundActive,
+  accentVarsFromColor,
+  ownerAccentStyle,
+  appearanceStyle,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
@@ -214,5 +217,105 @@ describe("backgroundStyle", () => {
     expect(
       backgroundStyle({ mode: "image", color: null, pattern: null, image_url: "u/bg.jpg" }),
     ).toEqual({});
+  });
+});
+
+describe("accentVarsFromColor", () => {
+  it("derives the full accent variable family from a hex colour", () => {
+    const vars = accentVarsFromColor("#2dd4bf");
+    expect(vars["--user-accent"]).toBe("#2dd4bf");
+    expect(vars["--user-accent-subtle"]).toBe("color-mix(in oklab, #2dd4bf 10%, transparent)");
+    expect(vars["--user-accent-border"]).toBe("color-mix(in oklab, #2dd4bf 30%, transparent)");
+    expect(vars["--user-accent-glow"]).toBe("color-mix(in oklab, #2dd4bf 6%, transparent)");
+    expect(vars["--user-accent-foreground"]).toBeTruthy();
+  });
+
+  it("returns no styles for an invalid colour", () => {
+    expect(accentVarsFromColor("#fff")).toEqual({});
+    expect(accentVarsFromColor("grey")).toEqual({});
+    expect(accentVarsFromColor("")).toEqual({});
+  });
+});
+
+describe("ownerAccentStyle", () => {
+  it("prefers an explicit custom accent over the background colour", () => {
+    const style = ownerAccentStyle({
+      mode: "color",
+      color: "#38bdf8",
+      accentMode: "custom",
+      accentColor: "#6d28d9",
+      pattern: null,
+      image_url: null,
+    });
+    expect(style["--user-accent"]).toBe("#6d28d9");
+  });
+
+  it("falls back to the background colour for the owner's signature", () => {
+    const style = ownerAccentStyle({
+      mode: "color",
+      color: "#2dd4bf",
+      pattern: null,
+      image_url: null,
+    });
+    expect(style["--user-accent"]).toBe("#2dd4bf");
+  });
+
+  it("returns no styles without a background or colour", () => {
+    expect(ownerAccentStyle(null)).toEqual({});
+    expect(ownerAccentStyle(undefined)).toEqual({});
+    expect(
+      ownerAccentStyle({ mode: null, color: null, pattern: null, image_url: null }),
+    ).toEqual({});
+  });
+});
+
+describe("appearanceStyle accent fallback", () => {
+  it("keeps an explicit custom accent untouched", () => {
+    const style = appearanceStyle({
+      mode: "color",
+      color: "#38bdf8",
+      accentMode: "custom",
+      accentColor: "#6d28d9",
+      pattern: null,
+      image_url: null,
+    }) as Record<string, string>;
+    expect(style["--user-accent"]).toBe("#6d28d9");
+  });
+
+  it("adopts the member's own colour when no accent preference is set", () => {
+    const style = appearanceStyle({
+      mode: "color",
+      color: "#2dd4bf",
+      pattern: null,
+      image_url: null,
+    }) as Record<string, string>;
+    expect(style["--user-accent"]).toBe("#2dd4bf");
+  });
+
+  it("skips the fallback when the tint follows the banner", () => {
+    const style = appearanceStyle({
+      mode: "color",
+      color: "#38bdf8",
+      colorSource: "banner",
+      pattern: null,
+      image_url: null,
+    }) as Record<string, string>;
+    expect(style["--user-accent"]).toBeUndefined();
+  });
+
+  it("skips the fallback when an explicit accent mode is set", () => {
+    const style = appearanceStyle({
+      mode: "color",
+      color: "#38bdf8",
+      accentMode: "dynamic",
+      pattern: null,
+      image_url: null,
+    }) as Record<string, string>;
+    expect(style["--user-accent"]).toBeUndefined();
+  });
+
+  it("returns no styles for a cleared background", () => {
+    expect(appearanceStyle(null)).toEqual({});
+    expect(appearanceStyle(undefined)).toEqual({});
   });
 });

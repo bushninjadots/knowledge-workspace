@@ -49,6 +49,7 @@ import {
   STAGE_RANK,
 } from "@/data/mocks/catalog";
 import { jsonLd, seoMeta } from "@/lib/seo";
+import type { ProfileBackground } from "@/lib/background-themes";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
 
@@ -77,6 +78,7 @@ export type ProjectRow = {
     creator_title: string | null;
     avatar_url: string | null;
     availability: string | null;
+    background?: ProfileBackground | null;
   } | null;
 };
 
@@ -273,7 +275,7 @@ function ExplorePage() {
     queryKey: ["explore-projects"],
     queryFn: async ({ pageParam }): Promise<ProjectRow[]> => {
       const PROJECTS_SELECT =
-        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url, availability)" as const;
+        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url, availability, background)" as const;
       let query = supabase
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)

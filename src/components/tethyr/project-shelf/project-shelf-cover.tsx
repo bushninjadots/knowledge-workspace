@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
+import { ownerAccentStyle } from "@/lib/background-themes";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 export const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
@@ -38,11 +39,13 @@ function ProjectShelfFace({
 }: ProjectShelfCoverProps) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
+  const ownerAccent = ownerAccentStyle(project.profiles?.background);
 
   return (
     <Card asChild>
       <button
         onClick={onClick}
+        style={ownerAccent}
         className="group relative w-full cursor-pointer overflow-hidden text-left transition-spatial duration-150 hover:-translate-y-1 hover:border-[var(--user-accent-border,var(--border-strong))]"
         aria-label={`View ${project.title}`}
       >

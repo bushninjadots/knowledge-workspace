@@ -41,6 +41,9 @@ export function BackgroundLayer({
             : style
         }
       />
+      {/* Accent glow: a faint radial wash over the top edge of the workspace.
+          It uses the banner-derived *secondary* accent (--user-accent-secondary-glow
+          is ~6% opacity), so this reads as a tint, never a gradient feature. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
