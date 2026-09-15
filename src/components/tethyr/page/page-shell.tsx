@@ -202,7 +202,7 @@ export function PageShell({
       ...themeTokensToStyle(effectiveTheme, resolvedTheme),
     } as React.CSSProperties & Record<string, string>;
     if (page) {
-      const configStyle = studioConfigToStyle(page.config) as React.CSSProperties &
+      const configStyle = studioConfigToStyle(page.config, bannerAccent) as React.CSSProperties &
         Record<string, string>;
       style["--content-density-gap"] = configStyle["--content-density-gap"];
       style["--content-density-padding"] = configStyle["--content-density-padding"];

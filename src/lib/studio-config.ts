@@ -4,7 +4,7 @@
 //   PERSONALITY — typography + visual character (editorial, modern, technical)
 //   DENSITY    — spacing rhythm (compact, comfortable, spacious)
 //   RADIUS     — corner roundness in pixels (0–24, exposed as a slider)
-//   ACCENT     — user identity colour (auto from banner, custom pick, none)
+//   ACCENT     — user identity colour (auto from banner, custom pick, dual, none)
 //
 // Two outputs are produced:
 //   • studioConfigToThemeTokens  → merged into the page's ThemeTokens so it
@@ -27,8 +27,9 @@ export type StructureId = "single" | "sidebar" | "wide";
 /** PERSONALITY — typography + visual character. */
 export type PersonalityId = "editorial" | "modern" | "technical";
 export type DensityId = "compact" | "comfortable" | "spacious";
-/** ACCENT — user identity colour. */
-export type AccentMode = "auto" | "custom" | "none";
+/** ACCENT — user identity colour. "dual" pairs a picked primary with the
+ *  banner-derived colour as the secondary tone (interactive vs background). */
+export type AccentMode = "auto" | "custom" | "dual" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
 type CardBorderWidth = "thin" | "medium" | "thick";
@@ -153,6 +154,7 @@ export const DENSITY_OPTIONS: ReadonlyArray<{ value: DensityId; label: string }>
 export const ACCENT_OPTIONS: ReadonlyArray<{ value: AccentMode; label: string }> = [
   { value: "auto", label: "From banner" },
   { value: "custom", label: "Pick" },
+  { value: "dual", label: "Banner + pick" },
   { value: "none", label: "None" },
 ];
 
@@ -382,7 +384,10 @@ export function studioConfigToThemeTokens(config: StudioConfig): ThemeTokens {
  * `--user-accent-*` family (used by rings, borders, active states, and
  * selection across the whole studio).
  */
-export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
+export function studioConfigToStyle(
+  config: StudioConfig,
+  secondaryColor?: string | null,
+): React.CSSProperties {
   const style = {} as React.CSSProperties & Record<string, string>;
 
   const { gap, pad } = densityMetrics(config.density);
@@ -399,21 +404,22 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
   style["--studio-pad"] = `${pad}px`;
 
   // Accent
-  if (config.accentMode === "custom" && config.accentColor) {
+  if (config.accentMode === "custom" || config.accentMode === "dual") {
+    // "custom" AND "dual" scope the interactive accent to the picked hex.
     const foreground = contrastingHexForeground(config.accentColor);
-    style["--user-accent"] = config.accentColor;
-    style["--user-accent-foreground"] = foreground;
-    style["--user-accent-subtle"] = `color-mix(in oklab, ${config.accentColor} 10%, transparent)`;
-    style["--user-accent-border"] = `color-mix(in oklab, ${config.accentColor} 30%, transparent)`;
-    style["--user-accent-glow"] = `color-mix(in oklab, ${config.accentColor} 6%, transparent)`;
+    emitAccentFamily(style, "user-accent", config.accentColor, foreground);
   } else {
     // Accent "none" AND "auto" both resolve to the page primary so the
     // --user-accent-* family always has a defined value (no dangling var()).
-    style["--user-accent"] = "var(--primary)";
-    style["--user-accent-foreground"] = "var(--primary-foreground)";
-    style["--user-accent-subtle"] = "color-mix(in oklab, var(--primary) 10%, transparent)";
-    style["--user-accent-border"] = "color-mix(in oklab, var(--primary) 30%, transparent)";
-    style["--user-accent-glow"] = "color-mix(in oklab, var(--primary) 6%, transparent)";
+    emitAccentFamily(style, "user-accent", "var(--primary)", "var(--primary-foreground)");
+  }
+
+  if (config.accentMode === "dual") {
+    // Secondary tone = the creator's banner colour (opts into the member's
+    // real background); falls back to the picked accent when no banner colour
+    // is in scope. Drives background tints and subtle surfaces.
+    const secondary = secondaryColor ?? config.accentColor;
+    emitAccentFamily(style, "user-accent-secondary", secondary, contrastingAccentForeground(secondary));
   }
 
   // Border weight shared by cards and panels. The border colour itself is
@@ -427,6 +433,23 @@ export function studioConfigToStyle(config: StudioConfig): React.CSSProperties {
         : "1px";
 
   return style;
+}
+
+/**
+ * Write one accent family (interactive `user-accent` or tonal
+ * `user-accent-secondary`) into the style object.
+ */
+function emitAccentFamily(
+  style: Record<string, string>,
+  prefix: string,
+  source: string,
+  foreground: string,
+): void {
+  style[`--${prefix}`] = source;
+  style[`--${prefix}-foreground`] = foreground;
+  style[`--${prefix}-subtle`] = `color-mix(in oklab, ${source} 10%, transparent)`;
+  style[`--${prefix}-border`] = `color-mix(in oklab, ${source} 30%, transparent)`;
+  style[`--${prefix}-glow`] = `color-mix(in oklab, ${source} 6%, transparent)`;
 }
 
 /** Card fill swatches; "" means "follow the page surface". */
@@ -474,6 +497,34 @@ function contrastingHexForeground(hex: string): string {
   const r = (value >> 16) & 255;
   const g = (value >> 8) & 255;
   const b = value & 255;
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.56 ? "#1f2328" : "#ffffff";
+}
+
+/**
+ * Like {@link contrastingHexForeground}, but also parses `rgb(r, g, b)`
+ * colours — the format the banner palette extractor returns — so the
+ * secondary accent's foreground stays readable when it comes from a banner.
+ */
+function contrastingAccentForeground(color: string): string {
+  let r: number | null = null;
+  let g: number | null = null;
+  let b: number | null = null;
+  const hex = color.match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const value = Number.parseInt(hex[1], 16);
+    r = (value >> 16) & 255;
+    g = (value >> 8) & 255;
+    b = value & 255;
+  } else {
+    const rgb = color.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+    if (rgb) {
+      r = Number(rgb[1]);
+      g = Number(rgb[2]);
+      b = Number(rgb[3]);
+    }
+  }
+  if (r === null || g === null || b === null) return "var(--background)";
   const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
   return luminance > 0.56 ? "#1f2328" : "#ffffff";
 }

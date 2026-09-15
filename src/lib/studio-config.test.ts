@@ -198,6 +198,47 @@ describe("studioConfigToStyle", () => {
     expect(style["--user-accent"]).toBe("var(--primary)");
   });
 
+  it("'dual' keeps the picked interactive accent and adds a banner secondary", () => {
+    const style = studioConfigToStyle(
+      { ...DEFAULT_STUDIO_CONFIG, accentMode: "dual", accentColor: "#6d28d9" },
+      "#a78bfa",
+    ) as Record<string, string>;
+    expect(style["--user-accent"]).toBe("#6d28d9");
+    expect(style["--user-accent-secondary"]).toBe("#a78bfa");
+    expect(style["--user-accent-secondary-foreground"]).toBe("#1f2328");
+    expect(style["--user-accent-secondary-subtle"]).toContain("a78bfa");
+    expect(style["--user-accent-secondary-border"]).toContain("a78bfa");
+    expect(style["--user-accent-secondary-glow"]).toContain("a78bfa");
+  });
+
+  it("'dual' falls back to the picked accent when no banner colour is in scope", () => {
+    const style = studioConfigToStyle({
+      ...DEFAULT_STUDIO_CONFIG,
+      accentMode: "dual",
+      accentColor: "#6d28d9",
+    }) as Record<string, string>;
+    expect(style["--user-accent-secondary"]).toBe("#6d28d9");
+  });
+
+  it("'dual' derives the secondary foreground from an rgb() banner colour", () => {
+    const style = studioConfigToStyle(
+      { ...DEFAULT_STUDIO_CONFIG, accentMode: "dual", accentColor: "#1f2328" },
+      "rgb(240, 245, 250)",
+    ) as Record<string, string>;
+    expect(style["--user-accent-secondary-foreground"]).toBe("#1f2328");
+  });
+
+  it("single-tone modes do not leak a secondary family", () => {
+    for (const accentMode of ["auto", "custom", "none"] as const) {
+      const style = studioConfigToStyle({
+        ...DEFAULT_STUDIO_CONFIG,
+        accentMode,
+        accentColor: "#6d28d9",
+      }) as Record<string, string>;
+      expect(style["--user-accent-secondary"]).toBeUndefined();
+    }
+  });
+
   it("emits the selected card border width", () => {
     const style = studioConfigToStyle({
       ...DEFAULT_STUDIO_CONFIG,
@@ -249,7 +290,7 @@ describe("option catalogs", () => {
     expect(values(PERSONALITY_OPTIONS)).toEqual(["editorial", "modern", "technical"]);
     expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide"]);
     expect(values(DENSITY_OPTIONS)).toEqual(["compact", "comfortable", "spacious"]);
-    expect(values(ACCENT_OPTIONS)).toEqual(["auto", "custom", "none"]);
+    expect(values(ACCENT_OPTIONS)).toEqual(["auto", "custom", "dual", "none"]);
     expect(values(BACKGROUND_OPTIONS as ReadonlyArray<{ value: string; label: string }>)).toEqual([
       "default",
       "surface",

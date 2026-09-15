@@ -31,14 +31,24 @@ export function BackgroundLayer({
   if (!isBackgroundActive(background) || Object.keys(style).length === 0) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10"
-      style={
-        isImage
-          ? { ...style, opacity: imageOpacityFor(background.strength), filter: "saturate(0.9)" }
-          : style
-      }
-    />
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={
+          isImage
+            ? { ...style, opacity: imageOpacityFor(background.strength), filter: "saturate(0.9)" }
+            : style
+        }
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(720px 320px at 50% 0%, var(--user-accent-secondary-glow, transparent), transparent 70%)",
+        }}
+      />
+    </>
   );
 }

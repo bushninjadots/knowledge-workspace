@@ -405,7 +405,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     [me?.background, props.cardBorders, props.cardBorderColor],
   );
   const surfaceStyle = {
-    ...studioSurfaceStyle(props.config),
+    ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
   };
@@ -2346,15 +2346,21 @@ function GCustomizePanel({
             </div>
             <Choice
               label="Accent"
+              hint={
+                config.accentMode === "dual"
+                  ? "Pick an interactive colour; the banner colour tints the background"
+                  : undefined
+              }
               value={config.accentMode}
               options={[
                 ["auto", "From banner"],
                 ["custom", "Pick"],
+                ["dual", "Banner + pick"],
                 ["none", "None"],
               ]}
               onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
             />
-            {config.accentMode === "custom" && (
+            {(config.accentMode === "custom" || config.accentMode === "dual") && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {ACCENT_SWATCHES.map((swatch) => (
                   <button
@@ -2958,12 +2964,13 @@ export function sizeFor(type: string): [number, number, number, number] {
   return BLOCK_SIZES[type] ?? [6, 4, 2, 2];
 }
 
-function studioSurfaceStyle(config: GStudioConfig): CSSProperties {
+function studioSurfaceStyle(config: GStudioConfig, secondaryColor?: string | null): CSSProperties {
   // Use the canonical style computation from studio-config so all accent
   // variables (--user-accent-foreground, --user-accent-glow, etc.) are set
   // consistently — the previous local copy omitted several, breaking contrast
   // on buttons/labels when a custom accent colour was picked.
-  const style = studioConfigToStyle(config) as CSSProperties & Record<string, string>;
+  const style = studioConfigToStyle(config, secondaryColor) as CSSProperties &
+    Record<string, string>;
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
   // Match the public page's font mapping (studioConfigToThemeTokens): an

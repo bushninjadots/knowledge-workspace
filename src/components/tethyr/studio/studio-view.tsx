@@ -172,7 +172,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const layout: PageLayout | null = page?.layout ?? null;
   const maxWidth = structureMaxWidth(config);
   const surfaceStyle = {
-    ...studioSurfaceStyle(config),
+    ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
     ...cardFillStyle(config),
   };
@@ -826,8 +826,12 @@ function StudioOnboardingChecklist({
 
 /** Page-local style: studio accent variables + personality font hints. Mirrors
  *  g-studio-surface's studioSurfaceStyle so the view and editor match. */
-function studioSurfaceStyle(config: StudioConfig): React.CSSProperties {
-  const style = studioConfigToStyle(config) as React.CSSProperties & Record<string, string>;
+function studioSurfaceStyle(
+  config: StudioConfig,
+  secondaryColor?: string | null,
+): React.CSSProperties {
+  const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
+    Record<string, string>;
   style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
   if (config.personality === "editorial") {
