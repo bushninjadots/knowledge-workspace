@@ -500,6 +500,88 @@ export function useMarkBestAnswer() {
 // Post Actions (like, helpful, save, offer)
 // ============================================================
 
+/**
+ * Apply an optimistic engagement toggle to one hydrated post.
+ * Returns the same object when the post doesn't match (cheap identity check).
+ */
+const ACTION_STATS_KEY: Record<string, keyof PostWithAuthor["stats"]> = {
+  like: "likes",
+  helpful: "helpful",
+  save: "saves",
+  offer: "offers",
+};
+
+function applyToggleToPost(
+  post: PostWithAuthor,
+  input: { postId: string; action: string; isActive: boolean },
+): PostWithAuthor {
+  if (post.id !== input.postId) return post;
+  const statsKey = ACTION_STATS_KEY[input.action] ?? input.action;
+  const delta = input.isActive ? -1 : 1;
+  const alreadyMine = post.myActions.includes(input.action);
+  return {
+    ...post,
+    stats: {
+      ...post.stats,
+      [statsKey]: Math.max(0, (post.stats[statsKey] ?? 0) + delta),
+    },
+    myActions: input.isActive
+      ? post.myActions.filter((a) => a !== input.action)
+      : alreadyMine
+        ? post.myActions
+        : [...post.myActions, input.action],
+  };
+}
+
+/**
+ * Optimistically rewrite every cached feed that may hold the post. Handles
+ * infinite-query pages ({ pages: [{ posts }] }) and plain post arrays — the
+ * two cache shapes the feed hooks use.
+ */
+function applyToggleToCaches(
+  qc: ReturnType<typeof useQueryClient>,
+  input: { postId: string; action: string; isActive: boolean },
+) {
+  for (const key of [POSTS_KEY, ["following-feed"], ["space-posts"]]) {
+    qc.setQueriesData({ queryKey: key }, (data: unknown): unknown => {
+      if (!data || typeof data !== "object") return data;
+
+      // Infinite-query shape: { pages: [{ posts: [...] }, ...] }.
+      if ("pages" in data && Array.isArray((data as { pages: unknown }).pages)) {
+        const dataPages = (data as { pages: { posts?: PostWithAuthor[] }[] }).pages ?? [];
+        let changed = false;
+        const nextPages = dataPages.map((page) => {
+          if (!page || !Array.isArray(page.posts)) return page;
+          let pageChanged = false;
+          const nextPosts = page.posts.map((p) => {
+            const next = applyToggleToPost(p, input);
+            if (next !== p) pageChanged = true;
+            return next;
+          });
+          if (!pageChanged) return page;
+          changed = true;
+          return { ...page, posts: nextPosts };
+        });
+        return changed ? { ...(data as object), pages: nextPages } : data;
+      }
+
+      // Plain array shape: [post, ...] (following feed).
+      if (Array.isArray(data)) {
+        let changed = false;
+        const next = data.map((p) => {
+          if (!p || typeof p !== "object" || !("id" in p)) return p;
+          const mapped = applyToggleToPost(p as PostWithAuthor, input);
+          if (mapped !== p) changed = true;
+          return mapped;
+        });
+        return changed ? next : data;
+      }
+
+      return data;
+    });
+  }
+}
+
 export function useTogglePostAction() {
   const qc = useQueryClient();
   return useMutation({
@@ -530,8 +612,26 @@ export function useTogglePostAction() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    // Optimistic: update every feed cache that holds this post so the button
+    // reacts instantly; `onSettled` invalidates to reconcile the true counts.
+    onMutate: async (input) => {
+      await Promise.all(
+        [POSTS_KEY, ["following-feed"], ["space-posts"]].map((k) =>
+          qc.cancelQueries({ queryKey: k }),
+        ),
+      );
+      applyToggleToCaches(qc, input);
+    },
+    onError: () => {
+      // Roll back by refetching — one round-trip restores the true counts.
       qc.invalidateQueries({ queryKey: POSTS_KEY });
+      qc.invalidateQueries({ queryKey: ["following-feed"] });
+      qc.invalidateQueries({ queryKey: ["space-posts"] });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+      qc.invalidateQueries({ queryKey: ["following-feed"] });
+      qc.invalidateQueries({ queryKey: ["space-posts"] });
     },
   });
 }

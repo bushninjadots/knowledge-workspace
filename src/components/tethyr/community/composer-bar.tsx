@@ -59,6 +59,7 @@ import { ComposerPoll } from "@/components/tethyr/community/composer-poll";
 import { supabase } from "@/integrations/supabase/client";
 import { validateFeedbackRequest, validatePollDraft } from "@/lib/community-validation";
 import { validateImageFile } from "@/lib/validators";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 
 const ACTION_ICON: Record<string, typeof Rocket> = {
   showcase: Rocket,
@@ -238,6 +239,12 @@ export function ComposerBar({
   const initial = name.charAt(0).toUpperCase();
   const isEditing = !!editingPost;
   const isSubmitting = createPost.isPending || updatePost.isPending;
+
+  // Guard in-progress posts from being lost to a navigation or tab close.
+  // The localStorage draft covers refreshes, so this only needs to fire when
+  // there is content that has never been saved anywhere else (edit mode).
+  const hasComposing = isEditing ? Boolean(draft.trim() || title.trim()) : Boolean(draft.trim());
+  useUnsavedChangesGuard(hasComposing, "Your post hasn't been published. Leave anyway?");
 
   // Draft autosave
   useEffect(() => {

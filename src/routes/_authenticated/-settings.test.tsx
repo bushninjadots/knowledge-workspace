@@ -67,6 +67,8 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
   useNavigate: () => vi.fn(),
+  // Navigation guard — inert in unit tests.
+  useBlocker: () => undefined,
 }));
 
 vi.mock("@/lib/theme", () => ({

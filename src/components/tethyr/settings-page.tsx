@@ -33,6 +33,7 @@ import { useNotificationPreferences } from "@/hooks/use-notification-preferences
 import { CATEGORY_LABELS, ALL_CATEGORIES } from "@/lib/notification-categories";
 import { deleteAccount } from "@/lib/account-server";
 import { friendlyError } from "@/lib/error-message";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 import type { ProfileBackground } from "@/lib/background-themes";
 
 export function SettingsPage() {
@@ -54,6 +55,12 @@ export function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  // Half-typed password/email changes count as unsaved work.
+  useUnsavedChangesGuard(
+    Boolean(newPassword || (newEmail && newEmail !== authUser?.email)),
+    "You have unsaved changes in Settings. Leave anyway?",
+  );
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();

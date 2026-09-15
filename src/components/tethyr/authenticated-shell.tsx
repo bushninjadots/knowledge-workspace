@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
-import { Menu, Search, ArrowUp, Bell } from "lucide-react";
+import { Menu, Search, ArrowUp, Bell, WifiOff } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -20,6 +20,7 @@ import { MobilePrimaryNav } from "./mobile-primary-nav";
 import { BackgroundLayer } from "./background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 const SIDEBAR_STORAGE_KEY = "tethyr:sidebar-collapsed";
@@ -71,6 +72,7 @@ export function AuthenticatedShell() {
     [palette, me?.background],
   );
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const online = useOnlineStatus();
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -142,6 +144,16 @@ export function AuthenticatedShell() {
         </header>
 
         <EmailVerificationBanner />
+
+        {!online && (
+          <div
+            role="status"
+            className="flex items-center justify-center gap-2 border-b border-caution/30 bg-caution/10 px-4 py-2 text-sm text-caution-foreground"
+          >
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span>You&apos;re offline — showing your last loaded data.</span>
+          </div>
+        )}
 
         <main id="main-content" className="flex-1 pb-16 md:pb-0">
           <Outlet />

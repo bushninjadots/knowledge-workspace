@@ -1,27 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { WifiOff } from "lucide-react";
 import { TethyrBall } from "./tethyr-ball";
-
-function useOnlineStatus() {
-  // Default to online (matches SSR) to avoid hydration mismatch; the effect
-  // syncs the real browser state right after mount, same pattern as use-mobile.
-  const [online, setOnline] = useState(true);
-
-  useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    setOnline(navigator.onLine);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
-
-  return online;
-}
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 function OfflineNotice() {
   const online = useOnlineStatus();

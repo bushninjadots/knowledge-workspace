@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Image, Camera } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BlockEmptyState } from "@/components/tethyr/blocks/block-empty-state";
+import { MediaLightbox } from "@/components/tethyr/media-lightbox";
 import { registerBlock } from "@/lib/block-registry";
 import type { BlockProps } from "@/lib/page-blocks";
 
@@ -55,6 +56,12 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
     if (isEditing || !blockId) return;
     onBlockEmptyChange?.(blockId, !hasContent);
   }, [isEditing, blockId, onBlockEmptyChange, hasContent]);
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
+  // Lightbox list follows the grid's rendered order (url-bearing items only).
+  const lightboxImages = (data ?? [])
+    .filter((d) => d.url)
+    .map((d) => ({ src: d.url as string, alt: d.title, caption: d.title }));
+
   if (isLoading) return <Skeleton className="h-32 w-full rounded-xl" />;
   // Narrow `data` for the render path below (hasContent alone doesn't narrow it).
   if (!data?.length) {
@@ -77,12 +84,21 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
             className="group relative aspect-square overflow-hidden rounded-lg bg-surface-sunken"
           >
             {item.url ? (
-              <img
-                src={item.url}
-                alt={item.title}
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                loading="lazy"
-              />
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxIndex(lightboxImages.findIndex((im) => im.src === item.url))
+                }
+                aria-label={`View ${item.title} fullscreen`}
+                className="block h-full w-full cursor-zoom-in"
+              >
+                <img
+                  src={item.url}
+                  alt={item.title}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
+              </button>
             ) : (
               <div className="flex h-full items-center justify-center">
                 {item.kind === "video" ? (
@@ -103,6 +119,13 @@ function ProfileGalleryBlock({ config, context }: BlockProps) {
           </div>
         ))}
       </div>
+
+      <MediaLightbox
+        images={lightboxImages}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(-1)}
+        onNavigate={setLightboxIndex}
+      />
     </div>
   );
 }

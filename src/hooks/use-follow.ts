@@ -10,6 +10,9 @@ const FOLLOWERS_KEY = (userId: string) => ["followers", userId] as const;
 const FOLLOWING_KEY = (userId: string) => ["following", userId] as const;
 const FOLLOWING_FEED_KEY = ["following-feed"] as const;
 
+/** Previous follow status, captured for rollback on failure. */
+type FollowSnapshot = { status: { isFollowing: boolean } | undefined };
+
 export function useFollowStatus(targetUserId: string) {
   return useQuery({
     queryKey: FOLLOW_STATUS_KEY(targetUserId),
@@ -99,7 +102,20 @@ export function useFollowUser() {
 
       if (error) throw error;
     },
-    onSuccess: (_data, targetUserId) => {
+    // Optimistic: flip the button instantly; the server round-trip only
+    // confirms. Rollback restores the previous state on failure.
+    onMutate: async (targetUserId) => {
+      await qc.cancelQueries({ queryKey: FOLLOW_STATUS_KEY(targetUserId) });
+      const status = qc.getQueryData<{ isFollowing: boolean }>(FOLLOW_STATUS_KEY(targetUserId));
+      qc.setQueryData(FOLLOW_STATUS_KEY(targetUserId), { isFollowing: true });
+      return { status } satisfies FollowSnapshot;
+    },
+    onError: (_err, targetUserId, ctx) => {
+      if (ctx?.status !== undefined) {
+        qc.setQueryData(FOLLOW_STATUS_KEY(targetUserId), ctx.status);
+      }
+    },
+    onSettled: (_data, _error, targetUserId) => {
       qc.invalidateQueries({ queryKey: FOLLOW_STATUS_KEY(targetUserId) });
       qc.invalidateQueries({ queryKey: FOLLOWING_FEED_KEY });
     },
@@ -121,7 +137,18 @@ export function useUnfollowUser() {
 
       if (error) throw error;
     },
-    onSuccess: (_data, targetUserId) => {
+    onMutate: async (targetUserId) => {
+      await qc.cancelQueries({ queryKey: FOLLOW_STATUS_KEY(targetUserId) });
+      const status = qc.getQueryData<{ isFollowing: boolean }>(FOLLOW_STATUS_KEY(targetUserId));
+      qc.setQueryData(FOLLOW_STATUS_KEY(targetUserId), { isFollowing: false });
+      return { status } satisfies FollowSnapshot;
+    },
+    onError: (_err, targetUserId, ctx) => {
+      if (ctx?.status !== undefined) {
+        qc.setQueryData(FOLLOW_STATUS_KEY(targetUserId), ctx.status);
+      }
+    },
+    onSettled: (_data, _error, targetUserId) => {
       qc.invalidateQueries({ queryKey: FOLLOW_STATUS_KEY(targetUserId) });
       qc.invalidateQueries({ queryKey: FOLLOWING_FEED_KEY });
     },

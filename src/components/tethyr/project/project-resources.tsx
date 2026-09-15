@@ -20,6 +20,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useProjectLibraryItems } from "@/hooks/use-library";
 import type { ResourceItem, GalleryItem } from "@/hooks/use-projects";
+import { MediaLightbox, type LightboxImage } from "@/components/tethyr/media-lightbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -306,7 +307,18 @@ export function GallerySection({
   const [mediaType, setMediaType] = useState<GalleryItem["type"]>("image");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Lightbox shows images only; map each gallery position to its position
+  // within the image-only list so navigation never lands on a video entry.
+  const imageIndexByKey = new Map<number, number>();
+  const lightboxImages: LightboxImage[] = [];
+  gallery.forEach((g, i) => {
+    if (g.type !== "image") return;
+    imageIndexByKey.set(i, lightboxImages.length);
+    lightboxImages.push({ src: g.url, alt: g.caption, caption: g.caption });
+  });
 
   const handleFileUpload = useCallback(
     async (file: File) => {
@@ -509,21 +521,43 @@ export function GallerySection({
               key={idx}
               className="content-safe group relative min-w-0 overflow-hidden rounded-xl border card-border bg-background/30"
             >
-              <GalleryMedia
-                url={g.url}
-                type={g.type}
-                alt={g.caption ?? ""}
-                className="aspect-video w-full max-w-full object-cover"
-              />
+              {/* Images open the fullscreen lightbox; videos keep native controls. */}
+              {g.type === "image" ? (
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(imageIndexByKey.get(idx) ?? -1)}
+                  aria-label={`View ${g.caption || `image ${idx + 1}`} fullscreen`}
+                  className="block w-full cursor-zoom-in"
+                >
+                  <GalleryMedia
+                    url={g.url}
+                    type={g.type}
+                    alt={g.caption ?? ""}
+                    className="aspect-video w-full max-w-full object-cover"
+                  />
+                </button>
+              ) : (
+                <GalleryMedia
+                  url={g.url}
+                  type={g.type}
+                  alt={g.caption ?? ""}
+                  className="aspect-video w-full max-w-full object-cover"
+                />
+              )}
               {g.caption && (
-                <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-[11px]">
-                  {g.caption}
-                </div>
+                <>
+                  {/* Guaranteed scrim — caption text must stay readable over any media. */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 on-media-scrim" />
+                  <div className="absolute inset-x-0 bottom-0 px-2 pb-1 text-[11px] text-white">
+                    {g.caption}
+                  </div>
+                </>
               )}
               {isOwner && (
                 <button
                   onClick={() => handleRemove(idx)}
                   disabled={saving}
+                  aria-label={`Remove ${g.caption || `gallery image ${idx + 1}`}`}
                   className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-fade group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive disabled:opacity-40"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -533,6 +567,13 @@ export function GallerySection({
           ))}
         </div>
       )}
+
+      <MediaLightbox
+        images={lightboxImages}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(-1)}
+        onNavigate={setLightboxIndex}
+      />
     </div>
   );
 }
