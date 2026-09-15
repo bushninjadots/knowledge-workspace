@@ -48,12 +48,7 @@ function ProjectShelfFace({
       >
         {/* Cover image — 16:9, object-contain to show the whole image */}
         <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-          <CoverGradient
-            tags={project.tags}
-            coverUrl={project.cover_url}
-            progress={project.progress_percent}
-            fit="contain"
-          />
+          <CoverGradient coverUrl={project.cover_url} fit="contain" />
 
           {/* Subtle specular sheen on hover */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-150 group-hover:opacity-100" />

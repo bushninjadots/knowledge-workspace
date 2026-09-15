@@ -55,12 +55,7 @@ export function ProjectShelfThumbnails({
                 : "border-border/60 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))]",
             )}
           >
-            <CoverGradient
-              tags={project.tags}
-              coverUrl={project.cover_url}
-              progress={project.progress_percent}
-              animated={false}
-            />
+            <CoverGradient coverUrl={project.cover_url} />
             {/* Title overlay — guaranteed scrim so white text is always readable. */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 on-media-scrim" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 px-1.5 pb-0.5">

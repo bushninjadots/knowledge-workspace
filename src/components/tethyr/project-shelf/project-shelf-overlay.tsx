@@ -167,12 +167,7 @@ export function ProjectShelfOverlay({
                       >
                         {/* Cover */}
                         <div className="relative aspect-video">
-                          <CoverGradient
-                            tags={project.tags}
-                            coverUrl={project.cover_url}
-                            progress={project.progress_percent}
-                            fit="contain"
-                          />
+                          <CoverGradient coverUrl={project.cover_url} fit="contain" />
 
                           {/* Close button */}
                           <button

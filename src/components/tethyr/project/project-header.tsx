@@ -25,6 +25,7 @@ import {
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { PersonPill, PERSON_ROLE_LABEL } from "@/components/tethyr/person-pill";
+import { ProjectCoverFallback } from "@/components/tethyr/project-shelf/cover-gradient";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import type { Contributor } from "@/hooks/use-projects";
 
@@ -123,9 +124,10 @@ export function ProjectHeader({
 
   return (
     <section className="border-b border-border/60">
-      {/* Slim cover band */}
-      <div className="relative h-44 overflow-hidden bg-[linear-gradient(120deg,oklch(0.65_0.26_305)_0%,oklch(0.92_0.23_142)_100%)] opacity-90 sm:h-52">
-        {coverSigned && (
+      {/* Slim cover band — a quiet theme surface when the project has no
+          cover image, matching the fallback used on every project card. */}
+      <div className="relative h-44 overflow-hidden bg-surface-sunken sm:h-52">
+        {coverSigned ? (
           <img
             src={coverSigned}
             alt={`${project.title} cover`}
@@ -134,6 +136,8 @@ export function ProjectHeader({
             className="h-full w-full object-cover"
             decoding="async"
           />
+        ) : (
+          <ProjectCoverFallback iconClassName="h-8 w-8" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
       </div>
