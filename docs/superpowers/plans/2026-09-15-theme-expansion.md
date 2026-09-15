@@ -1,6 +1,7 @@
 # Theme Expansion Plan
 
 **Date:** 2026-09-15
+**Status:** Complete — all three tasks shipped on `design/studio-dual-accent` and merged to `main`.
 **Scope:** Three related changes to theming and Studio creator
 
 ---
@@ -33,9 +34,9 @@
 - `src/lib/studio-config.ts` — `starterId` field stays as `string | null` (DB compat)
 
 ### Verification
-- Run tests, typecheck
-- Verify StarterPicker still appears on first Studio creation
-- Verify StarterPicker does NOT appear in Studio editor customize panel or header
+- ✅ Run tests, typecheck
+- ✅ Verify StarterPicker still appears on first Studio creation
+- ✅ Verify StarterPicker does NOT appear in Studio editor customize panel or header
 
 ---
 
@@ -93,6 +94,10 @@ When a preset is selected:
 ### Persistence
 - `localStorage["tethyr-theme"]` — dark/light/system (unchanged)
 - `localStorage["tethyr-theme-preset"]` — theme ID or null (new)
+- `localStorage["tethyr-theme-preset-vars"]` — cached CSS-var map replayed by the pre-hydration init script, so the chosen preset paints on the very first frame
+
+### Status
+- ✅ Shipped: `themePreset` context state, Style section in the ThemeToggle dropdown, `GlobalThemePreset` applier on `<html>`, cached-var replay in `themeInitScript`.
 
 ---
 
@@ -152,6 +157,9 @@ Add `accentMode: "dual"` option:
 - `src/styles.css` — CSS defaults for secondary vars
 - Tests: `studio-config.test.ts`, `background-themes.test.ts`
 
+### Status
+- ✅ Shipped as `accentMode: "dual"` ("Banner + colour"), replacing the redundant `"auto"` option with a legacy migration (`"auto"` → `"dual"`).
+
 ---
 
 ## Execution Order
@@ -160,4 +168,6 @@ Add `accentMode: "dual"` option:
 2. **Task 2** (navbar theme presets) — needs DB theme query infrastructure
 3. **Task 3** (dual-color accent) — builds on Task 1's cleaned-up Studio
 
-Each task gets its own branch, tests, and can be merged independently.
+Each task shipped on its own branch and was merged into `main` via
+`design/studio-dual-accent`. The `/templates` routes and hooks were deleted in
+the same pass so the Studio customize panel is the single appearance surface.
