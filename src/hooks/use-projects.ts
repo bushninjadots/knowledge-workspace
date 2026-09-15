@@ -294,7 +294,8 @@ export function useProjectUpdates(projectId: string) {
         .from("project_updates")
         .select("*, author:profiles!author_id(display_name, handle, avatar_url)")
         .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (error) throw error;
       const updates = (raw ?? []) as (Omit<ProjectUpdateRow, "author"> & {

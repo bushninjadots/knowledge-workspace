@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { ArrowRight, Sparkles, Folder, UserPlus, Award, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { completenessPercent, nextSteps, sections, type Section } from "@/lib/profile-completeness";
@@ -53,15 +54,15 @@ function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="h-32 animate-gentle-pulse rounded-xl bg-surface" />
-        <div className="space-y-3">
+        <Skeleton className="h-32 rounded-xl" />
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-12 animate-gentle-pulse rounded-lg bg-surface" />
+            <Skeleton key={i} className="h-12 rounded-lg" />
           ))}
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 animate-gentle-pulse rounded-xl bg-surface" />
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
       </div>
