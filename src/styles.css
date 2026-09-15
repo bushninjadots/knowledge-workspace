@@ -314,14 +314,18 @@
     }
   }
 
-  /* Dense, engineered heading scale — no marketing-size type by default. */
+  /* Dense, engineered heading scale — no marketing-size type by default.
+     Page and section titles take the display face (Space Grotesk by default,
+     user-overridable); dense sub-headings stay on the sans stack. */
   h1 {
+    font-family: var(--font-title);
     font-size: 1.375rem;
     line-height: 1.25;
     font-weight: 600;
     letter-spacing: -0.015em;
   }
   h2 {
+    font-family: var(--font-title);
     font-size: 1.0625rem;
     line-height: 1.3;
     font-weight: 600;
@@ -492,11 +496,12 @@
 
 /* Tethyr card surface — used for project cards, profile cards, and studio blocks.
    Uses the member's card-border-color when set, falling back to the page border.
-   Tints with the user accent when the member has chosen accent borders. */
+   Tints with the user accent when the member has chosen accent borders.
+   Radius matches the shared Card primitive (`src/components/ui/card.tsx`). */
 @utility card {
   background-color: var(--surface);
   border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
 }
 
 /* Full-bleed panel that sits flush inside a column (no side borders). */
