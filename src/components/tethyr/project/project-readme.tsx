@@ -223,10 +223,11 @@ export function ProjectReadmeTab({
       {presentationPreset === "demo-first" && mediaSection}
       <ReadingProgress />
 
-      {/* README document */}
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-4 py-3">
-          <h2 className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+      {/* README is the project homepage — a document surface on the page
+          itself, not a card in front of it. */}
+      <section aria-labelledby="project-readme-heading">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
+          <h2 id="project-readme-heading" className="flex items-center gap-2 text-sm font-medium text-foreground/80">
             <FileText className="h-4 w-4 text-muted-foreground" />
             README
           </h2>
@@ -272,7 +273,7 @@ export function ProjectReadmeTab({
         </div>
 
         {editing ? (
-          <div className="p-4">
+          <div className="pt-4">
             {/* Editor toolbar: Write / Preview / Changes */}
             <div className="mb-3 flex items-center gap-1 rounded-xl border border-border/40 bg-background/40 p-1">
               {(
@@ -369,13 +370,13 @@ export function ProjectReadmeTab({
             <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem]">
               <div id={README_ARTICLE_ID} className="min-w-0">
                 {project.readme ? (
-                  <div className="prose-custom px-5 py-5 sm:px-6">
+                  <div className="prose-custom py-6">
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                       {project.readme}
                     </Markdown>
                   </div>
                 ) : fallbackDoc ? (
-                  <div className="prose-custom px-5 py-5 sm:px-6">
+                  <div className="prose-custom py-6">
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                       {fallbackDoc}
                     </Markdown>
@@ -402,8 +403,9 @@ export function ProjectReadmeTab({
                 )}
               </div>
 
-              {/* Desktop rail — scroll-spy TOC + code source. Sticky below the
-                  sticky workbench so both stay reachable while reading. */}
+              {/* Desktop rail — scroll-spy TOC + code source. On screens with
+                  the workbench scrolled away, the lightweight Jump-to nav owns
+                  the sticky slot under the header; this rail stays below both. */}
               <aside className="hidden lg:block" aria-label="README navigation">
                 <div className="sticky top-44 max-h-[calc(100vh-12rem)] space-y-6 overflow-y-auto border-l border-border/40 py-5 pl-5 pr-1">
                   <ReadmeToc sections={readmeSections} />
@@ -418,7 +420,7 @@ export function ProjectReadmeTab({
             </div>
           </>
         )}
-      </Card>
+      </section>
 
       {/* Mobile code source — the rail above is desktop-only, so owners and
           visitors still get the GitHub surface on small screens. */}

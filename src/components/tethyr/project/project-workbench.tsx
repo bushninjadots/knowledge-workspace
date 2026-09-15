@@ -110,7 +110,7 @@ export function ProjectWorkbench({
   return (
     <section
       aria-labelledby="project-workbench-heading"
-      className="sticky top-16 z-20 -mx-4 border-y border-[var(--user-accent-border,var(--border))] bg-background px-4 py-4 shadow-[0_1px_0_var(--user-accent-subtle,var(--surface-elevated))] sm:-mx-8 sm:px-8 sm:py-5"
+      className="-mx-4 border-y border-[var(--user-accent-border,var(--border))] bg-background px-4 py-4 sm:-mx-8 sm:px-8 sm:py-5"
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 border-l-2 border-[var(--user-accent,var(--primary))] pl-3">

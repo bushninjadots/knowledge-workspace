@@ -985,7 +985,7 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
   return (
     <nav
       aria-label="Project sections"
-      className="sticky top-0 z-20 mt-6 border-y border-border/60 bg-background/90 py-3 backdrop-blur-sm"
+      className="sticky top-16 z-20 mt-6 border-y border-border/60 bg-background/90 py-3 backdrop-blur-sm"
     >
       <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
         <span className="section-label shrink-0">Jump to</span>
