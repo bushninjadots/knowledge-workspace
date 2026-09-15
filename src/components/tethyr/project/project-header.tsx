@@ -126,7 +126,7 @@ export function ProjectHeader({
     <section className="border-b border-border/60">
       {/* Slim cover band — a quiet theme surface when the project has no
           cover image, matching the fallback used on every project card. */}
-      <div className="relative h-44 overflow-hidden bg-surface-sunken sm:h-52">
+      <div className="relative h-56 overflow-hidden bg-surface-sunken sm:h-72 lg:h-80">
         {coverSigned ? (
           <img
             src={coverSigned}
@@ -142,8 +142,8 @@ export function ProjectHeader({
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-5 sm:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-4 pt-4">
+      <div className="mx-auto max-w-7xl px-4 pb-7 sm:px-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 pt-6 sm:pt-7">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
