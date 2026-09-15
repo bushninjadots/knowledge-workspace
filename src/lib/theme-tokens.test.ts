@@ -127,7 +127,7 @@ describe("themeTokensToVars", () => {
     expect(vars["--trust-subtle"]).toBe("color-mix(in oklab, var(--trust) 16%, #0d0221)");
   });
 
-  it("preserves explicitly supplied contrast tokens", () => {
+  it("preserves explicitly supplied structural tokens and derives primary foreground", () => {
     const vars = themeTokensToVars({
       colors: {
         background: "#111111",
@@ -141,7 +141,8 @@ describe("themeTokensToVars", () => {
     expect(vars["--card"]).toBe("#222222");
     expect(vars["--muted"]).toBe("#333333");
     expect(vars["--primary"]).toBe("#ff00aa");
-    expect(vars["--primary-foreground"]).toBe("#111111");
+    // primary-foreground is always derived for legibility, never left as-is
+    expect(vars["--primary-foreground"]).toBe("#f5f6f8");
   });
 
   it("handles full token set with all categories", () => {
