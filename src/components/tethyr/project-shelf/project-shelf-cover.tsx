@@ -92,14 +92,16 @@ function ProjectShelfFace({
               {project.title}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
-              {project.looking_for_collaborators ? (
-                <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--user-accent,var(--ai))]/15 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
-                  Open
+              {/* A posted role is more specific than "open to collaborators",
+                  so the count wins when both are true. */}
+              {openRoleCount > 0 ? (
+                <span className="inline-flex shrink-0 items-center rounded-full bg-trust/15 px-2 py-0.5 text-[11px] font-medium text-trust">
+                  {openRoleCount} role{openRoleCount !== 1 ? "s" : ""} open
                 </span>
               ) : (
-                openRoleCount > 0 && (
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-trust/15 px-2 py-0.5 text-[11px] font-medium text-trust">
-                    {openRoleCount} role{openRoleCount !== 1 ? "s" : ""} open
+                project.looking_for_collaborators && (
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--user-accent,var(--ai))]/15 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
+                    Open
                   </span>
                 )
               )}

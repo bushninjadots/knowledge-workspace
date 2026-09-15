@@ -200,16 +200,18 @@ export function ProjectShelfOverlay({
                               />
                               {STATUS_STYLES[project.status]?.label ?? "Active"}
                             </span>
-                            {project.looking_for_collaborators ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--user-accent,var(--ai))]/20 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
+                            {/* Matches the shelf cover: a posted role outranks the
+                                generic "open to collaborators" signal. */}
+                            {openRoleCount > 0 ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-trust/20 px-2 py-0.5 text-[11px] font-medium text-trust">
                                 <Users className="h-2.5 w-2.5" />
-                                Open
+                                {openRoleCount} role{openRoleCount !== 1 ? "s" : ""} open
                               </span>
                             ) : (
-                              openRoleCount > 0 && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-trust/20 px-2 py-0.5 text-[11px] font-medium text-trust">
+                              project.looking_for_collaborators && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--user-accent,var(--ai))]/20 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
                                   <Users className="h-2.5 w-2.5" />
-                                  {openRoleCount} role{openRoleCount !== 1 ? "s" : ""} open
+                                  Open
                                 </span>
                               )
                             )}
