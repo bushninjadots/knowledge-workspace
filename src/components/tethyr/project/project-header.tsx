@@ -389,15 +389,26 @@ export function ProjectHeader({
         </div>
 
         {/* Progress strip */}
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated">
+        <div className="mt-5 flex items-center gap-3" aria-label="Project progress">
+          <span className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
+            Momentum
+          </span>
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated"
+            role="progressbar"
+            aria-valuenow={project.progress_percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${project.progress_percent}% complete`}
+          >
             <div
-              className="h-full rounded-full bg-foreground transition-[width]"
+              className="h-full rounded-full bg-[var(--user-accent,var(--foreground))] transition-[width]"
               style={{ width: `${project.progress_percent}%` }}
             />
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-            {project.progress_percent}% complete
+          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+            {project.progress_percent}%{" "}
+            <span className="font-normal text-muted-foreground">complete</span>
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
