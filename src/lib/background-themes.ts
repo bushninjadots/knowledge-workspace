@@ -328,14 +328,12 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
           : "var(--user-accent-border, var(--border))";
 
   if (background.accentMode === "custom" && background.accentColor) {
-    const foreground = contrastingHexForeground(background.accentColor);
-    style["--user-accent"] = background.accentColor;
-    style["--user-accent-foreground"] = foreground;
-    style["--user-accent-subtle"] =
-      `color-mix(in oklab, ${background.accentColor} 10%, transparent)`;
-    style["--user-accent-border"] =
-      `color-mix(in oklab, ${background.accentColor} 30%, transparent)`;
-    style["--user-accent-glow"] = `color-mix(in oklab, ${background.accentColor} 6%, transparent)`;
+    Object.assign(style, accentVarsFromColor(background.accentColor));
+  } else if (!background.accentMode && background.color && background.colorSource !== "banner") {
+    // Identity fallback: no explicit accent chosen, so the accent follows the
+    // member's own colour. Banner-sourced colours are skipped — the live
+    // palette extracted from the banner is the more accurate signal there.
+    Object.assign(style, accentVarsFromColor(background.color));
   }
 
   if (background.density === "compact") {
@@ -346,6 +344,43 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
     style["--content-density-padding"] = "1rem";
   }
   return style;
+}
+
+/**
+ * Derive the five `--user-accent-*` variables from a hex colour. The same
+ * family the dynamic banner palette and explicit custom accents use, so every
+ * surface that consumes the accent tokens reacts to the given colour.
+ * Returns `{}` for anything that isn't a 6-digit hex.
+ */
+export function accentVarsFromColor(
+  color: string,
+): CSSProperties & Record<string, string> {
+  const style = {} as CSSProperties & Record<string, string>;
+  const match = color.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return style;
+  style["--user-accent"] = color;
+  style["--user-accent-foreground"] = contrastingHexForeground(color);
+  style["--user-accent-subtle"] = `color-mix(in oklab, ${color} 10%, transparent)`;
+  style["--user-accent-border"] = `color-mix(in oklab, ${color} 30%, transparent)`;
+  style["--user-accent-glow"] = `color-mix(in oklab, ${color} 6%, transparent)`;
+  return style;
+}
+
+/**
+ * The identity accent for a member: an explicit custom accent wins, otherwise
+ * the member's own background colour stands in as their signature. Used to
+ * scope accent tokens around a single card (e.g. each project in the explore
+ * grid carries its owner's colour), independent of the viewer's shell accent.
+ */
+export function ownerAccentStyle(
+  background: ProfileBackground | null | undefined,
+): CSSProperties & Record<string, string> {
+  if (!background) return {};
+  if (background.accentMode === "custom" && background.accentColor) {
+    return accentVarsFromColor(background.accentColor);
+  }
+  if (background.color) return accentVarsFromColor(background.color);
+  return {};
 }
 
 function contrastingHexForeground(hex: string): string {

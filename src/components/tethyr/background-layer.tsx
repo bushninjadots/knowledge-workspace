@@ -31,14 +31,27 @@ export function BackgroundLayer({
   if (!isBackgroundActive(background) || Object.keys(style).length === 0) return null;
 
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10"
-      style={
-        isImage
-          ? { ...style, opacity: imageOpacityFor(background.strength), filter: "saturate(0.9)" }
-          : style
-      }
-    />
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={
+          isImage
+            ? { ...style, opacity: imageOpacityFor(background.strength), filter: "saturate(0.9)" }
+            : style
+        }
+      />
+      {/* Accent glow: a faint radial wash from the member's accent colour over
+          the top edge of the workspace. `--user-accent-glow` is ~6% opacity,
+          so this reads as a tint, never a gradient feature. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(640px 280px at 50% 0%, var(--user-accent-glow, transparent), transparent 70%)",
+        }}
+      />
+    </>
   );
 }
