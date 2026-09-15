@@ -419,10 +419,10 @@ function DashboardWelcomeBanner({
           <p className="section-label">Welcome back</p>
           <h1
             id="dashboard-welcome-heading"
-            className="mt-1 font-display text-2xl font-semibold sm:text-3xl"
+            className="mt-1 max-w-2xl font-title text-3xl font-semibold tracking-[-0.035em] sm:text-5xl"
           >
             Hey {firstName},{" "}
-            <span className="text-[var(--user-accent,var(--trust))]">what&apos;s next?</span>
+            <span className="text-[var(--user-accent,var(--trust))]">what will you make move?</span>
           </h1>
         </div>
         {reputationScore != null && (

@@ -93,6 +93,19 @@ type Creator = {
 
 type Tab = "projects" | "creators" | "opportunities";
 
+function ExploreStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <p className="font-title text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
+}
+
 type OpportunityQueryRow = {
   id: string;
   title: string;
@@ -661,18 +674,26 @@ function ExplorePage() {
               Discover
             </Button>
           </div>
-          <section className="mb-6 border-b border-border/60 pb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-elevated">
-                <Compass className="h-4.5 w-4.5 text-muted-foreground" />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl font-semibold tracking-tight">
-                  Find work, people, and openings
+          <section className="mb-7 border-b border-border/60 pb-7">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--user-accent,var(--learning))]">
+                  <span className="h-px w-8 bg-[var(--user-accent,var(--learning))]" />
+                  Creative studios
+                </div>
+                <h1 className="font-title text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl">
+                  Find the work worth joining.
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Browse projects, people, and open opportunities from the community.
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+                  {
+                    "Explore projects in motion, meet the people making them, and find an opening where your contribution matters."
+                  }
                 </p>
+              </div>
+              <div className="grid grid-cols-3 gap-5 border-l border-border/60 pl-5 text-left sm:min-w-52">
+                <ExploreStat value={projects?.length ?? 0} label="projects" />
+                <ExploreStat value={creators?.length ?? 0} label="people" />
+                <ExploreStat value={opportunities?.length ?? 0} label="openings" />
               </div>
             </div>
           </section>
