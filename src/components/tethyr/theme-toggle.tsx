@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Monitor, Moon, Palette, Sun } from "lucide-react";
 import { useTheme, type Theme } from "@/lib/theme";
 import {
@@ -9,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
+import { useThemePresets, presetSwatch } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 const options: { value: Theme; label: string; icon: typeof Sun }[] = [
@@ -18,31 +17,14 @@ const options: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "System", icon: Monitor },
 ];
 
-interface ThemePresetRow {
-  id: string;
-  name: string;
-  tokens: {
-    colors?: Record<string, string>;
-    typography?: Record<string, string>;
-    borders?: { radius?: Record<string, string>; style?: string };
-    spacing?: Record<string, string>;
-    shadows?: Record<string, string>;
-  } | null;
-}
-
-/** Pull a representative swatch colour out of a theme's tokens for the dot. */
-function presetSwatch(tokens: ThemePresetRow["tokens"]): string | undefined {
-  const colors = tokens?.colors;
-  if (!colors) return undefined;
-  return colors.primary ?? colors.border ?? colors.background ?? colors.card;
-}
-
 /**
- * Theme switcher.`variant="icon"`is the compact header button,
- *`variant="row"`is a full-width row for sidebars.
+ * Theme switcher. `variant="icon"` is the compact header button,
+ * `variant="row"` is a full-width row for sidebars.
  *
  * The dropdown has two sections: an appearance **Mode** (light / dark / system)
  * and a global **Style** preset (Minimal, Terminal, Paper…) applied app-wide.
+ * The Style list shares the "theme-presets" query cache with the Studio
+ * customize panel, so both pickers always agree without duplicate fetches.
  */
 export function ThemeToggle({
   variant = "icon",
@@ -55,20 +37,8 @@ export function ThemeToggle({
   const Icon = resolvedTheme === "dark" ? Moon : Sun;
   const activeLabel = options.find((o) => o.value === theme)?.label ?? "System";
 
-  const presetsQuery = useQuery({
-    queryKey: ["theme-presets"],
-    queryFn: async (): Promise<ThemePresetRow[]> => {
-      const { data, error } = await supabase
-        .from("themes")
-        .select("id, name, tokens")
-        .order("name");
-      if (error) throw error;
-      return (data ?? []) as ThemePresetRow[];
-    },
-    staleTime: 60 * 1000,
-  });
-
-  const activePresetName = presetsQuery.data?.find((p) => p.id === themePreset)?.name;
+  const { data: presets = [] } = useThemePresets();
+  const activePresetName = presets.find((p) => p.id === themePreset)?.name;
 
   return (
     <DropdownMenu>
@@ -76,11 +46,7 @@ export function ThemeToggle({
         {variant === "icon" ? (
           <button
             type="button"
-            aria-label={
-              themePreset || activeLabel
-                ? `Theme: ${activePresetName ?? activeLabel}`
-                : "Theme settings"
-            }
+            aria-label={activePresetName ? `Theme: ${activePresetName}` : `Theme: ${activeLabel}`}
             className={cn(
               "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground",
               className,
@@ -132,28 +98,25 @@ export function ThemeToggle({
           Default
           {!themePreset && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-learning" />}
         </DropdownMenuItem>
-        {presetsQuery.data?.map((preset) => {
-          const swatch = presetSwatch(preset.tokens);
-          return (
-            <DropdownMenuItem
-              key={preset.id}
-              onSelect={() => setThemePreset(preset.id)}
-              className={cn(
-                "gap-2 text-[13px]",
-                themePreset === preset.id && "text-foreground font-medium",
-              )}
-            >
-              <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full border border-border"
-                style={swatch ? { backgroundColor: swatch } : undefined}
-              />
-              {preset.name}
-              {themePreset === preset.id && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-learning" />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
+        {presets.map((preset) => (
+          <DropdownMenuItem
+            key={preset.id}
+            onSelect={() => setThemePreset(preset.id)}
+            className={cn(
+              "gap-2 text-[13px]",
+              themePreset === preset.id && "text-foreground font-medium",
+            )}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full border border-border"
+              style={{ backgroundColor: presetSwatch(preset) }}
+            />
+            {preset.name}
+            {themePreset === preset.id && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-learning" />
+            )}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

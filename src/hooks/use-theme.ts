@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import type { ThemeTokens } from "@/lib/page-blocks";
 import { themeTokensToVars } from "@/lib/theme-tokens";
-import { useTheme as useAppTheme } from "@/lib/theme";
+import { useTheme as useAppTheme, THEME_PRESET_STORAGE_KEY } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
 
 interface ThemeRecord {
@@ -37,11 +37,27 @@ export function useThemePresets() {
         .order("name", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as unknown as (ThemeRecord & { id: string; name: string })[];
-      return rows.map((row) => ({
+      const presets = rows.map((row) => ({
         id: row.id,
         name: row.name,
         tokens: ((row.tokens ?? {}) as Json) as ThemeTokens,
       }));
+
+      // Self-heal: if the globally-selected preset was deleted from the themes
+      // table, clear the stale selection so the app falls back to the Tethyr
+      // default instead of dangling on a nonexistent theme id.
+      if (typeof window !== "undefined") {
+        try {
+          const selected = window.localStorage.getItem(THEME_PRESET_STORAGE_KEY);
+          if (selected && !presets.some((preset) => preset.id === selected)) {
+            window.localStorage.removeItem(THEME_PRESET_STORAGE_KEY);
+          }
+        } catch {
+          /* storage unavailable */
+        }
+      }
+
+      return presets;
     },
     staleTime: 60 * 1000,
   });
