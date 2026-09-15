@@ -11,6 +11,17 @@ type PostEngagement = {
   myActions: string[];
 };
 
+/** One row of the `post_engagement_counts` aggregate. */
+type EngagementCountRow = {
+  post_id: string;
+  likes: number | string;
+  helpful: number | string;
+  saves: number | string;
+  offers: number | string;
+  comment_count: number | string;
+  user_actions: string[] | null;
+};
+
 /**
  * Fetch engagement totals for a bounded set of posts. The aggregate RPC keeps
  * high-volume action/comment rows in Postgres; the fallback preserves
@@ -24,11 +35,20 @@ export async function fetchPostEngagement(
   const result = new Map<string, PostEngagement>();
   if (postIds.length === 0) return result;
 
-  const rpc = sb.rpc;
-  const { data: aggregated, error: aggregateError } =
-    typeof rpc === "function"
-      ? await rpc("post_engagement_counts", { p_post_ids: postIds })
-      : { data: null, error: new Error("RPC unavailable") };
+  // Call through the client. `sb.rpc` is a bound method — detaching it into a
+  // local (`const rpc = sb.rpc`) and calling that throws, because it reads
+  // `this.rest`. That throw rejected every caller's query, which is why the
+  // community feed, space rooms, and following feed all rendered empty despite
+  // the posts query itself returning rows. Called via `sb.` with a fallback.
+  let aggregated: EngagementCountRow[] | null = null;
+  let aggregateError: Error | null = null;
+  try {
+    const response = await sb.rpc("post_engagement_counts", { p_post_ids: postIds });
+    aggregated = response.data as EngagementCountRow[] | null;
+    aggregateError = response.error;
+  } catch (error) {
+    aggregateError = error as Error;
+  }
   if (!aggregateError && aggregated) {
     for (const row of aggregated) {
       result.set(row.post_id, {
