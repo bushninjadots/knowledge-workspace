@@ -982,7 +982,6 @@ export function CreationStudio({
         onSave={() => void save()}
         onPublish={requestPublish}
         onRollback={rollback}
-        onChooseStarter={chooseStarter}
         onUndo={undo}
         onRedo={redo}
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}

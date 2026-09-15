@@ -28,7 +28,6 @@ import {
   Settings2,
   Sliders,
   Smartphone,
-  Sparkles,
   Tablet,
   Trash2,
   Undo2,
@@ -63,11 +62,6 @@ import type {
 } from "@/lib/page-blocks";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
-import {
-  StarterPicker,
-  STUDIO_STARTERS,
-  type StudioStarter,
-} from "@/components/tethyr/studio/starter-picker";
 import {
   BACKGROUND_OPTIONS,
   CARD_FILL_SWATCHES,
@@ -158,7 +152,6 @@ interface GStudioSurfaceProps {
   onSave: () => void;
   onPublish: () => void;
   onRollback: (version: number) => void;
-  onChooseStarter: (starter: StudioStarter) => void;
   onUndo: () => void;
   onRedo: () => void;
   onCompleteProfile?: () => void;
@@ -380,7 +373,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<"left" | "right" | null>(null);
-  const [starterOpen, setStarterOpen] = useState(false);
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const [snapToBlocks, setSnapToBlocks] = useState(true);
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
@@ -454,7 +446,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onDeviceChange={props.onDeviceChange}
         onUndo={props.onUndo}
         onRedo={props.onRedo}
-        onFeel={() => setStarterOpen(true)}
         onCustomize={toggleCustomize}
         onPalette={togglePalette}
         onSave={props.onSave}
@@ -476,7 +467,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         {editing && (customizeOpen || mobilePanel === "left") && (
           <GCustomizePanel
             config={props.config}
-            starterId={props.config.starterId}
             layout={props.layout}
             compact={mobilePanel === "left"}
             onChange={props.onCustomizeChange}
@@ -491,7 +481,6 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               setCustomizeOpen(false);
               setMobilePanel(null);
             }}
-            onFeel={() => setStarterOpen(true)}
             onCompleteProfile={props.onCompleteProfile}
             onReset={props.onReset}
           />
@@ -541,17 +530,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             }}
           />
         )}
-        {editing && compact && <GMobileEditSheet {...props} onFeel={() => setStarterOpen(true)} />}
+        {editing && compact && <GMobileEditSheet {...props} />}
       </div>
-      {starterOpen && (
-        <StarterPicker
-          currentId={props.config.starterId}
-          canUndo={props.canUndo}
-          onUndo={props.onUndo}
-          onChoose={props.onChooseStarter}
-          onClose={() => setStarterOpen(false)}
-        />
-      )}
     </div>
   );
 }
@@ -574,7 +554,6 @@ function GStudioTopBar({
   onDeviceChange,
   onUndo,
   onRedo,
-  onFeel,
   snapToBlocks,
   onSnapToBlocksChange,
   onExit,
@@ -603,7 +582,6 @@ function GStudioTopBar({
   onDeviceChange: (device: GStudioDevice) => void;
   onUndo: () => void;
   onRedo: () => void;
-  onFeel: () => void;
   snapToBlocks: boolean;
   onSnapToBlocksChange: (enabled: boolean) => void;
   onExit?: () => void;
@@ -720,9 +698,6 @@ function GStudioTopBar({
                     title="Align dragged blocks to nearby block edges"
                   >
                     <Magnet className="h-3 w-3" /> Snap
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={onFeel}>
-                    <Sparkles className="h-3 w-3" /> Starting point
                   </Button>
                   <Button
                     variant={paletteOpen ? "default" : "secondary"}
@@ -2243,7 +2218,6 @@ const STUDIO_CUSTOMIZE_ADVANCED_KEY = "studio-customize-advanced-open";
 
 function GCustomizePanel({
   config,
-  starterId,
   layout,
   compact,
   onChange,
@@ -2255,12 +2229,10 @@ function GCustomizePanel({
   onBlockAction,
   onSelect,
   onClose,
-  onFeel,
   onCompleteProfile,
   onReset,
 }: {
   config: GStudioConfig;
-  starterId: StudioConfig["starterId"];
   layout: PageLayout;
   compact: boolean;
   onChange: (patch: Partial<GStudioConfig>) => void;
@@ -2272,13 +2244,9 @@ function GCustomizePanel({
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
   onClose: () => void;
-  onFeel: () => void;
   onCompleteProfile?: () => void;
   onReset: () => void;
 }) {
-  const starter = starterId
-    ? (STUDIO_STARTERS.find((item) => item.id === starterId) ?? null)
-    : null;
   // Progressive disclosure: the three "feel" decisions stay on top for every
   // visitor; fine-tuning lives under "More options" and remembers its state.
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -2308,20 +2276,6 @@ function GCustomizePanel({
         </IconButton>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="min-w-0">
-            <p className="t-label">Starting point</p>
-            <p className="mt-0.5 truncate text-xs text-foreground">
-              {starter ? starter.name : "Custom"}
-            </p>
-            <p className="truncate text-2xs text-muted-foreground-subtle">
-              {starter ? starter.tagline : "Built from your own choices"}
-            </p>
-          </div>
-          <Button size="sm" variant="ghost" onClick={onFeel}>
-            <Sparkles className="h-3 w-3" /> Change
-          </Button>
-        </div>
         <Choice
           label="Structure"
           hint="How wide your Studio reads"
@@ -2673,7 +2627,7 @@ function Choice({
   );
 }
 
-function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
+function GMobileEditSheet(props: GStudioSurfaceProps) {
   const [tab, setTab] = useState<"arrange" | "add" | "feel">("arrange");
   const [open, setOpen] = useState(true);
   const [targetArea, setTargetArea] = useState<string | undefined>(props.layout.sections[0]?.id);
@@ -2891,9 +2845,6 @@ function GMobileEditSheet(props: GStudioSurfaceProps & { onFeel: () => void }) {
                 props.onCustomizeChange({ density: value as GStudioConfig["density"] })
               }
             />
-            <Button size="sm" variant="ghost" onClick={props.onFeel}>
-              <Sparkles className="h-3 w-3" /> Choose a starting feel
-            </Button>
           </div>
         )}
       </div>
