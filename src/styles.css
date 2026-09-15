@@ -113,6 +113,18 @@
   );
 }
 
+/* Keep interaction feedback useful without forcing motion on reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * Light theme — the default workspace
  * ------------------------------------------------------------------------ */
@@ -519,8 +531,8 @@
 /* Small uppercase section label used above grouped content. */
 @utility section-label {
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 650;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-foreground-subtle);
   font-family: var(--studio-label-font, var(--font-sans));

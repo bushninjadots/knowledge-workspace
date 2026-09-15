@@ -569,6 +569,7 @@ function ProjectPage() {
         }
         onOpenDiscussions={() => scrollToSection("project-discussions")}
         onOpenNeeds={() => scrollToSection("project-needs")}
+        onOpenPeople={() => scrollToSection("project-people")}
       />
 
       <ProjectWorkbench

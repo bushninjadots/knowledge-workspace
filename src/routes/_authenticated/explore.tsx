@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -91,6 +92,19 @@ type Creator = {
 };
 
 type Tab = "projects" | "creators" | "opportunities";
+
+function ExploreStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <p className="font-title text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
+}
 
 type OpportunityQueryRow = {
   id: string;
@@ -660,18 +674,26 @@ function ExplorePage() {
               Discover
             </Button>
           </div>
-          <section className="mb-6 border-b border-border/60 pb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-elevated">
-                <Compass className="h-4.5 w-4.5 text-muted-foreground" />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl font-semibold tracking-tight">
-                  Find work, people, and openings
+          <section className="mb-7 border-b border-border/60 pb-7">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-[var(--user-accent,var(--learning))]">
+                  <span className="h-px w-8 bg-[var(--user-accent,var(--learning))]" />
+                  Creative studios
+                </div>
+                <h1 className="font-title text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl">
+                  Find the work worth joining.
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Browse projects, people, and open opportunities from the community.
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+                  {
+                    "Explore projects in motion, meet the people making them, and find an opening where your contribution matters."
+                  }
                 </p>
+              </div>
+              <div className="grid grid-cols-3 gap-5 border-l border-border/60 pl-5 text-left sm:min-w-52">
+                <ExploreStat value={projects?.length ?? 0} label="projects" />
+                <ExploreStat value={creators?.length ?? 0} label="people" />
+                <ExploreStat value={opportunities?.length ?? 0} label="openings" />
               </div>
             </div>
           </section>
@@ -695,7 +717,7 @@ function ExplorePage() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 animate-gentle-pulse rounded-xl bg-surface" />
+                <Skeleton key={i} className="h-48 rounded-xl" />
               ))}
             </div>
           ) : tab === "opportunities" ? (
@@ -740,7 +762,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "latest"}
                     onClick={() => setOppSort("latest")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "latest"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -752,7 +774,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "popular"}
                     onClick={() => setOppSort("popular")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "popular"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -765,7 +787,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "match"}
                     onClick={() => setOppSort("match")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "match"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -877,7 +899,7 @@ function ExplorePage() {
                         type="button"
                         aria-pressed={category === c}
                         onClick={() => setCategory(c)}
-                        className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
+                        className={`rounded-full border px-3 py-1.5 text-xs transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                           category === c
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"

@@ -80,6 +80,7 @@ export function ProjectHeader({
   onPostUpdate,
   onOpenDiscussions,
   onOpenNeeds,
+  onOpenPeople,
 }: {
   project: ProjectDetail;
   coverSigned: string | null;
@@ -103,6 +104,7 @@ export function ProjectHeader({
   onPostUpdate?: () => void;
   onOpenDiscussions?: () => void;
   onOpenNeeds?: () => void;
+  onOpenPeople?: () => void;
 }) {
   const others = contributors.filter((c) => c.role !== "creator");
   const timeSinceStart = project.started_at
@@ -126,7 +128,7 @@ export function ProjectHeader({
     <section className="border-b border-border/60">
       {/* Slim cover band — a quiet theme surface when the project has no
           cover image, matching the fallback used on every project card. */}
-      <div className="relative h-44 overflow-hidden bg-surface-sunken sm:h-52">
+      <div className="relative h-56 overflow-hidden bg-surface-sunken sm:h-72 lg:h-80">
         {coverSigned ? (
           <img
             src={coverSigned}
@@ -142,8 +144,8 @@ export function ProjectHeader({
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-5 sm:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-4 pt-4">
+      <div className="mx-auto max-w-7xl px-4 pb-7 sm:px-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 pt-6 sm:pt-7">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -216,9 +218,20 @@ export function ProjectHeader({
                         </ProfileLink>
                       ))}
                     </div>
-                    <span className="ml-1.5 text-xs text-muted-foreground">
-                      {others.length} collaborator{others.length !== 1 ? "s" : ""}
-                    </span>
+                    {onOpenPeople ? (
+                      <button
+                        type="button"
+                        onClick={onOpenPeople}
+                        className="ml-1.5 rounded-md text-left text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]"
+                        aria-label={`View ${others.length} collaborator${others.length !== 1 ? "s" : ""}`}
+                      >
+                        {others.length} collaborator{others.length !== 1 ? "s" : ""}
+                      </button>
+                    ) : (
+                      <span className="ml-1.5 text-xs text-muted-foreground">
+                        {others.length} collaborator{others.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                 </>
               )}
@@ -389,15 +402,26 @@ export function ProjectHeader({
         </div>
 
         {/* Progress strip */}
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated">
+        <div className="mt-5 flex items-center gap-3" aria-label="Project progress">
+          <span className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
+            Momentum
+          </span>
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-elevated"
+            role="progressbar"
+            aria-valuenow={project.progress_percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${project.progress_percent}% complete`}
+          >
             <div
-              className="h-full rounded-full bg-foreground transition-[width]"
+              className="h-full rounded-full bg-[var(--user-accent,var(--foreground))] transition-[width]"
               style={{ width: `${project.progress_percent}%` }}
             />
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-            {project.progress_percent}% complete
+          <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
+            {project.progress_percent}%{" "}
+            <span className="font-normal text-muted-foreground">complete</span>
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">

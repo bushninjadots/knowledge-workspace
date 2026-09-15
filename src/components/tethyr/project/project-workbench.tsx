@@ -110,10 +110,10 @@ export function ProjectWorkbench({
   return (
     <section
       aria-labelledby="project-workbench-heading"
-      className="sticky top-16 z-20 -mx-4 border-y border-[var(--user-accent-border,var(--border))] bg-background/95 px-4 py-3 sm:-mx-8 sm:px-8"
+      className="sticky top-16 z-20 -mx-4 border-y border-[var(--user-accent-border,var(--border))] bg-background px-4 py-4 shadow-[0_1px_0_var(--user-accent-subtle,var(--surface-elevated))] sm:-mx-8 sm:px-8 sm:py-5"
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+        <div className="min-w-0 border-l-2 border-[var(--user-accent,var(--primary))] pl-3">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--primary))]" />
             <p id="project-workbench-heading" className="section-label">
@@ -123,7 +123,7 @@ export function ProjectWorkbench({
               {seasonMeta.label}
             </span>
           </div>
-          <p className="mt-1 truncate text-sm font-medium">{next.title}</p>
+          <p className="mt-1 truncate text-base font-semibold tracking-tight">{next.title}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">{next.description}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -206,7 +206,7 @@ export function ProjectWorkbench({
         )}
       </div>
       <div
-        className="mx-auto mt-3 flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground"
+        className="mx-auto mt-4 flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/50 pt-3 text-xs text-muted-foreground"
         aria-label="Project loop status"
       >
         {actionSignals.map((signal) => (

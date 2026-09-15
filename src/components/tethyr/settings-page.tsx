@@ -270,7 +270,8 @@ export function SettingsPage() {
                     type="button"
                     onClick={() => prefs.toggle(category)}
                     aria-pressed={muted}
-                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-lift ${
+                    aria-label={`${CATEGORY_LABELS[category]} notifications`}
+                    className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                       muted
                         ? "border-border/60 bg-surface-elevated/40"
                         : "border-border/60 bg-background/40 hover:bg-surface-elevated/40"
