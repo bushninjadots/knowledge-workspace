@@ -35,7 +35,7 @@ Use sections, rows, lists, dividers, or editorial compositions when content belo
 Prefer the existing radius scale:
 
 - Large sections: `rounded-xl`
-- Cards: `rounded-lg` or `rounded-xl`
+- Cards: `rounded-xl` (the `card` utility and `Card` component both use `--radius-xl`)
 - Inputs and buttons: `rounded-md` or `rounded-lg`
 - Avatars and tags: `rounded-full`
 
