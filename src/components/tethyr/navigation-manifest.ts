@@ -8,9 +8,10 @@ import {
   MessageSquare,
   Settings,
   Swords,
-  Trophy,
   User,
   Users,
+  UsersRound,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,14 +34,14 @@ export const navigationGroups = [
     items: [
       { to: "/explore", label: "Explore", icon: Compass },
       { to: "/challenges", label: "Challenges", icon: Swords },
-      { to: "/sessions", label: "Sessions", icon: Trophy },
+      { to: "/sessions", label: "Sessions", icon: Video },
     ],
   },
   {
     label: "Network",
     items: [
       { to: "/community", label: "Community", icon: Users },
-      { to: "/teams", label: "Teams", icon: Users },
+      { to: "/teams", label: "Teams", icon: UsersRound },
       { to: "/connections", label: "Connections", icon: Link2 },
       { to: "/messages", label: "Messages", icon: MessageSquare },
       { to: "/notifications", label: "Notifications", icon: Bell },

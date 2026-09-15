@@ -151,6 +151,19 @@ const DESTINATIONS: ReadonlyArray<{
   },
 ];
 
+// Shown before the member types anything: a few high-intent places to jump to,
+// so an opened search is a launcher rather than a blank box.
+const SUGGESTED_LABELS = [
+  "Explore",
+  "Your Studio",
+  "Templates",
+  "Challenges",
+  "Community",
+] as const;
+const SUGGESTED_DESTINATIONS = SUGGESTED_LABELS.map(
+  (label) => DESTINATIONS.find((d) => d.label === label)!,
+).filter(Boolean);
+
 function destinationHitsFor(term: string, limit = 4): Array<(typeof DESTINATIONS)[number]> {
   if (!term) return [];
   const needle = term.toLowerCase();
@@ -672,6 +685,41 @@ export function GlobalSearch({
     return items;
   }
 
+  function renderZeroState() {
+    return (
+      <div>
+        <p
+          role="presentation"
+          className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
+        >
+          Jump to
+        </p>
+        {SUGGESTED_DESTINATIONS.map((d) => (
+          <button
+            key={`suggested-${d.label}`}
+            type="button"
+            onClick={() => {
+              const route = d.to();
+              setQ("");
+              setOpen(false);
+              navigate(route);
+            }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+          >
+            <Compass className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="truncate text-sm">{d.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{d.description}</p>
+            </div>
+          </button>
+        ))}
+        <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground">
+          Or search people, projects, skills, and sessions.
+        </p>
+      </div>
+    );
+  }
+
   const resultsExpanded = open && enabled;
   const activeDescendant = selectedIndex >= 0 ? `${resultsId}-opt-${selectedIndex}` : undefined;
   const listboxId = `${resultsId}-listbox`;
@@ -705,14 +753,14 @@ export function GlobalSearch({
             className="h-9 rounded-xl border-border/40 bg-background/40 pl-9 text-xs placeholder:text-xs"
           />
         </div>
-        {open && enabled && (
+        {open && (
           <div
             id={listboxId}
             role="listbox"
             aria-label="Search results"
             className="absolute left-0 right-0 top-11 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border/60 bg-background/95 p-2 shadow-lg"
           >
-            {renderResults()}
+            {enabled ? renderResults() : renderZeroState()}
           </div>
         )}
       </div>
@@ -745,14 +793,7 @@ export function GlobalSearch({
           aria-label="Search results"
           className="max-h-[60vh] overflow-y-auto px-1 pb-2"
         >
-          {enabled ? (
-            renderResults()
-          ) : (
-            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-              Search for people, projects, skills, and sessions — or jump to a feature like “Your
-              Studio”, “Templates”, or “Roadmap”.
-            </p>
-          )}
+          {enabled ? renderResults() : renderZeroState()}
         </div>
       </DialogContent>
     </Dialog>
