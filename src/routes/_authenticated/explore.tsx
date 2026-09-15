@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -695,7 +696,7 @@ function ExplorePage() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 animate-gentle-pulse rounded-xl bg-surface" />
+                <Skeleton key={i} className="h-48 rounded-xl" />
               ))}
             </div>
           ) : tab === "opportunities" ? (
@@ -740,7 +741,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "latest"}
                     onClick={() => setOppSort("latest")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "latest"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -752,7 +753,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "popular"}
                     onClick={() => setOppSort("popular")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "popular"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -765,7 +766,7 @@ function ExplorePage() {
                     type="button"
                     aria-pressed={oppSort === "match"}
                     onClick={() => setOppSort("match")}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       oppSort === "match"
                         ? "bg-surface-elevated text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -877,7 +878,7 @@ function ExplorePage() {
                         type="button"
                         aria-pressed={category === c}
                         onClick={() => setCategory(c)}
-                        className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
+                        className={`rounded-full border px-3 py-1.5 text-xs transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                           category === c
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
