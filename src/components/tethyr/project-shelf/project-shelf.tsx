@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { ProjectShelfHeader, type ProjectView } from "./project-shelf-header";
 import { ProjectShelfCover, STATUS_STYLES } from "./project-shelf-cover";
-import { CoverGradient } from "./cover-gradient";
+import { CoverGradient, ProjectCoverFallback } from "./cover-gradient";
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { clamp, dragDirection, wheelStep } from "./shelf-navigation";
@@ -552,7 +552,7 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
               draggable={false}
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-surface-elevated to-surface-sunken" />
+            <ProjectCoverFallback />
           )}
           <div className="pointer-events-none absolute inset-0 on-media-scrim" />
         </div>

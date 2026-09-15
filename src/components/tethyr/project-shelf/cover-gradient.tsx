@@ -1,29 +1,13 @@
 import { motion } from "framer-motion";
-import { FolderKanban } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
+
+// Re-exported so cover-sized consumers keep importing it from here.
+export { ProjectCoverFallback };
 
 interface CoverGradientProps {
   coverUrl?: string | null;
   fit?: "cover" | "contain";
-}
-
-/**
- * A project that has no cover image yet.
- *
- * Deliberately quiet: a sunken theme surface with one muted project glyph. No
- * category tint, no gradient, no motion — the card's title, tags, and progress
- * already carry the identity, and this is the treatment the landing cards use,
- * so an image-less project reads the same everywhere it appears.
- */
-export function ProjectCoverFallback({ iconClassName }: { iconClassName?: string } = {}) {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-surface-sunken">
-      <FolderKanban
-        className={cn("text-muted-foreground/30", iconClassName ?? "h-6 w-6")}
-        aria-hidden
-      />
-    </div>
-  );
 }
 
 /**
@@ -53,11 +37,27 @@ export function CoverGradient({ coverUrl, fit = "contain" }: CoverGradientProps)
   );
 }
 
-export function ProgressBar({ progress }: { progress: number }) {
+export function ProgressBar({
+  progress,
+  variant = "on-image",
+}: {
+  progress: number;
+  variant?: "on-image" | "on-surface";
+}) {
+  // The bar sits at the bottom of the cover. Over an image, white keeps it
+  // legible against the photo; over the quiet no-cover surface the same white
+  // disappears, so it falls back to the track/fill pairing used elsewhere on a
+  // theme surface.
+  const onSurface = variant === "on-surface";
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
+    <div
+      className={cn(
+        "absolute bottom-0 left-0 right-0 h-1",
+        onSurface ? "bg-border" : "bg-white/10",
+      )}
+    >
       <motion.div
-        className="h-full bg-white/60"
+        className={cn("h-full", onSurface ? "bg-primary/80" : "bg-white/60")}
         initial={{ width: 0 }}
         animate={{ width: `${progress}%` }}
         transition={{ duration: 0.8, ease: "easeOut" }}

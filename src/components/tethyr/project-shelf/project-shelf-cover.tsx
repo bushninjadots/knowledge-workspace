@@ -73,7 +73,10 @@ function ProjectShelfFace({
 
           {/* Progress bar at the bottom of the cover */}
           <div className="absolute bottom-0 left-0 right-0 z-10">
-            <ProgressBar progress={project.progress_percent} />
+            <ProgressBar
+              progress={project.progress_percent}
+              variant={project.cover_url ? "on-image" : "on-surface"}
+            />
           </div>
         </div>
 

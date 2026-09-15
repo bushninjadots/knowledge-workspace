@@ -163,7 +163,11 @@ export function AttachProjectPanel({
                           description: p.description,
                           platform: "tethyr",
                           url: `/projects/${p.id}`,
-                          logo: p.cover_url,
+                          // Snapshots carry only full URLs. A project cover is a
+                          // private storage path that the live card signs itself,
+                          // so leaving it out here keeps the fallback clean
+                          // instead of pointing an <img> at an unreadable path.
+                          logo: null,
                           status: p.status,
                           stage: p.stage,
                         };

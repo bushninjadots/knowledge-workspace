@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, FolderOpen } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjectSnapshot } from "@/hooks/use-community";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
@@ -72,8 +73,8 @@ export function ProjectCardInline({ project_id, project_snapshot }: Props) {
           className="h-10 w-10 shrink-0 rounded-xl object-cover"
         />
       ) : (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-trust/10 text-trust">
-          <FolderOpen className="h-4 w-4" />
+        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl">
+          <ProjectCoverFallback iconClassName="h-4 w-4" />
         </div>
       )}
       <div className="min-w-0 flex-1">
