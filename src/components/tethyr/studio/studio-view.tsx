@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
+import { useTheme } from "@/hooks/use-theme";
 import { CURRENT_USER_KEY, useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
@@ -171,7 +172,11 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const config: StudioConfig = page?.config ?? DEFAULT_STUDIO_CONFIG;
   const layout: PageLayout | null = page?.layout ?? null;
   const maxWidth = structureMaxWidth(config);
+  // Keep the Studio view in step with the editor: apply the page theme so a
+  // chosen preset is visible here exactly as it renders publicly.
+  const { data: themeVars = {} } = useTheme(page?.themeId);
   const surfaceStyle = {
+    ...themeVars,
     ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
     ...cardFillStyle(config),

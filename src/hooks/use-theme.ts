@@ -15,6 +15,45 @@ interface ThemeRecord {
   tokens: Json;
 }
 
+/** A curated preset row from the `themes` table (id + raw tokens). */
+export interface ThemePreset {
+  id: string;
+  name: string;
+  tokens: ThemeTokens;
+}
+
+/**
+ * Fetch every curated theme preset for pickers (navbar style menu, Studio
+ * Customize panel). Raw tokens are cached; each consumer derives the CSS
+ * variables for its own active light/dark scheme.
+ */
+export function useThemePresets() {
+  return useQuery({
+    queryKey: ["theme-presets"],
+    queryFn: async (): Promise<ThemePreset[]> => {
+      const { data, error } = await supabase
+        .from("themes")
+        .select("id, name, tokens")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as (ThemeRecord & { id: string; name: string })[];
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        tokens: ((row.tokens ?? {}) as Json) as ThemeTokens,
+      }));
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
+/** A small stable colour to badge a theme preset in a picker.
+ *  Prefers the authored primary, then border, background, card. */
+export function presetSwatch(preset: ThemePreset): string {
+  const colors = (preset.tokens as { colors?: Record<string, string> }).colors ?? {};
+  return colors.primary ?? colors.border ?? colors.background ?? colors.card ?? "#e5e7eb";
+}
+
 /**
  * Fetch a single theme by ID and return the CSS variable map.
  * Falls back to the built-in Tethyr Default theme when no theme is applied.

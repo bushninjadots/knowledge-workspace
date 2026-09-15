@@ -36,7 +36,6 @@ type SearchRoute =
   | { to: "/challenges" }
   | { to: "/sessions" }
   | { to: "/community" }
-  | { to: "/templates" }
   | { to: "/studio" }
   | { to: "/library" }
   | { to: "/teams" }
@@ -102,12 +101,6 @@ const DESTINATIONS: ReadonlyArray<{
     to: () => ({ to: "/sessions" }),
   },
   {
-    label: "Templates",
-    description: "Start a project from a ready-made shape",
-    keywords: ["template", "starter", "reuse", "remix", "made with"],
-    to: () => ({ to: "/templates" }),
-  },
-  {
     label: "Community",
     description: "Posts and conversation across the network",
     keywords: ["community", "posts", "discussion", "forum", "feed"],
@@ -156,7 +149,6 @@ const DESTINATIONS: ReadonlyArray<{
 const SUGGESTED_LABELS = [
   "Explore",
   "Your Studio",
-  "Templates",
   "Challenges",
   "Community",
 ] as const;

@@ -46,6 +46,8 @@ import {
 } from "@/lib/background-themes";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette } from "@/lib/dominant-color";
+import { useTheme, useThemePresets, presetSwatch, type ThemePreset } from "@/hooks/use-theme";
+import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import { getAllBlocks, getBlock } from "@/lib/block-registry";
@@ -143,6 +145,11 @@ interface GStudioSurfaceProps {
   onDragTypeChange: (type: string | null) => void;
   onPaletteTargetChange: (id: string) => void;
   onCustomizeChange: (patch: Partial<GStudioConfig>) => void;
+  /** The page's current theme id ("" when unset) — drives the Theme picker
+   *  and the live token preview on the canvas. */
+  themeId: string | null;
+  /** Change the page's theme (null clears back to the default). */
+  onThemeChange: (themeId: string | null) => void;
   /** Live card-border preference: the member's appearance, editable in
    *  Customize and persisted to `profiles.background` by the creator. */
   cardBorders: CardBorderPreference;
@@ -365,6 +372,9 @@ function SectionLayoutPicker({
 export function GStudioSurface(props: GStudioSurfaceProps) {
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
+  // Live theme preview: derive the page theme's CSS vars for the active
+  // light/dark scheme so picking a preset repaints the canvas immediately.
+  const { data: themeVars = {} } = useTheme(props.themeId);
   // Customization is the whole point of this view, so the panel starts open on
   // desktop instead of hiding behind a toggle the owner has to discover.
   const [customizeOpen, setCustomizeOpen] = useState(
@@ -405,6 +415,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     [me?.background, props.cardBorders, props.cardBorderColor],
   );
   const surfaceStyle = {
+    ...themeVars,
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
@@ -470,6 +481,8 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             layout={props.layout}
             compact={mobilePanel === "left"}
             onChange={props.onCustomizeChange}
+            themeId={props.themeId}
+            onThemeChange={props.onThemeChange}
             cardBorders={props.cardBorders}
             cardBorderColor={props.cardBorderColor}
             onCardBordersChange={props.onCardBordersChange}
@@ -2216,11 +2229,95 @@ function GBlockInspector({
 const ACCENT_SWATCHES = ["#3f8f8a", "#2f6fd0", "#7a4ecf", "#b4632a", "#2f7d4a", "#1f2328"];
 const STUDIO_CUSTOMIZE_ADVANCED_KEY = "studio-customize-advanced-open";
 
+/** Theme preset picker shared by the desktop Customize panel and the mobile
+ *  Style sheet. "Default" clears the page theme back to the Tethyr base;
+ *  every curated theme applies its full token palette across the Studio. */
+function ThemeSection({
+  themeId,
+  onThemeChange,
+}: {
+  themeId: string | null;
+  onThemeChange: (themeId: string | null) => void;
+}) {
+  const { data: presets = [] } = useThemePresets();
+  const current = themeId && themeId.length > 0 ? themeId : DEFAULT_THEME_ID;
+  const pick = (preset: ThemePreset | null) =>
+    onThemeChange(preset ? preset.id : null);
+
+  return (
+    <div className="mb-4">
+      <p className="t-label mb-1.5">Theme</p>
+      <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+        A premade look — colours and type — applied across your Studio.
+      </p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <ThemePick
+          name="Default"
+          swatch={presetSwatchForDefault(presets)}
+          active={current === DEFAULT_THEME_ID}
+          onClick={() => pick(null)}
+        />
+        {presets.map((preset) => (
+          <ThemePick
+            key={preset.id}
+            name={preset.name}
+            swatch={presetSwatch(preset)}
+            active={current === preset.id}
+            onClick={() => pick(preset)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ThemePick({
+  name,
+  swatch,
+  active,
+  onClick,
+}: {
+  name: string;
+  swatch: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      title={name}
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors",
+        active
+          ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
+          : "border-border hover:border-[var(--user-accent-border)]",
+      )}
+    >
+      <span
+        className="h-3.5 w-3.5 shrink-0 rounded-full border border-border/60"
+        style={{ backgroundColor: swatch }}
+      />
+      <span className="min-w-0 truncate text-2xs text-foreground">{name}</span>
+    </button>
+  );
+}
+
+/** Swatch for the "Default" tile: mirror the Tethyr Default theme's primary
+ *  when present, else the neutral base. */
+function presetSwatchForDefault(presets: ThemePreset[]): string {
+  const tethyr = presets.find((p) => p.id === DEFAULT_THEME_ID);
+  return tethyr ? presetSwatch(tethyr) : "#3f8f8a";
+}
+
 function GCustomizePanel({
   config,
   layout,
   compact,
   onChange,
+  themeId,
+  onThemeChange,
   cardBorders,
   cardBorderColor,
   onCardBordersChange,
@@ -2236,6 +2333,8 @@ function GCustomizePanel({
   layout: PageLayout;
   compact: boolean;
   onChange: (patch: Partial<GStudioConfig>) => void;
+  themeId: string | null;
+  onThemeChange: (themeId: string | null) => void;
   cardBorders: CardBorderPreference;
   cardBorderColor: string;
   onCardBordersChange: (cardBorders: CardBorderPreference) => void;
@@ -2276,6 +2375,7 @@ function GCustomizePanel({
         </IconButton>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
         <Choice
           label="Structure"
           hint="How wide your Studio reads"
@@ -2349,13 +2449,14 @@ function GCustomizePanel({
               hint={
                 config.accentMode === "dual"
                   ? "Pick an interactive colour; the banner colour tints the background"
-                  : undefined
+                  : config.accentMode === "none"
+                    ? "No colour accent — the theme carries the Studio"
+                    : undefined
               }
               value={config.accentMode}
               options={[
-                ["auto", "From banner"],
                 ["custom", "Pick"],
-                ["dual", "Banner + pick"],
+                ["dual", "Banner + colour"],
                 ["none", "None"],
               ]}
               onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
@@ -2815,6 +2916,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         )}
         {tab === "feel" && (
           <div>
+            <ThemeSection themeId={props.themeId} onThemeChange={props.onThemeChange} />
             <Choice
               label="Structure"
               value={props.config.structure}

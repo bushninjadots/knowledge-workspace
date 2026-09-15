@@ -29,7 +29,7 @@ const studioConfig: StudioConfig = {
   personality: "modern",
   density: "comfortable",
   radius: 12,
-  accentMode: "auto",
+  accentMode: "dual",
   accentColor: "#3f8f8a",
   cardColor: "",
   cardOpacity: 30,

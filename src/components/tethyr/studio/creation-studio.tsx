@@ -28,6 +28,7 @@ import {
   useCreatePage,
   usePublishPage,
   useRollbackPageVersion,
+  useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
 import { createBlockInstance, getBlock } from "@/lib/block-registry";
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
@@ -108,6 +109,7 @@ export function CreationStudio({
   const createPage = useCreatePage();
   const applyComposition = useApplyStudioComposition();
   const publishPage = usePublishPage();
+  const updateTheme = useUpdatePageTheme();
   const rollbackPage = useRollbackPageVersion();
   const page = pageQuery.data;
 
@@ -975,6 +977,11 @@ export function CreationStudio({
         onDragTypeChange={setDragType}
         onPaletteTargetChange={setPaletteTarget}
         onCustomizeChange={(patch) => commit(layout, { ...config, ...patch })}
+        themeId={page?.themeId ?? null}
+        onThemeChange={(themeId) => {
+          if (!page?.id) return;
+          updateTheme.mutate({ pageId: page.id, themeId, ownerId: userId, ownerType: "profile" });
+        }}
         cardBorders={cardBorders}
         cardBorderColor={cardBorderColor}
         onCardBordersChange={setCardBorders}

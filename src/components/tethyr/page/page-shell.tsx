@@ -25,7 +25,7 @@ import {
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
 import { friendlyError } from "@/lib/error-message";
-import { useDominantColor, withAlpha } from "@/lib/dominant-color";
+import { useDominantColor } from "@/lib/dominant-color";
 import type { BlockContext, PageOwnerType, PageLayout } from "@/lib/page-blocks";
 import type { StudioSnapshot } from "@/lib/studio-history";
 
@@ -210,14 +210,9 @@ export function PageShell({
       style["--card-border-width"] =
         (configStyle["--card-border-width"] as string | undefined) ??
         "var(--card-border-width, 1px)";
-      // Auto follows the creator's inherited Tethyr palette; explicit accent
-      // modes are page-local and should override it.
-      if (page.config.accentMode !== "auto") {
-        Object.assign(style, configStyle);
-      } else if (bannerAccent) {
-        style["--user-accent"] = bannerAccent;
-        style["--user-accent-border"] = withAlpha(bannerAccent, 0.3) ?? "var(--border)";
-      }
+      // Studio accent modes are page-local and override the inherited palette
+      // accent; "none" neutralizes the accent family toward the theme primary.
+      Object.assign(style, configStyle);
     }
     if (isGlassTheme || blockContext.translucent) {
       style["--surface"] = "color-mix(in oklab, var(--background) 72%, transparent)";

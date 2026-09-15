@@ -4,7 +4,7 @@
 //   PERSONALITY — typography + visual character (editorial, modern, technical)
 //   DENSITY    — spacing rhythm (compact, comfortable, spacious)
 //   RADIUS     — corner roundness in pixels (0–24, exposed as a slider)
-//   ACCENT     — user identity colour (auto from banner, custom pick, dual, none)
+//   ACCENT     — user identity colour (pick, banner + pick, none)
 //
 // Two outputs are produced:
 //   • studioConfigToThemeTokens  → merged into the page's ThemeTokens so it
@@ -28,8 +28,9 @@ export type StructureId = "single" | "sidebar" | "wide";
 export type PersonalityId = "editorial" | "modern" | "technical";
 export type DensityId = "compact" | "comfortable" | "spacious";
 /** ACCENT — user identity colour. "dual" pairs a picked primary with the
- *  banner-derived colour as the secondary tone (interactive vs background). */
-export type AccentMode = "auto" | "custom" | "dual" | "none";
+ *  banner-derived colour as the secondary tone (interactive vs background).
+ *  "auto" (legacy) migrated to "dual" on read. */
+export type AccentMode = "custom" | "dual" | "none";
 /** BACKGROUND — app shell vs public Studio. */
 export type BackgroundId = "default" | "surface" | "sunken";
 type CardBorderWidth = "thin" | "medium" | "thick";
@@ -117,7 +118,7 @@ export const DEFAULT_STUDIO_CONFIG: Readonly<StudioConfig> = {
   personality: "modern",
   density: "comfortable",
   radius: DEFAULT_RADIUS,
-  accentMode: "auto",
+  accentMode: "custom",
   accentColor: "#3f8f8a",
   cardBorderWidth: "thin",
   cardColor: "",
@@ -152,9 +153,8 @@ export const DENSITY_OPTIONS: ReadonlyArray<{ value: DensityId; label: string }>
 ];
 
 export const ACCENT_OPTIONS: ReadonlyArray<{ value: AccentMode; label: string }> = [
-  { value: "auto", label: "From banner" },
   { value: "custom", label: "Pick" },
-  { value: "dual", label: "Banner + pick" },
+  { value: "dual", label: "Banner + colour" },
   { value: "none", label: "None" },
 ];
 
@@ -215,6 +215,12 @@ function migrateLegacy(value: Record<string, unknown>): Partial<StudioConfig> {
   // AccentMode: "person" → "custom"
   if (value.accentMode === "person") {
     patch.accentMode = "custom";
+  }
+  // AccentMode: "auto" → "dual" (banner + picked colour replaced the old
+  // banner-only option; "dual" with the default accent still reads banner-led
+  // while keeping a defined interactive accent).
+  if (value.accentMode === "auto") {
+    patch.accentMode = "dual";
   }
 
   return patch;
@@ -409,8 +415,8 @@ export function studioConfigToStyle(
     const foreground = contrastingHexForeground(config.accentColor);
     emitAccentFamily(style, "user-accent", config.accentColor, foreground);
   } else {
-    // Accent "none" AND "auto" both resolve to the page primary so the
-    // --user-accent-* family always has a defined value (no dangling var()).
+    // Accent "none" resolves to the page primary so the --user-accent-*
+    // family always has a defined value (no dangling var()).
     emitAccentFamily(style, "user-accent", "var(--primary)", "var(--primary-foreground)");
   }
 

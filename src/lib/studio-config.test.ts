@@ -193,9 +193,14 @@ describe("studioConfigToStyle", () => {
     expect(style["--user-accent"]).toBe("var(--primary)");
   });
 
-  it("'auto' falls back to primary so the accent family always resolves", () => {
+  it("migrates legacy accentMode auto → dual so banner-led pages stay banner-led", () => {
+    const config = normalizeStudioConfig({ accentMode: "auto" });
+    expect(config.accentMode).toBe("dual");
+  });
+
+  it("'custom' scopes the interactive accent to the picked colour", () => {
     const style = studioConfigToStyle({ ...DEFAULT_STUDIO_CONFIG }) as Record<string, string>;
-    expect(style["--user-accent"]).toBe("var(--primary)");
+    expect(style["--user-accent"]).toBe("#3f8f8a");
   });
 
   it("'dual' keeps the picked interactive accent and adds a banner secondary", () => {
@@ -229,7 +234,7 @@ describe("studioConfigToStyle", () => {
   });
 
   it("single-tone modes do not leak a secondary family", () => {
-    for (const accentMode of ["auto", "custom", "none"] as const) {
+    for (const accentMode of ["custom", "none"] as const) {
       const style = studioConfigToStyle({
         ...DEFAULT_STUDIO_CONFIG,
         accentMode,
@@ -290,7 +295,7 @@ describe("option catalogs", () => {
     expect(values(PERSONALITY_OPTIONS)).toEqual(["editorial", "modern", "technical"]);
     expect(values(STRUCTURE_OPTIONS)).toEqual(["single", "sidebar", "wide"]);
     expect(values(DENSITY_OPTIONS)).toEqual(["compact", "comfortable", "spacious"]);
-    expect(values(ACCENT_OPTIONS)).toEqual(["auto", "custom", "dual", "none"]);
+    expect(values(ACCENT_OPTIONS)).toEqual(["custom", "dual", "none"]);
     expect(values(BACKGROUND_OPTIONS as ReadonlyArray<{ value: string; label: string }>)).toEqual([
       "default",
       "surface",
