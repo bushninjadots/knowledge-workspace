@@ -169,7 +169,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         >
           {/* Avatar */}
           <div className="shrink-0">
-            <Avatar className="h-24 w-24 border-4 border-surface sm:h-32 sm:w-32">
+            <Avatar className="h-24 w-24 ring-4 ring-surface sm:h-32 sm:w-32">
               <AvatarImage src={avatarSigned ?? undefined} alt="" />
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>

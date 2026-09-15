@@ -5,7 +5,6 @@ import {
   Globe,
   Lock,
   Trash2,
-  Loader2,
   Search,
   X,
   ChevronLeft,
@@ -24,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -168,8 +168,13 @@ function SpaceSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex max-w-3xl items-center justify-center px-4 py-24">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div className="mx-auto max-w-3xl space-y-8 px-4 py-16">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-10 rounded-lg" />
+          </div>
+        ))}
       </div>
     );
   }

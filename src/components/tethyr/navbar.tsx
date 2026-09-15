@@ -102,7 +102,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           {!publicOnly && <ThemeToggle />}
           <button
             onClick={() => setOpen((v) => !v)}
-            className="rounded-md p-2 transition-colors hover:bg-surface"
+            className="-mr-2 rounded-md p-2.5 transition-colors hover:bg-surface"
             aria-label="Toggle menu"
             aria-expanded={open}
             aria-controls="mobile-menu"

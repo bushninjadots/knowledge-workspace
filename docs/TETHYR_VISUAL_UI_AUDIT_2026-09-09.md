@@ -454,6 +454,52 @@ plus the residue noted above in G16/G18.
 
 ---
 
+## 07 · Status as of 2026-09-15
+
+QoL pass over the remaining findings, each verified against source before changing:
+
+- **G16 — closed.** The last full-page `Loader2` gates are replaced with layout-matching
+  `Skeleton` compositions: `library` (dense-row skeletons), `library.$id` (title/meta/body),
+  `sessions.$id` (header + content columns), `spaces.$slug.settings` (form-field groups), and
+  `spaces.$slug.reports` (row skeletons). Remaining `Loader2` uses are all legitimate in-button
+  spinners.
+- **G21 — closed.** The inaccessible icon-only controls now carry accessible names: the
+  challenge progress-step advance button (`Mark as <step>`), the pending-file remove button in
+  `file-upload-zone`, the library search-clear button, and the gallery-item remove button in
+  `project-resources`. The messages composer ring was already rebuilt to the standard
+  `focus-within` ring, and the `user-accent-foreground` fallbacks already resolve to
+  `var(--background)` (the `white` literal flagged in the audit no longer exists in `src`).
+- **G23 — closed.** `project-resources` gallery captions now use the guaranteed
+  `on-media-scrim` + white text, matching `gallery-block` and the project-shelf surfaces.
+- **G24 — closed.** Button `size="lg"` is 44px (`h-11 px-5`, touch-target minimum for primary
+  CTAs on the landing hero, auth recovery, dashboard empty state), and the marketing navbar's
+  mobile hamburger hit area is 44px (`p-2.5`), visually compensated with `-mr-2`.
+- **G25 — closed.** `discover-skills` renders a width-varied chip skeleton instead of a raw
+  "Loading trending skills…" text line; `reset-password`'s 1500ms auth fallback window now shows
+  a spinner + status line (`role="status"`) instead of bare text; the footer "Active community"
+  dot was already static.
+- **G26 — closed.** The team Shipped-work grid densifies to 3 columns at `lg`; the Studio
+  header avatar uses the canonical `ring-4 ring-surface` instead of `border-4 border-surface`
+  (matching `profile.tsx` and `u.$handle.tsx`).
+- **G27 — closed.** `collection-dialog` swatches are the semantic status tokens
+  (`--learning/--trust/--teaching/--ai/--caution/--warning/--primary`) instead of ten hardcoded
+  OKLCH literals; the `scale-110` selection affordance is replaced with a border change, and
+  swatches have labels (`aria-label` + `aria-pressed`). Both collection color consumers
+  (`collection-card`, dialog preview) now build their tint with `color-mix(... 12%, transparent)`,
+  which also fixes legacy DB rows whose raw `oklch(...)` strings silently broke the old
+  `${color}20` alpha-append (an invalid `backgroundColor` value). Existing rows keep working;
+  the `use-library` insert defaults are unchanged.
+- **G14** — was already restructured into one control row (search + need-scope + sort) with
+  applied filters collapsed into a single compact chip row; results start right under the
+  "Needs now" band. Marked resolved by the 09-12 pass; left as-is per "smallest change".
+
+Verification for this pass: `tsc --noEmit` clean, ESLint clean on all touched files, full Vitest
+suite passing (77 files / 639 tests), `prettier:check` unchanged from the pre-existing baseline
+(10 files of theme-file drift not touched here), production build green. The audit-fix batch is
+committed separately from the follow-on feature batch (see `git log`).
+
+---
+
 _Audit of `tethyr` (Base44) — full-site visual, layout, and UI/UX consistency re-audit.
 Supersedes `TETHYR_VISUAL_UI_AUDIT_2026-09-07.md` for the same scope._
 _22 findings · 1 critical · 9 high · 8 medium · 4 low · 10 strengths · 23 route groups._

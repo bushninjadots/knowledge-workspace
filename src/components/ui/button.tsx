@@ -26,7 +26,8 @@ const buttonVariants = cva(
       size: {
         default: "h-8 px-3",
         sm: "h-7 px-2.5 text-xs",
-        lg: "h-9 px-4",
+        // 44px — meets the touch-target minimum for primary CTAs, especially on mobile.
+        lg: "h-11 px-5",
         icon: "h-8 w-8",
       },
     },

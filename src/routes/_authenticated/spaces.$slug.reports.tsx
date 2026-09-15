@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Loader2,
   Lock,
   ShieldAlert,
   CheckCircle2,
@@ -16,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -77,8 +77,10 @@ function SpaceReportsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex max-w-3xl items-center justify-center px-4 py-24">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div className="mx-auto max-w-3xl space-y-3 px-4 py-16">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
       </div>
     );
   }
@@ -145,8 +147,10 @@ function SpaceReportsPage() {
       </div>
 
       {reportsLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="space-y-3 py-10">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
         </div>
       ) : reports.length === 0 ? (
         <EmptyState

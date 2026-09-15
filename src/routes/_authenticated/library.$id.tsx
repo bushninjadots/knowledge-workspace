@@ -21,6 +21,7 @@ import {
   Unlink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -47,6 +48,7 @@ const NoteEditor = lazy(() =>
 );
 import { LibraryContentLayout } from "@/components/tethyr/library/library-layout";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-changes";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,11 +216,16 @@ function LibraryItemPage() {
     });
   }
 
+  // Edits are client-only until Save — block accidental navigation/tab close.
+  useUnsavedChangesGuard(hasChanges, "You have unsaved changes to this item. Leave anyway?");
+
   if (isLoading) {
     return (
       <LibraryContentLayout>
-        <div className="flex h-full items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-2/3 rounded-lg" />
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       </LibraryContentLayout>
     );

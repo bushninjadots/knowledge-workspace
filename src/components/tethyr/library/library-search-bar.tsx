@@ -122,6 +122,7 @@ export function LibrarySearchBar({
         {value && (
           <button
             onClick={handleClear}
+            aria-label="Clear search"
             className="shrink-0 rounded-full p-0.5 text-muted-foreground/40 transition-colors hover:text-foreground"
           >
             <X className="h-3 w-3" />

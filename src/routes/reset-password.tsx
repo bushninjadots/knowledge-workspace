@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { AuthShell } from "@/components/tethyr/auth-shell";
@@ -125,7 +126,10 @@ function ResetPasswordPage() {
       }
     >
       {!sessionChecked ? (
-        <p className="text-center text-sm text-muted-foreground">Checking your reset link…</p>
+        <div className="flex flex-col items-center gap-3 py-4" role="status">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Checking your reset link…</p>
+        </div>
       ) : !hasSession ? (
         <div className="space-y-4 text-center">
           <p className="text-sm text-muted-foreground">

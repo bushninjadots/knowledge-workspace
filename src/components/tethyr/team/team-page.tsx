@@ -117,7 +117,7 @@ export function TeamPage({
         {shipped.length === 0 ? (
           <p className="text-sm text-muted-foreground">No shipped work yet — attach a project.</p>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {shipped.map((p) => (
               <li key={p.id}>
                 <Card asChild>

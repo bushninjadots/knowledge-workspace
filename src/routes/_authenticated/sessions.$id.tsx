@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Calendar,
+  CalendarPlus,
   Clock,
   Globe,
   MapPin,
@@ -37,11 +38,13 @@ import {
 import { STATUS_CONFIG } from "@/components/tethyr/sessions/sessions-sidebar";
 import { SessionResources } from "@/components/tethyr/sessions/session-resources";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { buildSessionIcs, downloadIcs } from "@/lib/ical";
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -88,8 +91,12 @@ function SessionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="mx-auto min-h-screen max-w-4xl space-y-6 bg-background px-4 py-8">
+        <Skeleton className="h-28 rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-40 rounded-xl md:col-span-2" />
+          <Skeleton className="h-40 rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -222,6 +229,7 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
   const statusCfg = STATUS_CONFIG[session.status];
 
   const startsAt = session.starts_at ? new Date(session.starts_at) : null;
+  const endsAt = session.ends_at ? new Date(session.ends_at) : null;
   const dateStr = startsAt
     ? startsAt.toLocaleDateString(undefined, {
         weekday: "long",
@@ -233,6 +241,21 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
   const timeStr = startsAt
     ? startsAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
+
+  const handleAddToCalendar = () => {
+    if (!startsAt) return;
+    const body = buildSessionIcs({
+      uid: session.id,
+      title: session.title,
+      start: startsAt,
+      end: endsAt,
+      durationMinutes: session.duration_minutes,
+      description: session.description,
+      location: session.location,
+      meetingUrl: session.meeting_url,
+    });
+    downloadIcs(`${session.title.replace(/[^\w-]+/g, "-").toLowerCase() || "session"}.ics`, body);
+  };
 
   return (
     <div className="space-y-4">
@@ -279,6 +302,17 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
               {session.organizer.display_name ?? session.organizer.handle ?? "Unknown"}
             </span>
           </div>
+        )}
+        {startsAt && (
+          <button
+            type="button"
+            onClick={handleAddToCalendar}
+            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+            aria-label="Add this session to your calendar"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            Add to calendar
+          </button>
         )}
       </div>
     </div>

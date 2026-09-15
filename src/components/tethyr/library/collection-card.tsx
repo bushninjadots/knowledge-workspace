@@ -26,9 +26,13 @@ export function CollectionCard({
         onClick={onClick}
         className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-lift duration-150 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated/50"
       >
+        {/* color may be a raw oklch string (legacy rows) or a CSS var() token; color-mix
+            handles both, unlike the old `${color}20` alpha append. */}
         <div
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `${collection.color}20` }}
+          style={{
+            backgroundColor: `color-mix(in oklab, ${collection.color} 12%, transparent)`,
+          }}
         >
           <Folder className="h-4 w-4" style={{ color: collection.color }} />
         </div>

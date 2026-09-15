@@ -413,6 +413,7 @@ function ChallengeDetailPage() {
                                 )
                               }
                               disabled={updateProgressMutation.isPending}
+                              aria-label={`Mark as ${step.replace(/_/g, " ")}`}
                               className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))]"
                             />
                           ) : (

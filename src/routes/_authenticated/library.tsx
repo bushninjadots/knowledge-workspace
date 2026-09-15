@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Plus, LayoutGrid, List, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, LayoutGrid, List, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LibraryLayout } from "@/components/tethyr/library/library-layout";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { ItemCard } from "@/components/tethyr/library/item-card";
@@ -223,8 +224,10 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
         {/* Items */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-2 py-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 rounded-lg" />
+            ))}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-4">

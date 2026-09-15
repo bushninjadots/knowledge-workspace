@@ -250,6 +250,7 @@ export function FileUploadZone({
               </div>
               <button
                 onClick={() => removePending(pf.id)}
+                aria-label={`Remove ${pf.title || pf.file.name}`}
                 className="shrink-0 rounded-md p-1 text-muted-foreground/40 transition-colors hover:bg-surface hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />

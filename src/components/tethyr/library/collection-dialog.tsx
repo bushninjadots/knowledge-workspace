@@ -45,17 +45,24 @@ const ICONS = [
 ];
 
 const COLORS = [
-  "oklch(0.65 0.15 260)",
-  "oklch(0.72 0.19 142)",
-  "oklch(0.65 0.22 30)",
-  "oklch(0.65 0.26 305)",
-  "oklch(0.70 0.18 55)",
-  "oklch(0.60 0.20 200)",
-  "oklch(0.55 0.22 25)",
-  "oklch(0.75 0.15 175)",
-  "oklch(0.60 0.18 330)",
-  "oklch(0.68 0.16 80)",
+  "var(--learning)",
+  "var(--trust)",
+  "var(--teaching)",
+  "var(--ai)",
+  "var(--caution)",
+  "var(--warning)",
+  "var(--primary)",
 ];
+
+const SWATCH_LABELS: Record<string, string> = {
+  "var(--learning)": "Blue",
+  "var(--trust)": "Green",
+  "var(--teaching)": "Amber",
+  "var(--ai)": "Purple",
+  "var(--caution)": "Yellow",
+  "var(--warning)": "Red",
+  "var(--primary)": "Ink",
+};
 
 export function CollectionDialog({
   open,
@@ -157,11 +164,14 @@ export function CollectionDialog({
                 <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
+                  title={SWATCH_LABELS[color]}
+                  aria-label={`Collection color: ${SWATCH_LABELS[color]}`}
+                  aria-pressed={selectedColor === color}
                   className={cn(
                     "h-7 w-7 rounded-full border-2 transition-colors",
                     selectedColor === color
-                      ? "border-foreground scale-110"
-                      : "border-transparent hover:scale-110",
+                      ? "border-foreground"
+                      : "border-transparent hover:border-border-strong",
                   )}
                   style={{ backgroundColor: color }}
                 />
@@ -173,7 +183,9 @@ export function CollectionDialog({
           <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-surface/40 px-4 py-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${selectedColor}20` }}
+              style={{
+                backgroundColor: `color-mix(in oklab, ${selectedColor} 12%, transparent)`,
+              }}
             >
               <IconComponent className="h-4 w-4" style={{ color: selectedColor }} />
             </div>
