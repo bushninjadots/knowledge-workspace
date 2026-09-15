@@ -14,6 +14,7 @@ import {
   useUpdatePageTheme,
 } from "@/hooks/use-page-editor";
 import { useTheme } from "@/hooks/use-theme";
+import { useTheme as useAppTheme } from "@/lib/theme";
 import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import {
   CARD_SURFACE_STYLE,
@@ -78,6 +79,7 @@ export function PageShell({
     includeDraft: renderState === "draft" || previewDraft === true || isOwner,
   });
   const { data: themeVars = {} } = useTheme(page?.themeId);
+  const { resolvedTheme } = useAppTheme();
   const { isEditing, isPreviewing, previewDevice, recordSnapshot, registerRestoreHandler } =
     useEditMode();
   const createPage = useCreatePage();
@@ -195,8 +197,10 @@ export function PageShell({
     [page, previewTheme],
   );
   const containerStyle = useMemo(() => {
-    const style = { ...themeVars, ...themeTokensToStyle(effectiveTheme) } as React.CSSProperties &
-      Record<string, string>;
+    const style = {
+      ...themeVars,
+      ...themeTokensToStyle(effectiveTheme, resolvedTheme),
+    } as React.CSSProperties & Record<string, string>;
     if (page) {
       const configStyle = studioConfigToStyle(page.config) as React.CSSProperties &
         Record<string, string>;

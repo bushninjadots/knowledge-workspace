@@ -11,6 +11,13 @@
 
 import type { ThemeTokens } from "@/lib/page-blocks";
 
+/**
+ * The active light/dark scheme from the app theme toggle. When passed, a full
+ * custom palette adapts to it instead of hard-locking to the palette's authored
+ * mode — so toggling light/dark stays fluid and consistent across themed pages.
+ */
+export type ThemeScheme = "light" | "dark";
+
 /** Top-level color keys — emitted as `--key: value`. */
 const COLOR_KEYS = [
   "background",
@@ -49,7 +56,10 @@ const COLOR_KEYS = [
  * Borders:   "--radius-lg": "12px"
  * Shadows:   "--shadow-soft": "..."
  */
-export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
+export function themeTokensToVars(
+  tokens: ThemeTokens,
+  scheme?: ThemeScheme,
+): Record<string, string> {
   const vars: Record<string, string> = {};
 
   // ── Colors ────────────────────────────────────────────────────────────
@@ -66,7 +76,7 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
         vars[`--${key}`] = value;
       }
     }
-    deriveContrastVars(vars);
+    deriveContrastVars(vars, scheme);
   }
 
   // ── Typography ────────────────────────────────────────────────────────
@@ -140,8 +150,20 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
  *
  * This fills in every missing contrast-critical token by mixing the theme's
  * own foreground and background, so any palette stays legible.
+ *
+ * When `scheme` is supplied (the active light/dark toggle), a full palette also
+ * becomes toggle-aware:
+ *   - If the palette's natural scheme matches the toggle, it renders exactly as
+ *     the creator authored it.
+ *   - If they differ, the *canvas* (background / foreground and every derived
+ *     neutral: cards, surfaces, muted text, borders) is rebuilt for the active
+ *     scheme, while the creator's *identity* (declared primary, accent and the
+ *     semantic hues) is preserved and blended in as a tint. So a dark studio
+ *     theme gets a matching light counterpart — and vice versa — instead of
+ *     hard-locking one mode and fighting the toggle.
+ * With no `scheme`, behaviour is unchanged: the authored palette is respected.
  */
-function deriveContrastVars(vars: Record<string, string>): void {
+function deriveContrastVars(vars: Record<string, string>, scheme?: ThemeScheme): void {
   const bg = vars["--background"];
   const fg = vars["--foreground"];
   // No palette declared — inherit the active light/dark scheme entirely, so
@@ -152,59 +174,113 @@ function deriveContrastVars(vars: Record<string, string>): void {
   // derive its partner from *that colour* — never from the app default, which
   // flips with the light/dark toggle and would leave the pair mismatched
   // (dark-on-dark or white-on-light) in one of the two schemes.
-  const BG = bg ?? readableCounterpart(fg, "var(--background)");
-  const FG = fg ?? readableCounterpart(bg, "var(--foreground)");
+  const authoredBg = bg ?? readableCounterpart(fg, "var(--background)");
+  const authoredFg = fg ?? readableCounterpart(bg, "var(--foreground)");
+
+  // Does the active toggle disagree with the palette's authored mode?
+  const natural = colorScheme(authoredBg);
+  const flip = scheme != null && natural != null && scheme !== natural;
+
+  // Canvas anchors. In matching (or scheme-less) mode they are the authored
+  // colours. When flipping, rebuild the canvas for the active scheme, tinted by
+  // the creator's identity colour so the counterpart still reads as their studio.
+  let BG = authoredBg;
+  let FG = authoredFg;
+  if (flip) {
+    const tint = vars["--primary"] ?? vars["--accent"] ?? authoredBg;
+    if (scheme === "dark") {
+      BG = `color-mix(in oklab, ${tint} 8%, ${DARK_CANVAS})`;
+      FG = PAPER_NEUTRAL;
+    } else {
+      BG = `color-mix(in oklab, ${tint} 8%, ${LIGHT_CANVAS})`;
+      FG = INK_NEUTRAL;
+    }
+  }
+
   const mix = (pct: number) => `color-mix(in oklab, ${FG} ${pct}%, ${BG})`;
-  const setIf = (key: string, value: string) => {
+  // Structural (canvas) tokens: rebuilt when flipping, otherwise only filled
+  // when the theme didn't declare them.
+  const putStructural = (key: string, value: string) => {
+    if (flip || !vars[key]) vars[key] = value;
+  };
+  // Identity tokens: always keep an explicitly declared value; only supply a
+  // default when the theme left it out.
+  const putIdentity = (key: string, value: string) => {
     if (!vars[key]) vars[key] = value;
   };
 
   // Emit both anchors so the themed container never borrows a half of the pair
   // from the toggle-driven default (the source of unreadable text on switch).
-  setIf("--background", BG);
-  setIf("--foreground", FG);
+  putStructural("--background", BG);
+  putStructural("--foreground", FG);
 
-  const card = vars["--card"] ?? BG;
-  setIf("--card", card);
-  setIf("--card-foreground", FG);
-  setIf("--popover", card);
-  setIf("--popover-foreground", FG);
-  setIf("--surface", card);
-  setIf("--surface-elevated", card);
-  setIf("--surface-sunken", mix(6));
+  const card = flip ? BG : (vars["--card"] ?? BG);
+  putStructural("--card", card);
+  putStructural("--card-foreground", FG);
+  putStructural("--popover", card);
+  putStructural("--popover-foreground", FG);
+  putStructural("--surface", card);
+  putStructural("--surface-elevated", card);
+  putStructural("--surface-sunken", mix(6));
 
-  setIf("--muted", mix(8));
-  setIf("--muted-foreground", mix(70));
-  setIf("--muted-foreground-subtle", mix(55));
-  setIf("--secondary", mix(8));
-  setIf("--secondary-foreground", FG);
-  setIf("--accent", mix(10));
-  setIf("--accent-foreground", FG);
+  putStructural("--muted", mix(8));
+  putStructural("--muted-foreground", mix(70));
+  putStructural("--muted-foreground-subtle", mix(55));
+  putStructural("--secondary", mix(8));
+  putStructural("--secondary-foreground", FG);
+  putStructural("--accent", mix(10));
+  putStructural("--accent-foreground", FG);
 
-  setIf("--border", mix(18));
-  setIf("--border-strong", mix(32));
-  setIf("--input", vars["--border"]);
+  putStructural("--border", mix(18));
+  putStructural("--border-strong", mix(32));
+  putStructural("--input", vars["--border"]);
 
-  setIf("--primary", FG);
-  setIf("--primary-foreground", BG);
-  setIf("--ring", vars["--primary"]);
-  setIf("--destructive-foreground", BG);
+  // Primary is identity: keep a declared brand colour, else fall back to the
+  // canvas ink. Its foreground is always derived so button labels stay legible
+  // against whichever primary is in play.
+  putIdentity("--primary", FG);
+  vars["--primary-foreground"] = readableCounterpart(vars["--primary"], BG);
+  putIdentity("--ring", vars["--primary"]);
+  putStructural("--destructive-foreground", BG);
 
-  // Semantic hue tints must sit on the theme background, not on white.
+  // Semantic hue tints must sit on the active canvas, not on white.
   for (const hue of ["trust", "learning", "teaching", "ai", "warning", "caution"]) {
-    setIf(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
-    setIf(`--${hue}-foreground`, BG);
+    putStructural(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
+    putStructural(`--${hue}-foreground`, BG);
   }
 }
 
 /**
  * Neutral ink / paper anchors used when a theme declares only one half of the
- * background/foreground pair. They match the app's own light-mode ink and a
+ * background/foreground pair, and as the canvas text colour when flipping a
+ * palette to the opposite scheme. They match the app's own light-mode ink and a
  * near-white paper, so a derived partner reads like Tethyr rather than a raw
  * black/white.
  */
 const INK_NEUTRAL = "#1f2328";
 const PAPER_NEUTRAL = "#f5f6f8";
+
+/**
+ * Canvas bases used when flipping a palette to the scheme it wasn't authored
+ * for. They are near-neutral so the creator's identity colour (blended in at a
+ * low percentage) defines the character, not a flat black/white.
+ */
+const DARK_CANVAS = "#101319";
+const LIGHT_CANVAS = "#f7f8fa";
+
+/**
+ * Relative luminance (0–1) of a 6-digit hex colour, or null for any other
+ * format (e.g. oklch / var()) where we can't safely infer brightness.
+ */
+function hexLuminance(color: string): number | null {
+  const match = color.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return null;
+  const value = Number.parseInt(match[1], 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
 
 /**
  * Return a neutral that contrasts against `color` (dark ink for light colours,
@@ -213,22 +289,31 @@ const PAPER_NEUTRAL = "#f5f6f8";
  * partial non-hex palette never produces a wrong-contrast guess.
  */
 function readableCounterpart(color: string, fallback: string): string {
-  const match = color.match(/^#([0-9a-f]{6})$/i);
-  if (!match) return fallback;
-  const value = Number.parseInt(match[1], 16);
-  const r = (value >> 16) & 255;
-  const g = (value >> 8) & 255;
-  const b = value & 255;
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const luminance = hexLuminance(color);
+  if (luminance == null) return fallback;
   return luminance > 0.56 ? INK_NEUTRAL : PAPER_NEUTRAL;
+}
+
+/**
+ * Classify a colour as belonging to a "light" or "dark" palette, or null when
+ * brightness can't be inferred (non-hex). Used to decide whether the active
+ * toggle agrees with a palette's authored mode.
+ */
+function colorScheme(color: string): ThemeScheme | null {
+  const luminance = hexLuminance(color);
+  if (luminance == null) return null;
+  return luminance > 0.5 ? "light" : "dark";
 }
 
 /**
  * Given a ThemeTokens object, return a CSS style object suitable for a
  * React `style` prop.
  */
-export function themeTokensToStyle(tokens: ThemeTokens): React.CSSProperties {
-  const vars = themeTokensToVars(tokens);
+export function themeTokensToStyle(
+  tokens: ThemeTokens,
+  scheme?: ThemeScheme,
+): React.CSSProperties {
+  const vars = themeTokensToVars(tokens, scheme);
   const fg = vars["--foreground"];
   if (typeof fg === "string" && fg.trim() !== "") {
     // Inherited text must adopt the theme's foreground color, not the app

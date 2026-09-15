@@ -120,7 +120,9 @@ describe("themeTokensToVars", () => {
     expect(vars["--card"]).toBe("#0d0221");
     expect(vars["--card-foreground"]).toBe("#f0e6ff");
     expect(vars["--primary"]).toBe("#f0e6ff");
-    expect(vars["--primary-foreground"]).toBe("#0d0221");
+    // primary-foreground is always derived to contrast with the primary: a very
+    // light primary (#f0e6ff) gets dark ink, not the raw background.
+    expect(vars["--primary-foreground"]).toBe("#1f2328");
     expect(vars["--input"]).toBe("color-mix(in oklab, #f0e6ff 18%, #0d0221)");
     expect(vars["--trust-subtle"]).toBe("color-mix(in oklab, var(--trust) 16%, #0d0221)");
   });

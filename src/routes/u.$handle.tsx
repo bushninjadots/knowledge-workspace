@@ -40,6 +40,7 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { useTheme as useAppTheme } from "@/lib/theme";
 
 type PublicProfile = {
   id: string;
@@ -174,9 +175,10 @@ function PublicProfileRoute() {
   });
   const { page: profilePage } = profilePageQuery;
 
+  const { resolvedTheme } = useAppTheme();
   const pageThemeStyle = useMemo(
-    () => themeTokensToStyle(profilePage?.theme ?? {}),
-    [profilePage?.theme],
+    () => themeTokensToStyle(profilePage?.theme ?? {}, resolvedTheme),
+    [profilePage?.theme, resolvedTheme],
   );
 
   const hasBlocks = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
