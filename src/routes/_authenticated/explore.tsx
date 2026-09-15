@@ -460,7 +460,9 @@ function ExplorePage() {
     queryFn: async ({ pageParam }): Promise<Creator[]> => {
       let query = supabase
         .from("profiles")
-        .select("id, handle, display_name, creator_title, category, country, availability, updated_at")
+        .select(
+          "id, handle, display_name, creator_title, category, country, availability, updated_at",
+        )
         .not("display_name", "is", null)
         .order("updated_at", { ascending: false })
         .order("id", { ascending: false })
@@ -1008,6 +1010,7 @@ function ExplorePage() {
                 setQ={setQ}
                 category={category}
                 setCategory={setCategory}
+                openRoleCounts={openRoleCounts}
               />
               {filteredProjects.length > 0 && (
                 <LoadMoreButton
@@ -1095,7 +1098,10 @@ function ExplorePage() {
                         </div>
                         {(c.availability === "available" || sessionHostIds.has(c.id)) && (
                           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                            <AvailabilityChip status={c.availability} className="border border-trust/20 bg-trust/5 text-trust" />
+                            <AvailabilityChip
+                              status={c.availability}
+                              className="border border-trust/20 bg-trust/5 text-trust"
+                            />
                             {sessionHostIds.has(c.id) && (
                               <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--ai))]/25 bg-[var(--user-accent,var(--ai))]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
                                 <CalendarDays className="h-3 w-3" />

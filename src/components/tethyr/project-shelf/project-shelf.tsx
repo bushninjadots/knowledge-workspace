@@ -419,7 +419,9 @@ export function ProjectShelf({
 
       <ProjectShelfOverlay
         project={overlayIndex == null ? null : (projects[overlayIndex] ?? null)}
-        openRoleCount={overlayIndex == null ? 0 : (openRoleCounts?.get(projects[overlayIndex].id) ?? 0)}
+        openRoleCount={
+          overlayIndex == null ? 0 : (openRoleCounts?.get(projects[overlayIndex].id) ?? 0)
+        }
         index={overlayIndex}
         count={projects.length}
         onClose={closeOverlay}

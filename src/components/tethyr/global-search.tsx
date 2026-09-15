@@ -160,8 +160,8 @@ const SUGGESTED_LABELS = [
   "Challenges",
   "Community",
 ] as const;
-const SUGGESTED_DESTINATIONS = SUGGESTED_LABELS.map(
-  (label) => DESTINATIONS.find((d) => d.label === label)!,
+const SUGGESTED_DESTINATIONS = SUGGESTED_LABELS.map((label) =>
+  DESTINATIONS.find((d) => d.label === label)!,
 ).filter(Boolean);
 
 function destinationHitsFor(term: string, limit = 4): Array<(typeof DESTINATIONS)[number]> {

@@ -33,7 +33,6 @@ import { useSessionRequests } from "@/hooks/use-sessions";
 import { useConnections } from "@/hooks/use-connections";
 import { useUnreadCounts } from "@/hooks/use-messages";
 import { useProjectReturnChanges } from "@/hooks/use-project-loop";
-import { supabase } from "@/integrations/supabase/client";
 import { seoMeta } from "@/lib/seo";
 import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 
