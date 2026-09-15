@@ -1,5 +1,5 @@
 // Creative Studios — discover projects, creators, and open opportunities.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { z } from "zod";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -52,6 +52,8 @@ import { jsonLd, seoMeta } from "@/lib/seo";
 import type { ProfileBackground } from "@/lib/background-themes";
 
 const OPP_FILTER_KEY = "tethyr-opportunity-filters";
+const PROJECT_FILTER_KEY = "tethyr-project-filters";
+const PEOPLE_FILTER_KEY = "tethyr-people-filters";
 
 const ALL_NEEDS = "all-needs";
 
@@ -244,12 +246,48 @@ function ExplorePage() {
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const { data: skills = [] } = useSkillsCatalog();
 
-  // Persist opportunity filters
+  // Persist filters per tab (search box, category, and the tab's own toggles),
+  // so returning to a tab resumes where you left off — parity for Projects and
+  // People with what Opportunities already did. Persisting is skipped until a
+  // tab has been visited/hydrated, so a save effect can't clobber stored
+  // filters with another tab's state before they're restored.
+  const [persistTabs, setPersistTabs] = useState<Set<Tab>>(new Set(["opportunities"]));
   useEffect(() => {
     if (tab === "opportunities") {
       saveOppFilters({ q, category, oppSort, activeNeed });
+    } else if (persistTabs.has(tab)) {
+      try {
+        const state = tab === "projects" ? { q, category } : { q, category, collabOnly };
+        localStorage.setItem(
+          tab === "projects" ? PROJECT_FILTER_KEY : PEOPLE_FILTER_KEY,
+          JSON.stringify(state),
+        );
+      } catch {
+        /* ignore */
+      }
     }
-  }, [q, category, oppSort, activeNeed, tab]);
+  }, [q, category, oppSort, activeNeed, collabOnly, tab, persistTabs]);
+
+  // Restore the Projects/People filters on tab switch (only the fields that
+  // tab persists; opportunities restore at mount above).
+  const prevTabRef = useRef<typeof tab | null>(null);
+  useEffect(() => {
+    if (prevTabRef.current === tab) return;
+    prevTabRef.current = tab;
+    if (tab !== "projects" && tab !== "creators") return;
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(tab === "projects" ? PROJECT_FILTER_KEY : PEOPLE_FILTER_KEY) ?? "{}",
+      ) as Record<string, unknown>;
+      if (typeof saved.q === "string") setQ(saved.q);
+      if (typeof saved.category === "string") setCategory(saved.category);
+      if (tab === "creators" && typeof saved.collabOnly === "boolean")
+        setCollabOnly(saved.collabOnly);
+    } catch {
+      /* ignore */
+    }
+    setPersistTabs((prev) => new Set(prev).add(tab));
+  }, [tab]);
 
   // Build user skill names for matching
   const mySkillNames = useMemo(() => {

@@ -34,6 +34,17 @@ WHERE s.title = 'QoL Verification Session'
     SELECT 1 FROM session_participants sp
     WHERE sp.session_id = s.id AND sp.profile_id = '{uid}'
   );
+
+-- Attach external-image gallery entries to the shelf's demo project so the
+-- lightbox zoom path has real data. Only touches the seeded 'Signal Garden'
+-- project when its gallery is still empty.
+UPDATE projects
+SET gallery = '[
+  {{"url": "https://picsum.photos/seed/tethyr-qol-1/1200/800", "caption": "Interface study", "type": "image"}},
+  {{"url": "https://picsum.photos/seed/tethyr-qol-2/1200/800", "caption": "Color system", "type": "image"}},
+  {{"url": "https://picsum.photos/seed/tethyr-qol-3/1200/800", "caption": "Motion pass", "type": "image"}}
+]'::jsonb
+WHERE title = 'Signal Garden' AND gallery = '[]'::jsonb;
 """
 
 

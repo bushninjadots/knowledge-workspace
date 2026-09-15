@@ -1,8 +1,9 @@
-import { CalendarDays, Video, MoreHorizontal, MapPin } from "lucide-react";
+import { CalendarDays, Video, MoreHorizontal, MapPin, CalendarPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 import { safeHref } from "@/lib/validators";
+import { downloadSessionIcs } from "@/lib/session-ical";
 
 function formatDate(iso: string | null) {
   if (!iso) return "TBD";
@@ -126,6 +127,19 @@ function UpcomingCard({
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {session.starts_at && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadSessionIcs(session);
+            }}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            title="Add to calendar"
+            aria-label={`Add ${session.title} to your calendar`}
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+          </button>
+        )}
         {session.meeting_url && (
           <a
             href={safeHref(session.meeting_url)}

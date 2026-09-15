@@ -4,7 +4,9 @@
 Walks the seeded demo account through:
   1. Lightbox on a project gallery (open, navigate, Escape closes)
   2. iCal export — "Add to calendar" downloads a valid .ics file
-  3. Offline banner — appears when the context goes offline, disappears on reconnect
+  3. iCal export from the Upcoming session list card (no page navigation)
+  4. Explore Projects/People filter persistence across tab switches
+  5. Offline banner — appears when the context goes offline, disappears on reconnect
 
 Usage:
     python3 tests/qol_pass_browser.py [BASE_URL]
@@ -59,24 +61,36 @@ def main() -> int:
             return 1
 
         # ── 1. Project gallery lightbox ────────────────────────────────
-        # Shelf flow: cover click -> overlay -> "View Project" -> project page.
+        # Direct to the seeded gallery project (idempotent seed in
+        # tests/helpers/seed_qol_fixtures.py attaches 3 images to Signal Garden).
         print("[1] project gallery lightbox")
         try:
-            page.goto(f"{BASE_URL}/explore", wait_until="domcontentloaded", timeout=30000)
+            import subprocess
+
+            proj_id = (
+                subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        "supabase_db_mfeinmphbsnjcchkmldi",
+                        "psql",
+                        "-U",
+                        "postgres",
+                        "-d",
+                        "postgres",
+                        "-tAc",
+                        "SELECT id FROM projects WHERE title = 'Signal Garden' LIMIT 1",
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+                .stdout.strip()
+            )
+            if not proj_id:
+                raise RuntimeError("Signal Garden not found — run tests/helpers/seed_qol_fixtures.py")
+            page.goto(f"{BASE_URL}/projects/{proj_id}", wait_until="domcontentloaded", timeout=30000)
             page.wait_for_timeout(5000)
-            cover = page.locator("main button:visible").filter(has_text="·").first
-            if cover.count() == 0:
-                raise RuntimeError("no shelf project card found")
-            cover.click()
-            page.wait_for_timeout(2500)
-            view = page.locator('button:has-text("View Project")').first
-            if view.count() == 0:
-                raise RuntimeError("shelf overlay did not show View Project")
-            view.click()
-            page.wait_for_timeout(5000)
-            if "/projects/" not in page.url:
-                raise RuntimeError(f"expected /projects/ url, got {page.url}")
-            ok(f"opened project {page.url.rsplit('/', 1)[-1]}")
+            ok(f"opened project {proj_id[:8]}…")
             zoom = page.locator("button.cursor-zoom-in")
             if zoom.count() == 0:
                 print("  --: project has no gallery images (lightbox covered by unit-level render)")
@@ -135,8 +149,64 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             all_ok = fail(f"ical: {exc}")
 
-        # ── 3. Offline banner ──────────────────────────────────────────
-        print("[3] offline banner")
+        # ── 3. iCal export from the Upcoming session card ──────────────
+        print("[3] upcoming-card iCal export")
+        try:
+            page.goto(f"{BASE_URL}/sessions", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(5000)
+            ics_btn = page.locator('button[title="Add to calendar"]').first
+            if ics_btn.count() == 0:
+                raise RuntimeError("no Add-to-calendar button on upcoming cards")
+            with page.expect_download() as download_info:
+                ics_btn.click()
+            download = download_info.value
+            with open(download.path(), "r", encoding="utf-8", errors="replace") as f:
+                ics = f.read()
+            if "BEGIN:VCALENDAR" in ics and "BEGIN:VEVENT" in ics:
+                ok(f"card-level ics downloaded ({download.suggested_filename})")
+            else:
+                all_ok = fail("card-level download is not a valid VCALENDAR")
+            if "/sessions/" in page.url:
+                all_ok = fail("card iCal click navigated instead of staying on the list")
+            else:
+                ok("card iCal click did not navigate")
+        except Exception as exc:  # noqa: BLE001
+            all_ok = fail(f"card ical: {exc}")
+
+        # ── 4. Explore Projects/People filter persistence ──────────────
+        print("[4] explore filter persistence")
+        try:
+            marker = "zz-qol-verify"
+            page.goto(f"{BASE_URL}/explore?tab=projects", wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(5000)
+            search = page.locator('main input[type="search"], main input[placeholder*="earch" i]').first
+            if search.count() == 0:
+                raise RuntimeError("explore search input not found")
+            search.fill(marker)
+            page.wait_for_timeout(1000)  # save effect
+            stored = page.evaluate("localStorage.getItem('tethyr-project-filters')")
+            if stored and marker in stored:
+                ok("project filters persisted to localStorage")
+            else:
+                all_ok = fail(f"project filters not persisted (got {stored!r})")
+            # Switch to People, then back — the marker must survive.
+            people_tab = page.locator("button", has_text="People").first
+            projects_tab = page.locator("button", has_text="Projects").first
+            if people_tab.count() == 0 or projects_tab.count() == 0:
+                raise RuntimeError("explore tab buttons not found")
+            people_tab.click()
+            page.wait_for_timeout(1500)
+            projects_tab.click()
+            page.wait_for_timeout(1500)
+            if search.input_value() == marker:
+                ok("project filters restored after tab switch")
+            else:
+                all_ok = fail(f"project filters lost after tab switch (got {search.input_value()!r})")
+        except Exception as exc:  # noqa: BLE001
+            all_ok = fail(f"explore persistence: {exc}")
+
+        # ── 5. Offline banner ──────────────────────────────────────────
+        print("[5] offline banner")
         try:
             ctx = page.context
             ctx.set_offline(True)

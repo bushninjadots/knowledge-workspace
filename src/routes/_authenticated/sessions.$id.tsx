@@ -44,7 +44,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
-import { buildSessionIcs, downloadIcs } from "@/lib/ical";
+import { downloadSessionIcs } from "@/lib/session-ical";
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -229,7 +229,6 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
   const statusCfg = STATUS_CONFIG[session.status];
 
   const startsAt = session.starts_at ? new Date(session.starts_at) : null;
-  const endsAt = session.ends_at ? new Date(session.ends_at) : null;
   const dateStr = startsAt
     ? startsAt.toLocaleDateString(undefined, {
         weekday: "long",
@@ -243,18 +242,7 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
     : "";
 
   const handleAddToCalendar = () => {
-    if (!startsAt) return;
-    const body = buildSessionIcs({
-      uid: session.id,
-      title: session.title,
-      start: startsAt,
-      end: endsAt,
-      durationMinutes: session.duration_minutes,
-      description: session.description,
-      location: session.location,
-      meetingUrl: session.meeting_url,
-    });
-    downloadIcs(`${session.title.replace(/[^\w-]+/g, "-").toLowerCase() || "session"}.ics`, body);
+    downloadSessionIcs(session);
   };
 
   return (

@@ -1,8 +1,9 @@
-import { Clock, Video, ExternalLink } from "lucide-react";
+import { Clock, Video, ExternalLink, CalendarPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { SessionWithParticipants } from "@/hooks/use-sessions";
 import { STATUS_CONFIG, TYPE_LABELS } from "./sessions-sidebar";
 import { safeHref } from "@/lib/validators";
+import { downloadSessionIcs } from "@/lib/session-ical";
 
 function formatTime(iso: string | null) {
   if (!iso) return "--:--";
@@ -101,6 +102,19 @@ function SessionCard({
           >
             <Video className="h-3.5 w-3.5" />
           </a>
+        )}
+        {session.starts_at && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadSessionIcs(session);
+            }}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            title="Add to calendar"
+            aria-label={`Add ${session.title} to your calendar`}
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+          </button>
         )}
         <button
           className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
