@@ -25,7 +25,7 @@ import {
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { PersonPill, PERSON_ROLE_LABEL } from "@/components/tethyr/person-pill";
-import { ProjectCoverFallback } from "@/components/tethyr/project-shelf/cover-gradient";
+import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import type { Contributor } from "@/hooks/use-projects";
 

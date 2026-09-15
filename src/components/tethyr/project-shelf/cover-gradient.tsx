@@ -2,9 +2,6 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 
-// Re-exported so cover-sized consumers keep importing it from here.
-export { ProjectCoverFallback };
-
 interface CoverGradientProps {
   coverUrl?: string | null;
   fit?: "cover" | "contain";

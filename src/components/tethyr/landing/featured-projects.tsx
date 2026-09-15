@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, FolderKanban } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { STATUS_STYLES } from "../project-shelf/project-shelf-cover";
+import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useFeaturedProjects } from "./data";
 
@@ -8,13 +9,7 @@ export function ProjectCardCover({ path }: { path: string | null }) {
   // Resolve the raw storage path to a signed URL client-side — keeps the
   // query data deterministic so SSR and hydration always match.
   const { data: url } = useSignedStorageUrl("project-media", path);
-  if (!url) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <FolderKanban className="h-8 w-8 text-muted-foreground/40" />
-      </div>
-    );
-  }
+  if (!url) return <ProjectCoverFallback iconClassName="h-8 w-8" />;
   return (
     <img
       src={url}
