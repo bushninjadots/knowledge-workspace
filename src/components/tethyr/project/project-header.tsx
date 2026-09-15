@@ -80,6 +80,7 @@ export function ProjectHeader({
   onPostUpdate,
   onOpenDiscussions,
   onOpenNeeds,
+  onOpenPeople,
 }: {
   project: ProjectDetail;
   coverSigned: string | null;
@@ -103,6 +104,7 @@ export function ProjectHeader({
   onPostUpdate?: () => void;
   onOpenDiscussions?: () => void;
   onOpenNeeds?: () => void;
+  onOpenPeople?: () => void;
 }) {
   const others = contributors.filter((c) => c.role !== "creator");
   const timeSinceStart = project.started_at
@@ -216,9 +218,20 @@ export function ProjectHeader({
                         </ProfileLink>
                       ))}
                     </div>
-                    <span className="ml-1.5 text-xs text-muted-foreground">
-                      {others.length} collaborator{others.length !== 1 ? "s" : ""}
-                    </span>
+                    {onOpenPeople ? (
+                      <button
+                        type="button"
+                        onClick={onOpenPeople}
+                        className="ml-1.5 rounded-md text-left text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--trust))]"
+                        aria-label={`View ${others.length} collaborator${others.length !== 1 ? "s" : ""}`}
+                      >
+                        {others.length} collaborator{others.length !== 1 ? "s" : ""}
+                      </button>
+                    ) : (
+                      <span className="ml-1.5 text-xs text-muted-foreground">
+                        {others.length} collaborator{others.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                 </>
               )}
