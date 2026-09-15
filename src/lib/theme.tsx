@@ -12,20 +12,31 @@ export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "tethyr-theme";
+/** ID of the globally-applied theme preset row, or null for the Tethyr default. */
+export const THEME_PRESET_STORAGE_KEY = "tethyr-theme-preset";
+/** Cached CSS-var map for the last applied preset, read by the init script to
+ *  avoid a flash of the default palette before the token query resolves. */
+export const THEME_PRESET_VARS_STORAGE_KEY = "tethyr-theme-preset-vars";
 
 /**
  * Runs before hydration (injected in the document head) so the correct theme
- * class is on <html> before first paint — no flash of the wrong palette.
+ * class is on <html> before first paint — no flash of the wrong palette. Also
+ * replays any cached preset-token CSS variables so a chosen global theme
+ * (Minimal, Terminal, Paper…) paints on the very first frame.
  */
 export const themeInitScript = `(function(){try{var k=${JSON.stringify(
   THEME_STORAGE_KEY,
-)};var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)").matches;var d=s==="dark"||((!s||s==="system")&&m);var e=document.documentElement;e.classList.toggle("dark",d);e.style.colorScheme=d?"dark":"light";}catch(e){}})();`;
+)};var pk=${JSON.stringify(THEME_PRESET_STORAGE_KEY)};var pv=${JSON.stringify(
+  THEME_PRESET_VARS_STORAGE_KEY,
+)};var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)").matches;var d=s==="dark"||((!s||s==="system")&&m);var e=document.documentElement;e.classList.toggle("dark",d);e.style.colorScheme=d?"dark":"light";var p=localStorage.getItem(pk);if(p){var c=JSON.parse(localStorage.getItem(pv)||"null");if(c&&c.preset===p&&c.scheme===(d?"dark":"light")){for(var v in c.vars){e.style.setProperty(v,c.vars[v]);}}}}catch(e){}})();`;
 
 type ThemeContextValue = {
   theme: Theme;
   resolvedTheme: ResolvedTheme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  themePreset: string | null;
+  setThemePreset: (id: string | null) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -44,6 +55,7 @@ function applyTheme(resolved: ResolvedTheme) {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
+  const [themePreset, setThemePresetState] = useState<string | null>(null);
 
   // Read the persisted preference after hydration.
   useEffect(() => {
@@ -59,6 +71,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       stored === "system" ? (systemPrefersDark() ? "dark" : "light") : stored;
     setResolvedTheme(resolved);
     applyTheme(resolved);
+
+    let presets: string | null = null;
+    try {
+      presets = localStorage.getItem(THEME_PRESET_STORAGE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    setThemePresetState(presets);
   }, []);
 
   // Follow the OS when the preference is"system".
@@ -91,9 +111,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }, [resolvedTheme, setTheme]);
 
+  const setThemePreset = useCallback((id: string | null) => {
+    setThemePresetState(id);
+    try {
+      if (id === null) localStorage.removeItem(THEME_PRESET_STORAGE_KEY);
+      else localStorage.setItem(THEME_PRESET_STORAGE_KEY, id);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({ theme, resolvedTheme, setTheme, toggleTheme }),
-    [theme, resolvedTheme, setTheme, toggleTheme],
+    () => ({ theme, resolvedTheme, setTheme, toggleTheme, themePreset, setThemePreset }),
+    [theme, resolvedTheme, setTheme, toggleTheme, themePreset, setThemePreset],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
