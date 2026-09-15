@@ -17,6 +17,7 @@ import {
   Hash,
   Zap,
   Loader2,
+  CalendarDays,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { ProjectShelf } from "@/components/tethyr/project-shelf/project-shelf";
 import { ApplyToRoleButton } from "@/components/tethyr/project/project-role-applications";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { ProfileLink } from "@/components/tethyr/profile-link";
+import { AvailabilityChip } from "@/components/tethyr/availability-chip";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +75,7 @@ export type ProjectRow = {
     display_name: string | null;
     creator_title: string | null;
     avatar_url: string | null;
+    availability: string | null;
   } | null;
 };
 
@@ -83,6 +86,7 @@ type Creator = {
   creator_title: string | null;
   category: string | null;
   country: string | null;
+  availability: string | null;
   updated_at: string;
 };
 
@@ -220,6 +224,7 @@ function ExplorePage() {
   const [category, setCategory] = useState<string>((savedOpp.category as string) ?? "All");
   const [oppSort, setOppSort] = useState<OppSortMode>((savedOpp.oppSort as OppSortMode) ?? "match");
   const [activeNeed, setActiveNeed] = useState<string>((savedOpp.activeNeed as string) ?? "");
+  const [collabOnly, setCollabOnly] = useState(false);
   const [discoverOpen, setDiscoverOpen] = useState(false);
   const { data: skills = [] } = useSkillsCatalog();
 
@@ -254,7 +259,7 @@ function ExplorePage() {
     queryKey: ["explore-projects"],
     queryFn: async ({ pageParam }): Promise<ProjectRow[]> => {
       const PROJECTS_SELECT =
-        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url)" as const;
+        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url, availability)" as const;
       let query = supabase
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)
@@ -455,7 +460,7 @@ function ExplorePage() {
     queryFn: async ({ pageParam }): Promise<Creator[]> => {
       let query = supabase
         .from("profiles")
-        .select("id, handle, display_name, creator_title, category, country, updated_at")
+        .select("id, handle, display_name, creator_title, category, country, availability, updated_at")
         .not("display_name", "is", null)
         .order("updated_at", { ascending: false })
         .order("id", { ascending: false })
@@ -481,6 +486,56 @@ function ExplorePage() {
     staleTime: 60_000,
   });
   const creators = (creatorsPages?.pages ?? []).flat();
+
+  // Open-role counts for the visible project cards — one batched query so the
+  // shelf, list, and overlay can each show "N open roles" without firing per
+  // card.
+  const { data: openRoleRows = [] } = useQuery({
+    queryKey: ["explore-open-roles", (projects ?? []).map((p) => p.id).join(",")],
+    queryFn: async (): Promise<{ project_id: string }[]> => {
+      const ids = (projects ?? []).map((p) => p.id);
+      if (ids.length === 0) return [];
+      const { data, error } = await supabase
+        .from("project_open_roles")
+        .select("project_id")
+        .eq("is_filled", false)
+        .in("project_id", ids)
+        .limit(2000);
+      if (error) throw error;
+      return (data ?? []) as { project_id: string }[];
+    },
+    enabled: (projects ?? []).length > 0,
+    staleTime: 60_000,
+  });
+  const openRoleCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of openRoleRows) {
+      counts.set(row.project_id, (counts.get(row.project_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [openRoleRows]);
+
+  // Creators hosting upcoming sessions — a subtle "hosting live sessions"
+  // signal on the People grid.
+  const { data: sessionHostIds = new Set<string>() } = useQuery({
+    queryKey: ["explore-session-hosts", (creators ?? []).map((c) => c.id).join(",")],
+    queryFn: async (): Promise<Set<string>> => {
+      const ids = (creators ?? []).map((c) => c.id);
+      if (ids.length === 0) return new Set();
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("organizer_id")
+        .gte("starts_at", now)
+        .in("status", ["scheduled", "confirmed", "invitation_sent"])
+        .in("organizer_id", ids)
+        .limit(2000);
+      if (error) throw error;
+      return new Set((data ?? []).map((row) => row.organizer_id));
+    },
+    enabled: (creators ?? []).length > 0,
+    staleTime: 120_000,
+  });
 
   const contributorIds = useMemo(() => {
     if (!meId) return new Set<string>();
@@ -568,6 +623,7 @@ function ExplorePage() {
   const filteredCreators = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (creators ?? []).filter((c) => {
+      if (collabOnly && c.availability !== "available") return false;
       if (category !== "All" && category !== "Projects") {
         if (!c.category || c.category.toLowerCase() !== category.toLowerCase()) return false;
       }
@@ -576,7 +632,7 @@ function ExplorePage() {
         (v ?? "").toLowerCase().includes(needle),
       );
     });
-  }, [creators, q, category]);
+  }, [creators, q, category, collabOnly]);
 
   const isLoading =
     tab === "projects"
@@ -981,6 +1037,18 @@ function ExplorePage() {
               </div>
               {/* People tab filter chips */}
               <div className="mb-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  aria-pressed={collabOnly}
+                  onClick={() => setCollabOnly((v) => !v)}
+                  className={`rounded-full border px-3 py-1.5 text-xs transition-lift ${
+                    collabOnly
+                      ? "border-trust bg-trust/10 text-trust"
+                      : "border-border bg-background/60 text-muted-foreground hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground"
+                  }`}
+                >
+                  {collabOnly ? "✓ " : ""}Open to collaboration
+                </button>
                 {EXPLORE_FILTER_CATEGORIES.map((c) => (
                   <button
                     key={c}
@@ -1025,6 +1093,17 @@ function ExplorePage() {
                             </p>
                           </div>
                         </div>
+                        {(c.availability === "available" || sessionHostIds.has(c.id)) && (
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <AvailabilityChip status={c.availability} className="border border-trust/20 bg-trust/5 text-trust" />
+                            {sessionHostIds.has(c.id) && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--user-accent,var(--ai))]/25 bg-[var(--user-accent,var(--ai))]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
+                                <CalendarDays className="h-3 w-3" />
+                                Hosts sessions
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-wider text-muted-foreground">
                           {c.handle ? <span className="truncate">@{c.handle}</span> : <span />}
                           {c.country && <span>{c.country}</span>}

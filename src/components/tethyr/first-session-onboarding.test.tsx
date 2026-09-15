@@ -41,6 +41,14 @@ function makeData(overrides: Partial<CurrentUserData> = {}): CurrentUserData {
   } as CurrentUserData;
 }
 
+const withStudio = {
+  profile: {
+    display_name: "Ada Lovelace",
+    creator_title: "Mathematician",
+    bio: "First programmer.",
+  } as CurrentUserData["profile"],
+};
+
 function renderOnboarding(data = makeData()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -55,18 +63,67 @@ beforeEach(() => {
 });
 
 describe("FirstSessionOnboarding", () => {
-  it("starts with an intent question and reveals a relevant action", async () => {
-    const user = userEvent.setup();
+  it("shows the guided path with all three steps when nothing is set up", () => {
     renderOnboarding();
 
-    expect(screen.getByRole("heading", { name: "What brings you to Tethyr?" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Find a project" }));
-
-    expect(screen.getByRole("heading", { name: "Find work worth joining." })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Explore projects/ })).toHaveAttribute(
+    expect(
+      screen.getByRole("heading", { name: "Set up your Studio, then start building." }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Set up your Studio")).toBeInTheDocument();
+    expect(screen.getByText("Start your first project")).toBeInTheDocument();
+    expect(screen.getByText("Share a skill you teach")).toBeInTheDocument();
+    // Studio is the first undone step → its action is the primary CTA.
+    expect(screen.getByRole("link", { name: /Open Your Studio/ })).toHaveAttribute(
       "href",
-      "/explore",
+      "/profile",
     );
+  });
+
+  it("advances the action to the project step once the studio is set up", () => {
+    renderOnboarding(makeData(withStudio));
+
+    expect(screen.getByText("done")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start a project" })).toBeInTheDocument();
+  });
+
+  it("advances the action to the skills step once a project exists", () => {
+    renderOnboarding(
+      makeData({
+        ...withStudio,
+        projects: [{ id: "p1" } as CurrentUserData["projects"][number]],
+      }),
+    );
+
+    expect(screen.getByRole("link", { name: /Add a skill/ })).toHaveAttribute("href", "/profile");
+  });
+
+  it("hides once studio, a project, and a skill are all in place", () => {
+    const { rerender } = renderOnboarding(
+      makeData({
+        ...withStudio,
+        projects: [{ id: "p1" } as CurrentUserData["projects"][number]],
+        teachIds: ["s1"],
+      }),
+    );
+
+    expect(
+      screen.queryByRole("heading", { name: "Set up your Studio, then start building." }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <FirstSessionOnboarding
+          data={makeData({
+            ...withStudio,
+            projects: [{ id: "p1" } as CurrentUserData["projects"][number]],
+            teachIds: ["s1"],
+          })}
+        />
+      </QueryClientProvider>,
+    );
+    expect(
+      screen.queryByRole("heading", { name: "Set up your Studio, then start building." }),
+    ).not.toBeInTheDocument();
   });
 
   it("dismisses per user", async () => {
@@ -75,7 +132,7 @@ describe("FirstSessionOnboarding", () => {
 
     await user.click(screen.getByRole("button", { name: "Dismiss onboarding" }));
     expect(
-      screen.queryByRole("heading", { name: "What brings you to Tethyr?" }),
+      screen.queryByRole("heading", { name: "Set up your Studio, then start building." }),
     ).not.toBeInTheDocument();
 
     rerender(
@@ -84,14 +141,7 @@ describe("FirstSessionOnboarding", () => {
       </QueryClientProvider>,
     );
     expect(
-      screen.queryByRole("heading", { name: "What brings you to Tethyr?" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("does not show once the user has started building", () => {
-    renderOnboarding(makeData({ projects: [{ id: "p1" } as CurrentUserData["projects"][number]] }));
-    expect(
-      screen.queryByRole("heading", { name: "What brings you to Tethyr?" }),
+      screen.queryByRole("heading", { name: "Set up your Studio, then start building." }),
     ).not.toBeInTheDocument();
   });
 });

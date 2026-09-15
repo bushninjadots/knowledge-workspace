@@ -24,6 +24,7 @@ import {
 } from "@/components/tethyr/profile-sections";
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
+import { PersonPill, PERSON_ROLE_LABEL } from "@/components/tethyr/person-pill";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import type { Contributor } from "@/hooks/use-projects";
 
@@ -179,20 +180,14 @@ export function ProjectHeader({
             {/* Owner + collaborators */}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
               {creator?.profile && (
-                <ProfileLink
+                <PersonPill
                   handle={creator.profile.handle}
-                  className="inline-flex items-center gap-2 text-muted-foreground transition-lift hover:text-foreground"
-                  title={creator.profile.display_name || creator.profile.handle || undefined}
-                >
-                  <Avatar
-                    name={creator.profile.display_name ?? creator.profile.handle}
-                    src={avatarSigned[creator.profile_id]}
-                    size="h-6 w-6"
-                  />
-                  <span className="font-medium">
-                    {creator.profile.display_name || creator.profile.handle}
-                  </span>
-                </ProfileLink>
+                  name={creator.profile.display_name ?? creator.profile.handle}
+                  role="creator"
+                  avatarSrc={avatarSigned[creator.profile_id]}
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                />
               )}
               {others.length > 0 && (
                 <>
@@ -202,13 +197,19 @@ export function ProjectHeader({
                   <div className="flex items-center">
                     <div className="flex -space-x-2">
                       {others.slice(0, 4).map((c) => (
-                        <Avatar
+                        <ProfileLink
                           key={c.profile_id}
-                          name={c.profile?.display_name ?? c.profile?.handle}
-                          src={avatarSigned[c.profile_id]}
-                          size="h-6 w-6"
-                          ring="ring-2 ring-background"
-                        />
+                          handle={c.profile?.handle}
+                          title={`${c.profile?.display_name ?? c.profile?.handle ?? "Anonymous"} · ${PERSON_ROLE_LABEL[c.role] ?? c.role}`}
+                          className="transition-lift"
+                        >
+                          <Avatar
+                            name={c.profile?.display_name ?? c.profile?.handle}
+                            src={avatarSigned[c.profile_id]}
+                            size="h-6 w-6"
+                            ring="ring-2 ring-background"
+                          />
+                        </ProfileLink>
                       ))}
                     </div>
                     <span className="ml-1.5 text-xs text-muted-foreground">

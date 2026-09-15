@@ -37,7 +37,11 @@ beforeAll(() => {
     })) as typeof window.matchMedia);
 });
 
-function makeProject(id: string, title: string): ProjectRow {
+function makeProject(
+  id: string,
+  title: string,
+  overrides: Partial<ProjectRow> & { profiles?: Partial<ProjectRow["profiles"]> } = {},
+): ProjectRow {
   return {
     id,
     profile_id: "user-1",
@@ -58,11 +62,14 @@ function makeProject(id: string, title: string): ProjectRow {
       display_name: "Creator",
       creator_title: null,
       avatar_url: null,
+      availability: null,
+      ...(overrides.profiles ?? {}),
     },
+    ...overrides,
   };
 }
 
-function renderShelf(projects: ProjectRow[]) {
+function renderShelf(projects: ProjectRow[], openRoleCounts?: Map<string, number>) {
   return render(
     <ProjectShelf
       projects={projects}
@@ -72,6 +79,7 @@ function renderShelf(projects: ProjectRow[]) {
       setQ={vi.fn()}
       category="All"
       setCategory={vi.fn()}
+      openRoleCounts={openRoleCounts}
     />,
   );
 }

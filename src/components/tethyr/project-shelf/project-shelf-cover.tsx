@@ -17,6 +17,7 @@ interface ProjectShelfCoverProps {
   isContributor: boolean;
   prefersReducedMotion: boolean;
   forceFace?: boolean;
+  openRoleCount?: number;
   onClick: () => void;
 }
 
@@ -28,7 +29,13 @@ export function ProjectShelfCover(props: ProjectShelfCoverProps) {
  * Clean, static project card — full cover image at 16:9,
  * info panel below. No 3D transforms, no animation math.
  */
-function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShelfCoverProps) {
+function ProjectShelfFace({
+  project,
+  meId,
+  isContributor,
+  openRoleCount = 0,
+  onClick,
+}: ProjectShelfCoverProps) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
   const isOwn = project.profiles?.id === meId;
 
@@ -85,10 +92,16 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
               {project.title}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
-              {project.looking_for_collaborators && (
+              {project.looking_for_collaborators ? (
                 <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--user-accent,var(--ai))]/15 px-2 py-0.5 text-[11px] font-medium text-[var(--user-accent,var(--ai))]">
                   Open
                 </span>
+              ) : (
+                openRoleCount > 0 && (
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-trust/15 px-2 py-0.5 text-[11px] font-medium text-trust">
+                    {openRoleCount} role{openRoleCount !== 1 ? "s" : ""} open
+                  </span>
+                )
               )}
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
                 {project.progress_percent}%
@@ -99,8 +112,18 @@ function ProjectShelfFace({ project, meId, isContributor, onClick }: ProjectShel
           {project.profiles && (
             <p
               className="truncate text-xs text-muted-foreground"
-              title={`by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`}
+              title={
+                project.profiles.availability === "available"
+                  ? `${project.profiles.display_name || project.profiles.handle || "Member"} · open to collaboration`
+                  : `by ${project.profiles.display_name || project.profiles.handle || "Member"} · ${status.label}`
+              }
             >
+              {project.profiles.availability === "available" && (
+                <span
+                  aria-hidden="true"
+                  className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-trust align-middle"
+                />
+              )}
               by {project.profiles.display_name || project.profiles.handle || "Member"}
               {" · "}
               {status.label}

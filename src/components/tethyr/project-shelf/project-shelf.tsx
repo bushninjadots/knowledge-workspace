@@ -19,6 +19,7 @@ interface ProjectShelfProps {
   setQ: (v: string) => void;
   category: string;
   setCategory: (v: string) => void;
+  openRoleCounts?: Map<string, number>;
 }
 
 const VIEW_STORAGE_KEY = "tethyr-project-view";
@@ -41,6 +42,7 @@ export function ProjectShelf({
   setQ,
   category,
   setCategory,
+  openRoleCounts,
 }: ProjectShelfProps) {
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -254,6 +256,7 @@ export function ProjectShelf({
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
               forceFace
+              openRoleCount={openRoleCounts?.get(project.id) ?? 0}
               onClick={() => handleCardClick(project, i)}
             />
           ))}
@@ -270,6 +273,7 @@ export function ProjectShelf({
               isContributor={contributorIds.has(project.id)}
               prefersReducedMotion={prefersReducedMotion ?? false}
               forceFace
+              openRoleCount={openRoleCounts?.get(project.id) ?? 0}
               onClick={() => handleCardClick(project, i)}
             />
           ))}
@@ -283,6 +287,7 @@ export function ProjectShelf({
               project={project}
               meId={meId}
               isContributor={contributorIds.has(project.id)}
+              openRoleCount={openRoleCounts?.get(project.id) ?? 0}
               onClick={() => handleCardClick(project, i)}
             />
           ))}
@@ -342,6 +347,7 @@ export function ProjectShelf({
                         isContributor={contributorIds.has(activeProject.id)}
                         prefersReducedMotion={prefersReducedMotion ?? false}
                         forceFace
+                        openRoleCount={openRoleCounts?.get(activeProject.id) ?? 0}
                         onClick={() => handleCardClick(activeProject, activeIndex)}
                       />
                     )}
@@ -413,6 +419,7 @@ export function ProjectShelf({
 
       <ProjectShelfOverlay
         project={overlayIndex == null ? null : (projects[overlayIndex] ?? null)}
+        openRoleCount={overlayIndex == null ? 0 : (openRoleCounts?.get(projects[overlayIndex].id) ?? 0)}
         index={overlayIndex}
         count={projects.length}
         onClose={closeOverlay}
@@ -431,11 +438,13 @@ function ProjectListRow({
   project,
   meId,
   isContributor,
+  openRoleCount,
   onClick,
 }: {
   project: ProjectRow;
   meId: string | null;
   isContributor: boolean;
+  openRoleCount: number;
   onClick: () => void;
 }) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
@@ -482,6 +491,11 @@ function ProjectListRow({
               {isContributor && (
                 <span className="rounded-full bg-[var(--user-accent,var(--ai))]/25 px-2 py-0.5 text-[10px] font-medium text-[var(--user-accent,var(--ai))]">
                   Contributing
+                </span>
+              )}
+              {openRoleCount > 0 && (
+                <span className="rounded-full bg-trust/15 px-2 py-0.5 text-[10px] font-medium text-trust">
+                  {openRoleCount} open role{openRoleCount !== 1 ? "s" : ""}
                 </span>
               )}
               <span className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">

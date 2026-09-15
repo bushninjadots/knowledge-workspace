@@ -17,6 +17,9 @@ import { getTierProgress } from "@/lib/reputation";
 import { HeroEditControls } from "@/components/tethyr/profile/hero-edit-controls";
 import { BannerStrip } from "@/components/tethyr/profile/banner-strip";
 import { ConnectButton } from "@/components/tethyr/connect-button";
+import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
+import { useSessionRequests } from "@/hooks/use-sessions";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -86,6 +89,8 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
 
   const { data: avatarSigned } = useSignedStorageUrl("avatars", data?.avatar_url);
   const { data: bannerSigned } = useSignedStorageUrl("banners", data?.banner_url);
+  const { data: me } = useCurrentUser();
+  const { data: sessionRequests } = useSessionRequests();
 
   // Report emptiness so the public Studio collapses the band when the
   // profile has no identity data to show.
@@ -289,8 +294,24 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               )}
 
             {showConnect && (
-              <div className="mt-4 border-t border-border/40 pt-3">
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
                 <ConnectButton targetId={data.id} targetName={data.display_name} />
+                {me?.userId != null && me.userId !== data.id && (
+                  <RequestSessionDialog
+                    toUserId={data.id}
+                    toUserName={data.display_name ?? data.handle ?? "this person"}
+                    hasPendingRequest={
+                      sessionRequests?.some(
+                        (r) =>
+                          r.from_user_id === me.userId &&
+                          r.to_user_id === data.id &&
+                          r.status === "pending",
+                      ) ?? false
+                    }
+                    label="Collaborate"
+                    pendingLabel="Requested"
+                  />
+                )}
               </div>
             )}
           </div>

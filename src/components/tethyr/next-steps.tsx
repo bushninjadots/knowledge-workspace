@@ -1,8 +1,13 @@
 import { memo } from "react";
 import { Link } from "@tanstack/react-router";
-import { Check, Circle } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import type { Section } from "@/lib/profile-completeness";
 
+/**
+ * The ongoing "what's left" list. The first undone item is the single
+ * highest-value next move, so it leads with the user accent; the rest read as
+ * a quiet to-do list.
+ */
 export const NextStepsList = memo(function NextStepsList({ items }: { items: Section[] }) {
   if (items.length === 0) {
     return (
@@ -14,30 +19,40 @@ export const NextStepsList = memo(function NextStepsList({ items }: { items: Sec
       </div>
     );
   }
+  const [first, ...rest] = items;
   return (
-    <ul className="space-y-2">
-      {items.map((s) => (
-        <li key={s.key}>
-          <Link
-            to={s.cta?.href ?? "/profile"}
-            className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-          >
-            {s.done ? (
-              <Check className="h-4 w-4 text-primary" />
-            ) : (
-              <Circle className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span
-              className={`text-sm ${s.done ? "text-muted-foreground line-through" : "text-foreground"}`}
-            >
-              {s.label}
-            </span>
-            <span className="ml-auto text-xs text-muted-foreground opacity-0 transition-fade group-hover:opacity-100">
-              {s.cta?.label ?? "Go"} →
-            </span>
-          </Link>
+    <ul className="space-y-1.5">
+      <li key={first.key} className="flex">
+        <Link
+          to={first.cta?.href ?? "/profile"}
+          className="group flex flex-1 items-center gap-3 rounded-xl border border-[var(--user-accent-border,var(--border-strong))] bg-[var(--user-accent-subtle,var(--surface-elevated))] px-4 py-3 transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+        >
+          <Check className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--trust))]" />
+          <span className="text-sm font-medium text-foreground">{first.label}</span>
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--user-accent,var(--trust))]">
+            Do this next
+            <ArrowRight className="h-3 w-3 transition-spatial group-hover:translate-x-0.5" />
+          </span>
+        </Link>
+      </li>
+      {rest.length > 0 && (
+        <li>
+          <ul className="space-y-1.5">
+            {rest.map((s) => (
+              <li key={s.key}>
+                <Link
+                  to={s.cta?.href ?? "/profile"}
+                  className="group flex items-center gap-3 rounded-xl border border-border/60 bg-surface/50 px-4 py-2.5 transition-lift hover:border-border-strong hover:bg-surface-elevated"
+                >
+                  <span className="h-2 w-2 shrink-0 rounded-full border border-muted-foreground/50" />
+                  <span className="truncate text-sm text-muted-foreground">{s.label}</span>
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-fade group-hover:opacity-100" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         </li>
-      ))}
+      )}
     </ul>
   );
 });

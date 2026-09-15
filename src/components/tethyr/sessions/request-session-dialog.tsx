@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Handshake } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,12 +23,18 @@ interface RequestSessionDialogProps {
   toUserId: string;
   toUserName: string;
   hasPendingRequest: boolean;
+  /** Label for the trigger button. Defaults to "Request Session". */
+  label?: string;
+  /** Label shown when a request is already pending. */
+  pendingLabel?: string;
 }
 
 export function RequestSessionDialog({
   toUserId,
   toUserName,
   hasPendingRequest,
+  label = "Request Session",
+  pendingLabel = "Request sent",
 }: RequestSessionDialogProps) {
   const [open, setOpen] = useState(false);
   const [sessionType, setSessionType] = useState("");
@@ -52,8 +59,9 @@ export function RequestSessionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={hasPendingRequest}>
-          {hasPendingRequest ? "Request sent" : "Request Session"}
+        <Button variant="outline" size="sm" className="gap-1.5" disabled={hasPendingRequest}>
+          <Handshake className="h-4 w-4" />
+          {hasPendingRequest ? pendingLabel : label}
         </Button>
       </DialogTrigger>
       <DialogContent>

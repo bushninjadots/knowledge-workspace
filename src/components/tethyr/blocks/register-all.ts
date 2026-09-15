@@ -36,3 +36,4 @@ import "./profile/experience-block";
 import "./profile/direction-block";
 import "./profile/achievements-block";
 import "./profile/gallery-block";
+import "./profile/collaborators-block";
