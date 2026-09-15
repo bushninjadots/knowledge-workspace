@@ -129,6 +129,9 @@ export function ProjectHeader({
       {/* Slim cover band — a quiet theme surface when the project has no
           cover image, matching the fallback used on every project card. */}
       <div className="relative h-56 overflow-hidden bg-surface-sunken sm:h-72 lg:h-80">
+        {/* The fallback mark is sized to the band, which scales up at sm/lg — a
+            glyph tuned for the shorter band reads as a broken-image placeholder
+            at this height. */}
         {coverSigned ? (
           <img
             src={coverSigned}
@@ -139,7 +142,7 @@ export function ProjectHeader({
             decoding="async"
           />
         ) : (
-          <ProjectCoverFallback iconClassName="h-8 w-8" />
+          <ProjectCoverFallback iconClassName="h-10 w-10 sm:h-14 sm:w-14" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
       </div>
