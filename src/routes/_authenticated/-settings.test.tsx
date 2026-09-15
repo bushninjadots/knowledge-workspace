@@ -76,6 +76,8 @@ vi.mock("@/lib/theme", () => ({
     resolvedTheme: "light",
     setTheme: vi.fn(),
     toggleTheme: vi.fn(),
+    themePreset: null,
+    setThemePreset: vi.fn(),
   }),
 }));
 

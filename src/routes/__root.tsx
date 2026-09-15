@@ -15,6 +15,7 @@ import { getConfiguredSiteUrl, SITE } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
+import { GlobalThemePreset } from "@/components/tethyr/global-theme-preset";
 
 function NotFoundComponent() {
   return (
@@ -182,6 +183,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <GlobalThemePreset />
         <Outlet />
         <ThemedToaster />
       </ThemeProvider>
