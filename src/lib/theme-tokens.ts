@@ -144,15 +144,25 @@ export function themeTokensToVars(tokens: ThemeTokens): Record<string, string> {
 function deriveContrastVars(vars: Record<string, string>): void {
   const bg = vars["--background"];
   const fg = vars["--foreground"];
-  // Only derive when the theme actually re-bases the surface or text color.
+  // No palette declared — inherit the active light/dark scheme entirely, so
+  // accent-only / typography-only themes stay in sync with the theme toggle.
   if (!bg && !fg) return;
 
-  const BG = bg ?? "var(--background)";
-  const FG = fg ?? "var(--foreground)";
+  // Background and foreground travel as a pair. When a theme declares only one,
+  // derive its partner from *that colour* — never from the app default, which
+  // flips with the light/dark toggle and would leave the pair mismatched
+  // (dark-on-dark or white-on-light) in one of the two schemes.
+  const BG = bg ?? readableCounterpart(fg, "var(--background)");
+  const FG = fg ?? readableCounterpart(bg, "var(--foreground)");
   const mix = (pct: number) => `color-mix(in oklab, ${FG} ${pct}%, ${BG})`;
   const setIf = (key: string, value: string) => {
     if (!vars[key]) vars[key] = value;
   };
+
+  // Emit both anchors so the themed container never borrows a half of the pair
+  // from the toggle-driven default (the source of unreadable text on switch).
+  setIf("--background", BG);
+  setIf("--foreground", FG);
 
   const card = vars["--card"] ?? BG;
   setIf("--card", card);
@@ -185,6 +195,32 @@ function deriveContrastVars(vars: Record<string, string>): void {
     setIf(`--${hue}-subtle`, `color-mix(in oklab, var(--${hue}) 16%, ${BG})`);
     setIf(`--${hue}-foreground`, BG);
   }
+}
+
+/**
+ * Neutral ink / paper anchors used when a theme declares only one half of the
+ * background/foreground pair. They match the app's own light-mode ink and a
+ * near-white paper, so a derived partner reads like Tethyr rather than a raw
+ * black/white.
+ */
+const INK_NEUTRAL = "#1f2328";
+const PAPER_NEUTRAL = "#f5f6f8";
+
+/**
+ * Return a neutral that contrasts against `color` (dark ink for light colours,
+ * light paper for dark colours). Works on 6-digit hex, which is what the colour
+ * pickers emit. For any other format (e.g. oklch), fall back to `fallback` so a
+ * partial non-hex palette never produces a wrong-contrast guess.
+ */
+function readableCounterpart(color: string, fallback: string): string {
+  const match = color.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return fallback;
+  const value = Number.parseInt(match[1], 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.56 ? INK_NEUTRAL : PAPER_NEUTRAL;
 }
 
 /**

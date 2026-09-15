@@ -16,13 +16,38 @@ describe("themeTokensToVars", () => {
     expect(vars["--foreground"]).toBe("#1a1a1a");
   });
 
-  it("skips empty color values", () => {
+  it("does not emit empty color values verbatim", () => {
     const tokens: ThemeTokens = {
       colors: { background: "#ffffff", foreground: "" },
     };
     const vars = themeTokensToVars(tokens);
     expect(vars["--background"]).toBe("#ffffff");
-    expect(vars["--foreground"]).toBeUndefined();
+    // The empty foreground is never emitted as an empty string; a light
+    // background derives a readable dark ink partner instead of inheriting the
+    // toggle-driven default.
+    expect(vars["--foreground"]).toBe("#1f2328");
+  });
+
+  it("derives a readable foreground when only a background is given", () => {
+    // Light background → dark ink, independent of the active light/dark scheme.
+    expect(themeTokensToVars({ colors: { background: "#ffffff" } })["--foreground"]).toBe(
+      "#1f2328",
+    );
+    // Dark background → light paper.
+    expect(themeTokensToVars({ colors: { background: "#0d0221" } })["--foreground"]).toBe(
+      "#f5f6f8",
+    );
+  });
+
+  it("derives a matching background when only a foreground is given", () => {
+    // Light text needs a dark surface; dark text needs a light surface — never
+    // the toggle default, which would flip to an unreadable pairing.
+    expect(themeTokensToVars({ colors: { foreground: "#f0e6ff" } })["--background"]).toBe(
+      "#1f2328",
+    );
+    expect(themeTokensToVars({ colors: { foreground: "#1a1a1a" } })["--background"]).toBe(
+      "#f5f6f8",
+    );
   });
 
   it("emits custom color keys not in the standard set", () => {
@@ -147,9 +172,16 @@ describe("themeTokensToStyle", () => {
     expect(style).toHaveProperty("color", "#e0e0e0");
   });
 
-  it("does not set color when no foreground is provided", () => {
-    const tokens: ThemeTokens = { colors: { background: "#fff" } };
-    const style = themeTokensToStyle(tokens);
+  it("sets color to a derived readable foreground when only a background is given", () => {
+    // A background-only palette must still pin the text colour so inherited
+    // text can't fall back to the toggle-driven default and go unreadable.
+    const style = themeTokensToStyle({ colors: { background: "#ffffff" } });
+    expect(style).toHaveProperty("color", "#1f2328");
+  });
+
+  it("does not set color for a palette-less theme", () => {
+    // Accent-only / radius-only themes inherit the active scheme's text colour.
+    const style = themeTokensToStyle({ borders: { radius: { lg: "8px" } } });
     expect(style).not.toHaveProperty("color");
   });
 });
