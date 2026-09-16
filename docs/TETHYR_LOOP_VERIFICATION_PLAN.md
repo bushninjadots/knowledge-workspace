@@ -25,12 +25,16 @@ DISCOVER → Explore work → Find people → Collaborate → Build
 Goal: a repeatable, two-user browser test that exercises the actual
 collaboration transitions, not just page renders.
 
-- [ ] **Create → open role → apply → accept → People** — user B applies to an
+- [x] **Create → open role → apply → accept → People** — user B applies to an
       open role on user A's project; user A accepts; B appears in People as a
-      contributor.
-- [ ] **Challenge submit → review → pass-gated reputation** — B joins and
+      contributor. (2026-09-16: `scripts/qa-project-loop.mjs`, repeatable —
+      creates a fresh project per run — and gated nightly in CI.)
+- [x] **Challenge submit → review → pass-gated reputation** — B joins and
       submits to A's challenge; A passes; B's review flips to `passed` and the
-      reputation event lands.
+      reputation event lands. (2026-09-16: `scripts/qa-challenge-loop.mjs`,
+      repeatable — creates a fresh challenge per run — asserts the +15
+      reputation delta, `challenge_winner` badge, `contribution_log` entry, and
+      the pass notification; gated nightly in CI.)
 - [ ] **Notification destinations** — the accept and pass outcomes create the
       right notifications for B (and A where applicable).
 - [ ] **Private-project visibility** — a private project renders for its
@@ -96,6 +100,24 @@ ways to make their first contribution without dead ends.
 ---
 
 ## Execution log
+
+### 2026-09-16 — Phase 1 loops ported to repeatable CI click-throughs
+
+- Ported the two core collaboration loops from the one-shot Python test to
+  repeatable Node click-throughs that create fresh records each run and run in
+  the nightly visual-QA job: `scripts/qa-project-loop.mjs` (create project →
+  open role → apply → accept → contributor in People) and
+  `scripts/qa-challenge-loop.mjs` (create challenge → join → submit → pass →
+  pass-gated reputation +15, badge, contribution log, notification).
+- The challenge script verifies rewards through REST probes with the
+  participant's own token, so the pass-gated trigger outcomes are asserted
+  directly rather than inferred from UI text.
+- Known repeat-run semantics: the `challenge_winner` badge is one-per-user
+  (`ON CONFLICT DO NOTHING`), so the script asserts the badge is held and uses
+  the reputation delta to prove the pass trigger fired that run.
+- Still open from Phase 1: the accept notification is only covered by
+  `tests/core_loop_browser.py` (not CI-gated); private-project visibility is
+  covered by RLS regression tests but has no CI click-through.
 
 ### 2026-08-18 — Phase 1 started
 

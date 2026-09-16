@@ -90,6 +90,13 @@ jobs:
           QA_BASE: http://127.0.0.1:3000
           QA_SB_REST: http://127.0.0.1:54321
 
+      # Two-user loop: create → join → submit → pass → pass-gated rewards.
+      - name: Run challenge-loop click-through (two users)
+        run: node scripts/qa-challenge-loop.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_SB_REST: http://127.0.0.1:54321
+
       - name: Upload screenshots + report
         if: always()
         uses: actions/upload-artifact@v4
