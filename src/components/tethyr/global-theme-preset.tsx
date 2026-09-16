@@ -27,6 +27,15 @@ export function GlobalThemePreset() {
 
     if (!themePreset || !vars) return;
 
+    // Remove variables that disappeared during a refetch or scheme change.
+    // Without this diff cleanup, a stale token (especially a border or surface
+    // token) can survive indefinitely and fight the newly-derived palette.
+    if (prev?.preset === themePreset) {
+      for (const name of Object.keys(prev.vars)) {
+        if (!(name in vars)) el.style.removeProperty(name);
+      }
+    }
+
     for (const [name, value] of Object.entries(vars)) {
       el.style.setProperty(name, value);
     }
