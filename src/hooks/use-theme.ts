@@ -40,7 +40,7 @@ export function useThemePresets() {
       const presets = rows.map((row) => ({
         id: row.id,
         name: row.name,
-        tokens: ((row.tokens ?? {}) as Json) as ThemeTokens,
+        tokens: (row.tokens ?? {}) as Json as ThemeTokens,
       }));
 
       // Self-heal: if the globally-selected preset was deleted from the themes

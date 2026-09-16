@@ -135,9 +135,7 @@ describe("global theme preset persistence", () => {
 
     renderHook(() => useThemePresets(), { wrapper });
 
-    await waitFor(() =>
-      expect(window.localStorage.getItem(THEME_PRESET_STORAGE_KEY)).toBeNull(),
-    );
+    await waitFor(() => expect(window.localStorage.getItem(THEME_PRESET_STORAGE_KEY)).toBeNull());
   });
 
   it("clearing the preset removes the storage key instead of writing an empty string", async () => {
@@ -161,9 +159,7 @@ describe("global theme preset persistence", () => {
       expect(document.documentElement.style.getPropertyValue("--background")).toBe("#f7f8fa"),
     );
 
-    const cached = JSON.parse(
-      window.localStorage.getItem(THEME_PRESET_VARS_STORAGE_KEY) ?? "null",
-    );
+    const cached = JSON.parse(window.localStorage.getItem(THEME_PRESET_VARS_STORAGE_KEY) ?? "null");
     expect(cached).toMatchObject({ preset: "terminal", scheme: "light" });
     expect(cached.vars["--background"]).toBe("#f7f8fa");
   });
@@ -202,9 +198,7 @@ describe("global theme preset persistence", () => {
     // scheme's dark base tinted by the theme's identity colour.
     const dark = document.documentElement.style.getPropertyValue("--background");
     expect(dark.startsWith("color-mix(in oklab")).toBe(true);
-    const cached = JSON.parse(
-      window.localStorage.getItem(THEME_PRESET_VARS_STORAGE_KEY) ?? "null",
-    );
+    const cached = JSON.parse(window.localStorage.getItem(THEME_PRESET_VARS_STORAGE_KEY) ?? "null");
     expect(cached.scheme).toBe("dark");
   });
 });

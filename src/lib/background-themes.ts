@@ -352,9 +352,7 @@ export function appearanceStyle(background: ProfileBackground | null | undefined
  * surface that consumes the accent tokens reacts to the given colour.
  * Returns `{}` for anything that isn't a 6-digit hex.
  */
-export function accentVarsFromColor(
-  color: string,
-): CSSProperties & Record<string, string> {
+export function accentVarsFromColor(color: string): CSSProperties & Record<string, string> {
   const style = {} as CSSProperties & Record<string, string>;
   const match = color.match(/^#([0-9a-f]{6})$/i);
   if (!match) return style;

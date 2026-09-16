@@ -263,9 +263,9 @@ describe("ownerAccentStyle", () => {
   it("returns no styles without a background or colour", () => {
     expect(ownerAccentStyle(null)).toEqual({});
     expect(ownerAccentStyle(undefined)).toEqual({});
-    expect(
-      ownerAccentStyle({ mode: null, color: null, pattern: null, image_url: null }),
-    ).toEqual({});
+    expect(ownerAccentStyle({ mode: null, color: null, pattern: null, image_url: null })).toEqual(
+      {},
+    );
   });
 });
 
