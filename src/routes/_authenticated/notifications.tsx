@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useNotifications, useNotificationRealtime } from "@/hooks/use-notifications";
+import {
+  useNotifications,
+  useNotificationRealtime,
+  useNotificationsByCategory,
+} from "@/hooks/use-notifications";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { NotificationHeader } from "@/components/tethyr/notifications/notification-header";
 import { NotificationFeed } from "@/components/tethyr/notifications/notification-feed";
@@ -13,6 +17,7 @@ import {
   typesForNotificationView,
   isNotificationMuted,
   isNotificationCategoryViewKey,
+  notificationViewUnreadCounts,
   type NotificationCategoryViewKey,
 } from "@/lib/notification-categories";
 
@@ -50,12 +55,28 @@ function useNotificationNavigator() {
   };
 }
 
+function NotificationTabLabel({ name, count }: { name: string; count: number }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      {name}
+      {count > 0 && (
+        <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function NotificationsPage() {
   useNotificationRealtime();
   const [activeCategory, setActiveCategory] = useState<NotificationCategoryViewKey>("all");
   const navigateToNotification = useNotificationNavigator();
   const { mutedCategories } = useNotificationPreferences();
+  const { data: unreadByType = {} } = useNotificationsByCategory();
   const muted = new Set(mutedCategories);
+
+  const viewCounts = notificationViewUnreadCounts(unreadByType, mutedCategories);
 
   const types = typesForNotificationView(activeCategory);
   const filterType = types && types.length === 1 ? types[0] : undefined;
@@ -88,7 +109,7 @@ function NotificationsPage() {
             className="mb-6"
             options={NOTIFICATION_CATEGORY_VIEWS.map((tab) => ({
               value: tab.key,
-              label: tab.label,
+              label: <NotificationTabLabel name={tab.label} count={viewCounts[tab.key]} />,
             }))}
           />
           <NotificationFeed

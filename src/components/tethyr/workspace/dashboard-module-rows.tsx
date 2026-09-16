@@ -8,7 +8,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Clock, Folder, Kanban, Sparkles, Swords, Ticket, Users } from "lucide-react";
+import { Clock, Folder, Kanban, Sparkles, Star, Swords, Ticket, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CreateProjectButton } from "@/components/tethyr/create-project-button";
 import { describeActivity, relativeActivityTime } from "@/components/tethyr/activity-timeline";
@@ -17,10 +17,23 @@ import { useChallenges } from "@/hooks/use-challenges";
 import { useConnections } from "@/hooks/use-connections";
 import { useCurrentUser, useTrendingSkills } from "@/hooks/use-current-user";
 import { useMyProjects } from "@/hooks/use-projects";
+import { useWatchedProjects } from "@/hooks/use-project-loop";
 import { supabase } from "@/integrations/supabase/client";
+import { isColumnSchemaError } from "@/lib/supabase-errors";
 
 /** Secondary row actions share one weight so the demoted rows read as one list. */
 const ROW_ACTION = "text-[11px] font-medium text-primary hover:underline";
+
+type ApplicationRow = {
+  id: string;
+  status: string;
+  role_id: string;
+  created_at: string;
+  project_open_roles?: {
+    title?: string;
+    projects?: { title?: string };
+  } | null;
+};
 
 /** Projects the member is actively building, most recently touched first. */
 export function selectActiveProjects(projects: ProjectRow[]): ProjectRow[] {
@@ -48,12 +61,15 @@ function ModuleRow({
   title,
   subtitle,
   action,
+  degraded,
   children,
 }: {
   icon?: React.ReactNode;
   title: string;
   subtitle?: string;
   action?: React.ReactNode;
+  /** True when this row's data source was unavailable (schema drift / load error). */
+  degraded?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -78,6 +94,11 @@ function ModuleRow({
           </div>
           {action && <span className="shrink-0">{action}</span>}
         </div>
+        {degraded && (
+          <p className="px-3.5 pb-1.5 text-[11px] text-muted-foreground">
+            Details are temporarily unavailable.
+          </p>
+        )}
         {children && <div className="px-3.5 pb-3">{children}</div>}
       </div>
     </Card>
@@ -129,23 +150,31 @@ export function ProjectsModuleRow({ projects }: { projects: ProjectRow[] }) {
 
 export function ApplicationsModuleRow() {
   const { data: me } = useCurrentUser();
-  const { data: applications = [], isLoading } = useQuery({
+  const { data = { items: [], degraded: false }, isLoading } = useQuery({
     queryKey: ["my-applications", me?.userId],
     queryFn: async () => {
       const profileId = me?.userId;
-      if (!profileId) return [];
+      if (!profileId) return { items: [], degraded: false };
       const { data, error } = await supabase
         .from("project_role_applications")
         .select("id, status, role_id, created_at, project_open_roles(title, projects(title, id))")
         .eq("profile_id", profileId)
         .order("created_at", { ascending: false })
         .limit(10);
-      if (error) return [];
-      return data ?? [];
+      if (error) {
+        if (isColumnSchemaError(error)) {
+          console.warn("[tethyr] applications: schema not published yet — degraded.", error);
+        } else {
+          console.error("[tethyr] applications: failed to load.", error);
+        }
+        return { items: [], degraded: true };
+      }
+      return { items: (data ?? []) as ApplicationRow[], degraded: false };
     },
     enabled: !!me?.userId,
     staleTime: 30_000,
   });
+  const { items: applications, degraded } = data;
 
   if (isLoading) return <ModuleRowLoading title="Applications" />;
 
@@ -163,6 +192,7 @@ export function ApplicationsModuleRow() {
     <ModuleRow
       icon={<Ticket className="h-4 w-4" />}
       title="Applications"
+      degraded={degraded}
       subtitle={
         applications.length === 0
           ? "Applications you send will stay visible here."
@@ -183,26 +213,70 @@ export function ApplicationsModuleRow() {
   );
 }
 
+export function WatchlistModuleRow() {
+  const { data: watched = [], isLoading } = useWatchedProjects(8);
+
+  if (isLoading) return <ModuleRowLoading title="Watchlist" />;
+
+  const preview = watched
+    .slice(0, 3)
+    .map((project) => project.title)
+    .join(" · ");
+
+  return (
+    <ModuleRow
+      icon={<Star className="h-4 w-4" />}
+      title="Watchlist"
+      subtitle={
+        watched.length === 0
+          ? "Watch a project to keep it on your dashboard."
+          : `${watched.length} watched`
+      }
+      action={
+        watched.length === 0 ? (
+          <Link to="/explore" className={ROW_ACTION}>
+            Find a project →
+          </Link>
+        ) : (
+          <Link to="/projects/$id" params={{ id: watched[0].id }} className={ROW_ACTION}>
+            View
+          </Link>
+        )
+      }
+    >
+      {preview && <Preview text={preview} />}
+    </ModuleRow>
+  );
+}
+
 /** The member's milestone boards, summarized — the one place that points at the
  *  per-project Roadmap surface most people don't know exists yet. */
 export function RoadmapModuleRow() {
   const { data: projects = [], isLoading: loadingProjects } = useMyProjects();
   const projectIds = useMemo(() => projects.map((project) => project.id), [projects]);
 
-  const { data: milestoneRows = [], isLoading: loadingMilestones } = useQuery({
+  const { data = { items: [], degraded: false }, isLoading: loadingMilestones } = useQuery({
     queryKey: ["my-milestone-summary", projectIds],
     queryFn: async () => {
-      if (projectIds.length === 0) return [];
+      if (projectIds.length === 0) return { items: [], degraded: false };
       const { data, error } = await supabase
         .from("project_milestones")
         .select("project_id, status")
         .in("project_id", projectIds);
-      if (error) return [];
-      return (data ?? []) as { project_id: string; status: string }[];
+      if (error) {
+        if (isColumnSchemaError(error)) {
+          console.warn("[tethyr] roadmap: schema not published yet — degraded.", error);
+        } else {
+          console.error("[tethyr] roadmap: failed to load.", error);
+        }
+        return { items: [], degraded: true };
+      }
+      return { items: (data ?? []) as { project_id: string; status: string }[], degraded: false };
     },
     enabled: projectIds.length > 0,
     staleTime: 30_000,
   });
+  const { items: milestoneRows, degraded } = data;
 
   if (loadingProjects || loadingMilestones) return <ModuleRowLoading title="Roadmap" />;
 
@@ -237,6 +311,7 @@ export function RoadmapModuleRow() {
     <ModuleRow
       icon={<Kanban className="h-4 w-4" />}
       title="Roadmap"
+      degraded={degraded}
       subtitle={
         projectsWithRoadmaps.length > 0
           ? `${totalMilestones} milestones across ${projectsWithRoadmaps.length} project${projectsWithRoadmaps.length === 1 ? "" : "s"}`

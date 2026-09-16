@@ -39,7 +39,8 @@ describe("dashboard hierarchy", () => {
       { i: "suggested-projects", x: 6, y: 8, w: 6, h: 3 },
       { i: "suggested-creators", x: 0, y: 12, w: 6, h: 3 },
       { i: "trending-skills", x: 6, y: 12, w: 6, h: 3 },
-      { i: "activity", x: 0, y: 16, w: 6, h: 3 },
+      { i: "watchlist", x: 0, y: 16, w: 6, h: 3 },
+      { i: "activity", x: 6, y: 16, w: 6, h: 3 },
     ]);
   });
 

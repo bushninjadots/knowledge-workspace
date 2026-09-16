@@ -39,6 +39,7 @@ import { AvailabilityChip } from "@/components/tethyr/availability-chip";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { supabase } from "@/integrations/supabase/client";
+import { isColumnSchemaError } from "@/lib/supabase-errors";
 import { useCurrentUser, useSkillsCatalog, useTrendingSkills } from "@/hooks/use-current-user";
 import {
   NEED_BADGE,
@@ -404,7 +405,20 @@ function ExplorePage() {
         );
       }
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        // A published schema that doesn't have the newest columns yet is
+        // expected while migrations roll out — degrade to an empty list
+        // instead of crashing the Opportunities tab. Everything else is a
+        // genuine failure and should surface (React Query retry + error UI).
+        if (isColumnSchemaError(error)) {
+          console.warn(
+            "[tethyr] explore opportunities: schema not published yet — degraded.",
+            error,
+          );
+          return [];
+        }
+        throw error;
+      }
 
       return (data ?? []).flatMap((row) => {
         const project = row.projects;

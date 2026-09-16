@@ -1,7 +1,14 @@
 // ── Studio Starters Tests ─────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
-import { STARTERS, applyStarter, sectionMarker, starterConfig, starterMap } from "@/data/starters";
+import {
+  STARTERS,
+  applyStarter,
+  sectionMarker,
+  starterConfig,
+  starterMap,
+  starterPreviewLayout,
+} from "@/data/starters";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { DEFAULT_STUDIO_CONFIG, type StudioConfig } from "@/lib/studio-config";
 
@@ -111,6 +118,49 @@ describe("applyStarter", () => {
     const starter = STARTERS[1]; // editorial
     const next = applyStarter(layout, starter);
     expect(next.sections.map((s) => s.id).sort()).toEqual(layout.sections.map((s) => s.id).sort());
+  });
+});
+
+describe("starterPreviewLayout", () => {
+  it("builds a standalone layout following the starter's section order", () => {
+    const starter = starterMap["project-first"];
+    const layout = starterPreviewLayout(starter);
+    expect(layout.sections.map(sectionMarker)).toEqual(starter.sectionOrder);
+    expect(layout.sections.map((s) => s.id)).toEqual(
+      starter.sectionOrder.map((marker) => `preview:${marker}`),
+    );
+  });
+
+  it("populates each section with the marker's representative blocks", () => {
+    const starter = STARTERS[0]; // focused
+    const layout = starterPreviewLayout(starter);
+    const skills = layout.sections[starter.sectionOrder.indexOf("skills")];
+    expect(skills.blocks.map((b) => b.type)).toEqual(["profile-skills"]);
+    const byMarker = new Map(layout.sections.map((s) => [sectionMarker(s), s]));
+    expect(byMarker.get("projects")?.blocks.map((b) => b.type)).toEqual(["profile-projects"]);
+    expect(byMarker.get("identity")?.blocks.map((b) => b.type)).toEqual(["profile-header"]);
+  });
+
+  it("dresses the projects block with the starter's presentation", () => {
+    const starter = starterMap["minimal"]; // minimal-list
+    const layout = starterPreviewLayout(starter);
+    const projects = layout.sections
+      .flatMap((s) => s.blocks)
+      .find((b) => b.type === "profile-projects");
+    expect(projects?.config.presentation).toBe("minimal-list");
+  });
+
+  it("mirrors collapsed sections so they stay hidden in the preview", () => {
+    const starter = starterMap["minimal"]; // collapsedSections: [tools, gallery]
+    const layout = starterPreviewLayout(starter);
+    for (const section of layout.sections) {
+      const marker = sectionMarker(section);
+      const collapsed = marker ? starter.collapsedSections.includes(marker) : false;
+      expect(section.visible).toBe(!collapsed);
+      for (const block of section.blocks) {
+        expect(block.visible).toBe(!collapsed);
+      }
+    }
   });
 });
 

@@ -8,6 +8,8 @@ const SESSION_TABS: SessionsTab[] = ["upcoming", "calendar", "history", "request
 export const Route = createFileRoute("/_authenticated/sessions")({
   validateSearch: z.object({
     tab: z.enum(SESSION_TABS).optional(),
+    // Deep link used by the command palette: auto-opens the schedule wizard.
+    schedule: z.literal("1").optional(),
   }).parse,
   head: () => ({
     meta: [

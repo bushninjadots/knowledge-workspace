@@ -17,6 +17,7 @@ export function ProjectPeopleTab({
   projectId,
   projectTitle,
   contributors,
+  degraded,
   avatarSigned,
   openRoles,
   isOwner,
@@ -29,6 +30,8 @@ export function ProjectPeopleTab({
   projectId: string;
   projectTitle?: string;
   contributors: Contributor[];
+  /** True when contributor details were unavailable (schema drift / load error). */
+  degraded?: boolean;
   avatarSigned: Record<string, string>;
   openRoles: OpenRoleRow[];
   isOwner: boolean;
@@ -146,9 +149,14 @@ export function ProjectPeopleTab({
           Project people
           <span className="text-xs text-muted-foreground">({contributors.length})</span>
         </h2>
-        {contributors.length === 0 ? (
+        {degraded && (
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Contributor details are temporarily unavailable.
+          </p>
+        )}
+        {contributors.length === 0 && !degraded ? (
           <p className="mt-3 text-sm text-muted-foreground">No contributors yet.</p>
-        ) : (
+        ) : contributors.length === 0 ? null : (
           <ul className="mt-3 divide-y divide-border/50 rounded-xl border border-border/40 bg-background/40">
             {contributors.map((c) => {
               const connectionId = connectionByProfile.get(c.profile_id);

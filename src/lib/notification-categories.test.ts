@@ -6,6 +6,7 @@ import {
   NOTIFICATION_CATEGORY_VIEWS,
   TYPE_CATEGORY,
   isNotificationMuted,
+  notificationViewUnreadCounts,
   typesForNotificationView,
 } from "./notification-categories";
 
@@ -58,5 +59,53 @@ describe("notification categories", () => {
     expect(isNotificationMuted("connection_request", ["reputation"])).toBe(true);
     expect(isNotificationMuted("connection_request", ["community"])).toBe(false);
     expect(isNotificationMuted("challenge_submitted", ["community"])).toBe(true);
+  });
+});
+
+describe("notificationViewUnreadCounts", () => {
+  it("returns every view key even when there is nothing unread", () => {
+    expect(notificationViewUnreadCounts({}, [])).toEqual({
+      all: 0,
+      action: 0,
+      message: 0,
+      session: 0,
+      community: 0,
+      project: 0,
+      reputation: 0,
+      achievement: 0,
+      moderation: 0,
+    });
+  });
+
+  it("sums types into their canonical category", () => {
+    const counts = notificationViewUnreadCounts(
+      { message: 3, session_invite: 1, session_update: 2, follow: 2 },
+      [],
+    );
+
+    expect(counts.all).toBe(8);
+    expect(counts.message).toBe(3);
+    expect(counts.session).toBe(3);
+    expect(counts.community).toBe(2);
+    expect(counts.action).toBe(1); // only session_invite needs action
+  });
+
+  it("excludes muted categories from every view, including Needs action", () => {
+    const counts = notificationViewUnreadCounts(
+      { connection_request: 2, challenge_submitted: 1, message: 4 },
+      ["reputation", "community"],
+    );
+
+    expect(counts.reputation).toBe(0);
+    expect(counts.community).toBe(0);
+    expect(counts.all).toBe(4); // message survives; muted categories dropped
+    expect(counts.action).toBe(0); // both action types live in muted categories
+  });
+
+  it("keeps the result keys aligned with the view catalog", () => {
+    const result = notificationViewUnreadCounts({ achievement: 1 }, []);
+    expect(Object.keys(result).sort()).toEqual(
+      NOTIFICATION_CATEGORY_VIEWS.map((view) => view.key).sort(),
+    );
   });
 });

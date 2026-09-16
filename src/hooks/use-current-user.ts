@@ -4,6 +4,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { backgroundImageSignedUrl, type ProfileBackground } from "@/lib/background-themes";
+import { isColumnSchemaError } from "@/lib/supabase-errors";
 import type { ProjectRow, ActivityRow } from "@/components/tethyr/profile-sections";
 
 export type Profile = {
@@ -95,6 +96,7 @@ const PROFILE_COLS_EXTENDED =
 
 async function fetchProfile(userId: string) {
   // Try full column set first; fall back to basic columns if a column is missing.
+  let lastError: { message?: string | null; code?: string | null } | null = null;
   for (const cols of [`${PROFILE_COLS_BASIC}, ${PROFILE_COLS_EXTENDED}`, PROFILE_COLS_BASIC]) {
     const { data, error } = await supabase
       .from("profiles")
@@ -102,6 +104,7 @@ async function fetchProfile(userId: string) {
       .eq("id", userId)
       .maybeSingle();
     if (!error) return (data as Profile | null) ?? null;
+    lastError = error;
     // Retry on any schema/column error (missing column, schema cache, etc.)
     if (
       !error.message?.includes("column") &&
@@ -111,13 +114,39 @@ async function fetchProfile(userId: string) {
       break;
   }
   // Last resort: return just the id so the app doesn't crash.
+  console.warn("[tethyr] fetchProfile: profile degraded to id-only fallback.", lastError);
   return { id: userId } as Profile;
 }
 
-async function safeQuery<T>(fn: () => PromiseLike<unknown>, fallback: T): Promise<T> {
+/**
+ * Runs a supabase query and falls back to `fallback` on any failure so the app
+ * never breaks. Column/schema errors (the published schema is missing a column
+ * the frontend knows about) are expected while migrations roll out and degrade
+ * silently with a warning; every other error is logged as a real failure.
+ */
+export async function safeQuery<T>(
+  label: string,
+  fn: () => PromiseLike<unknown>,
+  fallback: T,
+): Promise<T> {
   try {
-    return (await fn()) as T;
+    const result = (await fn()) as {
+      error?: { code?: string | null; message?: string | null } | null;
+    };
+    if (result.error) {
+      if (isColumnSchemaError(result.error)) {
+        console.warn(
+          `[tethyr] ${label}: schema not published yet — using degraded fallback.`,
+          result.error,
+        );
+      } else {
+        console.error(`[tethyr] ${label}: failed to load.`, result.error);
+      }
+      return fallback;
+    }
+    return result as T;
   } catch {
+    console.error(`[tethyr] ${label}: unexpected error while loading.`);
     return fallback;
   }
 }
@@ -136,6 +165,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
   const [teach, learn, wishlist, projectsRes, activityRes, avatarRes, bannerRes] =
     await Promise.all([
       safeQuery(
+        "teach skills",
         () =>
           supabase
             .from("profile_skills_teach")
@@ -144,14 +174,17 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
         { data: [], error: null },
       ),
       safeQuery(
+        "learn skills",
         () => supabase.from("profile_skills_learn").select("skill_id").eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
+        "wishlist skills",
         () => supabase.from("profile_skills_wishlist").select("skill_id").eq("profile_id", userId),
         { data: [], error: null },
       ),
       safeQuery(
+        "projects",
         () =>
           supabase
             .from("projects")
@@ -165,6 +198,7 @@ async function fetchCurrentUser(): Promise<CurrentUserData | null> {
         { data: [], error: null },
       ),
       safeQuery(
+        "activity",
         () =>
           supabase
             .from("activity_events")
@@ -318,6 +352,27 @@ export function useTrendingSkills() {
         description: skill.description,
         usageCount: Number(skill.usage_count),
       }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * How many distinct profiles teach or learn each skill. Backs the skill
+ * directory page; counts profiles, not rows, so someone who both teaches and
+ * learns stays counted once.
+ */
+export function useSkillProfileCounts() {
+  return useQuery({
+    queryKey: ["skill-profile-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("skill_profile_counts");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of (data ?? []) as { skill_id: string; profile_count: number }[]) {
+        counts[row.skill_id] = Number(row.profile_count);
+      }
+      return counts;
     },
     staleTime: 5 * 60 * 1000,
   });

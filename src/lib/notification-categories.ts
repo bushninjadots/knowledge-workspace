@@ -98,3 +98,38 @@ export function isNotificationMuted(
 ): boolean {
   return mutedCategories.includes(TYPE_CATEGORY[type]);
 }
+
+/**
+ * Unread counts per notification view (All / Needs action / each category),
+ * as shown on the notifications page tabs. Muted categories always read 0 so
+ * the badge matches what the feed actually displays, and muted-category types
+ * are excluded from the cross-cutting "Needs action" total.
+ *
+ * `unreadByType` is capped at 100 rows by its query; the counts are therefore
+ * an accurate lower bound once a user has more than 100 unread notifications.
+ */
+export function notificationViewUnreadCounts(
+  unreadByType: Readonly<Partial<Record<NotificationType, number>>>,
+  mutedCategories: readonly NotificationCategory[],
+): Record<NotificationCategoryViewKey, number> {
+  const muted = new Set(mutedCategories);
+
+  const byCategory = Object.fromEntries(ALL_CATEGORIES.map((category) => [category, 0])) as Record<
+    NotificationCategory,
+    number
+  >;
+
+  for (const [type, count] of Object.entries(unreadByType) as [NotificationType, number][]) {
+    const category = TYPE_CATEGORY[type];
+    if (category) byCategory[category] += count ?? 0;
+  }
+  for (const category of muted) byCategory[category] = 0;
+
+  const action = NEEDS_ACTION_TYPES.reduce(
+    (sum, type) => sum + (muted.has(TYPE_CATEGORY[type]) ? 0 : (unreadByType[type] ?? 0)),
+    0,
+  );
+  const all = ALL_CATEGORIES.reduce((sum, category) => sum + byCategory[category], 0);
+
+  return { all, action, ...byCategory };
+}

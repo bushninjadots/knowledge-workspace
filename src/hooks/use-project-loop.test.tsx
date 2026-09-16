@@ -10,6 +10,7 @@ import {
   useUpdateProjectDirection,
   useCreateProjectContribution,
   useRecognizeProjectActivity,
+  useWatchedProjects,
 } from "./use-project-loop";
 
 vi.mock("sonner", () => ({
@@ -95,6 +96,44 @@ describe("useToggleProjectWatch", () => {
     });
     const call = handle.calls.find((c) => c.action === "delete");
     expect(call?.table).toBe("project_watchers");
+  });
+});
+
+describe("useWatchedProjects", () => {
+  it("returns the projects the member watches, newest first", async () => {
+    handle.on("project_watchers:select", () => ({
+      data: [
+        {
+          created_at: "2026-09-02T00:00:00Z",
+          projects: { id: "project-2", title: "Reverb", description: null },
+        },
+        {
+          created_at: "2026-09-01T00:00:00Z",
+          projects: { id: "project-1", title: "Bloom", description: "A greenhouse" },
+        },
+      ],
+      error: null,
+    }));
+    const { result } = renderHook(() => useWatchedProjects(8), {
+      wrapper: makeWrapper(newQueryClient()),
+    });
+    await waitFor(() =>
+      expect(result.current.data).toEqual([
+        { id: "project-2", title: "Reverb", description: null },
+        { id: "project-1", title: "Bloom", description: "A greenhouse" },
+      ]),
+    );
+  });
+
+  it("returns an empty list when the watchers table is missing (schema drift)", async () => {
+    handle.on("project_watchers:select", () => ({
+      data: null,
+      error: { code: "42P01", message: 'relation "project_watchers" does not exist' },
+    }));
+    const { result } = renderHook(() => useWatchedProjects(8), {
+      wrapper: makeWrapper(newQueryClient()),
+    });
+    await waitFor(() => expect(result.current.data).toEqual([]));
   });
 });
 

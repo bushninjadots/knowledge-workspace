@@ -10,11 +10,13 @@ import {
   BookOpen,
   MessageSquare,
   Clock,
+  Zap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { CreateProjectButton } from "./create-project-button";
 
 type ProfileHit = {
   id: string;
@@ -33,6 +35,7 @@ type SearchRoute =
   | { to: "/dashboard" }
   | { to: "/profile" }
   | { to: "/explore" }
+  | { to: "/skills" }
   | { to: "/challenges" }
   | { to: "/sessions" }
   | { to: "/community" }
@@ -47,6 +50,7 @@ type SearchRoute =
   | { to: "/projects/$id"; params: { id: string } }
   | { to: "/library/$id"; params: { id: string } }
   | { to: "/community"; search: { post: string } }
+  | { to: "/sessions"; search: { schedule: "1" } }
   | { to: "/sessions/$id"; params: { id: string } };
 
 // Feature destinations make the search a discovery tool: people who don't yet
@@ -81,6 +85,12 @@ const DESTINATIONS: ReadonlyArray<{
     description: "Projects, people, and open roles",
     keywords: ["explore", "discover", "browse", "projects", "people", "hire", "recruit"],
     to: () => ({ to: "/explore" }),
+  },
+  {
+    label: "Skills",
+    description: "Browse the skill directory by category",
+    keywords: ["skills", "skills directory", "categories", "teach", "learn", "expertise"],
+    to: () => ({ to: "/skills" }),
   },
   {
     label: "Roadmap",
@@ -146,15 +156,66 @@ const DESTINATIONS: ReadonlyArray<{
 
 // Shown before the member types anything: a few high-intent places to jump to,
 // so an opened search is a launcher rather than a blank box.
-const SUGGESTED_LABELS = [
-  "Explore",
-  "Your Studio",
-  "Challenges",
-  "Community",
-] as const;
+const SUGGESTED_LABELS = ["Explore", "Your Studio", "Challenges", "Community"] as const;
 const SUGGESTED_DESTINATIONS = SUGGESTED_LABELS.map((label) =>
   DESTINATIONS.find((d) => d.label === label)!,
 ).filter(Boolean);
+
+// Commands turn the palette into a launcher, not just a search box: typed
+// keywords like "create" / "new" / "schedule" surface the actions below, and
+// they're always listed in the zero state so an opened palette offers something
+// to do even before anyone types.
+type PaletteActionKind =
+  "createProject" | "communityPost" | "scheduleSession" | "addToLibrary" | "openWatchlist";
+
+export const ACTIONS: ReadonlyArray<{
+  kind: PaletteActionKind;
+  label: string;
+  description: string;
+  keywords: readonly string[];
+}> = [
+  {
+    kind: "createProject",
+    label: "Create a project",
+    description: "Start a new project in Tethyr",
+    keywords: ["create", "new", "start", "project", "make", "build"],
+  },
+  {
+    kind: "communityPost",
+    label: "Write a community post",
+    description: "Share an update, ask for help, or showcase work",
+    keywords: ["create", "new", "post", "write", "share", "update", "compose"],
+  },
+  {
+    kind: "scheduleSession",
+    label: "Schedule a session",
+    description: "Plan a collaboration or mentoring call",
+    keywords: ["create", "new", "schedule", "session", "book", "mentor", "call", "meet"],
+  },
+  {
+    kind: "addToLibrary",
+    label: "Add to your Library",
+    description: "Save a resource, note, or file",
+    keywords: ["create", "new", "add", "library", "save", "note", "upload"],
+  },
+  {
+    kind: "openWatchlist",
+    label: "Open your watchlist",
+    description: "Jump to the projects you're watching",
+    keywords: ["watchlist", "watch", "watched", "shortlist", "starred", "shelf", "return"],
+  },
+];
+
+export function actionHitsFor(term: string, limit = 4): ReadonlyArray<(typeof ACTIONS)[number]> {
+  if (!term) return ACTIONS.slice(0, limit);
+  const needle = term.toLowerCase();
+  return ACTIONS.filter(
+    (a) =>
+      a.label.toLowerCase().includes(needle) ||
+      a.description.toLowerCase().includes(needle) ||
+      a.keywords.some((k) => k.includes(needle)),
+  ).slice(0, limit);
+}
 
 function destinationHitsFor(term: string, limit = 4): Array<(typeof DESTINATIONS)[number]> {
   if (!term) return [];
@@ -197,6 +258,7 @@ export function GlobalSearch({
   const debounced = useDebounced(q.trim(), 200);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hiddenCreateRef = useRef<HTMLSpanElement>(null);
   const resultsId = useId();
   const navigate = useNavigate();
   const { data: me } = useCurrentUser();
@@ -364,6 +426,7 @@ export function GlobalSearch({
   const postHits = posts.data ?? [];
   const sessionHits = sessions.data ?? [];
   const destinationHits = destinationHitsFor(debounced);
+  const actionHits = actionHitsFor(debounced);
 
   const isLoading =
     profiles.isLoading ||
@@ -375,6 +438,7 @@ export function GlobalSearch({
   const noResults =
     enabled &&
     !isLoading &&
+    actionHits.length === 0 &&
     destinationHits.length === 0 &&
     profileHits.length === 0 &&
     skillHits.length === 0 &&
@@ -385,6 +449,7 @@ export function GlobalSearch({
 
   function flatItems() {
     const items: Array<{ type: string }> = [];
+    actionHits.forEach(() => items.push({ type: "action" }));
     destinationHits.forEach(() => items.push({ type: "destination" }));
     profileHits.forEach(() => items.push({ type: "profile" }));
     skillHits.forEach(() => items.push({ type: "skill" }));
@@ -432,7 +497,8 @@ export function GlobalSearch({
   }
 
   function activateItem(index: number) {
-    const allHits: Array<{ to: () => SearchRoute | null }> = [
+    const allHits: Array<{ action?: (typeof ACTIONS)[number]; to: () => SearchRoute | null }> = [
+      ...actionHits.map((a) => ({ action: a, to: () => null as SearchRoute | null })),
       ...destinationHits.map((d) => ({ to: d.to })),
       ...profileHits.map((h) => ({
         to: () => (h.handle ? { to: "/u/$handle" as const, params: { handle: h.handle } } : null),
@@ -458,11 +524,44 @@ export function GlobalSearch({
     ];
     const hit = allHits[index];
     if (!hit) return;
+    if (hit.action) {
+      activateAction(hit.action);
+      return;
+    }
     const route = hit.to();
     if (!route) return;
     setQ("");
     setOpen(false);
     navigate(route);
+  }
+
+  function closeAndNavigate(route: SearchRoute) {
+    setQ("");
+    setOpen(false);
+    navigate(route);
+  }
+
+  function activateAction(action: (typeof ACTIONS)[number]) {
+    switch (action.kind) {
+      case "createProject":
+        // The real CreateProjectButton (and its ProjectDialog) is mounted
+        // invisibly below; a palette activation is the same as pressing it.
+        // Keep the palette open behind the dialog so cancelling returns here.
+        hiddenCreateRef.current?.querySelector("button")?.click();
+        break;
+      case "communityPost":
+        closeAndNavigate({ to: "/community" });
+        break;
+      case "scheduleSession":
+        closeAndNavigate({ to: "/sessions", search: { schedule: "1" } });
+        break;
+      case "addToLibrary":
+        closeAndNavigate({ to: "/library" });
+        break;
+      case "openWatchlist":
+        closeAndNavigate({ to: "/dashboard" });
+        break;
+    }
   }
 
   function renderResults() {
@@ -489,6 +588,28 @@ export function GlobalSearch({
         id: `${resultsId}-opt-${flatIndex}`,
         "aria-selected": isSelected(type, flatIndex - resultOffset(type)),
       };
+    }
+
+    if (actionHits.length > 0) {
+      items.push(sectionHeader("Actions"));
+      actionHits.forEach((a) => {
+        const i = idx++;
+        items.push(
+          <button
+            key={`action-${a.kind}`}
+            type="button"
+            onClick={() => activateItem(i)}
+            {...optionProps("action", i)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface ${isSelected("action", i - resultOffset("action")) ? "bg-surface" : ""}`}
+          >
+            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--trust))]" />
+            <div className="min-w-0">
+              <p className="truncate text-sm">{a.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{a.description}</p>
+            </div>
+          </button>,
+        );
+      });
     }
 
     if (destinationHits.length > 0) {
@@ -684,6 +805,26 @@ export function GlobalSearch({
           role="presentation"
           className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
         >
+          Actions
+        </p>
+        {ACTIONS.map((a) => (
+          <button
+            key={`zero-action-${a.kind}`}
+            type="button"
+            onClick={() => activateAction(a)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-lift hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+          >
+            <Zap className="h-4 w-4 shrink-0 text-[var(--user-accent,var(--trust))]" />
+            <div className="min-w-0">
+              <p className="truncate text-sm">{a.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{a.description}</p>
+            </div>
+          </button>
+        ))}
+        <p
+          role="presentation"
+          className="px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground"
+        >
           Jump to
         </p>
         {SUGGESTED_DESTINATIONS.map((d) => (
@@ -706,7 +847,7 @@ export function GlobalSearch({
           </button>
         ))}
         <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground">
-          Or search people, projects, skills, and sessions.
+          Run an action, jump somewhere, or search people, projects, skills, and sessions.
         </p>
       </div>
     );
@@ -755,6 +896,9 @@ export function GlobalSearch({
             {enabled ? renderResults() : renderZeroState()}
           </div>
         )}
+        <span ref={hiddenCreateRef} aria-hidden="true" className="sr-only">
+          <CreateProjectButton label="Create project" onCreated={() => setOpen(false)} />
+        </span>
       </div>
     );
   }
@@ -787,6 +931,9 @@ export function GlobalSearch({
         >
           {enabled ? renderResults() : renderZeroState()}
         </div>
+        <span ref={hiddenCreateRef} aria-hidden="true" className="sr-only">
+          <CreateProjectButton label="Create project" onCreated={() => setOpen(false)} />
+        </span>
       </DialogContent>
     </Dialog>
   );

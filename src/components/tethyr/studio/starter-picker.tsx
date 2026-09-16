@@ -1,7 +1,12 @@
+import { useMemo } from "react";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { STARTERS, type Starter } from "@/data/starters";
+import { STARTERS, starterPreviewLayout, type Starter } from "@/data/starters";
+import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
+import type { BlockContext } from "@/lib/page-blocks";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import "@/components/tethyr/blocks/register-all";
 
 // Backward-compatible aliases so existing consumers keep importing from here.
 export type StudioStarter = Starter;
@@ -40,7 +45,7 @@ export function StarterPicker({
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
               A starting direction. It rearranges what you already have — nothing is deleted, and
-              one undo puts it back.
+              one undo puts it back. Each preview below renders your live work in that direction.
             </p>
           </div>
         </header>
@@ -56,7 +61,7 @@ export function StarterPicker({
                   aria-pressed={active}
                   className={`flex h-full w-full flex-col gap-3 p-4 text-left transition-colors ${active ? "bg-primary/10" : "hover:bg-surface"}`}
                 >
-                  <Sketch rows={starter.sketch} active={active} />
+                  <StarterPreview starter={starter} active={active} />
                   <span>
                     <span className="flex items-baseline gap-2 font-display text-sm font-semibold text-foreground">
                       {starter.name}
@@ -98,13 +103,56 @@ export function StarterPicker({
   );
 }
 
-/** Small wireframe preview of a starter's rhythm. */
-function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
+/** A scaled live preview of the member's work in a starter's direction. */
+function StarterPreview({ starter, active }: { starter: StudioStarter; active: boolean }) {
+  const { data: me } = useCurrentUser();
+  const ownerId = me?.userId ?? "";
+  const layout = useMemo(() => starterPreviewLayout(starter), [starter]);
+  const context = useMemo<BlockContext>(
+    () => ({
+      ownerId,
+      ownerType: "profile",
+      pageId: `profile:${ownerId}`,
+      isEditing: false,
+      isOwner: false,
+      quickEdit: false,
+    }),
+    [ownerId],
+  );
+
   return (
     <div
       aria-hidden
-      className="flex flex-col gap-1 [border-color:var(--card-border-color,var(--border))] bg-background p-2 card"
+      className="overflow-hidden [border-color:var(--card-border-color,var(--border))] bg-background card"
+      style={active ? { boxShadow: "0 0 0 1px var(--user-accent)" } : undefined}
     >
+      <div className="flex items-center gap-1.5 border-b [border-color:var(--border)] px-2 py-1.5">
+        <span
+          className="h-2 w-2 rounded-full"
+          style={{
+            backgroundColor: active ? "var(--user-accent)" : "var(--border-strong)",
+          }}
+        />
+        <span className="h-2 w-2 rounded-full bg-border" />
+        <span className="h-2 w-2 rounded-full bg-border" />
+      </div>
+      {ownerId ? (
+        <div className="pointer-events-none select-none overflow-hidden" style={{ height: 150 }}>
+          <div className="w-[512px] origin-top-left" style={{ transform: "scale(0.5)" }}>
+            <PageLayoutRenderer layout={layout} context={context} />
+          </div>
+        </div>
+      ) : (
+        <Sketch rows={starter.sketch} active={active} />
+      )}
+    </div>
+  );
+}
+
+/** Small wireframe fallback preview of a starter's rhythm. */
+function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
+  return (
+    <div aria-hidden className="flex flex-col gap-1 p-2">
       {rows.map((row, rowIndex) => (
         <div key={rowIndex} className="flex gap-1">
           {row.map((span, spanIndex) => (

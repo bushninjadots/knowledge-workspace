@@ -20,7 +20,7 @@ import type {
   StructureId,
   StudioConfig,
 } from "@/lib/studio-config";
-import type { LayoutSection, PageLayout } from "@/lib/page-blocks";
+import type { LayoutSection, PageLayout, SectionLayoutType } from "@/lib/page-blocks";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
 type SectionMarker =
@@ -246,5 +246,48 @@ export function starterConfig(starter: Starter, current: StudioConfig): StudioCo
     ...current,
     ...starter.config,
     starterId: starter.id,
+  };
+}
+
+// ── Live preview layout ────────────────────────────────────────────────────────
+
+const PREVIEW_TITLES: Partial<Record<SectionMarker, string>> = {
+  projects: "Work",
+  bio: "About",
+  readme: "README",
+  skills: "Skills",
+  gallery: "Gallery",
+  tools: "Tools",
+  links: "Links",
+};
+
+const PREVIEW_LAYOUTS: Partial<Record<SectionMarker, SectionLayoutType>> = {
+  projects: "feature",
+  tools: "two_column",
+};
+
+/**
+ * Build a small representative layout for a starter, used to render a live
+ * preview of what applying it would look like. Blocks are built from the
+ * starter's semantic markers with empty configs (blocks self-default), so the
+ * member's own data renders inside the real block components.
+ */
+export function starterPreviewLayout(starter: Starter): PageLayout {
+  const collapsed = new Set(starter.collapsedSections);
+  return {
+    sections: starter.sectionOrder.map((marker, index) => ({
+      id: `preview:${marker}`,
+      position: index,
+      title: PREVIEW_TITLES[marker],
+      layout: PREVIEW_LAYOUTS[marker] ?? "full",
+      visible: !collapsed.has(marker),
+      blocks: MARKER_BLOCKS[marker].map((type, blockIndex) => ({
+        id: `preview:${marker}:${type}`,
+        type,
+        position: blockIndex,
+        visible: !collapsed.has(marker),
+        config: type === "profile-projects" ? { presentation: starter.presentation } : {},
+      })),
+    })),
   };
 }

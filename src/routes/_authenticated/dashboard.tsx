@@ -20,6 +20,7 @@ import {
   SuggestedCreatorsModuleRow,
   SuggestedProjectsModuleRow,
   TrendingSkillsModuleRow,
+  WatchlistModuleRow,
   selectActiveProjects,
 } from "@/components/tethyr/workspace/dashboard-module-rows";
 const WorkspaceGrid = lazy(() =>
@@ -198,6 +199,9 @@ function DashboardContent({
 
         case "trending-skills":
           return <TrendingSkillsModuleRow />;
+
+        case "watchlist":
+          return <WatchlistModuleRow />;
 
         case "today":
           return (

@@ -45,6 +45,7 @@ export async function renderSitemap(requestOrigin: string) {
   // (profiles, projects, skills) and resolved below.
   const entries: SitemapEntry[] = [
     { path: "/", lastModified: new Date().toISOString().slice(0, 10) },
+    { path: "/skills", lastModified: new Date().toISOString().slice(0, 10) },
   ];
 
   try {

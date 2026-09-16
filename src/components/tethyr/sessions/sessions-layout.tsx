@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SessionsSidebar, type SessionsTab } from "./sessions-sidebar";
@@ -25,10 +25,18 @@ export function SessionsLayout() {
   const navigate = useNavigate();
   // The active tab is URL-driven (?tab=requests) so the dashboard's "Review
   // requests" CTA and the pending-count badge can deep-link to the queue.
-  const { tab } = useSearch({ from: "/_authenticated/sessions" });
+  const { tab, schedule } = useSearch({ from: "/_authenticated/sessions" });
   const activeTab: SessionsTab = tab ?? "upcoming";
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
+
+  // The palette deep-links with ?schedule=1; open the wizard once and consume
+  // the param so a later tab switch or repeat visit doesn't re-open it.
+  useEffect(() => {
+    if (schedule !== "1") return;
+    setWizardOpen(true);
+    navigate({ to: "/sessions", search: tab ? { tab } : {}, replace: true });
+  }, [schedule, tab, navigate]);
 
   const setActiveTab = useCallback(
     (next: SessionsTab) => {

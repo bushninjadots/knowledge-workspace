@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Settings,
   Swords,
+  Tags,
   User,
   Users,
   UsersRound,
@@ -32,6 +33,7 @@ export const navigationGroups = [
     label: "Discover",
     items: [
       { to: "/explore", label: "Explore", icon: Compass },
+      { to: "/skills", label: "Skills", icon: Tags },
       { to: "/challenges", label: "Challenges", icon: Swords },
       { to: "/sessions", label: "Sessions", icon: Video },
     ],

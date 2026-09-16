@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { supabasePending } from "@/lib/supabase-pending-schema";
+import { isColumnSchemaError } from "@/lib/supabase-errors";
 import type {
   CollaborationBrief,
   ProjectLineage,
@@ -163,6 +164,43 @@ export function useMarkProjectVisited() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROJECT_RETURN_KEY });
     },
+  });
+}
+
+export type WatchedProject = {
+  id: string;
+  title: string;
+  description: string | null;
+};
+
+/** The member's watched projects ("shortlist"), most recently watched first. */
+export function useWatchedProjects(limit = 8) {
+  return useQuery({
+    queryKey: ["watched-projects", limit],
+    queryFn: async (): Promise<WatchedProject[]> => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("project_watchers")
+        .select("created_at, projects(id, title, description)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) {
+        if (isColumnSchemaError(error)) {
+          console.warn("[tethyr] watched projects: schema not published yet — degraded.", error);
+        } else {
+          console.error("[tethyr] watched projects: failed to load.", error);
+        }
+        return [];
+      }
+      return (data ?? [])
+        .map((row) => row.projects)
+        .filter((project): project is WatchedProject => !!project);
+    },
+    staleTime: 30_000,
   });
 }
 

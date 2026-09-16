@@ -347,18 +347,24 @@ function ProjectPage() {
         "profile_id, role, profiles(id, handle, display_name, creator_title, avatar_url)";
 
       let contributorsRes: { data: unknown[] | null } | null = null;
+      let contributorsDegraded = false;
       for (const cols of [FULL_CONTRIB_COLS, BASIC_CONTRIB_COLS]) {
         const res = await supabase.from("project_contributors").select(cols).eq("project_id", id);
         if (!res.error) {
           contributorsRes = res;
+          contributorsDegraded = cols === BASIC_CONTRIB_COLS;
           break;
         }
         if (
           !res.error.message?.includes("column") &&
           !res.error.message?.includes("schema") &&
           !res.error.code?.startsWith("42")
-        )
+        ) {
+          console.error("[tethyr] project contributors failed to load.", res.error);
+          contributorsDegraded = true;
           break;
+        }
+        contributorsDegraded = true;
       }
       contributorsRes ??= { data: [] };
 
@@ -420,6 +426,7 @@ function ProjectPage() {
         skills,
         coverSigned,
         avatarSigned,
+        contributorsDegraded,
       };
     },
   });
@@ -489,7 +496,7 @@ function ProjectPage() {
     );
   }
 
-  const { project, contributors, skills, coverSigned, avatarSigned } = data;
+  const { project, contributors, skills, coverSigned, avatarSigned, contributorsDegraded } = data;
   const presentation = getProjectPresentationOption(project.presentation_preset);
   const creator = contributors.find((c) => c.role === "creator");
   const isContributor = isOwner || contributors.some((c) => c.profile_id === me?.userId);
@@ -721,6 +728,7 @@ function ProjectPage() {
                       projectId={id}
                       projectTitle={project.title}
                       contributors={contributors}
+                      degraded={contributorsDegraded}
                       avatarSigned={avatarSigned}
                       openRoles={openRoles}
                       isOwner={isOwner}

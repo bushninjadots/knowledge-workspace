@@ -14,6 +14,9 @@ const NotificationDropdown = lazy(() =>
 const GlobalSearch = lazy(() =>
   import("./global-search").then((m) => ({ default: m.GlobalSearch })),
 );
+const KeyboardShortcutsDialog = lazy(() =>
+  import("./keyboard-shortcuts-dialog").then((m) => ({ default: m.KeyboardShortcutsDialog })),
+);
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette, paletteToStyle } from "@/lib/dominant-color";
 import { MobilePrimaryNav } from "./mobile-primary-nav";
@@ -64,6 +67,7 @@ function useSidebarRail() {
 export function AuthenticatedShell() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarRail();
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
@@ -174,6 +178,7 @@ export function AuthenticatedShell() {
 
       <Suspense fallback={null}>
         <GlobalSearch variant="dialog" open={searchOpen} onOpenChange={setSearchOpen} />
+        <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       </Suspense>
     </div>
   );
