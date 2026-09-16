@@ -63,10 +63,7 @@ function SkillsDirectoryPage() {
     );
   }, [catalog.data, query]);
 
-  const groups = useMemo<SkillCategoryGroup[]>(
-    () => groupSkillsByCategory(skills),
-    [skills],
-  );
+  const groups = useMemo<SkillCategoryGroup[]>(() => groupSkillsByCategory(skills), [skills]);
 
   if (catalog.isLoading) {
     return (
