@@ -82,6 +82,14 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:3000
 
+      # Two-user loop: create → role → apply → accept → People contributor.
+      # Closes the Stage 0 "project-creation/People click-through" gap.
+      - name: Run project-loop click-through (two users)
+        run: node scripts/qa-project-loop.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+          QA_SB_REST: http://127.0.0.1:54321
+
       - name: Upload screenshots + report
         if: always()
         uses: actions/upload-artifact@v4
