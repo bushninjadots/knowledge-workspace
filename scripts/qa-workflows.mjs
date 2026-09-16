@@ -73,8 +73,30 @@ const token = await page.evaluate(() => {
   }
   return null;
 });
-const KEY = process.env.SB_KEY;
-if (token && KEY) {
+let KEY = process.env.SB_KEY;
+// Self-serve the anon key: in dev, Vite injects the literal env value into the
+// served client module, so it can be read back from the dev server. A missing
+// key must be a visible failure, not a silently skipped check.
+if (!KEY) {
+  KEY = await page
+    .evaluate(async () => {
+      try {
+        // In dev, Vite rewrites `import.meta.env` in served modules into a
+        // literal object; the publishable key is right there.
+        const src = await fetch("/src/integrations/supabase/client.ts").then((r) => r.text());
+        const m = src.match(/VITE_SUPABASE_PUBLISHABLE_KEY"?:\s*"([^"]+)"/);
+        return m ? m[1] : null;
+      } catch {
+        return null;
+      }
+    })
+    .catch(() => null);
+}
+if (!token) {
+  log("edit details: bio persisted", false, "no session token found");
+} else if (!KEY) {
+  log("edit details: bio persisted", false, "no Supabase anon key (set SB_KEY)");
+} else {
   const res = await page.evaluate(
     async ({ token, KEY }) => {
       const r = await fetch("http://127.0.0.1:54321/rest/v1/profiles?select=bio&handle=eq.maya", {

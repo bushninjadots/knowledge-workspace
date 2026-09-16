@@ -227,7 +227,7 @@ export function PostCard({
 
   return (
     <article
-      className={`content-safe min-w-0 card-border border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-150 ${TYPE_BORDER[post.type]} ${
+      className={`content-safe min-w-0 card-border rounded-lg border border-l-[3px] bg-surface px-4 py-3.5 sm:px-5 sm:py-4 transition-lift duration-150 ${TYPE_BORDER[post.type]} ${
         autoDimmed ? "opacity-70 saturate-50" : highlighted ? "ring-2 ring-primary/50" : ""
       }`}
     >

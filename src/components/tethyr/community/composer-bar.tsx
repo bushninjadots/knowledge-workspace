@@ -545,7 +545,7 @@ export function ComposerBar({
 
   return (
     <div
-      className={`card-border border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 ${
+      className={`card-border rounded-lg border bg-surface px-4 py-3.5 sm:px-5 sm:py-4 ${
         focused ? "shadow-[0_0_0_1px_oklch(0.92_0.23_142/20%)]" : ""
       }`}
     >

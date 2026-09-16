@@ -55,3 +55,6 @@ supabase/.branches/
 
 # Scratch/debug artifacts from local testing
 .tmp/
+
+# QA harness output (screenshots, reports) — regenerable
+qa-artifacts/

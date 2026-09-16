@@ -223,4 +223,8 @@ try {
   console.log(
     `\nDone. ${report.pages.length} pages, ${errCount} errors. Artifacts in qa-artifacts/`,
   );
+  // Gate on hard failures (console/page/HTTP errors). Visual metrics above are
+  // informational — card-density findings need human review to separate real
+  // defects from intentional design (media overlays, line-clamped text).
+  process.exitCode = errCount > 0 ? 1 : 0;
 }
