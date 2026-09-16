@@ -309,10 +309,7 @@ function colorScheme(color: string): ThemeScheme | null {
  * Given a ThemeTokens object, return a CSS style object suitable for a
  * React `style` prop.
  */
-export function themeTokensToStyle(
-  tokens: ThemeTokens,
-  scheme?: ThemeScheme,
-): React.CSSProperties {
+export function themeTokensToStyle(tokens: ThemeTokens, scheme?: ThemeScheme): React.CSSProperties {
   const vars = themeTokensToVars(tokens, scheme);
   const fg = vars["--foreground"];
   if (typeof fg === "string" && fg.trim() !== "") {

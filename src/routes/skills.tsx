@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useSkillsCatalog, useSkillProfileCounts } from "@/hooks/use-current-user";
-import { groupSkillsByCategory } from "@/lib/skills";
+import { groupSkillsByCategory, type SkillCategoryGroup } from "@/lib/skills";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { Input } from "@/components/ui/input";
 import { seoMeta } from "@/lib/seo";
@@ -63,7 +63,10 @@ function SkillsDirectoryPage() {
     );
   }, [catalog.data, query]);
 
-  const groups = useMemo(() => groupSkillsByCategory(skills), [skills]);
+  const groups = useMemo<SkillCategoryGroup[]>(
+    () => groupSkillsByCategory(skills),
+    [skills],
+  );
 
   if (catalog.isLoading) {
     return (

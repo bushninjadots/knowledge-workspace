@@ -227,7 +227,10 @@ export function ProjectReadmeTab({
           itself, not a card in front of it. */}
       <section aria-labelledby="project-readme-heading">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
-          <h2 id="project-readme-heading" className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+          <h2
+            id="project-readme-heading"
+            className="flex items-center gap-2 text-sm font-medium text-foreground/80"
+          >
             <FileText className="h-4 w-4 text-muted-foreground" />
             README
           </h2>

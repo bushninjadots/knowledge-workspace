@@ -425,7 +425,12 @@ export function studioConfigToStyle(
     // real background); falls back to the picked accent when no banner colour
     // is in scope. Drives background tints and subtle surfaces.
     const secondary = secondaryColor ?? config.accentColor;
-    emitAccentFamily(style, "user-accent-secondary", secondary, contrastingAccentForeground(secondary));
+    emitAccentFamily(
+      style,
+      "user-accent-secondary",
+      secondary,
+      contrastingAccentForeground(secondary),
+    );
   }
 
   // Border weight shared by cards and panels. The border colour itself is

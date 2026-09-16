@@ -2241,8 +2241,7 @@ function ThemeSection({
 }) {
   const { data: presets = [] } = useThemePresets();
   const current = themeId && themeId.length > 0 ? themeId : DEFAULT_THEME_ID;
-  const pick = (preset: ThemePreset | null) =>
-    onThemeChange(preset ? preset.id : null);
+  const pick = (preset: ThemePreset | null) => onThemeChange(preset ? preset.id : null);
 
   return (
     <div className="mb-4">

@@ -233,6 +233,7 @@ export function PageShell({
   }, [
     themeVars,
     effectiveTheme,
+    resolvedTheme,
     isGlassTheme,
     blockContext.translucent,
     page,
