@@ -226,13 +226,24 @@ export function SettingsPage() {
             </p>
 
             <div className="mt-4 space-y-4">
-              {/* Theme — a device-level preference, kept here */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Theme</p>
-                  <p className="text-sm text-muted-foreground">Light, dark, or system</p>
+              {/* Theme controls use the same shared state as the navbar and Studio. */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium">Theme mode</p>
+                    <p className="text-sm text-muted-foreground">Light, dark, or system</p>
+                  </div>
+                  <ThemeToggle variant="icon" />
                 </div>
-                <ThemeToggle variant="icon" />
+                <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-3">
+                  <div>
+                    <p className="font-medium">Site-wide style preset</p>
+                    <p className="text-sm text-muted-foreground">
+                      Apply the same color, border, typography, and surface language across Tethyr.
+                    </p>
+                  </div>
+                  <ThemeToggle variant="row" className="w-auto shrink-0" />
+                </div>
               </div>
 
               <div className="border-t border-border/60 pt-4">

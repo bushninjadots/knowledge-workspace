@@ -81,18 +81,48 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemePresetState(presets);
   }, []);
 
-  // Follow the OS when the preference is"system".
+  // Follow the OS when the preference is "system" and keep other tabs in sync.
   useEffect(() => {
-    if (theme !== "system" || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => {
+      if (theme !== "system") return;
       const resolved: ResolvedTheme = mq.matches ? "dark" : "light";
       setResolvedTheme(resolved);
       applyTheme(resolved);
     };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY) {
+        const next = event.newValue;
+        const nextTheme: Theme =
+          next === "light" || next === "dark" || next === "system" ? next : "system";
+        setThemeState(nextTheme);
+        const resolved: ResolvedTheme =
+          nextTheme === "system" ? (mq.matches ? "dark" : "light") : nextTheme;
+        setResolvedTheme(resolved);
+        applyTheme(resolved);
+      }
+      if (event.key === THEME_PRESET_STORAGE_KEY) {
+        setThemePresetState(event.newValue);
+      }
+    };
     mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      mq.removeEventListener("change", onChange);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [theme]);
+
+  // Keep the current tab responsive when a control writes localStorage directly.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onThemePresetChanged = () => {
+      setThemePresetState(window.localStorage.getItem(THEME_PRESET_STORAGE_KEY));
+    };
+    window.addEventListener("tethyr:theme-preset-change", onThemePresetChanged);
+    return () => window.removeEventListener("tethyr:theme-preset-change", onThemePresetChanged);
+  }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
@@ -116,6 +146,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       if (id === null) localStorage.removeItem(THEME_PRESET_STORAGE_KEY);
       else localStorage.setItem(THEME_PRESET_STORAGE_KEY, id);
+      window.dispatchEvent(new Event("tethyr:theme-preset-change"));
     } catch {
       /* storage unavailable */
     }

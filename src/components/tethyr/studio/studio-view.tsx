@@ -28,6 +28,7 @@ import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { appearanceStyle } from "@/lib/background-themes";
 import { useUserPalette } from "@/lib/dominant-color";
+import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
 import { normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
@@ -44,6 +45,7 @@ import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
   studioConfigToStyle,
+  studioConfigToThemeTokens,
   EDITORIAL_HEADING_FONT,
   TECHNICAL_HEADING_FONT,
   structureMaxWidth,
@@ -177,6 +179,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const surfaceStyle = {
     ...themeVars,
+    ...themeTokensToStyle(studioConfigToThemeTokens(config)),
     ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
     ...cardFillStyle(config),

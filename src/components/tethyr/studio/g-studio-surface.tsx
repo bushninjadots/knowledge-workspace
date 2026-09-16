@@ -62,6 +62,7 @@ import type {
   PageLayout,
   PageVersion,
 } from "@/lib/page-blocks";
+import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 import {
@@ -74,6 +75,7 @@ import {
   RADIUS_MIN,
   structureMaxWidth,
   studioConfigToStyle,
+  studioConfigToThemeTokens,
   TECHNICAL_HEADING_FONT,
   type StudioConfig,
 } from "@/lib/studio-config";
@@ -416,6 +418,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   );
   const surfaceStyle = {
     ...themeVars,
+    ...themeTokensToStyle(studioConfigToThemeTokens(props.config)),
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
