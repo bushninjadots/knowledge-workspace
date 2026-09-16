@@ -302,27 +302,31 @@ function ProfileSetupForm({
       bio: form.bio || null,
       teaching_style: form.teaching_style || null,
       learning_goals: form.learning_goals || null,
+      // NOT NULL columns must never receive null/undefined — Postgres rejects
+      // the whole update ("null value … violates not-null constraint"), which
+      // friendlyError then masks as "Something went wrong". Empty choices are
+      // stored as empty arrays/objects instead.
       favourite_tools: form.favourite_tools.trim()
         ? form.favourite_tools
             .split(",")
             .map((s: string) => s.trim())
             .filter(Boolean)
-        : undefined,
+        : [],
       software_stack: form.software_stack.trim()
         ? form.software_stack
             .split(",")
             .map((s: string) => s.trim())
             .filter(Boolean)
-        : undefined,
+        : [],
       availability: ["available", "busy", "learning", "looking_for_team", "mentoring"].includes(
         form.availability,
       )
         ? (form.availability as
             "available" | "busy" | "learning" | "looking_for_team" | "mentoring")
         : null,
-      languages: form.languages.length > 0 ? form.languages : undefined,
-      portfolio_links: portfolioLinks.length > 0 ? portfolioLinks : null,
-      social_links: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+      languages: form.languages,
+      portfolio_links: portfolioLinks,
+      social_links: socialLinks,
     };
 
     const { error } = await supabase.from("profiles").update(updateData).eq("id", userId);
@@ -895,8 +899,8 @@ function ProfileSetupForm({
           </div>
         </Card>
 
-        {/* SAVE */}
-        <div className="flex flex-wrap gap-3">
+        {/* SAVE — sticky so it stays reachable from anywhere in the long form */}
+        <div className="sticky bottom-0 z-10 -mx-4 mt-6 flex flex-wrap gap-3 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-sm sm:-mx-6 sm:px-6">
           <Button onClick={save} busy={saving} size="lg" className="gap-2">
             {saving ? (
               <>

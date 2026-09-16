@@ -19,8 +19,10 @@ import {
   GripHorizontal,
   GripVertical,
   History,
+  LayoutGrid,
   Magnet,
   Monitor,
+  Palette,
   Pencil,
   Plus,
   Redo2,
@@ -47,6 +49,7 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useUserPalette } from "@/lib/dominant-color";
 import { useTheme, useThemePresets, presetSwatch, type ThemePreset } from "@/hooks/use-theme";
+import { useTheme as useAppTheme } from "@/lib/theme";
 import { DEFAULT_THEME_ID } from "@/lib/constants";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
@@ -66,7 +69,6 @@ import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 import {
-  BACKGROUND_OPTIONS,
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
   cardFillStyle,
@@ -144,6 +146,8 @@ interface GStudioSurfaceProps {
     placement?: { col: number; row: number },
   ) => void;
   onAdd: (type: string, sectionId?: string, placement?: LayoutGridItem) => void;
+  /** Open the shared background/appearance dialog (banner → Appearance). */
+  onOpenAppearance?: () => void;
   onDragTypeChange: (type: string | null) => void;
   onPaletteTargetChange: (id: string) => void;
   onCustomizeChange: (patch: Partial<GStudioConfig>) => void;
@@ -498,6 +502,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
               setMobilePanel(null);
             }}
             onCompleteProfile={props.onCompleteProfile}
+            onOpenAppearance={props.onOpenAppearance}
             onReset={props.onReset}
           />
         )}
@@ -614,17 +619,16 @@ function GStudioTopBar({
       <div className="flex min-h-10 items-center gap-2 px-3 py-1.5">
         <div className="flex min-w-0 items-center gap-2">
           {onExit && (
-            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onExit}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-1.5"
+              onClick={onExit}
+              title="Back to Studio view"
+            >
               <ArrowLeft className="h-3.5 w-3.5" />
-              {!compact && <span className="text-xs">Studio</span>}
             </Button>
           )}
-          <span className="font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-foreground">
-            Tethyr
-          </span>
-          <span className="text-muted-foreground-subtle" aria-hidden>
-            /
-          </span>
           <span className="t-heading truncate text-[13px] font-semibold text-foreground">
             Studio
           </span>
@@ -970,7 +974,22 @@ export function snapGridPlacement(
 
   const others = existing.filter((item) => item.i !== ignoreId);
   const candidates: Array<{ col: number; row: number; distance: number }> = [];
+  const consider = (candidate: { col: number; row: number }) => {
+    const col = Math.max(0, Math.min(maxCol, candidate.col));
+    const row = Math.max(0, candidate.row);
+    // Manhattan distance between the drop cell and the candidate edge cell —
+    // 2 is roughly two grid cells of travel, enough that a near miss still
+    // glues to a neighbour.
+    const distance = Math.abs(col - clamped.col) + Math.abs(row - clamped.row);
+    if (distance > 2) return;
+    const proposed = { i: "__snap__", x: col, y: row, w: width, h: height };
+    if (!others.some((other) => overlapsGridItems(proposed, other))) {
+      candidates.push({ col, row, distance });
+    }
+  };
   for (const item of others) {
+    // Snap to neighbour edges — flush right/left/above/below plus corner
+    // alignments so boxes can stack tightly against each other.
     const edgeCandidates = [
       { col: item.x + item.w, row: item.y },
       { col: item.x - width, row: item.y },
@@ -981,16 +1000,12 @@ export function snapGridPlacement(
       { col: item.x, row: item.y + item.h - height },
     ];
     for (const candidate of edgeCandidates) {
-      const col = Math.max(0, Math.min(maxCol, candidate.col));
-      const row = Math.max(0, candidate.row);
-      const distance = Math.abs(col - clamped.col) + Math.abs(row - clamped.row);
-      if (distance <= 2) {
-        const proposed = { i: "__snap__", x: col, y: row, w: width, h: height };
-        if (!others.some((other) => overlapsGridItems(proposed, other))) {
-          candidates.push({ col, row, distance });
-        }
-      }
+      if (candidate.col >= 0 && candidate.col <= maxCol) consider(candidate);
     }
+    // Grid-edge alignment: matching rows of neighbours so blocks can also
+    // snap flush to x=0 / x=maxCol even when no neighbour edge offers it.
+    consider({ col: 0, row: item.y });
+    consider({ col: maxCol, row: item.y });
   }
   const nearest = candidates.sort((a, b) => a.distance - b.distance)[0];
   return nearest ? { ...clamped, col: nearest.col, row: nearest.row } : clamped;
@@ -1332,7 +1347,7 @@ function GSectionBand({
             onDragStop={(current, _oldItem, newItem) => {
               props.onGridInteractionEnd();
               if (!editing || !directManipulation || !newItem) return;
-              const blockId = newItem.i;
+              const blockId = String(newItem.i);
               const committed = (current as unknown as LayoutGridItem[]).map((item) => ({
                 i: item.i,
                 x: item.x,
@@ -2243,11 +2258,12 @@ function ThemeSection({
   onThemeChange: (themeId: string | null) => void;
 }) {
   const { data: presets = [] } = useThemePresets();
+  const { themePreset: siteWidePreset, setThemePreset } = useAppTheme();
   const current = themeId && themeId.length > 0 ? themeId : DEFAULT_THEME_ID;
   const pick = (preset: ThemePreset | null) => onThemeChange(preset ? preset.id : null);
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 shrink-0">
       <p className="t-label mb-1.5">Theme</p>
       <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
         A premade look — colours and type — applied across your Studio.
@@ -2269,6 +2285,20 @@ function ThemeSection({
           />
         ))}
       </div>
+      <button
+        type="button"
+        onClick={() => setThemePreset(current === DEFAULT_THEME_ID ? null : current)}
+        className={cn(
+          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-2xs transition-colors",
+          siteWidePreset && siteWidePreset === current
+            ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
+            : "border-border text-muted-foreground hover:text-foreground",
+        )}
+        title="Apply this theme to every page of the app, including the navigation"
+      >
+        <LayoutGrid className="h-3 w-3" aria-hidden />
+        {siteWidePreset && siteWidePreset === current ? "Applied site-wide" : "Apply site-wide"}
+      </button>
     </div>
   );
 }
@@ -2328,7 +2358,7 @@ function GCustomizePanel({
   onBlockAction,
   onSelect,
   onClose,
-  onCompleteProfile,
+  onOpenAppearance,
   onReset,
 }: {
   config: GStudioConfig;
@@ -2346,6 +2376,8 @@ function GCustomizePanel({
   onSelect: (id: string | null) => void;
   onClose: () => void;
   onCompleteProfile?: () => void;
+  /** Opens the shared background/appearance dialog (banner → Appearance). */
+  onOpenAppearance?: () => void;
   onReset: () => void;
 }) {
   // Progressive disclosure: the three "feel" decisions stay on top for every
@@ -2366,7 +2398,7 @@ function GCustomizePanel({
   return (
     <aside
       className={cn(
-        "flex w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--surface-elevated)]",
+        "flex w-64 shrink-0 flex-col border-r border-border bg-[var(--surface-elevated)]",
         compact && "fixed inset-y-11 left-0 z-40",
       )}
     >
@@ -2376,7 +2408,7 @@ function GCustomizePanel({
           <X className="h-3.5 w-3.5" />
         </IconButton>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
         <Choice
           label="Structure"
@@ -2404,7 +2436,7 @@ function GCustomizePanel({
           type="button"
           onClick={toggleAdvanced}
           aria-expanded={advancedOpen}
-          className="mb-3 flex w-full items-center justify-between gap-2 border-t border-border pt-3 text-left"
+          className="mb-3 flex w-full shrink-0 items-center justify-between gap-2 border-t border-border pt-3 text-left"
         >
           <span className="t-label">More options</span>
           <ChevronDown
@@ -2414,276 +2446,252 @@ function GCustomizePanel({
             )}
           />
         </button>
-        {advancedOpen && (
-          <>
-            <Choice
-              label="Density"
-              hint="Spacing rhythm between blocks"
-              value={config.density}
-              options={[
-                ["compact", "Compact"],
-                ["comfortable", "Comfortable"],
-                ["spacious", "Spacious"],
-              ]}
-              onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
-            />
-            <div className="mb-4">
-              <div className="mb-1.5 flex items-center justify-between">
-                <p className="t-label">Corners</p>
-                <span className="t-label tabular-nums">{config.radius}px</span>
-              </div>
-              <p className="mb-1.5 text-[0.6875rem] leading-snug text-muted-foreground">
-                Roundness of card corners, from sharp to generously soft.
-              </p>
-              <input
-                type="range"
-                min={RADIUS_MIN}
-                max={RADIUS_MAX}
-                step={1}
-                value={config.radius}
-                aria-label="Corner radius in pixels"
-                onChange={(event) => onChange({ radius: Number(event.target.value) })}
-                className="studio-slider w-full"
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {advancedOpen && (
+            <>
+              <Choice
+                label="Density"
+                hint="Spacing rhythm between blocks"
+                value={config.density}
+                options={[
+                  ["compact", "Compact"],
+                  ["comfortable", "Comfortable"],
+                  ["spacious", "Spacious"],
+                ]}
+                onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
               />
-            </div>
-            <Choice
-              label="Accent"
-              hint={
-                config.accentMode === "dual"
-                  ? "Pick an interactive colour; the banner colour tints the background"
-                  : config.accentMode === "none"
-                    ? "No colour accent — the theme carries the Studio"
-                    : undefined
-              }
-              value={config.accentMode}
-              options={[
-                ["custom", "Pick"],
-                ["dual", "Banner + colour"],
-                ["none", "None"],
-              ]}
-              onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
-            />
-            {(config.accentMode === "custom" || config.accentMode === "dual") && (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {ACCENT_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch}
-                    type="button"
-                    aria-label={`Accent ${swatch}`}
-                    aria-pressed={config.accentColor.toLowerCase() === swatch}
-                    onClick={() => onChange({ accentColor: swatch })}
-                    className={cn(
-                      "h-6 w-6 rounded-sm border-2",
-                      config.accentColor.toLowerCase() === swatch
-                        ? "border-foreground"
-                        : "border-border",
-                    )}
-                    style={{ backgroundColor: swatch }}
-                  />
-                ))}
-              </div>
-            )}
-            <Choice
-              label="Card borders"
-              hint="Outlines around cards and panels"
-              value={cardBorders}
-              options={[
-                ["neutral", "Neutral"],
-                ["accent", "Dynamic"],
-                ["custom", "Custom"],
-                ["none", "None"],
-              ]}
-              onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
-            />
-            <Choice
-              label="Border weight"
-              hint="Control how much the card outline carries"
-              value={config.cardBorderWidth ?? "thin"}
-              options={[
-                ["thin", "Thin"],
-                ["medium", "Medium"],
-                ["thick", "Thick"],
-              ]}
-              onChange={(value) =>
-                onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-              }
-            />
-            {cardBorders === "custom" && (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {BORDER_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch}
-                    type="button"
-                    aria-label={`Card border ${swatch}`}
-                    aria-pressed={cardBorderColor.toLowerCase() === swatch}
-                    onClick={() => onCardBorderColorChange(swatch)}
-                    className={cn(
-                      "h-6 w-6 rounded-sm border-2",
-                      cardBorderColor.toLowerCase() === swatch
-                        ? "border-foreground"
-                        : "border-border",
-                    )}
-                    style={{ backgroundColor: swatch }}
-                  />
-                ))}
-              </div>
-            )}
-            <div className="mb-4">
-              <p className="t-label mb-1.5">Card fill</p>
-              <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-                Colour and translucency of every block surface
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {CARD_FILL_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch.value || "auto"}
-                    type="button"
-                    title={swatch.label}
-                    aria-label={`Card fill ${swatch.label}`}
-                    aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
-                    onClick={() => onChange({ cardColor: swatch.value })}
-                    className={cn(
-                      "h-6 w-6 rounded-sm border-2 text-3xs",
-                      (config.cardColor ?? "").toLowerCase() === swatch.value
-                        ? "border-foreground"
-                        : "border-border",
-                    )}
-                    style={
-                      swatch.value
-                        ? { backgroundColor: swatch.value }
-                        : { backgroundColor: "var(--surface-elevated)" }
-                    }
-                  >
-                    {swatch.value ? "" : "A"}
-                  </button>
-                ))}
-              </div>
-              <label className="mt-2 block">
-                <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-                  Opacity <span>{config.cardOpacity}%</span>
-                </span>
+              <div className="mb-4">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <p className="t-label">Corners</p>
+                  <span className="t-label tabular-nums">{config.radius}px</span>
+                </div>
+                <p className="mb-1.5 text-[0.6875rem] leading-snug text-muted-foreground">
+                  Roundness of card corners, from sharp to generously soft.
+                </p>
                 <input
                   type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={config.cardOpacity}
-                  onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
-                  className="w-full accent-[var(--user-accent)]"
+                  min={RADIUS_MIN}
+                  max={RADIUS_MAX}
+                  step={1}
+                  value={config.radius}
+                  aria-label="Corner radius in pixels"
+                  onChange={(event) => onChange({ radius: Number(event.target.value) })}
+                  className="studio-slider w-full"
                 />
-              </label>
-            </div>
-            <div className="mb-4 border-t border-border pt-3">
-              <p className="t-label mb-1.5">Background</p>
-              {(
-                [
-                  ["While editing", "appBackground"],
-                  ["Public Studio", "publicBackground"],
-                ] as const
-              ).map(([label, key]) => (
-                <div key={key} className="mb-2">
-                  <p className="mb-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-                    {label}
-                  </p>
-                  <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
-                    {BACKGROUND_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={config[key] === option.value}
-                        onClick={() => onChange({ [key]: option.value } as Partial<GStudioConfig>)}
-                        className={cn(
-                          "rounded-sm px-1 py-1 text-2xs",
-                          config[key] === option.value
-                            ? "bg-[var(--surface-elevated)] text-foreground"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-border pt-3">
-              <p className="t-label mb-1.5">Content</p>
-              <ul className="space-y-2">
-                {layout.sections.map((section) => (
-                  <li key={section.id}>
+              </div>
+              <Choice
+                label="Accent"
+                hint={
+                  config.accentMode === "dual"
+                    ? "Pick an interactive colour; the banner colour tints the background"
+                    : config.accentMode === "none"
+                      ? "No colour accent — the theme carries the Studio"
+                      : undefined
+                }
+                value={config.accentMode}
+                options={[
+                  ["custom", "Pick"],
+                  ["dual", "Banner + colour"],
+                  ["none", "None"],
+                ]}
+                onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
+              />
+              {(config.accentMode === "custom" || config.accentMode === "dual") && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {ACCENT_SWATCHES.map((swatch) => (
                     <button
+                      key={swatch}
                       type="button"
-                      onClick={() => onToggleSection(section.id)}
-                      aria-label={
-                        section.visible === false
-                          ? `Show ${sectionLabel(section)}`
-                          : `Hide ${sectionLabel(section)}`
-                      }
-                      className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
-                    >
-                      {section.visible === false ? (
-                        <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                      ) : (
-                        <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      aria-label={`Accent ${swatch}`}
+                      aria-pressed={config.accentColor.toLowerCase() === swatch}
+                      onClick={() => onChange({ accentColor: swatch })}
+                      className={cn(
+                        "h-6 w-6 rounded-sm border-2",
+                        config.accentColor.toLowerCase() === swatch
+                          ? "border-foreground"
+                          : "border-border",
                       )}
-                      <span
-                        className={cn(
-                          "truncate text-xs",
-                          section.visible === false
-                            ? "text-muted-foreground-subtle line-through"
-                            : "text-foreground",
-                        )}
-                      >
-                        {sectionLabel(section)}
-                      </span>
+                      style={{ backgroundColor: swatch }}
+                    />
+                  ))}
+                </div>
+              )}
+              <Choice
+                label="Card borders"
+                hint="Outlines around cards and panels"
+                value={cardBorders}
+                options={[
+                  ["neutral", "Neutral"],
+                  ["accent", "Dynamic"],
+                  ["custom", "Custom"],
+                  ["none", "None"],
+                ]}
+                onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
+              />
+              <Choice
+                label="Border weight"
+                hint="Control how much the card outline carries"
+                value={config.cardBorderWidth ?? "thin"}
+                options={[
+                  ["thin", "Thin"],
+                  ["medium", "Medium"],
+                  ["thick", "Thick"],
+                ]}
+                onChange={(value) =>
+                  onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+                }
+              />
+              {cardBorders === "custom" && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {BORDER_SWATCHES.map((swatch) => (
+                    <button
+                      key={swatch}
+                      type="button"
+                      aria-label={`Card border ${swatch}`}
+                      aria-pressed={cardBorderColor.toLowerCase() === swatch}
+                      onClick={() => onCardBorderColorChange(swatch)}
+                      className={cn(
+                        "h-6 w-6 rounded-sm border-2",
+                        cardBorderColor.toLowerCase() === swatch
+                          ? "border-foreground"
+                          : "border-border",
+                      )}
+                      style={{ backgroundColor: swatch }}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="mb-4">
+                <p className="t-label mb-1.5">Card fill</p>
+                <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+                  Colour and translucency of every block surface
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {CARD_FILL_SWATCHES.map((swatch) => (
+                    <button
+                      key={swatch.value || "auto"}
+                      type="button"
+                      title={swatch.label}
+                      aria-label={`Card fill ${swatch.label}`}
+                      aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
+                      onClick={() => onChange({ cardColor: swatch.value })}
+                      className={cn(
+                        "h-6 w-6 rounded-sm border-2 text-3xs",
+                        (config.cardColor ?? "").toLowerCase() === swatch.value
+                          ? "border-foreground"
+                          : "border-border",
+                      )}
+                      style={
+                        swatch.value
+                          ? { backgroundColor: swatch.value }
+                          : { backgroundColor: "var(--surface-elevated)" }
+                      }
+                    >
+                      {swatch.value ? "" : "A"}
                     </button>
-                    <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
-                      {section.blocks.map((block) => (
-                        <li key={block.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelect(block.id);
-                              onBlockAction(block.id, { visible: block.visible === false });
-                            }}
-                            className="flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
-                          >
-                            {block.visible === false ? (
-                              <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                            ) : (
-                              <Eye className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                            )}
-                            <span
-                              className={cn(
-                                "truncate text-2xs",
-                                block.visible === false
-                                  ? "text-muted-foreground-subtle line-through"
-                                  : "text-muted-foreground",
-                              )}
+                  ))}
+                </div>
+                <label className="mt-2 block">
+                  <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+                    Opacity <span>{config.cardOpacity}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={config.cardOpacity}
+                    onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
+                    className="w-full accent-[var(--user-accent)]"
+                  />
+                </label>
+              </div>
+              <div className="mb-4 border-t border-border pt-3">
+                <p className="t-label mb-1.5">Background</p>
+                <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+                  Colour, pattern, or image — for your app and your public Studio.
+                </p>
+                {onOpenAppearance ? (
+                  <button
+                    type="button"
+                    onClick={onOpenAppearance}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground transition-lift hover:bg-[var(--surface-sunken)]"
+                  >
+                    <Palette className="h-3 w-3" aria-hidden />
+                    Edit background
+                  </button>
+                ) : null}
+              </div>
+              <div className="border-t border-border pt-3">
+                <p className="t-label mb-1.5">Content</p>
+                <ul className="space-y-2">
+                  {layout.sections.map((section) => (
+                    <li key={section.id}>
+                      <button
+                        type="button"
+                        onClick={() => onToggleSection(section.id)}
+                        aria-label={
+                          section.visible === false
+                            ? `Show ${sectionLabel(section)}`
+                            : `Hide ${sectionLabel(section)}`
+                        }
+                        className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
+                      >
+                        {section.visible === false ? (
+                          <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                        ) : (
+                          <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        )}
+                        <span
+                          className={cn(
+                            "truncate text-xs",
+                            section.visible === false
+                              ? "text-muted-foreground-subtle line-through"
+                              : "text-foreground",
+                          )}
+                        >
+                          {sectionLabel(section)}
+                        </span>
+                      </button>
+                      <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
+                        {section.blocks.map((block) => (
+                          <li key={block.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelect(block.id);
+                                onBlockAction(block.id, { visible: block.visible === false });
+                              }}
+                              className="flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
                             >
-                              {getBlock(block.type)?.label ?? block.type}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {onCompleteProfile && (
-              <button
-                type="button"
-                onClick={onCompleteProfile}
-                className="mt-4 border-t border-border pt-3 text-left text-xs text-primary"
-              >
-                Edit details
-              </button>
-            )}
-          </>
-        )}
+                              {block.visible === false ? (
+                                <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                              ) : (
+                                <Eye className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                              )}
+                              <span
+                                className={cn(
+                                  "truncate text-2xs",
+                                  block.visible === false
+                                    ? "text-muted-foreground-subtle line-through"
+                                    : "text-muted-foreground",
+                                )}
+                              >
+                                {getBlock(block.type)?.label ?? block.type}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>{" "}
+            </>
+          )}
+        </div>
       </div>
-      <footer className="border-t border-border p-3">
+      <footer className="shrink-0 border-t border-border p-3">
         <button
           type="button"
           onClick={onReset}

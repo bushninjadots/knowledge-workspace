@@ -244,7 +244,6 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         mode={mode}
         device={previewDevice}
         onBack={onBack}
-        onCompleteProfile={onCompleteProfile}
         onOpenEditor={() => navigate({ to: "/studio" })}
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
         onDeviceChange={setPreviewDevice}
@@ -504,7 +503,6 @@ function StudioViewTopBar({
   mode,
   device,
   onBack,
-  onCompleteProfile,
   onOpenEditor,
   onToggleMode,
   onDeviceChange,
@@ -514,13 +512,15 @@ function StudioViewTopBar({
   mode: "view" | "preview";
   device: PreviewDevice;
   onBack?: () => void;
-  onCompleteProfile?: () => void;
   onOpenEditor: () => void;
   onToggleMode: () => void;
   onDeviceChange: (device: PreviewDevice) => void;
 }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
+    // The authenticated shell already provides the sticky app navbar; this
+    // owner chrome intentionally doesn't draw its own sticky bar (no border,
+    // transparent background) so the Studio doesn't stack two headers.
+    <header className="z-40 bg-transparent">
       <div className="flex min-h-10 items-center gap-2 px-3 py-1.5">
         {onBack && (
           <Button variant="ghost" size="sm" className="h-7 px-2" onClick={onBack}>
@@ -528,12 +528,6 @@ function StudioViewTopBar({
           </Button>
         )}
         <div className="flex min-w-0 items-center gap-2">
-          <span className="font-mono text-2xs font-semibold uppercase tracking-[0.18em] text-foreground">
-            Tethyr
-          </span>
-          <span className="text-muted-foreground-subtle" aria-hidden>
-            /
-          </span>
           <span className="truncate text-[13px] font-semibold text-foreground">Studio</span>
           <span
             className={`hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline ${
@@ -549,16 +543,6 @@ function StudioViewTopBar({
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {onCompleteProfile && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:inline-flex"
-              onClick={onCompleteProfile}
-            >
-              Edit details
-            </Button>
-          )}
           <Button variant="ghost" size="sm" onClick={onToggleMode} title="Toggle preview">
             <Sparkles className="h-3 w-3" />
             <span className="hidden sm:inline">

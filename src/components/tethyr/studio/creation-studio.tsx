@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ProjectDialog } from "@/components/tethyr/profile";
+import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { CURRENT_USER_KEY, useSkillsCatalog } from "@/hooks/use-current-user";
 import {
   Dialog,
@@ -84,6 +85,9 @@ export function CreationStudio({
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [publishNote, setPublishNote] = useState("");
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  // The Customize panel's Background entry opens the same dialog the banner's
+  // Appearance control uses — one owner for backdrop/pattern/image settings.
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [introStarterOpen, setIntroStarterOpen] = useState(false);
   const [renameFocusId, setRenameFocusId] = useState<string | null>(null);
@@ -992,6 +996,7 @@ export function CreationStudio({
         onUndo={undo}
         onRedo={redo}
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
+        onOpenAppearance={() => setAppearanceOpen(true)}
         onAddProject={() => setProjectDialogOpen(true)}
         onExit={onExit ? exit : undefined}
         lastSavedAt={lastSavedAt}
@@ -1059,6 +1064,18 @@ export function CreationStudio({
         onSaved={() => {
           setProjectDialogOpen(false);
           queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        }}
+      />
+      <BackgroundPickerDialog
+        open={appearanceOpen}
+        onOpenChange={setAppearanceOpen}
+        background={me?.background ?? null}
+        publicBackground={me?.profile?.public_background ?? null}
+        userId={userId}
+        bannerUrl={me?.bannerSigned ?? null}
+        onSaved={() => {
+          setAppearanceOpen(false);
+          refreshMe();
         }}
       />
       {introStarterOpen && (

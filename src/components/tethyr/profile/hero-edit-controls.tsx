@@ -10,16 +10,6 @@ import { Camera, Palette, Pencil, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +40,7 @@ export function HeroEditControls({
   hasBanner,
   bannerSigned,
   onChanged,
+  onCompleteProfile,
 }: {
   userId: string;
   identity: HeroIdentity;
@@ -57,6 +48,8 @@ export function HeroEditControls({
   /** Resolved banner URL, so the appearance editor can preview a banner-derived tint. */
   bannerSigned?: string | null;
   onChanged?: () => void;
+  /** Opens the full identity-completion form (route-level "Edit details" dialog). */
+  onCompleteProfile?: () => void;
 }) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -66,7 +59,6 @@ export function HeroEditControls({
   const [editingCaption, setEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState(identity.banner_caption ?? "");
   const [savingCaption, setSavingCaption] = useState(false);
-  const [identityOpen, setIdentityOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   function refresh() {
@@ -143,7 +135,7 @@ export function HeroEditControls({
 
         <button
           type="button"
-          onClick={() => setIdentityOpen(true)}
+          onClick={() => onCompleteProfile?.()}
           className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-lift hover:bg-background"
         >
           <Pencil className="h-3.5 w-3.5" />
@@ -215,14 +207,6 @@ export function HeroEditControls({
         </div>
       )}
 
-      <IdentityDialog
-        open={identityOpen}
-        onOpenChange={setIdentityOpen}
-        userId={userId}
-        identity={identity}
-        onSaved={refresh}
-      />
-
       <BackgroundPickerDialog
         open={appearanceOpen}
         onOpenChange={setAppearanceOpen}
@@ -236,138 +220,5 @@ export function HeroEditControls({
         }}
       />
     </>
-  );
-}
-
-function IdentityDialog({
-  open,
-  onOpenChange,
-  userId,
-  identity,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  userId: string;
-  identity: HeroIdentity;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState({
-    display_name: identity.display_name ?? "",
-    handle: identity.handle ?? "",
-    creator_title: identity.creator_title ?? "",
-    bio: identity.bio ?? "",
-    category: identity.category ?? "",
-    country: identity.country ?? "",
-    timezone: identity.timezone ?? "",
-  });
-  const [saving, setSaving] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        display_name: form.display_name.trim() || null,
-        handle: form.handle.trim() || null,
-        creator_title: form.creator_title.trim() || null,
-        bio: form.bio.trim() || null,
-        category: form.category.trim() || null,
-        country: form.country.trim() || null,
-        timezone: form.timezone.trim() || null,
-      })
-      .eq("id", userId);
-    setSaving(false);
-    if (error) return toast.error(friendlyError(error));
-    toast.success("Details updated");
-    onOpenChange(false);
-    onSaved();
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit details</DialogTitle>
-          <DialogDescription>
-            How you're introduced across Tethyr. Your work still speaks first.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="Display name"
-            value={form.display_name}
-            onChange={(v) => setForm((f) => ({ ...f, display_name: v }))}
-          />
-          <Field
-            label="Handle"
-            value={form.handle}
-            placeholder="yourhandle"
-            onChange={(v) => setForm((f) => ({ ...f, handle: v }))}
-          />
-          <Field
-            label="Title"
-            value={form.creator_title}
-            placeholder="Motion designer"
-            onChange={(v) => setForm((f) => ({ ...f, creator_title: v }))}
-          />
-          <Field
-            label="Category"
-            value={form.category}
-            placeholder="Design"
-            onChange={(v) => setForm((f) => ({ ...f, category: v }))}
-          />
-          <Field
-            label="Country"
-            value={form.country}
-            onChange={(v) => setForm((f) => ({ ...f, country: v }))}
-          />
-          <Field
-            label="Timezone"
-            value={form.timezone}
-            placeholder="Europe/Madrid"
-            onChange={(v) => setForm((f) => ({ ...f, timezone: v }))}
-          />
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bio</Label>
-            <Textarea
-              rows={4}
-              value={form.bio}
-              onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              placeholder="What are you building, and what do you want to build next?"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={() => void save()} disabled={saving}>
-            {saving ? "Saving…" : "Save changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground">{label}</Label>
-      <Input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
-    </div>
   );
 }

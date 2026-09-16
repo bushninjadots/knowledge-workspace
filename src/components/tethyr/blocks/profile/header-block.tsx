@@ -6,7 +6,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Languages, Sparkles, Hammer, CheckCircle2 } from "lucide-react";
+import { MapPin, Clock, Languages, Sparkles, Hammer } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,8 +127,6 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   // Profile editing belongs to Studio editor mode. View mode stays presentation-only,
   // including on the owner's public-facing Studio route.
   const canEdit = context.isOwner === true && (context.isEditing || context.quickEdit === true);
-  const profileCompleteness =
-    typeof context.profileCompleteness === "number" ? context.profileCompleteness : null;
   const showConnect = ownerType === "profile" && !canEdit;
 
   return (
@@ -137,6 +135,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         <HeroEditControls
           userId={data.id}
           hasBanner={!!bannerSrc}
+          onCompleteProfile={context.onCompleteProfile}
           bannerSigned={bannerSrc}
           identity={{
             display_name: data.display_name,
@@ -271,27 +270,6 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   </div>
                 );
               })()}
-
-            {canEdit &&
-              profileCompleteness !== null &&
-              profileCompleteness < 100 &&
-              context.onCompleteProfile && (
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-3">
-                  <p className="text-xs text-muted-foreground">
-                    Flesh out your details so people can understand what you make and how to work
-                    with you.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={context.onCompleteProfile}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--user-accent-border,var(--card-border))] bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-lift hover:bg-background"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Edit details
-                    <span className="text-muted-foreground">{profileCompleteness}%</span>
-                  </button>
-                </div>
-              )}
 
             {showConnect && (
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">

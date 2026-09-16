@@ -19,6 +19,7 @@ import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
+  structureMaxWidth,
   studioConfigToStyle,
   studioConfigToThemeTokens,
 } from "@/lib/studio-config";
@@ -306,11 +307,17 @@ export function PageShell({
   if (wantsDraft && !isOwner) return null;
 
   const layout = previewLayout ?? page.layout ?? { sections: [] };
+  // Public parity: profile Studios honour the creator's Structure choice (the
+  // same `structureMaxWidth` the private Studio view uses), so the published
+  // page reads at the width the creator designed it at.
+  const structureWidth = page ? structureMaxWidth(page.config) : null;
   const canvasFrameClass = isPreviewing
     ? previewFrameClasses(previewDevice)
     : isEditing
       ? "mx-auto w-full max-w-5xl overflow-hidden border-y border-border/50"
-      : "w-full";
+      : ownerType === "profile" && structureWidth
+        ? "mx-auto w-full"
+        : "w-full";
   const workspaceClass =
     isPreviewing || isEditing ? "bg-surface-sunken px-3 py-5 sm:px-8 sm:py-10" : "";
 
@@ -325,7 +332,11 @@ export function PageShell({
       >
         <div
           className={`${canvasFrameClass} bg-background font-sans text-foreground`}
-          style={containerStyle}
+          style={
+            ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
+              ? { ...containerStyle, maxWidth: structureWidth, marginInline: "auto" }
+              : containerStyle
+          }
           data-page-id={page.id}
           data-page-status={page.status}
           data-page-preview={

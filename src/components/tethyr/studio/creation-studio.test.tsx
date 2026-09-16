@@ -94,6 +94,31 @@ describe("Creation Studio grid adapter", () => {
     ).toMatchObject({ col: 4, row: 0 });
   });
 
+  it("snaps a dropped block flush below a neighbour", () => {
+    // Drop one row below the neighbour's bottom edge — should glue to y=3.
+    expect(
+      snapGridPlacement(
+        { sectionId: "section-1", col: 0, row: 4 },
+        4,
+        3,
+        [{ i: "a", x: 0, y: 0, w: 4, h: 3 }],
+        true,
+      ),
+    ).toMatchObject({ col: 0, row: 3 });
+  });
+
+  it("snaps flush to the left grid edge alongside a neighbour row", () => {
+    expect(
+      snapGridPlacement(
+        { sectionId: "section-1", col: 1, row: 0 },
+        4,
+        3,
+        [{ i: "a", x: 4, y: 0, w: 4, h: 3 }],
+        true,
+      ),
+    ).toMatchObject({ col: 0, row: 0 });
+  });
+
   it("keeps free placement when snapping is disabled", () => {
     expect(
       snapGridPlacement(

@@ -358,7 +358,11 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col" data-page-layout>
+    <div
+      className="flex flex-col"
+      style={{ gap: "calc(var(--studio-gap, 14px) * 1.6)" }}
+      data-page-layout
+    >
       {sectionsToRender.map((section) => {
         const sectionIndex = sections.findIndex((candidate) => candidate.id === section.id);
         const layoutSectionIndex = layout.sections.findIndex(
@@ -382,8 +386,12 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             data-section-id={section.id}
             data-section-layout={section.layout}
             className={[
-              context.isEditing ? "py-8 first:pt-0" : "py-[var(--spacing-section)] first:pt-0",
-              isWhitespaceLed ? "" : "border-b border-border/35 last:border-b-0 last:pb-0",
+              context.isEditing ? "py-8 first:pt-0" : "first:pt-0",
+              // Public rhythm mirrors the private Studio view: whitespace-led
+              // gaps (density-scaled) instead of full-width divider rules.
+              isWhitespaceLed || !context.isEditing
+                ? ""
+                : "border-b border-border/35 last:border-b-0 last:pb-0",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -508,14 +516,13 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
             ) : (
               <>
                 {!context.isEditing && section.title && !/^area\s+\d+$/i.test(section.title) && (
-                  <header className="mb-4 flex items-center gap-2">
+                  <header className="mb-2 flex items-center gap-2">
                     <span
                       className="h-3 w-0.5 shrink-0"
                       style={{ backgroundColor: "var(--user-accent, var(--trust))" }}
                     />
-                    <h2 className="text-base font-semibold tracking-tight text-foreground">
-                      {section.title}
-                    </h2>
+                    <span className="t-label">{section.title}</span>
+                    <span className="t-rule flex-1" />
                   </header>
                 )}
                 <div
