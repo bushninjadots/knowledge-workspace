@@ -261,7 +261,71 @@ if (projectId) {
       .count()
       .catch(() => 0)) > 0,
   );
+
+  // 5. The acceptance notification lands for the applicant.
+  await applicant2.goto(`${BASE}/notifications`, { waitUntil: "domcontentloaded" });
+  await applicant2.waitForSelector('[aria-label="Notifications content"]', { timeout: 20000 });
+  await applicant2.waitForTimeout(1500);
+  log(
+    "notify: acceptance notification",
+    (await applicant2
+      .getByText(/your application was accepted/i)
+      .count()
+      .catch(() => 0)) > 0,
+  );
   await applicant2.close();
+
+  // ── Private-project visibility: devon's own project must hide from maya. ───
+  const PRIVATE_PROJECT_ID =
+    process.env.QA_PRIVATE_PROJECT || "20000000-0000-0000-0000-000000000009";
+
+  // Positive case: the owner sees their private project.
+  const devon3 = await newSession();
+  await login(devon3, "devon@tethyr.dev");
+  await devon3.goto(`${BASE}/projects/${PRIVATE_PROJECT_ID}`, { waitUntil: "domcontentloaded" });
+  const ownerSeesPrivate = await devon3
+    .getByText("Atlas — Internal Metrics")
+    .first()
+    .waitFor({ state: "visible", timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
+  log("private: owner sees their project", ownerSeesPrivate);
+  await devon3.close();
+
+  // Negative case: an outsider gets a 404 view (route-level or root), never
+  // the private content.
+  const outsider = await newSession();
+  await login(outsider, "maya@tethyr.dev");
+  await outsider.goto(`${BASE}/projects/${PRIVATE_PROJECT_ID}`, { waitUntil: "domcontentloaded" });
+  const outcome = await Promise.race([
+    outsider
+      .getByText(/project not found|no project with that id|page not found/i)
+      .first()
+      .waitFor({ state: "visible", timeout: 20000 })
+      .then(() => "not-found")
+      .catch(() => null),
+    outsider
+      .getByText("Atlas — Internal Metrics")
+      .first()
+      .waitFor({ state: "visible", timeout: 20000 })
+      .then(() => "leaked")
+      .catch(() => null),
+  ]);
+  // Also sweep the raw DOM: any leak beyond the headline fails the check.
+  const leakedAnywhere =
+    outcome !== "leaked" &&
+    (await outsider
+      .getByText(/Atlas — Internal|Private dashboard and analytics/i)
+      .count()
+      .catch(() => 1)) > 0;
+  log(
+    "private: hidden from non-member",
+    outcome === "not-found" && !leakedAnywhere,
+    outcome === "leaked" || leakedAnywhere
+      ? "CONTENT LEAKED"
+      : (outcome ?? "no expected state rendered"),
+  );
+  await outsider.close();
 } else {
   log("role/apply/accept", false, "skipped — project id not resolved");
 }

@@ -35,10 +35,17 @@ collaboration transitions, not just page renders.
       repeatable — creates a fresh challenge per run — asserts the +15
       reputation delta, `challenge_winner` badge, `contribution_log` entry, and
       the pass notification; gated nightly in CI.)
-- [ ] **Notification destinations** — the accept and pass outcomes create the
-      right notifications for B (and A where applicable).
-- [ ] **Private-project visibility** — a private project renders for its
-      creator/contributors and 404s (or is hidden) for outsiders.
+- [x] **Notification destinations** — the accept and pass outcomes create the
+      right notifications for B (and A where applicable). (2026-09-16: the
+      `role_application_accepted` notification is asserted in
+      `scripts/qa-project-loop.mjs` and the `challenge_passed` notification in
+      `scripts/qa-challenge-loop.mjs`, both CI-gated; destination routing is
+      unit-tested in `src/lib/notification-destinations.test.ts`.)
+- [x] **Private-project visibility** — a private project renders for its
+      creator/contributors and 404s (or is hidden) for outsiders. (2026-09-16:
+      covered by `scripts/qa-project-loop.mjs` — owner sees "Atlas — Internal
+      Metrics", a non-member gets the not-found view with a DOM sweep for
+      leaked content; CI-gated.)
 - [ ] Wire the new test next to `tests/seed_browser_smoke.py` and document its
       run order.
 
@@ -115,9 +122,10 @@ ways to make their first contribution without dead ends.
 - Known repeat-run semantics: the `challenge_winner` badge is one-per-user
   (`ON CONFLICT DO NOTHING`), so the script asserts the badge is held and uses
   the reputation delta to prove the pass trigger fired that run.
-- Still open from Phase 1: the accept notification is only covered by
-  `tests/core_loop_browser.py` (not CI-gated); private-project visibility is
-  covered by RLS regression tests but has no CI click-through.
+- Still open from Phase 1: nothing — all four loop checks are repeatable and
+  CI-gated. The "wire the new test next to `tests/seed_browser_smoke.py`"
+  item below is superseded by the nightly CI job in
+  `.github/workflows/visual-qa.yml`.
 
 ### 2026-08-18 — Phase 1 started
 
