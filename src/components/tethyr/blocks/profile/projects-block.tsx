@@ -54,7 +54,6 @@ const ROLE_VERB: Record<string, string> = {
   mentor: "Mentored",
   contributor: "Contributed to",
 };
-
 const CARD_CLS =
   "flex h-fit flex-col rounded-lg border border-border bg-surface p-3 transition-colors hover:bg-surface-elevated";
 
@@ -177,9 +176,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
       {project.description && (
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
       )}
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-2">
         {showStatus && (
-          <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[10px] text-muted-foreground">
+          <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
             {STATUS_LABEL[project.status] ?? project.status}
           </span>
         )}
@@ -309,9 +308,9 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
             {featured.project.description && (
               <p className="mt-1 text-xs text-muted-foreground">{featured.project.description}</p>
             )}
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2">
               {showStatus && (
-                <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] leading-snug text-muted-foreground">
                   {STATUS_LABEL[featured.project.status] ?? featured.project.status}
                 </span>
               )}
@@ -422,12 +421,12 @@ function CollaboratorRowInline({
           <CollaboratorAvatar key={c.profile_id} row={c} />
         ))}
         {extra > 0 && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-sunken text-[9px] text-muted-foreground ring-2 ring-surface">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-sunken text-[10px] text-muted-foreground ring-2 ring-surface">
             +{extra}
           </span>
         )}
       </span>
-      <span className="text-[10px] text-muted-foreground">
+      <span className="text-[11px] leading-snug text-muted-foreground">
         with {people.length} {people.length === 1 ? "collaborator" : "collaborators"}
       </span>
     </div>

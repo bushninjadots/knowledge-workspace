@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { usePage } from "@/hooks/use-page";
+import { getBlock } from "@/lib/block-registry";
 import { useTheme } from "@/hooks/use-theme";
 import { CURRENT_USER_KEY, useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProjectDialog } from "@/components/tethyr/profile";
@@ -664,12 +665,18 @@ function StudioViewBlock({
   context: BlockContext;
 }) {
   const span = Math.max(1, Math.min(12, gridItem?.w ?? 12));
+  const def = getBlock(block.type);
   return (
     <div
       className={SPAN_CLASS[span] ?? "md:col-span-12"}
       style={{ borderRadius: "var(--studio-radius)" }}
     >
-      <div className="relative h-full min-h-0 overflow-hidden studio-block">
+      <div
+        className={cn(
+          "relative h-full min-h-0 overflow-hidden studio-block",
+          (def?.containerless || block.type === "profile-header") && "studio-block-flush",
+        )}
+      >
         <BlockRenderer
           type={block.type}
           config={block.config}

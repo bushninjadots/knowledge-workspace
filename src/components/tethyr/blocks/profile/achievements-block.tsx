@@ -72,7 +72,7 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
         {achievements.map((a) => (
           <div
             key={a.id}
-            className="flex min-w-44 flex-1 items-start gap-3 border-l-2 border-trust/40 pl-3"
+            className="flex min-w-[min(11rem,100%)] flex-1 items-start gap-3 border-l-2 border-trust/40 pl-3"
           >
             <div className="mt-0.5 rounded-full bg-trust-subtle p-1.5">
               {(() => {
@@ -83,10 +83,10 @@ function ProfileAchievementsBlock({ config, context }: BlockProps) {
             <div className="min-w-0">
               <p className="text-sm font-medium">{a.title}</p>
               {a.description && config.showDescription !== false && (
-                <p className="text-xs text-muted-foreground">{a.description}</p>
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{a.description}</p>
               )}
               {config.showDate !== false && (
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
                   {new Date(a.awarded_at).toLocaleDateString()}
                 </p>
               )}

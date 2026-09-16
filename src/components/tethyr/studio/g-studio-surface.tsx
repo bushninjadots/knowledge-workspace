@@ -1574,6 +1574,7 @@ const GBlockFrame = forwardRef<
         ref={contentRef}
         className={cn(
           "relative overflow-x-hidden studio-block",
+          (def?.containerless || block.type === "profile-header") && "studio-block-flush",
           !fluid && "h-full min-h-0 overflow-y-auto",
         )}
       >

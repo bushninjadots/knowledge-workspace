@@ -203,9 +203,8 @@ function TeamsPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {teams.map(({ team, role }) => (
-                <Card asChild>
+                <Card asChild key={team.id}>
                   <Link
-                    key={team.id}
                     to="/teams/$slug"
                     params={{ slug: team.slug }}
                     className="group flex items-center gap-4 px-4 py-4 transition-lift hover:bg-surface/50 hover:border-[var(--user-accent-border,var(--border-strong))]"

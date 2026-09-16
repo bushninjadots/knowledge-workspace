@@ -482,11 +482,20 @@
 
 /* Studio block surface — the frame around content blocks on the Studio
    canvas, the creator view, and their peers. Honors the member's unified
-   card-border colour/width and the continuous corner-radius slider. */
+   card-border colour/width and the continuous corner-radius slider.
+   The frame owns the inset: block content renders flush inside it, so
+   text never starts on the border. Full-bleed blocks opt out. */
 @utility studio-block {
   background-color: var(--surface);
   border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
   border-radius: var(--studio-radius, var(--radius-lg));
+  padding: var(--studio-block-inset, 1rem);
+}
+
+/* Full-bleed variant for blocks that must reach the frame edge
+   (heroes, banner imagery, edge-to-edge galleries). */
+@utility studio-block-flush {
+  padding: 0;
 }
 
 /* Each child inside surface-section gets a hairline separator. */

@@ -241,7 +241,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                   <div className="mt-3 flex w-fit items-center gap-2 rounded-md border border-trust/25 bg-trust/5 px-2.5 py-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-trust" />
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[11px] leading-none">
+                      <div className="flex items-center gap-1.5 text-[11px] leading-normal">
                         <span className="font-medium text-trust">{current.name}</span>
                         {next && (
                           <>
