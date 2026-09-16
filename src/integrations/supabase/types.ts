@@ -2940,6 +2940,13 @@ export type Database = {
           reply_count: number;
         }[];
       };
+      skill_profile_counts: {
+        Args: never;
+        Returns: {
+          skill_id: string;
+          profile_count: number;
+        }[];
+      };
       trending_skills: {
         Args: { p_limit?: number };
         Returns: {
