@@ -10,15 +10,15 @@
 
 ## Findings fixed this pass
 
-| Finding | Root cause | Fix |
-| --- | --- | --- |
-| Block content sat 1px from the `studio-block` card border | The frame utility owned background/border/radius but no padding | Frame owns a 16px inset (`--studio-block-inset`); self-carding blocks (profile header, containerless heroes) render flush |
-| "Bunched" density in studio cards | 9–10px metadata text, 0px vertical gaps between rows, 11px text on 11px line-height | Metadata floor raised to 11px with `leading-snug`; rhythm restored (`mt-3` meta rows, 0.5 caption gaps) in projects, achievements, header, person pills |
-| Achievements text pushed past the card border in narrow columns | `min-w-44` beats `max-w-full` in CSS — classic min/max clash | `min-w-[min(11rem,100%)]` responsive minimum |
-| Project page 32px horizontal viewport overflow | Workbench band's `-mx-4` counteracted padding that wasn't there | Full-width band + the container's own horizontal padding |
-| Teams page React key warning | `key` on the inner Link instead of the repeated Card | Key moved to the Card |
-| Community inline project card 1px bottom overflow | Line-height subpixel artifact | Clipped at the card |
-| Community post/composer cards were the only square cards site-wide | Missing radius utility | `rounded-lg` per the radius scale |
+| Finding                                                            | Root cause                                                                          | Fix                                                                                                                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Block content sat 1px from the `studio-block` card border          | The frame utility owned background/border/radius but no padding                     | Frame owns a 16px inset (`--studio-block-inset`); self-carding blocks (profile header, containerless heroes) render flush                               |
+| "Bunched" density in studio cards                                  | 9–10px metadata text, 0px vertical gaps between rows, 11px text on 11px line-height | Metadata floor raised to 11px with `leading-snug`; rhythm restored (`mt-3` meta rows, 0.5 caption gaps) in projects, achievements, header, person pills |
+| Achievements text pushed past the card border in narrow columns    | `min-w-44` beats `max-w-full` in CSS — classic min/max clash                        | `min-w-[min(11rem,100%)]` responsive minimum                                                                                                            |
+| Project page 32px horizontal viewport overflow                     | Workbench band's `-mx-4` counteracted padding that wasn't there                     | Full-width band + the container's own horizontal padding                                                                                                |
+| Teams page React key warning                                       | `key` on the inner Link instead of the repeated Card                                | Key moved to the Card                                                                                                                                   |
+| Community inline project card 1px bottom overflow                  | Line-height subpixel artifact                                                       | Clipped at the card                                                                                                                                     |
+| Community post/composer cards were the only square cards site-wide | Missing radius utility                                                              | `rounded-lg` per the radius scale                                                                                                                       |
 
 False positives documented for future runs: line-clamped text reports full range
 rects (measurement artifact, not visual overflow); intentional media-overlay
