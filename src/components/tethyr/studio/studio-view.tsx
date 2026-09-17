@@ -101,6 +101,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const { data: me } = useCurrentUser();
@@ -200,6 +201,10 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     });
   }, []);
 
+  useEffect(() => {
+    if (mode !== "preview") setPreviewLoaded(false);
+  }, [mode]);
+
   const blockContext: BlockContext = {
     ownerId: userId,
     ownerType: "profile",
@@ -277,12 +282,22 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
           bannerColor={palette?.dominant ?? null}
         />
         {mode === "preview" && profile?.handle ? (
-          <div className="flex min-h-full w-full justify-center overflow-y-auto bg-noise py-2 sm:py-4">
+          <div className="relative flex min-h-full w-full justify-center overflow-y-auto bg-noise py-2 sm:py-4">
+            {!previewLoaded && (
+              <div className="absolute inset-x-0 top-6 z-10 flex justify-center" aria-live="polite">
+                <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/90 px-3 py-2 text-xs text-muted-foreground shadow-sm">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+                  Loading visitor view…
+                </div>
+              </div>
+            )}
             <iframe
               title="Public Studio preview — exactly as visitors see it"
               src={`/u/${profile.handle}?embed=true`}
+              onLoad={() => setPreviewLoaded(true)}
               className={cn(
-                "min-h-[calc(100vh-7rem)] w-full border-0 bg-background",
+                "min-h-[calc(100vh-7rem)] w-full border-0 bg-background transition-opacity duration-200",
+                !previewLoaded && "opacity-0",
                 previewDevice !== "desktop" &&
                   "rounded-lg shadow-[0_12px_40px_-24px_hsl(var(--foreground)/0.5)]",
               )}
@@ -559,7 +574,7 @@ function StudioViewTopBar({
             variant={mode === "preview" ? "default" : "ghost"}
             size="sm"
             onClick={onToggleMode}
-            title={mode === "view" ? "Open public view" : "Return to quick edit"}
+            title={mode === "view" ? "Open visitor view" : "Return to quick edit"}
             aria-pressed={mode === "preview"}
           >
             <Sparkles className="h-3 w-3" />
