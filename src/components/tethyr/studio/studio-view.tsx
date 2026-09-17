@@ -249,19 +249,26 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         onToggleMode={() => setMode((m) => (m === "view" ? "preview" : "view"))}
         onDeviceChange={setPreviewDevice}
       />
-      <StudioPublishStrip
-        published={page?.status === "published"}
-        hasContent={(layout?.sections.length ?? 0) > 0}
-        publishing={publishPage.isPending}
-        onPublish={handlePublish}
-      />
-      <StudioHiddenSectionsStrip
-        count={layout?.sections.filter((section) => section.visible === false).length ?? 0}
-        onEdit={() => navigate({ to: "/studio" })}
-      />
+      {mode === "view" && (
+        <>
+          <StudioPublishStrip
+            published={page?.status === "published"}
+            hasContent={(layout?.sections.length ?? 0) > 0}
+            publishing={publishPage.isPending}
+            onPublish={handlePublish}
+          />
+          <StudioHiddenSectionsStrip
+            count={layout?.sections.filter((section) => section.visible === false).length ?? 0}
+            onEdit={() => navigate({ to: "/studio" })}
+          />
+        </>
+      )}
       <main
-        className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
-        aria-label="Studio"
+        className={cn(
+          "relative min-w-0 flex-1 overflow-y-auto bg-noise",
+          mode === "preview" && "bg-[var(--surface-sunken)] p-2 sm:p-4",
+        )}
+        aria-label={mode === "preview" ? "Public Studio preview" : "Studio"}
         style={CARD_SURFACE_STYLE}
       >
         <BackgroundLayer
@@ -270,11 +277,15 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
           bannerColor={palette?.dominant ?? null}
         />
         {mode === "preview" && profile?.handle ? (
-          <div className="flex h-full w-full justify-center overflow-y-auto bg-noise">
+          <div className="flex min-h-full w-full justify-center overflow-y-auto bg-noise py-2 sm:py-4">
             <iframe
-              title="Public Studio preview"
+              title="Public Studio preview — exactly as visitors see it"
               src={`/u/${profile.handle}?embed=true`}
-              className="h-full w-full border-0 bg-background"
+              className={cn(
+                "min-h-[calc(100vh-7rem)] w-full border-0 bg-background",
+                previewDevice !== "desktop" &&
+                  "rounded-lg shadow-[0_12px_40px_-24px_hsl(var(--foreground)/0.5)]",
+              )}
               style={{
                 maxWidth: PREVIEW_DEVICE_WIDTHS[previewDevice],
                 borderLeft: previewDevice !== "desktop" ? "1px solid var(--border)" : undefined,
@@ -544,10 +555,16 @@ function StudioViewTopBar({
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Button variant="ghost" size="sm" onClick={onToggleMode} title="Toggle preview">
+          <Button
+            variant={mode === "preview" ? "default" : "ghost"}
+            size="sm"
+            onClick={onToggleMode}
+            title={mode === "view" ? "Open public view" : "Return to quick edit"}
+            aria-pressed={mode === "preview"}
+          >
             <Sparkles className="h-3 w-3" />
             <span className="hidden sm:inline">
-              {mode === "view" ? "View as visitor" : "Back to quick edit"}
+              {mode === "view" ? "Public view" : "Quick edit"}
             </span>
           </Button>
           {mode === "preview" && (
