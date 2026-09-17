@@ -23,13 +23,16 @@ jobs:
           # Pin to the local toolchain (bun 1.3.14 line) for reproducibility.
           bun-version: 1.3.14
       - run: npm ci
+      # Vite build generates src/routeTree.gen.ts (gitignored), which every
+      # route file's typed path imports depend on — so it must run before
+      # typecheck or a fresh checkout cannot resolve them (TS2307 cascade).
+      - run: npm run build
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       # Fail CI if any migration timestamp is ≤ the preceding one — prevents
       # a new file that can never apply in order (drift audit root cause).
       - run: npm run check:migration-order
-      - run: npm run build
       # Fail CI if any built chunk exceeds the bundle budget (e.g. a large
       # editor/dependency leaking back into a route's initial chunk).
       - run: npm run check:bundle

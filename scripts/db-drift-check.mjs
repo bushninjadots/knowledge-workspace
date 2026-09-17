@@ -16,7 +16,9 @@
 //
 // Environment:
 //   DB_LOCAL_URL  — local Postgres connection string
-//                   (default: postgresql://postgres:postgres@localhost:54321/postgres)
+//                   (default: postgresql://postgres:postgres@localhost:54322/postgres —
+//                   port 54322 is the direct Postgres port; 54321 is the Kong
+//                   API gateway, which rejects the psql wire protocol)
 //   DB_HOSTED_URL — hosted Postgres connection string (required for hosted
 //                   comparison; if unset, only the expected-object check runs
 //                   against local)
@@ -32,7 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..");
 
 const DB_LOCAL_URL =
-  process.env.DB_LOCAL_URL || "postgresql://postgres:postgres@localhost:54321/postgres";
+  process.env.DB_LOCAL_URL || "postgresql://postgres:postgres@localhost:54322/postgres";
 const DB_HOSTED_URL = process.env.DB_HOSTED_URL;
 
 // ---------------------------------------------------------------------------
