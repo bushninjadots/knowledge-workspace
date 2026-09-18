@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { initSentry } from "@/lib/sentry";
@@ -170,6 +170,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
+  // Toasts can only fire after user interaction, so mounting the toaster
+  // after browser idle keeps sonner's eval off the landing's critical path.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const w = window as typeof window & { requestIdleCallback?: typeof requestIdleCallback };
+    const schedule = w.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
+    const id = schedule(() => setMounted(true));
+    return () => {
+      if (typeof w.cancelIdleCallback === "function") w.cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
+  }, []);
+  if (!mounted) return null;
   return <Toaster theme={resolvedTheme} position="top-center" />;
 }
 

@@ -30,6 +30,15 @@ Check `package.json` before introducing a library. Reuse the established stack a
 
 Use the route that owns the user-visible behavior. Do not duplicate a page in a new route to avoid understanding the existing one.
 
+## Route Code-Splitting (Lazy Pages)
+
+Every route is code-split so the entry chunk stays small (loaders/head/validateSearch are eager; components load on navigation):
+
+1. **Route files keep only the eager surface** — the `createFileRoute(...)` definition with `loader`, `head`, and `validateSearch`, plus a `component: lazyRouteComponent(() => import("./-<name>-page"), "<ExportName>")` wire-up. No page JSX in the route file.
+2. **Page components live in dash-prefixed sibling modules** — `-<name>-page.tsx` next to the route file (Vite excludes dash-prefixed files from the generated route tree). A shared data plane used by both the eager loader and the lazy page goes in its own dash-prefixed module (e.g. `-u.$handle-data.ts`); the route file must never statically import the page module or the split is undone.
+3. **Split modules resolve route data with typed hooks** — `useSearch({ from: "/_authenticated/x" })` / `useParams({ from: ... })` with slash-form route ids (dots in filenames are slashes in ids: `spaces.$slug.settings` → `/_authenticated/spaces/$slug/settings`).
+4. **Regenerate the route tree with a build** — `npm run build` regenerates `routeTree.gen.ts`; there is no standalone generator binary.
+
 ## Component Ownership
 
 - `src/components/ui/` — generic accessible primitives and established variants
@@ -119,6 +128,14 @@ Do not add security headers in individual page components. Do not expose service
 - `docs/superpowers/specs/` and `docs/superpowers/plans/` — feature-specific proposals and execution records
 
 When documents disagree, prefer the binding constitution and current source, then record the decision rather than creating a third interpretation.
+
+## Dead Code Policy
+
+`npm run check:unused` (part of `npm run verify`) fails on any new unused export; the baseline is **zero** and must stay there.
+
+- When a change orphans code, delete it (or de-export it if it is genuinely used in-file) **in the same change** — do not re-record the baseline to make the check pass.
+- Prefer deleting over keeping "might need later" exports; git history is the archive.
+- Re-recording the baseline is allowed only with an explicit reason noted in the commit.
 
 ## Change-Scope Rule
 
