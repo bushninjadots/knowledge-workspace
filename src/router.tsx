@@ -39,7 +39,9 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // Avoid repeating loader work when users move across navigation links while
+    // keeping preloaded route data fresh enough for interactive surfaces.
+    defaultPreloadStaleTime: 30_000,
     // SSR: routes that prefetch in their loader (e.g. the landing page) get
     // their query cache serialized into the HTML and rehydrated on the client,
     // so server-rendered content and the client's first render always match.

@@ -138,10 +138,6 @@ function HomePage() {
 
       <section className="relative overflow-hidden bg-noise">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-        <div
-          className="pointer-events-none absolute -top-40 left-1/4 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)" }}
-        />
         <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-32 sm:px-6 sm:pt-32">
           <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="text-center lg:text-left">
@@ -208,27 +204,27 @@ function HomePage() {
 
       <LandingStats />
       <main id="landing-content">
-        <SectionReveal id="how-it-works">
+        <SectionReveal id="how-it-works" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <HowItWorks />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="trending-skills">
+        <SectionReveal id="trending-skills" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <TrendingSkills />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="featured-projects">
+        <SectionReveal id="featured-projects" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <FeaturedProjects />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="recent-activity">
+        <SectionReveal id="recent-activity" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <RecentActivity />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="community-spaces">
+        <SectionReveal id="community-spaces" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <CommunitySpaces />
           </Suspense>
@@ -245,12 +241,6 @@ function HomePage() {
           <section className="px-4 py-24 sm:px-6">
             <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-border/60 bg-surface p-12 text-center sm:p-20">
               <div className="bg-grid pointer-events-none absolute inset-0 opacity-20" />
-              <div
-                className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full opacity-10 blur-3xl"
-                style={{
-                  background: "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
-                }}
-              />
               <div className="relative">
                 <h2 className="font-display text-3xl font-semibold sm:text-4xl lg:text-5xl">
                   Ready to build something together?

@@ -981,14 +981,35 @@ function ProjectPage() {
   );
 }
 
+const PROJECT_SECTIONS: Record<ProjectSectionKey, { id: string; label: string }> = {
+  overview: { id: "project-homepage-heading", label: "Overview" },
+  work: { id: "project-current-work", label: "Work" },
+  people: { id: "project-people", label: "People" },
+  conversation: { id: "project-discussions", label: "Conversation" },
+  evidence: { id: "project-evidence", label: "Evidence" },
+};
+
 function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[] }) {
-  const sections: Record<ProjectSectionKey, { id: string; label: string }> = {
-    overview: { id: "project-homepage-heading", label: "Overview" },
-    work: { id: "project-current-work", label: "Work" },
-    people: { id: "project-people", label: "People" },
-    conversation: { id: "project-discussions", label: "Conversation" },
-    evidence: { id: "project-evidence", label: "Evidence" },
-  };
+  const [activeSection, setActiveSection] = useState<string>("project-homepage-heading");
+
+  useEffect(() => {
+    const targets = sectionOrder
+      .map((sectionKey) => document.getElementById(PROJECT_SECTIONS[sectionKey].id))
+      .filter((element): element is HTMLElement => element !== null);
+    if (targets.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]?.target.id) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-96px 0px -60% 0px", threshold: 0 },
+    );
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
+  }, [sectionOrder]);
 
   return (
     <nav
@@ -998,12 +1019,17 @@ function ProjectSectionNav({ sectionOrder }: { sectionOrder: ProjectSectionKey[]
       <div className="flex items-center gap-4 overflow-x-auto scrollbar-none">
         <span className="section-label shrink-0">Jump to</span>
         {sectionOrder.map((sectionKey) => {
-          const section = sections[sectionKey];
+          const section = PROJECT_SECTIONS[sectionKey];
           return (
             <a
               key={section.id}
               href={`#${section.id}`}
-              className="shrink-0 text-sm text-muted-foreground underline-offset-4 transition-lift hover:text-foreground hover:underline"
+              className={`shrink-0 rounded-md px-2 py-1 text-sm underline-offset-4 transition-lift hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                activeSection === section.id
+                  ? "bg-surface-elevated font-medium text-foreground"
+                  : "text-muted-foreground"
+              }`}
+              aria-current={activeSection === section.id ? "location" : undefined}
             >
               {section.label}
             </a>

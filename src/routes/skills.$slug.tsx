@@ -179,7 +179,7 @@ function SkillPage() {
         </div>
 
         {/* Workshop divider */}
-        <div className="h-px bg-gradient-to-r from-primary/20 via-border to-ai/20" />
+        <div className="h-px bg-border" />
 
         {/* Tabs — Workshop sections */}
         <div className="relative">
@@ -705,7 +705,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
                 )}
               </div>
               {/* Skill-project connection line */}
-              <div className="mt-3 h-px bg-gradient-to-r from-primary/20 to-transparent" />
+              <div className="mt-3 h-px bg-border" />
             </Link>
           </Card>
         );
