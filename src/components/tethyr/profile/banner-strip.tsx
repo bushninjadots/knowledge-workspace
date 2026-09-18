@@ -140,7 +140,7 @@ export function BannerStrip({
               openCaptionEditor();
             }}
             disabled={uploading}
-            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground hover:bg-background disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur-sm ring-1 ring-border/40 hover:bg-background disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" />
             {bannerCaption ? "Edit caption" : "Add caption"}
@@ -151,7 +151,7 @@ export function BannerStrip({
               ref.current?.click();
             }}
             disabled={uploading}
-            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground hover:bg-background disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1.5 text-xs text-foreground backdrop-blur-sm ring-1 ring-border/40 hover:bg-background disabled:opacity-50"
           >
             <Camera className="h-3.5 w-3.5" />
             {uploading ? "Uploading…" : bannerSigned ? "Change banner" : "Add banner"}
@@ -162,7 +162,7 @@ export function BannerStrip({
 
       {readonly && showCaption && bannerCaption && (
         <span
-          className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+          className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ring-1 ring-border/40 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
         >
           {bannerCaption}
         </span>
@@ -171,7 +171,7 @@ export function BannerStrip({
       {!readonly &&
         (editingCaption ? (
           <div
-            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-xl bg-background/85 p-3"
+            className="absolute bottom-4 left-32 right-4 z-20 flex flex-col gap-2 rounded-xl bg-background/85 p-3 backdrop-blur-md ring-1 ring-border/40"
             onClick={(e) => e.stopPropagation()}
           >
             <Input
@@ -229,7 +229,7 @@ export function BannerStrip({
           bannerCaption && (
             <button
               onClick={openCaptionEditor}
-              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/60 px-3 py-1.5 text-sm text-foreground transition-lift hover:bg-background/80 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ring-1 ring-border/40 transition-lift hover:bg-background/85 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
               title="Click to edit caption"
             >
               {bannerCaption}

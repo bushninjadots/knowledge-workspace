@@ -81,35 +81,58 @@ export function normalizeBannerOverlay(value: string | null | undefined): Banner
     : "soft";
 }
 
-/** Layer styles for a banner overlay, or null when no overlay should render. */
+/**
+ * Layer styles for a banner overlay, or null when no overlay should render.
+ *
+ * Each treatment is a stack of CSS background layers in one element (first
+ * layer renders on top). Every treatment that doesn't already darken the
+ * caption zone carries a bottom-anchored gradient so the caption chip sits on
+ * a readable base regardless of which treatment — or position — is chosen.
+ */
 export function bannerOverlayStyle(value: string | null | undefined): CSSProperties | null {
   const id = normalizeBannerOverlay(value);
+  // Bottom anchor: protects the caption zone (captions render near the bottom
+  // edge) without weighing the whole image down.
+  const bottomAnchor = (strength: number, reach: string) =>
+    `linear-gradient(to top, color-mix(in oklab, var(--background) ${strength}%, transparent) 0%, color-mix(in oklab, var(--background) ${Math.round(strength / 2)}%, transparent) ${reach}, transparent 100%)`;
+  const wash = (strength: number) =>
+    ({
+      backgroundColor: `color-mix(in oklab, var(--background) ${strength}%, transparent)`,
+    }) as CSSProperties;
+
   switch (id) {
     case "none":
       return null;
     case "soft":
-      return { backgroundColor: "color-mix(in oklab, var(--background) 20%, transparent)" };
+      return {
+        ...wash(20),
+        backgroundImage: bottomAnchor(28, "55%"),
+      };
     case "strong":
-      return { backgroundColor: "color-mix(in oklab, var(--background) 45%, transparent)" };
+      return {
+        ...wash(45),
+        backgroundImage: bottomAnchor(40, "65%"),
+      };
     case "scrim":
       return {
-        backgroundImage:
-          "linear-gradient(to top, color-mix(in oklab, var(--background) 78%, transparent) 0%, color-mix(in oklab, var(--background) 30%, transparent) 45%, transparent 100%)",
+        backgroundImage: `linear-gradient(to top, color-mix(in oklab, var(--background) 82%, transparent) 0%, color-mix(in oklab, var(--background) 32%, transparent) 45%, transparent 100%)`,
       };
     case "vignette":
+      // Edges alone leave the middle — where captions often sit — untouched,
+      // so a faint full wash and a bottom anchor sit beneath the radial
+      // darkening (the bottom edge is already part of the vignette's identity).
       return {
-        backgroundImage:
-          "radial-gradient(120% 100% at 50% 50%, transparent 40%, color-mix(in oklab, var(--background) 70%, transparent) 100%)",
+        ...wash(18),
+        backgroundImage: `${bottomAnchor(25, "45%")}, radial-gradient(120% 100% at 50% 50%, transparent 40%, color-mix(in oklab, var(--background) 70%, transparent) 100%)`,
       };
     case "spotlight":
       return {
-        backgroundImage:
-          "radial-gradient(80% 70% at 50% 35%, color-mix(in oklab, var(--foreground) 10%, transparent) 0%, color-mix(in oklab, var(--background) 55%, transparent) 100%)",
+        backgroundImage: `${bottomAnchor(35, "60%")}, radial-gradient(80% 70% at 50% 35%, color-mix(in oklab, var(--foreground) 10%, transparent) 0%, color-mix(in oklab, var(--background) 55%, transparent) 100%)`,
       };
     case "duotone":
       return {
-        backgroundImage:
-          "linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 45%, transparent) 0%, color-mix(in oklab, var(--background) 60%, transparent) 100%)",
+        ...wash(10),
+        backgroundImage: `${bottomAnchor(30, "60%")}, linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 45%, transparent) 0%, color-mix(in oklab, var(--background) 60%, transparent) 100%)`,
       };
   }
 }

@@ -7,6 +7,9 @@ import {
   accentVarsFromColor,
   ownerAccentStyle,
   appearanceStyle,
+  BANNER_OVERLAYS,
+  bannerOverlayStyle,
+  normalizeBannerOverlay,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
@@ -317,5 +320,53 @@ describe("appearanceStyle accent fallback", () => {
   it("returns no styles for a cleared background", () => {
     expect(appearanceStyle(null)).toEqual({});
     expect(appearanceStyle(undefined)).toEqual({});
+  });
+});
+
+describe("bannerOverlayStyle", () => {
+  it("returns null only for the none treatment", () => {
+    expect(bannerOverlayStyle("none")).toBeNull();
+    for (const option of BANNER_OVERLAYS) {
+      if (option.id === "none") continue;
+      expect(bannerOverlayStyle(option.id), option.id).not.toBeNull();
+    }
+  });
+
+  it("carries a bottom-anchored caption zone in every non-none treatment", () => {
+    // Captions can sit left/center/right near the bottom edge — every
+    // treatment must darken that zone, not just the treatments designed for it.
+    for (const option of BANNER_OVERLAYS) {
+      if (option.id === "none") continue;
+      const style = bannerOverlayStyle(option.id) as Record<string, string>;
+      const layers = [style.backgroundImage, style.backgroundColor].filter(Boolean).join(", ");
+      expect(layers, option.id).toMatch(/background/);
+      expect(layers, option.id).toContain("to top");
+    }
+  });
+
+  it("stacks layered treatments so their effects compose", () => {
+    const duotone = bannerOverlayStyle("duotone") as Record<string, string>;
+    expect(duotone.backgroundImage?.split("), linear")).not.toBeNull();
+    // duotone = bottom anchor over the accent gradient, plus a faint wash
+    expect(duotone.backgroundImage).toMatch(/^linear-gradient\(to top/);
+    expect(duotone.backgroundColor).toBeTruthy();
+
+    const spotlight = bannerOverlayStyle("spotlight") as Record<string, string>;
+    // spotlight = bottom anchor layered over the radial lift
+    expect(spotlight.backgroundImage).toMatch(/radial-gradient\(/);
+    expect(spotlight.backgroundImage?.split("radial-gradient").length).toBe(2);
+  });
+
+  it("keeps the scrim purely a bottom fade (no extra wash needed)", () => {
+    const scrim = bannerOverlayStyle("scrim") as Record<string, string>;
+    expect(scrim.backgroundColor).toBeUndefined();
+    expect(scrim.backgroundImage).toMatch(/to top/);
+  });
+
+  it("falls back to soft for unknown or legacy values", () => {
+    expect(normalizeBannerOverlay("mysterious-2019")).toBe("soft");
+    expect(normalizeBannerOverlay(null)).toBe("soft");
+    const style = bannerOverlayStyle("mysterious-2019") as Record<string, string>;
+    expect(style.backgroundColor).toContain("20%");
   });
 });
