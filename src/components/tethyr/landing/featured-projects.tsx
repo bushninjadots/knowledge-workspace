@@ -5,7 +5,7 @@ import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useFeaturedProjects } from "./data";
 
-export function ProjectCardCover({ path }: { path: string | null }) {
+function ProjectCardCover({ path }: { path: string | null }) {
   // Resolve the raw storage path to a signed URL client-side — keeps the
   // query data deterministic so SSR and hydration always match.
   const { data: url } = useSignedStorageUrl("project-media", path);

@@ -161,8 +161,3 @@ function ProjectShelfFace({
     </Card>
   );
 }
-
-// getCardHeight kept for backward compat with project-shelf-thumbnails
-export function getCardHeight(_absDist: number): number {
-  return 540;
-}

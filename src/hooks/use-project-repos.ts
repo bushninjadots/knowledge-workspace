@@ -18,7 +18,7 @@ export type ProjectRepo = {
   updated_at: string;
 };
 
-export type RepoMetadata = RepoMeta;
+type RepoMetadata = RepoMeta;
 
 export function useProjectRepos(projectId: string) {
   return useQuery({

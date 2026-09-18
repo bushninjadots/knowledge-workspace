@@ -3,10 +3,10 @@
 // scripts, javascript: URLs) — server-side RLS + storage policies remain the
 // final line of defence.
 
-export const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "gif"] as const;
-export const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "gif"] as const;
+const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
-export type ImageValidation =
+type ImageValidation =
   { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateImageFile(file: File): ImageValidation {
@@ -49,15 +49,10 @@ export function isSafeUrl(url: string): boolean {
 
 // Skill proof uploads: certificates and portfolio exports are commonly PDFs,
 // not just images, so this is a bit more permissive than validateImageFile.
-export const ALLOWED_PROOF_EXTS = ["jpg", "jpeg", "png", "webp", "pdf"] as const;
-export const ALLOWED_PROOF_MIMES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/pdf",
-] as const;
+const ALLOWED_PROOF_EXTS = ["jpg", "jpeg", "png", "webp", "pdf"] as const;
+const ALLOWED_PROOF_MIMES = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
 
-export type ProofFileValidation =
+type ProofFileValidation =
   { ok: true; ext: string; contentType: string } | { ok: false; error: string };
 
 export function validateProofFile(file: File): ProofFileValidation {

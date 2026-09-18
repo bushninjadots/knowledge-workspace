@@ -50,7 +50,7 @@ export interface Notification {
   created_at: string;
 }
 
-export interface NotificationFilters {
+interface NotificationFilters {
   type?: NotificationType;
   unreadOnly?: boolean;
   archived?: boolean;

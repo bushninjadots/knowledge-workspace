@@ -16,8 +16,8 @@ export type SessionStatus =
   | "completed"
   | "cancelled";
 
-export type ParticipantRole = "organizer" | "participant" | "mentor";
-export type ParticipantStatus = "invited" | "accepted" | "declined" | "pending";
+type ParticipantRole = "organizer" | "participant" | "mentor";
+type ParticipantStatus = "invited" | "accepted" | "declined" | "pending";
 
 export type Session = {
   id: string;
@@ -42,7 +42,7 @@ export type Session = {
   updated_at: string;
 };
 
-export type SessionParticipant = {
+type SessionParticipant = {
   id: string;
   session_id: string;
   profile_id: string;
@@ -94,7 +94,7 @@ export type SessionRequest = {
 
 /* ───────── Query Keys ───────── */
 
-export const sessionKeys = {
+const sessionKeys = {
   all: ["sessions"] as const,
   list: (userId: string) => [...sessionKeys.all, "list", userId] as const,
   detail: (id: string) => [...sessionKeys.all, "detail", id] as const,
@@ -140,18 +140,6 @@ async function fetchParticipatingSessionIds(userId: string): Promise<string[]> {
 function sessionsForUserFilter(userId: string, sessionIds: string[]): string {
   const ids = sessionIds.length > 0 ? sessionIds.join(",") : NO_MATCHING_UUID;
   return `organizer_id.eq.${userId},id.in.(${ids})`;
-}
-
-async function fetchSessionsForUser(userId: string): Promise<SessionWithParticipants[]> {
-  const participantSessionIds = await fetchParticipatingSessionIds(userId);
-  const { data, error } = await sb
-    .from("sessions")
-    .select(SESSION_SELECT)
-    .or(sessionsForUserFilter(userId, participantSessionIds))
-    .order("starts_at", { ascending: true })
-    .limit(100);
-  if (error) throw error;
-  return (data ?? []) as SessionWithParticipants[];
 }
 
 async function fetchSessionsForProject(projectId: string): Promise<SessionWithParticipants[]> {
@@ -359,16 +347,6 @@ export function useAddSessionNote() {
   });
 }
 
-export function useSessions() {
-  const { data: me } = useCurrentUser();
-  const userId = me?.userId;
-  return useQuery({
-    queryKey: sessionKeys.list(userId ?? ""),
-    queryFn: () => fetchSessionsForUser(userId!),
-    enabled: !!userId,
-  });
-}
-
 export function useProjectSessions(projectId: string) {
   return useQuery({
     queryKey: sessionKeys.project(projectId),
@@ -504,30 +482,6 @@ export function useCreateSession() {
       }
 
       return session as Session;
-    },
-    onSuccess: () => {
-      if (userId) {
-        queryClient.invalidateQueries({ queryKey: sessionKeys.all });
-      }
-    },
-  });
-}
-
-export function useUpdateSession() {
-  const queryClient = useQueryClient();
-  const { data: me } = useCurrentUser();
-  const userId = me?.userId;
-
-  return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Session> & { id: string }) => {
-      const { data, error } = await sb
-        .from("sessions")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as Session;
     },
     onSuccess: () => {
       if (userId) {

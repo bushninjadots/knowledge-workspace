@@ -21,16 +21,16 @@ export type ProjectCredit = {
 };
 
 /** One project_activity row (the fields the roll reads). */
-export type ProjectCreditEvent = {
+type ProjectCreditEvent = {
   actor_id: string | null;
   kind: string;
   title: string;
   created_at: string;
 };
 
-export type ContributorRole = { profile_id: string; role: string };
+type ContributorRole = { profile_id: string; role: string };
 
-export type ProfileLite = {
+type ProfileLite = {
   id: string;
   display_name: string | null;
   handle: string | null;

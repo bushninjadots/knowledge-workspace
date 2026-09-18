@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type ExtractedPalette = {
+type ExtractedPalette = {
   /** The dominant colour as `rgb(r, g, b)`. */
   dominant: string;
   /** A readable text colour to sit on top of `dominant` when it's used as a background. */
@@ -100,7 +100,7 @@ function ensureVisible(r: number, g: number, b: number): { r: number; g: number;
 // (Supabase Storage signed URLs are). If the canvas gets tainted for any
 // reason, we fail silently and return null — callers should treat that as
 //"no accent colour"rather than throw.
-export async function getDominantColor(url: string): Promise<string | null> {
+async function getDominantColor(url: string): Promise<string | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -172,7 +172,7 @@ export async function getDominantColor(url: string): Promise<string | null> {
 }
 
 /** Extracts a full palette from an image URL. */
-export async function extractPalette(url: string): Promise<ExtractedPalette | null> {
+async function extractPalette(url: string): Promise<ExtractedPalette | null> {
   const dominant = await getDominantColor(url);
   if (!dominant) return null;
   return {

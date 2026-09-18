@@ -6,7 +6,7 @@ const sb = supabase;
 
 export type ChallengeType = "skill" | "project" | "learning";
 export type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
-export type ChallengeStatus = "draft" | "active" | "completed" | "archived";
+type ChallengeStatus = "draft" | "active" | "completed" | "archived";
 
 export type ChallengeRow = {
   id: string;
@@ -39,7 +39,7 @@ export type ChallengeRow = {
   my_participation?: ChallengeParticipantRow | null;
 };
 
-export type ChallengeReviewStatus = "none" | "submitted" | "passed" | "rejected";
+type ChallengeReviewStatus = "none" | "submitted" | "passed" | "rejected";
 
 export type ChallengeParticipantRow = {
   id: string;
@@ -61,7 +61,7 @@ export type ChallengeParticipantRow = {
   };
 };
 
-export type CreateChallengeInput = {
+type CreateChallengeInput = {
   title: string;
   description: string;
   type?: ChallengeType;
@@ -75,8 +75,8 @@ export type CreateChallengeInput = {
   project_id?: string | null;
 };
 
-export const CHALLENGES_KEY = ["challenges"] as const;
-export const CHALLENGE_KEY = (id: string) => ["challenge", id] as const;
+const CHALLENGES_KEY = ["challenges"] as const;
+const CHALLENGE_KEY = (id: string) => ["challenge", id] as const;
 
 export function useChallenges(statusFilter: string = "active") {
   return useQuery({

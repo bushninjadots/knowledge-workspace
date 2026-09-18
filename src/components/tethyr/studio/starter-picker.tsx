@@ -11,7 +11,7 @@ import "@/components/tethyr/blocks/register-all";
 // Backward-compatible aliases so existing consumers keep importing from here.
 export type StudioStarter = Starter;
 type StudioStarterId = Starter["id"];
-export const STUDIO_STARTERS: StudioStarter[] = STARTERS;
+const STUDIO_STARTERS: StudioStarter[] = STARTERS;
 
 /**
  * "Choose how you want your Studio to feel."

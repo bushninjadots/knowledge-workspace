@@ -1,4 +1,4 @@
-export type SupabaseErrorLike = {
+type SupabaseErrorLike = {
   code?: string | null;
   message?: string | null;
 };

@@ -23,26 +23,8 @@ export type Community = {
   name: string;
 };
 
-export type ReputationBadge =
-  | "Helpful Mentor"
-  | "Verified Sharer"
-  | "Project Builder"
-  | "Community Contributor"
-  | "Expert"
-  | "Learner";
-
 // ============================================================
 // Display constants
-// ============================================================
-
-export const BADGE_STYLES: Record<ReputationBadge, string> = {
-  "Helpful Mentor": "border-trust/40 bg-trust/10 text-trust",
-  "Verified Sharer": "border-primary/40 bg-primary/10 text-primary",
-  "Project Builder": "border-ai/40 bg-ai/10 text-ai",
-  "Community Contributor": "border-border bg-surface-elevated text-foreground",
-  Expert: "border-ai/40 bg-ai/10 text-ai",
-  Learner: "border-border bg-surface-elevated text-muted-foreground",
-};
 
 export const POST_TYPE_LABEL: Record<string, string> = {
   showcase: "Showcase",

@@ -3,14 +3,14 @@ export type ProjectPresentationPreset =
 
 export type ProjectSectionKey = "overview" | "work" | "people" | "conversation" | "evidence";
 
-export type ProjectPresentationOption = {
+type ProjectPresentationOption = {
   id: ProjectPresentationPreset;
   label: string;
   description: string;
   sectionOrder: ProjectSectionKey[];
 };
 
-export const DEFAULT_PROJECT_PRESENTATION: ProjectPresentationPreset = "story-first";
+const DEFAULT_PROJECT_PRESENTATION: ProjectPresentationPreset = "story-first";
 
 export const PROJECT_PRESENTATION_OPTIONS: ProjectPresentationOption[] = [
   {
@@ -45,11 +45,5 @@ export function getProjectPresentationOption(
   return (
     PROJECT_PRESENTATION_OPTIONS.find((option) => option.id === value) ??
     PROJECT_PRESENTATION_OPTIONS.find((option) => option.id === DEFAULT_PROJECT_PRESENTATION)!
-  );
-}
-
-export function isProjectPresentationPreset(value: unknown): value is ProjectPresentationPreset {
-  return (
-    typeof value === "string" && PROJECT_PRESENTATION_OPTIONS.some((option) => option.id === value)
   );
 }

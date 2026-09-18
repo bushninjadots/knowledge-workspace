@@ -56,7 +56,7 @@ export type WorkspaceLayoutPreset = {
 // "week" is retired because it duplicated the welcome header's reputation
 // badge and overlapped with the Recent activity (evidence) module — a
 // pure-stat surface that didn't earn its place in the default workspace.
-export const RETIRED_DASHBOARD_MODULE_IDS = ["today", "next-steps", "week"] as const;
+const RETIRED_DASHBOARD_MODULE_IDS = ["today", "next-steps", "week"] as const;
 
 // Every dashboard module renders one compact row — label, a line of real
 // content, and the action that leads to the surface where that content lives

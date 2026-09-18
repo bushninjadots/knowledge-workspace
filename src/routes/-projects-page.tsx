@@ -1019,7 +1019,10 @@ function Shell({
         <span className="text-muted-foreground">/</span>
         <span className="text-sm text-muted-foreground">Project</span>
       </header>
-      <main className="flex-1">{children}</main>
+      {/* Same id as the other frames so the global skip link lands here too */}
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
     </div>
   );
 }

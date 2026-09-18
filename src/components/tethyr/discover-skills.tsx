@@ -40,9 +40,14 @@ export const DiscoverSkills = memo(function DiscoverSkills({ limit = 12 }: { lim
           to="/skills/$slug"
           params={{ slug: s.slug }}
           title={s.description ?? undefined}
+          aria-label={`Explore the ${s.name} skill`}
           className="text-muted-foreground transition-lift hover:text-primary"
         >
           {s.name}
+          {/* One-word skill names ("Go") read as generic link text to a11y
+              heuristics — the hidden suffix disambiguates without changing
+              the chip's look. */}
+          <span className="sr-only"> skill</span>
         </Link>
       ))}
     </div>

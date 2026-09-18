@@ -16,7 +16,7 @@ import type { ThemeTokens } from "@/lib/page-blocks";
  * custom palette adapts to it instead of hard-locking to the palette's authored
  * mode — so toggling light/dark stays fluid and consistent across themed pages.
  */
-export type ThemeScheme = "light" | "dark";
+type ThemeScheme = "light" | "dark";
 
 /** Top-level color keys — emitted as `--key: value`. */
 const COLOR_KEYS = [

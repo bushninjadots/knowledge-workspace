@@ -71,9 +71,10 @@ export function FeaturedHeroCard() {
             </>
           )}
         </div>
-        <h3 className="mt-2 truncate font-display text-lg font-semibold group-hover:text-primary">
+        {/* h2: this card sits directly under the hero h1 with no section heading between */}
+        <h2 className="mt-2 truncate font-display text-lg font-semibold group-hover:text-primary">
           {project.title}
-        </h3>
+        </h2>
         {project.description && (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
         )}

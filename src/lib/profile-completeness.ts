@@ -2,7 +2,7 @@
 // Setup completeness answers “can people understand who you are?” while
 // showcase completeness answers “is there work here worth exploring?”
 
-export type CompletenessInput = {
+type CompletenessInput = {
   profile: {
     avatar_url: string | null;
     banner_url: string | null;

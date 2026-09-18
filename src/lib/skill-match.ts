@@ -12,21 +12,6 @@ export type SkillMeta = {
 export type AvailabilityStatus =
   "available" | "busy" | "learning" | "looking_for_team" | "mentoring" | null;
 
-export type MatchCandidate = {
-  profile_id: string;
-  handle: string | null;
-  display_name: string | null;
-  creator_title: string | null;
-  avatar_url: string | null;
-  availability: AvailabilityStatus;
-  category: string | null;
-  languages: string[];
-  teachSkills: SkillMeta[];
-  learnSkills: SkillMeta[];
-  matchScore: number;
-  matchReasons: string[];
-};
-
 const VERIFICATION_WEIGHT: Record<string, number> = {
   community_recognized: 3,
   proof_certified: 2,

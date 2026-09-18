@@ -127,7 +127,7 @@ export function useLandingStats() {
   );
 }
 
-export type LandingProject = {
+type LandingProject = {
   id: string;
   title: string;
   description: string | null;
@@ -187,7 +187,7 @@ export function useContributorCount(projectId: string | null | undefined) {
   });
 }
 
-export type LandingActivityPost = {
+type LandingActivityPost = {
   id: string;
   type: PostType;
   title: string;

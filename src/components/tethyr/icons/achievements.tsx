@@ -10,7 +10,7 @@ const svgBase = {
   strokeLinejoin: "round" as const,
 };
 
-export function IconFirstProject(props: IconProps) {
+function IconFirstProject(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 2L8 10H16L12 2Z" />
@@ -21,7 +21,7 @@ export function IconFirstProject(props: IconProps) {
   );
 }
 
-export function IconFirstMilestone(props: IconProps) {
+function IconFirstMilestone(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M6 20V4" />
@@ -31,7 +31,7 @@ export function IconFirstMilestone(props: IconProps) {
   );
 }
 
-export function IconFirstEndorsement(props: IconProps) {
+function IconFirstEndorsement(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M7 22V11L10 2C10.5 2 11 2.5 11 3V9H18C19 9 19.8 9.8 19.6 10.8L18 20C17.8 21 17 22 16 22H7Z" />
@@ -41,7 +41,7 @@ export function IconFirstEndorsement(props: IconProps) {
   );
 }
 
-export function IconFiveEndorsements(props: IconProps) {
+function IconFiveEndorsements(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 2L14.5 8.5L21.5 9L16.5 13.5L18 20.5L12 17L6 20.5L7.5 13.5L2.5 9L9.5 8.5L12 2Z" />
@@ -50,7 +50,7 @@ export function IconFiveEndorsements(props: IconProps) {
   );
 }
 
-export function IconTenEndorsements(props: IconProps) {
+function IconTenEndorsements(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="12" cy="14" r="6" />
@@ -60,7 +60,7 @@ export function IconTenEndorsements(props: IconProps) {
   );
 }
 
-export function IconCommunityRecognized(props: IconProps) {
+function IconCommunityRecognized(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 2L3 6V12C3 17 7 21 12 22C17 21 21 17 21 12V6L12 2Z" />
@@ -69,7 +69,7 @@ export function IconCommunityRecognized(props: IconProps) {
   );
 }
 
-export function IconMentor(props: IconProps) {
+function IconMentor(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 3L2 9L12 15L22 9L12 3Z" />
@@ -79,7 +79,7 @@ export function IconMentor(props: IconProps) {
   );
 }
 
-export function IconCollaborator(props: IconProps) {
+function IconCollaborator(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="9" cy="7" r="3" />
@@ -91,7 +91,7 @@ export function IconCollaborator(props: IconProps) {
   );
 }
 
-export function IconProlificTeacher(props: IconProps) {
+function IconProlificTeacher(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M2 4C2 4 6 3 12 5V20C6 18 2 19 2 19" />
@@ -103,7 +103,7 @@ export function IconProlificTeacher(props: IconProps) {
   );
 }
 
-export function IconProjectBuilder(props: IconProps) {
+function IconProjectBuilder(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M3 15L8 10L14 16L9 21Z" />
@@ -113,7 +113,7 @@ export function IconProjectBuilder(props: IconProps) {
   );
 }
 
-export function IconCommunityBuilder(props: IconProps) {
+function IconCommunityBuilder(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M3 4H21V16H13L8 20V16H3V4Z" />
@@ -124,7 +124,7 @@ export function IconCommunityBuilder(props: IconProps) {
   );
 }
 
-export function IconReliableCollaborator(props: IconProps) {
+function IconReliableCollaborator(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="12" cy="12" r="9" />
@@ -134,7 +134,7 @@ export function IconReliableCollaborator(props: IconProps) {
   );
 }
 
-export function IconHelpedTenPeople(props: IconProps) {
+function IconHelpedTenPeople(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 21C12 21 3 15 3 9C3 6 5.5 3.5 8 3.5C9.5 3.5 11 4.5 12 6C13 4.5 14.5 3.5 16 3.5C18.5 3.5 21 6 21 9C21 15 12 21 12 21Z" />
@@ -144,7 +144,7 @@ export function IconHelpedTenPeople(props: IconProps) {
   );
 }
 
-export function IconLearnerJourney(props: IconProps) {
+function IconLearnerJourney(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="12" cy="12" r="9" />
@@ -154,7 +154,7 @@ export function IconLearnerJourney(props: IconProps) {
   );
 }
 
-export function IconChallengeWinner(props: IconProps) {
+function IconChallengeWinner(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M8 2H16V10C16 13.3 14.2 16 12 16C9.8 16 8 13.3 8 10V2Z" />
@@ -167,7 +167,7 @@ export function IconChallengeWinner(props: IconProps) {
   );
 }
 
-export function IconCrewFounder(props: IconProps) {
+function IconCrewFounder(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="8" cy="7" r="3" />
@@ -179,7 +179,7 @@ export function IconCrewFounder(props: IconProps) {
   );
 }
 
-export function IconTeamPlayer(props: IconProps) {
+function IconTeamPlayer(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="5" cy="8" r="2" />
@@ -192,7 +192,7 @@ export function IconTeamPlayer(props: IconProps) {
   );
 }
 
-export function IconMilestoneMaster(props: IconProps) {
+function IconMilestoneMaster(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <circle cx="12" cy="12" r="9" />
@@ -203,7 +203,7 @@ export function IconMilestoneMaster(props: IconProps) {
   );
 }
 
-export function IconHelpingHand(props: IconProps) {
+function IconHelpingHand(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 6C12 6 9 3 7 3C5 3 3.5 4.5 3.5 6.5C3.5 9 12 14 12 14C12 14 20.5 9 20.5 6.5C20.5 4.5 19 3 17 3C15 3 12 6 12 6Z" />
@@ -213,7 +213,7 @@ export function IconHelpingHand(props: IconProps) {
   );
 }
 
-export function IconConversationStarter(props: IconProps) {
+function IconConversationStarter(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M3 4H21V16H13L8 20V16H3V4Z" />
@@ -225,7 +225,7 @@ export function IconConversationStarter(props: IconProps) {
   );
 }
 
-export function IconRoleFiller(props: IconProps) {
+function IconRoleFiller(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M4 4H20V16L12 22L4 16V4Z" />
@@ -234,7 +234,7 @@ export function IconRoleFiller(props: IconProps) {
   );
 }
 
-export function IconFirstSession(props: IconProps) {
+function IconFirstSession(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <rect x="3" y="4" width="18" height="17" rx="2" />
@@ -246,7 +246,7 @@ export function IconFirstSession(props: IconProps) {
   );
 }
 
-export function IconSessionTeacher(props: IconProps) {
+function IconSessionTeacher(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -258,7 +258,7 @@ export function IconSessionTeacher(props: IconProps) {
   );
 }
 
-export function IconStreak4Weeks(props: IconProps) {
+function IconStreak4Weeks(props: IconProps) {
   return (
     <svg {...svgBase} {...props}>
       <path d="M12 2C12 2 6 8 6 13C6 16.3 8.7 19 12 19C15.3 19 18 16.3 18 13C18 8 12 2 12 2Z" />

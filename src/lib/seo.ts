@@ -56,7 +56,7 @@ function ogImageUrl() {
   return `${getConfiguredSiteUrl() ?? ""}/og-image.png`;
 }
 
-export type SeoOptions = {
+type SeoOptions = {
   /** Route path for the canonical + og:url, e.g. "/community". */
   path: string;
   /** Page title. The "— Tethyr" suffix is applied automatically. */

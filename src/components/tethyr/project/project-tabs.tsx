@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export type ProjectTab = "files" | "activity";
 
-export const PROJECT_TABS: {
+const PROJECT_TABS: {
   id: ProjectTab;
   label: string;
   icon: typeof FolderOpen;

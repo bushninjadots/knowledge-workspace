@@ -8,7 +8,7 @@ const PREFS_KEY = ["notification-preferences"] as const;
 
 const DEFAULT_MUTED: NotificationCategory[] = [];
 
-export type NotificationPreferences = {
+type NotificationPreferences = {
   mutedCategories: NotificationCategory[];
 };
 

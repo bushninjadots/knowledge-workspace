@@ -122,7 +122,7 @@ export async function fetchRepoReadme(fullName: string, token?: string): Promise
   return { text: null, rateLimited: false, unauthorized: false };
 }
 
-export type RepoFileResult = {
+type RepoFileResult = {
   text: string | null;
   /** Git blob SHA of the fetched file — used for idempotent re-sync. */
   sha: string | null;
@@ -321,7 +321,7 @@ export async function fetchUserRepos(username: string, token?: string): Promise<
   }));
 }
 
-export type TokenValidation =
+type TokenValidation =
   | { ok: true; username: string }
   | { ok: false; reason: "unauthorized" | "network" | "empty" | "storage" };
 

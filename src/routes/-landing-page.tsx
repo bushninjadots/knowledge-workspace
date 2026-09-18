@@ -63,7 +63,7 @@ function SectionSkeleton() {
 }
 
 function scrollToContent() {
-  document.getElementById("landing-content")?.scrollIntoView({
+  document.getElementById("main-content")?.scrollIntoView({
     behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
     block: "start",
   });
@@ -145,7 +145,8 @@ export function HomePage() {
       </section>
 
       <LandingStats />
-      <main id="landing-content">
+      {/* Same id as every other frame so the global skip link lands here too */}
+      <main id="main-content">
         <SectionReveal id="how-it-works" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <HowItWorks />

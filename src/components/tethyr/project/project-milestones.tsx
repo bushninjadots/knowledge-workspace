@@ -204,7 +204,11 @@ export function MilestonesTimeline({
           <div className="flex min-w-[12rem] flex-1 items-center justify-end gap-3">
             <div
               className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-surface-elevated"
+              role="progressbar"
               aria-label={`${progress}% complete`}
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
             >
               <div
                 className="h-full rounded-full bg-foreground transition-[width]"

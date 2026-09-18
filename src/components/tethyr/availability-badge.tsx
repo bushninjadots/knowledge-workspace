@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { AVAILABILITY_OPTIONS } from "@/data/mocks/availability";
 
-export function getStatusDisplay(status: AvailabilityStatus) {
+function getStatusDisplay(status: AvailabilityStatus) {
   return AVAILABILITY_OPTIONS.find((s) => s.value === status) ?? null;
 }
 

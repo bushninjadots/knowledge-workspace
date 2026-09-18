@@ -131,20 +131,6 @@ export interface BlockField {
 
 // ---------------------------------------------------------------------------
 // Layout Types
-// ---------------------------------------------------------------------------
-
-export type LayoutType =
-  | "standard"
-  | "minimal"
-  | "full_width"
-  | "centered"
-  | "sidebar"
-  | "documentation"
-  | "portfolio"
-  | "magazine"
-  | "dashboard"
-  | "landing_page"
-  | "custom";
 
 export type SectionLayoutType =
   | "full"
@@ -350,46 +336,6 @@ export type BlockRegistry = Map<BlockType, BlockDefinition>;
 // Template Types
 // ---------------------------------------------------------------------------
 
-/** A template is a layout that has been marked as reusable by its creator. */
-export interface TemplateData {
-  id: string;
-  name: string;
-  description: string | null;
-  type: LayoutType;
-  category: string | null;
-  sections: LayoutSection[];
-  /** The theme tokens bundled with this template (null = default). */
-  themeTokens: ThemeTokens | null;
-  /** The theme ID for this template. */
-  themeId: string | null;
-  /** Creator profile info — joined from layouts.created_by → profiles. */
-  createdBy: string | null;
-  creatorHandle: string | null;
-  creatorDisplayName: string | null;
-  usageCount: number;
-  forkCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** Categories for browsing templates in the library. */
-export type TemplateCategory =
-  | "minimal"
-  | "developer"
-  | "portfolio"
-  | "documentation"
-  | "startup"
-  | "community"
-  | "creative"
-  | "experimental";
-
 // ---------------------------------------------------------------------------
 // Fork / Remix Types
 // ---------------------------------------------------------------------------
-
-/** A lineage node returned by get_layout_lineage. */
-export interface LineageNode {
-  layoutId: string;
-  parentId: string;
-  depth: number;
-}

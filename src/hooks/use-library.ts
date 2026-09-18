@@ -40,7 +40,7 @@ export type LibraryCollection = {
   updated_at: string;
 };
 
-export type LibraryTag = {
+type LibraryTag = {
   id: string;
   user_id: string;
   name: string;
@@ -48,21 +48,12 @@ export type LibraryTag = {
   created_at: string;
 };
 
-export type LibraryVersion = {
-  id: string;
-  item_id: string;
-  title: string;
-  content: string;
-  editor_id: string;
-  created_at: string;
-};
-
-export type LibraryItemWithTags = LibraryItem & {
+type LibraryItemWithTags = LibraryItem & {
   tags: LibraryTag[];
   collection?: LibraryCollection | null;
 };
 
-export type LibraryFilter = {
+type LibraryFilter = {
   type?: LibraryItem["type"];
   collection_id?: string;
   tag_id?: string;
@@ -376,34 +367,6 @@ export function useCreateCollection() {
   });
 }
 
-export function useUpdateCollection() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: {
-      id: string;
-      name?: string;
-      icon?: string;
-      color?: string;
-      parent_id?: string | null;
-      position?: number;
-    }) => {
-      const { id, ...updates } = input;
-      const { data, error } = await supabase
-        .from("library_collections")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as LibraryCollection;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: libraryKeys.collections() });
-    },
-  });
-}
-
 export function useDeleteCollection() {
   const queryClient = useQueryClient();
 
@@ -469,20 +432,6 @@ export function useCreateTag() {
   });
 }
 
-export function useDeleteTag() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("library_tags").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: libraryKeys.tags() });
-    },
-  });
-}
-
 export function useAddTagToItem() {
   const queryClient = useQueryClient();
 
@@ -511,51 +460,6 @@ export function useRemoveTagFromItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.items() });
-    },
-  });
-}
-
-/* ───────── Versions ───────── */
-
-export function useLibraryVersions(itemId: string) {
-  return useQuery({
-    queryKey: libraryKeys.versions(itemId),
-    enabled: !!itemId,
-    queryFn: async (): Promise<LibraryVersion[]> => {
-      const { data, error } = await supabase
-        .from("library_versions")
-        .select("*")
-        .eq("item_id", itemId)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      return (data ?? []) as LibraryVersion[];
-    },
-  });
-}
-
-export function useCreateVersion() {
-  const queryClient = useQueryClient();
-  const { data: me } = useCurrentUser();
-
-  return useMutation({
-    mutationFn: async (input: { item_id: string; title: string; content: string }) => {
-      if (!me?.userId) throw new Error("Not authenticated");
-      const { data, error } = await supabase
-        .from("library_versions")
-        .insert({
-          item_id: input.item_id,
-          title: input.title,
-          content: input.content,
-          editor_id: me.userId,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as LibraryVersion;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: libraryKeys.versions(variables.item_id) });
     },
   });
 }

@@ -5,7 +5,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-export type MessageRow = {
+type MessageRow = {
   id: string;
   connection_id: string;
   sender_id: string;
@@ -15,9 +15,9 @@ export type MessageRow = {
   created_at: string;
 };
 
-export const MESSAGES_KEY = ["messages"] as const;
-export const UNREAD_KEY = ["messages-unread"] as const;
-export const LAST_MESSAGES_KEY = ["messages-last"] as const;
+const MESSAGES_KEY = ["messages"] as const;
+const UNREAD_KEY = ["messages-unread"] as const;
+
 export const PAGE_SIZE = 25;
 
 // ---------- Paginated thread ----------

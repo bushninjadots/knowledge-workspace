@@ -1,7 +1,7 @@
 // Achievements — auto-awarded badges displayed on profiles.
 import { Award } from "lucide-react";
 import { ACHIEVEMENT_ICONS } from "./icons/achievements";
-import { ACHIEVEMENTS, type AchievementType, type AchievementDef } from "@/lib/reputation";
+import { ACHIEVEMENTS, type AchievementDef } from "@/lib/reputation";
 
 function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm" | "md" }) {
   const Icon = ACHIEVEMENT_ICONS[def.type];
@@ -14,17 +14,6 @@ function AchievementIcon({ def, size = "md" }: { def: AchievementDef; size?: "sm
       }`}
     >
       {Icon ? <Icon className={iconClass} /> : <Award className={iconClass} />}
-    </span>
-  );
-}
-
-export function AchievementBadge({ type }: { type: AchievementType }) {
-  const def = ACHIEVEMENTS.find((a) => a.type === type);
-  if (!def) return null;
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-2 py-1 text-[11px] font-medium text-foreground">
-      <AchievementIcon def={def} />
-      {def.label}
     </span>
   );
 }

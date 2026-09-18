@@ -39,7 +39,7 @@ export type TeamProjectRow = {
   } | null;
 };
 
-export type TeamInviteRow = {
+type TeamInviteRow = {
   id: string;
   team_id: string;
   profile_id: string;
@@ -49,9 +49,9 @@ export type TeamInviteRow = {
   team?: TeamRow | null;
 };
 
-export const TEAM_KEY = (slug: string) => ["team", slug] as const;
-export const MY_TEAMS_KEY = ["my-teams"] as const;
-export const PROJECT_TEAMS_KEY = (projectId: string) => ["project-teams", projectId] as const;
+const TEAM_KEY = (slug: string) => ["team", slug] as const;
+const MY_TEAMS_KEY = ["my-teams"] as const;
+const PROJECT_TEAMS_KEY = (projectId: string) => ["project-teams", projectId] as const;
 
 // ============================================================
 // Queries

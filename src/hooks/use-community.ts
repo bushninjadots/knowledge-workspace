@@ -184,8 +184,7 @@ export type UpdatePostInput = {
 // ============================================================
 
 export const POSTS_KEY = ["posts"] as const;
-export const COMMENTS_KEY = (postId: string) => ["comments", postId] as const;
-export const POST_ACTIONS_KEY = (postId: string) => ["post-actions", postId] as const;
+const COMMENTS_KEY = (postId: string) => ["comments", postId] as const;
 
 // ============================================================
 // Hooks
@@ -193,9 +192,9 @@ export const POST_ACTIONS_KEY = (postId: string) => ["post-actions", postId] as 
 
 /** Number of posts fetched per page. Kept small so the per-page joins
  * (profiles, actions, comment counts) stay bounded as the feed grows. */
-export const POSTS_PAGE_SIZE = 20;
+const POSTS_PAGE_SIZE = 20;
 
-export type PostsPage = {
+type PostsPage = {
   posts: PostWithAuthor[];
   nextPage: number | null;
 };
@@ -442,19 +441,6 @@ export function useAddComment() {
   });
 }
 
-export function useDeleteComment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { commentId: string; postId: string }) => {
-      const { error } = await sb.from("comments").delete().eq("id", input.commentId);
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
-    },
-  });
-}
-
 export function useUpdateComment() {
   const qc = useQueryClient();
   return useMutation({
@@ -463,31 +449,6 @@ export function useUpdateComment() {
         .from("comments")
         .update({ body: input.body })
         .eq("id", input.commentId);
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: COMMENTS_KEY(variables.postId) });
-    },
-  });
-}
-
-export function useMarkBestAnswer() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { commentId: string; postId: string; isBest: boolean }) => {
-      // First unset any existing best answer for this post
-      await sb
-        .from("comments")
-        .update({ is_best_answer: false })
-        .eq("post_id", input.postId)
-        .eq("is_best_answer", true);
-
-      // Then set the new one
-      const { error } = await sb
-        .from("comments")
-        .update({ is_best_answer: input.isBest })
-        .eq("id", input.commentId);
-
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

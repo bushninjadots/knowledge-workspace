@@ -20,7 +20,7 @@ export type CommunityNavId =
   | "tip"
   | "discussion";
 
-export interface CommunityNavItem {
+interface CommunityNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
@@ -28,7 +28,7 @@ export interface CommunityNavItem {
   href?: string;
 }
 
-export interface CommunityNavGroup {
+interface CommunityNavGroup {
   label: string;
   items: CommunityNavItem[];
 }

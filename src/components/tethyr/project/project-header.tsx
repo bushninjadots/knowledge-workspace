@@ -210,7 +210,7 @@ export function ProjectHeader({
                           key={c.profile_id}
                           handle={c.profile?.handle}
                           title={`${c.profile?.display_name ?? c.profile?.handle ?? "Anonymous"} · ${PERSON_ROLE_LABEL[c.role] ?? c.role}`}
-                          className="transition-lift"
+                          className="transition-lift inline-flex rounded-full p-0.5 -m-0.5"
                         >
                           <Avatar
                             name={c.profile?.display_name ?? c.profile?.handle}

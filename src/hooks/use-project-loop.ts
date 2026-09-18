@@ -10,9 +10,9 @@ import type {
 } from "@/hooks/use-projects";
 
 const PROJECT_LOOP_KEY = (projectId: string) => ["project-loop", projectId] as const;
-export const PROJECT_RETURN_KEY = ["project-return-changes"] as const;
+const PROJECT_RETURN_KEY = ["project-return-changes"] as const;
 
-export type ProjectContributionInput = {
+type ProjectContributionInput = {
   projectId: string;
   title: string;
   body: string;
@@ -167,7 +167,7 @@ export function useMarkProjectVisited() {
   });
 }
 
-export type WatchedProject = {
+type WatchedProject = {
   id: string;
   title: string;
   description: string | null;
@@ -204,7 +204,7 @@ export function useWatchedProjects(limit = 8) {
   });
 }
 
-export type ReturnChange = {
+type ReturnChange = {
   id: string;
   projectId: string;
   projectTitle: string;

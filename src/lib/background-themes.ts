@@ -58,7 +58,7 @@ export type ProfileBackground = {
 export type BannerOverlayId =
   "none" | "soft" | "strong" | "scrim" | "vignette" | "spotlight" | "duotone";
 
-export type BannerOverlayOption = {
+type BannerOverlayOption = {
   id: BannerOverlayId;
   label: string;
   description: string;
@@ -122,9 +122,9 @@ export const BACKGROUND_MIN_STRENGTH = 18;
 
 export const BACKGROUND_MAX_STRENGTH = 60;
 
-export type BackgroundColor = { id: string; label: string; color: string };
+type BackgroundColor = { id: string; label: string; color: string };
 
-export type BackgroundPattern = {
+type BackgroundPattern = {
   id: string;
   label: string;
   backgroundImage: string;
@@ -188,9 +188,7 @@ export const BACKGROUND_PATTERNS: BackgroundPattern[] = [
   },
 ];
 
-export const BACKGROUND_PATTERN_IDS = BACKGROUND_PATTERNS.map((p) => p.id);
-
-export type BackgroundGradient = {
+type BackgroundGradient = {
   id: string;
   label: string;
   from: string;
@@ -211,8 +209,6 @@ export const BACKGROUND_GRADIENTS: BackgroundGradient[] = [
   { id: "ember", label: "Ember", from: "#f97316", to: "#e11d48" },
   { id: "skyline", label: "Skyline", from: "#38bdf8", to: "#a78bfa" },
 ];
-
-export const BACKGROUND_GRADIENT_IDS = BACKGROUND_GRADIENTS.map((g) => g.id);
 
 /** Swatch palette for the custom card border colour picker. */
 export const BORDER_SWATCHES = [
@@ -238,13 +234,6 @@ export function gradientBackgroundImage(
   if (!gradient) return null;
   return `linear-gradient(135deg, color-mix(in oklab, ${gradient.from} ${strength}%, transparent), color-mix(in oklab, ${gradient.to} ${strength}%, transparent))`;
 }
-
-/**
- * How strongly an uploaded image is dimmed behind content at the default
- * strength. Strong enough to read as a personal wallpaper, faint enough that
- * text stays legible. Scales with the member's chosen strength.
- */
-export const BACKGROUND_IMAGE_OPACITY = 0.55;
 
 export function imageOpacityFor(strength: number | null | undefined): number {
   const s = clampStrength(strength);

@@ -19,7 +19,7 @@ export const TIMEZONES = [
   "Pacific/Auckland",
 ] as const;
 
-export type TimeZone = (typeof TIMEZONES)[number];
+type TimeZone = (typeof TIMEZONES)[number];
 
 export function getUserTimezone(): TimeZone {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;

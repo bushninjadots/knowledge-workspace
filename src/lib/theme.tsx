@@ -9,7 +9,7 @@ import {
 } from "react";
 
 export type Theme = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
+type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "tethyr-theme";
 /** ID of the globally-applied theme preset row, or null for the Tethyr default. */

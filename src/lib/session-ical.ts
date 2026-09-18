@@ -1,5 +1,4 @@
 import { buildSessionIcs, downloadIcs } from "@/lib/ical";
-import type { SessionWithParticipants } from "@/hooks/use-sessions";
 
 /**
  * Build and download an .ics for a session. Shared by the session detail page
@@ -30,9 +29,4 @@ export function downloadSessionIcs(session: {
   const slug = session.title.replace(/[^\w-]+/g, "-").toLowerCase() || "session";
   downloadIcs(`${slug}.ics`, body);
   return true;
-}
-
-/** Convenience re-export for callers that already hold a full session row. */
-export function sessionToIcsDownload(session: SessionWithParticipants): boolean {
-  return downloadSessionIcs(session);
 }

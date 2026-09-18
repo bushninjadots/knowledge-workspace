@@ -3,22 +3,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// ── Point values ──────────────────────────────────────────────
-
-export const POINTS = {
-  project_published: 10,
-  project_joined: 5,
-  milestone_completed: 5,
-  project_update_posted: 3,
-  endorsement_received: 2,
-  community_post_created: 2,
-  community_comment_created: 1,
-  discussion_started: 3,
-  discussion_reply: 1,
-} as const;
-
-export type ReputationAction = keyof typeof POINTS;
-
 // ── Achievement definitions ───────────────────────────────────
 
 export type AchievementType =
@@ -226,10 +210,6 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
 ];
 
-export function getAchievementDef(type: AchievementType): AchievementDef | undefined {
-  return ACHIEVEMENTS.find((a) => a.type === type);
-}
-
 // ── Category breakdown ────────────────────────────────────────
 
 type ReputationCategory = {
@@ -275,14 +255,14 @@ export async function checkAndAwardAchievements(): Promise<AchievementType[]> {
 
 // ── Reputation tier ───────────────────────────────────────────
 
-export type ReputationTier = {
+type ReputationTier = {
   name: string;
   minScore: number;
   color: string;
   gradient: string;
 };
 
-export const TIERS: ReputationTier[] = [
+const TIERS: ReputationTier[] = [
   {
     name: "Newcomer",
     minScore: 0,
@@ -321,7 +301,7 @@ export const TIERS: ReputationTier[] = [
   },
 ];
 
-export function getTier(score: number): ReputationTier {
+function getTier(score: number): ReputationTier {
   let tier = TIERS[0];
   for (const t of TIERS) {
     if (score >= t.minScore) tier = t;

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const sb = supabase;
 
-export type RoleApplication = {
+type RoleApplication = {
   id: string;
   role_id: string;
   profile_id: string;
@@ -24,7 +24,7 @@ export type RoleApplication = {
   };
 };
 
-export function useRoleApplications(roleId: string) {
+function useRoleApplications(roleId: string) {
   return useQuery({
     queryKey: ["role-applications", roleId],
     queryFn: async () => {

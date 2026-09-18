@@ -4,7 +4,7 @@ import { LogIn, UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthShell } from "@/components/tethyr/auth-shell";
 
-export type DashboardStateData = {
+type DashboardStateData = {
   userId?: string | null;
 } | null;
 

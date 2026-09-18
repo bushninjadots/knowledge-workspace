@@ -188,16 +188,3 @@ export function TethyrBall({ onComplete, size = "md", className = "" }: TethyrBa
     </div>
   );
 }
-
-export function TethyrBallFull({ className }: { className?: string }) {
-  return (
-    <div
-      className={`flex min-h-screen flex-col items-center justify-center bg-background ${className ?? ""}`}
-    >
-      <TethyrBall size="lg" />
-      <p className="mt-6 text-sm text-muted-foreground animate-gentle-pulse">
-        Entering the network…
-      </p>
-    </div>
-  );
-}

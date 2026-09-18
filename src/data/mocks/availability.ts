@@ -7,7 +7,7 @@ import { BookOpen, Circle, Clock, GraduationCap, Users } from "lucide-react";
 
 import type { AvailabilityStatus } from "@/lib/skill-match";
 
-export interface AvailabilityOption {
+interface AvailabilityOption {
   value: NonNullable<AvailabilityStatus>;
   label: string;
   icon: LucideIcon;

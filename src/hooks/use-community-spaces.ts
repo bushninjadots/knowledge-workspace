@@ -239,24 +239,6 @@ export function useLeaveSpace() {
 
 // ============================================================
 // Pin / Unpin
-// ============================================================
-
-export function usePinPost() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { postId: string; spaceId: string; isPinned: boolean }) => {
-      const { error } = await sb
-        .from("posts")
-        .update({ is_pinned: input.isPinned })
-        .eq("id", input.postId);
-
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(variables.spaceId) });
-    },
-  });
-}
 
 // ============================================================
 // Share / Unshare
@@ -274,24 +256,6 @@ export function useSharePost() {
         space_id: input.spaceId,
         shared_by: me.user.id,
       });
-
-      if (error) throw error;
-    },
-    onSettled: (_data, _error, variables) => {
-      qc.invalidateQueries({ queryKey: SPACE_POSTS_KEY(variables.spaceId) });
-    },
-  });
-}
-
-export function useUnsharePost() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { postId: string; spaceId: string }) => {
-      const { error } = await sb
-        .from("post_space_shares")
-        .delete()
-        .eq("post_id", input.postId)
-        .eq("space_id", input.spaceId);
 
       if (error) throw error;
     },

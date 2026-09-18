@@ -75,14 +75,6 @@ export function useProjectCredits(projectId: string) {
   });
 }
 
-export type StudioCredit = {
-  project_id: string;
-  project_title: string;
-  role: CreditRole;
-  credit_text: string;
-  at: string | null;
-};
-
 /**
  * A crew's Credits roll — everyone credited across all of the team's projects,
  * merged per person (strongest role, most recent credit, project named in the

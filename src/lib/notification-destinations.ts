@@ -6,7 +6,7 @@ type NotificationInput = {
   metadata: Record<string, unknown>;
 };
 
-export type NotificationDestination =
+type NotificationDestination =
   | { to: "/messages" }
   | { to: "/community" }
   | { to: "/sessions" }

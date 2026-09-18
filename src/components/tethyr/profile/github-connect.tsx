@@ -24,7 +24,7 @@ type ConnectedAccount = {
  * `https://github.com/handle`, or `owner/repo`) down to just the handle, so
  * the stored value and the rendered link never double-prefix `github.com/`.
  */
-export function githubHandleFrom(value: string): string {
+function githubHandleFrom(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
   const withoutProtocol = trimmed.replace(/^https?:\/\/github\.com\//i, "");
@@ -32,7 +32,7 @@ export function githubHandleFrom(value: string): string {
   return firstSegment.replace(/^@/, "").replace(/[\s]+/g, "");
 }
 
-export function useConnectedAccounts() {
+function useConnectedAccounts() {
   const { data: user } = useAuthUser();
   return useQuery({
     queryKey: ["connected-accounts"],
@@ -50,7 +50,7 @@ export function useConnectedAccounts() {
   });
 }
 
-export function useConnectGitHub() {
+function useConnectGitHub() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -103,7 +103,7 @@ export function useConnectGitHub() {
   });
 }
 
-export function useDisconnectGitHub() {
+function useDisconnectGitHub() {
   const queryClient = useQueryClient();
 
   return useMutation({

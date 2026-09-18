@@ -1,4 +1,4 @@
-export type DiffLine = { type: "same" | "add" | "del"; text: string };
+type DiffLine = { type: "same" | "add" | "del"; text: string };
 
 /**
  * Minimal LCS-based line diff. Returns the full sequence with each line

@@ -15,7 +15,6 @@ import {
   validateGitHubToken,
   type GithubCommitLite,
   type GithubRepoLite,
-  type RepoFileResult,
   type RepoMeta,
   type RepoReadmeResult,
 } from "./github";
@@ -214,19 +213,6 @@ export const fetchRepoMetaServer = createServerFn({ method: "POST" })
     return fetchRepoMeta(data.owner, data.repo, token ?? undefined);
   });
 
-/** Fetch an arbitrary repo file on the server, using the stored token when present. */
-export const fetchRepoFileServer = createServerFn({ method: "POST" })
-  .validator((d: { fullName: string; path: string; ref?: string }) => ({
-    fullName: d.fullName.trim(),
-    path: d.path.replace(/^\/+/, "").trim(),
-    ref: d.ref?.trim() || undefined,
-  }))
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }): Promise<RepoFileResult> => {
-    const token = await getStoredToken(context.userId);
-    return fetchRepoFile(data.fullName, data.path, data.ref, token ?? undefined);
-  });
-
 /** Attach (or replace) a GitHub file link on a library item. Owner-only. */
 export const linkLibraryItemGithub = createServerFn({ method: "POST" })
   .validator((d: { itemId: string; repo: string; path: string; branch?: string }) => ({
@@ -283,7 +269,7 @@ export const unlinkLibraryItemGithub = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-export type SyncResult =
+type SyncResult =
   | { ok: true; updated: boolean; source: GithubSource }
   | {
       ok: false;

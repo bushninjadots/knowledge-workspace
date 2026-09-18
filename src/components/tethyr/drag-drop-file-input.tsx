@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Upload } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 /**
@@ -84,82 +84,6 @@ export function DragDropFileInput({
         disabled={disabled}
       />
       {children}
-    </div>
-  );
-}
-
-/**
- * Compact drag & drop area with visual feedback — good for inline image
- * uploads in the composer or avatar/banner changes on the profile.
- */
-export function InlineDropZone({
-  accept = "image/*",
-  onFile,
-  className,
-}: {
-  accept?: string;
-  onFile: (file: File) => void;
-  className?: string;
-}) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }
-
-  function handleDragLeave(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) onFile(file);
-  }
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) onFile(file);
-    e.target.value = "";
-  }
-
-  return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
-      className={cn(
-        "flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-colors",
-        isDragOver ? "border-trust bg-trust/5" : "border-border/40 hover:border-border/60",
-        className,
-      )}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={handleChange}
-      />
-      <div className="flex flex-col items-center gap-1 py-2 text-center">
-        <Upload
-          className={cn(
-            "h-4 w-4 transition-colors",
-            isDragOver ? "text-trust" : "text-muted-foreground",
-          )}
-        />
-        <span className="text-[11px] text-muted-foreground">
-          {isDragOver ? "Drop here" : "Drag & drop or click"}
-        </span>
-      </div>
     </div>
   );
 }

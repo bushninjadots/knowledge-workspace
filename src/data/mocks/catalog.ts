@@ -14,8 +14,6 @@ export const PROJECT_CATEGORIES = [
   "Marketing",
 ] as const;
 
-export type ProjectCategory = (typeof PROJECT_CATEGORIES)[number];
-
 // Categories used by the Explore filters. "Projects" is a view, not a craft,
 // so it belongs in the main tab bar rather than beside Design and Development.
 export const EXPLORE_FILTER_CATEGORIES = PROJECT_CATEGORIES.filter(
@@ -23,7 +21,7 @@ export const EXPLORE_FILTER_CATEGORIES = PROJECT_CATEGORIES.filter(
 );
 
 /** A "browse by need" chip: a role label mapped to the skills it implies. */
-export interface OpportunityNeedChip {
+interface OpportunityNeedChip {
   label: string;
   skills: string[];
 }
@@ -39,7 +37,7 @@ export const OPPORTUNITY_NEED_CHIPS: OpportunityNeedChip[] = [
   { label: "Mentor", skills: ["mentoring", "teaching", "coaching"] },
 ];
 
-export type NeedUrgency = "high" | "normal" | "low";
+type NeedUrgency = "high" | "normal" | "low";
 
 /** Human label for an open-need urgency level. */
 export const NEED_LABEL: Record<NeedUrgency, string> = {

@@ -13,9 +13,9 @@ let activeChannel: ReturnType<typeof supabase.channel> | null = null;
 let activeUserId: string | null = null;
 let refCount = 0;
 
-export type ConnectionStatus = "pending" | "accepted" | "declined";
+type ConnectionStatus = "pending" | "accepted" | "declined";
 
-export type ConnectionRow = {
+type ConnectionRow = {
   id: string;
   requester_id: string;
   addressee_id: string;

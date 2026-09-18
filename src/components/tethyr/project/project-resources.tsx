@@ -243,7 +243,7 @@ export function ProjectLibrarySection({
  * Renders a gallery image. Storage paths (project-media is a private bucket)
  * are signed on demand; full http(s) URLs pass through untouched.
  */
-export function GalleryMedia({
+function GalleryMedia({
   url,
   type,
   alt,
