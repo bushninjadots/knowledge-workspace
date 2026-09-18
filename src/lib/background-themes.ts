@@ -126,13 +126,17 @@ export function bannerOverlayStyle(value: string | null | undefined): CSSPropert
         backgroundImage: `${bottomAnchor(25, "45%")}, radial-gradient(120% 100% at 50% 50%, transparent 40%, color-mix(in oklab, var(--background) 70%, transparent) 100%)`,
       };
     case "spotlight":
+      // Light anchor: the radial already darkens the bottom edge, so a heavy
+      // one would over-darken the caption zone (composite >60%).
       return {
-        backgroundImage: `${bottomAnchor(35, "60%")}, radial-gradient(80% 70% at 50% 35%, color-mix(in oklab, var(--foreground) 10%, transparent) 0%, color-mix(in oklab, var(--background) 55%, transparent) 100%)`,
+        backgroundImage: `${bottomAnchor(25, "60%")}, radial-gradient(80% 70% at 50% 35%, color-mix(in oklab, var(--foreground) 10%, transparent) 0%, color-mix(in oklab, var(--background) 55%, transparent) 100%)`,
       };
     case "duotone":
+      // Light anchor: the accent gradient already covers the bottom-right
+      // corner where a right-positioned caption sits.
       return {
         ...wash(10),
-        backgroundImage: `${bottomAnchor(30, "60%")}, linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 45%, transparent) 0%, color-mix(in oklab, var(--background) 60%, transparent) 100%)`,
+        backgroundImage: `${bottomAnchor(22, "60%")}, linear-gradient(135deg, color-mix(in oklab, var(--user-accent, var(--primary)) 45%, transparent) 0%, color-mix(in oklab, var(--background) 60%, transparent) 100%)`,
       };
   }
 }

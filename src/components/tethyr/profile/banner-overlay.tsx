@@ -50,8 +50,27 @@ export function BannerOverlayPicker({
                 : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
             )}
           >
-            <span className="relative block h-10 w-full bg-[linear-gradient(120deg,var(--ai)_0%,var(--trust)_100%)]">
+            {/* Preview stands in for a busy photo: layered colour noise + a
+                mini caption chip, so the choice is judged on what overlays
+                are for — keeping text readable. */}
+            <span className="relative block h-14 w-full overflow-hidden">
+              <span
+                aria-hidden="true"
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: "var(--muted)",
+                  backgroundImage:
+                    "radial-gradient(140% 90% at 15% 20%, var(--ai) 0%, transparent 55%), radial-gradient(120% 100% at 85% 75%, var(--trust) 0%, transparent 60%), radial-gradient(100% 80% at 60% 15%, color-mix(in oklab, var(--primary) 35%, transparent) 0%, transparent 50%)",
+                }}
+              />
               {style && <span aria-hidden="true" className="absolute inset-0" style={style} />}
+              {/* Mini caption chip at the position captions actually render */}
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 right-1.5 max-w-[80%] truncate rounded-full bg-background/70 px-1.5 py-0.5 text-[8px] leading-none text-foreground backdrop-blur-sm ring-1 ring-border/40"
+              >
+                Your caption
+              </span>
             </span>
             <span className="block px-2 py-1.5">
               <span className="block truncate text-xs font-medium">{option.label}</span>
