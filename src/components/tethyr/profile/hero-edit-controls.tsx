@@ -15,7 +15,7 @@ import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-p
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
-import { BANNER_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
+import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import type { ProfileBackground } from "@/lib/background-themes";
 
 const CAPTION_MAX = 60;
@@ -61,6 +61,7 @@ export function HeroEditControls({
   const [captionDraft, setCaptionDraft] = useState(identity.banner_caption ?? "");
   const [savingCaption, setSavingCaption] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
   function refresh() {
     void queryClient.invalidateQueries({ queryKey: ["profile-header-block"] });
@@ -71,12 +72,14 @@ export function HeroEditControls({
   async function uploadBanner(file: File) {
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
+    // Confirm the crop (3:1 band preview) before anything is stored.
+    requestCrop(file, "banner", (payload, meta) => void doUpload(payload, meta));
+  }
+
+  async function doUpload(payload: File | Blob, meta: { ext: string; contentType: string }) {
     setUploading(true);
     // Use a unique path so the signed URL changes and the browser never serves
     // a stale cached copy when the banner is replaced.
-    const crop = await cropImageToAspect(file, BANNER_CROP_ASPECT);
-    const meta = cropUploadMeta(file, crop);
-    const payload: File | Blob = crop?.blob ?? file;
     const previousPath = identity.banner_url;
     const path = `${userId}/banner-${Date.now()}.${meta.ext}`;
     const { error: upErr } = await supabase.storage
@@ -223,6 +226,7 @@ export function HeroEditControls({
           refresh();
         }}
       />
+      {cropDialog}
     </>
   );
 }

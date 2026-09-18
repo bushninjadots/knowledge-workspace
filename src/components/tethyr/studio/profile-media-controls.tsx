@@ -3,15 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
+import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
-import {
-  AVATAR_CROP_ASPECT,
-  BANNER_CROP_ASPECT,
-  cropImageToAspect,
-  cropUploadMeta,
-} from "@/lib/image-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -63,6 +58,7 @@ export function ProfileMediaControls({
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
   const [savingIdentity, setSavingIdentity] = useState(false);
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
   const { data: identity, isLoading: identityLoading } = useQuery({
     queryKey: ["profile-header-block", ownerId],
@@ -90,19 +86,15 @@ export function ProfileMediaControls({
     setCaption(identity.banner_caption ?? "");
   }, [identity, savingIdentity]);
 
-  async function upload(kind: "avatar" | "banner", file: File) {
-    const check = validateImageFile(file);
-    if (!check.ok) return toast.error(check.error);
+  async function upload(
+    kind: "avatar" | "banner",
+    payload: File | Blob,
+    meta: { ext: string; contentType: string },
+  ) {
     setUploading(kind);
-    // Centre-crop to the display shape — squares for avatars, 3:1 for banners —
-    // so what is stored is what is shown. Falls back to the raw file if the
-    // browser can't crop.
-    const crop = await cropImageToAspect(
-      file,
-      kind === "avatar" ? AVATAR_CROP_ASPECT : BANNER_CROP_ASPECT,
-    );
-    const meta = cropUploadMeta(file, crop);
-    const payload: File | Blob = crop?.blob ?? file;
+    // The payload has already been validated and optionally centre-cropped via
+    // the confirm dialog (squares for avatars, 3:1 for banners) — what is
+    // stored is what is shown.
     const bucket = kind === "avatar" ? "avatars" : "banners";
     const previousPath = kind === "avatar" ? avatarUrl : bannerUrl;
     // Use a unique path so the signed URL changes and the browser never serves
@@ -241,7 +233,13 @@ export function ProfileMediaControls({
         <DragDropFileInput
           accept="image/*"
           disabled={uploading !== null}
-          onFiles={(files) => files[0] && upload("avatar", files[0])}
+          onFiles={(files) => {
+            const file = files[0];
+            if (!file) return;
+            const check = validateImageFile(file);
+            if (!check.ok) return toast.error(check.error);
+            requestCrop(file, "avatar", (payload, meta) => void upload("avatar", payload, meta));
+          }}
           className="rounded-md"
         >
           <div className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground">
@@ -256,7 +254,13 @@ export function ProfileMediaControls({
         <DragDropFileInput
           accept="image/*"
           disabled={uploading !== null}
-          onFiles={(files) => files[0] && upload("banner", files[0])}
+          onFiles={(files) => {
+            const file = files[0];
+            if (!file) return;
+            const check = validateImageFile(file);
+            if (!check.ok) return toast.error(check.error);
+            requestCrop(file, "banner", (payload, meta) => void upload("banner", payload, meta));
+          }}
           className="rounded-md"
         >
           <div className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground">
@@ -269,6 +273,7 @@ export function ProfileMediaControls({
           </div>
         </DragDropFileInput>
       </div>
+      {cropDialog}
     </div>
   );
 }

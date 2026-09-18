@@ -34,7 +34,7 @@ import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateImageFile } from "@/lib/validators";
-import { AVATAR_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
+import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import { SkillEditingSection } from "@/components/tethyr/profile/skill-editing";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
 import {
@@ -210,6 +210,38 @@ function ProfileSetupForm({
   });
   const [saving, setSaving] = useState(false);
   const [bgOpen, setBgOpen] = useState(false);
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
+
+  async function uploadAvatar(payload: File | Blob, meta: { ext: string; contentType: string }) {
+    // Use a unique path so the signed URL changes and the browser never serves
+    // a stale cached copy when the avatar is replaced.
+    const previousPath = profile?.avatar_url ?? null;
+    const path = `${userId}/avatar-${Date.now()}.${meta.ext}`;
+    setSaving(true);
+    try {
+      await supabase.storage
+        .from("avatars")
+        .upload(path, payload, { upsert: true, contentType: meta.contentType });
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: path })
+        .eq("id", userId);
+      if (profileErr) {
+        setSaving(false);
+        return toast.error(friendlyError(profileErr));
+      }
+      // Clean up the previous file — best-effort, don't block the UI.
+      if (previousPath && previousPath !== path) {
+        supabase.storage.from("avatars").remove([previousPath]);
+      }
+    } catch (err) {
+      setSaving(false);
+      return toast.error(friendlyError(err as Error, "Avatar upload failed"));
+    }
+    setSaving(false);
+    toast.success("Avatar updated");
+    onSaved();
+  }
   const [handleStatus, setHandleStatus] = useState<"idle" | "checking" | "available" | "taken">(
     "idle",
   );
@@ -374,42 +406,13 @@ function ProfileSetupForm({
             <div className="relative shrink-0 -mt-16 sm:-mt-20">
               <DragDropFileInput
                 accept="image/*"
-                onFiles={async (files) => {
+                onFiles={(files) => {
                   const file = files[0];
                   if (!file) return;
                   const check = validateImageFile(file);
                   if (!check.ok) return toast.error(check.error);
-                  // Use a unique path so the signed URL changes and the browser
-                  // never serves a stale cached copy when the avatar is replaced.
-                  const previousPath = profile?.avatar_url ?? null;
-                  const crop = await cropImageToAspect(file, AVATAR_CROP_ASPECT);
-                  const meta = cropUploadMeta(file, crop);
-                  const payload: File | Blob = crop?.blob ?? file;
-                  const path = `${userId}/avatar-${Date.now()}.${meta.ext}`;
-                  setSaving(true);
-                  try {
-                    await supabase.storage
-                      .from("avatars")
-                      .upload(path, payload, { upsert: true, contentType: meta.contentType });
-                    const { error: profileErr } = await supabase
-                      .from("profiles")
-                      .update({ avatar_url: path })
-                      .eq("id", userId);
-                    if (profileErr) {
-                      setSaving(false);
-                      return toast.error(friendlyError(profileErr));
-                    }
-                    // Clean up the previous file — best-effort, don't block the UI.
-                    if (previousPath && previousPath !== path) {
-                      supabase.storage.from("avatars").remove([previousPath]);
-                    }
-                  } catch (err) {
-                    setSaving(false);
-                    return toast.error(friendlyError(err as Error, "Avatar upload failed"));
-                  }
-                  setSaving(false);
-                  toast.success("Avatar updated");
-                  onSaved();
+                  // Confirm the square crop preview before anything is stored.
+                  requestCrop(file, "avatar", (payload, meta) => void uploadAvatar(payload, meta));
                 }}
               >
                 <div className="h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface sm:h-32 sm:w-32">
@@ -909,6 +912,7 @@ function ProfileSetupForm({
           refresh();
         }}
       />
+      {cropDialog}
     </div>
   );
 }

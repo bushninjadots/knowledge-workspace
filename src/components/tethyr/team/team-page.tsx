@@ -24,7 +24,7 @@ import { useMyProjects } from "@/hooks/use-projects";
 import { useTeamCredits } from "@/hooks/use-credits";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { validateImageFile } from "@/lib/validators";
-import { AVATAR_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
+import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
 import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
@@ -258,6 +258,7 @@ function TeamAvatar({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const initial = (team.name ?? "C").charAt(0).toUpperCase();
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -265,13 +266,15 @@ function TeamAvatar({
     if (!file) return;
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
+    // Confirm the square crop preview before anything is stored.
+    requestCrop(file, "avatar", (payload, meta) => void doUpload(payload, meta));
+  }
+
+  async function doUpload(payload: File | Blob, meta: { ext: string; contentType: string }) {
     setUploading(true);
     try {
       // Use a unique path so the signed URL changes and the browser never serves
       // a stale cached copy when the crew picture is replaced.
-      const crop = await cropImageToAspect(file, AVATAR_CROP_ASPECT);
-      const meta = cropUploadMeta(file, crop);
-      const payload: File | Blob = crop?.blob ?? file;
       const previousPath = team.avatar_url;
       const path = `${team.id}/avatar-${Date.now()}.${meta.ext}`;
       const { error: upErr } = await supabase.storage
@@ -331,6 +334,7 @@ function TeamAvatar({
               <Camera className="h-3.5 w-3.5" />
             )}
           </button>
+          {cropDialog}
         </>
       )}
     </div>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
-import { BANNER_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
+import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,19 +58,20 @@ export function BannerStrip({
   const [captionDraft, setCaptionDraft] = useState(bannerCaption ?? "");
   const [savingCaption, setSavingCaption] = useState(false);
   const captionInputRef = useRef<HTMLInputElement>(null);
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
 
   async function handle(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
+    // Confirm the crop (3:1 band preview) before anything is stored.
+    requestCrop(file, "banner", (payload, meta) => void doUpload(payload, meta));
+    e.target.value = "";
+  }
+
+  async function doUpload(payload: File | Blob, meta: { ext: string; contentType: string }) {
     setUploading(true);
-    // Centre-crop to the banner's 3:1 band so what is stored is what is shown
-    // (no unpredictable object-cover framing). Falls back to the raw file if
-    // the browser can't crop.
-    const crop = await cropImageToAspect(file, BANNER_CROP_ASPECT);
-    const meta = cropUploadMeta(file, crop);
-    const payload: File | Blob = crop?.blob ?? file;
     // Use a unique path so the signed URL changes and the browser never serves
     // a stale cached copy when the banner is replaced.
     const previousPath = bannerPath;
@@ -91,7 +92,6 @@ export function BannerStrip({
     }
     toast.success("Banner updated");
     refresh();
-    if (ref.current) ref.current.value = "";
   }
 
   function openCaptionEditor() {
@@ -267,6 +267,7 @@ export function BannerStrip({
       disabled={uploading}
     >
       {banner}
+      {cropDialog}
     </DragDropFileInput>
   );
 }
