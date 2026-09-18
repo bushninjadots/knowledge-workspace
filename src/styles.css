@@ -113,6 +113,13 @@
   );
 }
 
+/* Let the browser skip layout and paint work for below-the-fold sections while
+ * preserving a stable fallback size to avoid scroll-jump during reveal. */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 520px;
+}
+
 /* Keep interaction feedback useful without forcing motion on reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
   *,

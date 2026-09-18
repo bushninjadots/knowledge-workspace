@@ -204,27 +204,27 @@ function HomePage() {
 
       <LandingStats />
       <main id="landing-content">
-        <SectionReveal id="how-it-works">
+        <SectionReveal id="how-it-works" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <HowItWorks />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="trending-skills">
+        <SectionReveal id="trending-skills" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <TrendingSkills />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="featured-projects">
+        <SectionReveal id="featured-projects" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <FeaturedProjects />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="recent-activity">
+        <SectionReveal id="recent-activity" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <RecentActivity />
           </Suspense>
         </SectionReveal>
-        <SectionReveal id="community-spaces">
+        <SectionReveal id="community-spaces" className="content-visibility-auto">
           <Suspense fallback={<SectionSkeleton />}>
             <CommunitySpaces />
           </Suspense>
