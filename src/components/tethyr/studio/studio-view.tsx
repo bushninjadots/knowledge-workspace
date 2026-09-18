@@ -41,6 +41,7 @@ import {
 } from "@/lib/profile-completeness";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
+import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
 import { Button } from "@/components/ui/button";
 import {
   CARD_SURFACE_STYLE,
@@ -80,22 +81,6 @@ const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, number | undefined> = {
   mobile: 390,
 };
 
-/** Tailwind span classes for each grid width (1–12). Declared as literals so
- *  Tailwind's scanner generates every variant. */
-const SPAN_CLASS: Record<number, string> = {
-  1: "md:col-span-1",
-  2: "md:col-span-2",
-  3: "md:col-span-3",
-  4: "md:col-span-4",
-  5: "md:col-span-5",
-  6: "md:col-span-6",
-  7: "md:col-span-7",
-  8: "md:col-span-8",
-  9: "md:col-span-9",
-  10: "md:col-span-10",
-  11: "md:col-span-11",
-  12: "md:col-span-12",
-};
 
 export function StudioView({ userId, profile, onBack, onCompleteProfile }: StudioViewProps) {
   const navigate = useNavigate();
@@ -653,6 +638,8 @@ function StudioViewSection({
 
   if (blocks.length === 0) return null;
 
+  const gridClass = SECTION_GRID[section.layout] ?? "";
+  const hasGrid = (section.grid?.length ?? 0) > 0;
   const gridMap = new Map((section.grid ?? []).map((item) => [item.i, item]));
 
   return (
@@ -673,12 +660,27 @@ function StudioViewSection({
           </button>
         </header>
       )}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <div
+        className={
+          hasGrid
+            ? "grid grid-cols-1 gap-8 content-safe md:grid-cols-12"
+            : `${gridClass} content-safe`
+        }
+        style={
+          hasGrid
+            ? { gridAutoFlow: "row dense", alignItems: "start" }
+            : gridClass
+              ? { gridAutoFlow: "row", alignItems: "start" }
+              : undefined
+        }
+      >
         {blocks.map((block) => (
           <StudioViewBlock
             key={block.id}
             block={block}
             gridItem={gridMap.get(block.id)}
+            gridClass={gridClass}
+            hasGrid={hasGrid}
             context={context}
           />
         ))}
@@ -690,17 +692,29 @@ function StudioViewSection({
 function StudioViewBlock({
   block,
   gridItem,
+  gridClass,
+  hasGrid,
   context,
 }: {
   block: LayoutBlockInstance;
   gridItem?: LayoutGridItem;
+  gridClass: string;
+  hasGrid: boolean;
   context: BlockContext;
 }) {
-  const span = Math.max(1, Math.min(12, gridItem?.w ?? 12));
+  const span = Math.max(1, Math.min(12, gridItem?.w ?? block.span ?? 12));
   const def = getBlock(block.type);
   return (
     <div
-      className={SPAN_CLASS[span] ?? "md:col-span-12"}
+      className={
+        hasGrid
+          ? gridItem
+            ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(span)}`
+            : "relative min-w-0"
+          : gridClass
+            ? `min-w-0 ${spanClass(span)}`
+            : "min-w-0"
+      }
       style={{ borderRadius: "var(--studio-radius)" }}
     >
       <div
