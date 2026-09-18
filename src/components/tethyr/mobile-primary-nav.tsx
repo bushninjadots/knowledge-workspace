@@ -20,7 +20,7 @@ export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
             <Link
               key={item.to}
               to={item.to}
-              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] transition-lift ${
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                 active
                   ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
                   : "text-muted-foreground hover:text-foreground"
@@ -35,7 +35,7 @@ export function MobilePrimaryNav({ onOpenMore }: { onOpenMore: () => void }) {
         <button
           type="button"
           onClick={onOpenMore}
-          className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] text-muted-foreground transition-lift hover:text-foreground"
+          className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md text-[11px] text-muted-foreground transition-lift hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label="Open more navigation"
         >
           <MoreHorizontal className="h-4 w-4" />
