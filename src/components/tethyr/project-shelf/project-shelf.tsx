@@ -10,6 +10,7 @@ import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback
 import { ProjectShelfOverlay } from "./project-shelf-overlay";
 import { ProjectShelfThumbnails } from "./project-shelf-thumbnails";
 import { clamp, dragDirection, wheelStep } from "./shelf-navigation";
+import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 interface ProjectShelfProps {
@@ -451,6 +452,7 @@ function ProjectListRow({
   onClick: () => void;
 }) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
+  const canonicalWord = canonicalProjectStatus(project.status, project.stage);
   const isOwn = project.profiles?.id === meId;
 
   return (
@@ -468,11 +470,11 @@ function ProjectListRow({
               <span
                 className={cn(
                   "h-1 w-1 rounded-full",
-                  status.dot,
-                  project.status === "active" && "animate-status-breathe",
+                  statusDotClass(project.status),
+                  isLiveStatus(project.status, project.stage) && "animate-status-breathe",
                 )}
               />
-              {status.label}
+              {canonicalWord ?? status.label}
             </span>
           </div>
         </div>

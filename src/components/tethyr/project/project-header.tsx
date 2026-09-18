@@ -17,16 +17,13 @@ import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { ProjectDetail } from "@/hooks/use-projects";
-import {
-  PROJECT_STATUS_LABEL,
-  PROJECT_STATUS_STYLE,
-  PROJECT_LINK_KEYS,
-} from "@/components/tethyr/profile-sections";
+import { PROJECT_STATUS_STYLE, PROJECT_LINK_KEYS } from "@/components/tethyr/profile-sections";
 import { safeHref } from "@/lib/validators";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { PersonPill, PERSON_ROLE_LABEL } from "@/components/tethyr/person-pill";
 import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
+import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { Contributor } from "@/hooks/use-projects";
 
 function Avatar({
@@ -107,6 +104,7 @@ export function ProjectHeader({
   onOpenPeople?: () => void;
 }) {
   const others = contributors.filter((c) => c.role !== "creator");
+  const canonicalWord = canonicalProjectStatus(project.status, project.stage);
   const timeSinceStart = project.started_at
     ? formatDistanceToNowStrict(new Date(project.started_at), { addSuffix: true })
     : null;
@@ -154,11 +152,21 @@ export function ProjectHeader({
               <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                 {project.title}
               </h1>
-              <span
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs ${PROJECT_STATUS_STYLE[project.status]}`}
-              >
-                {PROJECT_STATUS_LABEL[project.status]}
-              </span>
+              {canonicalWord && (
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${PROJECT_STATUS_STYLE[project.status]}`}
+                  title="Where the project is in its life — set by the builder"
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      statusDotClass(project.status),
+                      isLiveStatus(project.status, project.stage) && "animate-status-breathe",
+                    )}
+                  />
+                  {canonicalWord}
+                </span>
+              )}
               <span
                 className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
                 title={
@@ -181,9 +189,6 @@ export function ProjectHeader({
                   aria-label="Featured"
                 />
               )}
-              <span className="rounded-full border border-border/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {project.stage ?? "planning"}
-              </span>
             </div>
 
             {/* Owner + collaborators */}
@@ -406,7 +411,10 @@ export function ProjectHeader({
 
         {/* Progress strip */}
         <div className="mt-5 flex items-center gap-3" aria-label="Project progress">
-          <span className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline">
+          <span
+            className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:inline"
+            title="Set by the builder, and nudged along by completed milestones and recent activity"
+          >
             Momentum
           </span>
           <div
@@ -428,7 +436,6 @@ export function ProjectHeader({
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>{project.stage ?? "Planning"} stage</span>
           {project.looking_for_collaborators && <span>· Seeking collaborators</span>}
           {project.looking_for_feedback && <span>· Open to feedback</span>}
         </div>

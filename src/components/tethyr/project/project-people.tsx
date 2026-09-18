@@ -198,6 +198,19 @@ export function ProjectPeopleTab({
           <UsersIcon className="h-4 w-4 text-muted-foreground" />
           Project people
           <span className="text-xs text-muted-foreground">({contributors.length})</span>
+          {showHeat && (
+            <span
+              className="ml-auto flex items-center gap-1.5 text-[10px] font-normal text-muted-foreground"
+              title="Each person has four bars — one per week. Taller and brighter means more activity that week."
+            >
+              <span className="flex items-end gap-[2px]" aria-hidden="true">
+                <span className="w-1 rounded-[1px] bg-trust/40" style={{ height: 5 }} />
+                <span className="w-1 rounded-[1px] bg-trust/60" style={{ height: 8 }} />
+                <span className="w-1 rounded-[1px] bg-trust" style={{ height: 11 }} />
+              </span>
+              Activity · last 4 weeks
+            </span>
+          )}
         </h2>
         {degraded && (
           <p className="mt-1.5 text-xs text-muted-foreground">
@@ -205,7 +218,23 @@ export function ProjectPeopleTab({
           </p>
         )}
         {contributors.length === 0 && !degraded ? (
-          <p className="mt-3 text-sm text-muted-foreground">No contributors yet.</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {isOwner
+                ? "It's just you so far — open a role or need so collaborators can find their way in."
+                : "No contributors yet. Watch this space."}
+            </p>
+            {isOwner && onOpenNeeds && (
+              <button
+                type="button"
+                onClick={onOpenNeeds}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--user-accent,var(--trust))] px-3.5 py-2 text-xs font-semibold text-[var(--user-accent-foreground,var(--background))] transition-fade hover:opacity-90"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Open a need or role
+              </button>
+            )}
+          </div>
         ) : contributors.length === 0 ? null : (
           <ul className="mt-3 divide-y divide-border/50 rounded-xl border border-border/40 bg-background/40">
             {contributors.map((c) => {

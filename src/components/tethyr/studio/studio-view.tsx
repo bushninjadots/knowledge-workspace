@@ -87,6 +87,23 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  // Edit affordances stay visible until the owner's first edit so new builders
+  // discover their Studio is editable; afterwards they fade to hover-only.
+  const [revealEdits, setRevealEdits] = useState(() => {
+    try {
+      return localStorage.getItem("tethyr:studio-edited") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const markEdited = useCallback(() => {
+    setRevealEdits(false);
+    try {
+      localStorage.setItem("tethyr:studio-edited", "1");
+    } catch {
+      // Private browsing — reveal-on-first-visit just won't persist.
+    }
+  }, []);
   const pageQuery = usePage({ ownerId: userId, ownerType: "profile", includeDraft: true });
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
@@ -332,6 +349,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                         key={section.id}
                         section={section}
                         context={blockContext}
+                        revealEdits={revealEdits}
                         onEdit={() =>
                           navigate({
                             to: "/studio",
@@ -362,9 +380,13 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
         allSkills={allSkills}
         initialSkillIds={[]}
         open={projectDialogOpen}
-        onOpenChange={setProjectDialogOpen}
+        onOpenChange={(open) => {
+          setProjectDialogOpen(open);
+          if (!open) markEdited();
+        }}
         onSaved={() => {
           setProjectDialogOpen(false);
+          markEdited();
           queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
         }}
       />
@@ -625,10 +647,13 @@ function StudioViewSection({
   section,
   context,
   onEdit,
+  revealEdits,
 }: {
   section: LayoutSection;
   context: BlockContext;
   onEdit: () => void;
+  /** Until first edit, section edit buttons are always visible (discoverability). */
+  revealEdits: boolean;
 }) {
   const blocks = section.blocks
     .slice()
@@ -653,7 +678,10 @@ function StudioViewSection({
             onClick={onEdit}
             title="Edit this area in Customize"
             aria-label="Edit this area in Customize"
-            className="flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground opacity-0 transition-lift hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100 group-hover/section:opacity-100"
+            className={cn(
+              "flex h-6 items-center gap-1 rounded-sm px-1.5 text-muted-foreground transition-lift hover:bg-[var(--surface-elevated)] hover:text-foreground focus-visible:opacity-100",
+              revealEdits ? "opacity-100" : "opacity-0 group-hover/section:opacity-100",
+            )}
           >
             <Pencil className="h-3 w-3" />
           </button>

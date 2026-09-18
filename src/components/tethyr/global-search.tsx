@@ -883,8 +883,14 @@ export function GlobalSearch({
             placeholder="Search the network…"
             title="Search (press /)"
             {...comboboxProps}
-            className="h-9 rounded-xl border-border/40 bg-background/40 pl-9 text-xs placeholder:text-xs"
+            className="h-9 rounded-xl border-border/40 bg-background/40 pl-9 pr-12 text-xs placeholder:text-xs"
           />
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border/60 bg-surface-elevated px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground"
+          >
+            /
+          </kbd>
         </div>
         {open && (
           <div
@@ -922,6 +928,12 @@ export function GlobalSearch({
             {...comboboxProps}
             className="h-12 border-0 bg-transparent px-3 text-base shadow-none focus-visible:ring-0"
           />
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none mr-1 rounded border border-border/60 bg-surface-elevated px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground"
+          >
+            ESC
+          </kbd>
         </div>
         <div
           id={listboxId}

@@ -14,6 +14,7 @@ import {
   HandHeart,
 } from "lucide-react";
 import { timeAgo } from "@/lib/time";
+import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
@@ -202,10 +203,14 @@ export function ProjectShelfOverlay({
                               <span
                                 className={cn(
                                   "h-1.5 w-1.5 rounded-full",
-                                  STATUS_STYLES[project.status]?.dot ?? STATUS_STYLES.active.dot,
+                                  statusDotClass(project.status),
+                                  isLiveStatus(project.status, project.stage) &&
+                                    "animate-status-breathe",
                                 )}
                               />
-                              {STATUS_STYLES[project.status]?.label ?? "Active"}
+                              {canonicalProjectStatus(project.status, project.stage) ??
+                                STATUS_STYLES[project.status]?.label ??
+                                "Active"}
                             </span>
                             {/* Matches the shelf cover: a posted role outranks the
                                 generic "open to collaborators" signal. */}
@@ -254,14 +259,25 @@ export function ProjectShelfOverlay({
                               stage, momentum, age, and collaboration intent. */}
                           <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
                             <div className="flex items-center gap-1.5">
-                              <dt className="sr-only">Stage</dt>
+                              <dt className="sr-only">Status</dt>
                               <Flag className="h-3.5 w-3.5" />
-                              <dd className="capitalize">{project.stage ?? "planning"}</dd>
+                              <dd>
+                                {canonicalProjectStatus(project.status, project.stage) ??
+                                  "In motion"}
+                              </dd>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <dt className="sr-only">Momentum</dt>
-                              <Activity className="h-3.5 w-3.5" />
-                              <dd className="tabular-nums">{project.progress_percent}% complete</dd>
+                              <Activity
+                                className="h-3.5 w-3.5"
+                                aria-label="Momentum — set by the builder, nudged by completed milestones and recent activity"
+                              />
+                              <dd
+                                className="tabular-nums"
+                                title="Momentum — set by the builder, nudged by completed milestones and recent activity"
+                              >
+                                {project.progress_percent}% complete
+                              </dd>
                             </div>
                             {project.created_at && (
                               <div className="flex items-center gap-1.5">

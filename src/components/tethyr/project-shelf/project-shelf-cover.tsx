@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
 import { ownerAccentStyle } from "@/lib/background-themes";
+import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 export const STATUS_STYLES: Record<string, { label: string; dot: string }> = {
@@ -38,6 +39,7 @@ function ProjectShelfFace({
   onClick,
 }: ProjectShelfCoverProps) {
   const status = STATUS_STYLES[project.status] ?? STATUS_STYLES.active;
+  const canonicalWord = canonicalProjectStatus(project.status, project.stage);
   const isOwn = project.profiles?.id === meId;
   const ownerAccent = ownerAccentStyle(project.profiles?.background);
 
@@ -62,11 +64,11 @@ function ProjectShelfFace({
               <span
                 className={cn(
                   "h-1.5 w-1.5 rounded-full",
-                  status.dot,
-                  project.status === "active" && "animate-status-breathe",
+                  statusDotClass(project.status),
+                  isLiveStatus(project.status, project.stage) && "animate-status-breathe",
                 )}
               />
-              {status.label}
+              {canonicalWord ?? status.label}
             </span>
             {isOwn && (
               <span className="rounded-full bg-trust/25 px-2 py-0.5 text-[11px] font-medium text-trust">
