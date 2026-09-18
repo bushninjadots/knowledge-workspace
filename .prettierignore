@@ -2,3 +2,4 @@
 g/
 .venv/
 pnpm-lock.yaml
+.vercel/
