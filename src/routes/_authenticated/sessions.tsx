@@ -1,9 +1,8 @@
-import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
-import { z } from "zod";
-import { SessionsLayout } from "@/components/tethyr/sessions/sessions-layout";
-import type { SessionsTab } from "@/components/tethyr/sessions/sessions-sidebar";
-
 const SESSION_TABS: SessionsTab[] = ["upcoming", "calendar", "history", "requests", "availability"];
+
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { z } from "zod";
+import type { SessionsTab } from "@/components/tethyr/sessions/sessions-sidebar";
 
 export const Route = createFileRoute("/_authenticated/sessions")({
   validateSearch: z.object({
@@ -17,7 +16,9 @@ export const Route = createFileRoute("/_authenticated/sessions")({
       { name: "description", content: "Manage your collaborations, mentoring, and meetings." },
     ],
   }),
-  component: SessionsPage,
+  // Code-split: the page component loads after the eager route surface
+  // (loader/head/beforeLoad) so the entry chunk stays small.
+  component: lazyRouteComponent(() => import("./-sessions-page"), "SessionsPage"),
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -45,16 +46,3 @@ export const Route = createFileRoute("/_authenticated/sessions")({
     </div>
   ),
 });
-
-function SessionsPage() {
-  const { location } = useRouterState();
-  const isChildRoute = location.pathname.startsWith("/sessions/");
-
-  // `/sessions/$id` is a nested child route — render its detail page here
-  // instead of the list (same pattern as /library).
-  if (isChildRoute) {
-    return <Outlet />;
-  }
-
-  return <SessionsLayout />;
-}

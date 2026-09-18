@@ -20,6 +20,7 @@ import { ConnectButton } from "@/components/tethyr/connect-button";
 import { RequestSessionDialog } from "@/components/tethyr/sessions/request-session-dialog";
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import type { ProfileBackground } from "@/lib/background-themes";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -152,16 +153,25 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
           }}
         />
       )}
-      {showBanner && bannerSrc && (
-        <BannerStrip
-          bannerSigned={bannerSrc}
-          bannerCaption={data.banner_caption}
-          userId={data.id}
-          onChange={() => undefined}
-          readonly
-          showCaption
-        />
-      )}
+      {showBanner &&
+        bannerSrc &&
+        (() => {
+          // Caption position and overlay follow the profile's background settings
+          // so the studio banner matches the dashboard instead of assuming defaults.
+          const background = data.background as ProfileBackground | null;
+          return (
+            <BannerStrip
+              bannerSigned={bannerSrc}
+              bannerCaption={data.banner_caption}
+              userId={data.id}
+              onChange={() => undefined}
+              overlay={background?.bannerOverlay ?? "soft"}
+              captionPosition={background?.bannerCaptionPosition ?? "right"}
+              readonly
+              showCaption
+            />
+          );
+        })()}
       <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
         <div
           className={`flex flex-col gap-4 sm:flex-row sm:items-end ${bannerSrc && showBanner ? "-mt-12" : "pt-6"}`}

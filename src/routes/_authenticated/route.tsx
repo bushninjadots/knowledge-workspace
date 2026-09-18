@@ -1,12 +1,16 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthenticatedShell } from "@/components/tethyr/authenticated-shell";
 import { robotsMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   head: () => ({ meta: robotsMeta() }),
-  component: AuthenticatedShell,
+  // Code-split: the authenticated chrome (sidebar, nav, modules) stays out of
+  // the public entry chunk. beforeLoad (the auth gate) stays eager.
+  component: lazyRouteComponent(
+    () => import("@/components/tethyr/authenticated-shell"),
+    "AuthenticatedShell",
+  ),
   beforeLoad: async () => {
     try {
       const { data, error } = await supabase.auth.getUser();

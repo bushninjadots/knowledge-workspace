@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, Check, ImagePlus, LoaderCircle, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -92,6 +92,7 @@ export function BackgroundPickerDialog({
    *  follow the banner so the "From banner" swatch shows the exact tint. */
   bannerUrl?: string | null;
 }) {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<BgTab>("app");
   const [appDraft, setAppDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
   const [publicDraft, setPublicDraft] = useState<ProfileBackground>(EMPTY_BACKGROUND);
@@ -182,6 +183,10 @@ export function BackgroundPickerDialog({
     setSaving(false);
     if (error) return toast.error(friendlyError(error));
     toast.success("Background updated");
+    // Caption position/overlay live here — resync the studio header block too,
+    // not just current-user readers, so dashboard and studio stay in step.
+    void queryClient.invalidateQueries({ queryKey: ["profile-header-block"] });
+    void queryClient.invalidateQueries({ queryKey: ["current-user"] });
     onOpenChange(false);
     onSaved();
   }

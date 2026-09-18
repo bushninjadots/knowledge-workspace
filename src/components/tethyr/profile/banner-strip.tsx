@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -41,6 +42,16 @@ export function BannerStrip({
   const ref = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const accentColor = useDominantColor(bannerSigned);
+  const queryClient = useQueryClient();
+
+  // After a write, resync every surface that renders this profile — the studio
+  // header block keeps its own query, so invalidating only `current-user`
+  // leaves the dashboard and studio showing different captions/banners.
+  function refresh() {
+    void queryClient.invalidateQueries({ queryKey: ["profile-header-block"] });
+    void queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    onChange();
+  }
 
   const [editingCaption, setEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState(bannerCaption ?? "");
@@ -72,7 +83,7 @@ export function BannerStrip({
       supabase.storage.from("banners").remove([previousPath]);
     }
     toast.success("Banner updated");
-    onChange();
+    refresh();
     if (ref.current) ref.current.value = "";
   }
 
@@ -97,7 +108,7 @@ export function BannerStrip({
     if (error) return toast.error(friendlyError(error));
     setEditingCaption(false);
     toast.success(trimmed ? "Caption updated" : "Caption cleared");
-    onChange();
+    refresh();
   }
 
   const banner = (
