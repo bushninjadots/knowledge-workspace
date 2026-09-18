@@ -81,7 +81,6 @@ const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, number | undefined> = {
   mobile: 390,
 };
 
-
 export function StudioView({ userId, profile, onBack, onCompleteProfile }: StudioViewProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
