@@ -51,7 +51,7 @@ function ProjectShelfFace({
       >
         {/* Cover image — 16:9, object-contain to show the whole image */}
         <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-          <CoverGradient coverUrl={project.cover_url} fit="contain" />
+          <CoverGradient coverUrl={project.cover_url} fit="contain" hoverZoom />
 
           {/* Subtle specular sheen on hover */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-transparent opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
@@ -59,7 +59,13 @@ function ProjectShelfFace({
           {/* Status badge */}
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-foreground">
-              <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  status.dot,
+                  project.status === "active" && "animate-status-breathe",
+                )}
+              />
               {status.label}
             </span>
             {isOwn && (

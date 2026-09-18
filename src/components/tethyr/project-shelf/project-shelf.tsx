@@ -465,7 +465,13 @@ function ProjectListRow({
           <CoverGradient coverUrl={project.cover_url} fit="cover" />
           <div className="absolute left-2 top-2 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
-              <span className={cn("h-1 w-1 rounded-full", status.dot)} />
+              <span
+                className={cn(
+                  "h-1 w-1 rounded-full",
+                  status.dot,
+                  project.status === "active" && "animate-status-breathe",
+                )}
+              />
               {status.label}
             </span>
           </div>

@@ -1,7 +1,11 @@
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Users as UsersIcon, Briefcase, HandHeart, MessageSquare, Zap } from "lucide-react";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import type { Contributor, OpenRoleRow } from "@/hooks/use-projects";
+import { useProjectActivity } from "@/hooks/use-projects";
+import { bucketContributorActivity } from "@/lib/activity-heat";
+import { cn } from "@/lib/utils";
 import { OpenRolesSection } from "./project-open-roles";
 import { useProjectTeams } from "@/hooks/use-teams";
 import { useConnections } from "@/hooks/use-connections";
@@ -12,6 +16,46 @@ const ROLE_LABEL: Record<Contributor["role"], string> = {
   mentor: "Mentor",
   contributor: "Contributor",
 };
+
+const ZERO_HEAT = [0, 0, 0, 0] as const;
+
+const HEAT_TINT: Record<number, string> = {
+  0: "bg-muted-foreground/15",
+  1: "bg-trust/40",
+  2: "bg-trust/60",
+  3: "bg-trust",
+};
+
+/**
+ * Four 7-day activity bars (oldest → newest) — people shown through what
+ * they recently did on this project, not claims. Pure CSS, no chart lib.
+ */
+function ContributionHeat({ counts, name }: { counts: readonly number[]; name: string }) {
+  const total = counts.reduce((a, b) => a + b, 0);
+  const weekLabel = (n: number) => (n === 1 ? "1 event" : `${n} events`);
+  return (
+    <span
+      className="hidden items-end gap-[3px] sm:flex"
+      title={`Activity, last 4 weeks: ${counts
+        .map((n) => weekLabel(n))
+        .join(", ")} · ${total} total for ${name}`}
+    >
+      {counts.map((n, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className={cn("w-1 rounded-[1px]", HEAT_TINT[Math.min(n, 3)])}
+          style={{ height: `${4 + Math.min(n, 4) * 2.5}px` }}
+        />
+      ))}
+      <span className="sr-only">
+        {total > 0
+          ? `${total} contribution${total !== 1 ? "s" : ""} in the last 4 weeks (most recent week: ${counts[3]})`
+          : "No contributions in the last 4 weeks"}
+      </span>
+    </span>
+  );
+}
 
 export function ProjectPeopleTab({
   projectId,
@@ -46,6 +90,12 @@ export function ProjectPeopleTab({
   const { data: teams = [] } = useProjectTeams(projectId);
   const { data: me } = useCurrentUser();
   const { data: connections } = useConnections();
+
+  // Recent cadence per contributor (four 7-day windows) — work-first signal
+  // for the people roster. Hidden entirely when the project has no activity.
+  const { data: activity } = useProjectActivity(projectId);
+  const heatByProfile = useMemo(() => bucketContributorActivity(activity ?? []), [activity]);
+  const showHeat = (activity?.length ?? 0) > 0;
 
   // Accepted connection id for each contributor, so the Message action can open
   // the right thread with project context.
@@ -200,6 +250,12 @@ export function ProjectPeopleTab({
                   </ProfileLink>
 
                   <div className="flex items-center gap-2">
+                    {showHeat && (
+                      <ContributionHeat
+                        counts={heatByProfile.get(c.profile_id) ?? ZERO_HEAT}
+                        name={c.profile?.display_name || c.profile?.handle || "member"}
+                      />
+                    )}
                     {c.contribution_score > 0 && (
                       <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary tabular-nums">
                         {c.contribution_score} pts

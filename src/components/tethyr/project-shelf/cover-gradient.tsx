@@ -5,6 +5,11 @@ import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback
 interface CoverGradientProps {
   coverUrl?: string | null;
   fit?: "cover" | "contain";
+  /**
+   * Card-level hover affordance: a slow 1.03 image zoom on parent `group`
+   * hover. Opt-in — only browsing surfaces where the whole card lifts.
+   */
+  hoverZoom?: boolean;
 }
 
 /**
@@ -13,7 +18,11 @@ interface CoverGradientProps {
  * is letterboxed (`fit="contain"`) the same sunken surface fills the margins
  * instead of a saturated gradient.
  */
-export function CoverGradient({ coverUrl, fit = "contain" }: CoverGradientProps) {
+export function CoverGradient({
+  coverUrl,
+  fit = "contain",
+  hoverZoom = false,
+}: CoverGradientProps) {
   if (!coverUrl) return <ProjectCoverFallback />;
 
   return (
@@ -26,7 +35,11 @@ export function CoverGradient({ coverUrl, fit = "contain" }: CoverGradientProps)
         draggable={false}
         loading="lazy"
         decoding="async"
-        className={`pointer-events-none h-full w-full select-none ${fit === "cover" ? "object-cover" : "object-contain"}`}
+        className={`pointer-events-none h-full w-full select-none ${
+          fit === "cover" ? "object-cover" : "object-contain"
+        } ${
+          hoverZoom ? "transition-transform duration-300 ease-out group-hover:scale-[1.03]" : ""
+        }`}
       />
       {/* Gentle bottom fade so the progress bar is visible */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />

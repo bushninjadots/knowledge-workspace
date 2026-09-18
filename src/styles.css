@@ -745,6 +745,22 @@
   animation: gentle-pulse 2.4s ease-in-out infinite;
 }
 
+/* Active-project status dot — a slow opacity breathe signalling a live,
+   moving project. Restrained: colour/opacity only (motion policy above). */
+@keyframes status-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@utility animate-status-breathe {
+  animation: status-breathe 3s ease-in-out infinite;
+}
+
 /* Stats marquee — seamless infinite scroll. Reduced-motion users get a static
    wrapped grid instead (the global reduced-motion rule already stops the animation). */
 @keyframes marquee-scroll {
