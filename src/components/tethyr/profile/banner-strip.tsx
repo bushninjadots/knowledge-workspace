@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
+import { BANNER_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
 import { useDominantColor } from "@/lib/dominant-color";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,13 +65,19 @@ export function BannerStrip({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(true);
+    // Centre-crop to the banner's 3:1 band so what is stored is what is shown
+    // (no unpredictable object-cover framing). Falls back to the raw file if
+    // the browser can't crop.
+    const crop = await cropImageToAspect(file, BANNER_CROP_ASPECT);
+    const meta = cropUploadMeta(file, crop);
+    const payload: File | Blob = crop?.blob ?? file;
     // Use a unique path so the signed URL changes and the browser never serves
     // a stale cached copy when the banner is replaced.
     const previousPath = bannerPath;
-    const path = `${userId}/banner-${Date.now()}.${check.ext}`;
+    const path = `${userId}/banner-${Date.now()}.${meta.ext}`;
     const { error: upErr } = await supabase.storage
       .from("banners")
-      .upload(path, file, { upsert: true, contentType: check.contentType });
+      .upload(path, payload, { upsert: true, contentType: meta.contentType });
     if (upErr) {
       setUploading(false);
       return toast.error(friendlyError(upErr));

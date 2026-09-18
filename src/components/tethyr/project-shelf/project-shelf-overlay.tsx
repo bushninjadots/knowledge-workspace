@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useRef } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { motion, AnimatePresence, useReducedMotion, useMotionValue } from "framer-motion";
-import { X, ExternalLink, Users, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  X,
+  ExternalLink,
+  Users,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  Flag,
+  Activity,
+  CalendarDays,
+  HandHeart,
+} from "lucide-react";
+import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
@@ -237,6 +249,60 @@ export function ProjectShelfOverlay({
                               {project.description}
                             </p>
                           )}
+
+                          {/* Facts strip — the "what am I looking at" line:
+                              stage, momentum, age, and collaboration intent. */}
+                          <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <dt className="sr-only">Stage</dt>
+                              <Flag className="h-3.5 w-3.5" />
+                              <dd className="capitalize">{project.stage ?? "planning"}</dd>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <dt className="sr-only">Momentum</dt>
+                              <Activity className="h-3.5 w-3.5" />
+                              <dd className="tabular-nums">{project.progress_percent}% complete</dd>
+                            </div>
+                            {project.created_at && (
+                              <div className="flex items-center gap-1.5">
+                                <dt className="sr-only">Started</dt>
+                                <CalendarDays className="h-3.5 w-3.5" />
+                                <dd>{timeAgo(project.created_at)}</dd>
+                              </div>
+                            )}
+                            {(project.looking_for_collaborators ||
+                              project.looking_for_feedback) && (
+                              <div className="flex items-center gap-1.5">
+                                <dt className="sr-only">Looking for</dt>
+                                <HandHeart className="h-3.5 w-3.5" />
+                                <dd>
+                                  {project.looking_for_collaborators &&
+                                    (project.looking_for_feedback
+                                      ? "Collaborators · feedback"
+                                      : "Collaborators")}
+                                  {project.looking_for_feedback &&
+                                    !project.looking_for_collaborators &&
+                                    "Feedback"}
+                                </dd>
+                              </div>
+                            )}
+                          </dl>
+
+                          {/* Momentum bar — mirrors the card cover and the
+                              project page's progress strip. */}
+                          <div
+                            className="h-1 overflow-hidden rounded-full bg-surface-elevated"
+                            role="progressbar"
+                            aria-valuenow={project.progress_percent}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${project.progress_percent}% complete`}
+                          >
+                            <div
+                              className="h-full rounded-full bg-[var(--user-accent,var(--primary))]"
+                              style={{ width: `${project.progress_percent}%` }}
+                            />
+                          </div>
 
                           {project.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">

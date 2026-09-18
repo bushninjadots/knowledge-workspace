@@ -372,6 +372,28 @@ export function ProjectReadmeTab({
             <ReadmeTocCollapsed sections={readmeSections} />
             <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem]">
               <div id={README_ARTICLE_ID} className="min-w-0">
+                {/* Structured About — always visible when a README exists (the
+                    fallback doc below already carries this info otherwise).
+                    The goal line lives in the page header; this is the what
+                    and the why. */}
+                {project.readme && (project.description || project.vision) && (
+                  <div className="border-b border-border/40 py-5">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      About
+                    </h2>
+                    {project.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+                        {project.description}
+                      </p>
+                    )}
+                    {project.vision && (
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                        <span className="font-medium text-foreground/80">Vision · </span>
+                        {project.vision}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {project.readme ? (
                   <div className="prose-custom py-6">
                     <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

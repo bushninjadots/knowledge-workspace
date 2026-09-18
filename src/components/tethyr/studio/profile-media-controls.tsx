@@ -6,6 +6,12 @@ import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
+import {
+  AVATAR_CROP_ASPECT,
+  BANNER_CROP_ASPECT,
+  cropImageToAspect,
+  cropUploadMeta,
+} from "@/lib/image-crop";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -88,15 +94,24 @@ export function ProfileMediaControls({
     const check = validateImageFile(file);
     if (!check.ok) return toast.error(check.error);
     setUploading(kind);
+    // Centre-crop to the display shape — squares for avatars, 3:1 for banners —
+    // so what is stored is what is shown. Falls back to the raw file if the
+    // browser can't crop.
+    const crop = await cropImageToAspect(
+      file,
+      kind === "avatar" ? AVATAR_CROP_ASPECT : BANNER_CROP_ASPECT,
+    );
+    const meta = cropUploadMeta(file, crop);
+    const payload: File | Blob = crop?.blob ?? file;
     const bucket = kind === "avatar" ? "avatars" : "banners";
     const previousPath = kind === "avatar" ? avatarUrl : bannerUrl;
     // Use a unique path so the signed URL changes and the browser never serves
     // a stale cached copy when the media is replaced at the same extension.
-    const path = `${ownerId}/${kind}-${Date.now()}.${check.ext}`;
+    const path = `${ownerId}/${kind}-${Date.now()}.${meta.ext}`;
     try {
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(path, file, { upsert: true, contentType: check.contentType });
+        .upload(path, payload, { upsert: true, contentType: meta.contentType });
       if (uploadError) throw uploadError;
       const { error: profileError } = await supabase
         .from("profiles")

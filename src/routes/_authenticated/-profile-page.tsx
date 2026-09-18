@@ -34,6 +34,7 @@ import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-picker-dialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateImageFile } from "@/lib/validators";
+import { AVATAR_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
 import { SkillEditingSection } from "@/components/tethyr/profile/skill-editing";
 import { GitHubConnect } from "@/components/tethyr/profile/github-connect";
 import {
@@ -381,12 +382,15 @@ function ProfileSetupForm({
                   // Use a unique path so the signed URL changes and the browser
                   // never serves a stale cached copy when the avatar is replaced.
                   const previousPath = profile?.avatar_url ?? null;
-                  const path = `${userId}/avatar-${Date.now()}.${check.ext}`;
+                  const crop = await cropImageToAspect(file, AVATAR_CROP_ASPECT);
+                  const meta = cropUploadMeta(file, crop);
+                  const payload: File | Blob = crop?.blob ?? file;
+                  const path = `${userId}/avatar-${Date.now()}.${meta.ext}`;
                   setSaving(true);
                   try {
                     await supabase.storage
                       .from("avatars")
-                      .upload(path, file, { upsert: true, contentType: check.contentType });
+                      .upload(path, payload, { upsert: true, contentType: meta.contentType });
                     const { error: profileErr } = await supabase
                       .from("profiles")
                       .update({ avatar_url: path })

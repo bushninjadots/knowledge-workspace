@@ -24,6 +24,7 @@ import { useMyProjects } from "@/hooks/use-projects";
 import { useTeamCredits } from "@/hooks/use-credits";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { validateImageFile } from "@/lib/validators";
+import { AVATAR_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
 import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
@@ -268,11 +269,14 @@ function TeamAvatar({
     try {
       // Use a unique path so the signed URL changes and the browser never serves
       // a stale cached copy when the crew picture is replaced.
+      const crop = await cropImageToAspect(file, AVATAR_CROP_ASPECT);
+      const meta = cropUploadMeta(file, crop);
+      const payload: File | Blob = crop?.blob ?? file;
       const previousPath = team.avatar_url;
-      const path = `${team.id}/avatar-${Date.now()}.${check.ext}`;
+      const path = `${team.id}/avatar-${Date.now()}.${meta.ext}`;
       const { error: upErr } = await supabase.storage
         .from("team-avatars")
-        .upload(path, file, { upsert: true, contentType: check.contentType });
+        .upload(path, payload, { upsert: true, contentType: meta.contentType });
       if (upErr) throw upErr;
       await updateTeam.mutateAsync({ avatar_url: path });
       // Clean up the previous file — best-effort, don't block the UI.

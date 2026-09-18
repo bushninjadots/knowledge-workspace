@@ -15,6 +15,7 @@ import { BackgroundPickerDialog } from "@/components/tethyr/profile/background-p
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
+import { BANNER_CROP_ASPECT, cropImageToAspect, cropUploadMeta } from "@/lib/image-crop";
 import type { ProfileBackground } from "@/lib/background-themes";
 
 const CAPTION_MAX = 60;
@@ -73,11 +74,14 @@ export function HeroEditControls({
     setUploading(true);
     // Use a unique path so the signed URL changes and the browser never serves
     // a stale cached copy when the banner is replaced.
+    const crop = await cropImageToAspect(file, BANNER_CROP_ASPECT);
+    const meta = cropUploadMeta(file, crop);
+    const payload: File | Blob = crop?.blob ?? file;
     const previousPath = identity.banner_url;
-    const path = `${userId}/banner-${Date.now()}.${check.ext}`;
+    const path = `${userId}/banner-${Date.now()}.${meta.ext}`;
     const { error: upErr } = await supabase.storage
       .from("banners")
-      .upload(path, file, { upsert: true, contentType: check.contentType });
+      .upload(path, payload, { upsert: true, contentType: meta.contentType });
     if (upErr) {
       setUploading(false);
       return toast.error(friendlyError(upErr));
