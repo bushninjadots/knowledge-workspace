@@ -171,7 +171,7 @@ export function BannerStrip({
 
       {readonly && showCaption && bannerCaption && (
         <span
-          className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ring-1 ring-border/40 sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+          className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-full bg-background/70 px-3 py-1.5 text-sm text-foreground backdrop-blur-sm ring-1 ring-border/40 ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
         >
           {bannerCaption}
         </span>
@@ -239,7 +239,7 @@ export function BannerStrip({
             <button
               onClick={openCaptionEditor}
               aria-label="Edit banner caption"
-              className={`absolute bottom-4 z-20 max-w-[calc(100%-2rem)] truncate rounded-md border border-white/20 bg-background/80 px-3 py-1.5 text-sm text-foreground shadow-sm backdrop-blur-sm transition-lift hover:bg-background/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[calc(100%-2rem)] ${captionPosition === "left" ? "left-4" : captionPosition === "center" ? "left-1/2 -translate-x-1/2" : "right-4"}`}
+              className={`absolute bottom-4 z-20 w-[calc(100%-2rem)] truncate rounded-md border border-white/20 bg-background/80 px-3 py-1.5 text-sm text-foreground shadow-sm backdrop-blur-sm transition-lift hover:bg-background/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${captionPosition === "left" ? "left-4 text-left" : captionPosition === "center" ? "left-1/2 -translate-x-1/2 text-center" : "right-4 text-right"}`}
               title="Edit banner caption"
             >
               {bannerCaption}
