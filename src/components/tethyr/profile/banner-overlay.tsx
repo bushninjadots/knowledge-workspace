@@ -44,10 +44,10 @@ export function BannerOverlayPicker({
             aria-pressed={selected}
             onClick={() => onChange(option.id)}
             className={cn(
-              "min-w-0 overflow-hidden rounded-lg border text-left transition-lift",
+              "group min-w-0 overflow-hidden rounded-lg border bg-surface text-left transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               selected
-                ? "border-[var(--user-accent,var(--primary))]"
-                : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
+                ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--accent))]"
+                : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface-elevated",
             )}
           >
             {/* Preview stands in for a busy photo: layered colour noise + a

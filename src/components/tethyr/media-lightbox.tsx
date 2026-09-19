@@ -66,11 +66,11 @@ export function MediaLightbox({
       role="dialog"
       aria-modal="true"
       aria-label={image.alt || "Image viewer"}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 sm:p-10"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/95 p-4 backdrop-blur-sm sm:p-10"
       onClick={onClose}
     >
       {/* Counter + close */}
-      <div className="absolute top-4 right-4 flex items-center gap-3 text-white/70">
+      <div className="absolute right-4 top-4 flex items-center gap-3 rounded-md border border-white/15 bg-black/20 px-1.5 py-1 text-white/70 backdrop-blur-sm">
         <span className="text-xs tabular-nums">
           {index + 1} / {images.length}
         </span>
@@ -78,7 +78,7 @@ export function MediaLightbox({
           type="button"
           onClick={onClose}
           aria-label="Close viewer"
-          className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+          className="rounded-md p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
           <X className="h-5 w-5" />
         </button>
@@ -94,7 +94,7 @@ export function MediaLightbox({
               goPrev();
             }}
             aria-label="Previous image"
-            className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white sm:left-6"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-md border border-white/10 bg-black/20 p-2 text-white/70 backdrop-blur-sm transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:left-6"
           >
             <ChevronLeft className="h-8 w-8" />
           </button>
@@ -105,7 +105,7 @@ export function MediaLightbox({
               goNext();
             }}
             aria-label="Next image"
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white sm:right-6"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-white/10 bg-black/20 p-2 text-white/70 backdrop-blur-sm transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-6"
           >
             <ChevronRight className="h-8 w-8" />
           </button>
