@@ -80,14 +80,14 @@ export function HomePage() {
 
       <section className="relative overflow-hidden bg-noise">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />
-        <div className="relative mx-auto max-w-7xl px-4 pt-24 pb-32 sm:px-6 sm:pt-32">
-          <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative mx-auto max-w-7xl px-4 pt-20 pb-24 sm:px-6 sm:pt-28 sm:pb-28">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-4 py-1.5 text-xs text-muted-foreground animate-stagger">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 Early access — now open
               </span>
-              <h1 className="mt-8 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+              <h1 className="mt-7 max-w-3xl font-display text-[3.25rem] font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl md:text-7xl lg:text-[5.75rem]">
                 Build together.
                 <br />
                 Get known for what you make

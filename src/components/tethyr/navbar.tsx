@@ -32,7 +32,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 bg-noise backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 bg-noise">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Logo />
 
@@ -41,13 +41,13 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           <nav aria-label="Section navigation" className="hidden items-center gap-1 md:flex">
             <Link
               to="/explore"
-              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
             >
               Explore
             </Link>
             <a
               href="/#how-it-works"
-              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
             >
               How it works
             </a>
