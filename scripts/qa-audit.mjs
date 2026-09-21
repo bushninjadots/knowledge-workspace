@@ -38,8 +38,26 @@ async function settle(page, ms = 1800) {
   await page.waitForTimeout(ms);
 }
 
+/**
+ * page.goto with retries. On a cold dev server Vite discovers new module
+ * dependencies mid-navigation, re-optimizes, and reloads the page — aborting
+ * in-flight navigations with net::ERR_ABORTED. One retry after a settle
+ * absorbs the class of flake (seen on /skills) without masking real 500s.
+ */
+async function goto(page, url, options) {
+  try {
+    return await page.goto(url, options);
+  } catch (err) {
+    const retriable =
+      err?.message?.includes("ERR_ABORTED") || err?.message?.includes("ERR_CONNECTION_REFUSED");
+    if (!retriable) throw err;
+    await page.waitForTimeout(2500);
+    return page.goto(url, options);
+  }
+}
+
 async function login(page) {
-  await page.goto(`${BASE}/login`, { waitUntil: "load" });
+  await goto(page, `${BASE}/login`, { waitUntil: "load" });
   await settle(page, 1200); // hydration must complete before interacting
   await page.fill("#email", EMAIL);
   await page.fill("#password", PASSWORD);
@@ -146,11 +164,11 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     wireDiagnostics(page);
-    await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+    await goto(page, `${BASE}/`, { waitUntil: "domcontentloaded" });
     await auditPage(page, "landing");
-    await page.goto(`${BASE}/u/maya`, { waitUntil: "domcontentloaded" });
+    await goto(page, `${BASE}/u/maya`, { waitUntil: "domcontentloaded" });
     await auditPage(page, "public-studio-maya");
-    await page.goto(`${BASE}/skills`, { waitUntil: "domcontentloaded" });
+    await goto(page, `${BASE}/skills`, { waitUntil: "domcontentloaded" });
     await auditPage(page, "skills");
 
     await login(page);
@@ -170,7 +188,7 @@ try {
       ["studio-editor", "/studio"],
       ["profile-private", "/profile"],
     ]) {
-      await page.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded" });
+      await goto(page, `${BASE}${url}`, { waitUntil: "domcontentloaded" });
       await auditPage(page, name);
     }
 
@@ -179,7 +197,7 @@ try {
       return a.length ? a[0].getAttribute("href") : null;
     });
     if (projHref) {
-      await page.goto(`${BASE}${projHref}`, { waitUntil: "domcontentloaded" });
+      await goto(page, `${BASE}${projHref}`, { waitUntil: "domcontentloaded" });
       await auditPage(page, "project-detail");
     }
     await page.context().close();
@@ -189,9 +207,9 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     wireDiagnostics(page);
-    await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+    await goto(page, `${BASE}/`, { waitUntil: "domcontentloaded" });
     await auditPage(page, "landing", { mobile: true });
-    await page.goto(`${BASE}/u/maya`, { waitUntil: "domcontentloaded" });
+    await goto(page, `${BASE}/u/maya`, { waitUntil: "domcontentloaded" });
     await auditPage(page, "public-studio-maya", { mobile: true });
     await login(page);
     for (const [name, url] of [
@@ -199,7 +217,7 @@ try {
       ["explore", "/explore"],
       ["studio-editor", "/studio"],
     ]) {
-      await page.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded" });
+      await goto(page, `${BASE}${url}`, { waitUntil: "domcontentloaded" });
       await auditPage(page, name, { mobile: true });
     }
     await page.context().close();
