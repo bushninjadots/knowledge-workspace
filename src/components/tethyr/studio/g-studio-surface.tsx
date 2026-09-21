@@ -638,7 +638,7 @@ function GStudioTopBar({
           </span>
           <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
-              className={cn(
+            className={cn(
               "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
               saving || dirty
                 ? "border-caution text-caution"
@@ -740,7 +740,9 @@ function GStudioTopBar({
                     aria-label={saving ? "Saving draft" : "Save draft"}
                   >
                     <Save className="h-3 w-3" />
-                    <span className={compact ? "sr-only" : undefined}>{saving ? "Saving" : "Save draft"}</span>
+                    <span className={compact ? "sr-only" : undefined}>
+                      {saving ? "Saving" : "Save draft"}
+                    </span>
                   </Button>
                   <Button
                     variant={hasUnpublishedChanges ? "default" : "outline"}
@@ -2776,7 +2778,51 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
       className="fixed inset-x-0 bottom-0 z-40 max-h-[62vh] border-t border-border bg-[var(--surface-elevated)] shadow-panel"
       aria-label="Mobile Studio editor"
     >
-      <div className="flex items-center gap-1 border-b border-border px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="t-label">Edit Studio</span>
+          <span
+            className={cn(
+              "truncate text-2xs",
+              props.saving || props.dirty || props.hasUnpublishedChanges
+                ? "text-caution"
+                : "text-trust",
+            )}
+          >
+            {props.saving
+              ? "Saving…"
+              : props.dirty
+                ? "Unsaved changes"
+                : props.hasUnpublishedChanges
+                  ? "Ready to publish"
+                  : props.published
+                    ? `Live · v${props.publishedVersion ?? 1}`
+                    : "Draft"}
+          </span>
+        </div>
+        <Button
+          variant={props.dirty ? "default" : "outline"}
+          size="sm"
+          className="h-7 px-2 text-2xs"
+          disabled={!props.dirty || props.saving}
+          onClick={props.onSave}
+        >
+          <Save className="h-3 w-3" /> Save
+        </Button>
+        <Button
+          variant={props.hasUnpublishedChanges ? "default" : "outline"}
+          size="sm"
+          className="h-7 px-2 text-2xs"
+          disabled={!props.hasUnpublishedChanges || props.saving}
+          onClick={props.onPublish}
+        >
+          <Upload className="h-3 w-3" /> Publish
+        </Button>
+        <IconButton label="Close mobile editor" onClick={() => setOpen(false)}>
+          <X className="h-3.5 w-3.5" />
+        </IconButton>
+      </div>
+      <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
         <button
           type="button"
           onClick={() => setTab("arrange")}
@@ -2807,9 +2853,6 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         >
           <Sliders className="mr-1 inline h-3 w-3" /> Style
         </button>
-        <IconButton label="Close mobile editor" className="ml-auto" onClick={() => setOpen(false)}>
-          <X className="h-3.5 w-3.5" />
-        </IconButton>
       </div>
       <div className="max-h-[48vh] overflow-y-auto px-3 py-2">
         {tab === "arrange" && (
