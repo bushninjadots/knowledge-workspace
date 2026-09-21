@@ -1,28 +1,16 @@
 import { useEffect, useMemo } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Github,
-  Globe,
-  Instagram,
-  Link2,
-  Pencil,
-  Twitch,
-  Twitter,
-  Youtube,
-} from "lucide-react";
+import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
-import { useCurrentUser } from "@/hooks/use-current-user";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { fetchPublicProfile, type PublicProfile } from "./-u.$handle-data";
-import { useTheme as useAppTheme } from "@/lib/theme";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -37,10 +25,6 @@ export function PublicProfileRoute() {
     queryFn: () => fetchPublicProfile(handle),
     staleTime: 60_000,
   });
-
-  const { data: me } = useCurrentUser();
-  const meId = me?.userId ?? null;
-  const bannerColor = useDominantColor(data?.bannerSigned ?? null);
 
   useEffect(() => {
     const profileId = data?.profile?.id;
@@ -65,22 +49,21 @@ export function PublicProfileRoute() {
     };
   }, [data?.profile?.id, handle, queryClient]);
 
-  const isOwner = !!(meId && data?.profile && meId === data.profile.id);
-
-  // The owner builder provisions its draft itself. Keeping this query
-  // published-only prevents the public route and builder from racing to create
-  // two profile pages for the same owner.
+  // Public parity: this query stays published-only. The owner builder (and the
+  // owner's Studio view at /profile) provisions its draft itself — letting the
+  // public route create pages would race the owner's own provisioning.
   const profilePageQuery = useProfilePage({
     profileId: data?.profile?.id ?? "",
     isOwner: false,
   });
   const { page: profilePage } = profilePageQuery;
 
-  const { resolvedTheme } = useAppTheme();
   const pageThemeStyle = useMemo(
-    () => themeTokensToStyle(profilePage?.theme ?? {}, resolvedTheme),
-    [profilePage?.theme, resolvedTheme],
+    () => themeTokensToStyle(profilePage?.theme ?? {}),
+    [profilePage?.theme],
   );
+
+  const bannerColor = useDominantColor(data?.bannerSigned ?? null);
 
   const hasBlocks = !!profilePage && (profilePage.layout?.sections?.length ?? 0) > 0;
 
@@ -120,20 +103,6 @@ export function PublicProfileRoute() {
       pageThemeStyle={pageThemeStyle}
       embed={embed}
     >
-      {isOwner && !embed && (
-        <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-2 px-4 pt-4 sm:px-8">
-          <span className="text-xs text-muted-foreground">
-            This is your public Studio, exactly as visitors see it.
-          </span>
-          <Link
-            to="/studio"
-            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1 text-xs font-medium text-foreground transition-lift hover:bg-[var(--surface-elevated)]"
-          >
-            <Pencil className="h-3 w-3" />
-            Customize
-          </Link>
-        </div>
-      )}
       {hasBlocks ? (
         <EditModeProvider>
           <PageShell
@@ -143,6 +112,13 @@ export function PublicProfileRoute() {
             pageCreationAction={profilePageQuery.createPage}
             pageCreationError={profilePageQuery.pageCreationError}
             pageCreationPending={profilePageQuery.pageCreationPending}
+            backgroundSlot={
+              <BackgroundLayer
+                background={data.publicBackground}
+                imageUrl={data.backgroundImageUrl}
+                bannerColor={bannerColor}
+              />
+            }
           />
         </EditModeProvider>
       ) : (
@@ -169,16 +145,15 @@ function Shell({
 }) {
   const navigate = useNavigate();
 
+  // Composed like the owner's Studio view: the root keeps the app background +
+  // appearance variables; the content wrapper becomes the themed canvas (page
+  // theme + backdrop) so blocks sit on exactly the surface the creator sees in
+  // their own view.
   return (
     <div
       className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
-      style={{ ...appearanceStyle(background), ...(pageThemeStyle ?? {}) }}
+      style={appearanceStyle(background)}
     >
-      <BackgroundLayer
-        background={background}
-        imageUrl={backgroundImageUrl}
-        bannerColor={bannerColor}
-      />
       {!embed && (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
           <button
@@ -200,7 +175,17 @@ function Shell({
           <span className="text-sm text-muted-foreground">Studio</span>
         </header>
       )}
-      <main className="flex-1">{children}</main>
+      <main
+        className="relative isolate min-w-0 flex-1 bg-background bg-noise"
+        style={pageThemeStyle}
+      >
+        <BackgroundLayer
+          background={background}
+          imageUrl={backgroundImageUrl}
+          bannerColor={bannerColor}
+        />
+        {children}
+      </main>
     </div>
   );
 }

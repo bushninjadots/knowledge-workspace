@@ -546,6 +546,11 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                       (candidate) => candidate.id === block.id,
                     );
                     const gridItem = hasGrid ? gridByBlock.get(block.id) : undefined;
+                    const blockDef = getBlock(block.type);
+                    // Full-bleed blocks opt out of the studio-block frame, exactly
+                    // like the owner Studio view and the editor canvas.
+                    const isFlush =
+                      blockDef?.containerless === true || block.type === "profile-header";
                     return (
                       <div
                         key={`drop-${block.id}`}
@@ -556,8 +561,15 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                               ? gridItem
                                 ? `relative min-w-0 ${colStartClass(gridItem.x + 1)} ${spanClass(gridItem.w)}`
                                 : "relative min-w-0"
-                              : "contents",
-                          gridClass && !hasGrid && typeof block.span === "number"
+                              : // Template sections (no persisted grid): the wrapper is
+                                // the grid item — same span boxes the owner view uses —
+                                // instead of display:contents auto-flow, which laid the
+                                // same section out differently on the public page.
+                                "relative min-w-0",
+                          !context.isEditing &&
+                          !hasGrid &&
+                          gridClass &&
+                          typeof block.span === "number"
                             ? spanClass(block.span)
                             : "",
                           dropTarget?.sectionIdx === layoutSectionIndex &&
@@ -601,19 +613,34 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                             onConfigChange={(config) => onBlockConfigChange?.(block.id, config)}
                           />
                         ) : (
-                          <BlockRenderer
-                            type={block.type}
-                            config={block.config}
-                            context={{
-                              ...context,
-                              blockId: block.id,
-                              profileCompleteness:
-                                block.type === "profile-header" ? profileCompleteness : undefined,
-                              onCompleteProfile:
-                                block.type === "profile-header" ? onCompleteProfile : undefined,
-                              onBlockEmptyChange: context.isEditing ? undefined : reportBlockEmpty,
-                            }}
-                          />
+                          // Same studio-block frame the owner Studio view wraps its
+                          // blocks in (background, border, radius, inset; flush for
+                          // full-bleed blocks) — so a block reads identically on the
+                          // public page and in the creator's view.
+                          <div
+                            className={[
+                              "relative h-full min-h-0 overflow-hidden studio-block",
+                              isFlush ? "studio-block-flush" : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            <BlockRenderer
+                              type={block.type}
+                              config={block.config}
+                              context={{
+                                ...context,
+                                blockId: block.id,
+                                profileCompleteness:
+                                  block.type === "profile-header" ? profileCompleteness : undefined,
+                                onCompleteProfile:
+                                  block.type === "profile-header" ? onCompleteProfile : undefined,
+                                onBlockEmptyChange: context.isEditing
+                                  ? undefined
+                                  : reportBlockEmpty,
+                              }}
+                            />
+                          </div>
                         )}
                       </div>
                     );

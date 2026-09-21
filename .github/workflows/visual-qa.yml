@@ -104,6 +104,13 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:3000
 
+      # Owner /profile vs public /u/:handle: same block count, same
+      # studio-block frames, same full-bleed opt-outs.
+      - name: Run studio-parity click-through
+        run: node scripts/qa-studio-parity.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+
       - name: Upload screenshots + report
         if: always()
         uses: actions/upload-artifact@v4

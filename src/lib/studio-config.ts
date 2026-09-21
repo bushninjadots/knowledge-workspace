@@ -338,9 +338,8 @@ function radiusScale(radius: number): Record<string, string> {
   };
 }
 
-export const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
-export const TECHNICAL_HEADING_FONT =
-  "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace";
+const EDITORIAL_HEADING_FONT = "Space Grotesk, ui-sans-serif, system-ui, sans-serif";
+const TECHNICAL_HEADING_FONT = "JetBrains Mono, ui-monospace, SFMono-Regular, Consolas, monospace";
 
 const DENSITY_SECTION: Record<DensityId, string> = {
   compact: "2.5rem",
@@ -461,6 +460,34 @@ function emitAccentFamily(
   style[`--${prefix}-subtle`] = `color-mix(in oklab, ${source} 10%, transparent)`;
   style[`--${prefix}-border`] = `color-mix(in oklab, ${source} 30%, transparent)`;
   style[`--${prefix}-glow`] = `color-mix(in oklab, ${source} 6%, transparent)`;
+}
+
+/**
+ * Page-local style for a Studio surface: the config's custom properties plus
+ * the personality font hints. Shared by the owner Studio view, the editor
+ * canvas, and any other surface that must render the Studio's look exactly as
+ * the published page does — one source of truth so they can't drift.
+ */
+export function studioSurfaceStyle(
+  config: StudioConfig,
+  secondaryColor?: string | null,
+): React.CSSProperties {
+  const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
+    Record<string, string>;
+  style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
+  style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
+  // Match the public page's font mapping (studioConfigToThemeTokens): an
+  // editorial page flips --font-display/title to Space Grotesk and a technical
+  // page to JetBrains Mono, so every canvas renders the face the published
+  // page will.
+  if (config.personality === "editorial") {
+    style["--font-display"] = EDITORIAL_HEADING_FONT;
+    style["--font-title"] = EDITORIAL_HEADING_FONT;
+  } else if (config.personality === "technical") {
+    style["--font-display"] = TECHNICAL_HEADING_FONT;
+    style["--font-title"] = TECHNICAL_HEADING_FONT;
+  }
+  return style;
 }
 
 /** Card fill swatches; "" means "follow the page surface". */

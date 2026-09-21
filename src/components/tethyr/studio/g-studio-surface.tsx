@@ -73,13 +73,11 @@ import {
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
   cardFillStyle,
-  EDITORIAL_HEADING_FONT,
   RADIUS_MAX,
   RADIUS_MIN,
   structureMaxWidth,
-  studioConfigToStyle,
   studioConfigToThemeTokens,
-  TECHNICAL_HEADING_FONT,
+  studioSurfaceStyle,
   type StudioConfig,
 } from "@/lib/studio-config";
 /** GStudioConfig keeps the legacy component-local name so callers don't churn. */
@@ -3146,29 +3144,6 @@ function sectionGrid(section: LayoutSection, blocks: LayoutBlockInstance[]): Lay
  * drag-in placeholders — one source of truth for block default heights. */
 export function sizeFor(type: string): [number, number, number, number] {
   return BLOCK_SIZES[type] ?? [6, 4, 2, 2];
-}
-
-function studioSurfaceStyle(config: GStudioConfig, secondaryColor?: string | null): CSSProperties {
-  // Use the canonical style computation from studio-config so all accent
-  // variables (--user-accent-foreground, --user-accent-glow, etc.) are set
-  // consistently — the previous local copy omitted several, breaking contrast
-  // on buttons/labels when a custom accent colour was picked.
-  const style = studioConfigToStyle(config, secondaryColor) as CSSProperties &
-    Record<string, string>;
-  style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
-  style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
-  // Match the public page's font mapping (studioConfigToThemeTokens): an
-  // editorial page flips --font-display/title to Space Grotesk and a technical
-  // page to JetBrains Mono, so the canvas renders the face the published page
-  // will.
-  if (config.personality === "editorial") {
-    style["--font-display"] = EDITORIAL_HEADING_FONT;
-    style["--font-title"] = EDITORIAL_HEADING_FONT;
-  } else if (config.personality === "technical") {
-    style["--font-display"] = TECHNICAL_HEADING_FONT;
-    style["--font-title"] = TECHNICAL_HEADING_FONT;
-  }
-  return style;
 }
 
 function findSection(layout: PageLayout, blockId: string) {

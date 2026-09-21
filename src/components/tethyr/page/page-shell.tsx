@@ -20,8 +20,8 @@ import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
   structureMaxWidth,
-  studioConfigToStyle,
   studioConfigToThemeTokens,
+  studioSurfaceStyle,
 } from "@/lib/studio-config";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import { useEditMode, type PreviewDevice } from "@/components/tethyr/page/edit-mode-context";
@@ -48,6 +48,13 @@ interface PageShellProps {
   pageCreationAction?: () => void;
   pageCreationError?: unknown;
   pageCreationPending?: boolean;
+  /**
+   * Optional backdrop (BackgroundLayer) rendered as the canvas's first child so
+   * the member's background paints inside the page's theme-variable scope —
+   * the same composition the owner Studio view uses. Omitted by callers whose
+   * shell already paints a backdrop (editor, project pages).
+   */
+  backgroundSlot?: React.ReactNode;
 }
 
 export function PageShell({
@@ -68,6 +75,7 @@ export function PageShell({
   pageCreationAction,
   pageCreationError,
   pageCreationPending,
+  backgroundSlot,
 }: PageShellProps) {
   const {
     data: page,
@@ -203,7 +211,10 @@ export function PageShell({
       ...themeTokensToStyle(effectiveTheme, resolvedTheme),
     } as React.CSSProperties & Record<string, string>;
     if (page) {
-      const configStyle = studioConfigToStyle(page.config, bannerAccent) as React.CSSProperties &
+      // Full Studio surface style (accent family, density, radius/gap/pad,
+      // border weight, personality font hints) — the same computation the owner
+      // Studio view applies, so the public canvas carries the identical stack.
+      const configStyle = studioSurfaceStyle(page.config, bannerAccent) as React.CSSProperties &
         Record<string, string>;
       style["--content-density-gap"] = configStyle["--content-density-gap"];
       style["--content-density-padding"] = configStyle["--content-density-padding"];
@@ -331,7 +342,7 @@ export function PageShell({
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
       >
         <div
-          className={`${canvasFrameClass} bg-background font-sans text-foreground`}
+          className={`${canvasFrameClass} relative isolate bg-background bg-noise font-sans text-foreground`}
           style={
             ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
               ? { ...containerStyle, maxWidth: structureWidth, marginInline: "auto" }
@@ -345,6 +356,7 @@ export function PageShell({
           role="region"
           aria-label={`${ownerType} page`}
         >
+          {backgroundSlot}
           {previewMode && (
             <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-border/60 px-4 py-3 sm:px-8">
               <div>

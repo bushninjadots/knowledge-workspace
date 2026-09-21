@@ -46,11 +46,9 @@ import { Button } from "@/components/ui/button";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
-  studioConfigToStyle,
   studioConfigToThemeTokens,
-  EDITORIAL_HEADING_FONT,
-  TECHNICAL_HEADING_FONT,
   structureMaxWidth,
+  studioSurfaceStyle,
   DEFAULT_STUDIO_CONFIG,
   type StudioConfig,
 } from "@/lib/studio-config";
@@ -894,24 +892,4 @@ function StudioOnboardingChecklist({
       </ul>
     </div>
   );
-}
-
-/** Page-local style: studio accent variables + personality font hints. Mirrors
- *  g-studio-surface's studioSurfaceStyle so the view and editor match. */
-function studioSurfaceStyle(
-  config: StudioConfig,
-  secondaryColor?: string | null,
-): React.CSSProperties {
-  const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
-    Record<string, string>;
-  style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
-  style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
-  if (config.personality === "editorial") {
-    style["--font-display"] = EDITORIAL_HEADING_FONT;
-    style["--font-title"] = EDITORIAL_HEADING_FONT;
-  } else if (config.personality === "technical") {
-    style["--font-display"] = TECHNICAL_HEADING_FONT;
-    style["--font-title"] = TECHNICAL_HEADING_FONT;
-  }
-  return style;
 }
