@@ -30,6 +30,7 @@ import {
   Settings2,
   Sliders,
   Smartphone,
+  Save,
   Tablet,
   Trash2,
   Undo2,
@@ -637,9 +638,13 @@ function GStudioTopBar({
           </span>
           <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
-            className={cn(
+              className={cn(
               "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
-              hasUnpublishedChanges ? "border-caution text-caution" : "border-trust text-trust",
+              saving || dirty
+                ? "border-caution text-caution"
+                : hasUnpublishedChanges
+                  ? "border-caution text-caution"
+                  : "border-trust text-trust",
             )}
           >
             {saving
@@ -731,16 +736,22 @@ function GStudioTopBar({
                     size="sm"
                     disabled={!dirty || saving}
                     onClick={onSave}
+                    title={saving ? "Saving draft" : "Save draft"}
+                    aria-label={saving ? "Saving draft" : "Save draft"}
                   >
-                    {saving ? "Saving" : "Save draft"}
+                    <Save className="h-3 w-3" />
+                    <span className={compact ? "sr-only" : undefined}>{saving ? "Saving" : "Save draft"}</span>
                   </Button>
                   <Button
                     variant={hasUnpublishedChanges ? "default" : "outline"}
                     size="sm"
                     disabled={!hasUnpublishedChanges || saving}
                     onClick={onPublish}
+                    title="Publish changes"
+                    aria-label="Publish changes"
                   >
-                    <Upload className="h-3 w-3" /> Publish
+                    <Upload className="h-3 w-3" />
+                    <span className={compact ? "sr-only" : undefined}>Publish</span>
                   </Button>
                 </>
               )}
