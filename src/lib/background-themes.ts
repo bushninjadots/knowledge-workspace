@@ -48,6 +48,8 @@ export type ProfileBackground = {
   bannerCaptionPosition?: "left" | "center" | "right" | null;
   /** Custom card border colour (hex) used when cardBorders === "custom". */
   cardBorderColor?: string | null;
+  /** Silhouette of the member's profile picture, everywhere it renders. */
+  avatarShape?: AvatarShapeId | null;
 };
 
 /**
@@ -79,6 +81,71 @@ export function normalizeBannerOverlay(value: string | null | undefined): Banner
   return BANNER_OVERLAYS.some((option) => option.id === value)
     ? (value as BannerOverlayId)
     : "soft";
+}
+
+/**
+ * Profile-picture shapes. The stored id resolves into CSS variables that any
+ * avatar primitive (or hand-rolled identity bubble) consumes, so one choice
+ * styles the picture everywhere the member's appearance is in scope — their
+ * app, their Studio, and their public Studio — without call sites knowing the
+ * option list.
+ */
+type AvatarShapeId = "circle" | "rounded" | "squircle" | "hex" | "diamond" | "flower" | "star";
+
+type AvatarShapeOption = { id: AvatarShapeId; label: string; description: string };
+
+export const AVATAR_SHAPES: AvatarShapeOption[] = [
+  { id: "circle", label: "Circle", description: "The Tethyr default" },
+  { id: "rounded", label: "Rounded", description: "A soft square" },
+  { id: "squircle", label: "Squircle", description: "A smooth superellipse" },
+  { id: "hex", label: "Hexagon", description: "A six-sided cut" },
+  { id: "diamond", label: "Diamond", description: "A rotated square" },
+  { id: "flower", label: "Bloom", description: "A scalloped flower" },
+  { id: "star", label: "Star", description: "A five-point badge" },
+];
+
+/** Normalise a stored value (older rows / unknown ids fall back to `circle`). */
+export function normalizeAvatarShape(value: string | null | undefined): AvatarShapeId {
+  return AVATAR_SHAPES.some((option) => option.id === value) ? (value as AvatarShapeId) : "circle";
+}
+
+/**
+ * CSS variables for the member's profile-picture shape. `--avatar-radius`
+ * styles simple rounded containers (the Avatar primitive, identity bubbles);
+ * `--avatar-clip` additionally crops photos on the exotic shapes. Consumers
+ * render `border-radius: var(--avatar-radius, 9999px)` (+ the clip) and
+ * inherit the choice wherever these variables are scoped. Polygons use
+ * percentages, so every shape crops correctly at any avatar size.
+ */
+export function avatarShapeStyle(
+  background: ProfileBackground | null | undefined,
+): CSSProperties & Record<string, string> {
+  const id = normalizeAvatarShape(background?.avatarShape);
+  if (id === "circle") return {};
+  if (id === "rounded") return { "--avatar-radius": "18%" };
+  if (id === "squircle") return { "--avatar-radius": "30%" };
+  if (id === "hex")
+    return {
+      "--avatar-radius": "0px",
+      "--avatar-clip": "polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%)",
+    };
+  if (id === "diamond")
+    return {
+      "--avatar-radius": "0px",
+      "--avatar-clip": "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+    };
+  if (id === "flower")
+    return {
+      "--avatar-radius": "0px",
+      "--avatar-clip":
+        "polygon(50% 0%, 64.5% 14.9%, 85.4% 14.6%, 85.1% 35.5%, 100% 50%, 85.1% 64.5%, 85.4% 85.4%, 64.5% 85.1%, 50% 100%, 35.5% 85.1%, 14.6% 85.4%, 14.9% 64.5%, 0% 50%, 14.9% 35.5%, 14.6% 14.6%, 35.5% 14.9%)",
+    };
+  return {
+    // star
+    "--avatar-radius": "0px",
+    "--avatar-clip":
+      "polygon(50% 0%, 61.8% 38.2%, 100% 38.2%, 69.1% 61.8%, 80.9% 100%, 50% 76.4%, 19.1% 100%, 30.9% 61.8%, 0% 38.2%, 38.2% 38.2%)",
+  };
 }
 
 /**
@@ -297,6 +364,7 @@ export function emptyBackground(): ProfileBackground {
     density: "comfortable",
     bannerOverlay: "soft",
     bannerCaptionPosition: "right",
+    avatarShape: "circle",
   };
 }
 
@@ -326,6 +394,7 @@ export function hasAppearanceSettings(background: ProfileBackground | null | und
   }
   if (background.accentMode === "custom" && !!background.accentColor) return true;
   if (background.density === "compact") return true;
+  if (background.avatarShape && background.avatarShape !== "circle") return true;
   return false;
 }
 

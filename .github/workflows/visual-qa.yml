@@ -111,6 +111,13 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:3000
 
+      # Profile-picture shape: appearance dialog → both Studios render the
+      # silhouette → reset restores the circle default.
+      - name: Run avatar-shape click-through
+        run: node scripts/qa-avatar-shape.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+
       - name: Upload screenshots + report
         if: always()
         uses: actions/upload-artifact@v4

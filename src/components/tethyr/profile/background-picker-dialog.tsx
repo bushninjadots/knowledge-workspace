@@ -27,11 +27,14 @@ import {
   appearanceStyle,
   backgroundImageSignedUrl,
   backgroundStyle,
+  AVATAR_SHAPES,
   clampStrength,
   emptyBackground,
   gradientBackgroundImage,
   hasAppearanceSettings,
   imageOpacityFor,
+  normalizeAvatarShape,
+  avatarShapeStyle,
   type ContentDensity,
   type ProfileBackground,
 } from "@/lib/background-themes";
@@ -236,6 +239,53 @@ export function BackgroundPickerDialog({
         </div>
 
         <div className="space-y-5 py-2">
+          {/* PROFILE PICTURE SHAPE — identity, not surface, so it is
+              deliberately not per-tab: one silhouette everywhere. */}
+          <section className="space-y-3" aria-labelledby="avatar-shape-heading">
+            <div>
+              <h3
+                id="avatar-shape-heading"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                Profile picture shape
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The silhouette of your profile photo — the same everywhere your Tethyr space shows
+                it.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Profile picture shape">
+              {AVATAR_SHAPES.map((shape) => {
+                const selected = normalizeAvatarShape(activeDraft.avatarShape) === shape.id;
+                return (
+                  <button
+                    key={shape.id}
+                    type="button"
+                    title={`${shape.label} — ${shape.description}`}
+                    aria-pressed={selected}
+                    onClick={() => setActiveDraft((d) => ({ ...d, avatarShape: shape.id }))}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-lift",
+                      selected
+                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                        : "border-border/60 hover:border-[var(--user-accent-border,var(--border-strong))]",
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="block h-7 w-7 bg-[var(--user-accent,var(--primary))]"
+                      style={{
+                        ...avatarShapeStyle({ ...EMPTY_BACKGROUND, avatarShape: shape.id }),
+                        borderRadius: shape.id === "circle" ? "9999px" : undefined,
+                      }}
+                    />
+                    <span className="text-[10px] font-medium">{shape.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* PUBLIC STUDIO: same-as-app state */}
           {tab === "public" && !publicSeparate && (
             <Card className="bg-surface/40 p-4">

@@ -8,10 +8,14 @@ import { cn } from "@/lib/utils";
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <AvatarPrimitive.Root
     ref={ref}
-    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
+    style={style}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-[var(--avatar-radius,9999px)] [clip-path:var(--avatar-clip)]",
+      className,
+    )}
     {...props}
   />
 ));
@@ -38,12 +42,23 @@ const AvatarFallback = React.forwardRef<
   <AvatarPrimitive.Fallback
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      "flex h-full w-full items-center justify-center rounded-[var(--avatar-radius,9999px)] bg-muted",
       className,
     )}
     {...props}
   />
 ));
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
+
+/**
+ * Styles for a container that should take the member's profile-picture shape.
+ * Spread onto any wrapper (or the Avatar itself) that sits inside a scope
+ * carrying `avatarShapeStyle()` variables — radius by default, plus the
+ * polygon clip when the member picked an exotic shape.
+ */
+export const avatarShapeCss = {
+  borderRadius: "var(--avatar-radius, 9999px)",
+  clipPath: "var(--avatar-clip, none)",
+} as const;
 
 export { Avatar, AvatarImage, AvatarFallback };

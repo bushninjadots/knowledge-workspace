@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { appearanceStyle, type ProfileBackground } from "@/lib/background-themes";
+import { avatarShapeCss } from "@/components/ui/avatar";
+import { appearanceStyle, avatarShapeStyle, type ProfileBackground } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
@@ -152,7 +153,7 @@ function Shell({
   return (
     <div
       className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
-      style={appearanceStyle(background)}
+      style={{ ...appearanceStyle(background), ...avatarShapeStyle(background) }}
     >
       {!embed && (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
@@ -229,7 +230,10 @@ function BasicProfile({
     <div className="animate-room-enter mx-auto w-full max-w-2xl px-4 py-24 text-center sm:px-8">
       <p className="section-label">Personal creative space</p>
 
-      <div className="mx-auto mt-6 h-28 w-28 overflow-hidden rounded-full bg-[var(--user-accent,var(--trust))] ring-4 ring-surface">
+      <div
+        className="mx-auto mt-6 h-28 w-28 overflow-hidden bg-[var(--user-accent,var(--trust))] ring-4 ring-surface"
+        style={avatarShapeCss}
+      >
         {avatarSigned ? (
           <img
             src={avatarSigned}

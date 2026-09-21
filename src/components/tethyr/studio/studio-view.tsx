@@ -27,7 +27,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { CURRENT_USER_KEY, useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
 import { ProjectDialog } from "@/components/tethyr/profile";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
-import { appearanceStyle } from "@/lib/background-themes";
+import { appearanceStyle, avatarShapeStyle } from "@/lib/background-themes";
 import { useUserPalette } from "@/lib/dominant-color";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
@@ -183,6 +183,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     ...themeTokensToStyle(studioConfigToThemeTokens(config)),
     ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
+    ...avatarShapeStyle(me?.background),
     ...cardFillStyle(config),
   };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());

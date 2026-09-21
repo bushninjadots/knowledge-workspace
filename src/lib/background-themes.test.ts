@@ -10,6 +10,9 @@ import {
   BANNER_OVERLAYS,
   bannerOverlayStyle,
   normalizeBannerOverlay,
+  AVATAR_SHAPES,
+  normalizeAvatarShape,
+  avatarShapeStyle,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
@@ -318,8 +321,56 @@ describe("appearanceStyle accent fallback", () => {
   });
 
   it("returns no styles for a cleared background", () => {
-    expect(appearanceStyle(null)).toEqual({});
-    expect(appearanceStyle(undefined)).toEqual({});
+    const style = appearanceStyle({
+      mode: null,
+      color: null,
+      pattern: null,
+      image_url: null,
+    }) as Record<string, string>;
+    expect(style["--user-accent"]).toBeUndefined();
+  });
+});
+
+const BASE_BG = { mode: null, color: null, pattern: null, image_url: null } as const;
+
+describe("profile picture shapes", () => {
+  it("defaults to circle for null, unknown, and unset values", () => {
+    expect(normalizeAvatarShape(null)).toBe("circle");
+    expect(normalizeAvatarShape(undefined)).toBe("circle");
+    expect(normalizeAvatarShape("triangle")).toBe("circle");
+  });
+
+  it("emits no variables for the circle default", () => {
+    expect(avatarShapeStyle({ mode: null, color: null, pattern: null, image_url: null })).toEqual(
+      {},
+    );
+    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "circle" })).toEqual({});
+  });
+
+  it("maps rounded shapes to radius variables only", () => {
+    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "rounded" })).toEqual({
+      "--avatar-radius": "18%",
+    });
+    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "squircle" })).toEqual({
+      "--avatar-radius": "30%",
+    });
+  });
+
+  it("gives every exotic shape a radius reset and a polygon clip", () => {
+    for (const shape of ["hex", "diamond", "flower", "star"] as const) {
+      const style = avatarShapeStyle({ ...BASE_BG, avatarShape: shape });
+      expect(style["--avatar-radius"]).toBe("0px");
+      expect(style["--avatar-clip"]).toMatch(/^polygon\(/);
+    }
+  });
+
+  it("keeps the catalog small, labelled, and circle-first", () => {
+    expect(AVATAR_SHAPES.length).toBeLessThanOrEqual(8);
+    expect(AVATAR_SHAPES[0].id).toBe("circle");
+    for (const option of AVATAR_SHAPES) {
+      expect(option.label).toBeTruthy();
+      expect(option.description).toBeTruthy();
+    }
   });
 });
 
