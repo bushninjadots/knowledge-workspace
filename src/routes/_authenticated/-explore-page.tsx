@@ -149,7 +149,7 @@ type NeedRow = {
 
 export function ExplorePage() {
   const navigate = useNavigate();
-  const { tab: urlTab } = useSearch({ from: "/_authenticated/explore" });
+  const { tab: urlTab, project: urlProject } = useSearch({ from: "/_authenticated/explore" });
   const { data: me } = useCurrentUser();
   const meId = me?.userId ?? null;
   function loadOppFilters() {
@@ -1028,6 +1028,8 @@ export function ExplorePage() {
                 category={category}
                 setCategory={setCategory}
                 openRoleCounts={openRoleCounts}
+                initialOverlayId={urlProject ?? null}
+                onOverlayClosed={() => void navigate({ to: "/explore", search: {}, replace: true })}
               />
               {filteredProjects.length > 0 && (
                 <LoadMoreButton

@@ -34,6 +34,8 @@ import type { ProfileBackground } from "@/lib/background-themes";
 export const Route = createFileRoute("/_authenticated/explore")({
   validateSearch: z.object({
     tab: z.enum(["projects", "creators", "opportunities"]).optional(),
+    // Optional deep link to a project's quick-look preview: /explore?project=<id>
+    project: z.string().optional(),
   }).parse,
   head: () => {
     const base = seoMeta({

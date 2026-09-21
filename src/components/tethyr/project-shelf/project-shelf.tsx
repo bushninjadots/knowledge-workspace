@@ -22,6 +22,10 @@ interface ProjectShelfProps {
   category: string;
   setCategory: (v: string) => void;
   openRoleCounts?: Map<string, number>;
+  /** Open the quick-look overlay for this project id once projects load (deep link). */
+  initialOverlayId?: string | null;
+  /** Called after the overlay closes for any reason — the page clears its URL param here. */
+  onOverlayClosed?: () => void;
 }
 
 const VIEW_STORAGE_KEY = "tethyr-project-view";
@@ -45,8 +49,22 @@ export function ProjectShelf({
   category,
   setCategory,
   openRoleCounts,
+  initialOverlayId,
+  onOverlayClosed,
 }: ProjectShelfProps) {
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
+
+  // Deep link: /explore?project=<id> reopens the quick-look for a shared
+  // project. Attempted once, on the first loaded batch — a shared id older
+  // than the first page just opens Explore normally rather than paginating
+  // through everything to find it.
+  const deepLinkConsumed = useRef(false);
+  useEffect(() => {
+    if (!initialOverlayId || deepLinkConsumed.current || projects.length === 0) return;
+    deepLinkConsumed.current = true;
+    const idx = projects.findIndex((p) => p.id === initialOverlayId);
+    if (idx >= 0) setOverlayIndex(idx);
+  }, [initialOverlayId, projects]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [view, setView] = useState<ProjectView>(loadSavedView);
@@ -194,7 +212,8 @@ export function ProjectShelf({
 
   const closeOverlay = useCallback(() => {
     setOverlayIndex(null);
-  }, []);
+    onOverlayClosed?.();
+  }, [onOverlayClosed]);
 
   const shownIndex = Math.min(activeIndex, maxOffset);
   const activeProject = projects[shownIndex] ?? undefined;

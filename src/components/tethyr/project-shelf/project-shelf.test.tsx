@@ -339,3 +339,68 @@ describe("ProjectShelf overlay focus", () => {
     expect(titleLink).toHaveAttribute("href", "/projects/p1");
   });
 });
+
+describe("ProjectShelf deep link", () => {
+  it("opens the overlay for initialOverlayId once projects are loaded", async () => {
+    const projects = [makeProject("p1", "First"), makeProject("p2", "Second")];
+    render(
+      <ProjectShelf
+        projects={projects}
+        meId="user-1"
+        contributorIds={new Set()}
+        q=""
+        setQ={vi.fn()}
+        category="All"
+        setCategory={vi.fn()}
+        initialOverlayId="p2"
+      />,
+    );
+
+    // /explore?project=p2 reopens the shared project's quick-look.
+    expect(await screen.findByRole("dialog", { name: "Second" })).toBeInTheDocument();
+  });
+
+  it("stays on the shelf when the deep-linked id is unknown", () => {
+    const projects = [makeProject("p1", "First")];
+    render(
+      <ProjectShelf
+        projects={projects}
+        meId="user-1"
+        contributorIds={new Set()}
+        q=""
+        setQ={vi.fn()}
+        category="All"
+        setCategory={vi.fn()}
+        initialOverlayId="missing"
+      />,
+    );
+
+    // A stale or foreign id just opens Explore normally.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("1 / 1")).toBeInTheDocument();
+  });
+
+  it("reports the close so the page can clear its URL param", async () => {
+    const user = userEvent.setup();
+    const onOverlayClosed = vi.fn();
+    const projects = [makeProject("p1", "First")];
+    render(
+      <ProjectShelf
+        projects={projects}
+        meId="user-1"
+        contributorIds={new Set()}
+        q=""
+        setQ={vi.fn()}
+        category="All"
+        setCategory={vi.fn()}
+        initialOverlayId="p1"
+        onOverlayClosed={onOverlayClosed}
+      />,
+    );
+
+    const dialog = await screen.findByRole("dialog", { name: "First" });
+    await user.click(within(dialog).getByRole("button", { name: "Close overlay" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onOverlayClosed).toHaveBeenCalledTimes(1);
+  });
+});

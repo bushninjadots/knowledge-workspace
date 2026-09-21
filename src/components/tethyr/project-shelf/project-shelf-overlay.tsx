@@ -148,10 +148,11 @@ export function ProjectShelfOverlay({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Panel */}
+                {/* Panel — capped to the viewport so the close button stays
+                    reachable on short screens; content scrolls inside. */}
                 <Card asChild>
                   <motion.div
-                    className="relative mx-4 w-full max-w-[832px] overflow-hidden shadow-lg"
+                    className="relative mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-[832px] overflow-y-auto overflow-x-hidden shadow-lg"
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 12 }}
