@@ -17,7 +17,7 @@ export const AVATAR_CROP_ASPECT = 1;
 /** Banner bands render at 1200×400 (3:1) — store the same shape. */
 export const BANNER_CROP_ASPECT = 3;
 
-export type CenterCropRect = { sx: number; sy: number; sw: number; sh: number };
+type CenterCropRect = { sx: number; sy: number; sw: number; sh: number };
 
 /** Relative aspect difference below which no crop is worth a re-encode. */
 const ASPECT_EPSILON = 0.01;
@@ -41,7 +41,7 @@ export function centerCropRect(w: number, h: number, aspect: number): CenterCrop
   return { sx: 0, sy, sw: w, sh };
 }
 
-export type CropResult = { blob: Blob; width: number; height: number };
+type CropResult = { blob: Blob; width: number; height: number };
 
 /**
  * Centre-crop `file` to `aspect` and re-encode it. PNG keeps its format (and

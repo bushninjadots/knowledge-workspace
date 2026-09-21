@@ -98,7 +98,10 @@ describe("BannerStrip — caption text propagation", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /edit caption/i }));
+    // The caption chip and the toolbar affordance share the accessible name;
+    // either opens the caption editor.
+    const editButtons = screen.getAllByRole("button", { name: /edit banner caption/i });
+    await user.click(editButtons[0]!);
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     expect(handle.calls).toContainEqual(

@@ -16,7 +16,7 @@ import {
   cropUploadMeta,
 } from "@/lib/image-crop";
 
-export type CropShape = "avatar" | "banner";
+type CropShape = "avatar" | "banner";
 
 const SHAPE_ASPECT: Record<CropShape, number> = {
   avatar: AVATAR_CROP_ASPECT,

@@ -347,7 +347,10 @@ function DashboardContent({
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-4">
             <div>
               <p className="section-label">Workspace view</p>
-              <h2 id="dashboard-modules-heading" className="mt-1 font-display text-lg font-semibold">
+              <h2
+                id="dashboard-modules-heading"
+                className="mt-1 font-display text-lg font-semibold"
+              >
                 Build and discover
               </h2>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -430,8 +433,14 @@ function DashboardWelcomeBanner({
             >
               Open your Studio
             </Link>
-            <span aria-hidden="true" className="text-border-strong">/</span>
-            <CreateProjectButton label="Start a project" variant="ghost" className="h-auto p-0 font-medium text-foreground hover:bg-transparent hover:text-[var(--user-accent,var(--trust))]" />
+            <span aria-hidden="true" className="text-border-strong">
+              /
+            </span>
+            <CreateProjectButton
+              label="Start a project"
+              variant="ghost"
+              className="h-auto p-0 font-medium text-foreground hover:bg-transparent hover:text-[var(--user-accent,var(--trust))]"
+            />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
@@ -442,7 +451,8 @@ function DashboardWelcomeBanner({
             </span>
           )}
           <span className="hidden text-right text-xs text-muted-foreground sm:block">
-            Your workspace<br />
+            Your workspace
+            <br />
             <span className="font-medium text-foreground">is yours to arrange</span>
           </span>
         </div>

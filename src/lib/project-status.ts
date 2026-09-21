@@ -13,17 +13,6 @@
  * Everything renders as one line: `Growing · 68% · Started 3 months ago`.
  */
 
-export const CANONICAL_STAGES = [
-  "planning",
-  "prototyping",
-  "building",
-  "testing",
-  "launching",
-  "growing",
-] as const;
-
-export type CanonicalStage = (typeof CANONICAL_STAGES)[number];
-
 const STAGE_LABEL: Record<string, string> = {
   planning: "Planning",
   prototyping: "Prototyping",
