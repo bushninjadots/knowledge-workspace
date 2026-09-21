@@ -1,8 +1,22 @@
-import { describe, expect, it, vi, beforeAll, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeAll, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ProjectShelf } from "./project-shelf";
+import { createFakeSupabase } from "../../../../tests/helpers/fake-supabase";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
+
+// The overlay's README preview reads through the shared client — route it
+// through the chainable fake so tests can serve/omit the readme.
+const fake = vi.hoisted(() => ({
+  supabase: {} as { from: ReturnType<typeof vi.fn> },
+}));
+
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: fake.supabase,
+}));
+
+const handle = createFakeSupabase();
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -91,7 +105,7 @@ function makeProject(
 }
 
 function renderShelf(projects: ProjectRow[], openRoleCounts?: Map<string, number>) {
-  return render(
+  return renderWithClient(
     <ProjectShelf
       projects={projects}
       meId="user-1"
@@ -104,6 +118,21 @@ function renderShelf(projects: ProjectRow[], openRoleCounts?: Map<string, number
     />,
   );
 }
+
+/** The overlay queries with react-query; every render needs a provider. */
+function renderWithClient(ui: React.ReactElement) {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
+
+beforeEach(() => {
+  handle.reset();
+  fake.supabase.from = handle.client.from;
+  // Default: no readme served — the section stays hidden unless a test opts in.
+  handle.on("projects:select", () => ({ data: null, error: null }));
+});
 
 describe("ProjectShelf keyboard navigation", () => {
   it("browses projects with the arrow keys and updates the counter", async () => {
@@ -186,7 +215,7 @@ describe("ProjectShelf point-and-click navigation", () => {
     const user = userEvent.setup();
     const setQ = vi.fn();
     const setCategory = vi.fn();
-    render(
+    renderWithClient(
       <ProjectShelf
         projects={[]}
         meId="user-1"
@@ -343,7 +372,7 @@ describe("ProjectShelf overlay focus", () => {
 describe("ProjectShelf deep link", () => {
   it("opens the overlay for initialOverlayId once projects are loaded", async () => {
     const projects = [makeProject("p1", "First"), makeProject("p2", "Second")];
-    render(
+    renderWithClient(
       <ProjectShelf
         projects={projects}
         meId="user-1"
@@ -362,7 +391,7 @@ describe("ProjectShelf deep link", () => {
 
   it("stays on the shelf when the deep-linked id is unknown", () => {
     const projects = [makeProject("p1", "First")];
-    render(
+    renderWithClient(
       <ProjectShelf
         projects={projects}
         meId="user-1"
@@ -380,11 +409,42 @@ describe("ProjectShelf deep link", () => {
     expect(screen.getByText("1 / 1")).toBeInTheDocument();
   });
 
+  it("shows a README preview inside the overlay when the project has one", async () => {
+    handle.on("projects:select", () => ({ data: { readme: "# Built with care" }, error: null }));
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First")];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: /View First/i }));
+    const dialog = await screen.findByRole("dialog", { name: "First" });
+
+    expect(within(dialog).getByText("README")).toBeInTheDocument();
+    // The renderer is lazy-loaded — await its content.
+    expect(await within(dialog).findByText("Built with care")).toBeInTheDocument();
+    // The truncated preview must lead to the full read.
+    expect(within(dialog).getByRole("link", { name: /read the full readme/i })).toHaveAttribute(
+      "href",
+      "/projects/p1",
+    );
+  });
+
+  it("omits the README section when the project has none", async () => {
+    handle.on("projects:select", () => ({ data: { readme: null }, error: null }));
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First")];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: /View First/i }));
+    const dialog = await screen.findByRole("dialog", { name: "First" });
+
+    expect(within(dialog).queryByText("README")).not.toBeInTheDocument();
+  });
+
   it("reports the close so the page can clear its URL param", async () => {
     const user = userEvent.setup();
     const onOverlayClosed = vi.fn();
     const projects = [makeProject("p1", "First")];
-    render(
+    renderWithClient(
       <ProjectShelf
         projects={projects}
         meId="user-1"

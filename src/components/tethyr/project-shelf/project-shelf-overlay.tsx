@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { motion, AnimatePresence, useReducedMotion, useMotionValue } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   X,
   ExternalLink,
@@ -12,14 +13,24 @@ import {
   Activity,
   CalendarDays,
   HandHeart,
+  ArrowRight,
 } from "lucide-react";
 import { timeAgo } from "@/lib/time";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { CoverGradient } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
+
+// The markdown renderer pulls in highlighting; keep it out of the explore
+// chunk — it loads only when an overlay actually shows a README preview.
+const ReadmeMarkdown = lazy(() =>
+  import("@/components/tethyr/blocks/readme-markdown").then((m) => ({
+    default: m.ReadmeMarkdown,
+  })),
+);
 
 interface ProjectShelfOverlayProps {
   project: ProjectRow | null;
@@ -52,6 +63,23 @@ export function ProjectShelfOverlay({
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // README preview — fetched lazily on open (the explore grid never pays for
+  // it) and cached per project so flipping back and forth doesn't refetch.
+  const { data: readme } = useQuery({
+    queryKey: ["project-readme-preview", project?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("readme")
+        .eq("id", project!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.readme as string | null) ?? null;
+    },
+    enabled: !!project,
+    staleTime: Infinity,
+  });
 
   // ── Swipe-to-dismiss ──
   const panelY = useMotionValue(0);
@@ -340,6 +368,36 @@ export function ProjectShelfOverlay({
                                 </span>
                               ))}
                             </div>
+                          )}
+
+                          {/* README preview — a taste of the project homepage
+                              (the README is Tethyr's project front page). The
+                              clamped preview is non-interactive so truncated
+                              controls (copy buttons) can't half-work; the full
+                              read is one click away. */}
+                          {readme && readme.trim() && (
+                            <section
+                              aria-label="README preview"
+                              className="space-y-2 border-t border-border/60 pt-4"
+                            >
+                              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                                README
+                              </p>
+                              <div className="pointer-events-none line-clamp-6">
+                                <Suspense fallback={null}>
+                                  <ReadmeMarkdown>{readme}</ReadmeMarkdown>
+                                </Suspense>
+                              </div>
+                              <Link
+                                to="/projects/$id"
+                                params={{ id: project.id }}
+                                onClick={onClose}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-[var(--user-accent,var(--primary))] hover:underline"
+                              >
+                                Read the full README
+                                <ArrowRight className="h-3 w-3" />
+                              </Link>
+                            </section>
                           )}
                         </div>
 

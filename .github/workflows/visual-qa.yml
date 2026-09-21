@@ -97,6 +97,13 @@ jobs:
           QA_BASE: http://127.0.0.1:3000
           QA_SB_REST: http://127.0.0.1:54321
 
+      # Explore quick-look: card → overlay → title link → project page →
+      # deep link (?project=<id>) → close clears the param.
+      - name: Run explore-overlay click-through
+        run: node scripts/qa-explore-overlay.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+
       - name: Upload screenshots + report
         if: always()
         uses: actions/upload-artifact@v4

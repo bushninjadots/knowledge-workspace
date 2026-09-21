@@ -38,7 +38,9 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        // Cap tall drawers to the viewport (vaul's documented scrollable-drawer
+        // pattern) so content never grows past the top edge.
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto rounded-t-[10px] border bg-background",
         className,
       )}
       {...props}
