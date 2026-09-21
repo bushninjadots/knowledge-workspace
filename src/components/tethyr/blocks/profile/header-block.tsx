@@ -21,6 +21,7 @@ import { RequestSessionDialog } from "@/components/tethyr/sessions/request-sessi
 import { useSessionRequests } from "@/hooks/use-sessions";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import type { ProfileBackground } from "@/lib/background-themes";
+import { normalizeAvatarRing } from "@/lib/background-themes";
 import type { BlockProps } from "@/lib/page-blocks";
 
 type ProfileHeaderData = {
@@ -114,6 +115,10 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
   }
 
   if (!data) return null;
+  // Decorative ring preference: when active it replaces the static surface
+  // ring with the member's own accent (plus a surface separation gap).
+  const bg = data.background as ProfileBackground | null;
+  const hasRing = normalizeAvatarRing(bg?.avatarRing, bg?.avatarRingColor) !== "none";
   const customBanner =
     typeof config.bannerUrl === "string" && isSafeUrl(config.bannerUrl) ? config.bannerUrl : null;
   const bannerSrc = customBanner ?? bannerSigned;
@@ -178,7 +183,14 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
         >
           {/* Avatar */}
           <div className="shrink-0">
-            <Avatar className="h-24 w-24 ring-4 ring-surface sm:h-32 sm:w-32">
+            <Avatar
+              className={`h-24 w-24 sm:h-32 sm:w-32 ${hasRing ? "" : "ring-4 ring-surface"}`}
+              style={
+                hasRing
+                  ? { boxShadow: "0 0 0 3px var(--avatar-ring), 0 0 0 5px var(--surface)" }
+                  : undefined
+              }
+            >
               <AvatarImage src={avatarSigned ?? undefined} alt="" />
               <AvatarFallback className="text-2xl">{initial}</AvatarFallback>
             </Avatar>

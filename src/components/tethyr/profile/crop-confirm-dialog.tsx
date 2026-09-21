@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { avatarShapeCss } from "@/components/ui/avatar";
+import { avatarShapeStyle } from "@/lib/background-themes";
 import {
   AVATAR_CROP_ASPECT,
   BANNER_CROP_ASPECT,
@@ -27,10 +29,21 @@ const SHAPE_ASPECT: Record<CropShape, number> = {
  * "How will this look?" — a 2-second confirm step for identity media.
  *
  * Renders a live preview of the centre-crop (the exact math used at upload
- * time) and either hands back the file or the cropped blob. Auto-uploads when
- * no crop would change the image, so the common case stays one click.
+ * time) in the member's chosen profile-picture silhouette, and either hands
+ * back the file or the cropped blob. Auto-uploads when no crop would change
+ * the image, so the common case stays one click.
+ *
+ * @param avatarBackground the member's appearance document, so avatar
+ *   previews take their own chosen shape (circle, hexagon, bloom…) instead
+ *   of a generic rounded square.
  */
-export function useCropConfirm(): {
+export function useCropConfirm(
+  avatarBackground?: {
+    avatarShape?: string | null;
+    avatarRing?: string | null;
+    avatarRingColor?: string | null;
+  } | null,
+): {
   /** Feed user-selected files here instead of uploading directly. */
   requestCrop: (
     file: File,
@@ -155,8 +168,16 @@ export function useCropConfirm(): {
         <div className="flex justify-center py-2">
           <div
             aria-hidden="true"
-            className="overflow-hidden rounded-lg border border-border/60 bg-surface-sunken"
-            style={ready ? previewStyle : undefined}
+            className={`overflow-hidden border border-border/60 bg-surface-sunken ${pending?.shape === "avatar" ? "" : "rounded-lg"}`}
+            style={{
+              ...(ready ? previewStyle : undefined),
+              // Avatars preview in the member's own silhouette: the vars
+              // resolve radius (9999px fallback → circle) and clip together,
+              // so a hex member sees a hex crop, a circle member a circle.
+              ...(pending?.shape === "avatar"
+                ? { ...avatarShapeCss, ...avatarShapeStyle(avatarBackground) }
+                : {}),
+            }}
           >
             {!ready && <div className="h-[149px] w-[224px] animate-gentle-pulse" />}
           </div>

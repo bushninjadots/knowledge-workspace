@@ -61,4 +61,15 @@ export const avatarShapeCss = {
   clipPath: "var(--avatar-clip, none)",
 } as const;
 
+/**
+ * Ring styles for an avatar whose scope carries `avatarShapeStyle()`
+ * variables. Renders nothing when `--avatar-ring` isn't set, so call sites
+ * can spread it unconditionally. `--avatar-ring` resolves to a concrete
+ * colour (the member's accent or custom pick) set by `avatarShapeStyle()`.
+ */
+export const avatarRingCss = {
+  boxShadow:
+    "0 0 0 3px var(--avatar-ring), 0 0 0 4px color-mix(in oklab, var(--avatar-ring) 25%, transparent)",
+} as const;
+
 export { Avatar, AvatarImage, AvatarFallback };

@@ -41,7 +41,6 @@ async function login() {
   }
   throw new Error(`login failed; still on ${page.url()}`);
 }
-
 async function setShape(label) {
   await page.goto(`${BASE}/settings`, { waitUntil: "load" });
   await page.waitForTimeout(1500);
@@ -50,6 +49,20 @@ async function setShape(label) {
   await page
     .getByRole("button", { name: new RegExp(label, "i") })
     .first()
+    .click();
+  await page.getByRole("button", { name: /save background/i }).click();
+  await page.waitForTimeout(1500);
+}
+
+/** Pick a ring option in the appearance dialog's "Profile picture ring" group. */
+async function setRing(label) {
+  await page.goto(`${BASE}/settings`, { waitUntil: "load" });
+  await page.waitForTimeout(1500);
+  await page.getByRole("button", { name: /open appearance editor/i }).click();
+  await page.waitForTimeout(800);
+  await page
+    .getByRole("group", { name: /profile picture ring/i })
+    .getByRole("button", { name: new RegExp(label, "i") })
     .click();
   await page.getByRole("button", { name: /save background/i }).click();
   await page.waitForTimeout(1500);
@@ -64,6 +77,17 @@ async function polygonCount() {
         return clip && clip.includes("polygon");
       }).length,
   );
+}
+
+/** Find the avatar ring shadow (two-layer 3px+4px ring) anywhere in the layout. */
+async function ringShadow() {
+  return page.evaluate(() => {
+    for (const el of document.querySelectorAll(".studio-block *, main *")) {
+      const shadow = getComputedStyle(el).boxShadow;
+      if (shadow.includes("0px 0px 0px 3px")) return shadow;
+    }
+    return "none";
+  });
 }
 
 await login();
@@ -84,15 +108,29 @@ const pubPolys = await polygonCount();
 log("public studio renders the shape", pubPolys > 0, `clipped=${pubPolys}`);
 log("same clip presence on both", ownerPolys > 0 && pubPolys > 0);
 
-// ── 4. No runtime errors ─────────────────────────────────────────────────────
+// ── 3b. Ring: an accent ring draws a shadow around the avatar ───────────────
+await setRing("Accent");
+await page.goto(`${BASE}/profile`, { waitUntil: "load" });
+await page.waitForTimeout(2500);
+const ownerRing = await ringShadow();
+await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
+await page.waitForTimeout(2500);
+const pubRing = await ringShadow();
+log("owner studio renders the ring", ownerRing !== "none", ownerRing.slice(0, 60));
+log("public studio renders the ring", pubRing !== "none", pubRing.slice(0, 60));
+
+// ── 4. No runtime errors ─────────────────────────────────────────
 log("no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
 
-// ── 5. Restore the circle default and confirm it clears the clip ─────────────
+// ── 5. Restore defaults and confirm both clear ───────────────────────────────
 await setShape("Circle");
+await setRing("None");
 await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
 await page.waitForTimeout(2500);
 const resetPolys = await polygonCount();
+const resetRing = await ringShadow();
 log("reset clears the shape", resetPolys === 0, `clipped=${resetPolys}`);
+log("reset clears the ring", resetRing === "none", resetRing.slice(0, 40));
 
 await browser.close();
 

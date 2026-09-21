@@ -3,8 +3,13 @@ import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { avatarShapeCss } from "@/components/ui/avatar";
-import { appearanceStyle, avatarShapeStyle, type ProfileBackground } from "@/lib/background-themes";
+import { avatarShapeCss, avatarRingCss } from "@/components/ui/avatar";
+import {
+  appearanceStyle,
+  avatarShapeStyle,
+  normalizeAvatarRing,
+  type ProfileBackground,
+} from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
@@ -208,9 +213,11 @@ const SOCIAL_ICONS: Record<string, typeof Globe> = {
 function BasicProfile({
   profile,
   avatarSigned,
+  publicBackground,
 }: {
   profile: PublicProfile;
   avatarSigned: string | null;
+  publicBackground?: ProfileBackground | null;
 }) {
   const handle = profile.handle ?? "this member";
   const name = profile.display_name || `@${handle}`;
@@ -223,6 +230,10 @@ function BasicProfile({
     profile.languages && profile.languages.length > 0 ? profile.languages.join(", ") : null,
   ].filter((c): c is string => !!c);
 
+  // Same decorative ring rule as the Studio identity header: when a ring is
+  // active it replaces the static surface ring with the member's own accent.
+  const hasRing =
+    normalizeAvatarRing(publicBackground?.avatarRing, publicBackground?.avatarRingColor) !== "none";
   const portfolio = profile.portfolio_links ?? [];
   const social = Object.entries(profile.social_links ?? {}).filter(([, url]) => !!url);
 
@@ -231,8 +242,8 @@ function BasicProfile({
       <p className="section-label">Personal creative space</p>
 
       <div
-        className="mx-auto mt-6 h-28 w-28 overflow-hidden bg-[var(--user-accent,var(--trust))] ring-4 ring-surface"
-        style={avatarShapeCss}
+        className={`mx-auto mt-6 h-28 w-28 overflow-hidden bg-[var(--user-accent,var(--trust))] ${hasRing ? "" : "ring-4 ring-surface"}`}
+        style={{ ...avatarShapeCss, ...(hasRing ? avatarRingCss : {}) }}
       >
         {avatarSigned ? (
           <img

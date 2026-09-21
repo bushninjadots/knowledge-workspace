@@ -2,6 +2,7 @@ import { describe, expect, it, vi, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useCropConfirm } from "./crop-confirm-dialog";
+import { avatarShapeStyle } from "@/lib/background-themes";
 
 afterEach(() => {
   cleanup();
@@ -14,11 +15,13 @@ const PNG_FILE = new File(["fake-png-bytes"], "me.png", { type: "image/png" });
 function Harness({
   shape,
   onConfirmed,
+  avatarBackground,
 }: {
   shape: "avatar" | "banner";
   onConfirmed: (payload: File | Blob, meta: { ext: string; contentType: string }) => void;
+  avatarBackground?: { avatarShape?: string | null } | null;
 }) {
-  const { requestCrop, dialog } = useCropConfirm();
+  const { requestCrop, dialog } = useCropConfirm(avatarBackground);
   return (
     <div>
       <button type="button" onClick={() => requestCrop(PNG_FILE, shape, onConfirmed)}>
@@ -78,6 +81,56 @@ describe("useCropConfirm", () => {
     await screen.findByText(/will appear/i);
     expect(screen.getByText(/already fits — it will be uploaded as-is/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Upload" })).toBeInTheDocument();
+  });
+
+  it("previews avatars in the member's chosen silhouette", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn().mockResolvedValue({ width: 300, height: 300, close: () => undefined }),
+    );
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    });
+
+    render(
+      <Harness shape="avatar" onConfirmed={vi.fn()} avatarBackground={{ avatarShape: "hex" }} />,
+    );
+    await user.click(screen.getByRole("button", { name: "pick" }));
+    await screen.findByText(/will appear/i);
+
+    // The preview box carries the hex clip and radius reset exactly as
+    // avatarShapeStyle resolves them (via the CSS variables avatarShapeCss
+    // consumes) — not the generic rounded square. jsdom doesn't resolve the
+    // vars, so assert the variables themselves.
+    // (Radix portals the dialog outside the RTL container.)
+    const preview = document.querySelector("[style*='blob:preview']") as HTMLElement;
+    expect(preview.style.getPropertyValue("--avatar-clip")).toBe(
+      avatarShapeStyle({ avatarShape: "hex" })["--avatar-clip"],
+    );
+    expect(preview.style.getPropertyValue("--avatar-radius")).toBe("0px");
+    expect(preview.style.clipPath).toBe("var(--avatar-clip, none)");
+  });
+
+  it("previews banners without a silhouette (plain rounded box)", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn().mockResolvedValue({ width: 300, height: 300, close: () => undefined }),
+    );
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: vi.fn(() => "blob:preview"),
+      revokeObjectURL: vi.fn(),
+    });
+
+    render(<Harness shape="banner" onConfirmed={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "pick" }));
+    await screen.findByText(/will appear/i);
+    const preview = document.querySelector("[style*='blob:preview']") as HTMLElement;
+    expect(preview.style.clipPath).toBe("");
   });
 
   it("cancels without calling the uploader", async () => {

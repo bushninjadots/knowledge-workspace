@@ -4,6 +4,7 @@ import { Camera, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyError } from "@/lib/error-message";
 import { validateImageFile } from "@/lib/validators";
@@ -58,7 +59,11 @@ export function ProfileMediaControls({
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
   const [savingIdentity, setSavingIdentity] = useState(false);
-  const { requestCrop, dialog: cropDialog } = useCropConfirm();
+  const { data: me } = useCurrentUser();
+  const { requestCrop, dialog: cropDialog } = useCropConfirm(
+    // The member's appearance gives the preview their chosen silhouette.
+    (me?.background ?? null) as { avatarShape?: string | null } | null,
+  );
 
   const { data: identity, isLoading: identityLoading } = useQuery({
     queryKey: ["profile-header-block", ownerId],

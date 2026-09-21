@@ -17,6 +17,7 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import {
+  AVATAR_RINGS,
   BACKGROUND_COLORS,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_GRADIENTS,
@@ -33,6 +34,7 @@ import {
   gradientBackgroundImage,
   hasAppearanceSettings,
   imageOpacityFor,
+  normalizeAvatarRing,
   normalizeAvatarShape,
   avatarShapeStyle,
   type ContentDensity,
@@ -284,6 +286,77 @@ export function BackgroundPickerDialog({
                 );
               })}
             </div>
+          </section>
+
+          {/* AVATAR RING — a decorative outline in the identity accent or a
+              custom colour. Identity, not surface: one choice everywhere. */}
+          <section className="space-y-3" aria-labelledby="avatar-ring-heading">
+            <div>
+              <h3
+                id="avatar-ring-heading"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                Profile picture ring
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                A thin outline around your photo — accent follows your identity colour.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Profile picture ring">
+              {AVATAR_RINGS.map((ring) => {
+                const selected =
+                  normalizeAvatarRing(activeDraft.avatarRing, activeDraft.avatarRingColor) ===
+                  ring.id;
+                return (
+                  <button
+                    key={ring.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() =>
+                      setActiveDraft((d) => ({
+                        ...d,
+                        avatarRing: ring.id,
+                        // Seed a swatch so "custom" is immediately visible.
+                        avatarRingColor:
+                          ring.id === "custom" && !d.avatarRingColor
+                            ? BORDER_SWATCHES[0]
+                            : d.avatarRingColor,
+                      }))
+                    }
+                    className={cn(
+                      "rounded-lg border px-3 py-1.5 text-xs transition-lift",
+                      selected
+                        ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                        : "border-border/60 text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {ring.label}
+                  </button>
+                );
+              })}
+            </div>
+            {activeDraft.avatarRing === "custom" && (
+              <div
+                className="flex flex-wrap items-center gap-2"
+                role="group"
+                aria-label="Custom ring colour"
+              >
+                {BORDER_SWATCHES.map((swatch) => {
+                  const selected = (activeDraft.avatarRingColor ?? "").toLowerCase() === swatch;
+                  return (
+                    <SwatchButton
+                      key={swatch}
+                      title={swatch}
+                      selected={selected}
+                      style={{ backgroundColor: swatch }}
+                      onClick={() => setActiveDraft((d) => ({ ...d, avatarRingColor: swatch }))}
+                    >
+                      {selected && <Check className="h-3.5 w-3.5 text-foreground/70" />}
+                    </SwatchButton>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* PUBLIC STUDIO: same-as-app state */}

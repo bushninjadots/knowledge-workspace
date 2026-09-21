@@ -4,6 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { avatarShapeStyle, type ProfileBackground } from "@/lib/background-themes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { registerBlock } from "@/lib/block-registry";
@@ -17,6 +18,9 @@ type ContributorRow = {
     display_name: string | null;
     handle: string | null;
     avatar_url: string | null;
+    // Each contributor's own appearance — their profile picture takes their
+    // own silhouette, wherever a teammate surfaces it.
+    background: Pick<ProfileBackground, "avatarShape" | "avatarRing"> | null;
   } | null;
   signed_avatar_url: string | null;
 };
@@ -36,7 +40,7 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
       if (!projectId) return [];
       const { data } = await supabase
         .from("project_contributors")
-        .select("profile_id, role, profiles(id, display_name, handle, avatar_url)")
+        .select("profile_id, role, profiles(id, display_name, handle, avatar_url, background)")
         .eq("project_id", projectId)
         .order("role", { ascending: true });
       const rows = (data ?? []) as unknown as ContributorRow[];
@@ -98,7 +102,7 @@ function ProjectTeamBlock({ config, context }: BlockProps) {
               className="flex items-center gap-3 rounded-lg border border-border bg-surface p-2.5"
             >
               {config.showAvatars !== false && (
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8" style={avatarShapeStyle(profile?.background)}>
                   <AvatarImage src={c.signed_avatar_url ?? undefined} />
                   <AvatarFallback className="text-xs">{initial}</AvatarFallback>
                 </Avatar>

@@ -12,7 +12,9 @@ import {
   normalizeBannerOverlay,
   AVATAR_SHAPES,
   normalizeAvatarShape,
+  normalizeAvatarRing,
   avatarShapeStyle,
+  hasAppearanceSettings,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_MAX_STRENGTH,
   BACKGROUND_MIN_STRENGTH,
@@ -331,7 +333,39 @@ describe("appearanceStyle accent fallback", () => {
   });
 });
 
-const BASE_BG = { mode: null, color: null, pattern: null, image_url: null } as const;
+describe("profile picture rings", () => {
+  const BASE = { mode: null, color: null, pattern: null, image_url: null } as const;
+
+  it("emits a ring variable only when a ring is active", () => {
+    expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "none" })).toEqual({});
+    expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "accent" })).toEqual({
+      "--avatar-ring": "var(--user-accent, var(--primary))",
+    });
+    expect(
+      avatarShapeStyle({ avatarShape: "circle", avatarRing: "custom", avatarRingColor: "#b4632a" }),
+    ).toEqual({ "--avatar-ring": "#b4632a" });
+  });
+
+  it("degrades a custom ring without a colour to accent", () => {
+    expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "custom" })).toEqual({
+      "--avatar-ring": "var(--user-accent, var(--primary))",
+    });
+    expect(normalizeAvatarRing("custom", null)).toBe("accent");
+    expect(normalizeAvatarRing("custom", "#3f8f8a")).toBe("custom");
+    expect(normalizeAvatarRing("weird", null)).toBe("none");
+  });
+
+  it("combines shape and ring variables in one scope", () => {
+    const style = avatarShapeStyle({ avatarShape: "hex", avatarRing: "accent" });
+    expect(style["--avatar-clip"]).toMatch(/^polygon\(/);
+    expect(style["--avatar-ring"]).toBe("var(--user-accent, var(--primary))");
+  });
+
+  it("flags an active ring as an appearance setting", () => {
+    expect(hasAppearanceSettings({ ...BASE, avatarRing: "accent" })).toBe(true);
+    expect(hasAppearanceSettings({ ...BASE, avatarRing: "none" })).toBe(false);
+  });
+});
 
 describe("profile picture shapes", () => {
   it("defaults to circle for null, unknown, and unset values", () => {
@@ -341,24 +375,22 @@ describe("profile picture shapes", () => {
   });
 
   it("emits no variables for the circle default", () => {
-    expect(avatarShapeStyle({ mode: null, color: null, pattern: null, image_url: null })).toEqual(
-      {},
-    );
-    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "circle" })).toEqual({});
+    expect(avatarShapeStyle(null)).toEqual({});
+    expect(avatarShapeStyle({ avatarShape: "circle" })).toEqual({});
   });
 
   it("maps rounded shapes to radius variables only", () => {
-    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "rounded" })).toEqual({
+    expect(avatarShapeStyle({ avatarShape: "rounded" })).toEqual({
       "--avatar-radius": "18%",
     });
-    expect(avatarShapeStyle({ ...BASE_BG, avatarShape: "squircle" })).toEqual({
+    expect(avatarShapeStyle({ avatarShape: "squircle" })).toEqual({
       "--avatar-radius": "30%",
     });
   });
 
   it("gives every exotic shape a radius reset and a polygon clip", () => {
     for (const shape of ["hex", "diamond", "flower", "star"] as const) {
-      const style = avatarShapeStyle({ ...BASE_BG, avatarShape: shape });
+      const style = avatarShapeStyle({ avatarShape: shape });
       expect(style["--avatar-radius"]).toBe("0px");
       expect(style["--avatar-clip"]).toMatch(/^polygon\(/);
     }
