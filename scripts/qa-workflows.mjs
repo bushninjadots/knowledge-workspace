@@ -136,6 +136,13 @@ async function visible(locator, timeout = 10000) {
 
 // ── 2–3. Studio edit mode: customize panel, background entry, site-wide theme ─
 await page.goto(`${BASE}/studio`, { waitUntil: "load" });
+// A fresh database (CI) shows the first-run StarterPicker dialog, which
+// intercepts every pointer event on the page — dismiss it when present.
+const starterDialog = page.locator('[role="dialog"][aria-label="Choose how your Studio feels"]');
+if (await visible(starterDialog, 5000)) {
+  await starterDialog.getByRole("button", { name: /keep what i have/i }).click();
+  await starterDialog.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
+}
 // enter Editing mode (radiogroup) — auto-wait instead of a fixed sleep
 const editingRadio = page.getByRole("radio", { name: /editing/i }).first();
 if (await visible(editingRadio)) {
