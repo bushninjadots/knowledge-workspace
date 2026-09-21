@@ -417,13 +417,29 @@ function DashboardWelcomeBanner({
             Hey {firstName},{" "}
             <span className="text-[var(--user-accent,var(--trust))]">what will you make move?</span>
           </h1>
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <Link
+              to="/profile"
+              className="font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:text-[var(--user-accent,var(--trust))]"
+            >
+              Open your Studio
+            </Link>
+            <span aria-hidden="true" className="text-border-strong">/</span>
+            <CreateProjectButton label="Start a project" variant="ghost" className="h-auto p-0 font-medium text-foreground hover:bg-transparent hover:text-[var(--user-accent,var(--trust))]" />
+          </div>
         </div>
-        {reputationScore != null && (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
-            <Award className="h-3.5 w-3.5" />
-            {reputationScore} rep
+        <div className="flex shrink-0 items-center gap-3">
+          {reputationScore != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--user-accent-subtle,var(--learning-subtle))]/80 px-3 py-1.5 text-xs font-medium text-[var(--user-accent,var(--trust))]">
+              <Award className="h-3.5 w-3.5" />
+              {reputationScore} rep
+            </span>
+          )}
+          <span className="hidden text-right text-xs text-muted-foreground sm:block">
+            Your workspace<br />
+            <span className="font-medium text-foreground">is yours to arrange</span>
           </span>
-        )}
+        </div>
       </div>
     </section>
   );
