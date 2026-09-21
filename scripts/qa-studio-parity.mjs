@@ -122,6 +122,28 @@ log(
 );
 log("dark mode: no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
 
+// ── 6. Mobile viewport: parity must hold below the md breakpoint ─────────
+// Spans are md:col-span-* classes, so both surfaces collapse to one column.
+await page.setViewportSize({ width: 390, height: 844 });
+await page.goto(`${BASE}/profile`, { waitUntil: "load" });
+await page.waitForTimeout(2500);
+const ownerMobile = await census();
+await page.goto(`${BASE}/u/maya`, { waitUntil: "load" });
+await page.waitForTimeout(2500);
+const pubMobile = await census();
+await page.setViewportSize({ width: 1440, height: 900 });
+log(
+  "mobile: same studio-block frame count",
+  ownerMobile.blocks > 0 && ownerMobile.blocks === pubMobile.blocks,
+  `owner=${ownerMobile.blocks} public=${pubMobile.blocks}`,
+);
+log(
+  "mobile: same full-bleed opt-out count",
+  ownerMobile.flush === pubMobile.flush,
+  `owner=${ownerMobile.flush} public=${pubMobile.flush}`,
+);
+log("mobile: no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);

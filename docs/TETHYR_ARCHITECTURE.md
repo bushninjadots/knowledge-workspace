@@ -97,13 +97,12 @@ If duplicate controls or headings appear, fix ownership before adjusting spacing
 
 A person has a private Studio and a public Studio; they share concepts but not storage or rendering ownership:
 
-- `src/routes/_authenticated/profile.tsx` owns private identity, skills, project, community, and activity management.
-- `src/routes/u.$handle.tsx` owns the public Studio route and fixed identity header.
-- `src/components/tethyr/profile/public-studio-workspace.tsx` owns the public work/contribution section composition.
-- `src/hooks/use-public-studio-layout.ts` owns public Studio layout persistence.
-- `profiles.public_studio_layout` stores the owner-controlled public arrangement and is distinct from private `user_layout_preferences`.
+- `src/routes/_authenticated/profile.tsx` owns the private Studio route; `src/components/tethyr/studio/studio-view.tsx` renders the owner's saved layout.
+- `src/routes/u.$handle.tsx` owns the public Studio route; `src/routes/-u.$handle-page.tsx` composes identity and renders the published layout through `PageShell` + `PageLayoutRenderer` (`src/components/tethyr/page/`), published-only so drafts stay private.
+- `src/lib/studio-config.ts` owns the shared studio surface style (`studioSurfaceStyle`) consumed by the owner view, the editor, and the public canvas, so the three cannot drift.
+- The published layout lives on the `pages` row (`ownerType: "profile"`) fetched via `src/hooks/use-profile-page.ts`. (The legacy `profiles.public_studio_layout` column is not consumed by source code.)
 
-The public identity header remains fixed. Public work sections may be reordered, resized, pinned, or hidden by the owner. The profile table is already public-readable and owner-updatable, so the public layout can be rendered anonymously while writes remain protected by the existing profile RLS policy.
+Parity between the two surfaces is pinned by `src/components/tethyr/page/page-layout.test.tsx` (structural contracts) and `scripts/qa-studio-parity.mjs` (nightly browser click-through, light and dark schemes).
 
 ## Server and Security Ownership
 
