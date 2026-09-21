@@ -17,7 +17,7 @@ import { timeAgo } from "@/lib/time";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { CoverGradient } from "./cover-gradient";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -230,10 +230,18 @@ export function ProjectShelfOverlay({
                           </div>
 
                           {/* Title overlay — guaranteed scrim so white text is always
-                            readable over any cover image. */}
+                            readable over any cover image. The title block is a real
+                            link: the cover/title is the most obvious click target, so
+                            it must lead to the full project page (README, files,
+                            people) instead of dead-ending in this preview. */}
                           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 on-media-scrim" />
-                          <div className="absolute bottom-4 left-4 right-4">
-                            <p className="text-xl font-bold text-white drop-shadow-lg">
+                          <Link
+                            to="/projects/$id"
+                            params={{ id: project.id }}
+                            onClick={onClose}
+                            className="group/link absolute bottom-4 left-4 right-4 z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <p className="text-xl font-bold text-white drop-shadow-lg underline-offset-4 group-hover/link:underline decoration-white/60">
                               {project.title}
                             </p>
                             {project.profiles && (
@@ -244,7 +252,7 @@ export function ProjectShelfOverlay({
                                   "Member"}
                               </p>
                             )}
-                          </div>
+                          </Link>
                         </div>
 
                         {/* Content */}

@@ -1,10 +1,31 @@
 import { describe, expect, it, vi, beforeAll, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProjectShelf } from "./project-shelf";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
 vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    params,
+    children,
+    ...rest
+  }: {
+    to: string;
+    params?: Record<string, string>;
+    children: React.ReactNode;
+  }) => (
+    <a
+      href={
+        params
+          ? Object.entries(params).reduce((acc, [key, value]) => acc.replace(`$${key}`, value), to)
+          : to
+      }
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
   useNavigate: () => vi.fn(),
 }));
 
@@ -301,5 +322,20 @@ describe("ProjectShelf overlay focus", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "First" })).not.toBeInTheDocument(),
     );
+  });
+
+  it("links the overlay title to the full project page", async () => {
+    const user = userEvent.setup();
+    const projects = [makeProject("p1", "First")];
+    renderShelf(projects);
+
+    await user.click(screen.getByRole("button", { name: /View First/i }));
+    const dialog = await screen.findByRole("dialog", { name: "First" });
+
+    // The overlay is a quick look; the title must lead to the full detail
+    // surface (README, files, people) rather than dead-end inside the preview.
+    // Accessible name spans the title plus the author line.
+    const titleLink = within(dialog).getByRole("link", { name: /^First/ });
+    expect(titleLink).toHaveAttribute("href", "/projects/p1");
   });
 });
