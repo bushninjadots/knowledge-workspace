@@ -20,13 +20,23 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 page.on("pageerror", (e) => errors.push(String(e).slice(0, 150)));
 // domcontentloaded + a form wait is deterministic; networkidle flaked on the
 // dev server (lingering HMR/websocket traffic after on-demand transforms).
-await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
-await page.waitForSelector("#email", { timeout: 20000 });
-await page.waitForTimeout(1000);
-await page.fill("#email", "test@tethyr.com");
-await page.fill("#password", "password123");
-await page.click('button[type="submit"]');
-await page.waitForURL(/\/dashboard/, { timeout: 20000 });
+// A click before hydration falls through to a native GET submit (the
+// "/login?" tell), so retry until the SPA actually handles the submit
+// (same pattern qa-project-loop/qa-challenge-loop use).
+let loggedIn = false;
+for (let attempt = 0; attempt < 3 && !loggedIn; attempt++) {
+  await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#email", { timeout: 20000 });
+  await page.waitForTimeout(1000);
+  await page.fill("#email", "test@tethyr.com");
+  await page.fill("#password", "password123");
+  await page.click('button[type="submit"]');
+  loggedIn = await page
+    .waitForURL(/\/dashboard/, { timeout: 8000 })
+    .then(() => true)
+    .catch(() => false);
+}
+if (!loggedIn) throw new Error(`login failed; still on ${page.url()}`);
 log("login", true, "→ /dashboard");
 
 // Explore → Projects tab → open the quick-look overlay from a card.

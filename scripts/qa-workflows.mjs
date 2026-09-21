@@ -14,13 +14,26 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e).slice(0, 150)));
 
 async function login() {
-  await page.goto(`${BASE}/login`, { waitUntil: "load" });
-  await page.waitForTimeout(1500);
-  await page.fill("#email", "maya@tethyr.dev");
-  await page.fill("#password", "password123");
-  await page.getByRole("button", { name: /log in/i }).click();
-  await page.waitForURL(/dashboard/, { timeout: 20000 });
-  await page.waitForTimeout(1000);
+  // A click before hydration falls through to a native GET submit (the
+  // "/login?" tell), so retry until the SPA actually handles the submit
+  // (same pattern qa-project-loop/qa-challenge-loop use).
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("#email", { timeout: 20000 });
+    await page.waitForTimeout(1000);
+    await page.fill("#email", "maya@tethyr.dev");
+    await page.fill("#password", "password123");
+    await page.getByRole("button", { name: /log in/i }).click();
+    const ok = await page
+      .waitForURL(/dashboard/, { timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) {
+      await page.waitForTimeout(1000);
+      return;
+    }
+  }
+  throw new Error(`login failed; still on ${page.url()}`);
 }
 
 // ── 1. Edit details: open, edit, save, verify persistence ────────────────────
