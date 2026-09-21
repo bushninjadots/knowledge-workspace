@@ -34,19 +34,15 @@ await page
   .first()
   .click();
 await page.waitForTimeout(800);
-const dialogVisible = await page
-  .getByRole("dialog")
-  .first()
-  .isVisible()
-  .catch(() => false);
+const dialogVisible = await visible(page.getByRole("dialog").first());
 log("edit details: dialog opens", dialogVisible);
 
 const bioBox = page.locator("textarea").first();
-if (await bioBox.isVisible().catch(() => false)) {
+if (await visible(bioBox)) {
   await bioBox.fill(`QA bio edit ${Date.now()}`);
 }
 const saveBtn = page.getByRole("button", { name: /^save/i }).first();
-const saveVisible = await saveBtn.isVisible().catch(() => false);
+const saveVisible = await visible(saveBtn);
 log("edit details: save button visible", saveVisible);
 if (saveVisible) {
   await saveBtn.click();
@@ -56,11 +52,12 @@ if (saveVisible) {
     .count()
     .catch(() => 0);
   log("edit details: no error toast on save", toastErr === 0, `errors=${toastErr}`);
-  const dialogGone = !(await page
+  const dialogGone = await page
     .getByRole("dialog")
     .first()
-    .isVisible()
-    .catch(() => false));
+    .waitFor({ state: "hidden", timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
   log("edit details: dialog closes after save", dialogGone);
 }
 const token = await page.evaluate(() => {
@@ -110,38 +107,44 @@ if (!token) {
   log("edit details: bio persisted", bio.startsWith("QA bio edit"), bio.slice(0, 40));
 }
 
+/**
+ * Auto-wait for a locator to become visible instead of one-shot isVisible()
+ * after a fixed sleep — slow CI runners lose that race and fail checks
+ * spuriously. Never throws; returns whether it appeared in time.
+ */
+async function visible(locator, timeout = 10000) {
+  try {
+    await locator.waitFor({ state: "visible", timeout });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ── 2–3. Studio edit mode: customize panel, background entry, site-wide theme ─
 await page.goto(`${BASE}/studio`, { waitUntil: "load" });
-await page.waitForTimeout(2500);
-// enter Editing mode (radiogroup)
+// enter Editing mode (radiogroup) — auto-wait instead of a fixed sleep
 const editingRadio = page.getByRole("radio", { name: /editing/i }).first();
-if (await editingRadio.isVisible().catch(() => false)) {
+if (await visible(editingRadio)) {
   await editingRadio.click();
-  await page.waitForTimeout(1000);
 }
 const panel = page.locator("aside").filter({ hasText: "Customize" }).first();
-const panelVisible = await panel.isVisible().catch(() => false);
+const panelVisible = await visible(panel);
 log("customize: panel opens in edit mode", panelVisible);
 if (panelVisible) {
   // expand "More options" so advanced entries (incl. Edit background) render
   const moreBtn = panel.getByRole("button", { name: /more options/i }).first();
-  if (await moreBtn.isVisible().catch(() => false)) {
+  if (await visible(moreBtn, 5000)) {
     if ((await moreBtn.getAttribute("aria-expanded")) !== "true") {
       await moreBtn.click();
       await page.waitForTimeout(400);
     }
   }
-  const bgEntry = await panel
-    .getByRole("button", { name: /edit background/i })
-    .first()
-    .isVisible()
-    .catch(() => false);
+  const bgEntry = await visible(panel.getByRole("button", { name: /edit background/i }).first());
   log("customize: background entry present", bgEntry);
-  const themeEntry = await panel
-    .getByRole("button", { name: /apply site-wide|applied site-wide/i })
-    .first()
-    .isVisible()
-    .catch(() => false);
+  const themeEntry = await visible(
+    panel.getByRole("button", { name: /apply site-wide|applied site-wide/i }).first(),
+  );
   log("customize: site-wide theme option present", themeEntry);
 
   // independent scroll: shrink viewport, then the advanced area scrolls,
@@ -191,7 +194,7 @@ if (panelVisible) {
   if (picked) {
     await page.waitForTimeout(600);
     const applyBtn = panel.getByRole("button", { name: /apply site-wide/i }).first();
-    if (await applyBtn.isVisible().catch(() => false)) {
+    if (await visible(applyBtn)) {
       await applyBtn.click();
       await page.waitForTimeout(1200);
       const primaryAfter = await page.evaluate(() =>
@@ -206,14 +209,14 @@ if (panelVisible) {
       log("site-wide theme: persisted in localStorage", !!stored, stored ?? "none");
       // restore: pick Default, then Apply site-wide clears the preset
       const defaultPick = panel.locator('button[title="Default"]');
-      if (await defaultPick.isVisible().catch(() => false)) {
+      if (await visible(defaultPick, 4000)) {
         await defaultPick.click();
         await page.waitForTimeout(400);
       }
       const resetBtn = panel
         .getByRole("button", { name: /applied site-wide|apply site-wide/i })
         .first();
-      if (await resetBtn.isVisible().catch(() => false)) {
+      if (await visible(resetBtn, 4000)) {
         await resetBtn.click();
         await page.waitForTimeout(600);
       }
