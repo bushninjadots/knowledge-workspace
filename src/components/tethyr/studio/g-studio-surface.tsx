@@ -706,7 +706,28 @@ function GStudioTopBar({
               <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}>
                 <Redo2 className="h-3.5 w-3.5" />
               </IconButton>
-              {!compact && (
+              {compact ? (
+                <>
+                  <IconButton label="Customize Studio" active={customizeOpen} onClick={onCustomize}>
+                    <Sliders className="h-3.5 w-3.5" />
+                  </IconButton>
+                  <IconButton
+                    label={saving ? "Saving draft" : "Save draft"}
+                    disabled={!dirty || saving}
+                    onClick={onSave}
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                  </IconButton>
+                  <IconButton
+                    label="Publish changes"
+                    active={hasUnpublishedChanges}
+                    disabled={!hasUnpublishedChanges || saving}
+                    onClick={onPublish}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                  </IconButton>
+                </>
+              ) : (
                 <>
                   <Button
                     variant={customizeOpen ? "default" : "ghost"}
@@ -739,10 +760,7 @@ function GStudioTopBar({
                     title={saving ? "Saving draft" : "Save draft"}
                     aria-label={saving ? "Saving draft" : "Save draft"}
                   >
-                    <Save className="h-3 w-3" />
-                    <span className={compact ? "sr-only" : undefined}>
-                      {saving ? "Saving" : "Save draft"}
-                    </span>
+                    <Save className="h-3 w-3" /> {saving ? "Saving" : "Save draft"}
                   </Button>
                   <Button
                     variant={hasUnpublishedChanges ? "default" : "outline"}
@@ -752,8 +770,7 @@ function GStudioTopBar({
                     title="Publish changes"
                     aria-label="Publish changes"
                   >
-                    <Upload className="h-3 w-3" />
-                    <span className={compact ? "sr-only" : undefined}>Publish</span>
+                    <Upload className="h-3 w-3" /> Publish
                   </Button>
                 </>
               )}
