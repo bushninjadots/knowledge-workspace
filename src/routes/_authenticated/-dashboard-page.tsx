@@ -344,12 +344,18 @@ function DashboardContent({
         </section>
 
         <section aria-labelledby="dashboard-modules-heading" className="space-y-6">
-          <div>
-            <h2 id="dashboard-modules-heading" className="font-display text-lg font-semibold">
-              Build and discover
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your active work, collaboration signals, discovery, and contribution evidence.
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/60 pb-4">
+            <div>
+              <p className="section-label">Workspace view</p>
+              <h2 id="dashboard-modules-heading" className="mt-1 font-display text-lg font-semibold">
+                Build and discover
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Your active work, collaboration signals, discovery, and contribution evidence.
+              </p>
+            </div>
+            <p className="max-w-xs text-right text-xs leading-relaxed text-muted-foreground">
+              Arrange this space around what you are building now.
             </p>
           </div>
           <Suspense fallback={<div className="h-64 animate-gentle-pulse rounded-xl bg-surface" />}>
