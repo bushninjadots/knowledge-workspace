@@ -14,6 +14,8 @@ import {
   CalendarDays,
   HandHeart,
   ArrowRight,
+  Target,
+  Briefcase,
 } from "lucide-react";
 import { timeAgo } from "@/lib/time";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
@@ -78,6 +80,43 @@ export function ProjectShelfOverlay({
       return (data?.readme as string | null) ?? null;
     },
     enabled: !!project,
+    staleTime: Infinity,
+  });
+
+  // Milestones — the "where is this headed" line: the next unfinished
+  // milestone, or progress when everything ahead is done.
+  const { data: milestones = [] } = useQuery({
+    queryKey: ["project-milestones-preview", project?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_milestones")
+        .select("title,status")
+        .eq("project_id", project!.id)
+        .order("position");
+      if (error) throw error;
+      return (data ?? []) as { title: string; status: string }[];
+    },
+    enabled: !!project,
+    staleTime: Infinity,
+  });
+  const nextMilestone = milestones.find((m) => m.status !== "done");
+  const doneMilestones = milestones.filter((m) => m.status === "done").length;
+
+  // Open-role titles — the count already shows as a badge; the names are what
+  // tell a visitor whether the opening fits them.
+  const { data: openRoles = [] } = useQuery({
+    queryKey: ["project-roles-preview", project?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_open_roles")
+        .select("title")
+        .eq("project_id", project!.id)
+        .eq("is_filled", false)
+        .limit(3);
+      if (error) throw error;
+      return (data ?? []) as { title: string }[];
+    },
+    enabled: !!project && openRoleCount > 0,
     staleTime: Infinity,
   });
 
@@ -267,7 +306,6 @@ export function ProjectShelfOverlay({
                           <Link
                             to="/projects/$id"
                             params={{ id: project.id }}
-                            onClick={onClose}
                             className="group/link absolute bottom-4 left-4 right-4 z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <p className="text-xl font-bold text-white drop-shadow-lg underline-offset-4 group-hover/link:underline decoration-white/60">
@@ -321,6 +359,39 @@ export function ProjectShelfOverlay({
                                 <dt className="sr-only">Started</dt>
                                 <CalendarDays className="h-3.5 w-3.5" />
                                 <dd>{timeAgo(project.created_at)}</dd>
+                              </div>
+                            )}
+                            {nextMilestone && (
+                              <div className="flex items-center gap-1.5">
+                                <dt className="sr-only">Next milestone</dt>
+                                <Target className="h-3.5 w-3.5" />
+                                <dd
+                                  className="max-w-[16rem] truncate"
+                                  title={`Next: ${nextMilestone.title}`}
+                                >
+                                  Next: {nextMilestone.title}
+                                </dd>
+                              </div>
+                            )}
+                            {!nextMilestone && milestones.length > 0 && doneMilestones > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <dt className="sr-only">Milestones</dt>
+                                <Target className="h-3.5 w-3.5" />
+                                <dd>
+                                  {doneMilestones}/{milestones.length} milestones done
+                                </dd>
+                              </div>
+                            )}
+                            {openRoleCount > 0 && openRoles.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <dt className="sr-only">Open roles</dt>
+                                <Briefcase className="h-3.5 w-3.5" />
+                                <dd
+                                  className="max-w-[16rem] truncate"
+                                  title={openRoles.map((r) => r.title).join(", ")}
+                                >
+                                  {openRoles.map((r) => r.title).join(", ")}
+                                </dd>
                               </div>
                             )}
                             {(project.looking_for_collaborators ||
@@ -435,7 +506,6 @@ export function ProjectShelfOverlay({
                             <button
                               onClick={() => {
                                 navigate({ to: "/projects/$id", params: { id: project.id } });
-                                onClose();
                               }}
                               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-fade hover:opacity-90"
                             >

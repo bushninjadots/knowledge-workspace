@@ -1029,7 +1029,16 @@ export function ExplorePage() {
                 setCategory={setCategory}
                 openRoleCounts={openRoleCounts}
                 initialOverlayId={urlProject ?? null}
-                onOverlayClosed={() => void navigate({ to: "/explore", search: {}, replace: true })}
+                onOverlayClosed={() => {
+                  // Clear only the deep-link param — preserve ?tab — and never
+                  // fire while navigating to the project page (that navigation
+                  // must win; the explore surface unmounts with the route).
+                  void navigate({
+                    to: "/explore",
+                    search: urlTab ? { tab: urlTab } : {},
+                    replace: true,
+                  });
+                }}
               />
               {filteredProjects.length > 0 && (
                 <LoadMoreButton

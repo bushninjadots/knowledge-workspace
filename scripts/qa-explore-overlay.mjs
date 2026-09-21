@@ -57,6 +57,31 @@ const projectUrl = page.url();
 const projectId = projectUrl.replace(/\/$/, "").split("/").pop();
 log("title click lands on project page", true, projectUrl);
 
+// Regression: the overlay's close handler used to fire a second navigation
+// back to /explore, bouncing the user off the project page. Both exits must
+// STICK — wait past any bounce window and re-assert.
+await page.waitForTimeout(2000);
+log("title click stays on project page", /\/projects\//.test(page.url()), page.url());
+
+// Same regression for the footer "View Project" button — back to explore,
+// reopen the overlay (the shelf remounts without it), then click through.
+await page.goBack();
+// Let the restored explore surface finish hydrating before interacting.
+await page.waitForTimeout(1500);
+const reopenCard = page.locator('button[aria-label^="View "]').first();
+await reopenCard.waitFor({ state: "visible", timeout: 20000 });
+await reopenCard.click();
+const reopenOverlay = page.getByRole("dialog");
+await reopenOverlay.waitFor({ state: "visible", timeout: 10000 });
+await reopenOverlay.getByRole("button", { name: "View Project" }).click();
+await page.waitForURL(/\/projects\//, { timeout: 20000 });
+await page.waitForTimeout(2000);
+log(
+  "View Project stays on project page",
+  /\/projects\//.test(page.url()) && page.url().includes(projectId),
+  page.url(),
+);
+
 // Deep link: /explore?project=<id> reopens the shared project's preview.
 await page.goto(`${BASE}/explore?project=${projectId}`, { waitUntil: "domcontentloaded" });
 const deepOverlay = page.getByRole("dialog");
