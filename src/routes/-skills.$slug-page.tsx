@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Card } from "@/components/ui/card";
+import { Navbar } from "@/components/tethyr/navbar";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -679,44 +680,9 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
 // ── Shell ─────────────────────────────────────────────────────
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const navItems = [
-    { to: "/explore", label: "Explore", icon: Compass },
-    { to: "/skills", label: "Skills", icon: Tags },
-    { to: "/challenges", label: "Challenges", icon: Swords },
-  ] as const;
-
   return (
     <div className="min-h-screen bg-background bg-noise">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
-          <Link to="/" className="shrink-0 font-display text-lg font-semibold text-foreground">
-            Tethyr
-          </Link>
-          <span className="hidden text-muted-foreground sm:inline">/</span>
-          <span className="hidden text-sm text-muted-foreground sm:inline">Skill hub</span>
-          <nav aria-label="Primary navigation" className="ml-auto flex items-center gap-1">
-            {navItems.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground sm:px-3"
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">{label}</span>
-              </Link>
-            ))}
-            <Link
-              to="/skills"
-              aria-label="Browse all skills"
-              className="ml-1 inline-flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-sunken sm:px-3"
-            >
-              <Menu className="h-4 w-4 sm:hidden" aria-hidden="true" />
-              <span className="hidden sm:inline">Browse all skills</span>
-              <ArrowRight className="hidden h-3.5 w-3.5 sm:inline" aria-hidden="true" />
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar publicOnly />
       <main className="flex-1">{children}</main>
     </div>
   );

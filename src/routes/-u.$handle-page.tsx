@@ -16,6 +16,7 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { Navbar } from "@/components/tethyr/navbar";
 import { fetchPublicProfile, type PublicProfile } from "./-u.$handle-data";
 
 // Code-split module: the interactive page for its route. See the route
@@ -161,7 +162,10 @@ function Shell({
       style={{ ...appearanceStyle(background), ...avatarShapeStyle(background) }}
     >
       {!embed && (
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
+        <Navbar publicOnly />
+      )}
+      {!embed && (
+        <header className="flex h-12 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
           <button
             type="button"
             onClick={() =>

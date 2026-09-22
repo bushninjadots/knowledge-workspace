@@ -34,6 +34,7 @@ import { ProjectLiveRoom } from "@/components/tethyr/project/project-live-room";
 import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
+import { Navbar } from "@/components/tethyr/navbar";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -1001,7 +1002,8 @@ function Shell({
   };
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
+      <Navbar publicOnly />
+      <header className="flex h-12 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
         <button
           onClick={() =>
             window.history.length > 1 ? window.history.back() : navigate({ to: "/" })

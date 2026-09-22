@@ -45,6 +45,18 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             >
               Explore
             </Link>
+            <Link
+              to="/skills"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+            >
+              Skills
+            </Link>
+            <Link
+              to="/challenges"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+            >
+              Challenges
+            </Link>
             <a
               href="/#how-it-works"
               className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
@@ -127,6 +139,20 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                   className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
                 >
                   Explore
+                </Link>
+                <Link
+                  to="/skills"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  Skills
+                </Link>
+                <Link
+                  to="/challenges"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+                >
+                  Challenges
                 </Link>
                 <a
                   href="/#how-it-works"
