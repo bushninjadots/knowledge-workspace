@@ -82,9 +82,13 @@ export function useChallenges(statusFilter: string = "active") {
   return useQuery({
     queryKey: [...CHALLENGES_KEY, statusFilter],
     queryFn: async () => {
+      // Explicit column list — covers every field the list and cards render;
+      // skips only internal columns the list never displays.
+      const CHALLENGES_SELECT =
+        "id, title, description, type, skills, difficulty, start_date, end_date, max_participants, pass_criteria, status, created_by, created_at, updated_at, project_id, is_starter" as const;
       let query = sb
         .from("challenges")
-        .select("*")
+        .select<typeof CHALLENGES_SELECT, ChallengeRow>(CHALLENGES_SELECT)
         .order("created_at", { ascending: false })
         // Platform-wide list with no per-user bound — cap it so the page
         // doesn't grow unbounded as challenges accumulate. Pagination can
@@ -102,7 +106,7 @@ export function useChallenges(statusFilter: string = "active") {
         }
         throw error;
       }
-      const challenges = (rawChallenges ?? []) as ChallengeRow[];
+      const challenges = rawChallenges ?? [];
 
       if (challenges.length === 0) return [];
 

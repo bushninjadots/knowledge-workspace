@@ -20,12 +20,15 @@ export function useSpaceReportedPostCounts(spaceId: string) {
   return useQuery({
     queryKey: SPACE_REPORTED_POST_IDS_KEY(spaceId),
     queryFn: async () => {
+      // Grouped count() instead of pulling every open report row — the old
+      // .limit(1000) fetch shipped up to 1000 rows just to count per post, and
+      // silently dropped reports past the cap.
       const { data, error } = await sb
         .from("post_reports")
-        .select("post_id")
+        .select("post_id, count()")
         .eq("space_id_snapshot", spaceId)
         .eq("status", "open")
-        .limit(1000);
+        .not("post_id", "is", null);
 
       if (error) {
         if (error.message?.includes("Could not find the table") || error.code === "42P01") {
@@ -35,9 +38,8 @@ export function useSpaceReportedPostCounts(spaceId: string) {
       }
 
       const counts = new Map<string, number>();
-      for (const r of data ?? []) {
-        if (!r.post_id) continue;
-        counts.set(r.post_id as string, (counts.get(r.post_id as string) ?? 0) + 1);
+      for (const r of (data ?? []) as { post_id: string; count: number }[]) {
+        counts.set(r.post_id, Number(r.count));
       }
       return counts;
     },

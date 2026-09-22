@@ -2,6 +2,7 @@ import { createStart, createMiddleware, createCsrfMiddleware } from "@tanstack/r
 
 import { renderErrorPage } from "./lib/error-page";
 import { addSecurityHeaders } from "./lib/security-headers";
+import { reportServerError } from "./lib/server-error-reporter";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
@@ -12,6 +13,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
+    void reportServerError(error, { handler: "start-middleware" });
     return addSecurityHeaders(
       new Response(renderErrorPage(), {
         status: 500,

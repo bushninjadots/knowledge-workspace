@@ -11,12 +11,16 @@ import { routeTree } from "./routeTree.gen";
  *   previously a revoked session looked like the app "hanging".
  * - mutations never retry (a double-fired insert is worse than a visible
  *   error).
+ * - refocus refetching is off: 80+ mounted queries would each fire a Supabase
+ *   request on every tab switch. Volatile surfaces (notifications, messages,
+ *   chat) already subscribe to realtime channels and opt back in explicitly.
  */
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 15_000,
+        refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
           const status = (error as { status?: number } | null)?.status;
           if (typeof status === "number" && status >= 400 && status < 500) return false;

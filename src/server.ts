@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
+import { initServerErrorReporting, reportServerError } from "./lib/server-error-reporter";
 import { renderErrorPage } from "./lib/error-page";
 import { addSecurityHeaders, securityErrorResponse } from "./lib/security-headers";
 import { renderRobots, renderSitemap } from "./lib/sitemap";
@@ -9,6 +10,8 @@ import { isNoIndexPath } from "./lib/seo";
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
+
+initServerErrorReporting();
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -33,7 +36,10 @@ function addNoIndexHeader(response: Response) {
   });
 }
 
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  response: Response,
+  path: string,
+): Promise<Response> {
   if (response.status < 500) return addSecurityHeaders(response);
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return addSecurityHeaders(response);
@@ -43,7 +49,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return addSecurityHeaders(response);
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const reportedError = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  console.error(reportedError);
+  void reportServerError(reportedError, { path });
   return securityErrorResponse(renderErrorPage());
 }
 
@@ -51,29 +59,40 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);
+      // Bot-only endpoints: let any layer (CDN, browser) cache briefly so
+      // crawlers don't trigger three DB queries per hit. The sitemap itself is
+      // additionally memoised in-memory for 15 min.
+      const seoCacheControl = "public, max-age=900";
       if (url.pathname === "/sitemap.xml") {
         const sitemap = await renderSitemap(url.origin);
         return addSecurityHeaders(
           new Response(sitemap, {
-            headers: { "content-type": "application/xml; charset=utf-8" },
+            headers: {
+              "content-type": "application/xml; charset=utf-8",
+              "cache-control": seoCacheControl,
+            },
           }),
         );
       }
       if (url.pathname === "/robots.txt") {
         return addSecurityHeaders(
           new Response(renderRobots(url.origin), {
-            headers: { "content-type": "text/plain; charset=utf-8" },
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "cache-control": seoCacheControl,
+            },
           }),
         );
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      const normalizedResponse = await normalizeCatastrophicSsrResponse(response);
+      const normalizedResponse = await normalizeCatastrophicSsrResponse(response, url.pathname);
       return isNoIndexPath(url.pathname)
         ? addNoIndexHeader(normalizedResponse)
         : normalizedResponse;
     } catch (error) {
       console.error(error);
+      void reportServerError(error, { path: new URL(request.url).pathname });
       const errorResponse = securityErrorResponse(renderErrorPage());
       return isNoIndexPath(new URL(request.url).pathname)
         ? addNoIndexHeader(errorResponse)

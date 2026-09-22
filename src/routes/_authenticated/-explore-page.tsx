@@ -501,30 +501,29 @@ export function ExplorePage() {
   // Open-role counts for the visible project cards — one batched query so the
   // shelf, list, and overlay can each show "N open roles" without firing per
   // card.
-  const { data: openRoleRows = [] } = useQuery({
+  const { data: openRoleCounts = new Map<string, number>() } = useQuery({
     queryKey: ["explore-open-roles", (projects ?? []).map((p) => p.id).join(",")],
-    queryFn: async (): Promise<{ project_id: string }[]> => {
+    queryFn: async (): Promise<Map<string, number>> => {
       const ids = (projects ?? []).map((p) => p.id);
-      if (ids.length === 0) return [];
+      if (ids.length === 0) return new Map();
+      // Grouped count() instead of pulling every role row: the earlier
+      // .in(...).limit(2000) fetch shipped up to 2000 rows to the client just
+      // to count them. PostgREST aggregates make it one small response.
       const { data, error } = await supabase
         .from("project_open_roles")
-        .select("project_id")
+        .select("project_id, count()")
         .eq("is_filled", false)
-        .in("project_id", ids)
-        .limit(2000);
+        .in("project_id", ids);
       if (error) throw error;
-      return (data ?? []) as { project_id: string }[];
+      const counts = new Map<string, number>();
+      for (const row of (data ?? []) as { project_id: string; count: number }[]) {
+        counts.set(row.project_id, Number(row.count));
+      }
+      return counts;
     },
     enabled: (projects ?? []).length > 0,
     staleTime: 60_000,
   });
-  const openRoleCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const row of openRoleRows) {
-      counts.set(row.project_id, (counts.get(row.project_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [openRoleRows]);
 
   // Creators hosting upcoming sessions — a subtle "hosting live sessions"
   // signal on the People grid.
@@ -534,13 +533,14 @@ export function ExplorePage() {
       const ids = (creators ?? []).map((c) => c.id);
       if (ids.length === 0) return new Set();
       const now = new Date().toISOString();
+      // Distinct organizers via a grouped select — the old .limit(2000) row
+      // pull only ever needed the organizer_id set.
       const { data, error } = await supabase
         .from("sessions")
-        .select("organizer_id")
+        .select("organizer_id, count()")
         .gte("starts_at", now)
         .in("status", ["scheduled", "confirmed", "invitation_sent"])
-        .in("organizer_id", ids)
-        .limit(2000);
+        .in("organizer_id", ids);
       if (error) throw error;
       return new Set((data ?? []).map((row) => row.organizer_id));
     },

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 
 export type ActivityPoint = {
   date: string; // YYYY-MM-DD
@@ -15,9 +16,16 @@ function dateKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+type DailyActivityRow = { day: string; joins: number; posts: number };
+
 /**
  * Fetches daily joins + posts across all community spaces for the last 14 days.
  * Used by the activity charts on the communities dashboard.
+ *
+ * Runs as one server-side aggregate (security-definer `community_daily_activity`
+ * RPC) instead of pulling up to 500 member rows + 500 post rows and counting
+ * them client-side — the old shape scaled with activity volume and silently
+ * dropped days once either stream crossed its limit.
  */
 export function useCommunityActivity() {
   return useQuery({
@@ -28,58 +36,43 @@ export function useCommunityActivity() {
       since.setDate(since.getDate() - (DAYS - 1));
       const sinceIso = since.toISOString();
 
-      // Fetch recent member joins (RLS: only visible for spaces you've joined)
-      const { data: memberRows, error: memberErr } = await supabase
-        .from("community_space_members")
-        .select("joined_at, space_id")
-        .gte("joined_at", sinceIso)
-        .order("joined_at", { ascending: true })
-        .limit(500);
+      const { data, error } = await supabasePending.rpc("community_daily_activity", {
+        p_since: sinceIso,
+        p_days: DAYS,
+      });
 
-      if (memberErr) {
-        if (memberErr.code === "42P01" || memberErr.message?.includes("Could not find the table")) {
+      if (error) {
+        // RPC not yet migrated / table missing → degrade to an empty chart
+        // exactly like the old missing-table path did.
+        if (
+          error.code === "42P01" ||
+          error.code === "42883" ||
+          error.code === "PGRST202" ||
+          error.code === "404"
+        ) {
           return buildEmpty(DAYS);
         }
-        throw memberErr;
+        throw error;
       }
 
-      // Fetch recent posts in spaces
-      const { data: postRows, error: postErr } = await supabase
-        .from("posts")
-        .select("created_at, space_id")
-        .gte("created_at", sinceIso)
-        .not("space_id", "is", null)
-        .order("created_at", { ascending: true })
-        .limit(500);
+      const rows = (data ?? []) as DailyActivityRow[];
+      if (rows.length === 0) return buildEmpty(DAYS);
 
-      if (postErr) {
-        if (postErr.code === "42P01" || postErr.message?.includes("Could not find the table")) {
-          return buildEmpty(DAYS);
-        }
-        throw postErr;
-      }
-
-      // Build day buckets
-      const buckets = new Map<string, ActivityPoint>();
+      // Fill every day so the chart never has gaps; server rows are counts.
+      const byDay = new Map(rows.map((r) => [r.day, r]));
+      const out: ActivityPoint[] = [];
       for (let i = 0; i < DAYS; i++) {
         const d = new Date(since);
         d.setDate(d.getDate() + i);
-        buckets.set(dateKey(d), { date: dateKey(d), joins: 0, posts: 0 });
+        const key = dateKey(d);
+        const row = byDay.get(key);
+        out.push({
+          date: key,
+          joins: Number(row?.joins ?? 0),
+          posts: Number(row?.posts ?? 0),
+        });
       }
-
-      for (const row of memberRows ?? []) {
-        const key = (row as { joined_at: string }).joined_at.slice(0, 10);
-        const b = buckets.get(key);
-        if (b) b.joins += 1;
-      }
-
-      for (const row of postRows ?? []) {
-        const key = (row as { created_at: string }).created_at.slice(0, 10);
-        const b = buckets.get(key);
-        if (b) b.posts += 1;
-      }
-
-      return Array.from(buckets.values());
+      return out;
     },
     staleTime: 60_000,
   });

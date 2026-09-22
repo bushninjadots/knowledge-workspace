@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -56,6 +56,7 @@ import { toast } from "sonner";
 import { safeHref } from "@/lib/validators";
 import { friendlyError } from "@/lib/error-message";
 import { useCurrentUser, useSkillsCatalog } from "@/hooks/use-current-user";
+import { useNow } from "@/hooks/use-now";
 import { useAddComment, useReportPost, useVotePoll, type PollData } from "@/hooks/use-community";
 import { FollowButton } from "@/components/tethyr/follow-button";
 import {
@@ -859,12 +860,9 @@ function PollWidget({ pollData, postId }: { pollData: PollData; postId: string }
   const votePoll = useVotePoll();
   const myVote = pollData.votes?.find((v) => v.user_id === me?.userId) ?? null;
   const totalVotes = pollData.votes?.length ?? 0;
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!pollData.ends_at) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
-    return () => window.clearInterval(timer);
-  }, [pollData.ends_at]);
+  // Shared 30s wall-clock ticker — one module-level interval serves every poll
+  // card, instead of one timer (and one re-render loop) per rendered poll.
+  const now = useNow();
   const hasEnded = !!pollData.ends_at && new Date(pollData.ends_at).getTime() <= now;
 
   function handleVote(optionIndex: number) {

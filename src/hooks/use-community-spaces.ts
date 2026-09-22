@@ -68,9 +68,13 @@ export function useCommunitySpaces() {
   return useQuery({
     queryKey: SPACES_KEY,
     queryFn: async () => {
+      // Explicit column list for the platform-wide list — every rendered field,
+      // skipping internal columns the list never displays.
+      const SPACES_LIST_SELECT =
+        "id, name, slug, description, avatar_url, visibility, join_type, rules, report_auto_dim_threshold, created_by, created_at, updated_at" as const;
       const { data: spaces, error } = await sb
         .from("community_spaces")
-        .select("*")
+        .select<typeof SPACES_LIST_SELECT, CommunitySpace>(SPACES_LIST_SELECT)
         .order("created_at", { ascending: false })
         .limit(100);
 
@@ -83,7 +87,7 @@ export function useCommunitySpaces() {
 
       const { data: me } = await supabase.auth.getUser();
 
-      const spaceIds = ((spaces ?? []) as CommunitySpace[]).map((s) => s.id);
+      const spaceIds = (spaces ?? []).map((s) => s.id);
       // Member counts come from a SECURITY DEFINER aggregate — the raw table's
       // SELECT RLS only shows members of spaces you've joined, which made the
       // count on unjoined spaces read 0.
@@ -121,7 +125,7 @@ export function useCommunitySpaces() {
         }
       }
 
-      return ((spaces ?? []) as CommunitySpace[]).map((s): CommunitySpace => ({
+      return (spaces ?? []).map((s): CommunitySpace => ({
         ...s,
         member_count: countMap.get(s.id) ?? 0,
         is_member: myMembershipMap.has(s.id),

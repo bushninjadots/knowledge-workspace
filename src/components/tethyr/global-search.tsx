@@ -295,7 +295,11 @@ export function GlobalSearch({
     return value.replace(/[,%()\\|]/g, (c) => `\\${c}`);
   }
 
-  const enabled = debounced.length >= 1;
+  // Two characters before hitting the database: single-character terms fan out
+  // to seven ilike queries whose leading-wildcard patterns match huge fractions
+  // of each table. The extra keystroke is imperceptible; the query load drop
+  // is not (pg_trgm indexes on the same columns back this up server-side).
+  const enabled = debounced.length >= 2;
   const safeTerm = escapeForOr(debounced);
   const like = `%${safeTerm}%`;
 
