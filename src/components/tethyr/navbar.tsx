@@ -56,7 +56,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                   key={item.to}
                   to={item.to}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-md px-3 py-2 text-sm transition-colors duration-200 hover:bg-surface hover:text-foreground ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
+                  className={`rounded-md px-3 py-2 text-sm transition-colors duration-200 hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
                 >
                   {item.label}
                 </Link>
@@ -64,7 +64,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
             })}
             <a
               href="/#how-it-works"
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               How it works
             </a>
@@ -73,7 +73,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
 
         {/* Desktop: right-side actions */}
         <div className="hidden items-center gap-2 md:flex">
-          {!publicOnly && <ThemeToggle />}
+          <ThemeToggle />
           {publicOnly || isLoading ? (
             publicOnly ? (
               <>
@@ -116,7 +116,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
 
         {/* Mobile: hamburger */}
         <div className="flex items-center gap-1 md:hidden">
-          {!publicOnly && <ThemeToggle />}
+          <ThemeToggle />
           <button
             onClick={() => setOpen((v) => !v)}
             className="-mr-2 rounded-md p-2.5 transition-colors hover:bg-surface"
@@ -147,7 +147,7 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
                         to={item.to}
                         onClick={() => setOpen(false)}
                         aria-current={active ? "page" : undefined}
-                        className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
+                        className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
                       >
                         {item.label}
                       </Link>

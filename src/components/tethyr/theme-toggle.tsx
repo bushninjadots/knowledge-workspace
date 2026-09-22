@@ -48,7 +48,7 @@ export function ThemeToggle({
             type="button"
             aria-label={activePresetName ? `Theme: ${activePresetName}` : `Theme: ${activeLabel}`}
             className={cn(
-              "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground",
+              "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               className,
             )}
           >
