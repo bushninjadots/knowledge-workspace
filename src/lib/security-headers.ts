@@ -1,4 +1,4 @@
-const isDevelopment = import.meta.env.DEV === true || process.env.NODE_ENV === "development";
+import { buildContentSecurityPolicy, CSP_HEADER } from "./csp";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
@@ -7,31 +7,20 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
-    // Sentry Replay uses a blob: worker for session recording; without
-    // worker-src the browser falls back to script-src and blocks it.
-    "worker-src 'self' blob:",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https: http://localhost:54321 http://127.0.0.1:54321",
-    // *.ingest.sentry.io + regional ingest hosts: without these, CSP silently
-    // blocks every Sentry envelope and error tracking is dead in production.
-    "connect-src 'self' http://localhost:54321 http://127.0.0.1:54321 ws://localhost:54321 ws://127.0.0.1:54321 wss://*.supabase.co https://*.supabase.co https://raw.githubusercontent.com https://api.github.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
-    // Same-origin framing only: the Studio View's visitor preview embeds the
-    // public page in an iframe. External embedding stays blocked, so this does
-    // not weaken clickjacking protection.
-    "frame-ancestors 'self'",
-  ].join("; "),
 };
 
 export function addSecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(name, value);
+  }
+
+  // The strict, nonce-carrying policy is set per request by the CSP middleware
+  // in src/start.ts. This only fills in the nonce-less fallback for responses
+  // that never went through middleware: static error pages, /sitemap.xml,
+  // /robots.txt, and the catch-all 500s in src/server.ts.
+  if (!headers.has(CSP_HEADER)) {
+    headers.set(CSP_HEADER, buildContentSecurityPolicy());
   }
 
   return new Response(response.body, {

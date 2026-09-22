@@ -62,6 +62,10 @@ Before adding a component, search these areas for an existing owner of the same 
 5. Invalidate the relevant query keys after mutations rather than introducing ad hoc refresh logic.
 6. Do not change schema or RLS as a workaround for a local presentation problem.
 7. When adding a database field or policy, add a migration and consider regression coverage.
+8. Aggregate in Postgres, not over the wire. Do not pull rows into the client to count or bucket them. A single total uses the supported header-count form (`.select("id", { count: "exact", head: true })`); grouped counts use a small SQL function. PostgREST's aggregate-select endpoint is stack-dependent and rejected locally with `PGRST123` — see `AGENTS.md`.
+9. RLS policies reference `auth.uid()` through a scalar subquery — `(select auth.uid())` — so it is evaluated once per statement rather than per row. Keep that form when adding or editing a policy; `20260922101000_auth_rls_initplan.sql` is the `public`-schema sweep that converted every existing one.
+10. Searchable text is indexed for leading-wildcard `ILIKE` with pg_trgm GIN indexes (`20260922100000_search_trgm_indexes.sql`). Add an index alongside any new `%term%` search column, and require at least two characters before searching.
+11. Grant EXECUTE explicitly. A new function in `public` is not executable by `anon` by default (`20260922105000_least_privilege_anon_execute.sql` revoked that default privilege), so a public-facing RPC needs a deliberate `GRANT ... TO anon` — and the allowlist in `supabase/tests/anon_execute_grants.sql` has to be updated in the same change, which is the point. Never grant `anon` a `SECURITY DEFINER` function that is not an RLS predicate: it runs with RLS bypassed, so the grant is a grant on everything it touches.
 
 ## Public vs Authenticated Surface
 
@@ -107,11 +111,14 @@ Parity between the two surfaces is pinned by `src/components/tethyr/page/page-la
 ## Server and Security Ownership
 
 - `src/server.ts` owns server response wrapping, security headers, special document endpoints, and catastrophic SSR response normalization.
-- `src/start.ts` owns TanStack Start middleware configuration and CSRF/error middleware.
-- `src/lib/security-headers.ts` owns shared response security headers.
+- `src/start.ts` owns TanStack Start middleware configuration, CSRF/error middleware, and the per-request CSP nonce (it generates the nonce, sets the policy, and passes the nonce into the request context).
+- `src/lib/security-headers.ts` owns shared response security headers, and adds the nonce-less fallback CSP only when a response has none.
+- `src/lib/csp.ts` owns the policy itself (`buildContentSecurityPolicy`, `generateNonce`) and the reason the dev and production policies differ.
 - `src/lib/error-capture.ts` and `src/lib/error-page.ts` own server error reporting and safe error rendering.
 
 Do not add security headers in individual page components. Do not expose service-role Supabase credentials to client bundles.
+
+Scripts the router renders (`Scripts`, `ScriptOnce`, the SSR stream barrier) get the nonce from `router.options.ssr.nonce`; the one inline script the app renders itself — the theme bootstrap in `src/routes/__root.tsx` — is stamped by hand. Pages served outside the middleware (the static error page, `/sitemap.xml`, `/robots.txt`) get the nonce-less fallback policy, so they must not contain inline scripts or inline event handlers. `scripts/qa-csp.mjs` runs in the nightly QA job and fails if the nonce stops reaching an inline script, if any inline handler appears, or if the browser reports a violation for something that should have been allowed.
 
 ## Documentation Ownership
 

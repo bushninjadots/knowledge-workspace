@@ -77,6 +77,16 @@ jobs:
         env:
           QA_BASE: http://127.0.0.1:3000
 
+      # CSP plumbing: every inline script carries the request's nonce, the
+      # client router learns it from <meta property="csp-nonce">, and no markup
+      # relies on inline event handlers (which no nonce can cover). The dev
+      # server serves the policy report-only, so a nonce-less script shows up
+      # here as a violation instead of only breaking production.
+      - name: Run CSP nonce check
+        run: node scripts/qa-csp.mjs
+        env:
+          QA_BASE: http://127.0.0.1:3000
+
       - name: Run workflow click-throughs
         run: node scripts/qa-workflows.mjs
         env:

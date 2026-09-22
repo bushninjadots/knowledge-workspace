@@ -1,9 +1,40 @@
 import { createStart, createMiddleware, createCsrfMiddleware } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 
 import { renderErrorPage } from "./lib/error-page";
 import { addSecurityHeaders } from "./lib/security-headers";
 import { reportServerError } from "./lib/server-error-reporter";
+import {
+  buildContentSecurityPolicy,
+  CSP_HEADER,
+  CSP_REPORT_ONLY_HEADER,
+  generateNonce,
+  isDevelopment,
+} from "./lib/csp";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+/**
+ * Per-request Content Security Policy. The nonce is generated here, put on the
+ * response, and passed down through the request context so the router stamps it
+ * on the scripts it renders (see src/lib/csp.ts). Middleware runs outside the
+ * SSR render, so a response that fails before the context exists — and every
+ * non-document route below — falls back to the nonce-less policy in
+ * `addSecurityHeaders`.
+ *
+ * Only GET gets the nonce: server-function POSTs and asset requests render no
+ * HTML, and a nonce must never be reused across responses.
+ */
+const cspMiddleware = createMiddleware().server(({ next, request }) => {
+  if (request.method !== "GET") return next();
+
+  const nonce = generateNonce();
+  setResponseHeader(
+    isDevelopment ? CSP_REPORT_ONLY_HEADER : CSP_HEADER,
+    buildContentSecurityPolicy(nonce),
+  );
+
+  return next({ context: { nonce } });
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -32,5 +63,7 @@ const csrfMiddleware = createCsrfMiddleware({
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [csrfMiddleware, errorMiddleware],
+  // CSP first: every later stage (auth attach, CSRF, routes) runs with the
+  // request's nonce already in the context.
+  requestMiddleware: [cspMiddleware, csrfMiddleware, errorMiddleware],
 }));

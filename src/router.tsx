@@ -1,5 +1,6 @@
 import { QueryClient, dehydrate, hydrate, type DehydratedState } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { getGlobalStartContext } from "@tanstack/react-start";
 import { routeTree } from "./routeTree.gen";
 
 /**
@@ -39,9 +40,19 @@ export const getRouter = () => {
   // dehydrated cache state never leaks between users.
   const queryClient = makeQueryClient();
 
+  // `start.ts`'s CSP middleware puts a per-request nonce in the request
+  // context; handing it to the router is what makes the scripts TanStack
+  // renders (Scripts, ScriptOnce, the SSR stream barrier) carry it, and what
+  // emits <meta property="csp-nonce"> for the client to read on hydration.
+  // Undefined everywhere the context does not exist (client-side navigation,
+  // tests), which simply means no nonce attributes — the browser only checks
+  // the attribute in the response it received.
+  const nonce = getGlobalStartContext()?.nonce;
+
   const router = createRouter({
     routeTree,
     context: { queryClient },
+    ssr: { nonce },
     scrollRestoration: true,
     // Avoid repeating loader work when users move across navigation links while
     // keeping preloaded route data fresh enough for interactive surfaces.

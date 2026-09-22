@@ -74,7 +74,26 @@ async function login(page) {
 }
 
 // Metric: leaf "card" surfaces (bordered + filled) and the closest any of their
-// own text nodes comes to the card's border edge (padding + border included).
+// in-flow text comes to a border *that actually exists*.
+//
+// The exclusions below are what make the number mean "cramped text" rather than
+// "text somewhere near this element". Each was added after the metric reported
+// an offender that was provably not a visual defect:
+//
+//   * only measure sides with a border — a `border-y` sticky nav was flagged for
+//     text 0px from its left edge, where there is no edge;
+//   * skip clamped text (`-webkit-line-clamp`) — a Range rect over a clamped
+//     node reports the unclamped ink box, so a `line-clamp-1` description
+//     sitting 15px clear of the border measured as -1px;
+//   * skip overlay text (an `absolute`/`fixed` ancestor) — a bottom-anchored
+//     title on a cover thumbnail is placed against the frame on purpose, and
+//     eight of those were drowning out the real findings;
+//   * skip visually hidden text — `sr-only` accessible labels are 1x1px boxes,
+//     but the text inside still has a wide layout rect that measured as 315px
+//     "outside" a progress list.
+//
+// Scrollable content is deliberately left in: it is reachable by scrolling, but
+// a card that quietly clips its own text is still a finding.
 async function cardMetrics(page) {
   return page.evaluate(() => {
     const isSurface = (el) => {
@@ -85,11 +104,40 @@ async function cardMetrics(page) {
       return r.width > 90 && r.height > 40 && el.innerText.trim().length > 0;
     };
     const all = [...document.querySelectorAll("main *, [data-page_layout] *")].filter(isSurface);
+    // Text that is out of flow, truncated by design, or invisible cannot be
+    // judged against the surface's border box.
+    const isMeasurableText = (node, surface) => {
+      let cur = node.parentElement;
+      while (cur && cur !== surface.parentElement) {
+        const cs = getComputedStyle(cur);
+        if (cs.position === "absolute" || cs.position === "fixed") return false;
+        if (cs.webkitLineClamp && cs.webkitLineClamp !== "none") return false;
+        if (cs.clipPath && cs.clipPath !== "none") return false;
+        if (cs.clip && cs.clip !== "auto") return false;
+        const cr = cur.getBoundingClientRect();
+        if (cr.width <= 1.5 || cr.height <= 1.5) return false;
+        if (cur === surface) break;
+        cur = cur.parentElement;
+      }
+      return true;
+    };
     // keep only leaf surfaces (no nested surface inside)
     const leaves = all.filter((el) => ![...el.querySelectorAll("*")].some((c) => isSurface(c)));
     const out = [];
     for (const el of leaves.slice(0, 120)) {
       const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      // Only sides with a real border can be "text-to-border" offenders.
+      const sides = [
+        { side: "left", width: parseFloat(cs.borderLeftWidth), gap: (tr) => tr.left - r.left },
+        { side: "right", width: parseFloat(cs.borderRightWidth), gap: (tr) => r.right - tr.right },
+        { side: "top", width: parseFloat(cs.borderTopWidth), gap: (tr) => tr.top - r.top },
+        {
+          side: "bottom",
+          width: parseFloat(cs.borderBottomWidth),
+          gap: (tr) => r.bottom - tr.bottom,
+        },
+      ].filter((s) => s.width > 0);
       let minGap = Infinity;
       let worst = null;
       const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -97,24 +145,19 @@ async function cardMetrics(page) {
       while ((n = w.nextNode())) {
         const t = n.textContent.trim();
         if (!t) continue;
+        if (!isMeasurableText(n, el)) continue;
         const rng = document.createRange();
         rng.selectNodeContents(n);
         const tr = rng.getBoundingClientRect();
         if (tr.width < 2 || tr.height < 2) continue;
-        const gaps = [
-          { side: "left", gap: tr.left - r.left },
-          { side: "right", gap: r.right - tr.right },
-          { side: "top", gap: tr.top - r.top },
-          { side: "bottom", gap: r.bottom - tr.bottom },
-        ];
-        for (const g of gaps) {
-          if (g.gap < minGap) {
-            minGap = g.gap;
-            worst = { side: g.side, text: t.slice(0, 40) };
+        for (const s of sides) {
+          const gap = s.gap(tr);
+          if (gap < minGap) {
+            minGap = gap;
+            worst = { side: s.side, text: t.slice(0, 40) };
           }
         }
       }
-      const cs = getComputedStyle(el);
       if (minGap < 8)
         out.push({
           tag: el.tagName.toLowerCase(),

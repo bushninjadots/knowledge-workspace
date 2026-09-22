@@ -25,6 +25,16 @@ rects (measurement artifact, not visual overflow); intentional media-overlay
 labels (project shelf thumbnails) sit close to edges by design; full-bleed
 `border-y` bands and `section-label` eyebrows are the site's level-1 language.
 
+**Update (2026-09-22):** those four classes are now excluded by the metric
+itself, so they no longer have to be re-triaged by hand on every run — the
+metric only measures sides that have a real border, and only text that is
+in-flow (not under an `absolute`/`fixed` ancestor), visible (not a 1x1px
+`sr-only` box or `clip`/`clip-path`), and not truncated by design
+(`-webkit-line-clamp`). Genuine cramping still reports: the metric was checked
+against injected fixtures for every excluded class plus one real offender.
+With the exclusions in place all 21 pages measure clean, and the remaining
+product-level offenders from this audit were already fixed above.
+
 ## Status of the 2026-09-09 audit items
 
 Re-verified in source and in the running app rather than assumed. **G14, G16,

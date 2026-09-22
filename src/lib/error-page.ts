@@ -4,7 +4,7 @@ export function renderErrorPage(): string {
   <head>
     <meta charset="utf-8"/>
     <title>This page didn't load</title>
-    <meta name="viewport"content="width=device-width, initial-scale=1"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <style>
       :root {
         color-scheme: light dark;
@@ -22,8 +22,8 @@ export function renderErrorPage(): string {
       h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
       p { color: var(--mut); margin: 0 0 1.5rem; }
       .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 4px; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      a:focus-visible, button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  a { padding: 0.5rem 1rem; border-radius: 4px; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+  a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
       .primary { background: var(--btn-bg); color: var(--btn-fg); }
       .secondary { background: var(--card-bg); color: var(--fg); border-color: var(--line); }
     </style>
@@ -34,8 +34,11 @@ export function renderErrorPage(): string {
       <h1>This page didn't load</h1>
       <p>Something went wrong on our end. You can try refreshing or head back home.</p>
       <div class="actions">
-        <button class="primary"onclick="location.reload()">Try again</button>
-        <a class="secondary"href="/">Go home</a>
+        <!-- Reload is a link to the current URL on purpose: this page is served
+             with the nonce-less fallback CSP, which blocks inline event
+             handlers, and it has no script of its own to hang a listener on. -->
+        <a class="primary" href="">Try again</a>
+        <a class="secondary" href="/">Go home</a>
       </div>
     </div>
   </body>

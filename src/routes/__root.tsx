@@ -123,10 +123,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   initSentry();
 
+  // The theme bootstrap is the one inline script this app renders itself, so it
+  // needs the request nonce by hand — everything TanStack renders gets it from
+  // `router.options.ssr.nonce` (see src/lib/csp.ts).
+  const nonce = useRouter().options.ssr?.nonce;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head suppressHydrationWarning>
-        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
