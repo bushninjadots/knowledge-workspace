@@ -57,7 +57,7 @@ export function DashboardSidebar({
   return (
     <aside
       id="app-sidebar"
-      className={`flex h-full flex-col border-r border-border bg-surface relative transition-[width] duration-150 ${
+      className={`relative flex h-full flex-col overflow-hidden border-r border-border bg-surface transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] ${
         collapsed ? "w-16" : "w-60"
       }`}
     >
@@ -87,9 +87,9 @@ export function DashboardSidebar({
                 aria-expanded
                 aria-controls="app-sidebar"
                 title="Collapse sidebar"
-                className="ml-auto rounded-sm p-1 text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+                className="ml-auto flex size-8 items-center justify-center rounded-sm text-muted-foreground transition-[background-color,color,transform] duration-200 ease-out hover:bg-surface-sunken hover:text-foreground active:scale-95"
               >
-                <PanelLeftClose className="h-4 w-4" />
+                <PanelLeftClose className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" />
               </button>
             )}
           </>
@@ -267,9 +267,9 @@ export function DashboardSidebar({
             aria-expanded={false}
             aria-controls="app-sidebar"
             title="Expand sidebar"
-            className="mx-auto mt-1 flex h-7 w-8 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-surface-sunken hover:text-foreground"
+            className="mx-auto mt-1 flex size-8 items-center justify-center rounded-sm text-muted-foreground transition-[background-color,color,transform] duration-200 ease-out hover:bg-surface-sunken hover:text-foreground active:scale-95"
           >
-            <PanelLeftOpen className="h-4 w-4" />
+            <PanelLeftOpen className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" />
           </button>
         )}
       </div>
