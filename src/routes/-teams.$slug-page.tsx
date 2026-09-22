@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTeam } from "@/hooks/use-teams";
 import { TeamPage } from "@/components/tethyr/team/team-page";
 import { Navbar } from "@/components/tethyr/navbar";
+import { Footer } from "@/components/tethyr/footer";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -37,8 +38,9 @@ export function TeamRoute() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar publicOnly />
+      <Navbar />
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

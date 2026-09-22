@@ -35,6 +35,7 @@ import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
 import { Navbar } from "@/components/tethyr/navbar";
+import { Footer } from "@/components/tethyr/footer";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -1002,7 +1003,7 @@ function Shell({
   };
   return (
     <div className="min-h-screen bg-background" style={accentStyle}>
-      <Navbar publicOnly />
+      <Navbar />
       <header className="flex h-12 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
         <button
           onClick={() =>
@@ -1015,16 +1016,13 @@ function Shell({
           <ArrowLeft className="h-3.5 w-3.5" />
           Back
         </button>
-        <Link to="/" className="font-display text-lg font-semibold text-foreground">
-          Tethyr
-        </Link>
-        <span className="text-muted-foreground">/</span>
         <span className="text-sm text-muted-foreground">Project</span>
       </header>
       {/* Same id as the other frames so the global skip link lands here too */}
       <main id="main-content" className="flex-1">
         {children}
       </main>
+      <Footer />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/tethyr/navbar";
+import { Footer } from "@/components/tethyr/footer";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -682,8 +683,9 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background bg-noise">
-      <Navbar publicOnly />
+      <Navbar />
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

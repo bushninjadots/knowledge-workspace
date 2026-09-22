@@ -76,7 +76,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar publicOnly />
+      <Navbar />
 
       <section className="relative overflow-hidden bg-noise">
         <div className="bg-grid pointer-events-none absolute inset-0 opacity-30" />

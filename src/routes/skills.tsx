@@ -8,6 +8,7 @@ import { useSkillsCatalog, useSkillProfileCounts } from "@/hooks/use-current-use
 import { groupSkillsByCategory, type SkillCategoryGroup } from "@/lib/skills";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { Navbar } from "@/components/tethyr/navbar";
+import { Footer } from "@/components/tethyr/footer";
 import { Input } from "@/components/ui/input";
 import { seoMeta } from "@/lib/seo";
 
@@ -105,7 +106,7 @@ function SkillsDirectoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar publicOnly />
+      <Navbar />
       <header className="px-4 pb-8 pt-12 sm:px-6">
         <div className="mx-auto max-w-5xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -194,6 +195,7 @@ function SkillsDirectoryPage() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

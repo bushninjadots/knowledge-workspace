@@ -20,7 +20,7 @@ export function PublicPageFrame({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar publicOnly />
+      <Navbar />
       <main id="main-content" className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="font-display text-3xl font-semibold">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
