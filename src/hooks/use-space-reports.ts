@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { supabasePending } from "@/lib/supabase-pending-schema";
 import type { PostReportRow, ModerationLogRow } from "@/hooks/community-space-types";
 
 const sb = supabase;
@@ -20,26 +21,28 @@ export function useSpaceReportedPostCounts(spaceId: string) {
   return useQuery({
     queryKey: SPACE_REPORTED_POST_IDS_KEY(spaceId),
     queryFn: async () => {
-      // Grouped count() instead of pulling every open report row — the old
-      // .limit(1000) fetch shipped up to 1000 rows just to count per post, and
-      // silently dropped reports past the cap.
-      const { data, error } = await sb
-        .from("post_reports")
-        .select("post_id, count()")
-        .eq("space_id_snapshot", spaceId)
-        .eq("status", "open")
-        .not("post_id", "is", null);
+      // Server-side grouped count via RPC instead of pulling every open report
+      // row (the old .limit(1000) fetch shipped up to 1000 rows just to count
+      // per post, and a PostgREST count() select breaks on stacks with
+      // aggregates disabled).
+      const { data, error } = await supabasePending.rpc("space_reported_post_counts", {
+        p_space_id: spaceId,
+      });
 
       if (error) {
-        if (error.message?.includes("Could not find the table") || error.code === "42P01") {
+        if (
+          error.message?.includes("Could not find the table") ||
+          error.code === "42P01" ||
+          error.code === "PGRST202"
+        ) {
           return new Map<string, number>();
         }
         throw error;
       }
 
       const counts = new Map<string, number>();
-      for (const r of (data ?? []) as { post_id: string; count: number }[]) {
-        counts.set(r.post_id, Number(r.count));
+      for (const r of (data ?? []) as { post_id: string; reports: number }[]) {
+        counts.set(r.post_id, Number(r.reports));
       }
       return counts;
     },
