@@ -34,7 +34,15 @@ let dsn: SentryDsn | null | undefined;
 let environment: string | undefined;
 let initialized = false;
 
-const ENV = (key: string) => (typeof process !== "undefined" ? process.env[key] : undefined);
+function readEnv(key: string): string | undefined {
+  // Prefer real process env (Cloudflare/Nitro runtimes inject vars there),
+  // then the Vite-injected import.meta.env mirror — .env values reach the
+  // server bundle through VITE_-prefixed defines, not process.env.
+  const fromProcess = typeof process !== "undefined" ? process.env?.[key] : undefined;
+  if (fromProcess) return fromProcess;
+  const metaEnv = (import.meta as { env?: Record<string, string | undefined> }).env;
+  return metaEnv?.[key];
+}
 
 function parseDsn(raw: string | undefined): SentryDsn | null {
   if (!raw) return null;
@@ -146,8 +154,12 @@ export function initServerErrorReporting() {
   if (initialized) return;
   initialized = true;
 
-  dsn = parseDsn(ENV("SENTRY_DSN") ?? ENV("VITE_SENTRY_DSN"));
-  environment = ENV("SENTRY_ENVIRONMENT") ?? ENV("NODE_ENV") ?? undefined;
+  // Mirror the client SDK: telemetry is browser/server-runtime only and
+  // non-essential — skip in dev so local stack traces stay noise-free.
+  if (import.meta.env.DEV) return;
+
+  dsn = parseDsn(readEnv("SENTRY_DSN") ?? readEnv("VITE_SENTRY_DSN"));
+  environment = readEnv("SENTRY_ENVIRONMENT") ?? readEnv("NODE_ENV") ?? undefined;
 
   const pending = pendingReports.splice(0);
   for (const [error, context] of pending) reportServerError(error, context);
