@@ -161,9 +161,7 @@ function Shell({
       className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={{ ...appearanceStyle(background), ...avatarShapeStyle(background) }}
     >
-      {!embed && (
-        <Navbar publicOnly />
-      )}
+      {!embed && <Navbar publicOnly />}
       {!embed && (
         <header className="flex h-12 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
           <button

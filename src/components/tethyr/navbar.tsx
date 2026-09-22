@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Menu, X, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "./logo";
@@ -9,9 +9,19 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateProjectButton } from "./create-project-button";
 
+const publicNavigation = [
+  { to: "/explore", label: "Explore" },
+  { to: "/skills", label: "Skills" },
+  { to: "/challenges", label: "Challenges" },
+  { to: "/teams", label: "Teams" },
+] as const;
+
 export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
   const { data: me, isLoading } = useCurrentUser();
+  const location = useLocation();
   const navigate = useNavigate();
+  const isActive = (to: string) =>
+    location.pathname === to || location.pathname.startsWith(`${to}/`);
   const [open, setOpen] = useState(false);
   const isAuthed = Boolean(me?.userId);
 
@@ -38,25 +48,20 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
 
         {/* Desktop: key section links for public visitors */}
         {publicOnly && (
-          <nav aria-label="Section navigation" className="hidden items-center gap-1 md:flex">
-            <Link
-              to="/explore"
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
-            >
-              Explore
-            </Link>
-            <Link
-              to="/skills"
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
-            >
-              Skills
-            </Link>
-            <Link
-              to="/challenges"
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
-            >
-              Challenges
-            </Link>
+          <nav aria-label="Primary navigation" className="hidden items-center gap-1 md:flex">
+            {publicNavigation.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-md px-3 py-2 text-sm transition-colors duration-200 hover:bg-surface hover:text-foreground ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <a
               href="/#how-it-works"
               className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-surface hover:text-foreground"
@@ -133,34 +138,29 @@ export function Navbar({ publicOnly = false }: { publicOnly?: boolean }) {
           <div className="flex flex-col gap-1 px-4 py-4">
             {publicOnly ? (
               <>
-                <Link
-                  to="/explore"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
-                >
-                  Explore
-                </Link>
-                <Link
-                  to="/skills"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
-                >
-                  Skills
-                </Link>
-                <Link
-                  to="/challenges"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
-                >
-                  Challenges
-                </Link>
-                <a
-                  href="/#how-it-works"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
-                >
-                  How it works
-                </a>
+                <nav aria-label="Mobile primary navigation" className="flex flex-col gap-1">
+                  {publicNavigation.map((item) => {
+                    const active = isActive(item.to);
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface ${active ? "bg-surface text-foreground" : "text-muted-foreground"}`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                  <a
+                    href="/#how-it-works"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+                  >
+                    How it works
+                  </a>
+                </nav>
                 <div className="mt-3 flex gap-2">
                   <Button asChild variant="outline" className="flex-1">
                     <Link to="/login" onClick={() => setOpen(false)}>
