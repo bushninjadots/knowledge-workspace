@@ -37,6 +37,19 @@ const PAGES = [
 ];
 
 const STYLE_TAGLESS = "script:not([src])";
+// Directives that exist because something concrete broke without them. They are
+// asserted here, not just in unit tests, because the *hosting* layer also sets
+// response headers on this app (it overrides HSTS and X-Frame-Options), and a
+// merged or rewritten policy would silently break these at the edge:
+//   worker-src blob:            Sentry Replay's session-recording worker
+//   connect-src ingest hosts    every Sentry envelope
+//   frame-ancestors 'self'      the Studio View's visitor-preview iframe
+const REQUIRED_DIRECTIVES = [
+  "worker-src 'self' blob:",
+  "frame-ancestors 'self'",
+  "font-src 'self' https://fonts.gstatic.com",
+];
+const REQUIRED_CONNECT_SOURCES = ["https://*.ingest.sentry.io", "https://*.supabase.co"];
 const INLINE_HANDLER_ATTRS = [
   "onclick",
   "onload",
@@ -51,6 +64,10 @@ const INLINE_HANDLER_ATTRS = [
 ];
 
 const failures = [];
+
+/** One directive per semicolon-delimited segment, so counting is unambiguous. */
+const countDirective = (policy, directive) =>
+  policy.split(";").filter((segment) => segment.trim().startsWith(directive)).length;
 
 async function check(page, name, url) {
   const violations = [];
@@ -86,6 +103,24 @@ async function check(page, name, url) {
     failures.push(`${name}: strict policy still allows 'unsafe-inline' for script-src`);
   if (REQUIRE_ENFORCED && !enforcing)
     failures.push(`${name}: the nonce policy is not enforcing (report-only)`);
+
+  // Two half-policies are worse than one: browsers intersect multiple CSP
+  // headers, so a second policy without the nonce blocks every inline script.
+  // Seeing two nonces or two script-src directives means the header was merged.
+  const distinctNonces = new Set(strict.match(/'nonce-([^']+)'/g) ?? []);
+  if (distinctNonces.size > 1)
+    failures.push(
+      `${name}: the policy carries ${distinctNonces.size} different nonces (merged headers?)`,
+    );
+  const scriptSrcDirectives = countDirective(strict, "script-src");
+  if (scriptSrcDirectives !== 1)
+    failures.push(
+      `${name}: ${scriptSrcDirectives} script-src directives in one policy (merged headers?)`,
+    );
+  for (const directive of REQUIRED_DIRECTIVES)
+    if (!strict.includes(directive)) failures.push(`${name}: policy is missing \`${directive}\``);
+  for (const source of REQUIRED_CONNECT_SOURCES)
+    if (!strict.includes(source)) failures.push(`${name}: connect-src is missing \`${source}\``);
 
   const dom = await page.evaluate(
     ({ styleTagless, handlerAttrs }) => {
