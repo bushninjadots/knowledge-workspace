@@ -97,7 +97,12 @@ function ProjectStatusBlock({ context }: BlockProps) {
       {/* Progress */}
       {resolvedData.progress_percent > 0 && (
         <div className="mt-3 flex items-center gap-3">
-          <Progress value={resolvedData.progress_percent} className="h-1.5 flex-1" />
+          {/* Adjacent visible % text carries the value for assistive tech. */}
+          <Progress
+            value={resolvedData.progress_percent}
+            className="h-1.5 flex-1"
+            aria-hidden="true"
+          />
           <span className="text-xs tabular-nums text-muted-foreground">
             {resolvedData.progress_percent}%
           </span>

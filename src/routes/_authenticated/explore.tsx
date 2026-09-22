@@ -14,6 +14,7 @@ export type ProjectRow = {
   looking_for_collaborators: boolean;
   looking_for_feedback: boolean;
   created_at: string;
+  updated_at: string;
   profiles: {
     id: string;
     handle: string | null;

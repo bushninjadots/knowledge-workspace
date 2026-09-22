@@ -22,6 +22,7 @@ import {
   useInfinitePosts,
   flattenPosts,
   useDeletePost,
+  useRestorePost,
   useTogglePostAction,
   type PostWithAuthor,
 } from "@/hooks/use-community";
@@ -91,6 +92,7 @@ export function CommunityFeed({
     activeSpace?.id ?? "",
   );
   const deletePost = useDeletePost();
+  const restorePost = useRestorePost();
   const toggleAction = useTogglePostAction();
   const { data: skillCatalog = [] } = useSkillsCatalog();
   // Read receipts: the member's last-read cursor for the open space, used to
@@ -201,11 +203,29 @@ export function CommunityFeed({
   const deletePostHandler = useCallback(
     (id: string) => {
       deletePost.mutate(id, {
-        onSuccess: () => toast.success("Post deleted"),
+        onSuccess: (result) =>
+          toast.success("Post deleted", {
+            description: "You can undo this for a few seconds.",
+            duration: 6000,
+            action: result?.post
+              ? {
+                  label: "Undo",
+                  onClick: () => {
+                    restorePost.mutate(
+                      { post: result.post, comments: result.comments },
+                      {
+                        onSuccess: () => toast.success("Post restored"),
+                        onError: () => toast.error("Couldn't restore the post"),
+                      },
+                    );
+                  },
+                }
+              : undefined,
+          }),
         onError: () => toast.error("Failed to delete"),
       });
     },
-    [deletePost],
+    [deletePost, restorePost],
   );
 
   const editPost = useCallback((post: PostWithAuthor) => {

@@ -353,8 +353,59 @@ export function useDeletePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await sb.from("posts").delete().eq("id", id);
+      // Capture the post and its comments before the delete so the toast's
+      // Undo action can restore them. Likes/actions are not captured — the
+      // restored post comes back without engagement.
+      const { data: post, error } = await sb.from("posts").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
+      if (!post) return { post, comments: [] };
+      const { data: comments, error: cErr } = await sb
+        .from("comments")
+        .select("*")
+        .eq("post_id", id);
+      if (cErr) throw cErr;
+
+      const { error: delErr } = await sb.from("posts").delete().eq("id", id);
+      if (delErr) throw delErr;
+      return { post, comments: comments ?? [] };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: POSTS_KEY });
+    },
+  });
+}
+
+/**
+ * Restore a post deleted via useDeletePost — powers the Undo action on the
+ * deletion toast. The post comes back with a new id and its comments
+ * re-attached; likes and other engagement are not captured.
+ */
+export function useRestorePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      post: Record<string, unknown>;
+      comments: Record<string, unknown>[];
+    }) => {
+      const { id: _omit, ...postRow } = payload.post;
+      // Captured from the same table — shape matches Insert; the cast exists
+      // only because rest-spread widens the index signature.
+      const { data: recreated, error } = await sb
+        .from("posts")
+        .insert(postRow as never)
+        .select()
+        .single();
+      if (error) throw error;
+
+      if (payload.comments.length > 0) {
+        const rows = payload.comments.map((c) => ({ ...c, post_id: recreated.id }));
+        const { error: cErr } = await sb.from("comments").insert(rows as never);
+        if (cErr) {
+          // The post is back — keep going even if comments fail.
+          console.error("Failed to restore post comments", cErr);
+        }
+      }
+      return recreated;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: POSTS_KEY });

@@ -398,6 +398,40 @@ export function WorkspaceGrid({
 
   const dragEnabled = customizing && canCustomize && !isMobile;
 
+  // First-run discoverability: customization is a core product pillar, but the
+  // Customize control is easy to miss. Draw the level-3 accent treatment on
+  // the existing button until the user first enters (or dismisses) customize
+  // mode — once per browser, not a nag. "Dismissed" and "used" share the key
+  // so a user who enters and leaves keeps the quiet state.
+  const CUSTOMIZE_HINT_KEY = "tethyr:customize-hint-dismissed";
+  const [showCustomizeHint, setShowCustomizeHint] = useState(false);
+  useEffect(() => {
+    try {
+      if (!canCustomize || !showCustomizeBar) return;
+      if (window.localStorage.getItem(CUSTOMIZE_HINT_KEY)) return;
+      setShowCustomizeHint(true);
+    } catch {
+      /* storage unavailable — stay quiet */
+    }
+  }, [canCustomize, showCustomizeBar]);
+  useEffect(() => {
+    if (!customizing) return;
+    try {
+      window.localStorage.setItem(CUSTOMIZE_HINT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setShowCustomizeHint(false);
+  }, [customizing]);
+  const dismissCustomizeHint = useCallback(() => {
+    try {
+      window.localStorage.setItem(CUSTOMIZE_HINT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setShowCustomizeHint(false);
+  }, []);
+
   const renderGridItem = (it: LayoutItem) => (
     <div
       id={showSectionNav ? `workspace-section-${it.i}` : undefined}
@@ -511,15 +545,33 @@ export function WorkspaceGrid({
                     Choose which {workspaceLabel} sections people see first.
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 text-muted-foreground"
-                  onClick={() => setCustomizing(true)}
-                >
-                  <GripVertical className="mr-1.5 h-3.5 w-3.5" />
-                  Customize
-                </Button>
+                <span className="relative inline-flex shrink-0 items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`shrink-0 text-muted-foreground ${
+                      showCustomizeHint
+                        ? "border-[var(--user-accent-border,var(--border-strong))] text-foreground"
+                        : ""
+                    }`}
+                    onClick={() => setCustomizing(true)}
+                  >
+                    <GripVertical className="mr-1.5 h-3.5 w-3.5" />
+                    Customize
+                  </Button>
+                  {showCustomizeHint && (
+                    <span className="absolute -right-2 -top-2 z-10 flex items-center">
+                      <button
+                        type="button"
+                        onClick={dismissCustomizeHint}
+                        aria-label="Dismiss customize hint"
+                        className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--user-accent,var(--trust))] text-[9px] font-semibold leading-none text-[var(--user-accent-foreground,var(--background))] shadow-none"
+                      >
+                        1
+                      </button>
+                    </span>
+                  )}
+                </span>
               </div>
               {showPresetPicker && layoutPresets.length > 0 && (
                 <PresetPicker

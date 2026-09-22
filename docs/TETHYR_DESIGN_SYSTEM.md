@@ -65,6 +65,21 @@ Typography should establish hierarchy before decoration:
 
 Do not solve weak hierarchy with extra colors, badges, borders, shadows, or card nesting.
 
+### The two font tokens
+
+There are exactly two font-family tokens — they are distinct faces with distinct
+roles, not interchangeable spellings of "the heading font":
+
+| Token            | Face (default) | Role                                                                                                                                                  |
+| ---------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--font-title`   | Space Grotesk  | Headings and titles (`font-title` utility, plus the `h1`–`h6` base styles). Studio personality themes may override it per surface via `theme-tokens`. |
+| `--font-display` | Inter          | UI/body face (`font-display` utility). Also the fallback inside the `.font-display` rule.                                                             |
+
+Do not "normalize" `font-title` to `font-display` (or vice versa) in a cleanup
+pass — the split is what lets Studio personality themes swap the heading face
+without touching the UI face. See `src/styles.css` (token definitions and the
+unlayered `.font-display` rule) and `src/lib/theme-tokens.ts`.
+
 ## Interaction States
 
 Every meaningful interactive surface should have an intentional treatment for:

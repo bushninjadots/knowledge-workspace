@@ -158,7 +158,12 @@ function ProjectHeroBlock({ config, context }: BlockProps) {
         {/* Progress bar */}
         {showProgress && resolvedProject.progress_percent > 0 && (
           <div className="mt-4 flex max-w-sm items-center gap-3">
-            <Progress value={resolvedProject.progress_percent} className="h-2 flex-1" />
+            {/* Adjacent visible % text carries the value for assistive tech. */}
+            <Progress
+              value={resolvedProject.progress_percent}
+              className="h-2 flex-1"
+              aria-hidden="true"
+            />
             <span className="text-xs font-medium tabular-nums text-muted-foreground">
               {resolvedProject.progress_percent}%
             </span>

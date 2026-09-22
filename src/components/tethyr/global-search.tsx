@@ -792,10 +792,22 @@ export function GlobalSearch({
     }
 
     if (noResults) {
+      // Dead ends teach nothing — point people back to the Discover loop.
       items.push(
-        <p key="no-results" className="px-3 py-4 text-center text-sm text-muted-foreground">
-          No results for "{debounced}".
-        </p>,
+        <div key="no-results" className="px-3 py-4 text-center">
+          <p className="text-sm text-muted-foreground">No results for "{debounced}".</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Try a broader term, or{" "}
+            <button
+              type="button"
+              onClick={() => closeAndNavigate({ to: "/explore" })}
+              className="font-medium text-foreground underline decoration-border-strong underline-offset-2 hover:text-primary"
+            >
+              browse all projects
+            </button>
+            .
+          </p>
+        </div>,
       );
     }
 
@@ -937,6 +949,14 @@ export function GlobalSearch({
             className="pointer-events-none mr-1 rounded border border-border/60 bg-surface-elevated px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground"
           >
             ESC
+          </kbd>
+          {/* Discoverability: the dialog also answers ⌘K everywhere; the hint
+              rides along so users meeting the dialog first learn the shortcut. */}
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none mr-1 hidden rounded border border-border/60 bg-surface-elevated px-1.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground sm:block"
+          >
+            ⌘K
           </kbd>
         </div>
         <div

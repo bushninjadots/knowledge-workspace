@@ -183,7 +183,11 @@ function ProfileProjectsBlock({ context, config }: BlockProps) {
           </span>
         )}
         {showProgress && project.progress_percent > 0 && (
-          <Progress value={project.progress_percent} className="h-1 flex-1" />
+          <Progress
+            value={project.progress_percent}
+            className="h-1 flex-1"
+            aria-label={`${project.title}: ${project.progress_percent}% complete`}
+          />
         )}
       </div>
     </>
@@ -397,7 +401,13 @@ function ProjectRowLink({
       />
       <div className="relative flex items-center justify-between gap-3">
         <div className="min-w-0">{children}</div>
-        {showProgress && progress > 0 && <Progress value={progress} className="h-1 w-24" />}
+        {showProgress && progress > 0 && (
+          <Progress
+            value={progress}
+            className="h-1 w-24"
+            aria-label={`${label}: ${progress}% complete`}
+          />
+        )}
       </div>
     </div>
   );

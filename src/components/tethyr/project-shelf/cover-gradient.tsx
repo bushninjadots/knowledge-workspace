@@ -57,10 +57,12 @@ export function ProgressBar({
   // The bar sits at the bottom of the cover. Over an image, white keeps it
   // legible against the photo; over the quiet no-cover surface the same white
   // disappears, so it falls back to the track/fill pairing used elsewhere on a
-  // theme surface.
+  // theme surface. Decorative: the cover's info panel already shows the same
+  // percentage as text.
   const onSurface = variant === "on-surface";
   return (
     <div
+      aria-hidden="true"
       className={cn(
         "absolute bottom-0 left-0 right-0 h-1",
         onSurface ? "bg-border" : "bg-white/10",

@@ -30,6 +30,7 @@ import {
   useAddSessionNote,
   useDeleteSessionNote,
   useDeleteSession,
+  useRestoreSession,
   useUpdateSessionStatus,
   useUpdateParticipantStatus,
   type SessionWithParticipants,
@@ -45,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { downloadSessionIcs } from "@/lib/session-ical";
+import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
 
 export const Route = createFileRoute("/_authenticated/sessions/$id")({
   head: () => ({
@@ -54,18 +56,15 @@ export const Route = createFileRoute("/_authenticated/sessions/$id")({
     ],
   }),
   component: SessionDetailPage,
-  errorComponent: () => (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Session not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          We couldn't load this session. Please try again.
-        </p>
-        <Link to="/sessions" className="mt-4 inline-block text-sm text-primary hover:underline">
-          Back to sessions
-        </Link>
-      </div>
-    </div>
+  errorComponent: ({ reset }) => (
+    <RouteErrorBoundary
+      error={new Error("session failed to load")}
+      reset={reset}
+      title="Session not found"
+      description="We couldn't load this session. It may have been removed."
+      backTo="/sessions"
+      backLabel="Back to sessions"
+    />
   ),
 });
 
@@ -79,6 +78,7 @@ function SessionDetailPage() {
   const addNote = useAddSessionNote();
   const deleteNote = useDeleteSessionNote();
   const deleteSession = useDeleteSession();
+  const restoreSession = useRestoreSession();
   const updateStatus = useUpdateSessionStatus();
   const updateParticipantStatus = useUpdateParticipantStatus();
 
@@ -209,8 +209,25 @@ function SessionDetailPage() {
           userId={me?.userId}
           onDelete={async () => {
             try {
-              await deleteSession.mutateAsync(id);
-              toast.success("Session deleted");
+              const result = await deleteSession.mutateAsync(id);
+              toast.success("Session deleted", {
+                description: "You can undo this for a few seconds.",
+                action: result?.session
+                  ? {
+                      label: "Undo",
+                      onClick: () => {
+                        restoreSession.mutate(
+                          { session: result.session, participants: result.participants },
+                          {
+                            onSuccess: () => toast.success("Session restored"),
+                            onError: () => toast.error("Couldn't restore the session"),
+                          },
+                        );
+                      },
+                    }
+                  : undefined,
+                duration: 6000,
+              });
               navigate({ to: "/sessions" });
             } catch {
               toast.error("Failed to delete session");

@@ -498,8 +498,82 @@ export function useDeleteSession() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await sb.from("sessions").delete().eq("id", id);
+      const { data: session, error } = await sb
+        .from("sessions")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
       if (error) throw error;
+      if (!session) return { session, participants: [] };
+
+      const { data: participants, error: pErr } = await sb
+        .from("session_participants")
+        .select("session_id, profile_id, role, status, responded_at, created_at")
+        .eq("session_id", id);
+      if (pErr) throw pErr;
+
+      const { error: delErr } = await sb.from("sessions").delete().eq("id", id);
+      if (delErr) throw delErr;
+      return { session, participants: participants ?? [] };
+    },
+    onSuccess: () => {
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      }
+    },
+  });
+}
+
+/**
+ * Restore a session deleted by useDeleteSession — powers the Undo action on
+ * the deletion toast. Best-effort: recreates the row and re-inserts captured
+ * participants; the new id differs from the original, so follow-up detail
+ * queries by old id simply miss.
+ */
+export function useRestoreSession() {
+  const queryClient = useQueryClient();
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+
+  type DeletedSession = Record<string, unknown> & { id: string };
+
+  return useMutation({
+    mutationFn: async (payload: {
+      session: DeletedSession;
+      participants: Record<string, unknown>[];
+    }) => {
+      const { id: _omit, ...sessionRow } = payload.session;
+      // The captured row came straight from the same table, so its shape
+      // matches Insert — the cast exists only because rest-spread widens the
+      // index signature beyond the generated Insert type.
+      const { data: recreated, error } = await sb
+        .from("sessions")
+        .insert(sessionRow as never)
+        .select()
+        .single();
+      if (error) throw error;
+
+      if (payload.participants.length > 0) {
+        type ParticipantInsert = {
+          session_id: string;
+          profile_id: string;
+          role?: "mentor" | "organizer" | "participant";
+          status?: "invited" | "accepted" | "declined" | "pending";
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        const rows = payload.participants.map((p) => ({
+          ...p,
+          session_id: recreated.id,
+        })) as ParticipantInsert[];
+        const { error: pErr } = await sb.from("session_participants").insert(rows);
+        if (pErr) {
+          // The session itself is back — surface the partial failure but don't
+          // leave the user with nothing.
+          console.error("Failed to restore session participants", pErr);
+        }
+      }
+      return recreated;
     },
     onSuccess: () => {
       if (userId) {

@@ -255,7 +255,7 @@ export function ExplorePage() {
     queryKey: ["explore-projects"],
     queryFn: async ({ pageParam }): Promise<ProjectRow[]> => {
       const PROJECTS_SELECT =
-        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url, availability, background)" as const;
+        "id, profile_id, title, description, status, stage, tags, progress_percent, cover_url, is_featured, looking_for_collaborators, looking_for_feedback, created_at, updated_at, profiles!projects_profile_id_fkey(id, handle, display_name, creator_title, avatar_url, availability, background)" as const;
       let query = supabase
         .from("projects")
         .select<typeof PROJECTS_SELECT, ProjectRow>(PROJECTS_SELECT)

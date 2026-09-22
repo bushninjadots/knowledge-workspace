@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { CoverGradient, ProgressBar } from "./cover-gradient";
 import { ownerAccentStyle } from "@/lib/background-themes";
+import { timeAgo } from "@/lib/time";
 import { canonicalProjectStatus, isLiveStatus, statusDotClass } from "@/lib/project-status";
 import type { ProjectRow } from "@/routes/_authenticated/explore";
 
@@ -138,6 +139,15 @@ function ProjectShelfFace({
               by {project.profiles.display_name || project.profiles.handle || "Member"}
               {" · "}
               {status.label}
+            </p>
+          )}
+
+          {/* Freshness — the biggest pre-contact signal for collaborators is
+              when the work last moved. Sits under the author line so metadata
+              stays secondary to the work itself. */}
+          {project.updated_at && (
+            <p className="text-[11px] leading-snug text-muted-foreground/70">
+              Work updated {timeAgo(project.updated_at)}
             </p>
           )}
 

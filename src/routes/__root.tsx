@@ -4,10 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { initSentry } from "@/lib/sentry";
@@ -16,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider, themeInitScript, useTheme } from "@/lib/theme";
 import { GlobalThemePreset } from "@/components/tethyr/global-theme-preset";
+import { RouteErrorBoundary } from "@/components/tethyr/route-error-boundary";
 
 function NotFoundComponent() {
   return (
@@ -39,37 +41,10 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorFallback({ error: _error, reset }: { error: Error; reset: () => void }) {
-  const router = useRouter();
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+function ErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+  // The shared boundary is the single source of the error layout; the root
+  // just supplies the default copy.
+  return <RouteErrorBoundary error={error} reset={reset} />;
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
@@ -189,6 +164,27 @@ function ThemedToaster() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  // Route-change focus management: SPA navigations otherwise leave focus
+  // where it was (often a removed node), so screen-reader users land silently
+  // with no announcement. Moving focus to <main id="main-content"> (the skip
+  // link's target) announces the new page and starts tab order at the content.
+  const { matches } = useRouterState();
+  const locationHash = matches[matches.length - 1]?.pathname;
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    requestAnimationFrame(() => {
+      const main = document.getElementById("main-content");
+      if (main && !main.contains(document.activeElement)) {
+        main.setAttribute("tabindex", "-1");
+        main.focus({ preventScroll: true });
+      }
+    });
+  }, [locationHash]);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event: string) => {

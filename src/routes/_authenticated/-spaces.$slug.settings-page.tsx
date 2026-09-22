@@ -51,6 +51,7 @@ import {
   type ModerationLogRow,
   type SpaceBan,
 } from "@/hooks/use-community-spaces";
+import { useRestoreSpace } from "@/hooks/use-space-settings";
 
 // Code-split module: the interactive page for its route. See the route
 // file for the eager surface (loader/head) and the lazyRouteComponent wire-up.
@@ -89,6 +90,7 @@ export function SpaceSettingsPage() {
 
   const updateSpace = useUpdateSpace();
   const deleteSpace = useDeleteSpace();
+  const restoreSpace = useRestoreSpace();
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const approveRequest = useApproveJoinRequest();
@@ -217,8 +219,25 @@ export function SpaceSettingsPage() {
   function handleDelete() {
     if (!space) return;
     deleteSpace.mutate(space.id, {
-      onSuccess: () => {
-        toast.success("Community deleted");
+      onSuccess: (result) => {
+        toast.success("Community deleted", {
+          description: "You can undo this for a few seconds.",
+          duration: 6000,
+          action: result?.space
+            ? {
+                label: "Undo",
+                onClick: () => {
+                  restoreSpace.mutate(
+                    { space: result.space, members: result.members, posts: result.posts },
+                    {
+                      onSuccess: () => toast.success("Community restored"),
+                      onError: () => toast.error("Couldn't restore the community"),
+                    },
+                  );
+                },
+              }
+            : undefined,
+        });
         navigate({ to: "/community" });
       },
       onError: () => toast.error("Failed to delete community"),

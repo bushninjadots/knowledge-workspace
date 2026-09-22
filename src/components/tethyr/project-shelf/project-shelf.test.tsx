@@ -91,6 +91,7 @@ function makeProject(
     looking_for_collaborators: false,
     looking_for_feedback: false,
     created_at: "2026-08-01T00:00:00Z",
+    updated_at: "2026-08-01T00:00:00Z",
     profiles: {
       id: "user-1",
       handle: "creator",
