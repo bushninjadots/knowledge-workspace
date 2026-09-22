@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:prod": "LOVABLE_SANDBOX=1 LOVABLE_NITRO_PRESET=lovable-fetch-bundle vite build",
+    "serve:prod": "node scripts/serve-prod-build.mjs",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "check:unused": "node scripts/check-unused-exports.mjs",
     "check:cards": "node scripts/check-handrolled-cards.mjs",

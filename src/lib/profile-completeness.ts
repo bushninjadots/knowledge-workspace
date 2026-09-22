@@ -35,7 +35,10 @@ export type Section = {
   cta?: { label: string; href: string };
 };
 
-const has = <T>(value: T | null | undefined) => value != null && value !== "";
+// Trimmed: a field a user opened and left as spaces is not filled in, though
+// the checklist used to count it as done (and report a percentage for it).
+const has = <T>(value: T | null | undefined) =>
+  typeof value === "string" ? value.trim() !== "" : value != null;
 const arr = (value: unknown[] | null | undefined) => (value?.length ?? 0) > 0;
 
 export function sections({
