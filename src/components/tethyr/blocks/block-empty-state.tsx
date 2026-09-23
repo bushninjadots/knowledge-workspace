@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BlockEmptyStateProps {
@@ -9,6 +10,9 @@ interface BlockEmptyStateProps {
   /** Optional owner action for creating the first item. */
   actionLabel?: string;
   onAction?: () => void;
+  /** Optional route for a read-only next step. */
+  nextHref?: string;
+  nextLabel?: string;
 }
 
 export function BlockEmptyState({ label, detail, actionLabel, onAction }: BlockEmptyStateProps) {
@@ -22,12 +26,22 @@ export function BlockEmptyState({ label, detail, actionLabel, onAction }: BlockE
         <span className="font-medium text-foreground">{label}</span>
         {detail ? ` — ${detail}` : " is empty — add your first item when ready."}
       </span>
-      {actionLabel && onAction && (
-        <Button type="button" size="sm" variant="outline" onClick={onAction}>
-          <Plus aria-hidden="true" />
-          {actionLabel}
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {nextHref && nextLabel && (
+          <Button asChild type="button" size="sm" variant="ghost">
+            <Link to={nextHref}>
+              {nextLabel}
+              <ArrowRight aria-hidden="true" data-icon="inline-end" />
+            </Link>
+          </Button>
+        )}
+        {actionLabel && onAction && (
+          <Button type="button" size="sm" variant="outline" onClick={onAction}>
+            <Plus aria-hidden="true" data-icon="inline-start" />
+            {actionLabel}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

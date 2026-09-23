@@ -26,6 +26,7 @@ import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { NavigationProgress } from "./navigation-progress";
 
 /**
  * Shared layout for all authenticated routes.
@@ -57,6 +58,7 @@ export function AuthenticatedShell() {
       className={`relative isolate flex min-h-screen ${me?.background?.density === "compact" ? "tethyr-density-compact" : ""}`}
       style={themeStyle}
     >
+      <NavigationProgress />
       <BackgroundLayer
         background={me?.background}
         imageUrl={me?.backgroundImageUrl}

@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { useAuthUser } from "@/hooks/use-current-user";
 import { useSidebarRail } from "@/hooks/use-sidebar-rail";
 import { cn } from "@/lib/utils";
+import { NavigationProgress } from "./navigation-progress";
 
 // Notification/Search are auth-only chrome — keep them (and their query
 // graphs) out of the public section pages' initial chunk, same as the
@@ -148,6 +149,7 @@ export function SectionShell({
       className={cn("relative isolate flex min-h-screen bg-background", className)}
       style={style}
     >
+      <NavigationProgress />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         {isAuthed ? (
           <DashboardSidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
