@@ -1,4 +1,4 @@
-import type { Skill } from "@/hooks/use-current-user";
+import type { Skill, SkillActivityCounts } from "@/hooks/use-current-user";
 
 export type SkillCategoryGroup = {
   category: string;
@@ -23,4 +23,13 @@ export function groupSkillsByCategory(skills: readonly Skill[]): SkillCategoryGr
     group.skills.push(skill);
   }
   return groups;
+}
+
+/**
+ * Combined real activity for a skill — sharing + growing + projects. Ranks the
+ * "Trending now" rail on the directory without inventing numbers: a skill only
+ * appears when at least one of these is non-zero.
+ */
+export function skillActivityTotal(stats: SkillActivityCounts | undefined): number {
+  return (stats?.sharing ?? 0) + (stats?.growing ?? 0) + (stats?.projects ?? 0);
 }

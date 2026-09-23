@@ -3,10 +3,13 @@
 
 Checks (public unless noted):
   1. Directory hydrates with real catalog data (categories + skill links)
-  2. Profile-count pills render next to skills
-  3. Search filter narrows the list and clears back to full results
-  4. A skill link navigates to its /skills/:slug hub
-  5. Signed in: the sidebar "Skills" nav link lands on the directory
+  2. Real activity lines render on skill rows (sharing · growing · projects)
+  3. Search narrows the list, syncs the ?q= URL, and clears back to full
+  4. A skill link navigates to its /skills/:slug hub (h1 = skill name)
+  5. Signed in: the sidebar "Skills" nav link lands on the directory and
+     the sidebar frame persists on it
+  6. Section chrome: no top navigation, standard Back button on directory
+     and hub
 
 Usage:
     python3 tests/skills_directory_browser.py [BASE_URL]
@@ -45,7 +48,12 @@ def main() -> int:
         print("[1] directory hydration")
         try:
             page.goto(f"{BASE_URL}/skills", wait_until="domcontentloaded", timeout=30000)
-            page.wait_for_selector("h1:has-text('Skills directory')", timeout=15000)
+            page.wait_for_selector("h1", timeout=15000)
+            h1 = page.locator("h1").first.inner_text().strip()
+            if h1 != "Skills":
+                all_ok = fail(f"expected h1 'Skills', got {h1!r}")
+            else:
+                all_ok = ok("h1 'Skills' renders") and all_ok
             # SSR paints a skeleton; the client fills in sections after hydration.
             page.wait_for_selector("section h2", timeout=20000)
             categories = page.locator("section h2").all_inner_texts()
@@ -58,42 +66,61 @@ def main() -> int:
                 all_ok = fail("no skill links rendered")
             else:
                 all_ok = ok(f"{link_count} skill links") and all_ok
+            # Section chrome: sidebar frame + Back, no marketing top nav.
+            if page.locator('nav[aria-label="Primary navigation"]').count() != 0:
+                all_ok = fail("top navigation still renders on /skills")
+            else:
+                all_ok = ok("top navigation removed from /skills") and all_ok
+            back = page.get_by_role("button", name="Go back")
+            if back.count() == 0:
+                all_ok = fail("no Back button in the section frame header")
+            else:
+                all_ok = ok("Back button renders in the frame header") and all_ok
         except Exception as exc:  # noqa: BLE001
             print(f"  FAIL: hydration: {exc}")
             return 1
 
-        # ── 2. Profile-count pills ─────────────────────────────────────
-        print("[2] profile-count pills")
+        # ── 2. Real activity lines on skill rows ───────────────────────
+        print("[2] activity lines")
         try:
-            pills = page.locator("section li span.rounded-full").all_inner_texts()
-            meaningful = [t for t in pills if re.search(r"\d", t)]
+            lines = page.locator('a[href^="/skills/"] p:has-text("sharing")').all_inner_texts()
+            meaningful = [t for t in lines if re.search(r"\d", t)]
             if not meaningful:
-                all_ok = fail("no numeric profile counts rendered")
+                all_ok = fail("no real activity rendered (expected 'N sharing · …')")
             else:
-                all_ok = ok(f"counts render, e.g. {meaningful[0]!r}") and all_ok
+                all_ok = ok(f"activity renders, e.g. {meaningful[0]!r}") and all_ok
         except Exception as exc:  # noqa: BLE001
-            all_ok = fail(f"count pills: {exc}") and all_ok
+            all_ok = fail(f"activity lines: {exc}") and all_ok
 
-        # ── 3. Search narrows and clears ───────────────────────────────
+        # ── 3. Search narrows, syncs the URL, and clears ───────────────
         print("[3] search filter")
         try:
             before = page.locator('a[href^="/skills/"]').count()
             page.fill("input[type=search]", "zzzznomatch")
             page.wait_for_timeout(400)
-            narrowed = page.locator('a[href^="/skills/"]').count()
+            # The trending rail stays put (it ranks the full catalog); the
+            # directory below must empty out.
+            narrowed = page.locator(
+                'section[aria-labelledby^="skills-"] a[href^="/skills/"]'
+            ).count()
             if narrowed != 0:
-                all_ok = fail(f"expected 0 links for a nonsense query, got {narrowed}")
+                all_ok = fail(f"expected 0 directory links for a nonsense query, got {narrowed}")
             elif not page.get_by_text("No skills match that search").is_visible():
                 all_ok = fail("empty-state message not shown for nonsense query")
             else:
-                all_ok = ok("nonsense query shows empty state") and all_ok
-            page.fill("input[type=search]", "")
+                all_ok = ok("nonsense query empties the directory (trending stays)") and all_ok
+            if "q=zzzznomatch" not in page.url:
+                all_ok = fail(f"search did not sync ?q= into the URL ({page.url})")
+            else:
+                all_ok = ok("?q= param syncs into the URL") and all_ok
+            # Custom clear button restores the full list.
+            page.click("button[aria-label='Clear search']")
             page.wait_for_timeout(400)
             after = page.locator('a[href^="/skills/"]').count()
             if after != before:
                 all_ok = fail(f"clearing search restored {after} links, expected {before}")
             else:
-                all_ok = ok("clearing search restores the full list") and all_ok
+                all_ok = ok("clear button restores the full list") and all_ok
         except Exception as exc:  # noqa: BLE001
             all_ok = fail(f"search: {exc}") and all_ok
 
@@ -104,12 +131,24 @@ def main() -> int:
             href = first.get_attribute("href") or ""
             first.click()
             page.wait_for_url(f"**{href}*", timeout=15000)
-            page.wait_for_timeout(3000)  # hydration of the hub page
+            page.wait_for_timeout(4000)  # hydration of the hub page
             main_visible = page.locator("main").count() > 0
+            hub_h1 = page.locator("h1").first.inner_text().strip()
             if not main_visible:
                 all_ok = fail(f"{href} did not render a page")
+            elif hub_h1 == "Skills":
+                all_ok = fail(f"hub h1 is the directory title, expected the skill name")
             else:
-                all_ok = ok(f"navigated to {href}") and all_ok
+                all_ok = ok(f"navigated to {href} (h1: {hub_h1!r})") and all_ok
+            tab_text = page.locator("main").inner_text()
+            if "Sharing" not in tab_text or "Growing" not in tab_text:
+                all_ok = fail("hub has no Sharing/Growing copy (stats summary)")
+            else:
+                all_ok = ok("hub renders Sharing/Growing stats summary") and all_ok
+            if page.get_by_role("button", name="Go back").count() == 0:
+                all_ok = fail("hub has no Back button in the section frame header")
+            else:
+                all_ok = ok("hub renders the standard Back button") and all_ok
         except Exception as exc:  # noqa: BLE001
             all_ok = fail(f"hub navigation: {exc}") and all_ok
 
@@ -132,8 +171,21 @@ def main() -> int:
                 else:
                     sidebar_link.click()
                     page.wait_for_url("**/skills", timeout=15000)
-                    page.wait_for_selector("h1:has-text('Skills directory')", timeout=15000)
-                    all_ok = ok("sidebar Skills link lands on the directory") and all_ok
+                    page.wait_for_selector("h1", timeout=15000)
+                    h1 = page.locator("h1").first.inner_text().strip()
+                    if h1 != "Skills":
+                        all_ok = fail(f"sidebar lands on directory, h1 {h1!r}")
+                    else:
+                        all_ok = ok("sidebar Skills link lands on the directory") and all_ok
+                    # The frame keeps the sidebar visible on /skills itself —
+                    # the app chrome never changes under the user's hands.
+                    # useAuthUser resolves after hydration, so wait for the
+                    # authed sidebar to replace the visitor one.
+                    page.wait_for_selector('a[href="/dashboard"]', timeout=10000)
+                    if page.locator('a[href="/dashboard"]').count() == 0:
+                        all_ok = fail("sidebar frame missing after landing on /skills")
+                    else:
+                        all_ok = ok("sidebar frame persists on /skills (authed)") and all_ok
         except Exception as exc:  # noqa: BLE001
             all_ok = fail(f"sidebar: {exc}") and all_ok
 

@@ -1,15 +1,27 @@
 // Skill ecosystem page at /skills/:slug. Each skill becomes a creative
-// workshop — a dedicated learning space with teachers, learners, and projects.
+// workshop — a hub connecting the people sharing it, the people growing it,
+// the projects using it, and the projects looking for it. The route loader
+// prefetches the skill so the SEO head carries the real skill name.
 
 import { Link, createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { absoluteUrl, jsonLd, seoMeta, SITE } from "@/lib/seo";
+import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
 export const Route = createFileRoute("/skills/$slug")({
-  head: ({ params }) => {
+  loader: async ({ params, context: { queryClient } }) => {
+    const skill = await queryClient.fetchQuery({
+      queryKey: skillQueryKey(params.slug),
+      queryFn: () => fetchSkillBySlug(params.slug),
+      staleTime: 5 * 60 * 1000,
+    });
+    return { skill };
+  },
+  head: ({ loaderData, params }) => {
+    const name = loaderData?.skill?.name ?? params.slug;
     const base = seoMeta({
       path: `/skills/${encodeURIComponent(params.slug)}`,
-      title: `${params.slug} skill hub`,
-      description: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects built with it.`,
+      title: `${name} — skill hub`,
+      description: `Explore ${name} on Tethyr — the people sharing it, the people growing it, and the projects built with it.`,
     });
     const skillUrl = absoluteUrl(`/skills/${encodeURIComponent(params.slug)}`);
     return {
@@ -19,8 +31,8 @@ export const Route = createFileRoute("/skills/$slug")({
         ...jsonLd({
           "@context": "https://schema.org",
           "@type": "Course",
-          name: `${params.slug} — Tethyr skill hub`,
-          description: `Explore ${params.slug} on Tethyr — find people sharing, growing, and discover projects.`,
+          name: `${name} — Tethyr skill hub`,
+          description: `Explore ${name} on Tethyr — people sharing, people growing, and the projects built with it.`,
           ...(skillUrl ? { url: skillUrl } : {}),
           provider: {
             "@type": "Organization",
@@ -32,7 +44,7 @@ export const Route = createFileRoute("/skills/$slug")({
     };
   },
   // Code-split: the page component loads after the eager route surface
-  // (loader/head/beforeLoad) so the entry chunk stays small.
+  // (loader/head) so the entry chunk stays small.
   component: lazyRouteComponent(() => import("./-skills.$slug-page"), "SkillPage"),
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

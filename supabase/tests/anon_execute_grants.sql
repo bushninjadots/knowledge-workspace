@@ -66,7 +66,7 @@ SELECT set_eq(
       ('get_layout_lineage(start_id uuid)'),
       ('post_engagement_counts(p_post_ids uuid[])'),
       ('posts_images_are_valid(p_images text[])'),
-      ('skill_profile_counts(p_skill_ids uuid[])'),
+      ('skill_directory_stats(p_skill_ids uuid[])'),
       ('trending_skills(p_limit integer)')
     ) AS allowed(name)
   $$,

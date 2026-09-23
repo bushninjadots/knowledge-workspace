@@ -354,7 +354,7 @@ export function ProjectHeader({
           </div>
 
           {/* Actions */}
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {openNeedCount > 0 && (
               <button
                 onClick={onOpenNeeds}

@@ -1,8 +1,9 @@
-import { lazy, Suspense, useCallback, useState, useMemo, useEffect } from "react";
+import { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { Menu, Search, ArrowUp, Bell, WifiOff } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeToggle } from "./theme-toggle";
+import { useSidebarRail } from "@/hooks/use-sidebar-rail";
 
 // Both panels are only ever interactive on user intent — keep their JS (and
 // the six-source search queries) off the shell's initial render.
@@ -25,39 +26,6 @@ import { appearanceStyle } from "@/lib/background-themes";
 import { EmailVerificationBanner } from "./email-verification-banner";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-
-const SIDEBAR_STORAGE_KEY = "tethyr:sidebar-collapsed";
-
-/**
- * Sidebar width preference, remembered per browser. Starts expanded so the
- * server-rendered markup matches the first client render; the stored value is
- * applied right after mount (same pattern as `useOnlineStatus`).
- */
-function useSidebarRail() {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    try {
-      setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "1");
-    } catch {
-      // Private mode or blocked storage — stay expanded.
-    }
-  }, []);
-
-  const toggle = useCallback(() => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? "1" : "0");
-      } catch {
-        // Preference simply won't persist.
-      }
-      return next;
-    });
-  }, []);
-
-  return { collapsed, toggle };
-}
 
 /**
  * Shared layout for all authenticated routes.

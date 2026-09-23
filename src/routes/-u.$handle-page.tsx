@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
-import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useParams, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
+import { Github, Globe, Instagram, Link2, Twitch, Twitter, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarShapeCss, avatarRingCss } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,7 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
-import { Navbar } from "@/components/tethyr/navbar";
+import { SectionShell } from "@/components/tethyr/section-shell";
 import { fetchPublicProfile, type PublicProfile } from "./-u.$handle-data";
 
 // Code-split module: the interactive page for its route. See the route
@@ -150,30 +150,45 @@ function Shell({
   pageThemeStyle?: React.CSSProperties;
   embed?: boolean;
 }) {
-  const navigate = useNavigate();
+  // Composed like the owner's Studio view: the frame keeps the app background
+  // + appearance variables; the content wrapper becomes the themed canvas
+  // (page theme + backdrop) so blocks sit on exactly the surface the creator
+  // sees in their own view. Embeds skip the chrome entirely.
+  const densityClass = background?.density === "compact" ? "tethyr-density-compact" : undefined;
+  const rootStyle = { ...appearanceStyle(background), ...avatarShapeStyle(background) };
 
-  // Composed like the owner's Studio view: the root keeps the app background +
-  // appearance variables; the content wrapper becomes the themed canvas (page
-  // theme + backdrop) so blocks sit on exactly the surface the creator sees in
-  // their own view.
+  if (embed) {
+    return (
+      <div className={`relative isolate min-h-screen ${densityClass ?? ""}`} style={rootStyle}>
+        <main
+          className="relative isolate min-w-0 flex-1 bg-background bg-noise"
+          style={pageThemeStyle}
+        >
+          <BackgroundLayer
+            background={background}
+            imageUrl={backgroundImageUrl}
+            bannerColor={bannerColor}
+          />
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`relative isolate min-h-screen ${background?.density === "compact" ? "tethyr-density-compact" : ""}`}
-      style={{ ...appearanceStyle(background), ...avatarShapeStyle(background) }}
+    <SectionShell
+      className={densityClass}
+      style={rootStyle}
+      mainClassName="relative isolate min-w-0 flex-1 bg-background bg-noise"
+      mainStyle={pageThemeStyle}
     >
-      {!embed && <Navbar />}
-      <main
-        className="relative isolate min-w-0 flex-1 bg-background bg-noise"
-        style={pageThemeStyle}
-      >
-        <BackgroundLayer
-          background={background}
-          imageUrl={backgroundImageUrl}
-          bannerColor={bannerColor}
-        />
-        {children}
-      </main>
-    </div>
+      <BackgroundLayer
+        background={background}
+        imageUrl={backgroundImageUrl}
+        bannerColor={bannerColor}
+      />
+      {children}
+    </SectionShell>
   );
 }
 

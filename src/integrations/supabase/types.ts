@@ -2940,11 +2940,14 @@ export type Database = {
           reply_count: number;
         }[];
       };
-      skill_profile_counts: {
-        Args: never;
+      skill_directory_stats: {
+        Args: { p_skill_ids?: string[] };
         Returns: {
           skill_id: string;
-          profile_count: number;
+          sharing_count: number;
+          growing_count: number;
+          project_count: number;
+          need_count: number;
         }[];
       };
       trending_skills: {

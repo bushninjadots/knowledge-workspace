@@ -357,22 +357,45 @@ export function useTrendingSkills() {
   });
 }
 
+export type SkillActivityCounts = {
+  /** Distinct profiles who share / can contribute this skill. */
+  sharing: number;
+  /** Distinct profiles developing (growing) this skill. */
+  growing: number;
+  /** Distinct projects using this skill. */
+  projects: number;
+  /** Open (unfilled) project needs for this skill — "projects looking for it". */
+  needs: number;
+};
+
 /**
- * How many distinct profiles teach or learn each skill. Backs the skill
- * directory page; counts profiles, not rows, so someone who both teaches and
- * learns stays counted once.
+ * Per-skill activity counts backing the /skills directory and the skill hub:
+ * distinct sharing profiles, distinct growing profiles, distinct projects, and
+ * open project needs. Replaces the merged teach+learn "people" count so a
+ * skill reads as "18 sharing · 11 growing · 7 projects" instead of "29 people".
  */
-export function useSkillProfileCounts() {
+export function useSkillDirectoryStats() {
   return useQuery({
-    queryKey: ["skill-profile-counts"],
+    queryKey: ["skill-directory-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("skill_profile_counts");
+      const { data, error } = await supabase.rpc("skill_directory_stats");
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      for (const row of (data ?? []) as { skill_id: string; profile_count: number }[]) {
-        counts[row.skill_id] = Number(row.profile_count);
+      const stats: Record<string, SkillActivityCounts> = {};
+      for (const row of (data ?? []) as {
+        skill_id: string;
+        sharing_count: number;
+        growing_count: number;
+        project_count: number;
+        need_count: number;
+      }[]) {
+        stats[row.skill_id] = {
+          sharing: Number(row.sharing_count),
+          growing: Number(row.growing_count),
+          projects: Number(row.project_count),
+          needs: Number(row.need_count),
+        };
       }
-      return counts;
+      return stats;
     },
     staleTime: 5 * 60 * 1000,
   });

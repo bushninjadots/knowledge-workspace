@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { notFound, useParams, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, CalendarPlus } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,8 +34,7 @@ import { ProjectLiveRoom } from "@/components/tethyr/project/project-live-room";
 import { getRepoFullName } from "@/lib/github";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProjectFile } from "@/components/tethyr/project/project-files";
-import { Navbar } from "@/components/tethyr/navbar";
-import { Footer } from "@/components/tethyr/footer";
+import { SectionShell } from "@/components/tethyr/section-shell";
 
 const ProjectNeeds = lazy(() =>
   import("@/components/tethyr/project/project-needs").then((m) => ({ default: m.ProjectNeeds })),
@@ -995,34 +994,13 @@ function Shell({
   children: React.ReactNode;
   accentColor?: string | null;
 }) {
-  const navigate = useNavigate();
   const accentStyle: React.CSSProperties = {
     ...(accentColor
       ? ({ "--accent-border": withAlpha(accentColor, 0.35) } as React.CSSProperties)
       : {}),
   };
-  return (
-    <div className="min-h-screen bg-background" style={accentStyle}>
-      <Navbar />
-      <header className="flex h-12 items-center gap-3 border-b border-border/60 bg-background/70 px-4 sm:px-6">
-        <button
-          onClick={() =>
-            window.history.length > 1 ? window.history.back() : navigate({ to: "/" })
-          }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
-          aria-label="Go back"
-          title="Back"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back
-        </button>
-        <span className="text-sm text-muted-foreground">Project</span>
-      </header>
-      {/* Same id as the other frames so the global skip link lands here too */}
-      <main id="main-content" className="flex-1">
-        {children}
-      </main>
-      <Footer />
-    </div>
-  );
+  // The shared section frame owns the sidebar navigation and the Back button
+  // (same chrome as every other hub page); the accent var still cascades
+  // into the project's cards below.
+  return <SectionShell style={accentStyle}>{children}</SectionShell>;
 }

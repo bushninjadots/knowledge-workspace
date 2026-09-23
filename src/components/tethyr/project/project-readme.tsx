@@ -663,8 +663,10 @@ function HeadingWithId({
 
 function makeHeadingComponents(sections: { id: string; text: string; level: number }[]) {
   return {
+    // The page already owns the single h1 (the project title), so a README's
+    // own top-level `#` demotes to h2 — one h1 per page, no level skips.
     h1: (props: { children?: React.ReactNode }) => (
-      <HeadingWithId level={1} sections={sections} {...props} />
+      <HeadingWithId level={2} sections={sections} {...props} />
     ),
     h2: (props: { children?: React.ReactNode }) => (
       <HeadingWithId level={2} sections={sections} {...props} />
