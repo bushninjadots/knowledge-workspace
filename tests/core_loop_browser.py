@@ -95,11 +95,16 @@ def main() -> int:
                 wait_until="domcontentloaded",
                 timeout=30000,
             )
-            applicant.get_by_role("button", name="Apply").first.click(timeout=30000)
-            applicant.get_by_placeholder("Why'd you like to join? (optional)").fill(
+            # Scope to the Open Roles panel — the project header also has an
+            # "Apply" button, and only the role-level one opens the form.
+            open_roles = applicant.get_by_role("heading", name="Open Roles").locator(
+                "xpath=ancestor::div[contains(@class,'rounded-xl')][1]"
+            )
+            open_roles.get_by_role("button", name="Apply").first.click(timeout=30000)
+            applicant.get_by_label("Application message").first.fill(
                 "I'd love to help with the design work."
             )
-            applicant.get_by_role("button", name="Submit", exact=True).click()
+            applicant.get_by_role("button", name="Submit application", exact=True).first.click()
             applicant.wait_for_timeout(3000)
             body = applicant.inner_text("body")
             if "Application pending" not in body and "Application submitted" not in body:

@@ -31,6 +31,7 @@ Exits 0 when every check passes, 1 otherwise.
 """
 
 import os
+import re
 import sys
 import time
 
@@ -75,29 +76,31 @@ def main() -> int:
 
         # ---------------------------------------------------------------
         # Studio customization — enter customize mode, move a module, exit.
+        # (The personalizeable grid lives on the dashboard; the entry point
+        # is the customize bar's "Customize" button.)
         # ---------------------------------------------------------------
         try:
-            page.goto(f"{BASE_URL}/profile", wait_until="domcontentloaded", timeout=30000)
+            page.goto(f"{BASE_URL}/dashboard", wait_until="domcontentloaded", timeout=30000)
             page.wait_for_timeout(4000)
 
-            # The preset picker renders an "Arrange sections" entry point when
-            # not customizing (profile hides the built-in customize bar).
-            page.get_by_role("button", name="Arrange sections").click(timeout=30000)
+            page.get_by_role("button", name="Customize", exact=True).click(timeout=30000)
             page.wait_for_timeout(1500)
             body = page.inner_text("body")
-            if "Private Studio layout" not in body:
+            if "Arrange your workspace" not in body:
                 failures.append(("studio-customize", "customize mode did not open (no banner)"))
             else:
                 # Customize chrome exposes per-module move buttons.
-                page.get_by_role("button", name="Move Direction up").click(timeout=30000)
+                page.get_by_role("button", name=re.compile(r"Move .+ up")).first.click(
+                    timeout=30000
+                )
                 page.wait_for_timeout(1500)
-                if "Private Studio layout" not in page.inner_text("body"):
+                if "Arrange your workspace" not in page.inner_text("body"):
                     failures.append(("studio-customize", "move button exited customize mode"))
-                # Escape exits customize mode (profile has no visible Done button).
-                page.keyboard.press("Escape")
+                # Done exits customize mode (Escape also works).
+                page.get_by_role("button", name="Done", exact=True).click(timeout=30000)
                 page.wait_for_timeout(1000)
-                if "Private Studio layout" in page.inner_text("body"):
-                    failures.append(("studio-customize", "Escape did not exit customize mode"))
+                if "Arrange your workspace" in page.inner_text("body"):
+                    failures.append(("studio-customize", "Done did not exit customize mode"))
         except Exception as exc:  # noqa: BLE001
             failures.append(("studio-customize", str(exc)[:160]))
 
@@ -161,11 +164,14 @@ def main() -> int:
                 failures.append(("project-people", "People tab did not render 'Project people'"))
 
             role_title = f"Smoke Role {int(time.time() * 1000) % 1000000}"
-            # Owner-only "Add" button opens the inline role form.
-            page.get_by_role("button", name="Add", exact=True).first.click(timeout=30000)
+            # Owner-only "Add" button opens the inline role form. Scope it to
+            # the Open Roles section — other "Add" buttons exist on the page.
+            page.get_by_role("heading", name="Open Roles").locator(
+                "xpath=following-sibling::button"
+            ).first.click(timeout=30000)
             page.wait_for_timeout(800)
             page.get_by_placeholder("Role title (e.g. React Developer)").fill(role_title)
-            page.get_by_role("button", name="Save", exact=True).click(timeout=30000)
+            page.get_by_role("button", name="Save role", exact=True).click(timeout=30000)
             page.wait_for_timeout(3000)
             body = page.inner_text("body")
             if role_title not in body:
