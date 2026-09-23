@@ -11,6 +11,7 @@ import {
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import { MotionConfig } from "framer-motion";
 import { initSentry } from "@/lib/sentry";
 import { getConfiguredSiteUrl, SITE } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
@@ -213,8 +214,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <GlobalThemePreset />
-        <Outlet />
-        <ThemedToaster />
+        <MotionConfig reducedMotion="user">
+          <Outlet />
+          <ThemedToaster />
+        </MotionConfig>
       </ThemeProvider>
     </QueryClientProvider>
   );

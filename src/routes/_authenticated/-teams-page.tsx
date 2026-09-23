@@ -11,6 +11,7 @@ import {
 } from "@/hooks/use-teams";
 import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
@@ -174,8 +175,8 @@ export function TeamsPage() {
           </div>
           {teamsLoading || invitesLoading ? (
             <div className="grid gap-3 sm:grid-cols-2" aria-label="Loading teams">
-              <div className="h-20 animate-gentle-pulse bg-surface" />
-              <div className="h-20 animate-gentle-pulse bg-surface" />
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
             </div>
           ) : isError ? (
             <p

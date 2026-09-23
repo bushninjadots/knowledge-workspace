@@ -565,7 +565,7 @@ function MiniCard({ project, onClick }: { project: ProjectRow; onClick: () => vo
     <Card asChild>
       <button
         onClick={onClick}
-        className="group relative w-full cursor-pointer overflow-hidden text-left transition-[background-color,border-color,color,box-shadow,translate,scale] duration-150 ease-out hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-[0_12px_28px_-14px_var(--user-accent,var(--trust))] active:translate-y-0 active:scale-[0.99]"
+        className="group relative w-full cursor-pointer overflow-hidden text-left transition-[background-color,border-color,color,box-shadow,translate,scale] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 hover:-translate-y-0.5 hover:border-[var(--user-accent-border,var(--border-strong))] hover:shadow-[0_12px_28px_-14px_var(--user-accent,var(--trust))] active:translate-y-0 active:scale-[0.99]"
       >
         <div className="relative aspect-[3/4] w-full">
           {project.cover_url ? (

@@ -164,7 +164,7 @@ export function DashboardSidebar({
                       aria-current={isActive ? "page" : undefined}
                       aria-label={badge != null ? `${item.label}, ${badge} unread` : item.label}
                       title={item.label}
-                      className={`relative mx-auto flex h-8 w-8 items-center justify-center rounded-sm transition-colors ${stateClass}`}
+                      className={`relative mx-auto flex h-8 w-8 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${stateClass}`}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                       {badge != null && (
@@ -183,7 +183,7 @@ export function DashboardSidebar({
                     to={item.to}
                     onClick={onNavigate}
                     aria-current={isActive ? "page" : undefined}
-                    className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${stateClass}`}
+                    className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${stateClass}`}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>

@@ -3,12 +3,28 @@
 
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { canonicalLinks } from "@/lib/seo";
+import { fetchTeamData, TEAM_KEY } from "@/hooks/use-teams";
 
 export const Route = createFileRoute("/teams/$slug")({
-  head: ({ params }) => ({
+  loader: async ({ params, context: { queryClient } }) => {
+    const data = await queryClient.fetchQuery({
+      queryKey: TEAM_KEY(params.slug),
+      queryFn: () => fetchTeamData(params.slug),
+      staleTime: 15_000,
+    });
+    return { teamName: data?.team?.name ?? null };
+  },
+  head: ({ loaderData, params }) => ({
     meta: [
-      { title: `Team — Tethyr` },
-      { name: "description", content: "A crew that builds together on Tethyr." },
+      {
+        title: loaderData?.teamName ? `${loaderData.teamName} — Tethyr` : `Team — Tethyr`,
+      },
+      {
+        name: "description",
+        content: loaderData?.teamName
+          ? `A crew that builds together on Tethyr: ${loaderData.teamName}.`
+          : "A crew that builds together on Tethyr.",
+      },
     ],
     links: canonicalLinks(`/teams/${encodeURIComponent(params.slug)}`),
   }),

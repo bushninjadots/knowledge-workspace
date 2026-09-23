@@ -8,15 +8,18 @@ import {
   Swords,
   Tags,
   UsersRound,
+  WifiOff,
   type LucideIcon,
 } from "lucide-react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { ThemeToggle } from "./theme-toggle";
 import { Logo } from "./logo";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuthUser } from "@/hooks/use-current-user";
 import { useSidebarRail } from "@/hooks/use-sidebar-rail";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { cn } from "@/lib/utils";
 import { NavigationProgress } from "./navigation-progress";
 
@@ -72,7 +75,7 @@ function PublicSectionSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 to={item.to}
                 onClick={onNavigate}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors ${
+                className={`flex h-7 items-center gap-2 rounded-sm px-2 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
                   isActive
                     ? "bg-[var(--user-accent-subtle,var(--learning-subtle))] font-medium text-[var(--user-accent,var(--foreground))]"
                     : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
@@ -138,6 +141,7 @@ export function SectionShell({
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const online = useOnlineStatus();
 
   function goBack() {
     if (window.history.length > 1) window.history.back();
@@ -211,16 +215,22 @@ export function SectionShell({
             )}
             <ThemeToggle />
             {isAuthed && (
-              <Suspense
-                fallback={
-                  <div className="h-8 w-8 animate-gentle-pulse rounded-full bg-surface-elevated" />
-                }
-              >
+              <Suspense fallback={<Skeleton className="h-8 w-8 rounded-full" />}>
                 <NotificationDropdown />
               </Suspense>
             )}
           </div>
         </header>
+
+        {!online && (
+          <div
+            role="status"
+            className="flex items-center justify-center gap-2 border-b border-caution/30 bg-caution/10 px-4 py-2 text-sm text-caution-foreground"
+          >
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span>You&apos;re offline — showing your last loaded data.</span>
+          </div>
+        )}
 
         <main id="main-content" className={cn("flex-1", mainClassName)} style={mainStyle}>
           {children}

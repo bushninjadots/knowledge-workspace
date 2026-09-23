@@ -392,10 +392,7 @@ function LibraryItemPage() {
             ) : (
               <Suspense
                 fallback={
-                  <div
-                    className="min-h-[60vh] animate-gentle-pulse bg-surface/30"
-                    aria-label="Loading editor"
-                  />
+                  <Skeleton className="min-h-[60vh] bg-primary/10" aria-label="Loading editor" />
                 }
               >
                 <NoteEditor

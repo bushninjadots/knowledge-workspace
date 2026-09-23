@@ -1,5 +1,6 @@
 import { notFound, useParams } from "@tanstack/react-router";
 import { useTeam } from "@/hooks/use-teams";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TeamPage } from "@/components/tethyr/team/team-page";
 import { SectionShell } from "@/components/tethyr/section-shell";
 
@@ -13,15 +14,15 @@ export function TeamRoute() {
     return (
       <Shell>
         {/* Mirrors TeamPage: cover band, then the title row and member list. */}
-        <div className="animate-gentle-pulse p-4 sm:p-8" aria-hidden="true">
-          <div className="h-40 rounded-xl bg-surface" />
-          <div className="mt-6 h-8 w-2/3 rounded bg-surface sm:w-1/3" />
-          <div className="mt-3 h-4 w-1/3 rounded bg-surface" />
+        <div className="p-4 sm:p-8" aria-hidden="true">
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="mt-6 h-8 w-2/3 sm:w-1/3" />
+          <Skeleton className="mt-3 h-4 w-1/3" />
           <div className="mt-8 space-y-3">
             {[0, 1, 2].map((i) => (
               <div key={i} className="flex items-center gap-3 rounded-lg bg-surface p-3">
-                <div className="h-9 w-9 rounded-full bg-surface-elevated" />
-                <div className="h-4 w-1/2 rounded bg-surface-elevated" />
+                <Skeleton className="h-9 w-9 rounded-full" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
           </div>

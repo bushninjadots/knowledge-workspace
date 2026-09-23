@@ -49,7 +49,7 @@ type TeamInviteRow = {
   team?: TeamRow | null;
 };
 
-const TEAM_KEY = (slug: string) => ["team", slug] as const;
+export const TEAM_KEY = (slug: string) => ["team", slug] as const;
 const MY_TEAMS_KEY = ["my-teams"] as const;
 const PROJECT_TEAMS_KEY = (projectId: string) => ["project-teams", projectId] as const;
 
@@ -101,58 +101,58 @@ export function useMyTeams() {
 export function useTeam(slug: string) {
   return useQuery({
     queryKey: TEAM_KEY(slug),
-    queryFn: async () => {
-      const { data: team, error } = await sb
-        .from("teams")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-      if (error) throw error;
-      if (!team) return null;
-
-      const [{ data: members }, { data: projectLinks }] = await Promise.all([
-        sb.from("team_members").select("*").eq("team_id", team.id).order("joined_at"),
-        sb
-          .from("team_projects")
-          .select("team_id, project_id, projects(id, title, cover_url, status)")
-          .eq("team_id", team.id),
-      ]);
-
-      const memberRows = (members ?? []) as Omit<TeamMemberRow, "profile">[];
-      const profileIds = [...new Set(memberRows.map((m) => m.profile_id))];
-      const { data: profiles } =
-        profileIds.length > 0
-          ? await sb
-              .from("profiles")
-              .select("id, display_name, handle, avatar_url")
-              .in("id", profileIds)
-          : { data: [] };
-      type ProfileWithId = NonNullable<TeamMemberRow["profile"]> & { id: string };
-      const profileMap = new Map<string, ProfileWithId>(
-        ((profiles ?? []) as ProfileWithId[]).map((p) => [p.id, p]),
-      );
-
-      return {
-        team: team as TeamRow,
-        members: memberRows.map((m): TeamMemberRow => ({
-          ...m,
-          profile: profileMap.get(m.profile_id) ?? null,
-        })),
-        projects: (
-          (projectLinks ?? []) as {
-            team_id: string;
-            project_id: string;
-            projects: TeamProjectRow["project"];
-          }[]
-        ).map((l) => ({
-          team_id: l.team_id,
-          project_id: l.project_id,
-          project: l.projects ?? null,
-        })),
-      };
-    },
+    queryFn: () => fetchTeamData(slug),
     enabled: !!slug,
   });
+}
+
+/** Full team query (used by the page hook and prefetched by the route loader
+ * so the `<head>` title can carry the real crew name on first paint). */
+export async function fetchTeamData(slug: string) {
+  const { data: team, error } = await sb.from("teams").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw error;
+  if (!team) return null;
+
+  const [{ data: members }, { data: projectLinks }] = await Promise.all([
+    sb.from("team_members").select("*").eq("team_id", team.id).order("joined_at"),
+    sb
+      .from("team_projects")
+      .select("team_id, project_id, projects(id, title, cover_url, status)")
+      .eq("team_id", team.id),
+  ]);
+
+  const memberRows = (members ?? []) as Omit<TeamMemberRow, "profile">[];
+  const profileIds = [...new Set(memberRows.map((m) => m.profile_id))];
+  const { data: profiles } =
+    profileIds.length > 0
+      ? await sb
+          .from("profiles")
+          .select("id, display_name, handle, avatar_url")
+          .in("id", profileIds)
+      : { data: [] };
+  type ProfileWithId = NonNullable<TeamMemberRow["profile"]> & { id: string };
+  const profileMap = new Map<string, ProfileWithId>(
+    ((profiles ?? []) as ProfileWithId[]).map((p) => [p.id, p]),
+  );
+
+  return {
+    team: team as TeamRow,
+    members: memberRows.map((m): TeamMemberRow => ({
+      ...m,
+      profile: profileMap.get(m.profile_id) ?? null,
+    })),
+    projects: (
+      (projectLinks ?? []) as {
+        team_id: string;
+        project_id: string;
+        projects: TeamProjectRow["project"];
+      }[]
+    ).map((l) => ({
+      team_id: l.team_id,
+      project_id: l.project_id,
+      project: l.projects ?? null,
+    })),
+  };
 }
 
 export function useProjectTeams(projectId: string) {

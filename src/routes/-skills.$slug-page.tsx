@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VerificationBadge, ExperienceBadge } from "@/components/tethyr/profile-sections";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AvailabilityBadge } from "@/components/tethyr/availability-badge";
 import type { AvailabilityStatus } from "@/lib/skill-match";
 import { EmptyState } from "@/components/tethyr/empty-state";
@@ -291,7 +292,7 @@ export function SkillPage() {
     return (
       <Shell>
         <div className="mx-auto max-w-5xl p-8">
-          <div className="h-40 animate-gentle-pulse rounded-xl bg-surface/60" />
+          <Skeleton className="h-40 rounded-xl" />
         </div>
       </Shell>
     );
@@ -764,7 +765,7 @@ function SkillSharingPeople({ skillId, skillName }: { skillId: string; skillName
     return (
       <div className="grid gap-3 sm:grid-cols-2" aria-busy="true">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-gentle-pulse rounded-xl bg-surface/60" />
+          <Skeleton key={i} className="h-24 rounded-xl" />
         ))}
       </div>
     );
@@ -824,7 +825,7 @@ function SkillGrowingPeople({ skillId, skillName }: { skillId: string; skillName
     return (
       <div className="grid gap-3 sm:grid-cols-2" aria-busy="true">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-24 animate-gentle-pulse rounded-xl bg-surface/60" />
+          <Skeleton key={i} className="h-24 rounded-xl" />
         ))}
       </div>
     );
@@ -888,7 +889,7 @@ function SkillProjects({ skillId, skillName }: { skillId: string; skillName: str
     return (
       <div className="grid gap-3 sm:grid-cols-2" aria-busy="true">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 animate-gentle-pulse rounded-xl bg-surface/60" />
+          <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
       </div>
     );

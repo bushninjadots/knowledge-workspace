@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
 import { Send, ArrowLeft, Check, CheckCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/tethyr/empty-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -55,7 +56,7 @@ export function MessagesPage() {
         </header>
         <div className="flex-1 overflow-y-auto bg-noise">
           {isLoading ? (
-            <div className="m-2 h-16 animate-gentle-pulse rounded-xl bg-surface" />
+            <Skeleton className="m-2 h-16 rounded-xl" />
           ) : accepted.length === 0 ? (
             <div className="p-4">
               <EmptyState
@@ -273,7 +274,7 @@ function Thread({
           </div>
         )}
         {isLoading ? (
-          <div className="h-12 animate-gentle-pulse rounded-xl bg-surface" />
+          <Skeleton className="h-12 rounded-xl" />
         ) : messages.length > 0 ? (
           messages.map((m) => {
             const mine = m.sender_id === meId;

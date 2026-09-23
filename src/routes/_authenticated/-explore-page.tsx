@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCountUp } from "@/hooks/use-count-up";
 import {
   Select,
   SelectContent,
@@ -75,10 +76,14 @@ type Creator = {
 type Tab = "projects" | "creators" | "opportunities";
 
 function ExploreStat({ value, label }: { value: number; label: string }) {
+  const { ref, value: count } = useCountUp(value);
   return (
     <div>
-      <p className="font-title text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
-        {value}
+      <p
+        ref={ref}
+        className="font-title text-2xl font-semibold tracking-[-0.04em] text-foreground tabular-nums sm:text-3xl"
+      >
+        {count}
       </p>
       <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
         {label}
@@ -808,7 +813,7 @@ export function ExplorePage() {
                           to="/projects/$id"
                           params={{ id: n.projects!.id }}
                           preload="intent"
-                          className="group flex items-start justify-between gap-3 p-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+                          className="group flex items-start justify-between gap-3 p-3 transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 hover:border-[var(--user-accent-border,var(--border-strong))]"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium group-hover:text-primary">
@@ -921,7 +926,7 @@ export function ExplorePage() {
                             params={{ id: opportunity.project.id }}
                             search={{ tab: "people" } as Record<string, string>}
                             preload="intent"
-                            className="block"
+                            className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
@@ -1258,7 +1263,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
                 to="/skills/$slug"
                 params={{ slug: s.slug }}
                 preload="intent"
-                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
               >
                 {s.name}
               </Link>

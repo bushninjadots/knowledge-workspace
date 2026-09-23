@@ -273,7 +273,7 @@ function SkillsDirectoryPage() {
                       to="/skills/$slug"
                       params={{ slug: skill.slug }}
                       preload="intent"
-                      className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken"
+                      className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     >
                       <SkillRow
                         name={skill.name}
@@ -320,7 +320,7 @@ function SkillsDirectoryPage() {
                           to="/skills/$slug"
                           params={{ slug: skill.slug }}
                           preload="intent"
-                          className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken"
+                          className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken focus-visible:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         >
                           <SkillRow
                             name={skill.name}

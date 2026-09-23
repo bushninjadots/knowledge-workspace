@@ -6,6 +6,7 @@ import { friendlyError } from "@/lib/error-message";
 import { supabase } from "@/integrations/supabase/client";
 import { Link2, MessageSquare, Check, X, UserPlus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -152,19 +153,13 @@ export function ConnectionsPage() {
           view === "rows" ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-16 animate-gentle-pulse rounded-xl bg-surface-elevated/40"
-                />
+                <Skeleton key={i} className="h-16 rounded-xl" />
               ))}
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-20 animate-gentle-pulse rounded-xl bg-surface-elevated/40"
-                />
+                <Skeleton key={i} className="h-20 rounded-xl" />
               ))}
             </div>
           )

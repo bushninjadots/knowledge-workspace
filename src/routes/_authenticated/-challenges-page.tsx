@@ -2,6 +2,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { Swords, Search, Filter, Sparkles, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import {
   useChallenges,
@@ -303,19 +304,13 @@ function ChallengesContent() {
           layout === "grid" ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-64 animate-gentle-pulse rounded-xl border border-border/50 bg-surface/60"
-                />
+                <Skeleton key={i} className="h-64 rounded-xl border border-border/50" />
               ))}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-14 animate-gentle-pulse rounded-xl border border-border/50 bg-surface/60"
-                />
+                <Skeleton key={i} className="h-14 rounded-xl border border-border/50" />
               ))}
             </div>
           )

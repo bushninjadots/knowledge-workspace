@@ -11,6 +11,7 @@ import {
   type ProfileBackground,
 } from "@/lib/background-themes";
 import { BackgroundLayer } from "@/components/tethyr/background-layer";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDominantColor } from "@/lib/dominant-color";
 import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
@@ -77,16 +78,16 @@ export function PublicProfileRoute() {
   if (isLoading) {
     return (
       <Shell background={null} pageThemeStyle={pageThemeStyle}>
-        <div className="animate-gentle-pulse space-y-6 p-8" aria-hidden="true">
-          <div className="h-48 rounded-xl bg-surface" />
+        <div className="space-y-6 p-8" aria-hidden="true">
+          <Skeleton className="h-48 rounded-xl" />
           <div className="flex items-center gap-4">
-            <div className="h-28 w-28 rounded-full bg-surface" />
+            <Skeleton className="h-28 w-28 rounded-full" />
             <div className="flex-1 space-y-3">
-              <div className="h-6 w-1/3 rounded bg-surface" />
-              <div className="h-4 w-1/4 rounded bg-surface" />
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-4 w-1/4" />
             </div>
           </div>
-          <div className="h-24 rounded-xl bg-surface" />
+          <Skeleton className="h-24 rounded-xl" />
         </div>
       </Shell>
     );

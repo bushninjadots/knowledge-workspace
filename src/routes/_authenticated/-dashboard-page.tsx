@@ -361,7 +361,7 @@ function DashboardContent({
               Arrange this space around what you are building now.
             </p>
           </div>
-          <Suspense fallback={<div className="h-64 animate-gentle-pulse rounded-xl bg-surface" />}>
+          <Suspense fallback={<Skeleton className="h-64 rounded-xl" />}>
             <WorkspaceGrid
               page="dashboard"
               userId={data?.userId}
@@ -570,10 +570,7 @@ function ProjectReturnShelf() {
         </p>
       </div>
       {isLoading ? (
-        <div
-          className="mt-3 h-12 animate-gentle-pulse rounded-lg bg-surface"
-          aria-label="Loading project changes"
-        />
+        <Skeleton className="mt-3 h-12 rounded-lg" aria-label="Loading project changes" />
       ) : (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {changes.slice(0, 6).map((change) => (
