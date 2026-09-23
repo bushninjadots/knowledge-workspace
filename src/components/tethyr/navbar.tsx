@@ -147,12 +147,12 @@ export function Navbar() {
           >
             <span className="relative block h-5 w-5">
               <Menu
-                className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${
+                className={`absolute inset-0 h-5 w-5 transition-[transform,opacity] duration-200 ${
                   open ? "rotate-90 opacity-0" : "rotate-0 opacity-100"
                 }`}
               />
               <X
-                className={`absolute inset-0 h-5 w-5 transition-all duration-200 ${
+                className={`absolute inset-0 h-5 w-5 transition-[transform,opacity] duration-200 ${
                   open ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"
                 }`}
               />

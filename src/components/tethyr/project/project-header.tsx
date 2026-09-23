@@ -12,9 +12,11 @@ import {
   Globe2,
   Zap,
   Github,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { ProjectDetail } from "@/hooks/use-projects";
 import { PROJECT_STATUS_STYLE, PROJECT_LINK_KEYS } from "@/components/tethyr/profile-sections";
@@ -114,12 +116,15 @@ export function ProjectHeader({
   const repoHref = repoStats?.url ? safeHref(repoStats.url) : null;
   const repoChipClass =
     "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-0.5 text-[11px] text-muted-foreground transition-lift hover:text-foreground";
+  const [copied, setCopied] = useState(false);
 
   const copyLink = () => {
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(window.location.href);
+    if (!navigator.clipboard?.writeText) return;
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
       toast.success("Link copied");
-    }
+      window.setTimeout(() => setCopied(false), 1600);
+    });
   };
 
   return (
@@ -379,7 +384,7 @@ export function ProjectHeader({
               aria-label="Copy link"
               title="Copy link"
             >
-              <Share2 className="h-4 w-4" />
+              {copied ? <Check className="h-4 w-4 text-trust" /> : <Share2 className="h-4 w-4" />}
             </button>
             {onJoin ? (
               <button

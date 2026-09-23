@@ -15,7 +15,14 @@ interface BlockEmptyStateProps {
   nextLabel?: string;
 }
 
-export function BlockEmptyState({ label, detail, actionLabel, onAction }: BlockEmptyStateProps) {
+export function BlockEmptyState({
+  label,
+  detail,
+  actionLabel,
+  onAction,
+  nextHref,
+  nextLabel,
+}: BlockEmptyStateProps) {
   return (
     <div
       className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 text-xs text-muted-foreground"
