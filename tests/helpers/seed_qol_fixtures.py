@@ -14,6 +14,25 @@ CONTAINER = "supabase_db_mfeinmphbsnjcchkmldi"
 USER_ID = "a1d676d3-1a76-401f-bc30-0e4195569e26"  # handle 'testuser'
 
 SQL = """
+-- The lightbox check navigates to the 'Signal Garden' project. The demo seed
+-- doesn't create it, so insert it here (idempotent) before attaching gallery
+-- images to it below.
+INSERT INTO projects
+  (id, profile_id, title, description, goal, vision, status, stage, visibility,
+   progress_percent, started_at, tags, is_featured, looking_for_feedback,
+   looking_for_collaborators, gallery, resources, links, media, readme)
+SELECT '51000000-0000-0000-0000-000000000001', '{uid}', 'Signal Garden',
+       'A browser canvas that grows generative artwork from ambient sound.',
+       'Ship an embeddable garden that any project can plant on its landing page.',
+       'Creative coding should feel like gardening: plant seeds, tend, and watch patterns emerge.',
+       'active', 'building', 'public', 30, now() - interval '60 days',
+       ARRAY['generative-art', 'creative-coding', 'web-audio'],
+       false, true, true, '[]'::jsonb, '[]'::jsonb, '{{}}'::jsonb, '[]'::jsonb,
+       E'# Signal Garden\\n\\nGenerative artwork grown from ambient sound in the browser.\\n\\n## Current focus\\n- Seed-palette editor\\n- Embeddable widget'
+WHERE NOT EXISTS (
+  SELECT 1 FROM projects WHERE title = 'Signal Garden'
+);
+
 INSERT INTO sessions (organizer_id, title, description, session_type, status,
                       starts_at, ends_at, duration_minutes, timezone, location)
 SELECT '{uid}', 'QoL Verification Session', 'Browser-check for the iCal export.',

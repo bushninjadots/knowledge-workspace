@@ -7,17 +7,24 @@
 // This file keeps only the eager route surface (loader + head + search
 // validation). The ~900-line workspace component lives in -projects-page.tsx
 // and is code-split via lazyRouteComponent so the entry chunk stays small.
-import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { createFileRoute, lazyRouteComponent, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalLinks } from "@/lib/seo";
 
 const sb = supabase;
+
+// Projects are addressed by UUID everywhere in the app (links, sitemap, search).
+// A non-UUID :id — e.g. a hand-typed /projects/bloom — can never match, so 404
+// immediately instead of letting the page fire its full battery of doomed
+// PostgREST queries (project_id=eq.bloom against uuid columns → ~30 400s).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const Route = createFileRoute("/projects/$id")({
   // Lightweight title fetch so the SSR/meta <title> carries the real project
   // name (the component's useQuery still drives the full detail). Best-effort:
   // on any error we fall back to the generic title rather than failing the page.
   loader: async ({ params }) => {
+    if (!UUID_RE.test(params.id)) throw notFound();
     try {
       const { data } = await sb.from("projects").select("title").eq("id", params.id).maybeSingle();
       return { title: (data?.title ?? null) as string | null };
