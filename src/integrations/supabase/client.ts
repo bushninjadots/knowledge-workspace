@@ -42,12 +42,20 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
  * precedence can be tested without faking `window`.
  */
 export function resolveSupabaseEnv(isServer: boolean = typeof window === "undefined") {
-  const viteUrl = import.meta.env["VITE_SUPABASE_URL"];
-  const viteKey = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+  const viteUrl =
+    import.meta.env["VITE_SUPABASE_URL"] || import.meta.env["NEXT_PUBLIC_SUPABASE_URL"];
+  const viteKey =
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    import.meta.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
+    import.meta.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"];
   if (!isServer) return { url: viteUrl, key: viteKey };
   return {
-    url: process.env["SUPABASE_URL"] || viteUrl,
-    key: process.env["SUPABASE_PUBLISHABLE_KEY"] || viteKey,
+    url: process.env["SUPABASE_URL"] || process.env["NEXT_PUBLIC_SUPABASE_URL"] || viteUrl,
+    key:
+      process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+      process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
+      process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ||
+      viteKey,
   };
 }
 
