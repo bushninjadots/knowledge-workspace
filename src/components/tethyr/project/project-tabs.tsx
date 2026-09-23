@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { motion } from "framer-motion";
 import { FolderOpen, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +50,11 @@ export const ProjectTabs = memo(function ProjectTabs({
                 </span>
               )}
               {isActive && (
-                <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--user-accent,var(--primary))]" />
+                <motion.span
+                  layoutId="project-tab-indicator"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--user-accent,var(--primary))]"
+                />
               )}
             </button>
           );

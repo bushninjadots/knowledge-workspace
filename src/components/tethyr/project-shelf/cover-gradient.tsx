@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ProjectCoverFallback } from "@/components/tethyr/project-cover-fallback";
+import { BlurUpImage } from "@/components/tethyr/blur-up-image";
 
 interface CoverGradientProps {
   coverUrl?: string | null;
@@ -27,7 +28,7 @@ export function CoverGradient({
 
   return (
     <div className="absolute inset-0 bg-surface-sunken">
-      <img
+      <BlurUpImage
         src={coverUrl}
         alt=""
         width="400"

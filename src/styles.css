@@ -120,6 +120,14 @@
   contain-intrinsic-size: 0 520px;
 }
 
+/* A scoped theme transition keeps the workspace from snapping between palettes. */
+.theme-crossfade,
+.theme-crossfade * {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+
 /* Keep interaction feedback useful without forcing motion on reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
   *,

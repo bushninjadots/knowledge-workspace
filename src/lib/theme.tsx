@@ -52,6 +52,13 @@ function applyTheme(resolved: ResolvedTheme) {
   el.style.colorScheme = resolved;
 }
 
+function crossfadeTheme(resolved: ResolvedTheme) {
+  applyTheme(resolved);
+  const root = document.documentElement;
+  root.classList.add("theme-crossfade");
+  window.setTimeout(() => root.classList.remove("theme-crossfade"), 180);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
@@ -89,7 +96,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (theme !== "system") return;
       const resolved: ResolvedTheme = mq.matches ? "dark" : "light";
       setResolvedTheme(resolved);
-      applyTheme(resolved);
+      crossfadeTheme(resolved);
     };
     const onStorage = (event: StorageEvent) => {
       if (event.key === THEME_STORAGE_KEY) {
@@ -100,7 +107,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const resolved: ResolvedTheme =
           nextTheme === "system" ? (mq.matches ? "dark" : "light") : nextTheme;
         setResolvedTheme(resolved);
-        applyTheme(resolved);
+        crossfadeTheme(resolved);
       }
       if (event.key === THEME_PRESET_STORAGE_KEY) {
         setThemePresetState(event.newValue);
@@ -134,7 +141,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const resolved: ResolvedTheme =
       next === "system" ? (systemPrefersDark() ? "dark" : "light") : next;
     setResolvedTheme(resolved);
-    applyTheme(resolved);
+    crossfadeTheme(resolved);
   }, []);
 
   const toggleTheme = useCallback(() => {
