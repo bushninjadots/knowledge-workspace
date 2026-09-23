@@ -213,6 +213,14 @@ export function EmptyState({
   onAction?: () => void;
   variant?: "projects" | "skills" | "community" | "messages" | "default";
 }) {
+  const loopGuidance = {
+    projects: { label: "Explore work", href: "/explore" as const },
+    skills: { label: "Discover skills", href: "/skills" as const },
+    community: { label: "Find your people", href: "/explore" as const },
+    messages: { label: "Meet collaborators", href: "/explore" as const },
+    default: { label: "Explore what people are making", href: "/explore" as const },
+  }[variant];
+
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/60 bg-surface/30 bg-noise px-6 py-12 text-center animate-fade-in">
       <WorkshopIllustration variant={variant} />
@@ -223,6 +231,15 @@ export function EmptyState({
             {description}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Next step:{" "}
+          <Link
+            to={loopGuidance.href}
+            className="font-medium text-[var(--user-accent,var(--trust))] underline-offset-4 hover:underline"
+          >
+            {loopGuidance.label}
+          </Link>
+        </p>
       </div>
       {actionLabel && onAction && (
         <Button size="sm" variant="outline" className="mt-1 rounded-full" onClick={onAction}>
