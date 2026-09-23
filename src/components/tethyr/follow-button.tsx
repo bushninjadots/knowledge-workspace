@@ -25,7 +25,10 @@ export function FollowButton({
   function handleClick() {
     if (isFollowing) {
       unfollowUser.mutate(targetUserId, {
-        onSuccess: () => toast.success("Unfollowed"),
+        onSuccess: () =>
+          toast.success("Unfollowed", {
+            action: { label: "Undo", onClick: () => followUser.mutate(targetUserId) },
+          }),
         onError: () => toast.error("Failed to unfollow"),
       });
     } else {

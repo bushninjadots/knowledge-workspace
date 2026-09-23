@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/tethyr/empty-state";
 import { ProfileLink } from "@/components/tethyr/profile-link";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { Card } from "@/components/ui/card";
+import { useCountUp } from "@/hooks/use-count-up";
 import { SectionShell } from "@/components/tethyr/section-shell";
 import { fetchSkillBySlug, skillQueryKey } from "./-skills.$slug-data";
 
@@ -601,6 +602,7 @@ function SkillOverview({
                 key={related.id}
                 to="/skills/$slug"
                 params={{ slug: related.slug }}
+                preload="intent"
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
               >
                 {related.name}
@@ -615,10 +617,13 @@ function SkillOverview({
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  const { ref, value: count } = useCountUp(value);
   return (
     <Card className="p-4 text-center animate-room-enter">
       <div className="flex justify-center">{icon}</div>
-      <p className="mt-2 font-display text-2xl font-semibold tabular-nums">{value}</p>
+      <p ref={ref} className="mt-2 font-display text-2xl font-semibold tabular-nums">
+        {count}
+      </p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </Card>
   );

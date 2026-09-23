@@ -272,6 +272,7 @@ function SkillsDirectoryPage() {
                     <Link
                       to="/skills/$slug"
                       params={{ slug: skill.slug }}
+                      preload="intent"
                       className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken"
                     >
                       <SkillRow
@@ -318,6 +319,7 @@ function SkillsDirectoryPage() {
                         <Link
                           to="/skills/$slug"
                           params={{ slug: skill.slug }}
+                          preload="intent"
                           className="group flex items-center rounded-none transition-colors hover:bg-surface-sunken"
                         >
                           <SkillRow

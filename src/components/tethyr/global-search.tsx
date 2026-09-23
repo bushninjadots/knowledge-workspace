@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useTheme } from "@/lib/theme";
 import { CreateProjectButton } from "./create-project-button";
 
 type ProfileHit = {
@@ -166,7 +167,12 @@ const SUGGESTED_DESTINATIONS = SUGGESTED_LABELS.map((label) =>
 // they're always listed in the zero state so an opened palette offers something
 // to do even before anyone types.
 type PaletteActionKind =
-  "createProject" | "communityPost" | "scheduleSession" | "addToLibrary" | "openWatchlist";
+  | "createProject"
+  | "communityPost"
+  | "scheduleSession"
+  | "addToLibrary"
+  | "openWatchlist"
+  | "toggleTheme";
 
 export const ACTIONS: ReadonlyArray<{
   kind: PaletteActionKind;
@@ -203,6 +209,12 @@ export const ACTIONS: ReadonlyArray<{
     label: "Open your watchlist",
     description: "Jump to the projects you're watching",
     keywords: ["watchlist", "watch", "watched", "shortlist", "starred", "shelf", "return"],
+  },
+  {
+    kind: "toggleTheme",
+    label: "Toggle theme",
+    description: "Switch between light and dark",
+    keywords: ["theme", "dark", "light", "mode", "appearance", "color", "colour"],
   },
 ];
 
@@ -262,6 +274,7 @@ export function GlobalSearch({
   const resultsId = useId();
   const navigate = useNavigate();
   const { data: me } = useCurrentUser();
+  const { toggleTheme } = useTheme();
 
   useEffect(() => {
     if (variant !== "inline") return;
@@ -564,6 +577,9 @@ export function GlobalSearch({
         break;
       case "openWatchlist":
         closeAndNavigate({ to: "/dashboard" });
+        break;
+      case "toggleTheme":
+        toggleTheme();
         break;
     }
   }

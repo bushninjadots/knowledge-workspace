@@ -807,6 +807,7 @@ export function ExplorePage() {
                         <Link
                           to="/projects/$id"
                           params={{ id: n.projects!.id }}
+                          preload="intent"
                           className="group flex items-start justify-between gap-3 p-3 transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
                         >
                           <div className="min-w-0">
@@ -919,6 +920,7 @@ export function ExplorePage() {
                             to="/projects/$id"
                             params={{ id: opportunity.project.id }}
                             search={{ tab: "people" } as Record<string, string>}
+                            preload="intent"
                             className="block"
                           >
                             <div className="flex items-start justify-between gap-3">
@@ -1255,6 +1257,7 @@ function DiscoverSidebar({ tab }: { tab: Tab }) {
                 key={s.id}
                 to="/skills/$slug"
                 params={{ slug: s.slug }}
+                preload="intent"
                 className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px] text-muted-foreground transition-lift hover:border-[var(--user-accent-border,var(--border-strong))] hover:text-foreground hover:bg-surface-elevated"
               >
                 {s.name}
