@@ -2730,6 +2730,7 @@ export type Database = {
       teams: {
         Row: {
           avatar_url: string | null;
+          caption: string | null;
           cover_url: string | null;
           created_at: string;
           created_by: string;
@@ -2737,9 +2738,12 @@ export type Database = {
           id: string;
           name: string;
           slug: string;
+          social_links: Json;
+          website_url: string | null;
         };
         Insert: {
           avatar_url?: string | null;
+          caption?: string | null;
           cover_url?: string | null;
           created_at?: string;
           created_by: string;
@@ -2747,9 +2751,12 @@ export type Database = {
           id?: string;
           name: string;
           slug: string;
+          social_links?: Json;
+          website_url?: string | null;
         };
         Update: {
           avatar_url?: string | null;
+          caption?: string | null;
           cover_url?: string | null;
           created_at?: string;
           created_by?: string;
@@ -2757,6 +2764,8 @@ export type Database = {
           id?: string;
           name?: string;
           slug?: string;
+          social_links?: Json;
+          website_url?: string | null;
         };
         Relationships: [
           {

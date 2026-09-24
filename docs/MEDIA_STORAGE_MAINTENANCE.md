@@ -56,6 +56,7 @@ URLs that embed the path, JSON arrays, and rich-text bodies all match):
 | `avatars`               | `profiles.avatar_url`                                                                                                                            |
 | `banners`               | `profiles.banner_url`                                                                                                                            |
 | `team-avatars`          | `teams.avatar_url`                                                                                                                               |
+| `team-covers`           | `teams.cover_url`                                                                                                                                |
 | `backgrounds`           | `profiles.background`, `profiles.public_background` (jsonb)                                                                                      |
 | `skill-proofs`          | `profile_skills_teach.proof_url`                                                                                                                 |
 | `challenge-submissions` | `challenge_participants.submission_url`                                                                                                          |

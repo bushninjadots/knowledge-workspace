@@ -10,6 +10,9 @@ export type TeamRow = {
   name: string;
   slug: string;
   description: string | null;
+  caption: string | null;
+  website_url: string | null;
+  social_links: Record<string, string>;
   avatar_url: string | null;
   cover_url: string | null;
   created_by: string;
@@ -353,7 +356,11 @@ export function useUpdateTeam(teamId: string) {
     mutationFn: async (input: {
       name?: string;
       description?: string | null;
+      caption?: string | null;
+      website_url?: string | null;
+      social_links?: Record<string, string>;
       avatar_url?: string | null;
+      cover_url?: string | null;
     }) => {
       const { data, error } = await sb
         .from("teams")

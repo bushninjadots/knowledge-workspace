@@ -88,12 +88,16 @@ export function ContributionGraph({
   const idsKey = useMemo(() => ids.join(","), [ids]);
 
   // Align the window to the start of the current week (Monday) so the grid and
-  // the query cover the exact same range.
+  // the query cover the exact same range. Do the math in UTC (truncated to UTC
+  // midnight): the server runs in a UTC container while the browser uses its
+  // local timezone, so local-date math can fall on different days on each side
+  // and shift the whole grid by a day, failing SSR hydration.
   const startIso = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - WEEKS * 7 + 1);
-    const dayOfWeek = d.getDay();
-    d.setDate(d.getDate() - ((dayOfWeek + 6) % 7));
+    const now = new Date();
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    d.setUTCDate(d.getUTCDate() - WEEKS * 7 + 1);
+    const dayOfWeek = d.getUTCDay();
+    d.setUTCDate(d.getUTCDate() - ((dayOfWeek + 6) % 7));
     return d.toISOString();
   }, []);
 

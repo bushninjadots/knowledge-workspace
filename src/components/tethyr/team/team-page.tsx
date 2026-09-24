@@ -1,6 +1,22 @@
 import { useState, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { UserPlus, Link2, X, Loader2, Camera, Pencil, Check, Activity } from "lucide-react";
+import {
+  UserPlus,
+  Link2,
+  X,
+  Loader2,
+  Camera,
+  Pencil,
+  Check,
+  Activity,
+  Globe,
+  Github,
+  Instagram,
+  Twitter,
+  Twitch,
+  Youtube,
+  PenLine,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +40,9 @@ import { useMyProjects } from "@/hooks/use-projects";
 import { useTeamCredits } from "@/hooks/use-credits";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { validateImageFile } from "@/lib/validators";
+import { validateProfileUrl } from "@/lib/profile-validation";
 import { useCropConfirm } from "@/components/tethyr/profile/crop-confirm-dialog";
+import { DragDropFileInput } from "@/components/tethyr/drag-drop-file-input";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditsRoll } from "@/components/tethyr/project/project-credits";
 import { ContributionGraph } from "@/components/tethyr/profile/contribution-graph";
@@ -37,6 +55,31 @@ const ROLE_LABEL: Record<TeamRole, string> = {
 };
 
 const ROLE_ORDER: TeamRole[] = ["lead", "core", "contributor"];
+
+const CAPTION_MAX = 80;
+
+/**
+ * Social presence keys editable in Crew settings and shown as chips in the
+ * crew header. Same keys as profiles.social_links so the two surfaces stay
+ * consistent. The crew's own website has its own field (website_url) and chip,
+ * so it is deliberately not one of the social keys.
+ */
+const SOCIAL_ICONS: Record<string, typeof Globe> = {
+  youtube: Youtube,
+  instagram: Instagram,
+  x: Twitter,
+  twitch: Twitch,
+  github: Github,
+};
+
+/** Placeholder host per social key (origin.com is not the origin for all). */
+const SOCIAL_HOST: Record<string, string> = {
+  youtube: "youtube.com",
+  instagram: "instagram.com",
+  x: "x.com",
+  twitch: "twitch.tv",
+  github: "github.com",
+};
 
 export function TeamPage({
   team,
@@ -86,25 +129,25 @@ export function TeamPage({
         </div>
       )}
 
-      {/* Identity */}
+      {/* Banner section — banner + profile photo + caption */}
       <header className="mb-10">
-        <div className="flex items-start gap-5">
+        <TeamBanner team={team} isLead={isLead} />
+
+        <div className="flex flex-col gap-4 px-2 sm:flex-row sm:items-end sm:gap-6">
           <TeamAvatar team={team} isLead={isLead} onChanged={() => {}} />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pb-1">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Crew</p>
             <h1 className="mt-1 font-display text-3xl font-semibold text-foreground sm:text-4xl">
               {team.name}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">/{team.slug}</p>
+            <TeamCaption team={team} isLead={isLead} />
             {team.description ? (
               <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
                 {team.description}
               </p>
-            ) : isLead ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Add a short description so people know what this crew builds and who it&apos;s for.
-              </p>
             ) : null}
+            <TeamLinks team={team} />
           </div>
         </div>
       </header>
@@ -296,14 +339,14 @@ function TeamAvatar({
   }
 
   return (
-    <div className="relative shrink-0">
-      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border card-border bg-surface text-2xl font-semibold text-foreground">
+    <div className="relative -mt-10 shrink-0 sm:-mt-14">
+      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border card-border bg-surface text-3xl font-semibold text-foreground ring-4 ring-background sm:h-28 sm:w-28">
         {signedUrl ? (
           <img
             src={signedUrl}
             alt={`${team.name} avatar`}
-            width="80"
-            height="80"
+            width="112"
+            height="112"
             loading="lazy"
             decoding="async"
             className="h-full w-full object-cover"
@@ -337,6 +380,268 @@ function TeamAvatar({
           {cropDialog}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * The crew banner — the visual top of the page. Leads can upload/swap the
+ * image (3:1 crop confirm, drag-and-drop) or remove it; the placeholder is a
+ * quiet brand wash so the header still reads as a banner band.
+ */
+function TeamBanner({ team, isLead }: { team: TeamRow; isLead: boolean }) {
+  const { data: signedUrl } = useSignedStorageUrl("team-covers", team.cover_url);
+  const updateTeam = useUpdateTeam(team.id);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const { requestCrop, dialog: cropDialog } = useCropConfirm();
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const check = validateImageFile(file);
+    if (!check.ok) return toast.error(check.error);
+    // Confirm the 3:1 crop preview before anything is stored.
+    requestCrop(file, "banner", (payload, meta) => void doUpload(payload, meta));
+  }
+
+  async function doUpload(payload: File | Blob, meta: { ext: string; contentType: string }) {
+    setUploading(true);
+    try {
+      // Unique path so the signed URL changes and replacement never serves a
+      // stale cached copy (the upload convention every site follows).
+      const previousPath = team.cover_url;
+      const path = `${team.id}/banner-${Date.now()}.${meta.ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("team-covers")
+        .upload(path, payload, { upsert: true, contentType: meta.contentType });
+      if (upErr) throw upErr;
+      await updateTeam.mutateAsync({ cover_url: path });
+      // Clean up the previous file — best-effort, don't block the UI.
+      if (previousPath && previousPath !== path) {
+        supabase.storage.from("team-covers").remove([previousPath]);
+      }
+      toast.success("Crew banner updated");
+    } catch (err: unknown) {
+      toast.error(friendlyError(err, "Upload failed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const banner = (
+    <div className="relative h-40 overflow-hidden rounded-xl bg-surface-sunken sm:h-56">
+      {signedUrl ? (
+        <img
+          key={signedUrl}
+          src={signedUrl}
+          alt={`${team.name} banner`}
+          width="1200"
+          height="448"
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover object-center"
+        />
+      ) : (
+        <div
+          aria-hidden="true"
+          className="h-full w-full bg-[linear-gradient(120deg,var(--ai)_0%,var(--trust)_100%)] opacity-30"
+        />
+      )}
+      {isLead && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFile}
+          />
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                fileRef.current?.click();
+              }}
+              disabled={uploading}
+              className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              aria-label={team.cover_url ? "Change crew banner" : "Add crew banner"}
+            >
+              <Camera className="h-3.5 w-3.5" />
+              {uploading ? "Uploading…" : team.cover_url ? "Change banner" : "Add banner"}
+            </button>
+            {team.cover_url && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void (async () => {
+                    const path = team.cover_url ?? "";
+                    setUploading(true);
+                    try {
+                      await updateTeam.mutateAsync({ cover_url: null });
+                      supabase.storage.from("team-covers").remove([path]);
+                      toast.success("Banner removed");
+                    } catch {
+                      toast.error("Couldn't remove banner");
+                    } finally {
+                      setUploading(false);
+                    }
+                  })();
+                }}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-background/80 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                aria-label="Remove crew banner"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </>
+      )}
+      {cropDialog}
+    </div>
+  );
+
+  // Viewers see a purely presentational banner — skip the drag-and-drop
+  // wrapper so there's never a not-allowed cursor or disabled wash.
+  if (!isLead) return banner;
+
+  return (
+    <DragDropFileInput
+      accept="image/*"
+      onFiles={(files) => {
+        const file = files[0];
+        if (file) {
+          // Simulate the change event for the existing handler
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          const fakeEvent = { target: { files: dt.files } } as React.ChangeEvent<HTMLInputElement>;
+          handleFile(fakeEvent);
+        }
+      }}
+      disabled={uploading}
+    >
+      {banner}
+    </DragDropFileInput>
+  );
+}
+
+/** The caption — a short one-line tagline under the crew name. Leads edit it
+ *  in place (and it is the half of the banner section the page asks for). */
+function TeamCaption({ team, isLead }: { team: TeamRow; isLead: boolean }) {
+  const updateTeam = useUpdateTeam(team.id);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  if (!team.caption && !isLead) return null;
+
+  if (!editing) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+        {team.caption && (
+          <p className="max-w-2xl text-sm text-foreground/80 break-words">{team.caption}</p>
+        )}
+        {isLead && (
+          <button
+            onClick={() => {
+              setDraft(team.caption ?? "");
+              setEditing(true);
+            }}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs text-muted-foreground transition-lift hover:bg-surface-elevated hover:text-foreground"
+            aria-label={team.caption ? "Edit caption" : "Add a caption"}
+          >
+            <PenLine className="h-3 w-3" />
+            {team.caption ? "Edit" : "Add a caption"}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  async function save() {
+    const trimmed = draft.trim();
+    setSaving(true);
+    try {
+      await updateTeam.mutateAsync({ caption: trimmed.length > 0 ? trimmed : null });
+      toast.success(trimmed ? "Caption saved" : "Caption cleared");
+      setEditing(false);
+    } catch {
+      toast.error("Couldn't save caption");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 max-w-2xl space-y-2">
+      <Input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value.slice(0, CAPTION_MAX))}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void save();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        placeholder="A one-line tagline for the crew…"
+        maxLength={CAPTION_MAX}
+        aria-label="Crew caption"
+        className="h-9"
+      />
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-muted-foreground">
+          {draft.length}/{CAPTION_MAX}
+        </span>
+        <button
+          onClick={() => void save()}
+          disabled={saving}
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
+          Save
+        </button>
+        <button
+          onClick={() => setEditing(false)}
+          className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-lift hover:text-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Website + social chips, shown under the crew identity. Edited in Crew
+ *  settings; displayed for everyone. */
+function TeamLinks({ team }: { team: TeamRow }) {
+  const links: { icon: typeof Globe; href: string; label: string }[] = [];
+  if (team.website_url) links.push({ icon: Globe, href: team.website_url, label: "Website" });
+  for (const [key, url] of Object.entries(team.social_links ?? {})) {
+    if (url) links.push({ icon: SOCIAL_ICONS[key] ?? Globe, href: url, label: key });
+  }
+  if (links.length === 0) return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {links.map((link) => {
+        const Icon = link.icon;
+        return (
+          <a
+            key={`${link.label}:${link.href}`}
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1.5 text-xs transition-lift hover:border-[var(--user-accent-border,var(--border-strong))]"
+          >
+            <Icon className="h-3 w-3" />
+            <span className="capitalize">{link.label}</span>
+          </a>
+        );
+      })}
     </div>
   );
 }
@@ -392,10 +697,39 @@ function Management({ team }: { team: TeamRow }) {
     }
   }
 
+  // Links group — website + social presence, saved together (same shape as
+  // profiles.social_links so chips render identically everywhere).
+  const [websiteDraft, setWebsiteDraft] = useState(team.website_url ?? "");
+  const [socialDraft, setSocialDraft] = useState<Record<string, string>>(team.social_links ?? {});
+  const [savingLinks, setSavingLinks] = useState(false);
+
+  async function saveLinks() {
+    const linksToValidate = [websiteDraft, ...Object.values(socialDraft)].filter(Boolean);
+    if (linksToValidate.some((url) => !validateProfileUrl(url))) {
+      return toast.error("Links must use a valid https:// URL.");
+    }
+    const socialLinks: Record<string, string> = {};
+    for (const [key, url] of Object.entries(socialDraft)) {
+      if (typeof url === "string" && url.trim()) socialLinks[key] = url.trim();
+    }
+    setSavingLinks(true);
+    try {
+      await updateTeam.mutateAsync({
+        website_url: websiteDraft.trim() || null,
+        social_links: socialLinks,
+      });
+      toast.success("Links saved");
+    } catch {
+      toast.error("Couldn't save links");
+    } finally {
+      setSavingLinks(false);
+    }
+  }
+
   return (
-    <section aria-labelledby="manage-crew" className="rounded-xl bg-surface-elevated/30 p-5">
-      <h2 id="manage-crew" className="mb-4 text-sm font-semibold text-foreground/80">
-        Manage crew
+    <section aria-labelledby="crew-settings" className="rounded-xl bg-surface-elevated/30 p-5">
+      <h2 id="crew-settings" className="mb-4 text-sm font-semibold text-foreground/80">
+        Crew settings
       </h2>
 
       <div className="mb-5">
@@ -452,6 +786,52 @@ function Management({ team }: { team: TeamRow }) {
             )}
           </button>
         )}
+      </div>
+
+      {/* Links — website + social presence (shown as chips in the crew header) */}
+      <div className="mb-5">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+          <Globe className="h-3.5 w-3.5" />
+          Links
+        </label>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground">Website</label>
+            <Input
+              value={websiteDraft}
+              onChange={(e) => setWebsiteDraft(e.target.value)}
+              placeholder="https://your-crew.example.com"
+              aria-label="Crew website"
+              className="max-w-md"
+            />
+          </div>
+          {Object.entries(SOCIAL_ICONS).map(([key, Icon]) => {
+            const url = socialDraft[key] ?? "";
+            return (
+              <div key={key} className="space-y-1.5">
+                <label className="text-xs capitalize text-muted-foreground">{key}</label>
+                <div className="flex items-center gap-2">
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <Input
+                    value={url}
+                    onChange={(e) => setSocialDraft((f) => ({ ...f, [key]: e.target.value }))}
+                    placeholder={`https://${SOCIAL_HOST[key] ?? `${key}.com`}/your-crew`}
+                    aria-label={`Crew ${key} link`}
+                    className="max-w-md"
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <button
+            onClick={() => void saveLinks()}
+            disabled={savingLinks}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-background transition-fade hover:opacity-90 disabled:opacity-40"
+          >
+            {savingLinks && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            Save links
+          </button>
+        </div>
       </div>
 
       <div className="mb-5">

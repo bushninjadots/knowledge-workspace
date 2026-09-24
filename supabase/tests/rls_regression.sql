@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(110);
+SELECT plan(112);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -1216,6 +1216,28 @@ SELECT lives_ok(
       VALUES ('team-avatars', 'b0b0b0b0-0000-4000-8000-000000000001/logo.png',
               '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
   '110. team-avatars accept a valid PNG'
+);
+
+-- ---------------------------------------------------------------------------
+-- 16. Regression pin: team-covers keeps its upload gate (mirror of test 15).
+--     The crew banner lives in its own bucket so replacing a cover never
+--     collides with a profile banner; it must keep the same image-only gate.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+
+-- EXPECT: alice leads this team (section 13), so only the gate can reject.
+SELECT throws_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('team-covers', 'b0b0b0b0-0000-4000-8000-000000000001/banner.svg',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  NULL, '111. team-covers reject SVG'
+);
+
+SELECT lives_ok(
+  $$INSERT INTO storage.objects (bucket_id, name, owner, metadata)
+      VALUES ('team-covers', 'b0b0b0b0-0000-4000-8000-000000000001/banner.png',
+              '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
+  '112. team-covers accept a valid PNG'
 );
 
 
