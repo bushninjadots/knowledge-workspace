@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Undo2 } from "lucide-react";
+import { useMemo, type CSSProperties } from "react";
+import { BookOpen, Compass, Focus, Grid2X2, LayoutTemplate, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { STARTERS, starterPreviewLayout, type Starter } from "@/data/starters";
@@ -12,6 +12,26 @@ import "@/components/tethyr/blocks/register-all";
 export type StudioStarter = Starter;
 type StudioStarterId = Starter["id"];
 const STUDIO_STARTERS: StudioStarter[] = STARTERS;
+
+const STARTER_DETAILS: Record<
+  StudioStarterId,
+  {
+    icon: typeof Focus;
+    accent: string;
+    tint: string;
+    label: string;
+  }
+> = {
+  focused: { icon: Focus, accent: "#d97706", tint: "#fff7ed", label: "Clarity" },
+  editorial: { icon: BookOpen, accent: "#7c3aed", tint: "#f5f3ff", label: "Narrative" },
+  "project-first": { icon: Grid2X2, accent: "#0891b2", tint: "#ecfeff", label: "Momentum" },
+  minimal: { icon: LayoutTemplate, accent: "#475569", tint: "#f8fafc", label: "Essentials" },
+  experimental: { icon: Compass, accent: "#db2777", tint: "#fdf2f8", label: "Uncharted" },
+};
+
+function starterDetail(starter: StudioStarter) {
+  return STARTER_DETAILS[starter.id];
+}
 
 /**
  * "Choose how you want your Studio to feel."
@@ -50,33 +70,56 @@ export function StarterPicker({
           </div>
         </header>
 
-        <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 card">
+        <ul className="grid gap-3 bg-background/50 p-3 sm:grid-cols-2 lg:grid-cols-3">
           {STUDIO_STARTERS.map((starter) => {
             const active = starter.id === currentId;
+            const detail = starterDetail(starter);
+            const Icon = detail.icon;
             return (
-              <li key={starter.id} className="bg-surface-elevated">
+              <li key={starter.id}>
                 <button
                   type="button"
                   onClick={() => onChoose(starter)}
                   aria-pressed={active}
-                  className={`flex h-full w-full flex-col gap-3 p-4 text-left transition-colors ${active ? "bg-primary/10" : "hover:bg-surface"}`}
+                  className={`group flex h-full w-full flex-col gap-3 rounded-lg border p-3 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 ${active ? "border-[var(--starter-accent)] bg-[var(--starter-tint)]" : "border-card-border bg-surface-elevated hover:border-[var(--starter-accent)]/60 hover:bg-surface"}`}
+                  style={
+                    {
+                      "--starter-accent": detail.accent,
+                      "--starter-tint": detail.tint,
+                    } as CSSProperties
+                  }
                 >
-                  <StarterPreview starter={starter} active={active} />
-                  <span>
-                    <span className="flex items-baseline gap-2 font-display text-sm font-semibold text-foreground">
-                      {starter.name}
-                      {active && (
-                        <span className="text-[10px] uppercase tracking-wider text-primary">
-                          Current
-                        </span>
-                      )}
+                  <StarterPreview starter={starter} active={active} accent={detail.accent} />
+                  <span className="flex items-start gap-2.5">
+                    <span
+                      className="grid size-8 shrink-0 place-items-center rounded-md"
+                      style={{ backgroundColor: `${detail.accent}18`, color: detail.accent }}
+                    >
+                      <Icon aria-hidden data-icon="" />
                     </span>
-                    <span className="mt-0.5 block text-xs font-medium text-foreground">
-                      {starter.tagline}
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-sm font-semibold text-foreground">
+                        {starter.name}
+                        {active && (
+                          <span
+                            className="text-[10px] uppercase tracking-wider"
+                            style={{ color: detail.accent }}
+                          >
+                            Current
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-0.5 block text-xs font-medium text-foreground">
+                        {starter.tagline}
+                      </span>
                     </span>
-                    <span className="mt-1 block text-[11px] leading-relaxed text-muted-foreground">
-                      {starter.feels}
-                    </span>
+                  </span>
+                  <span className="mt-auto block text-[11px] leading-relaxed text-muted-foreground">
+                    {starter.feels}
+                  </span>
+                  <span className="flex items-center justify-between border-t border-current/10 pt-2 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    <span>{detail.label}</span>
+                    <span className="text-muted-foreground/60">Apply direction</span>
                   </span>
                 </button>
               </li>
@@ -104,7 +147,15 @@ export function StarterPicker({
 }
 
 /** A scaled live preview of the member's work in a starter's direction. */
-function StarterPreview({ starter, active }: { starter: StudioStarter; active: boolean }) {
+function StarterPreview({
+  starter,
+  active,
+  accent,
+}: {
+  starter: StudioStarter;
+  active: boolean;
+  accent: string;
+}) {
   const { data: me } = useCurrentUser();
   const ownerId = me?.userId ?? "";
   const layout = useMemo(() => starterPreviewLayout(starter), [starter]);
@@ -124,7 +175,12 @@ function StarterPreview({ starter, active }: { starter: StudioStarter; active: b
     <div
       aria-hidden
       className="overflow-hidden [border-color:var(--card-border-color,var(--border))] bg-background card"
-      style={active ? { boxShadow: "0 0 0 1px var(--user-accent)" } : undefined}
+      style={
+        {
+          borderColor: active ? accent : "var(--card-border-color,var(--border))",
+          boxShadow: active ? `0 0 0 1px ${accent}` : undefined,
+        } as CSSProperties
+      }
     >
       <div className="flex items-center gap-1.5 border-b [border-color:var(--border)] px-2 py-1.5">
         <span
