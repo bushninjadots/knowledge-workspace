@@ -231,9 +231,12 @@ function deriveContrastVars(vars: Record<string, string>, scheme?: ThemeScheme):
   putStructural("--accent", mix(10));
   putStructural("--accent-foreground", FG);
 
-  putStructural("--border", mix(18));
-  putStructural("--border-strong", mix(32));
-  putStructural("--input", vars["--border"]);
+  // Keep boundaries visible in both directions. A very dark canvas needs a
+  // brighter rule, while a paper canvas needs a quieter rule; the mix remains
+  // tied to the active foreground so themed panels never borrow the wrong mode.
+  putStructural("--border", mix(scheme === "dark" || colorScheme(BG) === "dark" ? 24 : 18));
+  putStructural("--border-strong", mix(scheme === "dark" || colorScheme(BG) === "dark" ? 42 : 32));
+  putStructural("--input", mix(18));
 
   // Primary is identity: keep a declared brand colour, else fall back to the
   // canvas ink. Its foreground is always derived so button labels stay legible
@@ -241,6 +244,12 @@ function deriveContrastVars(vars: Record<string, string>, scheme?: ThemeScheme):
   putIdentity("--primary", FG);
   vars["--primary-foreground"] = readableCounterpart(vars["--primary"], BG);
   putIdentity("--ring", vars["--primary"]);
+
+  // Runtime accents inherit the same contrast-safe canvas. This keeps focused
+  // controls and active template states readable even when a custom theme flips.
+  putStructural("--user-accent-foreground", readableCounterpart(vars["--primary"], BG));
+  putStructural("--user-accent-subtle", `color-mix(in oklab, var(--primary) 12%, ${BG})`);
+  putStructural("--user-accent-border", `color-mix(in oklab, var(--primary) 42%, ${BG})`);
   putStructural("--destructive-foreground", BG);
 
   // Semantic hue tints must sit on the active canvas, not on white.
