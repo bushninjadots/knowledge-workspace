@@ -18,7 +18,7 @@
 // on read via normalizeStudioConfig and silently migrated. New writes never
 // produce them.
 
-import type { ThemeTokens } from "@/lib/page-blocks";
+import type { LayoutBlockInstance, ThemeTokens } from "@/lib/page-blocks";
 
 // ── Dimension Types ───────────────────────────────────────────────────────────
 
@@ -36,6 +36,46 @@ export type BackgroundId = "default" | "surface" | "sunken";
 type CardBorderWidth = "thin" | "medium" | "thick";
 
 export type StarterId = "focused" | "editorial" | "project-first" | "minimal" | "experimental";
+
+// ── Per-block frame ───────────────────────────────────────────────────────────
+
+/** Per-block frame border choice. Default follows the member's card-border
+ *  appearance; "frame" forces the border on, "none" removes it. */
+export type BlockFrameBorder = "default" | "frame" | "none";
+
+/** Inner-spacing bounds for the per-block frame, in px. */
+export const BLOCK_INSET_MIN = 0;
+export const BLOCK_INSET_MAX = 40;
+/** The frame's default inset — must match the CSS fallback in
+ *  `.studio-block` (`--studio-block-inset`, 1rem) so "default" is a no-op. */
+export const BLOCK_INSET_DEFAULT_PX = 16;
+
+/**
+ * Per-block frame style from the block instance's optional `frame` fields:
+ * `border` (default/frame/none) and `inset` (px). Returns CSS custom
+ * properties scoped to this block; the shared `.studio-block` utility
+ * consumes them, so the editor canvas, the owner Studio view, and the public
+ * page all render the identical frame. Blocks without overrides get `{}` —
+ * exactly the global look.
+ */
+export function blockFrameStyle(
+  block: Pick<LayoutBlockInstance, "frameBorder" | "frameInset">,
+): React.CSSProperties {
+  const style = {} as React.CSSProperties & Record<string, string>;
+  if (block.frameBorder === "none") {
+    style["--studio-block-border"] = "none";
+  } else if (block.frameBorder === "frame") {
+    // Force-on resolves the colour itself rather than inheriting
+    // --card-border-color, which is transparent when the member's appearance
+    // sets card borders to "none" — the per-block choice must still show.
+    style["--studio-block-border"] = "var(--card-border-width, 1px) solid var(--border)";
+  }
+  const inset = block.frameInset;
+  if (typeof inset === "number" && Number.isFinite(inset)) {
+    style["--studio-block-inset"] = `${Math.round(inset)}px`;
+  }
+  return style;
+}
 
 // ── Radius range & defaults ────────────────────────────────────────────────────
 

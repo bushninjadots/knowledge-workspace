@@ -33,7 +33,15 @@ import {
 } from "@/hooks/use-page-editor";
 import { createBlockInstance, getBlock } from "@/lib/block-registry";
 import { StarterPicker, type StudioStarter } from "@/components/tethyr/studio/starter-picker";
-import { applyStarter, starterConfig } from "@/data/starters";
+import { applyStarter, starterConfig, starterMap } from "@/data/starters";
+import {
+  fetchTemplateSections,
+  useForkTemplate,
+  usePublishTemplate,
+  usePublicTemplates,
+  type CommunityTemplate,
+} from "@/hooks/use-templates";
+import { applyTemplateSections, sanitizeTemplateSections } from "@/lib/template-apply";
 import { withCardBorderPreference, type CardBorderPreference } from "@/lib/background-themes";
 import type {
   BlockConfig,
@@ -115,12 +123,29 @@ export function CreationStudio({
   const publishPage = usePublishPage();
   const updateTheme = useUpdatePageTheme();
   const rollbackPage = useRollbackPageVersion();
+  const forkTemplate = useForkTemplate();
+  const publishTemplate = usePublishTemplate();
   const page = pageQuery.data;
+  const { data: communityTemplates } = usePublicTemplates();
+
+  /** When a template with a theme is applied, the theme mutation must run
+   *  after the commit that lands the sections. Committed at click time,
+   *  consumed by the effect below. */
+  const pendingTemplateThemeRef = useRef<string | null>(null);
 
   useEffect(() => {
     layoutRef.current = layout;
     configRef.current = config;
   }, [config, layout]);
+
+  // Consume the theme handoff: after a template's sections are committed, set
+  // the page's theme (clearing stale overrides) so the whole direction lands.
+  useEffect(() => {
+    const themeId = pendingTemplateThemeRef.current;
+    if (!themeId || !page?.id) return;
+    pendingTemplateThemeRef.current = null;
+    updateTheme.mutate({ pageId: page.id, themeId, ownerId: userId, ownerType: "profile" });
+  }, [page?.id, updateTheme, userId]);
 
   useEffect(() => {
     if (!page || pageIdRef.current === page.id) return;
@@ -655,6 +680,17 @@ export function CreationStudio({
         redo();
       } else if (event.key === "Escape") {
         setSelectedBlockId(null);
+      } else if (mod && event.key.toLowerCase() === "d" && mode === "edit" && selectedBlockId) {
+        event.preventDefault();
+        duplicateBlock(selectedBlockId);
+      } else if (
+        !mod &&
+        mode === "edit" &&
+        selectedBlockId &&
+        (event.key === "Delete" || event.key === "Backspace")
+      ) {
+        event.preventDefault();
+        removeBlock(selectedBlockId);
       } else if (
         !mod &&
         mode === "edit" &&
@@ -688,7 +724,7 @@ export function CreationStudio({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commit, layout, mode, redo, selectedBlockId, undo]);
+  }, [commit, duplicateBlock, layout, mode, redo, removeBlock, selectedBlockId, undo]);
 
   // Restore a previously published version via the rollback RPC. The hook
   // invalidates the page query so the restored layout reloads from Supabase.
@@ -927,10 +963,106 @@ export function CreationStudio({
   const chooseStarter = useCallback(
     (starter: StudioStarter) => {
       if (!layout || !config) return;
-      commit(applyStarter(layout, starter), starterConfig(starter, config));
+      // Switching templates must reveal sections the previous template hid,
+      // so the new template's arrangement starts from a clean slate.
+      const previous = config.starterId ? starterMap[config.starterId] : null;
+      commit(applyStarter(layout, starter, previous), starterConfig(starter, config));
     },
     [commit, config, layout],
   );
+
+  const resetStudio = useCallback(
+    () => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG }),
+    [commit],
+  );
+
+  // ── Community templates ─────────────────────────────────────────────────
+  // Application is client-side through commit() — same non-destructive, one-
+  // undo path as the built-in starters. The fork is what persists a copy to
+  // the member's account; it never touches the live Studio by itself.
+  const applyTemplate = useCallback(
+    (sections: ReturnType<typeof sanitizeTemplateSections>, themeId: string | null) => {
+      if (!layout || !config) return;
+      if (sections.length === 0) {
+        toast.error("That template has no renderable sections.");
+        return;
+      }
+      pendingTemplateThemeRef.current = themeId;
+      commit(applyTemplateSections(layout, sections), { ...config, starterId: null });
+    },
+    [commit, config, layout],
+  );
+
+  const applyCommunityTemplate = useCallback(
+    (template: CommunityTemplate) => {
+      void (async () => {
+        try {
+          const fetched = await fetchTemplateSections(template.id);
+          applyTemplate(fetched.sections, fetched.themeId);
+          toast.success(`“${template.name}” applied — one undo puts it back.`);
+        } catch (err) {
+          console.error("[applyTemplate]", err);
+          toast.error("That template could not be applied.");
+        }
+      })();
+    },
+    [applyTemplate],
+  );
+
+  const saveCommunityTemplate = useCallback(
+    (template: CommunityTemplate) => {
+      forkTemplate.mutate(
+        { templateId: template.id, templateName: template.name },
+        {
+          onSuccess: () => toast.success(`“${template.name}” saved to My templates.`),
+          onError: () => toast.error("Could not save that template."),
+        },
+      );
+    },
+    [forkTemplate],
+  );
+
+  const useMyTemplateRow = useCallback(
+    (template: CommunityTemplate) => {
+      applyCommunityTemplate(template);
+    },
+    [applyCommunityTemplate],
+  );
+
+  const saveAsTemplate = useCallback(() => {
+    if (!page?.layoutId) {
+      toast.error("Open your Studio once before publishing it as a template.");
+      return;
+    }
+    const name = profile?.display_name ? `${profile.display_name}'s Studio` : "My Studio";
+    publishTemplate.mutate(
+      {
+        layoutId: page.layoutId,
+        name,
+        description: "A Studio direction shared with the community.",
+      },
+      {
+        onSuccess: () =>
+          toast.success("Published to the community — find it under Community directions."),
+        onError: () => toast.error("Could not publish the template."),
+      },
+    );
+  }, [page?.layoutId, profile?.display_name, publishTemplate]);
+
+  const savedTemplateIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const template of communityTemplates ?? []) {
+      if (template.isMine) ids.add(template.id);
+    }
+    return ids;
+  }, [communityTemplates]);
+  const savingTemplateIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (forkTemplate.isPending && forkTemplate.variables) {
+      ids.add(forkTemplate.variables.templateId);
+    }
+    return ids;
+  }, [forkTemplate.isPending, forkTemplate.variables]);
 
   if (!layout || !config) {
     return (
@@ -997,12 +1129,14 @@ export function CreationStudio({
         onRedo={redo}
         onCompleteProfile={onCompleteProfile ? completeProfile : undefined}
         onOpenAppearance={() => setAppearanceOpen(true)}
+        onOpenTemplates={() => setIntroStarterOpen(true)}
+        onSaveAsTemplate={saveAsTemplate}
         onAddProject={() => setProjectDialogOpen(true)}
         onExit={onExit ? exit : undefined}
         lastSavedAt={lastSavedAt}
         autoRenameId={renameFocusId}
         onRenameFocusHandled={() => setRenameFocusId(null)}
-        onReset={() => commit(createDefaultProfileLayout(), { ...DEFAULT_STUDIO_CONFIG })}
+        onReset={resetStudio}
       />
       <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
         <DialogContent className="studio-editor-chrome sm:max-w-sm">
@@ -1083,12 +1217,22 @@ export function CreationStudio({
           currentId={config.starterId}
           canUndo={history.length > 0}
           onUndo={undo}
+          firstRun={!config.starterId && page?.status !== "published"}
+          onUseTemplate={applyCommunityTemplate}
+          onSaveTemplate={saveCommunityTemplate}
+          onUseMyTemplate={useMyTemplateRow}
+          savingTemplateIds={savingTemplateIds}
+          savedTemplateIds={savedTemplateIds}
           onChoose={(starter) => {
             chooseStarter(starter);
             setIntroStarterOpen(false);
             if (typeof window !== "undefined") {
               window.localStorage.setItem(STUDIO_STARTER_INTRO_KEY, "1");
             }
+          }}
+          onStartFromScratch={() => {
+            setIntroStarterOpen(false);
+            resetStudio();
           }}
           onClose={() => {
             setIntroStarterOpen(false);

@@ -7,7 +7,9 @@ import {
   sectionMarker,
   starterConfig,
   starterMap,
+  starterPreviewConfig,
   starterPreviewLayout,
+  templatePreviewConfig,
 } from "@/data/starters";
 import { createDefaultProfileLayout } from "@/lib/default-layouts";
 import { DEFAULT_STUDIO_CONFIG, type StudioConfig } from "@/lib/studio-config";
@@ -40,6 +42,39 @@ describe("STARTERS", () => {
       );
       expect(starter.sketch.length).toBeGreaterThan(0);
     }
+  });
+
+  it("gives every starter a remix note — the descriptor shared with community templates", () => {
+    for (const starter of STARTERS) {
+      expect(starter.remixNote.length).toBeGreaterThan(10);
+    }
+    // Notes must differ — they are what makes the five directions distinct at
+    // a glance in the picker.
+    expect(new Set(STARTERS.map((s) => s.remixNote)).size).toBe(STARTERS.length);
+  });
+
+  it("stamps five distinct personality/structure/density combinations", () => {
+    const combos = new Set(
+      STARTERS.map((s) => `${s.config.structure}/${s.config.personality}/${s.config.density}`),
+    );
+    expect(combos.size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("preview configs", () => {
+  it("starterPreviewConfig merges the starter stamp over the defaults with its id", () => {
+    const config = starterPreviewConfig(starterMap["editorial"]);
+    expect(config.starterId).toBe("editorial");
+    expect(config.personality).toBe("editorial");
+    expect(config.density).toBe("spacious");
+    expect(config.radius).toBe(6);
+  });
+
+  it("templatePreviewConfig preserves the member's config and clears the starter id", () => {
+    const current = { ...DEFAULT_STUDIO_CONFIG, starterId: "focused", radius: 20 } as StudioConfig;
+    const config = templatePreviewConfig(current);
+    expect(config.starterId).toBeNull();
+    expect(config.radius).toBe(20);
   });
 });
 
@@ -118,6 +153,38 @@ describe("applyStarter", () => {
     const starter = STARTERS[1]; // editorial
     const next = applyStarter(layout, starter);
     expect(next.sections.map((s) => s.id).sort()).toEqual(layout.sections.map((s) => s.id).sort());
+  });
+
+  it("reveals sections hidden by the previous starter when switching templates", () => {
+    const hiddenFirst = applyStarter(layout, starterMap["minimal"]); // hides tools + gallery
+    const restored = applyStarter(hiddenFirst, starterMap["focused"], starterMap["minimal"]);
+    const stillHidden = restored.sections.filter((s) => s.visible === false);
+    expect(stillHidden).toEqual([]);
+  });
+
+  it("hands full visibility ownership to the new starter when switching", () => {
+    const hiddenFirst = applyStarter(layout, starterMap["minimal"]); // tools + gallery hidden
+    // Switch to experimental, which hides nothing: everything comes back.
+    const switched = applyStarter(hiddenFirst, starterMap["experimental"], starterMap["minimal"]);
+    expect(switched.sections.filter((s) => s.visible === false)).toEqual([]);
+    // Switch the other way, to minimal again: tools/gallery hide once more.
+    const back = applyStarter(switched, starterMap["minimal"], starterMap["experimental"]);
+    const hiddenMarkers = back.sections.filter((s) => s.visible === false).map(sectionMarker);
+    expect(hiddenMarkers).toContain("tools");
+    expect(hiddenMarkers).toContain("gallery");
+    expect(hiddenMarkers).toHaveLength(back.sections.filter((s) => s.visible === false).length);
+  });
+
+  it("respects manual visibility when no previous starter was applied", () => {
+    const manuallyHidden = {
+      ...layout,
+      sections: layout.sections.map((s, i) =>
+        i === layout.sections.length - 1 ? { ...s, visible: false } : s,
+      ),
+    };
+    const next = applyStarter(manuallyHidden, starterMap["focused"], null);
+    const last = next.sections[next.sections.length - 1];
+    expect(last.visible).toBe(false);
   });
 });
 

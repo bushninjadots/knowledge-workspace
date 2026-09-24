@@ -37,6 +37,7 @@ import type {
   SectionLayoutType,
 } from "@/lib/page-blocks";
 import { getBlock } from "@/lib/block-registry";
+import { blockFrameStyle } from "@/lib/studio-config";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 
 interface PageLayoutRendererProps {
@@ -618,6 +619,7 @@ export const PageLayoutRenderer = memo(function PageLayoutRenderer({
                           // full-bleed blocks) — so a block reads identically on the
                           // public page and in the creator's view.
                           <div
+                            style={blockFrameStyle(block)}
                             className={[
                               "relative h-full min-h-0 overflow-hidden studio-block",
                               isFlush ? "studio-block-flush" : "",

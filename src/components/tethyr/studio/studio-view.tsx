@@ -31,7 +31,7 @@ import { appearanceStyle, avatarShapeStyle } from "@/lib/background-themes";
 import { useUserPalette } from "@/lib/dominant-color";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
-import { normalizeStudioConfig } from "@/lib/studio-config";
+import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
 import {
   nextSteps,
@@ -744,6 +744,7 @@ function StudioViewBlock({
       style={{ borderRadius: "var(--studio-radius)" }}
     >
       <div
+        style={blockFrameStyle(block)}
         className={cn(
           "relative h-full min-h-0 overflow-hidden studio-block",
           (def?.containerless || block.type === "profile-header") && "studio-block-flush",

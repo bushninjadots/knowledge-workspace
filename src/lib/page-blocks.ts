@@ -190,6 +190,12 @@ export interface LayoutBlockInstance {
   frames?: ResponsiveFrames;
   /** When true, the block uses absolute freeform placement in its section canvas. */
   freeform?: boolean;
+  /** Per-block frame border: follow the appearance (default), force the
+   *  outline on, or remove it. Rendered by the shared `.studio-block` frame. */
+  frameBorder?: "default" | "frame" | "none";
+  /** Per-block inner spacing in px (0 = content flush to the frame edge).
+   *  Omitted = the global frame inset. */
+  frameInset?: number;
 }
 
 /** A 12-column grid item used by the Studio's direct manipulation canvas. */

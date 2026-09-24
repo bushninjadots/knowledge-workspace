@@ -20,6 +20,7 @@ import type {
   StructureId,
   StudioConfig,
 } from "@/lib/studio-config";
+import { DEFAULT_STUDIO_CONFIG } from "@/lib/studio-config";
 import type { LayoutSection, PageLayout, SectionLayoutType } from "@/lib/page-blocks";
 
 /** Semantic identity of a profile section, derived from the block types it holds. */
@@ -43,6 +44,9 @@ export interface Starter {
   name: string;
   tagline: string;
   feels: string;
+  /** Who this direction is for, in one line — the remix-descriptor layer
+   *  shared with community templates so both read as one system. */
+  remixNote: string;
   config: StarterConfigStamp;
   /** Applied to the profile-projects block. */
   presentation: ProfileProjectsPresentation;
@@ -96,6 +100,7 @@ export const STARTERS: Starter[] = [
     tagline: "One project at a time, front and centre.",
     feels:
       "A single column that reads top to bottom. Your current work fills the screen; everything else waits its turn.",
+    remixNote: "For makers deep in one build who want the work to open the conversation.",
     config: {
       structure: "single",
       personality: "modern",
@@ -114,6 +119,7 @@ export const STARTERS: Starter[] = [
     name: "Editorial",
     tagline: "Reads like a printed feature.",
     feels: "Generous rhythm and a narrow measure. Projects become articles rather than cards.",
+    remixNote: "For writers and designers whose work is the prose — work that reads, not scans.",
     config: {
       structure: "single",
       personality: "editorial",
@@ -132,6 +138,7 @@ export const STARTERS: Starter[] = [
     name: "Project-first",
     tagline: "Work above identity. Dense and technical.",
     feels: "The work opens the Studio. Compact rows, and every collaboration signal visible.",
+    remixNote: "For engineers and crews shipping in the open — signals over ceremony.",
     config: {
       structure: "wide",
       personality: "technical",
@@ -151,6 +158,7 @@ export const STARTERS: Starter[] = [
     tagline: "Name, work, a way to reach you.",
     feels:
       "Almost nothing. A list of projects and a line about what you want. Supporting sections stay, hidden, until you want them.",
+    remixNote: "For quiet presence — a card you'd hand someone instead of a résumé.",
     config: {
       structure: "single",
       personality: "modern",
@@ -169,6 +177,7 @@ export const STARTERS: Starter[] = [
     name: "Experimental",
     tagline: "Uneven, wide, a little restless.",
     feels: "Asymmetric widths and a horizontal shelf. For work that does not sit still.",
+    remixNote: "For studios and collectors whose work refuses the grid.",
     config: {
       structure: "wide",
       personality: "editorial",
@@ -195,8 +204,18 @@ export const starterMap: Record<StarterId, Starter> = STARTERS.reduce(
  * Apply a starter to a live layout. Reorders the leading sections, hides (never
  * deletes) collapsed ones, and re-dresses the projects presentation. Every
  * block's id, config and content are preserved.
+ *
+ * `previouslyApplied` (the starter already recorded on the Studio config, if
+ * any) matters when switching templates: sections hidden by the previous
+ * starter must be revealed again before the new one decides what stays hidden,
+ * otherwise they remain invisible no matter which template the creator picks
+ * next.
  */
-export function applyStarter(layout: PageLayout, starter: Starter): PageLayout {
+export function applyStarter(
+  layout: PageLayout,
+  starter: Starter,
+  previouslyApplied?: Starter | null,
+): PageLayout {
   // Order sections so markers named in `sectionOrder` lead (in that order),
   // then any remaining sections follow in their existing relative order.
   const byMarker = new Map<SectionMarker, LayoutSection[]>();
@@ -221,6 +240,7 @@ export function applyStarter(layout: PageLayout, starter: Starter): PageLayout {
   for (const section of layout.sections) push(section);
 
   const collapsed = new Set(starter.collapsedSections);
+  const previouslyHidden = new Set(previouslyApplied?.collapsedSections ?? []);
 
   return {
     sections: ordered.map((section, position) => {
@@ -230,10 +250,21 @@ export function applyStarter(layout: PageLayout, starter: Starter): PageLayout {
           ? { ...block, config: { ...block.config, presentation: starter.presentation } }
           : block,
       );
+      // Sections the previous starter hid come back when switching, unless the
+      // new starter hides them too. Sections hidden manually by the creator
+      // (no previous starter, or a marker no starter owns) keep their state.
+      const hiddenByPreviousStarter =
+        previouslyApplied != null && marker != null && previouslyHidden.has(marker);
+      const visible =
+        marker == null
+          ? section.visible
+          : hiddenByPreviousStarter
+            ? !collapsed.has(marker)
+            : (section.visible ?? true) && !collapsed.has(marker);
       return {
         ...section,
         position,
-        visible: marker ? !collapsed.has(marker) : section.visible,
+        visible,
         blocks: nextBlocks,
       };
     }),
@@ -290,4 +321,31 @@ export function starterPreviewLayout(starter: Starter): PageLayout {
       })),
     })),
   };
+}
+
+// ── Preview surface dressing ───────────────────────────────────────────────────
+
+/**
+ * The StudioConfig stamp a starter would set, merged over the defaults. Used
+ * by the picker to render each preview in its starter's real surface
+ * treatment — fonts, density, radius, backgrounds — instead of a generic
+ * canvas, so previews actually differ the way applying them would differ.
+ */
+export function starterPreviewConfig(starter: Starter): StudioConfig {
+  return {
+    ...DEFAULT_STUDIO_CONFIG,
+    ...starter.config,
+    starterId: starter.id,
+  };
+}
+
+/**
+ * The StudioConfig stamp a community template applies. Templates carry no
+ * config of their own (the layouts table is structure + theme only), so the
+ * member's current config is preserved — only the sections change. Kept as a
+ * sibling of {@link starterPreviewConfig} so the picker can treat both layers
+ * with one code path.
+ */
+export function templatePreviewConfig(current: StudioConfig): StudioConfig {
+  return { ...current, starterId: null };
 }

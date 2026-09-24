@@ -16,10 +16,12 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Frame,
   GripHorizontal,
   GripVertical,
   History,
   LayoutGrid,
+  LayoutTemplate,
   Magnet,
   Monitor,
   Palette,
@@ -31,6 +33,7 @@ import {
   Sliders,
   Smartphone,
   Save,
+  SquareDashed,
   Tablet,
   Trash2,
   Undo2,
@@ -70,6 +73,11 @@ import { themeTokensToStyle } from "@/lib/theme-tokens";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/time";
 import {
+  BlockFrameBorder,
+  BLOCK_INSET_DEFAULT_PX,
+  BLOCK_INSET_MAX,
+  BLOCK_INSET_MIN,
+  blockFrameStyle,
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
   cardFillStyle,
@@ -147,6 +155,11 @@ interface GStudioSurfaceProps {
   onAdd: (type: string, sectionId?: string, placement?: LayoutGridItem) => void;
   /** Open the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
+  /** Open the Templates picker (starter directions). Multiple entry points:
+   *  top bar, Customize panel, and the mobile Style tab. */
+  onOpenTemplates?: () => void;
+  /** Publish the current Studio layout as a community template. */
+  onSaveAsTemplate?: () => void;
   onDragTypeChange: (type: string | null) => void;
   onPaletteTargetChange: (id: string) => void;
   onCustomizeChange: (patch: Partial<GStudioConfig>) => void;
@@ -338,7 +351,7 @@ function SectionLayoutPicker({
         type="button"
         onClick={() => setOpen(!open)}
         title="Change area layout"
-        className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)]"
+        className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
       >
         {current}
       </button>
@@ -354,7 +367,7 @@ function SectionLayoutPicker({
                   setOpen(false);
                 }}
                 className={cn(
-                  "group flex flex-col items-center gap-1 rounded-md border p-1.5 transition-colors",
+                  "group flex flex-col items-center gap-1 rounded-md border p-1.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
                   option.value === value
                     ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
                     : "border-transparent hover:border-border hover:bg-surface/50",
@@ -471,6 +484,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         paletteOpen={paletteOpen}
         onExit={props.onExit}
         profile={props.profile}
+        onTemplates={props.onOpenTemplates}
       />
       {historyOpen && (
         <VersionPopover
@@ -496,12 +510,15 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
             onToggleSection={props.onToggleSection}
             onBlockAction={props.onBlockAction}
             onSelect={props.onSelect}
+            selectedBlockId={props.selectedBlockId}
             onClose={() => {
               setCustomizeOpen(false);
               setMobilePanel(null);
             }}
             onCompleteProfile={props.onCompleteProfile}
             onOpenAppearance={props.onOpenAppearance}
+            onOpenTemplates={props.onOpenTemplates}
+            onSaveAsTemplate={props.onSaveAsTemplate}
             onReset={props.onReset}
           />
         )}
@@ -584,6 +601,7 @@ function GStudioTopBar({
   customizeOpen,
   paletteOpen,
   profile,
+  onTemplates,
 }: {
   mode: GStudioMode;
   device: GStudioDevice;
@@ -612,6 +630,7 @@ function GStudioTopBar({
   customizeOpen: boolean;
   paletteOpen: boolean;
   profile: GStudioSurfaceProps["profile"];
+  onTemplates?: () => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
@@ -636,6 +655,7 @@ function GStudioTopBar({
           </span>
           <span className="truncate text-[13px] text-muted-foreground">Customize</span>
           <span
+            role="status"
             className={cn(
               "hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline",
               saving || dirty
@@ -706,6 +726,11 @@ function GStudioTopBar({
               </IconButton>
               {compact ? (
                 <>
+                  {onTemplates && (
+                    <IconButton label="Templates" onClick={onTemplates}>
+                      <LayoutTemplate className="h-3.5 w-3.5" />
+                    </IconButton>
+                  )}
                   <IconButton label="Customize Studio" active={customizeOpen} onClick={onCustomize}>
                     <Sliders className="h-3.5 w-3.5" />
                   </IconButton>
@@ -727,6 +752,11 @@ function GStudioTopBar({
                 </>
               ) : (
                 <>
+                  {onTemplates && (
+                    <Button variant="ghost" size="sm" onClick={onTemplates}>
+                      <LayoutTemplate className="h-3 w-3" /> Templates
+                    </Button>
+                  )}
                   <Button
                     variant={customizeOpen ? "default" : "ghost"}
                     size="sm"
@@ -753,6 +783,7 @@ function GStudioTopBar({
                   <Button
                     variant={dirty ? "default" : "outline"}
                     size="sm"
+                    busy={saving}
                     disabled={!dirty || saving}
                     onClick={onSave}
                     title={saving ? "Saving draft" : "Save draft"}
@@ -763,6 +794,7 @@ function GStudioTopBar({
                   <Button
                     variant={hasUnpublishedChanges ? "default" : "outline"}
                     size="sm"
+                    busy={saving}
                     disabled={!hasUnpublishedChanges || saving}
                     onClick={onPublish}
                     title="Publish changes"
@@ -815,8 +847,8 @@ function GStudioTopBar({
         <div className="flex min-h-5 items-center gap-2 border-t border-border bg-[var(--surface)] px-3 py-0.5">
           <span className="t-label">Editing</span>
           <span className="truncate text-2xs text-muted-foreground-subtle">
-            Drag any block to move it — it snaps to the grid and nearby blocks when Snap is on ·
-            pull an edge or corner to resize · arrow keys nudge a selected block
+            Drag blocks to move · pull an edge or corner to resize · arrow keys nudge · Del removes
+            · Ctrl/⌘D duplicates · click a block for border and spacing options
           </span>
         </div>
       )}
@@ -926,7 +958,7 @@ function GStudioCanvas({
             type="button"
             id="studio-add-section"
             onClick={props.onAddSection}
-            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-3 font-mono text-2xs uppercase tracking-widest text-muted-foreground hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)]"
+            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-3 font-mono text-2xs uppercase tracking-widest text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
             <Plus className="h-3.5 w-3.5" /> New area
           </button>
@@ -1342,7 +1374,7 @@ function GSectionBand({
           <button
             type="button"
             onClick={() => onRequestPalette(section.id)}
-            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)]"
+            className="flex w-full items-center justify-center gap-1.5 border border-dashed border-border py-8 text-xs text-muted-foreground outline-none hover:border-[var(--user-accent-border)] hover:text-[var(--user-accent)] focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
           >
             <Plus className="h-3.5 w-3.5" /> Add a block
           </button>
@@ -1485,7 +1517,7 @@ function GSectionBand({
         <button
           type="button"
           onClick={() => onRequestPalette(section.id)}
-          className="mx-auto mt-1 flex h-6 items-center gap-1 border border-border bg-[var(--surface-elevated)] px-1.5 font-mono text-3xs uppercase tracking-widest text-muted-foreground opacity-0 hover:opacity-100 focus-visible:opacity-100"
+          className="mx-auto mt-1 flex h-6 items-center gap-1 border border-border bg-[var(--surface-elevated)] px-1.5 font-mono text-3xs uppercase tracking-widest text-muted-foreground opacity-40 outline-none transition-opacity hover:text-foreground hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
         >
           <Plus className="h-3 w-3" /> Add block
         </button>
@@ -1600,6 +1632,7 @@ const GBlockFrame = forwardRef<
     >
       <div
         ref={contentRef}
+        style={blockFrameStyle(block)}
         className={cn(
           "relative overflow-x-hidden studio-block",
           (def?.containerless || block.type === "profile-header") && "studio-block-flush",
@@ -1647,6 +1680,21 @@ const GBlockFrame = forwardRef<
                   <EyeOff className="h-3.5 w-3.5" />
                 )}
               </IconButton>
+              <IconButton
+                label={block.frameBorder === "none" ? "Show block border" : "Hide block border"}
+                active={block.frameBorder === "none"}
+                onClick={() =>
+                  props.onBlockAction(block.id, {
+                    frameBorder: block.frameBorder === "none" ? "default" : "none",
+                  })
+                }
+              >
+                {block.frameBorder === "none" ? (
+                  <SquareDashed className="h-3.5 w-3.5" />
+                ) : (
+                  <Frame className="h-3.5 w-3.5" />
+                )}
+              </IconButton>
               <IconButton label="Duplicate block" onClick={() => props.onDuplicate(block.id)}>
                 <Copy className="h-3.5 w-3.5" />
               </IconButton>
@@ -1670,6 +1718,80 @@ const GBlockFrame = forwardRef<
     </div>
   );
 });
+
+/** Per-block frame controls in the inspector: border on/off (plus "follow
+ *  appearance") and inner spacing. Writes the block's `frameBorder`/
+ *  `frameInset` fields; the shared `.studio-block` utility renders them on
+ *  every surface (editor, owner view, public page). */
+function BlockFrameSection({
+  block,
+  ...props
+}: GStudioSurfaceProps & { block: LayoutBlockInstance }) {
+  const def = getBlock(block.type);
+  const flush = def?.containerless || block.type === "profile-header";
+  const inset = typeof block.frameInset === "number" ? block.frameInset : undefined;
+  return (
+    <div className="border-t border-border py-3">
+      <p className="t-label mb-2">Frame</p>
+      <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
+        {(
+          [
+            ["default", "Theme"],
+            ["frame", "Border"],
+            ["none", "None"],
+          ] as Array<[BlockFrameBorder, string]>
+        ).map(([option, text]) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={(block.frameBorder ?? "default") === option}
+            onClick={() => props.onBlockAction(block.id, { frameBorder: option })}
+            className={cn(
+              "rounded-sm px-1 py-1.5 text-2xs",
+              (block.frameBorder ?? "default") === option
+                ? "bg-[var(--surface-elevated)] text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            {text}
+          </button>
+        ))}
+      </div>
+      {flush && (block.frameBorder ?? "default") === "default" && (
+        <p className="mt-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+          This block is full-bleed — it starts with no outline, like the published page.
+        </p>
+      )}
+      {!flush && (
+        <label className="mt-2.5 block">
+          <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+            Inner spacing <span>{inset ?? "theme"}</span>
+          </span>
+          <input
+            type="range"
+            min={BLOCK_INSET_MIN}
+            max={BLOCK_INSET_MAX}
+            step={2}
+            value={inset ?? BLOCK_INSET_DEFAULT_PX}
+            aria-label="Inner spacing in pixels"
+            onChange={(event) =>
+              props.onBlockAction(block.id, { frameInset: Number(event.target.value) })
+            }
+            className="studio-slider w-full"
+          />
+          <button
+            type="button"
+            onClick={() => props.onBlockAction(block.id, { frameInset: undefined })}
+            disabled={inset === undefined}
+            className="mt-1 text-2xs text-muted-foreground-subtle underline-offset-2 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
+          >
+            Reset to theme spacing
+          </button>
+        </label>
+      )}
+    </div>
+  );
+}
 
 function GInspectorRail(
   props: GStudioSurfaceProps & { paletteOpen: boolean; onClose: () => void },
@@ -2235,6 +2357,7 @@ function GBlockInspector({
           );
         })}
       </div>
+      <BlockFrameSection block={block} {...props} />
       <div className="border-t border-border pt-3">
         <p className="t-label mb-2">Actions</p>
         <div className="flex gap-1">
@@ -2250,6 +2373,20 @@ function GBlockInspector({
           <IconButton label="Remove block" onClick={() => props.onRemove(block.id)}>
             <Trash2 className="h-3.5 w-3.5" />
           </IconButton>
+        </div>
+        <div className="mt-2 flex">
+          <WidthStepper
+            block={block}
+            section={
+              findSection(props.layout, block.id) ?? {
+                id: "",
+                position: 0,
+                layout: "full",
+                blocks: [],
+              }
+            }
+            onResize={props.onGridChange}
+          />
         </div>
       </div>
       <div className="mt-3 border-t border-border pt-3">
@@ -2318,7 +2455,7 @@ function ThemeSection({
         type="button"
         onClick={() => setThemePreset(current === DEFAULT_THEME_ID ? null : current)}
         className={cn(
-          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-2xs transition-colors",
+          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-2xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
           siteWidePreset && siteWidePreset === current
             ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
             : "border-border text-muted-foreground hover:text-foreground",
@@ -2350,7 +2487,7 @@ function ThemePick({
       onClick={onClick}
       title={name}
       className={cn(
-        "flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors",
+        "flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
         active
           ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)]"
           : "border-border hover:border-[var(--user-accent-border)]",
@@ -2386,8 +2523,11 @@ function GCustomizePanel({
   onToggleSection,
   onBlockAction,
   onSelect,
+  selectedBlockId,
   onClose,
   onOpenAppearance,
+  onOpenTemplates,
+  onSaveAsTemplate,
   onReset,
 }: {
   config: GStudioConfig;
@@ -2403,10 +2543,15 @@ function GCustomizePanel({
   onToggleSection: (id: string) => void;
   onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
   onSelect: (id: string | null) => void;
+  selectedBlockId: string | null;
   onClose: () => void;
   onCompleteProfile?: () => void;
   /** Opens the shared background/appearance dialog (banner → Appearance). */
   onOpenAppearance?: () => void;
+  /** Opens the Templates picker (starter directions). */
+  onOpenTemplates?: () => void;
+  /** Publishes the current Studio layout as a community template. */
+  onSaveAsTemplate?: () => void;
   onReset: () => void;
 }) {
   // Progressive disclosure: the three "feel" decisions stay on top for every
@@ -2439,6 +2584,19 @@ function GCustomizePanel({
       </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
+        {onOpenTemplates && (
+          <div className="mb-4 shrink-0">
+            <button
+              type="button"
+              onClick={onOpenTemplates}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-foreground transition-colors outline-none hover:border-[var(--user-accent-border)] hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+              title="Browse starting directions for your Studio"
+            >
+              <LayoutTemplate className="h-3 w-3" aria-hidden />
+              Browse templates
+            </button>
+          </div>
+        )}
         <Choice
           label="Structure"
           hint="How wide your Studio reads"
@@ -2664,7 +2822,7 @@ function GCustomizePanel({
                             ? `Show ${sectionLabel(section)}`
                             : `Hide ${sectionLabel(section)}`
                         }
-                        className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
+                        className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]"
                       >
                         {section.visible === false ? (
                           <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
@@ -2684,20 +2842,17 @@ function GCustomizePanel({
                       </button>
                       <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
                         {section.blocks.map((block) => (
-                          <li key={block.id}>
+                          <li key={block.id} className="group/block flex items-center gap-0.5">
                             <button
                               type="button"
-                              onClick={() => {
-                                onSelect(block.id);
-                                onBlockAction(block.id, { visible: block.visible === false });
-                              }}
-                              className="flex w-full items-center gap-1.5 rounded-sm px-1 py-0.5 text-left hover:bg-[var(--surface-sunken)]"
-                            >
-                              {block.visible === false ? (
-                                <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                              ) : (
-                                <Eye className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                              onClick={() => onSelect(block.id)}
+                              aria-current={selectedBlockId === block.id ? "true" : undefined}
+                              className={cn(
+                                "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]",
+                                selectedBlockId === block.id &&
+                                  "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
                               )}
+                            >
                               <span
                                 className={cn(
                                   "truncate text-2xs",
@@ -2709,6 +2864,23 @@ function GCustomizePanel({
                                 {getBlock(block.type)?.label ?? block.type}
                               </span>
                             </button>
+                            <IconButton
+                              label={
+                                block.visible === false
+                                  ? `Show ${getBlock(block.type)?.label ?? block.type}`
+                                  : `Hide ${getBlock(block.type)?.label ?? block.type}`
+                              }
+                              className="h-5 w-5 opacity-0 group-hover/block:opacity-100 focus-visible:opacity-100"
+                              onClick={() =>
+                                onBlockAction(block.id, { visible: block.visible === false })
+                              }
+                            >
+                              {block.visible === false ? (
+                                <EyeOff className="h-3 w-3" />
+                              ) : (
+                                <Eye className="h-3 w-3" />
+                              )}
+                            </IconButton>
                           </li>
                         ))}
                       </ul>
@@ -2721,10 +2893,20 @@ function GCustomizePanel({
         </div>
       </div>
       <footer className="shrink-0 border-t border-border p-3">
+        {onSaveAsTemplate && (
+          <button
+            type="button"
+            onClick={onSaveAsTemplate}
+            className="flex w-full items-center justify-center gap-1.5 rounded-sm px-2 py-2 text-xs text-muted-foreground transition-colors outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+          >
+            <LayoutTemplate className="h-3 w-3" aria-hidden />
+            Save as template
+          </button>
+        )}
         <button
           type="button"
           onClick={onReset}
-          className="flex w-full items-center justify-center gap-1.5 rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-[var(--surface-sunken)] hover:text-foreground"
+          className="flex w-full items-center justify-center gap-1.5 rounded-sm px-2 py-2 text-xs text-muted-foreground transition-colors outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
         >
           <RotateCcw className="h-3 w-3" aria-hidden />
           Reset to default Studio
@@ -2759,7 +2941,7 @@ function Choice({
             aria-pressed={value === option}
             onClick={() => onChange(option)}
             className={cn(
-              "rounded-sm px-1 py-1.5 text-2xs",
+              "rounded-sm px-1 py-1.5 text-2xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-sunken)]",
               value === option
                 ? "bg-[var(--surface-elevated)] text-foreground"
                 : "text-muted-foreground",
@@ -2797,6 +2979,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="t-label">Edit Studio</span>
           <span
+            role="status"
             className={cn(
               "truncate text-2xs",
               props.saving || props.dirty || props.hasUnpublishedChanges
@@ -2819,6 +3002,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           variant={props.dirty ? "default" : "outline"}
           size="sm"
           className="h-7 px-2 text-2xs"
+          busy={props.saving}
           disabled={!props.dirty || props.saving}
           onClick={props.onSave}
         >
@@ -2828,6 +3012,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           variant={props.hasUnpublishedChanges ? "default" : "outline"}
           size="sm"
           className="h-7 px-2 text-2xs"
+          busy={props.saving}
           disabled={!props.hasUnpublishedChanges || props.saving}
           onClick={props.onPublish}
         >
@@ -2842,7 +3027,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           type="button"
           onClick={() => setTab("arrange")}
           className={cn(
-            "px-2 py-1 text-xs",
+            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
             tab === "arrange" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
           )}
         >
@@ -2852,7 +3037,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           type="button"
           onClick={() => setTab("add")}
           className={cn(
-            "px-2 py-1 text-xs",
+            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
             tab === "add" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
           )}
         >
@@ -2862,7 +3047,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           type="button"
           onClick={() => setTab("feel")}
           className={cn(
-            "px-2 py-1 text-xs",
+            "rounded-sm px-2.5 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))]",
             tab === "feel" && "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
           )}
         >
@@ -2914,7 +3099,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                       type="button"
                       onClick={() => props.onSelect(block.id)}
                       className={cn(
-                        "min-w-0 flex-1 truncate rounded-sm px-1 py-0.5 text-left text-xs",
+                        "min-w-0 flex-1 truncate rounded-sm px-1 py-1.5 text-left text-xs",
                         props.selectedBlockId === block.id
                           ? "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
                           : "text-foreground",
@@ -2997,6 +3182,26 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
         {tab === "feel" && (
           <div>
             <ThemeSection themeId={props.themeId} onThemeChange={props.onThemeChange} />
+            {props.onOpenTemplates && (
+              <button
+                type="button"
+                onClick={props.onOpenTemplates}
+                className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-foreground outline-none hover:border-[var(--user-accent-border)] hover:bg-[var(--surface-sunken)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+              >
+                <LayoutTemplate className="h-3 w-3" aria-hidden />
+                Browse templates
+              </button>
+            )}
+            {props.onSaveAsTemplate && (
+              <button
+                type="button"
+                onClick={props.onSaveAsTemplate}
+                className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-muted-foreground outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+              >
+                <LayoutTemplate className="h-3 w-3" aria-hidden />
+                Save as template
+              </button>
+            )}
             <Choice
               label="Structure"
               value={props.config.structure}
@@ -3108,7 +3313,7 @@ function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border text-muted-foreground",
+        "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-muted-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--surface-elevated)]",
         active
           ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-[var(--user-accent)]"
           : "border-transparent hover:border-border hover:bg-[var(--surface-sunken)] hover:text-foreground",

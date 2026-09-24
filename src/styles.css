@@ -502,7 +502,12 @@
    text never starts on the border. Full-bleed blocks opt out. */
 @utility studio-block {
   background-color: var(--surface);
-  border: var(--card-border-width, 1px) solid var(--card-border-color, var(--border));
+  /* Per-block override (blockFrameStyle) wins; default follows the member's
+     card-border appearance exactly as before. */
+  border: var(
+    --studio-block-border,
+    var(--card-border-width, 1px) solid var(--card-border-color, var(--border))
+  );
   border-radius: var(--studio-radius, var(--radius-lg));
   padding: var(--studio-block-inset, 1rem);
 }

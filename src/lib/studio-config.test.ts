@@ -2,6 +2,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  blockFrameStyle,
+  BLOCK_INSET_DEFAULT_PX,
   DEFAULT_STUDIO_CONFIG,
   normalizeStudioConfig,
   studioConfigToStyle,
@@ -277,6 +279,39 @@ describe("structureMaxWidth", () => {
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "single" })).toBe(768);
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "sidebar" })).toBe(1024);
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "wide" })).toBe(1200);
+  });
+});
+
+describe("blockFrameStyle", () => {
+  it("returns nothing for a block without frame overrides", () => {
+    expect(blockFrameStyle({})).toEqual({});
+    expect(blockFrameStyle({ frameBorder: "default", frameInset: undefined })).toEqual({});
+  });
+
+  it("emits the per-block border override", () => {
+    const none = blockFrameStyle({ frameBorder: "none" }) as Record<string, string>;
+    expect(none["--studio-block-border"]).toBe("none");
+
+    const forced = blockFrameStyle({ frameBorder: "frame" }) as Record<string, string>;
+    expect(forced["--studio-block-border"]).toBe(
+      "var(--card-border-width, 1px) solid var(--border)",
+    );
+  });
+
+  it("emits the per-block inset override in px", () => {
+    const style = blockFrameStyle({ frameInset: 24 }) as Record<string, string>;
+    expect(style["--studio-block-inset"]).toBe("24px");
+  });
+
+  it("ignores non-finite insets so the theme value survives", () => {
+    expect(blockFrameStyle({ frameInset: Number.NaN })).toEqual({});
+  });
+
+  it("keeps the default inset aligned with the CSS fallback", () => {
+    // The "Inner spacing" slider seeds from this constant; the CSS fallback in
+    // .studio-block is 1rem. They must agree so the slider preview matches the
+    // un-customised frame.
+    expect(BLOCK_INSET_DEFAULT_PX).toBe(16);
   });
 });
 
