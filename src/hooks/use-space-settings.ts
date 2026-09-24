@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SPACES_KEY, SPACE_POSTS_KEY } from "@/hooks/community-space-types";
+import { SPACES_KEY } from "@/hooks/community-space-types";
 import type { SpaceVisibility, SpaceJoinType } from "@/hooks/community-space-types";
 
 const sb = supabase;

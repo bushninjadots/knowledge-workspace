@@ -13,7 +13,8 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90 hover:border-primary/90 active:bg-primary",
         purple: "bg-ai text-ai-foreground border-ai shadow-sm hover:bg-ai/90 hover:border-ai/90",
-        brand: "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90 hover:border-primary/90",
+        brand:
+          "bg-primary text-primary-foreground border-primary shadow-sm hover:bg-primary/90 hover:border-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground border-destructive shadow-sm hover:bg-destructive/90 hover:border-destructive/90",
         outline:
