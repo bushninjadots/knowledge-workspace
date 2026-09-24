@@ -1,4 +1,11 @@
-const SESSION_TABS: SessionsTab[] = ["upcoming", "calendar", "history", "requests", "availability"];
+const SESSION_TABS: SessionsTab[] = [
+  "board",
+  "upcoming",
+  "calendar",
+  "history",
+  "requests",
+  "availability",
+];
 
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { z } from "zod";

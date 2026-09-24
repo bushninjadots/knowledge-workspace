@@ -2412,6 +2412,7 @@ export type Database = {
           skill_id: string | null;
           starts_at: string | null;
           status: Database["public"]["Enums"]["session_status"];
+          team_id: string | null;
           timezone: string;
           title: string;
           updated_at: string;
@@ -2434,6 +2435,7 @@ export type Database = {
           skill_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["session_status"];
+          team_id?: string | null;
           timezone?: string;
           title: string;
           updated_at?: string;
@@ -2456,6 +2458,7 @@ export type Database = {
           skill_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["session_status"];
+          team_id?: string | null;
           timezone?: string;
           title?: string;
           updated_at?: string;
@@ -2480,6 +2483,13 @@ export type Database = {
             columns: ["skill_id"];
             isOneToOne: false;
             referencedRelation: "skills";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sessions_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
             referencedColumns: ["id"];
           },
         ];

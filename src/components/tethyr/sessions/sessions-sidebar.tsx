@@ -1,7 +1,8 @@
-import { CalendarDays, Clock, History, Bell, Calendar } from "lucide-react";
+import { CalendarDays, Clock, History, Bell, Calendar, LayoutDashboard } from "lucide-react";
 import type { SessionStatus } from "@/hooks/use-sessions";
 
 const tabs = [
+  { id: "board", label: "Board", icon: LayoutDashboard },
   { id: "upcoming", label: "Upcoming", icon: CalendarDays },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "history", label: "History", icon: History },

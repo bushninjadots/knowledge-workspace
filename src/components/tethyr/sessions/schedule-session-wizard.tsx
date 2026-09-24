@@ -25,6 +25,7 @@ import { zonedDateTimeToUtcIso } from "@/lib/timezones";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
+import { useMyTeams } from "@/hooks/use-teams";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,7 @@ type WizardState = {
   description: string;
   skillId: string | null;
   projectId: string | null;
+  teamId: string | null;
   meetingUrl: string;
   location: string;
   date: string;
@@ -121,6 +123,7 @@ const INITIAL: WizardState = {
   description: "",
   skillId: null,
   projectId: null,
+  teamId: null,
   meetingUrl: "",
   location: "",
   date: "",
@@ -194,6 +197,7 @@ export function ScheduleSessionWizard({
         location: state.location.trim() || undefined,
         skill_id: state.skillId ?? undefined,
         project_id: state.projectId ?? undefined,
+        team_id: state.teamId ?? undefined,
         participant_ids: participantIds.length > 0 ? participantIds : undefined,
       });
       toast.success("Session created!");
@@ -275,10 +279,12 @@ export function ScheduleSessionWizard({
               description={state.description}
               meetingUrl={state.meetingUrl}
               location={state.location}
+              teamId={state.teamId}
               onTitleChange={(v) => update("title", v)}
               onDescChange={(v) => update("description", v)}
               onMeetingUrlChange={(v) => update("meetingUrl", v)}
               onLocationChange={(v) => update("location", v)}
+              onTeamIdChange={(v) => update("teamId", v)}
             />
           )}
           {step === 3 && (
@@ -519,20 +525,27 @@ function StepLink({
   description,
   meetingUrl,
   location,
+  teamId,
   onTitleChange,
   onDescChange,
   onMeetingUrlChange,
   onLocationChange,
+  onTeamIdChange,
 }: {
   title: string;
   description: string;
   meetingUrl: string;
   location: string;
+  teamId: string | null;
   onTitleChange: (v: string) => void;
   onDescChange: (v: string) => void;
   onMeetingUrlChange: (v: string) => void;
   onLocationChange: (v: string) => void;
+  onTeamIdChange: (v: string | null) => void;
 }) {
+  const { data: myTeams = [] } = useMyTeams();
+  const NO_CREW = "__none__";
+
   return (
     <div className="space-y-4">
       <div>
@@ -566,6 +579,33 @@ function StepLink({
             value={description}
             onChange={(e) => onDescChange(e.target.value)}
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="session-crew" className="flex items-center gap-1.5 text-xs">
+            <Users className="h-3 w-3" /> Crew
+          </Label>
+          <Select
+            value={teamId ?? NO_CREW}
+            onValueChange={(v) => onTeamIdChange(v === NO_CREW ? null : v)}
+          >
+            <SelectTrigger id="session-crew">
+              <SelectValue placeholder="Attach a crew (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_CREW}>No crew</SelectItem>
+              {myTeams.map(({ team }) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+              {myTeams.length === 0 && (
+                <SelectItem value="__no-crews__" disabled>
+                  You haven&apos;t joined any crews yet
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -720,6 +760,8 @@ function StepSchedule({
 function StepConfirm({ state, organizerName }: { state: WizardState; organizerName: string }) {
   const typeInfo = SESSION_TYPES.find((t) => t.value === state.sessionType);
   const TypeIcon = typeInfo?.icon ?? MessageSquare;
+  const { data: myTeams = [] } = useMyTeams();
+  const crew = myTeams.find((t) => t.team.id === state.teamId);
 
   const dt = state.date && state.time ? new Date(`${state.date}T${state.time}`) : null;
 
@@ -783,6 +825,13 @@ function StepConfirm({ state, organizerName }: { state: WizardState; organizerNa
           <div className="flex items-center gap-2 rounded-lg bg-background/60 px-3 py-2 text-xs">
             <Globe className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="truncate font-medium text-foreground">{state.meetingUrl}</span>
+          </div>
+        )}
+
+        {state.teamId && crew && (
+          <div className="flex items-center gap-2 rounded-lg bg-background/60 px-3 py-2 text-xs">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-medium text-foreground">Crew · {crew.team.name}</span>
           </div>
         )}
 

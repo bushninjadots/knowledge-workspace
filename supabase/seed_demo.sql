@@ -523,3 +523,9 @@ INSERT INTO public.team_projects (team_id, project_id)
 VALUES
   ('40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001')
 ON CONFLICT DO NOTHING;
+
+-- Showcase the crew link: Atlas weekly sync belongs to Atlas Core (teams are
+-- inserted above the sessions block, so attach after both exist).
+UPDATE public.sessions
+SET team_id = '40000000-0000-0000-0000-000000000001'
+WHERE id = '50000000-0000-0000-0000-000000000001';

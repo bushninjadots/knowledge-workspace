@@ -20,6 +20,7 @@ import {
   XCircle,
   Check,
   X,
+  FolderKanban,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -282,6 +283,26 @@ function HeroSection({ session }: { session: SessionWithParticipants }) {
               <Badge variant="outline" className="text-xs">
                 <Repeat className="mr-1 h-3 w-3" /> Recurring
               </Badge>
+            )}
+            {session.projects?.id && (
+              <Link
+                to="/projects/$id"
+                params={{ id: session.projects.id }}
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-surface-elevated/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+              >
+                <FolderKanban className="h-3 w-3" aria-hidden="true" />
+                {session.projects.title}
+              </Link>
+            )}
+            {session.teams && (
+              <Link
+                to="/teams/$slug"
+                params={{ slug: session.teams.slug }}
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-surface-elevated/60 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+              >
+                <Users className="h-3 w-3" aria-hidden="true" />
+                {session.teams.name}
+              </Link>
             )}
           </div>
         </div>

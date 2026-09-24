@@ -10,6 +10,7 @@ import { SessionRequests } from "./session-requests";
 import { SessionHistory } from "./session-history";
 import { AvailabilitySettings } from "./availability-settings";
 import { ScheduleSessionWizard } from "./schedule-session-wizard";
+import { SessionsBoard } from "./sessions-board";
 import { SessionFilters, type SessionFiltersState } from "./session-filters";
 import {
   useSessionStats,
@@ -26,7 +27,7 @@ export function SessionsLayout() {
   // The active tab is URL-driven (?tab=requests) so the dashboard's "Review
   // requests" CTA and the pending-count badge can deep-link to the queue.
   const { tab, schedule } = useSearch({ from: "/_authenticated/sessions" });
-  const activeTab: SessionsTab = tab ?? "upcoming";
+  const activeTab: SessionsTab = tab ?? "board";
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filters, setFilters] = useState<SessionFiltersState>({ search: "", type: "" });
 
@@ -42,7 +43,7 @@ export function SessionsLayout() {
     (next: SessionsTab) => {
       navigate({
         to: "/sessions",
-        search: next === "upcoming" ? {} : { tab: next },
+        search: next === "board" ? {} : { tab: next },
         replace: true,
       });
     },
@@ -118,6 +119,8 @@ export function SessionsLayout() {
           </div>
 
           {/* Tab content */}
+          {activeTab === "board" && <SessionsBoard onSchedule={() => setWizardOpen(true)} />}
+
           {activeTab === "upcoming" && (
             <div className="space-y-6">
               <SessionFilters filters={filters} onChange={setFilters} />

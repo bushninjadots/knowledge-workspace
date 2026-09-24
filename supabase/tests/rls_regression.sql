@@ -39,7 +39,7 @@ BEGIN
     json_build_object('sub', uid::text, 'role', 'authenticated')::text, true);
 END $$;
 
-SELECT plan(112);
+SELECT plan(115);
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: anyone can SELECT, only owner can UPDATE
@@ -1238,6 +1238,51 @@ SELECT lives_ok(
       VALUES ('team-covers', 'b0b0b0b0-0000-4000-8000-000000000001/banner.png',
               '11111111-1111-1111-1111-111111111111', '{"size": 1000}')$$,
   '112. team-covers accept a valid PNG'
+);
+
+-- ---------------------------------------------------------------------------
+-- 17. Crew sessions: crew members can read their crew's sessions, but only
+--     the organizer can change the session (moving a card on the board must
+--     no-op for anyone else). Mirrors section 17 (project sessions) for crews.
+-- ---------------------------------------------------------------------------
+SELECT pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+INSERT INTO public.sessions(id, organizer_id, title, team_id)
+  VALUES ('d0d0d0d0-0000-4000-8000-000000000007',
+          '11111111-1111-1111-1111-111111111111',
+          'Alice Crew Sync',
+          'b0b0b0b0-0000-4000-8000-000000000001')
+  ON CONFLICT (id) DO NOTHING;
+
+-- Bob is a contributor of the crew (section 13) but neither organizer nor
+-- participant; the crew policy should let him read it.
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE id = 'd0d0d0d0-0000-4000-8000-000000000007')::bigint,
+  1::bigint,
+  '113. a crew member can read the crew''s sessions'
+);
+
+-- Eve belongs to no crew: still hidden.
+SELECT pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE id = 'd0d0d0d0-0000-4000-8000-000000000007')::bigint,
+  0::bigint,
+  '114. a non-member cannot read the crew''s sessions'
+);
+
+-- Crew visibility is read-only: Bob cannot drag the session into another
+-- column (RLS write rules still restrict updates to the organizer).
+SELECT pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+UPDATE public.sessions SET status = 'completed'
+  WHERE id = 'd0d0d0d0-0000-4000-8000-000000000007';
+SELECT is(
+  (SELECT count(*) FROM public.sessions
+    WHERE id = 'd0d0d0d0-0000-4000-8000-000000000007'
+      AND status = 'completed')::bigint,
+  0::bigint,
+  '115. a crew member cannot change a session''s status'
 );
 
 

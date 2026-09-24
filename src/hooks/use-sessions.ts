@@ -30,6 +30,7 @@ export type Session = {
   project_id: string | null;
   community_id: string | null;
   exchange_id: string | null;
+  team_id: string | null;
   starts_at: string | null;
   ends_at: string | null;
   duration_minutes: number;
@@ -66,7 +67,8 @@ export type SessionWithParticipants = Session & {
     avatar_url: string | null;
   } | null;
   skills?: { name: string; category: string } | null;
-  projects?: { title: string } | null;
+  projects?: { id: string; title: string } | null;
+  teams?: { id: string; name: string; slug: string } | null;
 };
 
 export type SessionRequest = {
@@ -97,6 +99,7 @@ export type SessionRequest = {
 const sessionKeys = {
   all: ["sessions"] as const,
   list: (userId: string) => [...sessionKeys.all, "list", userId] as const,
+  board: (userId: string) => [...sessionKeys.all, "board", userId] as const,
   detail: (id: string) => [...sessionKeys.all, "detail", id] as const,
   today: (userId: string) => [...sessionKeys.all, "today", userId] as const,
   upcoming: (userId: string) => [...sessionKeys.all, "upcoming", userId] as const,
@@ -119,7 +122,8 @@ const SESSION_SELECT = `
     profiles:profiles!session_participants_profile_id_fkey(display_name, handle, avatar_url)
   ),
   skills:skills(name, category),
-  projects:projects(title)
+  projects:projects(id, title),
+  teams:teams(id, name, slug)
 `;
 
 const NO_MATCHING_UUID = "00000000-0000-0000-0000-000000000000";
@@ -150,6 +154,26 @@ async function fetchSessionsForProject(projectId: string): Promise<SessionWithPa
     .not("status", "eq", "cancelled")
     .order("starts_at", { ascending: true })
     .limit(100);
+  if (error) throw error;
+  return (data ?? []) as SessionWithParticipants[];
+}
+
+/**
+ * Every session the user is part of (organizer or participant), newest
+ * first. Powers the Sessions board: the board groups these by status into
+ * columns and dragging a card moves it between columns. Cancelled sessions
+ * are excluded; any status the board doesn't render a column for (e.g.
+ * draft, which nothing creates today) is simply not shown.
+ */
+async function fetchBoardSessions(userId: string): Promise<SessionWithParticipants[]> {
+  const participantSessionIds = await fetchParticipatingSessionIds(userId);
+  const { data, error } = await sb
+    .from("sessions")
+    .select(SESSION_SELECT)
+    .not("status", "eq", "cancelled")
+    .or(sessionsForUserFilter(userId, participantSessionIds))
+    .order("starts_at", { ascending: true, nullsFirst: true })
+    .limit(200);
   if (error) throw error;
   return (data ?? []) as SessionWithParticipants[];
 }
@@ -376,6 +400,16 @@ export function useUpcomingSessions() {
   });
 }
 
+export function useBoardSessions() {
+  const { data: me } = useCurrentUser();
+  const userId = me?.userId;
+  return useQuery({
+    queryKey: sessionKeys.board(userId ?? ""),
+    queryFn: () => fetchBoardSessions(userId!),
+    enabled: !!userId,
+  });
+}
+
 export function useSessionStats(viewUserId?: string) {
   const { data: me } = useCurrentUser();
   const userId = viewUserId ?? me?.userId;
@@ -435,6 +469,7 @@ export function useCreateSession() {
       location?: string;
       skill_id?: string;
       project_id?: string;
+      team_id?: string | null;
       participant_ids?: string[];
     }) => {
       if (!userId) throw new Error("Not authenticated");
@@ -460,6 +495,7 @@ export function useCreateSession() {
           location: input.location ?? null,
           skill_id: input.skill_id ?? null,
           project_id: input.project_id ?? null,
+          team_id: input.team_id ?? null,
         })
         .select()
         .single();

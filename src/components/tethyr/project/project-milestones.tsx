@@ -1,5 +1,18 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Clock, ListFilter, Plus, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import type { MilestoneRow } from "@/hooks/use-projects";
 import { useCreateMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-projects";
@@ -40,9 +53,17 @@ export function MilestonesTimeline({
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [selectedMilestone, setSelectedMilestone] = useState<MilestoneRow | null>(null);
+  const [dragMilestone, setDragMilestone] = useState<MilestoneRow | null>(null);
   const createMutation = useCreateMilestone();
   const updateMutation = useUpdateMilestone();
   const deleteMutation = useDeleteMilestone();
+
+  // Drags start after a 6px threshold so clicks still open the milestone
+  // dialog; keyboard drag is supported for reduced-mobility users.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const doneCount = milestones.filter((m) => m.status === "done").length;
   const progress = milestones.length ? Math.round((doneCount / milestones.length) * 100) : 0;
@@ -89,6 +110,23 @@ export function MilestonesTimeline({
       toast.error("Failed to delete milestone");
     }
   };
+
+  function handleDragStart(event: DragStartEvent) {
+    setDragMilestone(milestones.find((m) => m.id === event.active.id) ?? null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setDragMilestone(null);
+    const { active, over } = event;
+    if (!over) return;
+    const milestone = milestones.find((m) => m.id === active.id);
+    if (!milestone) return;
+    // The drop target is either a column or another card — both carry their
+    // current status in data, so one resolution path covers both.
+    const targetStatus = over.data.current?.status as MilestoneRow["status"] | undefined;
+    if (!targetStatus || !COLUMNS.some((column) => column.status === targetStatus)) return;
+    void moveMilestone(milestone, targetStatus);
+  }
 
   const handlePanelStatus = async (status: MilestoneRow["status"]) => {
     if (!selectedMilestone || selectedMilestone.status === status) return;
@@ -231,108 +269,50 @@ export function MilestonesTimeline({
         </div>
       ) : (
         <div className="mt-5 -mx-1 overflow-x-auto px-1 pb-2" aria-label="Project roadmap board">
-          <div className="grid min-w-[48rem] grid-cols-3 gap-3">
-            {COLUMNS.map(({ status, label, icon: Icon }) => {
-              const items = visibleMilestones.filter((milestone) => milestone.status === status);
-              return (
-                <section
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={() => setDragMilestone(null)}
+          >
+            <div className="grid min-w-[48rem] grid-cols-3 gap-3">
+              {COLUMNS.map(({ status, label, icon }) => (
+                <MilestoneColumn
                   key={status}
-                  aria-labelledby={`roadmap-${status}`}
-                  className="min-h-44 rounded-lg bg-background/45 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${STATUS_STYLE[status]}`} />
-                      <h4 id={`roadmap-${status}`} className="text-sm font-medium">
-                        {label}
-                      </h4>
-                    </div>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {items.length}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {items.length === 0 ? (
-                      <p className="py-4 text-center text-xs text-muted-foreground">
-                        Nothing here yet.
+                  status={status}
+                  label={label}
+                  icon={icon}
+                  items={visibleMilestones.filter((milestone) => milestone.status === status)}
+                  isOwner={isOwner}
+                  deletePending={deleteMutation.isPending}
+                  onOpen={(milestone) => setSelectedMilestone(milestone)}
+                  onDelete={(milestone) => void handleDelete(milestone.id)}
+                />
+              ))}
+            </div>
+            <DragOverlay dropAnimation={null}>
+              {dragMilestone ? (
+                <div className="w-64 -rotate-1 rounded-lg border border-border/80 bg-surface-elevated/95 p-3 shadow-lg shadow-black/10">
+                  <div className="min-w-0">
+                    <h5
+                      className={`text-sm ${
+                        dragMilestone.status === "done"
+                          ? "text-muted-foreground line-through"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {dragMilestone.title}
+                    </h5>
+                    {dragMilestone.description && (
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {dragMilestone.description}
                       </p>
-                    ) : (
-                      items.map((milestone) => (
-                        <article
-                          key={milestone.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => setSelectedMilestone(milestone)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              setSelectedMilestone(milestone);
-                            }
-                          }}
-                          className="cursor-pointer rounded-lg border border-border/60 bg-surface-elevated/35 p-3 transition-colors hover:border-border hover:bg-surface-elevated/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <h5
-                                className={`text-sm ${status === "done" ? "text-muted-foreground line-through" : "text-foreground"}`}
-                              >
-                                {milestone.title}
-                              </h5>
-                              {milestone.description && (
-                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                  {milestone.description}
-                                </p>
-                              )}
-                              {milestone.due_date && (
-                                <p className="mt-2 text-[11px] text-muted-foreground">
-                                  Due {new Date(milestone.due_date).toLocaleDateString()}
-                                </p>
-                              )}
-                            </div>
-                            {isOwner && (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="size-7 shrink-0"
-                                onClick={() => void handleDelete(milestone.id)}
-                                disabled={deleteMutation.isPending}
-                                aria-label={`Delete milestone ${milestone.title}`}
-                              >
-                                <Trash2 data-icon="inline-start" />
-                              </Button>
-                            )}
-                          </div>
-                          {isOwner && (
-                            <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-2">
-                              <span className="text-[11px] text-muted-foreground">Move to</span>
-                              <div className="flex gap-1">
-                                {COLUMNS.filter((column) => column.status !== status).map(
-                                  (column) => (
-                                    <Button
-                                      key={column.status}
-                                      type="button"
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 px-2 text-[11px]"
-                                      onClick={() => void moveMilestone(milestone, column.status)}
-                                      disabled={updateMutation.isPending}
-                                    >
-                                      {column.label}
-                                    </Button>
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </article>
-                      ))
                     )}
                   </div>
-                </section>
-              );
-            })}
-          </div>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </div>
       )}
 
@@ -409,6 +389,157 @@ export function MilestonesTimeline({
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function MilestoneColumn({
+  status,
+  label,
+  icon,
+  items,
+  isOwner,
+  deletePending,
+  onOpen,
+  onDelete,
+}: {
+  status: MilestoneRow["status"];
+  label: string;
+  icon: typeof Circle;
+  items: MilestoneRow[];
+  isOwner: boolean;
+  deletePending: boolean;
+  onOpen: (milestone: MilestoneRow) => void;
+  onDelete: (milestone: MilestoneRow) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: status, data: { status } });
+  const Icon = icon;
+
+  return (
+    <section
+      ref={setNodeRef}
+      aria-labelledby={`roadmap-${status}`}
+      className={`flex min-h-44 flex-col rounded-lg p-3 transition-colors ${
+        isOver
+          ? "bg-surface-elevated/70 ring-1 ring-inset ring-[var(--user-accent-border,var(--border-strong))]"
+          : "bg-background/45"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-3">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${STATUS_STYLE[status]}`} aria-hidden="true" />
+          <h4 id={`roadmap-${status}`} className="text-sm font-medium text-foreground">
+            {label}
+          </h4>
+        </div>
+        <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
+      </div>
+      <div className="mt-3 flex flex-1 flex-col gap-2">
+        {items.length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Nothing here yet.</p>
+        ) : (
+          items.map((milestone) => (
+            <MilestoneCard
+              key={milestone.id}
+              milestone={milestone}
+              draggable={isOwner}
+              showDelete={isOwner}
+              deletePending={deletePending}
+              onOpen={() => onOpen(milestone)}
+              onDelete={() => onDelete(milestone)}
+            />
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MilestoneCard({
+  milestone,
+  draggable,
+  showDelete,
+  deletePending,
+  onOpen,
+  onDelete,
+}: {
+  milestone: MilestoneRow;
+  draggable: boolean;
+  showDelete: boolean;
+  deletePending: boolean;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: milestone.id,
+    data: { status: milestone.status },
+    disabled: !draggable,
+  });
+
+  const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+  // The card is always reachable as a button (open the milestone); when it is
+  // draggable, dnd-kit's own attributes (role/tabIndex/aria) apply on top.
+  const interactiveAttributes = {
+    role: "button" as const,
+    tabIndex: 0,
+    ...(draggable ? attributes : {}),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      aria-label={`Open milestone ${milestone.title}`}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      {...interactiveAttributes}
+      {...listeners}
+      style={style}
+      className={`rounded-lg border border-border/60 bg-surface-elevated/35 p-3 transition-colors hover:border-border hover:bg-surface-elevated/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        isDragging ? "opacity-40" : ""
+      } ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h5
+            className={`text-sm ${
+              milestone.status === "done" ? "text-muted-foreground line-through" : "text-foreground"
+            }`}
+          >
+            {milestone.title}
+          </h5>
+          {milestone.description && (
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {milestone.description}
+            </p>
+          )}
+          {milestone.due_date && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Due {new Date(milestone.due_date).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        {showDelete && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="size-7 shrink-0"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+            disabled={deletePending}
+            aria-label={`Delete milestone ${milestone.title}`}
+          >
+            <Trash2 data-icon="inline-start" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
