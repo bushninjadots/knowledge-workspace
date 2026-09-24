@@ -85,7 +85,7 @@ export function StarterPicker({
                   style={
                     {
                       "--starter-accent": detail.accent,
-                      "--starter-tint": detail.tint,
+                      "--starter-tint": `color-mix(in oklab, ${detail.accent} 12%, var(--background))`,
                     } as CSSProperties
                   }
                 >
