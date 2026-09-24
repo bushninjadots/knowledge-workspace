@@ -388,6 +388,7 @@ function SectionLayoutPicker({
 }
 
 export function GStudioSurface(props: GStudioSurfaceProps) {
+  const { resolvedTheme } = useAppTheme();
   const { data: me } = useCurrentUser();
   const palette = useUserPalette(me?.bannerSigned ?? null);
   // Live theme preview: derive the page theme's CSS vars for the active
@@ -434,7 +435,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   );
   const surfaceStyle = {
     ...themeVars,
-    ...themeTokensToStyle(studioConfigToThemeTokens(props.config)),
+    ...themeTokensToStyle(studioConfigToThemeTokens(props.config), resolvedTheme),
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),

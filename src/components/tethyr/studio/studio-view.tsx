@@ -30,6 +30,7 @@ import { BackgroundLayer } from "@/components/tethyr/background-layer";
 import { appearanceStyle, avatarShapeStyle } from "@/lib/background-themes";
 import { useUserPalette } from "@/lib/dominant-color";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
@@ -80,6 +81,7 @@ const PREVIEW_DEVICE_WIDTHS: Record<PreviewDevice, number | undefined> = {
 };
 
 export function StudioView({ userId, profile, onBack, onCompleteProfile }: StudioViewProps) {
+  const { resolvedTheme } = useAppTheme();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"view" | "preview">("view");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
@@ -180,7 +182,7 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   const { data: themeVars = {} } = useTheme(page?.themeId);
   const surfaceStyle = {
     ...themeVars,
-    ...themeTokensToStyle(studioConfigToThemeTokens(config)),
+    ...themeTokensToStyle(studioConfigToThemeTokens(config), resolvedTheme),
     ...studioSurfaceStyle(config, palette?.dominant ?? null),
     ...appearanceStyle(me?.background),
     ...avatarShapeStyle(me?.background),

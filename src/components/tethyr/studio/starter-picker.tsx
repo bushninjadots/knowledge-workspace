@@ -1,5 +1,18 @@
-import { useMemo, useState } from "react";
-import { Check, Clock, Copy, LayoutTemplate, Plus, Search, Trash2, Undo2 } from "lucide-react";
+import { useMemo, useState, type CSSProperties } from "react";
+import {
+  BookOpen,
+  Check,
+  Clock,
+  Compass,
+  Copy,
+  Focus,
+  Grid2X2,
+  LayoutTemplate,
+  Plus,
+  Search,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -26,6 +39,26 @@ import "@/components/tethyr/blocks/register-all";
 export type StudioStarter = Starter;
 type StudioStarterId = Starter["id"];
 const STUDIO_STARTERS: StudioStarter[] = STARTERS;
+
+const STARTER_DETAILS: Record<
+  StudioStarterId,
+  {
+    icon: typeof Focus;
+    accent: string;
+    tint: string;
+    label: string;
+  }
+> = {
+  focused: { icon: Focus, accent: "#d97706", tint: "#fff7ed", label: "Clarity" },
+  editorial: { icon: BookOpen, accent: "#7c3aed", tint: "#f5f3ff", label: "Narrative" },
+  "project-first": { icon: Grid2X2, accent: "#0891b2", tint: "#ecfeff", label: "Momentum" },
+  minimal: { icon: LayoutTemplate, accent: "#475569", tint: "#f8fafc", label: "Essentials" },
+  experimental: { icon: Compass, accent: "#db2777", tint: "#fdf2f8", label: "Uncharted" },
+};
+
+function starterDetail(starter: StudioStarter) {
+  return STARTER_DETAILS[starter.id];
+}
 
 /**
  * How a community template enters the member's Studio — the two actions every
@@ -152,17 +185,17 @@ export function StarterPicker({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {/* ── Built-in directions ─────────────────────────────────────── */}
           <section aria-label="Built-in directions">
-            <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3 card">
+            <ul className="grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
               {onStartFromScratch && (
-                <li className="bg-surface-elevated">
+                <li>
                   <button
                     type="button"
                     onClick={onStartFromScratch}
-                    className="flex h-full w-full flex-col items-start gap-3 p-4 text-left transition-colors outline-none hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    className="flex h-full w-full flex-col items-start gap-3 rounded-lg border border-card-border p-3 text-left outline-none transition-colors hover:bg-surface focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
                     <span
                       aria-hidden
-                      className="flex h-[150px] w-full items-center justify-center border border-dashed [border-color:var(--border)] bg-background"
+                      className="flex h-[150px] w-full items-center justify-center rounded-md border border-dashed [border-color:var(--border)] bg-background"
                     >
                       <span className="flex flex-col items-center gap-1.5 text-muted-foreground-subtle">
                         <Plus className="h-5 w-5" />
@@ -183,36 +216,66 @@ export function StarterPicker({
                   </button>
                 </li>
               )}
-              {STUDIO_STARTERS.map((starter) => (
-                <li key={starter.id} className="bg-surface-elevated">
-                  <button
-                    type="button"
-                    onClick={() => onChoose(starter)}
-                    aria-pressed={starter.id === currentId}
-                    className={`flex h-full w-full flex-col gap-3 p-4 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
-                      starter.id === currentId ? "bg-primary/10" : "hover:bg-surface"
-                    }`}
-                  >
-                    <StarterPreview starter={starter} active={starter.id === currentId} />
-                    <span>
-                      <span className="flex items-baseline gap-2 font-display text-sm font-semibold text-foreground">
-                        {starter.name}
-                        {starter.id === currentId && (
-                          <span className="text-[10px] uppercase tracking-wider text-primary">
-                            Current
+              {STUDIO_STARTERS.map((starter) => {
+                const active = starter.id === currentId;
+                const detail = starterDetail(starter);
+                const Icon = detail.icon;
+                return (
+                  <li key={starter.id}>
+                    <button
+                      type="button"
+                      onClick={() => onChoose(starter)}
+                      aria-pressed={active}
+                      className={`group flex h-full w-full flex-col gap-3 rounded-lg border p-3 text-left outline-none transition-[border-color,background-color,transform] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                        active
+                          ? "border-[var(--starter-accent)] bg-[var(--starter-tint)]"
+                          : "border-card-border bg-surface-elevated hover:border-[var(--starter-accent)]/60 hover:bg-surface"
+                      }`}
+                      style={
+                        {
+                          "--starter-accent": detail.accent,
+                          "--starter-tint": `color-mix(in oklab, ${detail.accent} 12%, var(--background))`,
+                        } as CSSProperties
+                      }
+                    >
+                      <StarterPreview starter={starter} active={active} accent={detail.accent} />
+                      <span className="flex items-start gap-2.5">
+                        <span
+                          className="grid size-8 shrink-0 place-items-center rounded-md"
+                          style={{ backgroundColor: `${detail.accent}18`, color: detail.accent }}
+                        >
+                          <Icon aria-hidden data-icon="" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-sm font-semibold text-foreground">
+                            {starter.name}
+                            {active && (
+                              <span
+                                className="text-[10px] uppercase tracking-wider"
+                                style={{ color: detail.accent }}
+                              >
+                                Current
+                              </span>
+                            )}
                           </span>
-                        )}
+                          <span className="mt-0.5 block text-xs font-medium text-foreground">
+                            {starter.tagline}
+                          </span>
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-xs font-medium text-foreground">
-                        {starter.tagline}
+                      <span className="mt-auto block border-t border-current/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+                        <span
+                          className="font-mono text-3xs uppercase tracking-widest"
+                          style={{ color: detail.accent }}
+                        >
+                          {detail.label}
+                        </span>{" "}
+                        — {starter.remixNote}
                       </span>
-                      <span className="mt-1 block text-[11px] leading-relaxed text-muted-foreground">
-                        {starter.remixNote}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -327,7 +390,15 @@ export function StarterPicker({
 
 /** A scaled live preview of the member's work, dressed in the starter's
  *  actual surface treatment (fonts, density, radius, backgrounds). */
-function StarterPreview({ starter, active }: { starter: StudioStarter; active: boolean }) {
+function StarterPreview({
+  starter,
+  active,
+  accent,
+}: {
+  starter: StudioStarter;
+  active: boolean;
+  accent: string;
+}) {
   const { data: me } = useCurrentUser();
   const ownerId = me?.userId ?? "";
   const layout = useMemo(() => starterPreviewLayout(starter), [starter]);
@@ -347,7 +418,12 @@ function StarterPreview({ starter, active }: { starter: StudioStarter; active: b
     <div
       aria-hidden
       className="overflow-hidden [border-color:var(--card-border-color,var(--border))] bg-background card"
-      style={active ? { boxShadow: "0 0 0 1px var(--user-accent)" } : undefined}
+      style={
+        {
+          borderColor: active ? accent : "var(--card-border-color,var(--border))",
+          boxShadow: active ? `0 0 0 1px ${accent}` : undefined,
+        } as CSSProperties
+      }
     >
       <div className="flex items-center gap-1.5 border-b [border-color:var(--border)] px-2 py-1.5">
         <span
