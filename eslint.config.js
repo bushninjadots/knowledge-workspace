@@ -91,6 +91,20 @@ export default tseslint.config(
           message:
             "Avoid transition-all — name transition properties explicitly (transition-colors, transition-opacity, transition-[width], etc.) per the motion policy.",
         },
+        // Search-term escaping (lib/search.ts): a raw term interpolated into an
+        // ilike value inside an .or() filter breaks or silently rewrites the
+        // filter when it contains , % ( ) |. Build the filter with
+        // ilikeOrFilter(columns, term) instead — escaping and % wrapping live
+        // there. Template quasis are split around interpolations, so the
+        // detectable shape is a quasi ENDING in `.ilike.%`: the `%` is
+        // immediately followed by an interpolation, i.e. raw input. Pre-wrapped
+        // values (`.ilike.${like}` where like came from escapeForOr) end the
+        // quasi at `.ilike.` and are not matched.
+        {
+          selector: "TemplateElement[value.raw=/\\.ilike\\.%$/]",
+          message:
+            "Raw term interpolated into an ilike or-filter — a term with , % ( ) | breaks or rewrites the filter. Use ilikeOrFilter(columns, term) from @/lib/search (or escapeForOr) instead of interpolating input directly.",
+        },
       ],
     },
   },

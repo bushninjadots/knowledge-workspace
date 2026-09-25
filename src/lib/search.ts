@@ -17,6 +17,21 @@ export function escapeForOr(value: string): string {
 }
 
 /**
+ * Build a PostgREST `or`-filter string that ilike-matches `term` across the
+ * given columns. Wrapping (`%term%`) and escaping happen here, so a call site
+ * can never assemble `title.ilike.%${raw}%` from unescaped input — the exact
+ * mistake the eslint rule (`ilike.%${` in a template literal) is watching for.
+ *
+ * ```ts
+ * query = query.or(ilikeOrFilter(["title", "content"], term));
+ * ```
+ */
+export function ilikeOrFilter(columns: readonly string[], term: string): string {
+  const wrapped = `%${escapeForOr(term)}%`;
+  return columns.map((column) => `${column}.ilike.${wrapped}`).join(",");
+}
+
+/**
  * Minimum term length before a search query is allowed to hit the database.
  * Single-character terms fan out to ilike queries whose leading-wildcard
  * patterns match huge fractions of a table — the extra keystroke is

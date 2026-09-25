@@ -28,7 +28,7 @@ import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
 import { useMyTeams } from "@/hooks/use-teams";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
 import { useDebounced } from "@/hooks/use-debounced";
-import { escapeForOr, SEARCH_MIN_LENGTH } from "@/lib/search";
+import { ilikeOrFilter, SEARCH_MIN_LENGTH } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -392,11 +392,10 @@ function StepParticipants({
     const requestId = ++requestIdRef.current;
     setLoading(true);
     void (async () => {
-      const term = escapeForOr(debouncedTerm);
       const { data } = await sb
         .from("profiles")
         .select("id, display_name, handle, avatar_url")
-        .or(`display_name.ilike.%${term}%,handle.ilike.%${term}%`)
+        .or(ilikeOrFilter(["display_name", "handle"], debouncedTerm))
         .limit(10);
       if (requestIdRef.current !== requestId) return; // a newer term superseded this response
       setResults((data ?? []).filter((p: Participant) => !participants.find((x) => x.id === p.id)));

@@ -717,6 +717,7 @@ export type Database = {
           is_pinned: boolean;
           project_id: string | null;
           reading_progress: number;
+          shared: boolean;
           thumbnail_url: string | null;
           title: string;
           type: Database["public"]["Enums"]["library_item_type"];
@@ -738,6 +739,7 @@ export type Database = {
           is_pinned?: boolean;
           project_id?: string | null;
           reading_progress?: number;
+          shared?: boolean;
           thumbnail_url?: string | null;
           title?: string;
           type?: Database["public"]["Enums"]["library_item_type"];
@@ -759,6 +761,7 @@ export type Database = {
           is_pinned?: boolean;
           project_id?: string | null;
           reading_progress?: number;
+          shared?: boolean;
           thumbnail_url?: string | null;
           title?: string;
           type?: Database["public"]["Enums"]["library_item_type"];

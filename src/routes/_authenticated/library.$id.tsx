@@ -19,6 +19,9 @@ import {
   Github,
   RefreshCw,
   Unlink,
+  Share2,
+  Link2,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +40,7 @@ import {
   useDeleteItem,
   useToggleFavorite,
   useTogglePin,
+  useToggleShared,
   libraryKeys,
 } from "@/hooks/use-library";
 import { syncLibraryItemFromGithub, unlinkLibraryItemGithub } from "@/lib/github-server";
@@ -75,6 +79,8 @@ function LibraryItemPage() {
   const deleteItem = useDeleteItem();
   const toggleFav = useToggleFavorite();
   const togglePin = useTogglePin();
+  const toggleShared = useToggleShared();
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const projects = me?.projects ?? [];
   const queryClient = useQueryClient();
@@ -218,6 +224,18 @@ function LibraryItemPage() {
 
   // Edits are client-only until Save — block accidental navigation/tab close.
   useUnsavedChangesGuard(hasChanges, "You have unsaved changes to this item. Leave anyway?");
+
+  async function handleCopyShareLink() {
+    if (!item) return;
+    const url = `${window.location.origin}/library/shared/${item.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy the link — copy it from the address bar instead.");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -450,6 +468,56 @@ function LibraryItemPage() {
                 {tag.name}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Sharing — owner-only, links instead of permission rows. Notes and
+            documents share fully; uploads/links still require the owner's
+            storage session, so the public page shows metadata only for them. */}
+        {isOwner && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border/50 bg-surface/30 px-3 py-2 text-xs">
+            <Share2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {item.shared ? (
+              <>
+                <span className="font-medium text-foreground">
+                  Shared — anyone with the link can view
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={handleCopyShareLink}
+                >
+                  {linkCopied ? <Check className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+                  {linkCopied ? "Copied" : "Copy link"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs text-muted-foreground"
+                  disabled={toggleShared.isPending}
+                  onClick={() => toggleShared.mutate({ id: item.id, shared: false })}
+                >
+                  Stop sharing
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground">
+                  Make this item readable by anyone with the link.
+                </span>
+                <span className="flex-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  disabled={toggleShared.isPending}
+                  onClick={() => toggleShared.mutate({ id: item.id, shared: true })}
+                >
+                  Share
+                </Button>
+              </>
+            )}
           </div>
         )}
 

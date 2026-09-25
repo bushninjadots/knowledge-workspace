@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
-import { escapeForOr, SEARCH_MIN_LENGTH } from "@/lib/search";
+import { ilikeOrFilter, SEARCH_MIN_LENGTH } from "@/lib/search";
 import { sanitizeFilename, validateLibraryFile } from "@/lib/validators";
 import { parseGithubSource, type GithubSource } from "@/lib/github-source";
 
@@ -21,6 +21,8 @@ export type LibraryItem = {
   thumbnail_url: string | null;
   is_pinned: boolean;
   is_favorite: boolean;
+  /** World-readable when true (RLS: `shared = true` grants public SELECT). */
+  shared: boolean;
   project_id: string | null;
   reading_progress: number;
   content_format: "html" | "markdown";
@@ -68,6 +70,7 @@ type LibraryFilter = {
 export const libraryKeys = {
   all: ["library"] as const,
   items: () => [...libraryKeys.all, "items"] as const,
+  sharedItem: (id: string) => [...libraryKeys.all, "shared", id] as const,
   item: (id: string) => [...libraryKeys.items(), id] as const,
   collections: () => [...libraryKeys.all, "collections"] as const,
   tags: () => [...libraryKeys.all, "tags"] as const,
@@ -109,10 +112,7 @@ export function useLibraryItems(filters?: LibraryFilter) {
       if (filters?.is_favorite) query = query.eq("is_favorite", true);
       if (filters?.is_pinned) query = query.eq("is_pinned", true);
       if (filters?.search) {
-        // Escape before embedding — raw terms with , % ( ) | break or change
-        // the meaning of the PostgREST or-filter (see lib/search.ts).
-        const term = escapeForOr(filters.search);
-        query = query.or(`title.ilike.%${term}%,content.ilike.%${term}%`);
+        query = query.or(ilikeOrFilter(["title", "content"], filters.search));
       }
 
       const { data, error } = await query.limit(100);
@@ -301,6 +301,51 @@ export function useTogglePin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.items() });
+    },
+  });
+}
+
+/**
+ * Toggle an item's world-readable flag. The RLS policy (`shared = true`
+ * grants public SELECT) makes this the single switch: on = anyone with the
+ * link can read it, off = owner-only again.
+ */
+export function useToggleShared() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, shared }: { id: string; shared: boolean }) => {
+      const { error } = await supabase.from("library_items").update({ shared }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: libraryKeys.items() });
+      queryClient.invalidateQueries({ queryKey: libraryKeys.item(variables.id) });
+      queryClient.invalidateQueries({ queryKey: libraryKeys.sharedItem(variables.id) });
+    },
+  });
+}
+
+/**
+ * Public read of one shared item — no auth requirement. Backs the
+ * /library/shared/$id page; RLS shows the row only while `shared` is true,
+ * so a revoked link 404s (PGRST116) rather than leaking content.
+ */
+export function useSharedLibraryItem(id: string | null) {
+  return useQuery({
+    queryKey: libraryKeys.sharedItem(id ?? ""),
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: async (): Promise<LibraryItem | null> => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("library_items")
+        .select("*")
+        .eq("id", id)
+        .eq("shared", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? (normalizeItem(data) as LibraryItem) : null;
     },
   });
 }
@@ -617,12 +662,11 @@ export function useLibrarySearch(query: string) {
     staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem[]> => {
       if (!userId || trimmed.length < SEARCH_MIN_LENGTH) return [];
-      const term = escapeForOr(trimmed);
       const { data, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("user_id", userId)
-        .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
+        .or(ilikeOrFilter(["title", "content"], trimmed))
         .order("updated_at", { ascending: false })
         .limit(20);
       if (error) throw error;

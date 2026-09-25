@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { escapeForOr, SEARCH_MIN_LENGTH } from "./search";
+import { escapeForOr, ilikeOrFilter, SEARCH_MIN_LENGTH } from "./search";
 
 describe("escapeForOr", () => {
   it("escapes the comma that would split the or-filter into two conditions", () => {
@@ -22,6 +22,25 @@ describe("escapeForOr", () => {
     expect(escapeForOr("react hooks")).toBe("react hooks");
     expect(escapeForOr("c++ tutorials")).toBe("c++ tutorials");
     expect(escapeForOr("")).toBe("");
+  });
+});
+
+describe("ilikeOrFilter", () => {
+  it("wraps and joins one condition per column", () => {
+    expect(ilikeOrFilter(["title", "content"], "react")).toBe(
+      "title.ilike.%react%,content.ilike.%react%",
+    );
+  });
+
+  it("escapes or-structure characters before embedding — the comma cannot split the filter", () => {
+    expect(ilikeOrFilter(["display_name", "handle"], "react, hooks")).toBe(
+      "display_name.ilike.%react\\, hooks%,handle.ilike.%react\\, hooks%",
+    );
+    expect(ilikeOrFilter(["title"], "100% (a|b)")).toBe("title.ilike.%100\\% \\(a\\|b\\)%");
+  });
+
+  it("passes ordinary terms through untouched apart from the % wrapping", () => {
+    expect(ilikeOrFilter(["title"], "c++")).toBe("title.ilike.%c++%");
   });
 });
 

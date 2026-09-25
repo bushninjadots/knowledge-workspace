@@ -85,7 +85,7 @@ GitHub sync, file upload, TipTap note editor, signed images.
 
 | #   | Issue                                            | Severity | Status                                                                                                                                                                             |
 | --- | ------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 13  | No sharing — items/collections are personal only | Low      | open                                                                                                                                                                               |
+| 13  | No sharing — items/collections are personal only | Low      | **fixed** (2026-09-25) — `library_items.shared` (migration `20260925140000_library_shared_column.sql`: column + permissive public-SELECT RLS policy "Public read shared items" + partial index; no new RPC, anon EXECUTE surface unchanged); owner toggle via `useToggleShared` with a share bar on the item detail page (share / copy link / stop sharing), and a public read-only page at `/library/shared/$id` (`SectionShell`, noindex) that renders notes/docs and links and shows metadata-only for uploads (uploaded files stay private to the owner's storage session — known limitation). Revoking hides the row immediately (RLS re-evaluated per query), so a revoked link shows the honest "isn't available" state. Verified live: anon REST sees only `shared=true` rows; browser checks 13/13 (`tests/verify-features-browser.mjs`) |
 | 14  | No full-text search within the library           | Low      | **fixed** — already implemented: `useLibrarySearch` (title/content `ilike`, min 2 chars) wired to `LibrarySearchBar` on `/library`; covered by `use-library.test.tsx` (2026-09-07) |
 
 ## 8. Reputation & Achievements
@@ -127,7 +127,7 @@ apply template, unpublish, forking with lineage, usage tracking.
 
 | #   | Issue                                 | Severity | Status |
 | --- | ------------------------------------- | -------- | ------ |
-| 21  | No visual template preview in gallery | Low      | open   |
+| 21  | No visual template preview in gallery | Low      | **fixed** (2026-09-25) — each community-template row in the Studio templates dialog renders a structural wireframe (`TemplateSketch`): one bar row per section, split per block for multi-column layouts, lead bar in the user accent — derived purely from `sanitizeTemplateSections` output (no block components, no data fetching, capped at 4 rows), so a long template list stays cheap and hostile section data can't break rendering. Coverage: `templateSketchRows` unit tests in `starter-picker.test.ts`; verified live in the dialog (wireframes render with per-template rhythm differences) |
 | 22  | No template versioning once published | Low      | open   |
 
 ## 12. Dashboard & Workspace

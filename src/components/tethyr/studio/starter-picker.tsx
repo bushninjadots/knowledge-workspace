@@ -29,7 +29,7 @@ import {
   type CommunityTemplate,
 } from "@/hooks/use-templates";
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
-import type { BlockContext } from "@/lib/page-blocks";
+import type { BlockContext, LayoutSection } from "@/lib/page-blocks";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { studioBackgroundVars, studioSurfaceStyle } from "@/lib/studio-config";
 import { sanitizeTemplateSections } from "@/lib/template-apply";
@@ -469,7 +469,11 @@ function previewSurfaceStyle(starter: Starter): React.CSSProperties {
   };
 }
 
-/** Small wireframe fallback preview of a starter's rhythm. */
+/**
+ * Small wireframe fallback preview of a starter's rhythm.
+ * The first row renders in the accent color so the direction reads as a page
+ * (lead block on top), matching how the live previews present themselves.
+ */
 function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
   return (
     <div aria-hidden className="flex flex-col gap-1 p-2">
@@ -481,11 +485,12 @@ function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
               className="h-3 rounded-sm"
               style={{
                 flex: span,
-                backgroundColor: active
-                  ? "var(--user-accent)"
-                  : rowIndex === 1
-                    ? "var(--border-strong)"
-                    : "var(--border)",
+                backgroundColor:
+                  active || rowIndex === 0
+                    ? "var(--user-accent)"
+                    : rowIndex === 1
+                      ? "var(--border-strong)"
+                      : "var(--border)",
               }}
             />
           ))}
@@ -496,6 +501,70 @@ function Sketch({ rows, active }: { rows: number[][]; active: boolean }) {
 }
 
 // ── Community template rows ──────────────────────────────────────────────────
+
+/**
+ * How many columns each section layout flows into — the only thing a wireframe
+ * needs to show. Full-width layouts are one bar; multi-column layouts split
+ * the row per block.
+ */
+const SECTION_COLUMN_COUNT: Record<string, number> = {
+  full: 1,
+  two_column: 2,
+  three_column: 3,
+  sidebar_left: 2,
+  sidebar_right: 2,
+  feature: 2,
+  side_by_side: 2,
+  featured_work: 1,
+  asymmetric: 2,
+  split: 2,
+  image_lead: 1,
+  compact_list: 1,
+};
+
+/** Previews communicate rhythm, not completeness (the row's own
+ *  "N sections" label carries the count). */
+const TEMPLATE_SKETCH_MAX_ROWS = 4;
+
+/**
+ * Structural wireframe for a template: one bar row per section, split per
+ * block for multi-column layouts. Derived purely from the sanitized section
+ * structure — no block components, no data fetching — so a long template list
+ * stays cheap and hostile section data can't break rendering (sanitize already
+ * dropped anything unknown).
+ */
+export function templateSketchRows(sections: LayoutSection[]): number[][] {
+  return sections.slice(0, TEMPLATE_SKETCH_MAX_ROWS).map((section) => {
+    const columnCount = Math.max(1, SECTION_COLUMN_COUNT[section.layout] ?? 1);
+    const blocks = section.blocks.slice(0, columnCount);
+    // A single block spans the row; otherwise blocks share it equally.
+    if (blocks.length <= 1) return [1];
+    return blocks.map(() => 1);
+  });
+}
+
+/** Wireframe rendering of `templateSketchRows` — the Sketch bar treatment,
+ *  lead row accented, shared with the starter fallbacks. */
+export function TemplateSketch({ rows }: { rows: number[][] }) {
+  return (
+    <div aria-hidden className="flex flex-col gap-1 p-2">
+      {rows.map((row, rowIndex) => (
+        <div key={rowIndex} className="flex gap-1">
+          {row.map((span, spanIndex) => (
+            <span
+              key={`${rowIndex}-${spanIndex}`}
+              className="h-2.5 rounded-sm"
+              style={{
+                flex: span,
+                backgroundColor: rowIndex === 0 ? "var(--user-accent)" : "var(--border)",
+              }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function TemplateRow({
   template,
@@ -514,12 +583,19 @@ function TemplateRow({
     () => sanitizeTemplateSections(template.rawSections),
     [template.rawSections],
   );
+  const sketchRows = useMemo(() => templateSketchRows(sanitized), [sanitized]);
   const creator =
     template.creatorDisplayName ?? (template.creatorHandle ? `@${template.creatorHandle}` : null);
 
   return (
     <li className="border-b border-border/60 last:border-b-0">
       <div className="flex items-center gap-3 py-2.5">
+        <div
+          aria-hidden
+          className="hidden w-28 shrink-0 rounded-md border border-border/60 bg-background sm:block"
+        >
+          <TemplateSketch rows={sketchRows} />
+        </div>
         <div className="min-w-0 flex-1">
           <p className="flex items-baseline gap-2 truncate text-sm font-medium text-foreground">
             <span className="truncate">{template.name}</span>
