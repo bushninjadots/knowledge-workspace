@@ -613,7 +613,7 @@ export function WorkspaceGrid({
       {showSectionNav && sectionModules.length > 1 && (
         <nav
           aria-label={`${workspaceLabel} sections`}
-          className="mb-5 border-b border-border/60 pb-3"
+          className="sticky top-14 z-20 mb-5 border-b border-border/60 bg-background/95 pb-3 pt-2"
         >
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="section-label">Jump to</span>

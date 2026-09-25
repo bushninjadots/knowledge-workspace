@@ -59,6 +59,12 @@ export function AuthenticatedShell() {
       style={themeStyle}
     >
       <NavigationProgress />
+      <a
+        href="#main-content"
+        className="sr-only z-[60] rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+      >
+        Skip to main content
+      </a>
       <BackgroundLayer
         background={me?.background}
         imageUrl={me?.backgroundImageUrl}
