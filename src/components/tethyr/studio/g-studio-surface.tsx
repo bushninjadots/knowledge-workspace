@@ -81,6 +81,7 @@ import {
   CARD_FILL_SWATCHES,
   CARD_SURFACE_STYLE,
   cardFillStyle,
+  studioBackgroundVars,
   RADIUS_MAX,
   RADIUS_MIN,
   structureMaxWidth,
@@ -439,6 +440,9 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
     ...studioSurfaceStyle(props.config, palette?.dominant ?? null),
     ...appearanceStyle(borderPreview),
     ...cardFillStyle(props.config),
+    // The template's app-scope backdrop choice paints the editor shell too,
+    // so the builder sits on the same canvas the published page will.
+    ...studioBackgroundVars(props.config, "app"),
   };
 
   const toggleCustomize = () => {
@@ -452,7 +456,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
 
   return (
     <div
-      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background"
+      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--studio-bg,var(--background))]"
       data-studio-builder="g"
       data-personality={props.config.personality}
       style={surfaceStyle}
@@ -524,7 +528,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
           />
         )}
         <main
-          className="relative min-w-0 flex-1 overflow-y-auto bg-noise"
+          className="relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise"
           aria-label="Studio canvas"
           style={CARD_SURFACE_STYLE}
         >

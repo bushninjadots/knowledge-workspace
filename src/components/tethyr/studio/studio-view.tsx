@@ -47,6 +47,7 @@ import { Button } from "@/components/ui/button";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
+  studioBackgroundVars,
   studioConfigToThemeTokens,
   structureMaxWidth,
   studioSurfaceStyle,
@@ -187,6 +188,10 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
     ...appearanceStyle(me?.background),
     ...avatarShapeStyle(me?.background),
     ...cardFillStyle(config),
+    // The template's app-scope backdrop choice paints this shell; preview mode
+    // is overridden below to the public scope so it matches the visitor page.
+    ...studioBackgroundVars(config, "app"),
+    ...(mode === "preview" ? studioBackgroundVars(config, "public") : null),
   };
   const [emptyBlocks, setEmptyBlocks] = useState<Set<string>>(() => new Set());
   const handleBlockEmpty = useCallback((blockId: string, isEmpty: boolean) => {
@@ -272,8 +277,8 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
       )}
       <main
         className={cn(
-          "relative min-w-0 flex-1 overflow-y-auto bg-noise",
-          mode === "preview" && "bg-[var(--surface-sunken)] p-2 sm:p-4",
+          "relative min-w-0 flex-1 overflow-y-auto bg-[var(--studio-bg,var(--background))] bg-noise",
+          mode === "preview" && "p-2 sm:p-4",
         )}
         aria-label={mode === "preview" ? "Public Studio preview" : "Studio"}
         style={CARD_SURFACE_STYLE}

@@ -133,4 +133,33 @@ describe("applyTemplateSections", () => {
     applyTemplateSections(layout, template);
     expect(JSON.stringify(layout)).toBe(before);
   });
+
+  it("is deterministic: the same template JSON produces byte-identical layouts", () => {
+    // Same untrusted JSON in → same normalized layout out, every time. This is
+    // what makes the published page render the same on every load: the stored
+    // arrangement is a pure function of the template, not of when/how it was
+    // applied.
+    const raw = [
+      {
+        id: "tpl-identity",
+        layout: "feature",
+        blocks: [
+          { id: "t1", type: "profile-header", config: { showTagline: true } },
+          { id: "t2", type: "profile-projects", config: { presentation: "spotlight" } },
+        ],
+      },
+      { id: "tpl-bio", layout: "full", blocks: [{ id: "t3", type: "profile-bio", config: {} }] },
+    ];
+    const first = JSON.stringify(applyTemplateSections(layout, sanitizeTemplateSections(raw)));
+    for (let i = 0; i < 5; i++) {
+      expect(JSON.stringify(applyTemplateSections(layout, sanitizeTemplateSections(raw)))).toBe(
+        first,
+      );
+    }
+    // And a JSON round-trip of the result re-applies to itself byte-for-byte.
+    const applied = JSON.parse(first);
+    expect(JSON.stringify(applyTemplateSections(applied, sanitizeTemplateSections(raw)))).toBe(
+      first,
+    );
+  });
 });

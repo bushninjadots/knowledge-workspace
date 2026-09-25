@@ -8,6 +8,7 @@ import {
   normalizeStudioConfig,
   studioConfigToStyle,
   studioConfigToThemeTokens,
+  studioBackgroundVars,
   structureMaxWidth,
   densityMetrics,
   RADIUS_MAX,
@@ -271,6 +272,47 @@ describe("studioConfigToStyle", () => {
     expect(style["--studio-radius"]).toBe("12px");
     expect(style["--studio-gap"]).toBe("14px");
     expect(style["--studio-pad"]).toBe("16px");
+  });
+});
+
+describe("studioBackgroundVars", () => {
+  it("maps every BackgroundId to its surface variable in the public scope", () => {
+    const varsOf = (id: string) =>
+      (
+        studioBackgroundVars(
+          { appBackground: "default", publicBackground: id as StudioConfig["publicBackground"] },
+          "public",
+        ) as Record<string, string>
+      )["--studio-bg"];
+    expect(varsOf("default")).toBe("var(--background)");
+    expect(varsOf("surface")).toBe("var(--surface)");
+    expect(varsOf("sunken")).toBe("var(--surface-sunken)");
+  });
+
+  it("reads appBackground in the app scope and publicBackground in the public scope", () => {
+    const config = {
+      appBackground: "sunken",
+      publicBackground: "surface",
+    } as Pick<StudioConfig, "appBackground" | "publicBackground">;
+    const app = studioBackgroundVars(config, "app") as Record<string, string>;
+    const pub = studioBackgroundVars(config, "public") as Record<string, string>;
+    expect(app["--studio-bg"]).toBe("var(--surface-sunken)");
+    expect(pub["--studio-bg"]).toBe("var(--surface)");
+  });
+
+  it("is a pure function of the stored config — identical output on every call", () => {
+    const config = {
+      appBackground: "surface",
+      publicBackground: "sunken",
+    } as Pick<StudioConfig, "appBackground" | "publicBackground">;
+    const first = JSON.stringify(studioBackgroundVars(config, "public"));
+    for (let i = 0; i < 5; i++) {
+      expect(JSON.stringify(studioBackgroundVars(config, "public"))).toBe(first);
+    }
+    // Surviving a persistence round-trip unchanged is what makes the rendered
+    // backdrop deterministic: the same stored JSON paints the same colour.
+    const roundTripped = JSON.parse(JSON.stringify(config));
+    expect(JSON.stringify(studioBackgroundVars(roundTripped, "public"))).toBe(first);
   });
 });
 

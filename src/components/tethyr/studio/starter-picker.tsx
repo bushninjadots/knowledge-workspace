@@ -31,7 +31,7 @@ import {
 import { PageLayoutRenderer } from "@/components/tethyr/page/page-layout";
 import type { BlockContext } from "@/lib/page-blocks";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { studioSurfaceStyle } from "@/lib/studio-config";
+import { studioBackgroundVars, studioSurfaceStyle } from "@/lib/studio-config";
 import { sanitizeTemplateSections } from "@/lib/template-apply";
 import "@/components/tethyr/blocks/register-all";
 
@@ -457,16 +457,16 @@ function StarterPreview({
  * typography, density rhythm, and corner treatment instead of a generic one.
  */
 function previewSurfaceStyle(starter: Starter): React.CSSProperties {
-  const style = studioSurfaceStyle(starterPreviewConfig(starter));
-  // Backgrounds: the config's publicBackground picks the preview's backdrop so
-  // Paper/Surface/Sunken differences are visible between directions.
-  const bg =
-    starter.config.publicBackground === "sunken"
-      ? "var(--surface-sunken)"
-      : starter.config.publicBackground === "surface"
-        ? "var(--surface)"
-        : "var(--background)";
-  return { ...style, backgroundColor: bg };
+  const config = starterPreviewConfig(starter);
+  const style = studioSurfaceStyle(config);
+  // Backgrounds: the config's publicBackground picks the preview's backdrop —
+  // the same shared mapping the public page applies, so Paper/Surface/Sunken
+  // differences are visible between directions and never drift from reality.
+  return {
+    ...style,
+    ...studioBackgroundVars(config, "public"),
+    backgroundColor: "var(--studio-bg)",
+  };
 }
 
 /** Small wireframe fallback preview of a starter's rhythm. */

@@ -17,6 +17,7 @@ import { PageShell } from "@/components/tethyr/page/page-shell";
 import { EditModeProvider } from "@/components/tethyr/page/edit-mode-context";
 import { useProfilePage } from "@/hooks/use-profile-page";
 import { themeTokensToStyle } from "@/lib/theme-tokens";
+import { useTheme as useAppTheme } from "@/lib/theme";
 import { SectionShell } from "@/components/tethyr/section-shell";
 import { fetchPublicProfile, type PublicProfile } from "./-u.$handle-data";
 
@@ -66,9 +67,13 @@ export function PublicProfileRoute() {
   });
   const { page: profilePage } = profilePageQuery;
 
+  // Page theme tokens derived under the active light/dark scheme — the same
+  // derivation the public shell applies, so outer chrome and inner canvas can
+  // never disagree about borders/foreground on a dark or tinted backdrop.
+  const { resolvedTheme } = useAppTheme();
   const pageThemeStyle = useMemo(
-    () => themeTokensToStyle(profilePage?.theme ?? {}),
-    [profilePage?.theme],
+    () => themeTokensToStyle(profilePage?.theme ?? {}, resolvedTheme),
+    [profilePage?.theme, resolvedTheme],
   );
 
   const bannerColor = useDominantColor(data?.bannerSigned ?? null);

@@ -19,6 +19,7 @@ import { themeTokensToStyle, deepMergeTokens } from "@/lib/theme-tokens";
 import {
   CARD_SURFACE_STYLE,
   cardFillStyle,
+  studioBackgroundVars,
   structureMaxWidth,
   studioConfigToThemeTokens,
   studioSurfaceStyle,
@@ -335,14 +336,21 @@ export function PageShell({
   return (
     <div
       data-page-shell={`${ownerType}:${ownerId}`}
-      style={page && ownerType === "profile" ? cardFillStyle(page.config) : undefined}
+      style={
+        page && ownerType === "profile"
+          ? {
+              ...cardFillStyle(page.config),
+              ...studioBackgroundVars(page.config, "public"),
+            }
+          : undefined
+      }
     >
       <div
         className={`${workspaceClass} ${isPreviewing || isEditing ? "studio-editor-workspace" : ""}`}
         data-studio-workspace={isPreviewing ? "preview" : isEditing ? "editor" : "view"}
       >
         <div
-          className={`${canvasFrameClass} relative isolate bg-background bg-noise font-sans text-foreground`}
+          className={`${canvasFrameClass} relative isolate bg-[var(--studio-bg,var(--background))] bg-noise font-sans text-foreground`}
           style={
             ownerType === "profile" && structureWidth && !isPreviewing && !isEditing
               ? { ...containerStyle, maxWidth: structureWidth, marginInline: "auto" }

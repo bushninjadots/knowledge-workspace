@@ -540,6 +540,36 @@ export const CARD_FILL_SWATCHES: ReadonlyArray<{ value: string; label: string }>
   { value: "#3f8f8a", label: "Teal" },
 ];
 
+// ── Background Scope → Backdrop ─────────────────────────────────────────────
+
+/** Which backdrop a surface wants: the editor shell or the published page. */
+export type StudioBackgroundScope = "app" | "public";
+
+/**
+ * The Studio's backdrop as a single custom property, `--studio-bg`, resolved
+ * from the config's BackgroundId (stamped by every starter and preserved by
+ * normalization). One mapping shared by the picker previews, the owner
+ * canvases, and the public page, so a template's Paper/Surface/Sunken choice
+ * is the same colour everywhere it renders — and the same on every load,
+ * because it is a pure function of the stored config.
+ *
+ * Consumers paint `backgroundColor: var(--studio-bg)` on their canvas root;
+ * the member's own backdrop layer (BackgroundLayer) still composes above it.
+ */
+export function studioBackgroundVars(
+  config: Pick<StudioConfig, "appBackground" | "publicBackground">,
+  scope: StudioBackgroundScope,
+): React.CSSProperties {
+  const id = scope === "public" ? config.publicBackground : config.appBackground;
+  const surface =
+    id === "sunken"
+      ? "var(--surface-sunken)"
+      : id === "surface"
+        ? "var(--surface)"
+        : "var(--background)";
+  return { "--studio-bg": surface } as React.CSSProperties;
+}
+
 /**
  * Card fill → a single resolved colour. Emitted on the *outer* Studio surface
  * so the canvas can point --surface/--card at it without a self-referencing

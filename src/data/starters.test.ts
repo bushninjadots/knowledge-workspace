@@ -59,6 +59,15 @@ describe("STARTERS", () => {
     );
     expect(combos.size).toBeGreaterThanOrEqual(4);
   });
+
+  it("exercises every background choice so template backdrops are part of the contract", () => {
+    const backgrounds = new Set(
+      STARTERS.flatMap((s) => [s.config.appBackground, s.config.publicBackground]),
+    );
+    // Every BackgroundId is in play across the five directions — the backdrop
+    // mapping has to handle all of them, not just the default.
+    expect([...backgrounds].sort()).toEqual(["default", "sunken", "surface"]);
+  });
 });
 
 describe("preview configs", () => {
@@ -173,6 +182,29 @@ describe("applyStarter", () => {
     expect(hiddenMarkers).toContain("tools");
     expect(hiddenMarkers).toContain("gallery");
     expect(hiddenMarkers).toHaveLength(back.sections.filter((s) => s.visible === false).length);
+  });
+
+  it("applies every starter completely — sections, config, and backdrop stamp", () => {
+    for (const starter of STARTERS) {
+      const next = applyStarter(layout, starter);
+      // The layout side always lands.
+      expect(next.sections).toHaveLength(layout.sections.length);
+      expect(next.sections.map((s) => s.id).sort()).toEqual(
+        layout.sections.map((s) => s.id).sort(),
+      );
+      // And the config side carries the starter's full stamp, backgrounds
+      // included — nothing about the direction is silently dropped.
+      const config = starterConfig(starter, DEFAULT_STUDIO_CONFIG);
+      expect(config.starterId).toBe(starter.id);
+      expect(config.structure).toBe(starter.config.structure);
+      expect(config.personality).toBe(starter.config.personality);
+      expect(config.density).toBe(starter.config.density);
+      expect(config.radius).toBe(starter.config.radius);
+      expect(config.appBackground).toBe(starter.config.appBackground);
+      expect(config.publicBackground).toBe(starter.config.publicBackground);
+      // Determinism: applying twice produces byte-identical layout JSON.
+      expect(JSON.stringify(applyStarter(layout, starter))).toBe(JSON.stringify(next));
+    }
   });
 
   it("respects manual visibility when no previous starter was applied", () => {
