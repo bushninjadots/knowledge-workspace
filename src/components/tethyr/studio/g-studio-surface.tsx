@@ -1801,7 +1801,7 @@ function GInspectorRail(
     .flatMap((section) => section.blocks)
     .find((item) => item.id === props.selectedBlockId);
   return (
-    <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-border bg-[var(--surface-elevated)] lg:block">
+    <aside className="hidden h-[calc(100vh-2.75rem)] min-h-0 w-72 shrink-0 overflow-y-auto border-l border-border bg-[var(--surface-elevated)] lg:block">
       {props.paletteOpen ? (
         <GBlockPalette {...props} />
       ) : (
@@ -2573,7 +2573,7 @@ function GCustomizePanel({
   return (
     <aside
       className={cn(
-        "flex w-64 shrink-0 flex-col border-r border-border bg-[var(--surface-elevated)]",
+        "flex h-[calc(100vh-2.75rem)] min-h-0 w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--surface-elevated)]",
         compact && "fixed inset-y-11 left-0 z-40",
       )}
     >
