@@ -615,8 +615,8 @@ export function WorkspaceGrid({
           aria-label={`${workspaceLabel} sections`}
           className="sticky top-14 z-20 mb-5 border-b border-border/60 bg-background/95 pb-3 pt-2"
         >
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="section-label">Jump to</span>
+          <div className="flex min-w-0 max-w-full items-center gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="section-label shrink-0">Jump to</span>
             {sectionModules.map((module) => (
               <a
                 key={module.id}
