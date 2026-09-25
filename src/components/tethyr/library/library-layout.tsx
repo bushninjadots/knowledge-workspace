@@ -18,14 +18,14 @@ export function LibraryLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] animate-room-enter">
+    <div className="flex min-h-[calc(100dvh-3rem)] animate-room-enter">
       {/* Library sidebar */}
-      <div className="hidden w-64 shrink-0 border-r border-border/60 bg-surface/30 bg-noise lg:block">
+      <div className="sticky top-12 hidden h-[calc(100dvh-3rem)] w-64 shrink-0 self-start overflow-y-auto border-r border-border/60 bg-surface/30 bg-noise lg:block">
         <LibrarySidebar view={view} onViewChange={setView} onNewNote={onNewNote} />
       </div>
 
       {/* Main content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-w-0 flex-1">
         <div className="border-b border-border/60 bg-surface/30 px-4 py-2 lg:hidden">
           <button
             type="button"

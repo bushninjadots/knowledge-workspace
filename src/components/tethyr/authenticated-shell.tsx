@@ -64,7 +64,7 @@ export function AuthenticatedShell() {
         imageUrl={me?.backgroundImageUrl}
         bannerColor={palette?.dominant ?? null}
       />
-      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
+      <div className="sticky top-0 hidden h-[100dvh] self-start shrink-0 md:block">
         <DashboardSidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
       </div>
 
