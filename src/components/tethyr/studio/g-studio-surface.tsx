@@ -452,7 +452,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
 
   return (
     <div
-      className="flex min-h-screen flex-col bg-background"
+      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background"
       data-studio-builder="g"
       data-personality={props.config.personality}
       style={surfaceStyle}
@@ -1801,7 +1801,7 @@ function GInspectorRail(
     .flatMap((section) => section.blocks)
     .find((item) => item.id === props.selectedBlockId);
   return (
-    <aside className="hidden h-[calc(100vh-2.75rem)] min-h-0 w-72 shrink-0 overflow-y-auto border-l border-border bg-[var(--surface-elevated)] lg:block">
+    <aside className="hidden h-[calc(100dvh-2.75rem)] min-h-0 w-72 shrink-0 overflow-y-auto border-l border-border bg-[var(--surface-elevated)] lg:block">
       {props.paletteOpen ? (
         <GBlockPalette {...props} />
       ) : (
@@ -2573,7 +2573,7 @@ function GCustomizePanel({
   return (
     <aside
       className={cn(
-        "flex h-[calc(100vh-2.75rem)] min-h-0 w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--surface-elevated)]",
+        "flex h-[calc(100dvh-2.75rem)] min-h-0 w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--surface-elevated)]",
         compact && "fixed inset-y-11 left-0 z-40",
       )}
     >
