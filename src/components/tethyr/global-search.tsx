@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useDebounced } from "@/hooks/use-debounced";
+import { escapeForOr, SEARCH_MIN_LENGTH } from "@/lib/search";
 import { useTheme } from "@/lib/theme";
 import { CreateProjectButton } from "./create-project-button";
 
@@ -240,15 +242,6 @@ function destinationHitsFor(term: string, limit = 4): Array<(typeof DESTINATIONS
   ).slice(0, limit);
 }
 
-function useDebounced<T>(value: T, ms = 200): T {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
-
 export function GlobalSearch({
   variant = "inline",
   className,
@@ -304,15 +297,7 @@ export function GlobalSearch({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [enableGlobalShortcut, setOpen, variant]);
 
-  function escapeForOr(value: string): string {
-    return value.replace(/[,%()\\|]/g, (c) => `\\${c}`);
-  }
-
-  // Two characters before hitting the database: single-character terms fan out
-  // to seven ilike queries whose leading-wildcard patterns match huge fractions
-  // of each table. The extra keystroke is imperceptible; the query load drop
-  // is not (pg_trgm indexes on the same columns back this up server-side).
-  const enabled = debounced.length >= 2;
+  const enabled = debounced.length >= SEARCH_MIN_LENGTH;
   const safeTerm = escapeForOr(debounced);
   const like = `%${safeTerm}%`;
 

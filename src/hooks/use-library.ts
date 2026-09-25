@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./use-current-user";
+import { escapeForOr, SEARCH_MIN_LENGTH } from "@/lib/search";
 import { sanitizeFilename, validateLibraryFile } from "@/lib/validators";
 import { parseGithubSource, type GithubSource } from "@/lib/github-source";
 
@@ -108,7 +109,10 @@ export function useLibraryItems(filters?: LibraryFilter) {
       if (filters?.is_favorite) query = query.eq("is_favorite", true);
       if (filters?.is_pinned) query = query.eq("is_pinned", true);
       if (filters?.search) {
-        query = query.or(`title.ilike.%${filters.search}%,content.ilike.%${filters.search}%`);
+        // Escape before embedding — raw terms with , % ( ) | break or change
+        // the meaning of the PostgREST or-filter (see lib/search.ts).
+        const term = escapeForOr(filters.search);
+        query = query.or(`title.ilike.%${term}%,content.ilike.%${term}%`);
       }
 
       const { data, error } = await query.limit(100);
@@ -609,14 +613,16 @@ export function useLibrarySearch(query: string) {
 
   return useQuery({
     queryKey: libraryKeys.search(trimmed),
-    enabled: !!userId && trimmed.length >= 2,
+    enabled: !!userId && trimmed.length >= SEARCH_MIN_LENGTH,
+    staleTime: 30_000,
     queryFn: async (): Promise<LibraryItem[]> => {
-      if (!userId || trimmed.length < 2) return [];
+      if (!userId || trimmed.length < SEARCH_MIN_LENGTH) return [];
+      const term = escapeForOr(trimmed);
       const { data, error } = await supabase
         .from("library_items")
         .select("*")
         .eq("user_id", userId)
-        .or(`title.ilike.%${trimmed}%,content.ilike.%${trimmed}%`)
+        .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
         .order("updated_at", { ascending: false })
         .limit(20);
       if (error) throw error;

@@ -141,6 +141,14 @@ describe("useLibrarySearch", () => {
     await act(async () => {});
     expect(libraryCalls()).toHaveLength(0);
   });
+
+  it("queries successfully when the term contains a PostgREST or-filter character", async () => {
+    // "react, hooks" used to be embedded raw into the .or() filter, where the
+    // comma split it into two conditions against a nonexistent column.
+    handle.on("library_items:select", () => ({ data: [], error: null }));
+    const { result } = renderHookWithClient(() => useLibrarySearch("react, hooks"));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
 });
 
 describe("useCreateItem", () => {

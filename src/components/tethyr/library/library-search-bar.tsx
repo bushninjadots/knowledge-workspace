@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useDebounced } from "@/hooks/use-debounced";
 import { Search, X, FileText, Globe, Upload } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
@@ -50,7 +51,11 @@ export function LibrarySearchBar({
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { data: results = [], isLoading } = useLibrarySearch(value);
+  // Debounce the dropdown's own query so typing fires one request per pause,
+  // not one per keystroke. The input itself stays fully controlled — the
+  // highlight matches what the user sees, not the older debounced term.
+  const debouncedValue = useDebounced(value, 200);
+  const { data: results = [], isLoading } = useLibrarySearch(debouncedValue);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

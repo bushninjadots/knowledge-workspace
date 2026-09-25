@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Users,
   Calendar,
@@ -27,6 +27,8 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCreateSession, type SessionType } from "@/hooks/use-sessions";
 import { useMyTeams } from "@/hooks/use-teams";
 import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { useDebounced } from "@/hooks/use-debounced";
+import { escapeForOr, SEARCH_MIN_LENGTH } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -375,22 +377,35 @@ function StepParticipants({
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(false);
+  const requestIdRef = useRef(0);
 
-  async function doSearch(q: string) {
-    setSearch(q);
-    if (q.length < 2) {
+  // Debounced, escaped, race-guarded: one query per pause (not per keystroke),
+  // a term with , % ( ) | can't break the or-filter, and a slow earlier response
+  // can't overwrite a newer one.
+  const debouncedSearch = useDebounced(search, 200);
+  const debouncedTerm = debouncedSearch.trim();
+  useEffect(() => {
+    if (debouncedTerm.length < SEARCH_MIN_LENGTH) {
       setResults([]);
       return;
     }
+    const requestId = ++requestIdRef.current;
     setLoading(true);
-    const { data } = await sb
-      .from("profiles")
-      .select("id, display_name, handle, avatar_url")
-      .or(`display_name.ilike.%${q}%,handle.ilike.%${q}%`)
-      .limit(10);
-    setResults((data ?? []).filter((p: Participant) => !participants.find((x) => x.id === p.id)));
-    setLoading(false);
-  }
+    void (async () => {
+      const term = escapeForOr(debouncedTerm);
+      const { data } = await sb
+        .from("profiles")
+        .select("id, display_name, handle, avatar_url")
+        .or(`display_name.ilike.%${term}%,handle.ilike.%${term}%`)
+        .limit(10);
+      if (requestIdRef.current !== requestId) return; // a newer term superseded this response
+      setResults((data ?? []).filter((p: Participant) => !participants.find((x) => x.id === p.id)));
+      setLoading(false);
+    })();
+    // participants is intentionally excluded: filtering out already-invited
+    // members uses the list at response time, not a reason to re-query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedTerm]);
 
   function add(p: Participant) {
     onChange([...participants, p]);
@@ -416,7 +431,7 @@ function StepParticipants({
         <Input
           placeholder="Search by name or handle..."
           value={search}
-          onChange={(e) => doSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
         />
         {loading && (

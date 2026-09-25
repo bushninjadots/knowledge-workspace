@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDebounced } from "@/hooks/use-debounced";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus, LayoutGrid, List, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -63,8 +64,11 @@ function LibraryContent({ view, onNewNote }: { view: LibraryView; onNewNote: () 
 
   const { data: collections = [], error: collectionsError } = useLibraryCollections();
 
+  // Debounced so the list query fires per pause, not per keystroke.
+  const debouncedSearch = useDebounced(search, 200);
+
   const filters: Record<string, unknown> = {};
-  if (search.trim()) filters.search = search.trim();
+  if (debouncedSearch.trim()) filters.search = debouncedSearch.trim();
   if (view.type === "favorites") filters.is_favorite = true;
   if (view.type === "pinned") filters.is_pinned = true;
   if (view.type === "collection") filters.collection_id = view.collectionId;
