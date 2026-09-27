@@ -263,7 +263,7 @@ export function ProfileMediaControls({
           className="rounded-md"
         >
           <div
-            className="group relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] focus-within:border-[var(--user-accent-border,var(--border-strong))]"
+            className="group relative flex min-h-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/30 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 focus-within:border-[var(--user-accent-border,var(--border-strong))]"
             aria-busy={uploading === "avatar"}
           >
             {avatarPreviewUrl ? (
@@ -275,12 +275,23 @@ export function ProfileMediaControls({
             ) : uploading === "avatar" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Camera className="h-4 w-4" />
+              <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-background/40 text-muted-foreground transition-transform group-hover:scale-105">
+                <Camera className="h-4 w-4" />
+                <span className="absolute -bottom-1 rounded-full bg-background px-1 text-[8px] leading-3 text-muted-foreground">
+                  1:1
+                </span>
+              </span>
             )}
             <span className="font-medium text-foreground">
-              {uploading === "avatar" ? "Uploading…" : avatarUrl ? "Change photo" : "Upload photo"}
+              {uploading === "avatar"
+                ? "Uploading…"
+                : avatarUrl
+                  ? "Change photo"
+                  : "Add your portrait"}
             </span>
-            <span className="text-[9px] text-muted-foreground/80">Square crop · JPG, PNG, GIF</span>
+            <span className="max-w-[12rem] text-[9px] leading-3 text-muted-foreground/80">
+              A square image anchors your studio identity
+            </span>
           </div>
         </DragDropFileInput>
         <DragDropFileInput
@@ -296,7 +307,7 @@ export function ProfileMediaControls({
           className="rounded-md"
         >
           <div
-            className="group relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] focus-within:border-[var(--user-accent-border,var(--border-strong))]"
+            className="group relative flex min-h-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/30 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] hover:bg-surface/50 focus-within:border-[var(--user-accent-border,var(--border-strong))]"
             aria-busy={uploading === "banner"}
           >
             {bannerPreviewUrl ? (
@@ -311,17 +322,22 @@ export function ProfileMediaControls({
             ) : uploading === "banner" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ImagePlus className="h-4 w-4" />
+              <span className="flex h-10 w-full items-center justify-center rounded-md border border-dashed border-[var(--user-accent-border,var(--border-strong))] bg-background/40">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <ImagePlus className="h-4 w-4" />
+                  <span className="text-[9px] tracking-[0.12em]">3:1 STAGE</span>
+                </span>
+              </span>
             )}
             <span className="font-medium text-foreground">
               {uploading === "banner"
                 ? "Uploading…"
                 : bannerUrl
                   ? "Change banner"
-                  : "Upload banner"}
+                  : "Set the scene"}
             </span>
-            <span className="text-[9px] text-muted-foreground/80">
-              Wide crop · JPG, PNG, GIF{isAnimatedBanner ? " · animated" : ""}
+            <span className="max-w-[12rem] text-[9px] leading-3 text-muted-foreground/80">
+              A wide image gives your profile room to breathe
             </span>
           </div>
         </DragDropFileInput>
