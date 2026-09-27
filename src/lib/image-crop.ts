@@ -50,6 +50,9 @@ type CropResult = { blob: Blob; width: number; height: number };
  * upload the original file in that case.
  */
 export async function cropImageToAspect(file: File, aspect: number): Promise<CropResult | null> {
+  // Canvas can only draw the current GIF frame. Keep the original file so the
+  // browser can decode and animate it everywhere the banner is rendered.
+  if (file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif")) return null;
   if (typeof document === "undefined" || typeof createImageBitmap === "undefined") return null;
   let bitmap: ImageBitmap;
   try {

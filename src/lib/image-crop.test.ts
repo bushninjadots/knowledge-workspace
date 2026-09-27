@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { centerCropRect, AVATAR_CROP_ASPECT, BANNER_CROP_ASPECT } from "./image-crop";
+import {
+  centerCropRect,
+  AVATAR_CROP_ASPECT,
+  BANNER_CROP_ASPECT,
+  cropImageToAspect,
+  cropUploadMeta,
+} from "./image-crop";
 
 describe("centerCropRect", () => {
   it("returns null for already-square images (avatar)", () => {
@@ -45,5 +51,13 @@ describe("centerCropRect", () => {
     expect(centerCropRect(0, 100, AVATAR_CROP_ASPECT)).toBeNull();
     expect(centerCropRect(100, -5, AVATAR_CROP_ASPECT)).toBeNull();
     expect(centerCropRect(100, 100, 0)).toBeNull();
+  });
+});
+
+describe("animated image uploads", () => {
+  it("keeps GIFs untouched so animation is preserved", async () => {
+    const file = new File(["gif"], "banner.gif", { type: "image/gif" });
+    expect(await cropImageToAspect(file, BANNER_CROP_ASPECT)).toBeNull();
+    expect(cropUploadMeta(file, null)).toEqual({ ext: "gif", contentType: "image/gif" });
   });
 });
