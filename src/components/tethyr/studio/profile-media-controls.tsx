@@ -72,6 +72,7 @@ export function ProfileMediaControls({
   const { data: signedBannerUrl } = useSignedStorageUrl("banners", bannerPath);
   const avatarPreviewUrl = avatarUrl?.startsWith("http") ? avatarUrl : signedAvatarUrl;
   const bannerPreviewUrl = bannerUrl?.startsWith("http") ? bannerUrl : signedBannerUrl;
+  const isAnimatedBanner = Boolean(bannerUrl?.toLowerCase().split("?")[0].endsWith(".gif"));
 
   const { data: identity, isLoading: identityLoading } = useQuery({
     queryKey: ["profile-header-block", ownerId],
@@ -244,7 +245,8 @@ export function ProfileMediaControls({
       <div className="pt-1">
         <p className="text-[11px] font-medium text-muted-foreground">Profile media</p>
         <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground/80">
-          Preview the exact assets used across your profile. Animated GIFs remain animated after upload.
+          Preview the exact assets used across your profile. Animated GIFs remain animated after
+          upload.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -260,20 +262,25 @@ export function ProfileMediaControls({
           }}
           className="rounded-md"
         >
-          <div className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))]">
+          <div
+            className="group relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] focus-within:border-[var(--user-accent-border,var(--border-strong))]"
+            aria-busy={uploading === "avatar"}
+          >
             {avatarPreviewUrl ? (
               <img
                 src={avatarPreviewUrl}
                 alt="Current profile photo"
-                className="h-10 w-10 rounded-full object-cover ring-1 ring-border/70"
+                className="h-10 w-10 rounded-full object-cover ring-1 ring-border/70 transition-transform group-hover:scale-105"
               />
             ) : uploading === "avatar" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Camera className="h-4 w-4" />
             )}
-            <span className="font-medium text-foreground">{avatarUrl ? "Change photo" : "Upload photo"}</span>
-            <span className="text-[9px] text-muted-foreground/80">Square crop</span>
+            <span className="font-medium text-foreground">
+              {uploading === "avatar" ? "Uploading…" : avatarUrl ? "Change photo" : "Upload photo"}
+            </span>
+            <span className="text-[9px] text-muted-foreground/80">Square crop · JPG, PNG, GIF</span>
           </div>
         </DragDropFileInput>
         <DragDropFileInput
@@ -288,20 +295,34 @@ export function ProfileMediaControls({
           }}
           className="rounded-md"
         >
-          <div className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))]">
+          <div
+            className="group relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))] focus-within:border-[var(--user-accent-border,var(--border-strong))]"
+            aria-busy={uploading === "banner"}
+          >
             {bannerPreviewUrl ? (
               <img
                 src={bannerPreviewUrl}
                 alt="Current profile banner"
-                className={cn("h-10 w-full object-cover", bannerUrl?.toLowerCase().endsWith(".gif") ? "rounded-md" : "rounded-md")}
+                className={cn(
+                  "h-10 w-full rounded-md object-cover transition-transform group-hover:scale-[1.02]",
+                  isAnimatedBanner && "motion-safe:animate-pulse",
+                )}
               />
             ) : uploading === "banner" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <ImagePlus className="h-4 w-4" />
             )}
-            <span className="font-medium text-foreground">{bannerUrl ? "Change banner" : "Upload banner"}</span>
-            <span className="text-[9px] text-muted-foreground/80">Wide crop · GIFs play</span>
+            <span className="font-medium text-foreground">
+              {uploading === "banner"
+                ? "Uploading…"
+                : bannerUrl
+                  ? "Change banner"
+                  : "Upload banner"}
+            </span>
+            <span className="text-[9px] text-muted-foreground/80">
+              Wide crop · JPG, PNG, GIF{isAnimatedBanner ? " · animated" : ""}
+            </span>
           </div>
         </DragDropFileInput>
       </div>
