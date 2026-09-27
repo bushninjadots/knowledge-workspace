@@ -340,15 +340,20 @@ describe("profile picture rings", () => {
     expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "none" })).toEqual({});
     expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "accent" })).toEqual({
       "--avatar-ring": "var(--user-accent, var(--primary))",
+      "--avatar-ring-width": "2px",
     });
     expect(
       avatarShapeStyle({ avatarShape: "circle", avatarRing: "custom", avatarRingColor: "#b4632a" }),
-    ).toEqual({ "--avatar-ring": "#b4632a" });
+    ).toEqual({
+      "--avatar-ring": "#b4632a",
+      "--avatar-ring-width": "2px",
+    });
   });
 
   it("degrades a custom ring without a colour to accent", () => {
     expect(avatarShapeStyle({ avatarShape: "circle", avatarRing: "custom" })).toEqual({
       "--avatar-ring": "var(--user-accent, var(--primary))",
+      "--avatar-ring-width": "2px",
     });
     expect(normalizeAvatarRing("custom", null)).toBe("accent");
     expect(normalizeAvatarRing("custom", "#3f8f8a")).toBe("custom");
