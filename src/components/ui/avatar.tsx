@@ -69,7 +69,7 @@ export const avatarShapeCss = {
  */
 export const avatarRingCss = {
   boxShadow:
-    "0 0 0 3px var(--avatar-ring), 0 0 0 4px color-mix(in oklab, var(--avatar-ring) 25%, transparent)",
+    "0 0 0 var(--avatar-ring-width, 3px) var(--avatar-ring), 0 0 0 calc(var(--avatar-ring-width, 3px) + 1px) color-mix(in oklab, var(--avatar-ring) 25%, transparent)",
 } as const;
 
 export { Avatar, AvatarImage, AvatarFallback };

@@ -43,6 +43,7 @@ export function BannerStrip({
   const ref = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const accentColor = useDominantColor(bannerSigned);
+  const isAnimatedBanner = Boolean(bannerPath?.toLowerCase().endsWith(".gif"));
   const queryClient = useQueryClient();
 
   // After a write, resync every surface that renders this profile — the studio
@@ -127,7 +128,7 @@ export function BannerStrip({
         <img
           key={bannerSigned}
           src={bannerSigned}
-          alt=""
+          alt={isAnimatedBanner ? "Animated profile banner" : "Profile banner"}
           width="1200"
           height="400"
           loading="lazy"
@@ -138,6 +139,14 @@ export function BannerStrip({
         <div className="h-full w-full bg-[linear-gradient(120deg,var(--ai)_0%,var(--trust)_100%)] opacity-40" />
       )}
       <BannerOverlay overlay={overlay} />
+      {isAnimatedBanner && (
+        <span
+          aria-label="Animated GIF banner"
+          className="absolute bottom-3 left-3 z-10 rounded-md border border-white/20 bg-background/75 px-2 py-1 text-[10px] font-medium text-foreground backdrop-blur-sm"
+        >
+          Animated
+        </span>
+      )}
 
       {!readonly && (
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2">

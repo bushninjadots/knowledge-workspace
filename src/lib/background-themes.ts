@@ -54,6 +54,8 @@ export type ProfileBackground = {
   avatarRing?: AvatarRingPreference | null;
   /** Ring colour (hex) used when avatarRing === "custom". */
   avatarRingColor?: string | null;
+  /** Ring thickness for the profile picture border. */
+  avatarRingWidth?: AvatarRingWidth | null;
 };
 
 /**
@@ -100,7 +102,14 @@ export function normalizeBannerOverlay(value: string | null | undefined): Banner
  * identity accent (dynamic banner palette or custom accent colour); `custom`
  * pins an explicit colour.
  */
-type AvatarRingPreference = "none" | "accent" | "custom";
+export type AvatarRingPreference = "none" | "accent" | "custom";
+export type AvatarRingWidth = "thin" | "medium" | "thick";
+
+export const AVATAR_RING_WIDTHS: ReadonlyArray<{ id: AvatarRingWidth; label: string }> = [
+  { id: "thin", label: "Thin" },
+  { id: "medium", label: "Medium" },
+  { id: "thick", label: "Thick" },
+];
 
 type AvatarRingOption = { id: AvatarRingPreference; label: string };
 
@@ -169,6 +178,7 @@ export function avatarShapeStyle(
         avatarShape?: string | null;
         avatarRing?: string | null;
         avatarRingColor?: string | null;
+        avatarRingWidth?: string | null;
       }
     | null
     | undefined,
@@ -187,6 +197,13 @@ export function avatarShapeStyle(
       : ring === "accent"
         ? { "--avatar-ring": "var(--user-accent, var(--primary))" }
         : {};
+  const ringWidth =
+    background?.avatarRingWidth === "thick"
+      ? "5px"
+      : background?.avatarRingWidth === "medium"
+        ? "3px"
+        : "2px";
+  if (ring !== "none") ringVars["--avatar-ring-width"] = ringWidth;
   // Circle with no ring is the untouched Tethyr default — emit nothing.
   if (!shapeVars["--avatar-clip"] && !shapeVars["--avatar-radius"] && !ringVars["--avatar-ring"])
     return {};

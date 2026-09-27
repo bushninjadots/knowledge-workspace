@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { validateImageFile } from "@/lib/validators";
 import {
   AVATAR_RINGS,
+  AVATAR_RING_WIDTHS,
   BACKGROUND_COLORS,
   BACKGROUND_DEFAULT_STRENGTH,
   BACKGROUND_GRADIENTS,
@@ -275,10 +276,14 @@ export function BackgroundPickerDialog({
                   >
                     <span
                       aria-hidden="true"
-                      className="block h-7 w-7 bg-[var(--user-accent,var(--primary))]"
+                      className="block h-9 w-9 bg-[var(--user-accent,var(--primary))]"
                       style={{
                         ...avatarShapeStyle({ ...EMPTY_BACKGROUND, avatarShape: shape.id }),
                         borderRadius: shape.id === "circle" ? "9999px" : undefined,
+                        clipPath:
+                          avatarShapeStyle({ ...EMPTY_BACKGROUND, avatarShape: shape.id })[
+                            "--avatar-clip"
+                          ] ?? "none",
                       }}
                     />
                     <span className="text-[10px] font-medium">{shape.label}</span>
@@ -335,6 +340,29 @@ export function BackgroundPickerDialog({
                 );
               })}
             </div>
+            {activeDraft.avatarRing !== "none" && (
+              <div className="space-y-2" role="group" aria-label="Profile picture border thickness">
+                <p className="text-[11px] text-muted-foreground">Border thickness</p>
+                <div className="flex flex-wrap gap-2">
+                  {AVATAR_RING_WIDTHS.map((width) => (
+                    <button
+                      key={width.id}
+                      type="button"
+                      aria-pressed={(activeDraft.avatarRingWidth ?? "medium") === width.id}
+                      onClick={() => setActiveDraft((d) => ({ ...d, avatarRingWidth: width.id }))}
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-xs transition-lift",
+                        (activeDraft.avatarRingWidth ?? "medium") === width.id
+                          ? "border-[var(--user-accent,var(--primary))] bg-[var(--user-accent-subtle,var(--surface-elevated))]"
+                          : "border-border/60 text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {width.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {activeDraft.avatarRing === "custom" && (
               <div
                 className="flex flex-wrap items-center gap-2"
