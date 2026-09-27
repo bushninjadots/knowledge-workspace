@@ -11,6 +11,8 @@ import { validateImageFile } from "@/lib/validators";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useSignedStorageUrl } from "@/hooks/use-signed-url";
+import { cn } from "@/lib/utils";
 
 const PROTECTED_HANDLES = new Set([
   "admin",
@@ -64,6 +66,12 @@ export function ProfileMediaControls({
     // The member's appearance gives the preview their chosen silhouette.
     (me?.background ?? null) as { avatarShape?: string | null } | null,
   );
+  const avatarPath = avatarUrl?.startsWith("http") ? null : avatarUrl;
+  const bannerPath = bannerUrl?.startsWith("http") ? null : bannerUrl;
+  const { data: signedAvatarUrl } = useSignedStorageUrl("avatars", avatarPath);
+  const { data: signedBannerUrl } = useSignedStorageUrl("banners", bannerPath);
+  const avatarPreviewUrl = avatarUrl?.startsWith("http") ? avatarUrl : signedAvatarUrl;
+  const bannerPreviewUrl = bannerUrl?.startsWith("http") ? bannerUrl : signedBannerUrl;
 
   const { data: identity, isLoading: identityLoading } = useQuery({
     queryKey: ["profile-header-block", ownerId],
@@ -233,7 +241,12 @@ export function ProfileMediaControls({
         {savingIdentity ? "Saving…" : "Save identity"}
       </Button>
 
-      <p className="pt-1 text-[11px] font-medium text-muted-foreground">Profile media</p>
+      <div className="pt-1">
+        <p className="text-[11px] font-medium text-muted-foreground">Profile media</p>
+        <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground/80">
+          Preview the exact assets used across your profile. Animated GIFs remain animated after upload.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <DragDropFileInput
           accept="image/*"
@@ -247,13 +260,20 @@ export function ProfileMediaControls({
           }}
           className="rounded-md"
         >
-          <div className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground">
-            {uploading === "avatar" ? (
+          <div className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))]">
+            {avatarPreviewUrl ? (
+              <img
+                src={avatarPreviewUrl}
+                alt="Current profile photo"
+                className="h-10 w-10 rounded-full object-cover ring-1 ring-border/70"
+              />
+            ) : uploading === "avatar" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Camera className="h-4 w-4" />
             )}
-            <span>{avatarUrl ? "Change photo" : "Upload photo"}</span>
+            <span className="font-medium text-foreground">{avatarUrl ? "Change photo" : "Upload photo"}</span>
+            <span className="text-[9px] text-muted-foreground/80">Square crop</span>
           </div>
         </DragDropFileInput>
         <DragDropFileInput
@@ -268,13 +288,20 @@ export function ProfileMediaControls({
           }}
           className="rounded-md"
         >
-          <div className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground">
-            {uploading === "banner" ? (
+          <div className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 bg-surface/40 px-2 py-2 text-center text-[10px] text-muted-foreground transition-colors hover:border-[var(--user-accent-border,var(--border-strong))]">
+            {bannerPreviewUrl ? (
+              <img
+                src={bannerPreviewUrl}
+                alt="Current profile banner"
+                className={cn("h-10 w-full object-cover", bannerUrl?.toLowerCase().endsWith(".gif") ? "rounded-md" : "rounded-md")}
+              />
+            ) : uploading === "banner" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <ImagePlus className="h-4 w-4" />
             )}
-            <span>{bannerUrl ? "Change banner" : "Upload banner"}</span>
+            <span className="font-medium text-foreground">{bannerUrl ? "Change banner" : "Upload banner"}</span>
+            <span className="text-[9px] text-muted-foreground/80">Wide crop · GIFs play</span>
           </div>
         </DragDropFileInput>
       </div>
