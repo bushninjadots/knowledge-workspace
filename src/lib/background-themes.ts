@@ -102,8 +102,8 @@ export function normalizeBannerOverlay(value: string | null | undefined): Banner
  * identity accent (dynamic banner palette or custom accent colour); `custom`
  * pins an explicit colour.
  */
-export type AvatarRingPreference = "none" | "accent" | "custom";
-export type AvatarRingWidth = "thin" | "medium" | "thick";
+type AvatarRingPreference = "none" | "accent" | "custom";
+type AvatarRingWidth = "thin" | "medium" | "thick";
 
 export const AVATAR_RING_WIDTHS: ReadonlyArray<{ id: AvatarRingWidth; label: string }> = [
   { id: "thin", label: "Thin" },

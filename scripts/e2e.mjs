@@ -46,9 +46,7 @@ const onlyArg = arg("only", "");
 const wanted = onlyArg ? onlyArg.split(",").map((s) => s.trim()) : null;
 const suite = wanted ? SUITE.filter(([name]) => wanted.includes(name)) : SUITE;
 if (suite.length === 0) {
-  console.error(
-    `no harness matched --only ${onlyArg}; names: ${SUITE.map(([n]) => n).join(", ")}`,
-  );
+  console.error(`no harness matched --only ${onlyArg}; names: ${SUITE.map(([n]) => n).join(", ")}`);
   process.exit(2);
 }
 
@@ -71,8 +69,7 @@ for (const [name, file] of suite) {
 }
 
 console.log("\n═══ e2e summary ═══");
-for (const r of results)
-  console.log(` ${r.code === 0 ? "✓" : "✗"} ${r.name} (${r.secs}s)`);
+for (const r of results) console.log(` ${r.code === 0 ? "✓" : "✗"} ${r.name} (${r.secs}s)`);
 const failed = results.filter((r) => r.code !== 0);
 console.log(
   failed.length

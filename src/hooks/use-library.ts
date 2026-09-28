@@ -94,7 +94,7 @@ export type LibraryBoardColumn = {
 };
 
 /** A member-defined field value on a card — free-form JSONB at rest. */
-export type LibraryCardFieldValue =
+type LibraryCardFieldValue =
   string | number | boolean | null | string[] | { text: string; checked: boolean }[];
 
 export type LibraryBoardCard = {

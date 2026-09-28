@@ -560,7 +560,7 @@ export const CARD_FILL_SWATCHES: ReadonlyArray<{ value: string; label: string }>
 // ── Background Scope → Backdrop ─────────────────────────────────────────────
 
 /** Which backdrop a surface wants: the editor shell or the published page. */
-export type StudioBackgroundScope = "app" | "public";
+type StudioBackgroundScope = "app" | "public";
 
 /**
  * The Studio's backdrop as a single custom property, `--studio-bg`, resolved

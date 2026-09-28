@@ -545,7 +545,7 @@ export function templateSketchRows(sections: LayoutSection[]): number[][] {
 
 /** Wireframe rendering of `templateSketchRows` — the Sketch bar treatment,
  *  lead row accented, shared with the starter fallbacks. */
-export function TemplateSketch({ rows }: { rows: number[][] }) {
+function TemplateSketch({ rows }: { rows: number[][] }) {
   return (
     <div aria-hidden className="flex flex-col gap-1 p-2">
       {rows.map((row, rowIndex) => (
