@@ -121,7 +121,8 @@ export function LoginPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
       </div>
-      <form className="mt-4 space-y-4" onSubmit={onSubmit}>
+      <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+        <p className="text-sm font-medium text-foreground">Log in with your email</p>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input

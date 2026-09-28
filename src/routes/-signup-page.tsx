@@ -104,7 +104,8 @@ export function SignupPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
       </div>
-      <form className="mt-4 space-y-4" onSubmit={onSubmit}>
+      <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+        <p className="text-sm font-medium text-foreground">Or create an account with email</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>

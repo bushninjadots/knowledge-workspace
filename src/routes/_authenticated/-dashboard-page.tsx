@@ -316,9 +316,18 @@ function DashboardContent({
     <div className="animate-room-enter min-h-screen bg-noise">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
         <section aria-labelledby="dashboard-next-move-heading" className="space-y-6">
-          <h2 id="dashboard-next-move-heading" className="sr-only">
-            Your next move
-          </h2>
+          <div>
+            <p className="section-label">Your workspace</p>
+            <h1
+              id="dashboard-next-move-heading"
+              className="mt-1 font-display text-2xl font-semibold tracking-tight sm:text-3xl"
+            >
+              Your next move
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Pick up an active project, respond to people, or make your work easier to discover.
+            </p>
+          </div>
           <FirstSessionOnboarding data={data} />
           <DashboardWelcomeBanner
             bannerSigned={data?.bannerSigned ?? null}

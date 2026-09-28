@@ -176,6 +176,30 @@ export function Navbar() {
           >
             <div className="flex flex-col gap-1 px-4 py-4">
               <nav aria-label="Mobile primary navigation" className="flex flex-col gap-1">
+                {isAuthed && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setOpen(false)}
+                      aria-current={isActive("/dashboard") ? "page" : undefined}
+                      className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                        isActive("/dashboard") ? "bg-surface text-foreground" : "text-foreground"
+                      }`}
+                    >
+                      Your workspace
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setOpen(false)}
+                      aria-current={isActive("/profile") ? "page" : undefined}
+                      className={`rounded-lg px-4 py-3 text-sm font-medium transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                        isActive("/profile") ? "bg-surface text-foreground" : "text-foreground"
+                      }`}
+                    >
+                      Your Studio
+                    </Link>
+                  </>
+                )}
                 {primaryNavigation.map((item, i) => {
                   const active = isActive(item.to);
                   return (
