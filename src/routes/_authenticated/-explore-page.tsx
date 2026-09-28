@@ -16,6 +16,7 @@ import {
   Zap,
   Loader2,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -743,6 +744,16 @@ export function ExplorePage() {
                     aria-label="Search roles, skills, or projects"
                     className="border-0 bg-transparent focus-visible:ring-0"
                   />
+                  {q && (
+                    <button
+                      type="button"
+                      onClick={() => setQ("")}
+                      aria-label="Clear search"
+                      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-border/60" />
                   <Select
                     value={activeNeed || ALL_NEEDS}
@@ -1084,6 +1095,16 @@ export function ExplorePage() {
                   aria-label="Search people by name, handle, or craft"
                   className="border-0 bg-transparent focus-visible:ring-0"
                 />
+                {q && (
+                  <button
+                    type="button"
+                    onClick={() => setQ("")}
+                    aria-label="Clear search"
+                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
               {/* People tab filter chips */}
               <div className="mb-6 flex flex-wrap gap-2">
