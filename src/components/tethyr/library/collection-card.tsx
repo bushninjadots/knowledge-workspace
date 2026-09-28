@@ -1,13 +1,20 @@
-import { Folder, ChevronRight, Trash2, MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import { Folder, ChevronRight, Trash2, MoreHorizontal, Share2, Link2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDeleteCollection, type LibraryCollection } from "@/hooks/use-library";
+import {
+  useDeleteCollection,
+  useToggleCollectionShared,
+  type LibraryCollection,
+} from "@/hooks/use-library";
 
 export function CollectionCard({
   collection,
@@ -19,6 +26,19 @@ export function CollectionCard({
   onClick: () => void;
 }) {
   const deleteCollection = useDeleteCollection();
+  const toggleShared = useToggleCollectionShared();
+  const [copied, setCopied] = useState(false);
+
+  async function copyShareLink() {
+    const url = `${window.location.origin}/library/shared/collection/${collection.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy the link");
+    }
+  }
 
   return (
     <Card asChild>
@@ -38,7 +58,18 @@ export function CollectionCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{collection.name}</p>
+          <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+            <span className="truncate">{collection.name}</span>
+            {collection.shared && (
+              <span
+                className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border/60 px-1.5 py-px text-[10px] text-muted-foreground"
+                title="Shared — anyone with the link can view"
+              >
+                <Share2 className="h-2.5 w-2.5" aria-hidden />
+                Shared
+              </span>
+            )}
+          </p>
           {itemCount !== undefined && (
             <p className="text-xs text-muted-foreground">
               {itemCount} {itemCount === 1 ? "item" : "items"}
@@ -58,7 +89,38 @@ export function CollectionCard({
                 <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleShared.mutate(
+                    { id: collection.id, shared: !collection.shared },
+                    {
+                      onSuccess: () =>
+                        toast.success(
+                          collection.shared
+                            ? "Sharing turned off — the link no longer works"
+                            : "Shared — anyone with the link can view this collection",
+                        ),
+                    },
+                  );
+                }}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                {collection.shared ? "Stop sharing" : "Share collection"}
+              </DropdownMenuItem>
+              {collection.shared && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void copyShareLink();
+                  }}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                  {copied ? "Link copied" : "Copy share link"}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={(e) => {

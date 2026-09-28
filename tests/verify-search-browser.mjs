@@ -59,10 +59,7 @@ await searchBox.fill("");
 await searchBox.click();
 await page.keyboard.type("(a|b)", { delay: 5 });
 await page.waitForTimeout(800);
-record(
-  "library search '(a|b)' produces no 400/PGRST errors",
-  httpErrs().length === libErrsBefore,
-);
+record("library search '(a|b)' produces no 400/PGRST errors", httpErrs().length === libErrsBefore);
 
 // ── Global search results listbox with special characters ────────────────────
 await page
@@ -75,10 +72,7 @@ await searchBox.fill("");
 await searchBox.click();
 await page.keyboard.type("100% (a|b),", { delay: 5 });
 await page.waitForTimeout(800);
-record(
-  "search '100% (a|b),' produces no 400/PGRST errors",
-  httpErrs().length === libErrsBefore,
-);
+record("search '100% (a|b),' produces no 400/PGRST errors", httpErrs().length === libErrsBefore);
 record(
   "search still responsive after hostile terms",
   (await searchBox.inputValue()) === "100% (a|b),",

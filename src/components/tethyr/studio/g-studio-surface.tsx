@@ -1817,8 +1817,25 @@ function GInspectorRail(
 
 /** 36×24 wireframe sketch shown next to each block in the palette. Type-level
  *  sketches communicate what a block renders at a glance; unknown or new types
- *  fall back to a category sketch so the palette never looks broken. */
+ *  fall back to a category sketch so the palette never looks broken. Rendered
+ *  as one self-contained <svg> — the shapes are meaningless to the DOM without
+ *  it (bare rects are dropped, which is exactly the "empty box" bug). */
 function BlockGlyph({ type, category }: { type: string; category: BlockCategory }) {
+  return (
+    <svg
+      viewBox="0 0 36 24"
+      width={36}
+      height={24}
+      aria-hidden
+      className="shrink-0"
+      role="presentation"
+    >
+      <BlockGlyphShapes type={type} category={category} />
+    </svg>
+  );
+}
+
+function BlockGlyphShapes({ type, category }: { type: string; category: BlockCategory }) {
   const stroke = "var(--border-strong)";
   const accent = "var(--user-accent,var(--primary))";
   const line = (y: number, x = 2, w = 32, h = 1.6) => (
@@ -2055,6 +2072,66 @@ function BlockGlyph({ type, category }: { type: string; category: BlockCategory 
             stroke={stroke}
             strokeWidth={0.9}
           />
+        </>
+      );
+    case "content-image":
+      return (
+        <>
+          <rect
+            x={2}
+            y={3}
+            width={32}
+            height={18}
+            rx={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.8}
+          />
+          <circle cx={9} cy={9} r={2.2} fill={accent} />
+          <path d="M4 19 L13 11 L19 16 L24 12 L32 19 Z" fill="var(--border)" stroke="none" />
+        </>
+      );
+    case "profile-readme":
+      return (
+        <>
+          <rect
+            x={6}
+            y={2}
+            width={24}
+            height={20}
+            rx={1.5}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.8}
+          />
+          {line(6, 9, 18)}
+          {line(10, 9, 18)}
+          {line(14, 9, 12)}
+          <rect x={9} y={17} width={8} height={2.4} rx={1.2} fill={accent} />
+        </>
+      );
+    case "profile-collaborators":
+      return (
+        <>
+          <circle
+            cx={8}
+            cy={8}
+            r={4}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          <circle
+            cx={19}
+            cy={6.5}
+            r={4}
+            fill="var(--surface-sunken)"
+            stroke={stroke}
+            strokeWidth={0.9}
+          />
+          <circle cx={29} cy={9} r={4} fill={accent} opacity={0.55} />
+          {line(15, 3, 30, 2)}
+          {line(19.5, 6, 24, 2)}
         </>
       );
     default:
@@ -2587,7 +2664,8 @@ function GCustomizePanel({
           <X className="h-3.5 w-3.5" />
         </IconButton>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Single scroll owner: the aside scrolls; this wrapper just stacks. */}
+      <div className="flex min-h-0 flex-1 flex-col">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
         {onOpenTemplates && (
           <div className="mb-4 shrink-0">
@@ -2638,7 +2716,9 @@ function GCustomizePanel({
             )}
           />
         </button>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* Flows with the panel — the aside is the single scrollbar (nested
+            scrollboxes here read as a box-in-box and clip the disclosure). */}
+        <div>
           {advancedOpen && (
             <>
               <Choice

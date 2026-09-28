@@ -78,10 +78,7 @@ const detail = page.locator("body");
 // share bar rather than racing a single innerText snapshot.
 await page.getByText(/anyone with the link can view/i).waitFor({ timeout: 10_000 });
 const shareText = await detail.innerText();
-record(
-  "share bar shows shared state",
-  /anyone with the link can view/i.test(shareText),
-);
+record("share bar shows shared state", /anyone with the link can view/i.test(shareText));
 record("share bar offers Stop sharing", /stop sharing/i.test(shareText));
 
 // Toggle off and on again; RLS must follow immediately.

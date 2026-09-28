@@ -11,6 +11,7 @@ import {
   Plus,
   Hash,
   Layers,
+  Columns3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-message";
@@ -26,6 +27,7 @@ type View =
   | { type: "favorites" }
   | { type: "recent" }
   | { type: "pinned" }
+  | { type: "boards" }
   | { type: "collection"; collectionId: string }
   | { type: "tag"; tagId: string }
   | { type: "uploads" };
@@ -37,6 +39,7 @@ const filterItems = [
   { type: "favorites" as const, label: "Favorites", icon: Heart },
   { type: "recent" as const, label: "Recent", icon: Clock },
   { type: "pinned" as const, label: "Pinned", icon: Star },
+  { type: "boards" as const, label: "Boards", icon: Columns3 },
   { type: "uploads" as const, label: "Uploads", icon: Upload },
 ];
 

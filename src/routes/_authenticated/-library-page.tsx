@@ -7,6 +7,7 @@ import { friendlyError } from "@/lib/error-message";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LibraryLayout } from "@/components/tethyr/library/library-layout";
+import { LibraryBoards } from "@/components/tethyr/library/boards";
 import { SegmentedControl } from "@/components/tethyr/segmented-control";
 import { ItemCard } from "@/components/tethyr/library/item-card";
 import { CollectionCard } from "@/components/tethyr/library/collection-card";
@@ -49,8 +50,32 @@ export function LibraryPage() {
 
   return (
     <LibraryLayout onNewNote={handleNewNote}>
-      {(view: LibraryView) => <LibraryContent view={view} onNewNote={handleNewNote} />}
+      {(view: LibraryView) =>
+        view.type === "boards" ? (
+          <BoardsPane />
+        ) : (
+          <LibraryContent view={view} onNewNote={handleNewNote} />
+        )
+      }
     </LibraryLayout>
+  );
+}
+
+/** Boards view — separate component so LibraryContent keeps its hook order. */
+function BoardsPane() {
+  return (
+    <div className="animate-room-enter min-h-screen bg-noise">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-5">
+          <h1 className="font-display text-2xl font-bold">Boards</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Kanban for any workflow — reading queues, pipelines, research moves. Cards can wrap
+            library items or stand alone.
+          </p>
+        </div>
+        <LibraryBoards />
+      </div>
+    </div>
   );
 }
 

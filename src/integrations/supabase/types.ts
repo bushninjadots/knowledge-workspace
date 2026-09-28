@@ -621,6 +621,169 @@ export type Database = {
           },
         ];
       };
+      library_board_cards: {
+        Row: {
+          accent: string | null;
+          archived: boolean;
+          board_id: string;
+          column_id: string;
+          created_at: string;
+          fields: Json;
+          id: string;
+          item_id: string | null;
+          position: number;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          accent?: string | null;
+          archived?: boolean;
+          board_id: string;
+          column_id: string;
+          created_at?: string;
+          fields?: Json;
+          id?: string;
+          item_id?: string | null;
+          position?: number;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          accent?: string | null;
+          archived?: boolean;
+          board_id?: string;
+          column_id?: string;
+          created_at?: string;
+          fields?: Json;
+          id?: string;
+          item_id?: string | null;
+          position?: number;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_board_cards_board_id_fkey";
+            columns: ["board_id"];
+            isOneToOne: false;
+            referencedRelation: "library_boards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_column_id_fkey";
+            columns: ["column_id"];
+            isOneToOne: false;
+            referencedRelation: "library_board_columns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "library_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_cards_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_board_columns: {
+        Row: {
+          board_id: string;
+          created_at: string;
+          id: string;
+          is_done: boolean;
+          name: string;
+          position: number;
+          user_id: string;
+          wip_limit: number | null;
+        };
+        Insert: {
+          board_id: string;
+          created_at?: string;
+          id?: string;
+          is_done?: boolean;
+          name: string;
+          position?: number;
+          user_id: string;
+          wip_limit?: number | null;
+        };
+        Update: {
+          board_id?: string;
+          created_at?: string;
+          id?: string;
+          is_done?: boolean;
+          name?: string;
+          position?: number;
+          user_id?: string;
+          wip_limit?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_board_columns_board_id_fkey";
+            columns: ["board_id"];
+            isOneToOne: false;
+            referencedRelation: "library_boards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "library_board_columns_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      library_boards: {
+        Row: {
+          color: string;
+          created_at: string;
+          icon: string;
+          id: string;
+          name: string;
+          position: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name: string;
+          position?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          icon?: string;
+          id?: string;
+          name?: string;
+          position?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "library_boards_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       library_collections: {
         Row: {
           color: string | null;
@@ -630,6 +793,7 @@ export type Database = {
           name: string;
           parent_id: string | null;
           position: number;
+          shared: boolean;
           updated_at: string;
           user_id: string;
         };
@@ -641,6 +805,7 @@ export type Database = {
           name: string;
           parent_id?: string | null;
           position?: number;
+          shared?: boolean;
           updated_at?: string;
           user_id: string;
         };
@@ -652,6 +817,7 @@ export type Database = {
           name?: string;
           parent_id?: string | null;
           position?: number;
+          shared?: boolean;
           updated_at?: string;
           user_id?: string;
         };

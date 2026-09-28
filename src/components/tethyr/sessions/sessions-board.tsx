@@ -243,7 +243,9 @@ export function SessionsBoard({ onSchedule }: { onSchedule: () => void }) {
           </div>
           <DragOverlay dropAnimation={null}>
             {activeSession ? (
-              <div className="w-64 -rotate-1 rounded-lg border border-border/80 bg-surface-elevated/95 p-3 shadow-lg shadow-black/10">
+              // pointer-events-none: dnd-kit stopped applying it for us (v6.1+),
+              // and an overlay that catches the pointer breaks every drop hit-test.
+              <div className="pointer-events-none w-64 -rotate-1 rounded-lg border border-border/80 bg-surface-elevated/95 p-3 shadow-lg shadow-black/10">
                 <SessionCardBody session={activeSession} />
               </div>
             ) : null}
