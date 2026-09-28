@@ -58,7 +58,9 @@ if (await palette.count()) {
 await page.keyboard.press("Escape");
 
 // ── 2. Customize panel: More options opens into the shared scroll ────────────
-const customize = page.locator('button:has-text("Customize"), [aria-label="Customize Studio"]').first();
+const customize = page
+  .locator('button:has-text("Customize"), [aria-label="Customize Studio"]')
+  .first();
 await customize.click({ timeout: 10_000 }).catch(() => {});
 await page.waitForTimeout(800);
 const panel = page.locator("aside", { hasText: "Customize" }).first();
@@ -68,7 +70,10 @@ if (await moreOptions.count()) {
   await page.waitForTimeout(600);
   // Density control (inside More options) must be visible within the panel
   const density = panel.getByText("Density", { exact: true });
-  const visible = await density.first().isVisible().catch(() => false);
+  const visible = await density
+    .first()
+    .isVisible()
+    .catch(() => false);
   record("More options expands and its content is visible", visible);
   // The inner scroll container is gone: panel itself should be the scroller
   const innerScrollers = await panel.locator("div.min-h-0.flex-1.overflow-y-auto").count();
@@ -90,7 +95,10 @@ await page.waitForTimeout(400);
 await page.locator('input[placeholder*="Reading queue"]').fill("QA Board");
 await page.locator('button:has-text("Create board")').click();
 await page.waitForTimeout(1200);
-record("board created with default columns", await page.locator('section[aria-label="To do"]').count() === 1);
+record(
+  "board created with default columns",
+  (await page.locator('section[aria-label="To do"]').count()) === 1,
+);
 
 // Add a standalone card in "To do"
 const todoColumn = page.locator('section[aria-label="To do"]');
@@ -98,14 +106,14 @@ await todoColumn.locator('button:has-text("Add card")').first().click();
 await todoColumn.locator('input[placeholder="Card title"]').fill("Read: design systems");
 await todoColumn.locator('button:has-text("Add card")').last().click();
 await page.waitForTimeout(1000);
-record("standalone card added", await todoColumn.getByText("Read: design systems").count() === 1);
+record("standalone card added", (await todoColumn.getByText("Read: design systems").count()) === 1);
 
 // Add a column
 await page.locator('button:has-text("Add column")').click();
 await page.locator('input[placeholder="Column name"]').fill("Blocked");
 await page.keyboard.press("Enter");
 await page.waitForTimeout(900);
-record("custom column added", await page.locator('section[aria-label="Blocked"]').count() === 1);
+record("custom column added", (await page.locator('section[aria-label="Blocked"]').count()) === 1);
 
 // Link a library item as a card (From library… in the Blocked column)
 const blocked = page.locator('section[aria-label="Blocked"]');
@@ -149,7 +157,11 @@ const hasCollections = await page.locator('h2:has-text("Collections")').count();
 if (!hasCollections) {
   record("collections section present", false, "cannot test share without a collection");
 } else {
-  const firstCard = page.locator("main div, div").filter({ has: page.locator("button") }).locator("button:has-text('collection')").first();
+  const firstCard = page
+    .locator("main div, div")
+    .filter({ has: page.locator("button") })
+    .locator("button:has-text('collection')")
+    .first();
   // Open the first collection card's dropdown (hover reveals it)
   const cardEl = page.locator(".group:has(button[aria-haspopup='menu'])").first();
   await cardEl.hover();
@@ -163,7 +175,10 @@ if (!hasCollections) {
     await page.waitForTimeout(900);
     record("collection share toggled on", true);
     // Badge appears
-    record("Shared badge visible", await page.locator("span", { hasText: "Shared" }).count() >= 1);
+    record(
+      "Shared badge visible",
+      (await page.locator("span", { hasText: "Shared" }).count()) >= 1,
+    );
   } else {
     record("share menu item found", false);
   }

@@ -329,9 +329,27 @@ export function normalizeStudioConfig(raw: unknown): StudioConfig {
 // ── Structure → Canvas Width ──────────────────────────────────────────────────
 
 /**
- * Max content width (px) for each structure mode. Kept under the site-wide
- * max-w-7xl (1280px) cap so the builder fits alongside the rest of Tethyr's
- * fixed chrome (inspector rail + customize panel).
+ * Width for each structure mode, as a CSS length: the smaller of the option's
+ * pixel ceiling and a fraction of the available canvas. The fractions are
+ * strictly ordered (82% < 90% < 100%) and each pixel ceiling only bites where
+ * its fraction has already grown past it, so the three options render at three
+ * different widths at EVERY canvas size — the previous fixed caps (768/1024/
+ * 1200) exceeded the ~944px canvas a 1440×900 laptop leaves after app nav +
+ * builder chrome, which rendered Balanced and Wide identically and made two
+ * thirds of the setting look dead. Used by the editor, whose canvas is what
+ * remains after the builder chrome; full-width surfaces (owner view, published
+ * page) use the numeric `structureMaxWidth` instead.
+ */
+export function structureMaxWidthCss(config: StudioConfig): string {
+  if (config.structure === "single") return "min(768px, 82%)";
+  if (config.structure === "sidebar") return "min(1024px, 90%)";
+  return "min(1200px, 100%)";
+}
+
+/**
+ * Numeric cap (px) for each structure mode on surfaces that size themselves
+ * from a measured container rather than CSS. Distinguishability comes from
+ * `structureMaxWidthCss`; this mirrors its ceilings for those callers.
  */
 export function structureMaxWidth(config: StudioConfig): number {
   if (config.structure === "single") return 768;
@@ -514,7 +532,6 @@ export function studioSurfaceStyle(
 ): React.CSSProperties {
   const style = studioConfigToStyle(config, secondaryColor) as React.CSSProperties &
     Record<string, string>;
-  style["--studio-display-font"] = config.personality === "editorial" ? "Space Grotesk" : "Inter";
   style["--studio-label-font"] = config.personality === "technical" ? "JetBrains Mono" : "Inter";
   // Match the public page's font mapping (studioConfigToThemeTokens): an
   // editorial page flips --font-display/title to Space Grotesk and a technical

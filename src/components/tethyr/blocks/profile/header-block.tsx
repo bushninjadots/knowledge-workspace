@@ -212,7 +212,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
               <Link
                 to="/projects/$id"
                 params={{ id: activeProject.id }}
-                className="group mt-2 inline-flex max-w-full items-center gap-1.5 text-sm"
+                className="group mt-2 inline-flex min-h-6 max-w-full items-center gap-1.5 text-sm"
               >
                 <Hammer className="h-3.5 w-3.5 shrink-0 text-[var(--user-accent,var(--muted-foreground))]" />
                 <span className="text-muted-foreground">Currently building</span>
@@ -271,9 +271,7 @@ function ProfileHeaderBlock({ config, context }: BlockProps) {
                             <span className="text-muted-foreground">{next.name}</span>
                           </>
                         )}
-                        <span className="text-muted-foreground/60">
-                          {data.reputation_score} rep
-                        </span>
+                        <span className="text-muted-foreground">{data.reputation_score} rep</span>
                       </div>
                       <div
                         className="h-1 w-28 overflow-hidden rounded-full bg-trust/15"

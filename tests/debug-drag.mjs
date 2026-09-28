@@ -2,7 +2,9 @@ import { chromium } from "playwright";
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 let patches = [];
-page.on("request", (r) => { if (r.method() === "PATCH") patches.push(r.postData()?.slice(0, 100)); });
+page.on("request", (r) => {
+  if (r.method() === "PATCH") patches.push(r.postData()?.slice(0, 100));
+});
 await page.goto("http://localhost:3000/login");
 await page.waitForLoadState("networkidle");
 await page.locator('input[type="email"]').click();
@@ -17,14 +19,18 @@ await page.waitForTimeout(1500);
 await page.locator('button:has-text("Boards")').first().click();
 await page.waitForTimeout(1000);
 const scroller = page.locator('div[aria-label="Board columns"]');
-await scroller.evaluate((el) => { el.scrollLeft = el.scrollWidth; });
+await scroller.evaluate((el) => {
+  el.scrollLeft = el.scrollWidth;
+});
 await page.waitForTimeout(400);
 const cardRoot = page.locator(".cursor-grab").filter({ hasText: "Read: design systems" }).first();
 const box = await cardRoot.boundingBox();
 const blocked = page.locator('section[aria-label="Blocked"]');
 const bbox = await blocked.boundingBox();
-const sx = box.x + box.width / 2, sy = box.y + box.height / 2;
-const ex = bbox.x + bbox.width / 2, ey = bbox.y + 60;
+const sx = box.x + box.width / 2,
+  sy = box.y + box.height / 2;
+const ex = bbox.x + bbox.width / 2,
+  ey = bbox.y + 60;
 await page.mouse.move(sx, sy);
 await page.mouse.down();
 await page.waitForTimeout(100);
@@ -35,5 +41,8 @@ await page.mouse.up();
 await page.waitForTimeout(2500);
 console.log("PATCH:", patches.length, patches.slice(0, 2));
 console.log("in Blocked:", await blocked.getByText("Read: design systems").count());
-console.log("left To do:", await page.locator('section[aria-label="To do"]').getByText("Read: design systems").count());
+console.log(
+  "left To do:",
+  await page.locator('section[aria-label="To do"]').getByText("Read: design systems").count(),
+);
 await browser.close();

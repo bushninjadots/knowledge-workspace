@@ -453,7 +453,7 @@ function CollaboratorAvatar({ row }: { row: CollaboratorRow }) {
         to="/u/$handle"
         params={{ handle: row.profile.handle }}
         title={fullName}
-        className="block h-5 w-5 shrink-0 rounded-full ring-2 ring-surface transition-transform hover:scale-110"
+        className="block h-6 w-6 shrink-0 rounded-full ring-2 ring-surface transition-transform hover:scale-110"
       >
         {avatarSigned ? (
           <img src={avatarSigned} alt="" className="h-full w-full rounded-full object-cover" />
@@ -466,7 +466,7 @@ function CollaboratorAvatar({ row }: { row: CollaboratorRow }) {
     );
   }
   return (
-    <span className="block h-5 w-5 shrink-0 rounded-full ring-2 ring-surface" title={fullName}>
+    <span className="block h-6 w-6 shrink-0 rounded-full ring-2 ring-surface" title={fullName}>
       {avatarSigned ? (
         <img src={avatarSigned} alt="" className="h-full w-full rounded-full object-cover" />
       ) : (

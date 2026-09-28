@@ -577,6 +577,19 @@ already does); a confirmation on Reset; the sub-4.5:1 content colours.
 | 10    | One guidance surface + one Customize entry on `/profile` (P2)     | Product clarity; no new components.                                                                |
 | 11    | Contrast, dialog semantics, device bezel, Reset confirmation (P3) | Real, but none blocks a task.                                                                      |
 
+## Status (2026-09-28)
+
+Items 1–9 of the priority order are implemented and verified: panel scroll
+ownership with a fixed footer, version popover anchored under the top bar with
+outside-click/Escape/trigger dismissal, `t-label` font-family var, Structure
+caps as canvas fractions (82% / 90% / 100% — distinct at laptop sizes), theme
+tiles filtered, `GCustomizeAdvanced` shared by panel and phone Style tab, sheet
+closed by default at 52vh behind an "Edit Studio" FAB, and the accessibility
+inventory (24px targets, control names, Frame radiogroup, renamed Move/Hide
+actions). Contrast on the Studio view (P3) is also fixed. Verified by
+`scripts/qa-studio.mjs` (32/32) and `scripts/qa-studio-view.mjs` (14/14);
+`npm run e2e` runs all harnesses.
+
 ## What this audit did not cover
 
 - Published-page rendering inside the `/u/<handle>` preview iframe beyond its

@@ -84,7 +84,7 @@ import {
   studioBackgroundVars,
   RADIUS_MAX,
   RADIUS_MIN,
-  structureMaxWidth,
+  structureMaxWidthCss,
   studioConfigToThemeTokens,
   studioSurfaceStyle,
   type StudioConfig,
@@ -352,7 +352,7 @@ function SectionLayoutPicker({
         type="button"
         onClick={() => setOpen(!open)}
         title="Change area layout"
-        className="h-5 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
+        className="h-6 max-w-[130px] rounded-sm border border-border bg-[var(--surface-sunken)] px-1 font-mono text-3xs uppercase tracking-widest text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:border-[var(--user-accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
       >
         {current}
       </button>
@@ -423,7 +423,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
   const directManipulation = !touch;
   const editing = props.mode === "edit";
   const deviceWidth = props.mode === "preview" ? DEVICE_WIDTHS[props.device] : undefined;
-  const maxWidth = structureMaxWidth(props.config);
+  const maxWidth = structureMaxWidthCss(props.config);
   const sections = props.layout.sections;
   // Card borders live on the member's appearance. For live canvas preview the
   // builder composes the current draft preference over the saved background.
@@ -456,7 +456,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
 
   return (
     <div
-      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-[var(--studio-bg,var(--background))]"
+      className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-[var(--studio-bg,var(--background))]"
       data-studio-builder="g"
       data-personality={props.config.personality}
       style={surfaceStyle}
@@ -477,6 +477,7 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         snapToBlocks={snapToBlocks}
         onSnapToBlocksChange={setSnapToBlocks}
         onHistory={() => setHistoryOpen((open) => !open)}
+        onHistoryClosed={() => setHistoryOpen(false)}
         onModeChange={props.onModeChange}
         onDeviceChange={props.onDeviceChange}
         onUndo={props.onUndo}
@@ -490,15 +491,9 @@ export function GStudioSurface(props: GStudioSurfaceProps) {
         onExit={props.onExit}
         profile={props.profile}
         onTemplates={props.onOpenTemplates}
+        versions={props.versions}
+        onRollback={props.onRollback}
       />
-      {historyOpen && (
-        <VersionPopover
-          versions={props.versions}
-          publishedVersion={props.publishedVersion}
-          onRollback={props.onRollback}
-          onClose={() => setHistoryOpen(false)}
-        />
-      )}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {editing && (customizeOpen || mobilePanel === "left") && (
           <GCustomizePanel
@@ -592,6 +587,9 @@ function GStudioTopBar({
   canRedo,
   historyOpen,
   onHistory,
+  onHistoryClosed,
+  versions,
+  onRollback,
   onModeChange,
   onDeviceChange,
   onUndo,
@@ -621,6 +619,7 @@ function GStudioTopBar({
   canRedo: boolean;
   historyOpen: boolean;
   onHistory: () => void;
+  onHistoryClosed: () => void;
   onModeChange: (mode: GStudioMode) => void;
   onDeviceChange: (device: GStudioDevice) => void;
   onUndo: () => void;
@@ -636,6 +635,8 @@ function GStudioTopBar({
   paletteOpen: boolean;
   profile: GStudioSurfaceProps["profile"];
   onTemplates?: () => void;
+  versions: PageVersion[];
+  onRollback: (version: number) => void;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-[var(--surface-elevated)]">
@@ -831,7 +832,12 @@ function GStudioTopBar({
               ))}
             </div>
           )}
-          <IconButton label="Version history" active={historyOpen} onClick={onHistory}>
+          <IconButton
+            label="Version history"
+            active={historyOpen}
+            data-version-history-trigger
+            onClick={onHistory}
+          >
             <History className="h-3.5 w-3.5" />
           </IconButton>
           {profile?.handle && (
@@ -857,6 +863,16 @@ function GStudioTopBar({
           </span>
         </div>
       )}
+      {/* Anchored to this header, so it drops below the bar instead of floating
+          over its own trigger; dismisses like every other popover in the file. */}
+      {historyOpen && (
+        <VersionPopover
+          versions={versions}
+          publishedVersion={publishedVersion}
+          onRollback={onRollback}
+          onClose={() => onHistoryClosed()}
+        />
+      )}
     </header>
   );
 }
@@ -872,9 +888,38 @@ function VersionPopover({
   onRollback: (version: number) => void;
   onClose: () => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    // Same dismissal contract as SectionLayoutPicker: outside mousedown and
+    // Escape both close, and the trigger stays clickable because the popover
+    // anchors below the bar instead of painting over it.
+    const onMousedown = (event: MouseEvent) => {
+      const el = ref.current;
+      if (!el) return;
+      const target = event.target as Element | null;
+      // A click on the popover's own trigger is not "outside" — the trigger's
+      // onClick performs the single toggle. Without this exception the
+      // mousedown closes the popover and the click immediately reopens it.
+      if (target?.closest("[data-version-history-trigger]")) return;
+      if (!el.contains(target as Node)) onClose();
+    };
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", onMousedown);
+    document.addEventListener("keydown", onKeydown);
+    return () => {
+      document.removeEventListener("mousedown", onMousedown);
+      document.removeEventListener("keydown", onKeydown);
+    };
+  }, [onClose]);
   return (
     <div
-      className="absolute right-3 top-11 z-50 w-72 border border-border bg-[var(--popover)] p-3 shadow-panel"
+      ref={ref}
+      role="dialog"
+      aria-label="Published versions"
+      className="absolute right-3 top-full z-50 mt-1 w-72 border border-border bg-[var(--popover)] p-3 shadow-panel"
       style={{ borderRadius: "var(--studio-radius)" }}
     >
       <div className="flex items-center justify-between">
@@ -1325,7 +1370,7 @@ function GSectionBand({
               onClick={() => setRenaming(true)}
               title="Rename area"
               aria-label="Rename area"
-              className="t-label truncate rounded-sm px-0.5 hover:text-foreground"
+              className="t-label flex h-6 items-center truncate rounded-sm px-1 hover:text-foreground"
             >
               {sectionTitle}
             </button>
@@ -1738,7 +1783,11 @@ function BlockFrameSection({
   return (
     <div className="border-t border-border py-3">
       <p className="t-label mb-2">Frame</p>
-      <div className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5">
+      <div
+        role="radiogroup"
+        aria-label="Block frame"
+        className="grid grid-cols-3 gap-1 border border-border bg-[var(--surface-sunken)] p-0.5"
+      >
         {(
           [
             ["default", "Theme"],
@@ -1749,7 +1798,8 @@ function BlockFrameSection({
           <button
             key={option}
             type="button"
-            aria-pressed={(block.frameBorder ?? "default") === option}
+            role="radio"
+            aria-checked={(block.frameBorder ?? "default") === option}
             onClick={() => props.onBlockAction(block.id, { frameBorder: option })}
             className={cn(
               "rounded-sm px-1 py-1.5 text-2xs",
@@ -2322,7 +2372,7 @@ function GBlockInspector({
                   type="checkbox"
                   checked={Boolean(value)}
                   onChange={(event) => update(event.target.checked)}
-                  className="h-4 w-4 rounded-sm"
+                  className="h-6 w-6 rounded-sm accent-[var(--user-accent,var(--primary))]"
                 />
               </label>
             );
@@ -2403,6 +2453,7 @@ function GBlockInspector({
                   </div>
                 )}
                 <input
+                  aria-label={field.label}
                   className="w-full rounded-sm border border-border bg-[var(--surface-sunken)] px-2 py-1 text-xs"
                   placeholder={field.placeholder ?? "https://…"}
                   value={String(value ?? "")}
@@ -2443,11 +2494,21 @@ function GBlockInspector({
       <div className="border-t border-border pt-3">
         <p className="t-label mb-2">Actions</p>
         <div className="flex gap-1">
-          <Button variant="outline" size="sm" onClick={() => props.onMove(block.id, -1)}>
-            <ChevronUp className="h-3 w-3" /> Up
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-20 justify-center"
+            onClick={() => props.onMove(block.id, -1)}
+          >
+            <ChevronUp className="h-3 w-3" /> Move up
           </Button>
-          <Button variant="outline" size="sm" onClick={() => props.onMove(block.id, 1)}>
-            <ChevronDown className="h-3 w-3" /> Down
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-20 justify-center"
+            onClick={() => props.onMove(block.id, 1)}
+          >
+            <ChevronDown className="h-3 w-3" /> Move down
           </Button>
           <IconButton label="Duplicate block" onClick={() => props.onDuplicate(block.id)}>
             <Copy className="h-3.5 w-3.5" />
@@ -2523,15 +2584,17 @@ function ThemeSection({
           active={current === DEFAULT_THEME_ID}
           onClick={() => pick(null)}
         />
-        {presets.map((preset) => (
-          <ThemePick
-            key={preset.id}
-            name={preset.name}
-            swatch={presetSwatch(preset)}
-            active={current === preset.id}
-            onClick={() => pick(preset)}
-          />
-        ))}
+        {presets
+          .filter((preset) => preset.id !== DEFAULT_THEME_ID)
+          .map((preset) => (
+            <ThemePick
+              key={preset.id}
+              name={preset.name}
+              swatch={presetSwatch(preset)}
+              active={current === preset.id}
+              onClick={() => pick(preset)}
+            />
+          ))}
       </div>
       <button
         type="button"
@@ -2589,6 +2652,288 @@ function ThemePick({
 function presetSwatchForDefault(presets: ThemePreset[]): string {
   const tethyr = presets.find((p) => p.id === DEFAULT_THEME_ID);
   return tethyr ? presetSwatch(tethyr) : "#3f8f8a";
+}
+
+/** Advanced appearance settings (density → content tree) shared by the
+ *  desktop Customize panel and the mobile Style tab — one list, so phone
+ *  parity is structural instead of a hand-maintained promise. */
+function GCustomizeAdvanced({
+  config,
+  layout,
+  onChange,
+  cardBorders,
+  cardBorderColor,
+  onCardBordersChange,
+  onCardBorderColorChange,
+  onToggleSection,
+  onBlockAction,
+  onSelect,
+  selectedBlockId,
+  onOpenAppearance,
+}: {
+  config: GStudioConfig;
+  layout: PageLayout;
+  onChange: (patch: Partial<GStudioConfig>) => void;
+  cardBorders: CardBorderPreference;
+  cardBorderColor: string;
+  onCardBordersChange: (cardBorders: CardBorderPreference) => void;
+  onCardBorderColorChange: (color: string) => void;
+  onToggleSection: (id: string) => void;
+  onBlockAction: (id: string, patch: Partial<LayoutBlockInstance>) => void;
+  onSelect: (id: string | null) => void;
+  selectedBlockId: string | null;
+  onOpenAppearance?: () => void;
+}) {
+  return (
+    <>
+      <Choice
+        label="Density"
+        hint="Spacing rhythm between blocks"
+        value={config.density}
+        options={[
+          ["compact", "Compact"],
+          ["comfortable", "Comfortable"],
+          ["spacious", "Spacious"],
+        ]}
+        onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
+      />
+      <div className="mb-4">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="t-label">Corners</p>
+          <span className="t-label tabular-nums">{config.radius}px</span>
+        </div>
+        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground">
+          Roundness of card corners, from sharp to generously soft.
+        </p>
+        <input
+          type="range"
+          min={RADIUS_MIN}
+          max={RADIUS_MAX}
+          step={1}
+          value={config.radius}
+          aria-label="Corner radius in pixels"
+          onChange={(event) => onChange({ radius: Number(event.target.value) })}
+          className="studio-slider w-full"
+        />
+      </div>
+      <Choice
+        label="Accent"
+        hint={
+          config.accentMode === "dual"
+            ? "Pick an interactive colour; the banner colour tints the background"
+            : config.accentMode === "none"
+              ? "No colour accent — the theme carries the Studio"
+              : undefined
+        }
+        value={config.accentMode}
+        options={[
+          ["custom", "Pick"],
+          ["dual", "Banner + colour"],
+          ["none", "None"],
+        ]}
+        onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
+      />
+      {(config.accentMode === "custom" || config.accentMode === "dual") && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {ACCENT_SWATCHES.map((swatch) => (
+            <button
+              key={swatch}
+              type="button"
+              aria-label={`Accent ${swatch}`}
+              aria-pressed={config.accentColor.toLowerCase() === swatch}
+              onClick={() => onChange({ accentColor: swatch })}
+              className={cn(
+                "h-6 w-6 rounded-sm border-2",
+                config.accentColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
+              )}
+              style={{ backgroundColor: swatch }}
+            />
+          ))}
+        </div>
+      )}
+      <Choice
+        label="Card borders"
+        hint="Outlines around cards and panels"
+        value={cardBorders}
+        options={[
+          ["neutral", "Neutral"],
+          ["accent", "Dynamic"],
+          ["custom", "Custom"],
+          ["none", "None"],
+        ]}
+        onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
+      />
+      <Choice
+        label="Border weight"
+        hint="Control how much the card outline carries"
+        value={config.cardBorderWidth ?? "thin"}
+        options={[
+          ["thin", "Thin"],
+          ["medium", "Medium"],
+          ["thick", "Thick"],
+        ]}
+        onChange={(value) =>
+          onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
+        }
+      />
+      {cardBorders === "custom" && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {BORDER_SWATCHES.map((swatch) => (
+            <button
+              key={swatch}
+              type="button"
+              aria-label={`Card border ${swatch}`}
+              aria-pressed={cardBorderColor.toLowerCase() === swatch}
+              onClick={() => onCardBorderColorChange(swatch)}
+              className={cn(
+                "h-6 w-6 rounded-sm border-2",
+                cardBorderColor.toLowerCase() === swatch ? "border-foreground" : "border-border",
+              )}
+              style={{ backgroundColor: swatch }}
+            />
+          ))}
+        </div>
+      )}
+      <div className="mb-4">
+        <p className="t-label mb-1.5">Card fill</p>
+        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+          Colour and translucency of every block surface
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CARD_FILL_SWATCHES.map((swatch) => (
+            <button
+              key={swatch.value || "auto"}
+              type="button"
+              title={swatch.label}
+              aria-label={`Card fill ${swatch.label}`}
+              aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
+              onClick={() => onChange({ cardColor: swatch.value })}
+              className={cn(
+                "h-6 w-6 rounded-sm border-2 text-3xs",
+                (config.cardColor ?? "").toLowerCase() === swatch.value
+                  ? "border-foreground"
+                  : "border-border",
+              )}
+              style={
+                swatch.value
+                  ? { backgroundColor: swatch.value }
+                  : { backgroundColor: "var(--surface-elevated)" }
+              }
+            >
+              {swatch.value ? "" : "A"}
+            </button>
+          ))}
+        </div>
+        <label className="mt-2 block">
+          <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
+            Opacity <span>{config.cardOpacity}%</span>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={config.cardOpacity}
+            onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
+            className="w-full accent-[var(--user-accent)]"
+          />
+        </label>
+      </div>
+      <div className="mb-4 border-t border-border pt-3">
+        <p className="t-label mb-1.5">Background</p>
+        <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
+          Colour, pattern, or image — for your app and your public Studio.
+        </p>
+        {onOpenAppearance ? (
+          <button
+            type="button"
+            onClick={onOpenAppearance}
+            className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground transition-lift hover:bg-[var(--surface-sunken)]"
+          >
+            <Palette className="h-3 w-3" aria-hidden />
+            Edit background
+          </button>
+        ) : null}
+      </div>
+      <div className="border-t border-border pt-3">
+        <p className="t-label mb-1.5">Content</p>
+        <ul className="space-y-2">
+          {layout.sections.map((section) => (
+            <li key={section.id}>
+              <button
+                type="button"
+                onClick={() => onToggleSection(section.id)}
+                aria-label={
+                  section.visible === false
+                    ? `Show ${sectionLabel(section)}`
+                    : `Hide ${sectionLabel(section)}`
+                }
+                className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]"
+              >
+                {section.visible === false ? (
+                  <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
+                ) : (
+                  <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
+                )}
+                <span
+                  className={cn(
+                    "truncate text-xs",
+                    section.visible === false
+                      ? "text-muted-foreground-subtle line-through"
+                      : "text-foreground",
+                  )}
+                >
+                  {sectionLabel(section)}
+                </span>
+              </button>
+              <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
+                {section.blocks.map((block) => (
+                  <li key={block.id} className="group/block flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => onSelect(block.id)}
+                      aria-current={selectedBlockId === block.id ? "true" : undefined}
+                      className={cn(
+                        "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]",
+                        selectedBlockId === block.id &&
+                          "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "truncate text-2xs",
+                          block.visible === false
+                            ? "text-muted-foreground-subtle line-through"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {getBlock(block.type)?.label ?? block.type}
+                      </span>
+                    </button>
+                    <IconButton
+                      label={
+                        block.visible === false
+                          ? `Show ${getBlock(block.type)?.label ?? block.type}`
+                          : `Hide ${getBlock(block.type)?.label ?? block.type}`
+                      }
+                      className="h-5 w-5 opacity-0 group-hover/block:opacity-100 focus-visible:opacity-100"
+                      onClick={() => onBlockAction(block.id, { visible: block.visible === false })}
+                    >
+                      {block.visible === false ? (
+                        <EyeOff className="h-3 w-3" />
+                      ) : (
+                        <Eye className="h-3 w-3" />
+                      )}
+                    </IconButton>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
 }
 
 function GCustomizePanel({
@@ -2654,18 +2999,18 @@ function GCustomizePanel({
   return (
     <aside
       className={cn(
-        "flex h-[calc(100dvh-2.75rem)] min-h-0 w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--surface-elevated)]",
-        compact && "fixed inset-y-11 left-0 z-40",
+        "flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-border bg-[var(--surface-elevated)]",
+        compact && "fixed bottom-0 left-0 top-11 z-40",
       )}
     >
       <header className="flex items-center justify-between border-b border-border px-3 py-2">
-        <h2 className="t-label">Customize</h2>
+        <p className="t-label">Customize</p>
         <IconButton label="Close customize" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
         </IconButton>
       </header>
-      {/* Single scroll owner: the aside scrolls; this wrapper just stacks. */}
-      <div className="flex min-h-0 flex-1 flex-col">
+      {/* Single scroll owner: this wrapper scrolls; the footer stays put below it. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <ThemeSection themeId={themeId} onThemeChange={onThemeChange} />
         {onOpenTemplates && (
           <div className="mb-4 shrink-0">
@@ -2721,258 +3066,20 @@ function GCustomizePanel({
         <div>
           {advancedOpen && (
             <>
-              <Choice
-                label="Density"
-                hint="Spacing rhythm between blocks"
-                value={config.density}
-                options={[
-                  ["compact", "Compact"],
-                  ["comfortable", "Comfortable"],
-                  ["spacious", "Spacious"],
-                ]}
-                onChange={(value) => onChange({ density: value as GStudioConfig["density"] })}
+              <GCustomizeAdvanced
+                config={config}
+                layout={layout}
+                onChange={onChange}
+                cardBorders={cardBorders}
+                cardBorderColor={cardBorderColor}
+                onCardBordersChange={onCardBordersChange}
+                onCardBorderColorChange={onCardBorderColorChange}
+                onToggleSection={onToggleSection}
+                onBlockAction={onBlockAction}
+                onSelect={onSelect}
+                selectedBlockId={selectedBlockId}
+                onOpenAppearance={onOpenAppearance}
               />
-              <div className="mb-4">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <p className="t-label">Corners</p>
-                  <span className="t-label tabular-nums">{config.radius}px</span>
-                </div>
-                <p className="mb-1.5 text-[0.6875rem] leading-snug text-muted-foreground">
-                  Roundness of card corners, from sharp to generously soft.
-                </p>
-                <input
-                  type="range"
-                  min={RADIUS_MIN}
-                  max={RADIUS_MAX}
-                  step={1}
-                  value={config.radius}
-                  aria-label="Corner radius in pixels"
-                  onChange={(event) => onChange({ radius: Number(event.target.value) })}
-                  className="studio-slider w-full"
-                />
-              </div>
-              <Choice
-                label="Accent"
-                hint={
-                  config.accentMode === "dual"
-                    ? "Pick an interactive colour; the banner colour tints the background"
-                    : config.accentMode === "none"
-                      ? "No colour accent — the theme carries the Studio"
-                      : undefined
-                }
-                value={config.accentMode}
-                options={[
-                  ["custom", "Pick"],
-                  ["dual", "Banner + colour"],
-                  ["none", "None"],
-                ]}
-                onChange={(value) => onChange({ accentMode: value as GStudioConfig["accentMode"] })}
-              />
-              {(config.accentMode === "custom" || config.accentMode === "dual") && (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {ACCENT_SWATCHES.map((swatch) => (
-                    <button
-                      key={swatch}
-                      type="button"
-                      aria-label={`Accent ${swatch}`}
-                      aria-pressed={config.accentColor.toLowerCase() === swatch}
-                      onClick={() => onChange({ accentColor: swatch })}
-                      className={cn(
-                        "h-6 w-6 rounded-sm border-2",
-                        config.accentColor.toLowerCase() === swatch
-                          ? "border-foreground"
-                          : "border-border",
-                      )}
-                      style={{ backgroundColor: swatch }}
-                    />
-                  ))}
-                </div>
-              )}
-              <Choice
-                label="Card borders"
-                hint="Outlines around cards and panels"
-                value={cardBorders}
-                options={[
-                  ["neutral", "Neutral"],
-                  ["accent", "Dynamic"],
-                  ["custom", "Custom"],
-                  ["none", "None"],
-                ]}
-                onChange={(value) => onCardBordersChange(value as CardBorderPreference)}
-              />
-              <Choice
-                label="Border weight"
-                hint="Control how much the card outline carries"
-                value={config.cardBorderWidth ?? "thin"}
-                options={[
-                  ["thin", "Thin"],
-                  ["medium", "Medium"],
-                  ["thick", "Thick"],
-                ]}
-                onChange={(value) =>
-                  onChange({ cardBorderWidth: value as GStudioConfig["cardBorderWidth"] })
-                }
-              />
-              {cardBorders === "custom" && (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {BORDER_SWATCHES.map((swatch) => (
-                    <button
-                      key={swatch}
-                      type="button"
-                      aria-label={`Card border ${swatch}`}
-                      aria-pressed={cardBorderColor.toLowerCase() === swatch}
-                      onClick={() => onCardBorderColorChange(swatch)}
-                      className={cn(
-                        "h-6 w-6 rounded-sm border-2",
-                        cardBorderColor.toLowerCase() === swatch
-                          ? "border-foreground"
-                          : "border-border",
-                      )}
-                      style={{ backgroundColor: swatch }}
-                    />
-                  ))}
-                </div>
-              )}
-              <div className="mb-4">
-                <p className="t-label mb-1.5">Card fill</p>
-                <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
-                  Colour and translucency of every block surface
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {CARD_FILL_SWATCHES.map((swatch) => (
-                    <button
-                      key={swatch.value || "auto"}
-                      type="button"
-                      title={swatch.label}
-                      aria-label={`Card fill ${swatch.label}`}
-                      aria-pressed={(config.cardColor ?? "").toLowerCase() === swatch.value}
-                      onClick={() => onChange({ cardColor: swatch.value })}
-                      className={cn(
-                        "h-6 w-6 rounded-sm border-2 text-3xs",
-                        (config.cardColor ?? "").toLowerCase() === swatch.value
-                          ? "border-foreground"
-                          : "border-border",
-                      )}
-                      style={
-                        swatch.value
-                          ? { backgroundColor: swatch.value }
-                          : { backgroundColor: "var(--surface-elevated)" }
-                      }
-                    >
-                      {swatch.value ? "" : "A"}
-                    </button>
-                  ))}
-                </div>
-                <label className="mt-2 block">
-                  <span className="mb-1 flex items-center justify-between font-mono text-3xs uppercase tracking-widest text-muted-foreground-subtle">
-                    Opacity <span>{config.cardOpacity}%</span>
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={config.cardOpacity}
-                    onChange={(event) => onChange({ cardOpacity: Number(event.target.value) })}
-                    className="w-full accent-[var(--user-accent)]"
-                  />
-                </label>
-              </div>
-              <div className="mb-4 border-t border-border pt-3">
-                <p className="t-label mb-1.5">Background</p>
-                <p className="mb-2 text-2xs leading-snug text-muted-foreground-subtle">
-                  Colour, pattern, or image — for your app and your public Studio.
-                </p>
-                {onOpenAppearance ? (
-                  <button
-                    type="button"
-                    onClick={onOpenAppearance}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-border px-2 py-1.5 text-2xs text-foreground transition-lift hover:bg-[var(--surface-sunken)]"
-                  >
-                    <Palette className="h-3 w-3" aria-hidden />
-                    Edit background
-                  </button>
-                ) : null}
-              </div>
-              <div className="border-t border-border pt-3">
-                <p className="t-label mb-1.5">Content</p>
-                <ul className="space-y-2">
-                  {layout.sections.map((section) => (
-                    <li key={section.id}>
-                      <button
-                        type="button"
-                        onClick={() => onToggleSection(section.id)}
-                        aria-label={
-                          section.visible === false
-                            ? `Show ${sectionLabel(section)}`
-                            : `Hide ${sectionLabel(section)}`
-                        }
-                        className="flex min-w-0 w-full items-center gap-1.5 rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]"
-                      >
-                        {section.visible === false ? (
-                          <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground-subtle" />
-                        ) : (
-                          <Eye className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        )}
-                        <span
-                          className={cn(
-                            "truncate text-xs",
-                            section.visible === false
-                              ? "text-muted-foreground-subtle line-through"
-                              : "text-foreground",
-                          )}
-                        >
-                          {sectionLabel(section)}
-                        </span>
-                      </button>
-                      <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2">
-                        {section.blocks.map((block) => (
-                          <li key={block.id} className="group/block flex items-center gap-0.5">
-                            <button
-                              type="button"
-                              onClick={() => onSelect(block.id)}
-                              aria-current={selectedBlockId === block.id ? "true" : undefined}
-                              className={cn(
-                                "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-left hover:bg-[var(--surface-sunken)]",
-                                selectedBlockId === block.id &&
-                                  "bg-[var(--user-accent-subtle)] text-[var(--user-accent)]",
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "truncate text-2xs",
-                                  block.visible === false
-                                    ? "text-muted-foreground-subtle line-through"
-                                    : "text-muted-foreground",
-                                )}
-                              >
-                                {getBlock(block.type)?.label ?? block.type}
-                              </span>
-                            </button>
-                            <IconButton
-                              label={
-                                block.visible === false
-                                  ? `Show ${getBlock(block.type)?.label ?? block.type}`
-                                  : `Hide ${getBlock(block.type)?.label ?? block.type}`
-                              }
-                              className="h-5 w-5 opacity-0 group-hover/block:opacity-100 focus-visible:opacity-100"
-                              onClick={() =>
-                                onBlockAction(block.id, { visible: block.visible === false })
-                              }
-                            >
-                              {block.visible === false ? (
-                                <EyeOff className="h-3 w-3" />
-                              ) : (
-                                <Eye className="h-3 w-3" />
-                              )}
-                            </IconButton>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              </div>{" "}
             </>
           )}
         </div>
@@ -3042,7 +3149,7 @@ function Choice({
 
 function GMobileEditSheet(props: GStudioSurfaceProps) {
   const [tab, setTab] = useState<"arrange" | "add" | "feel">("arrange");
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [targetArea, setTargetArea] = useState<string | undefined>(props.layout.sections[0]?.id);
   const usedBlockTypes = new Set(props.layout.sections.flatMap((s) => s.blocks.map((b) => b.type)));
   if (!open)
@@ -3050,14 +3157,14 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 border border-border bg-[var(--surface-elevated)] px-3 py-2 text-xs shadow-panel"
+        className="fixed bottom-20 left-1/2 z-40 -translate-x-1/2 border border-border bg-[var(--surface-elevated)] px-3 py-2 text-xs shadow-panel"
       >
         Edit Studio
       </button>
     );
   return (
     <section
-      className="fixed inset-x-0 bottom-0 z-40 max-h-[62vh] border-t border-border bg-[var(--surface-elevated)] shadow-panel"
+      className="fixed inset-x-0 bottom-0 z-50 flex max-h-[52vh] flex-col border-t border-border bg-[var(--surface-elevated)] shadow-panel"
       aria-label="Mobile Studio editor"
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -3139,7 +3246,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
           <Sliders className="mr-1 inline h-3 w-3" /> Style
         </button>
       </div>
-      <div className="max-h-[48vh] overflow-y-auto px-3 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         {tab === "arrange" && (
           <>
             <p className="mb-2 text-2xs leading-snug text-muted-foreground">
@@ -3277,18 +3384,9 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                 Browse templates
               </button>
             )}
-            {props.onSaveAsTemplate && (
-              <button
-                type="button"
-                onClick={props.onSaveAsTemplate}
-                className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-2 py-2 text-2xs text-muted-foreground outline-none hover:bg-[var(--surface-sunken)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1"
-              >
-                <LayoutTemplate className="h-3 w-3" aria-hidden />
-                Save as template
-              </button>
-            )}
             <Choice
               label="Structure"
+              hint="How wide your Studio reads"
               value={props.config.structure}
               options={[
                 ["single", "Column"],
@@ -3301,6 +3399,7 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
             />
             <Choice
               label="Personality"
+              hint="Typography and visual character — Editorial uses Space Grotesk, Technical uses JetBrains Mono"
               value={props.config.personality}
               options={[
                 ["modern", "Modern"],
@@ -3311,17 +3410,21 @@ function GMobileEditSheet(props: GStudioSurfaceProps) {
                 props.onCustomizeChange({ personality: value as GStudioConfig["personality"] })
               }
             />
-            <Choice
-              label="Density"
-              value={props.config.density}
-              options={[
-                ["compact", "Compact"],
-                ["comfortable", "Comfortable"],
-                ["spacious", "Spacious"],
-              ]}
-              onChange={(value) =>
-                props.onCustomizeChange({ density: value as GStudioConfig["density"] })
-              }
+            {/* Same list as the desktop panel's "More options" — one component,
+                so phone parity cannot drift again. */}
+            <GCustomizeAdvanced
+              config={props.config}
+              layout={props.layout}
+              onChange={props.onCustomizeChange}
+              cardBorders={props.cardBorders}
+              cardBorderColor={props.cardBorderColor}
+              onCardBordersChange={props.onCardBordersChange}
+              onCardBorderColorChange={props.onCardBorderColorChange}
+              onToggleSection={props.onToggleSection}
+              onBlockAction={props.onBlockAction}
+              onSelect={props.onSelect}
+              selectedBlockId={props.selectedBlockId}
+              onOpenAppearance={props.onOpenAppearance}
             />
           </div>
         )}

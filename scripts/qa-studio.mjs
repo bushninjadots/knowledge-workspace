@@ -131,6 +131,20 @@ async function expandMoreOptions(page) {
   return (await more.getAttribute("aria-expanded")) === "true";
 }
 
+// The phone editor is closed by default (audit P0) — the canvas shows first
+// and the "Edit Studio" FAB opens the sheet.
+async function openMobileEditor(page) {
+  const has = await page.evaluate(
+    () => !!document.querySelector('section[aria-label="Mobile Studio editor"]'),
+  );
+  if (has) return true;
+  const fab = page.getByRole("button", { name: "Edit Studio", exact: true });
+  if ((await fab.count()) === 0) return false;
+  await fab.click();
+  await page.waitForTimeout(400);
+  return true;
+}
+
 // ── page probes ─────────────────────────────────────────────────────────────
 
 /** 1. Is the builder bounded by the viewport, and is the panel inside it? */
@@ -168,8 +182,20 @@ const REACH = (scrollTop) => {
     root.querySelector("aside") ??
     document.querySelector('section[aria-label="Mobile Studio editor"]');
   if (!panel) return { absent: true, blocked: [], offscreen: [] };
-  if (typeof scrollTop === "number") panel.scrollTop = scrollTop;
+  const wrapper = panel.querySelector(":scope > div");
+  const wcs = wrapper ? getComputedStyle(wrapper) : null;
+  // The content wrapper is the scroll owner when it actually clips and
+  // scrolls; the panel itself is the fallback (legacy layout).
+  const scrollOwner =
+    wrapper &&
+    wcs &&
+    /(auto|scroll)/.test(wcs.overflowY) &&
+    wrapper.scrollHeight > wrapper.clientHeight + 1
+      ? wrapper
+      : panel;
+  if (typeof scrollTop === "number") scrollOwner.scrollTop = scrollTop;
   const pr = panel.getBoundingClientRect();
+  const or = scrollOwner.getBoundingClientRect();
   const footer = panel.querySelector("footer");
   const fr = footer?.getBoundingClientRect();
   const blocked = [];
@@ -178,6 +204,9 @@ const REACH = (scrollTop) => {
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     if (r.top < pr.top - 1 || r.bottom > pr.bottom + 1) continue; // off-panel, not an occlusion
+    // A control clipped by the scroll owner is out of view, not occluded —
+    // scrolling to it is exactly what the scrolled snapshots assert.
+    if (scrollOwner !== panel && (r.bottom > or.bottom + 1 || r.top < or.top - 1)) continue;
     const name = (el.getAttribute("aria-label") || el.textContent || el.title || el.value || "")
       .replace(/\s+/g, " ")
       .trim()
@@ -206,8 +235,9 @@ const REACH = (scrollTop) => {
       h: Math.round(pr.height),
       overflowBelow: Math.round(pr.bottom - innerHeight),
     },
-    scrollTop: panel.scrollTop,
-    maxScroll: panel.scrollHeight - panel.clientHeight,
+    scrollTop: scrollOwner.scrollTop,
+    maxScroll: scrollOwner.scrollHeight - scrollOwner.clientHeight,
+    scrollOwner: scrollOwner === wrapper ? "content wrapper" : "panel",
     contentWrapper: (() => {
       const w = panel.querySelector(":scope > div");
       if (!w) return null;
@@ -216,7 +246,9 @@ const REACH = (scrollTop) => {
         overflowY: cs.overflowY,
         clientH: w.clientHeight,
         scrollH: w.scrollHeight,
-        spills: w.scrollHeight > w.clientHeight + 1,
+        // "Spills" means unclipped overflow: content taller than the box with
+        // no scroll container, which is what runs under the footer.
+        spills: w.scrollHeight > w.clientHeight + 1 && !/(auto|scroll)/.test(cs.overflowY),
       };
     })(),
     footer: fr ? { y: Math.round(fr.y), h: Math.round(fr.height) } : null,
@@ -235,7 +267,10 @@ const POPOVER = () => {
   const trigger = document.querySelector('[aria-label="Version history"]');
   const t = trigger?.getBoundingClientRect();
   const covered = [];
-  for (const el of document.querySelectorAll("[data-studio-builder] header button")) {
+  for (const el of document.querySelectorAll("[data-studio-builder] > header button")) {
+    // Skip the popover's own controls — it legitimately contains its own Close
+    // button and internal controls; the check is about *other* top-bar buttons.
+    if (el.closest('[aria-label="Published versions"]')) continue;
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
     const overlap = !(b.right < r.left || b.left > r.right || b.bottom < r.top || b.top > r.bottom);
@@ -490,6 +525,9 @@ try {
       const page = await browser.newPage({ viewport: { width: w, height: h } });
       await login(page);
       await openStudio(page);
+      // Below `lg` the desktop aside is hidden and the phone sheet is the
+      // settings surface — but it is closed by default, so open it first.
+      if (w < 1024) await openMobileEditor(page);
       shells[`${w}x${h}`] = {
         ...(await page.evaluate(SHELL)),
         asideOpen: await ensureCustomizeOpen(page),
@@ -559,7 +597,7 @@ try {
       "customize panel can scroll to its last setting",
       (atRest.maxScroll ?? 0) > 0 || (atRest.contentWrapper?.spills ?? false) === false,
       atRest.maxScroll === 0 && atRest.contentWrapper?.spills
-        ? `panel scrollTop is pinned at 0 (maxScroll 0) while ${atRest.contentWrapper.scrollH}px of content sits in a ${atRest.contentWrapper.clientH}px box`
+        ? `scroll owner (${atRest.scrollOwner}) is pinned at scrollTop 0 while ${atRest.contentWrapper.scrollH}px of content sits in a ${atRest.contentWrapper.clientH}px box`
         : "",
     );
     for (const [label, snap] of [
@@ -978,6 +1016,22 @@ try {
     });
     await login(page);
     await openStudio(page);
+    // The sheet is closed by default (audit P0) — the canvas must be visible
+    // first. Open it via the FAB before measuring its contents.
+    const openByDefault = await page.evaluate(
+      () =>
+        !document.querySelector('section[aria-label="Mobile Studio editor"]') &&
+        !![...document.querySelectorAll("button")].find(
+          (b) => b.textContent.trim() === "Edit Studio",
+        ),
+    );
+    if (openByDefault) {
+      await page.getByRole("button", { name: "Edit Studio", exact: true }).click();
+      await page.waitForTimeout(400);
+    }
+    // Setting groups live on the Style tab; switch to it before inventorying.
+    await page.getByRole("button", { name: "Style", exact: true }).click();
+    await page.waitForTimeout(300);
     const sheet = await page.evaluate(() => {
       const sec = document.querySelector('section[aria-label="Mobile Studio editor"]');
       if (!sec) return null;
@@ -987,13 +1041,15 @@ try {
           (b.getAttribute("aria-label") || b.textContent || "").replace(/\s+/g, " ").trim(),
         )
         .filter(Boolean);
+      // Setting groups are `p.t-label` headings (e.g. "Corners"), not buttons.
+      const groups = [...sec.querySelectorAll("p.t-label")].map((e) => e.textContent.trim());
       return {
         heightPctOfViewport: Math.round((r.height / innerHeight) * 100),
-        openByDefault: true,
-        controls: names,
+        openByDefault: false,
+        controls: [...names, ...groups],
         tabs: [...sec.querySelectorAll("button")]
           .map((b) => b.textContent.trim())
-          .filter((t) => ["Arrange", "Add", "Style", "Feel"].includes(t)),
+          .filter((t) => ["Arrange", "Add", "Style"].includes(t)),
       };
     });
     await page.close();
@@ -1010,26 +1066,26 @@ try {
     });
     await d.close();
     report.sections.mobileSheet = sheet;
-    // The mobile Style tab carries a subset; name the groups it drops.
+    // True parity: every desktop setting group (minus the panel title) must
+    // appear on the phone's Style tab.
+    const desktopGroups = (report.sections.desktopPanelNames || []).filter(
+      (g) => g !== "Customize",
+    );
     const mobileGroups = sheet ? sheet.controls : [];
-    const missingGroups = [
-      "Corners",
-      "Accent",
-      "Card borders",
-      "Border weight",
-      "Card fill",
-      "Background",
-      "Content",
-    ];
     const onMobile = JSON.stringify(mobileGroups);
-    const dropped = missingGroups.filter(
+    const dropped = desktopGroups.filter(
       (g) => !onMobile.toLowerCase().includes(g.split(" ")[0].toLowerCase()),
     );
     report.sections.mobileDroppedGroups = dropped;
     log(
-      "mobile editor sheet is present on a phone viewport",
+      "mobile editor sheet is closed by default with an Edit Studio FAB",
+      openByDefault,
+      openByDefault ? "" : "sheet rendered open (or FAB missing) before any interaction",
+    );
+    log(
+      "mobile editor sheet is present on a phone viewport after opening it",
       !!sheet,
-      sheet ? "" : "no sheet rendered",
+      sheet ? "" : "no sheet rendered after clicking the FAB",
     );
     log(
       "mobile Style tab carries the desktop setting groups",
@@ -1038,8 +1094,8 @@ try {
     );
     log(
       "mobile editor does not permanently cover the canvas",
-      !sheet || sheet.heightPctOfViewport < 40,
-      sheet ? `sheet is ${sheet.heightPctOfViewport}% of the viewport, open by default` : "",
+      !sheet || sheet.heightPctOfViewport <= 52,
+      sheet ? `open sheet is ${sheet.heightPctOfViewport}% of the viewport (cap 52%)` : "",
     );
   }
 } finally {

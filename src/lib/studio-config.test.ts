@@ -10,6 +10,7 @@ import {
   studioConfigToThemeTokens,
   studioBackgroundVars,
   structureMaxWidth,
+  structureMaxWidthCss,
   densityMetrics,
   RADIUS_MAX,
   RADIUS_MIN,
@@ -317,10 +318,24 @@ describe("studioBackgroundVars", () => {
 });
 
 describe("structureMaxWidth", () => {
-  it("caps each structure under the site-wide max-w-7xl so the builder fits alongside chrome", () => {
+  it("caps each structure at its documented ceiling", () => {
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "single" })).toBe(768);
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "sidebar" })).toBe(1024);
     expect(structureMaxWidth({ ...DEFAULT_STUDIO_CONFIG, structure: "wide" })).toBe(1200);
+  });
+
+  it("writes CSS caps that stay distinguishable when the canvas is narrower than the ceiling", () => {
+    // The laptop-canvas defect: a fixed 1024/1200px cap renders identically
+    // when the canvas is ~944px, so the options must clamp to 100%.
+    expect(structureMaxWidthCss({ ...DEFAULT_STUDIO_CONFIG, structure: "single" })).toBe(
+      "min(768px, 82%)",
+    );
+    expect(structureMaxWidthCss({ ...DEFAULT_STUDIO_CONFIG, structure: "sidebar" })).toBe(
+      "min(1024px, 90%)",
+    );
+    expect(structureMaxWidthCss({ ...DEFAULT_STUDIO_CONFIG, structure: "wide" })).toBe(
+      "min(1200px, 100%)",
+    );
   });
 });
 

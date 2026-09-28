@@ -20,6 +20,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "smoke": "bash tests/route_smoke.sh",
+    "e2e": "node scripts/e2e.mjs",
     "check:db-drift": "node scripts/db-drift-check.mjs",
     "check:migration-order": "node scripts/migration-order-check.mjs",
     "test": "vitest run",

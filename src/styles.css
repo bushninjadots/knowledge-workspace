@@ -178,7 +178,7 @@
   --shadow-tint: oklch(0.2 0.02 265 / 0.06);
 
   /* Semantic meaning — GitHub Primer hues */
-  --trust: oklch(0.55 0.13 152); /* #1a7f37 */
+  --trust: oklch(0.52 0.13 152); /* #187733, AA as text on white */
   --trust-foreground: oklch(1 0 0);
   --trust-subtle: oklch(0.955 0.03 152);
 
@@ -186,7 +186,7 @@
   --learning-foreground: oklch(1 0 0);
   --learning-subtle: oklch(0.955 0.028 253);
 
-  --teaching: oklch(0.55 0.12 70); /* amber, AA as text on white */
+  --teaching: oklch(0.52 0.12 70); /* amber, AA as text on white */
   --teaching-foreground: oklch(1 0 0);
   --teaching-subtle: oklch(0.96 0.04 85);
 
@@ -347,6 +347,7 @@
     letter-spacing: -0.01em;
   }
   h3 {
+    font-family: var(--font-title);
     font-size: 0.9375rem;
     line-height: 1.35;
     font-weight: 600;
@@ -573,13 +574,15 @@
 }
 
 /* Legacy name for the same micro-label treatment used across the Studio
-   chrome; kept identical so every panel label renders at the same size. */
+   chrome; kept identical so every panel label renders at the same size —
+   including the personality font hint, which the panel's headings follow. */
 @utility t-label {
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 650;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-foreground-subtle);
+  font-family: var(--studio-label-font, var(--font-sans));
 }
 
 /* Tabular numerals for metrics, scores and counts. */
