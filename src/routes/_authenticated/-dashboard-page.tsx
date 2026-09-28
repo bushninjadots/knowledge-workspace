@@ -428,13 +428,13 @@ function DashboardWelcomeBanner({
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
         <div className="min-w-0">
           <p className="section-label">Welcome back</p>
-          <h1
+          <h2
             id="dashboard-welcome-heading"
             className="mt-1 max-w-2xl font-title text-3xl font-semibold tracking-[-0.035em] sm:text-5xl"
           >
             Hey {firstName},{" "}
             <span className="text-[var(--user-accent,var(--trust))]">what will you make move?</span>
-          </h1>
+          </h2>
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <Link
               to="/profile"
