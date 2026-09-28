@@ -661,15 +661,19 @@ export function ExplorePage() {
         {/* Main content */}
         <div className="min-w-0 flex-1">
           {/* Mobile discover panel trigger — sidebar content is hidden below lg */}
-          <div className="mb-4 lg:hidden">
+          <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+            <p className="text-xs text-muted-foreground">
+              Browse by project, person, or opportunity.
+            </p>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDiscoverOpen(true)}
-              className="gap-1.5"
+              className="shrink-0 gap-1.5"
+              aria-label="Open discover filters"
             >
               <Compass className="h-3.5 w-3.5" />
-              Discover
+              Filters
             </Button>
           </div>
           <section className="mb-7 border-b border-border/60 pb-7">

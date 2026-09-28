@@ -569,7 +569,7 @@ function StudioViewTopBar({
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[13px] font-semibold text-foreground">Studio</span>
           <span
-            className={`hidden border px-1.5 py-0.5 font-mono text-3xs sm:inline ${
+            className={`border px-1.5 py-0.5 font-mono text-3xs ${
               published ? "border-trust text-trust" : "border-caution text-caution"
             }`}
           >

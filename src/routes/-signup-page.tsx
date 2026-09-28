@@ -202,7 +202,7 @@ export function SignupPage() {
           {loading ? "Creating..." : "Create my profile"}
         </Button>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Let's build with respect and keep Tethyr a place where creators thrive.{" "}
+          {"Let's build with respect and keep Tethyr a place where creators thrive. "}
           <Link to="/terms" className="underline hover:text-foreground">
             Terms of Service
           </Link>{" "}
