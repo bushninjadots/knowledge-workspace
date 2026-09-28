@@ -2596,20 +2596,27 @@ function ThemeSection({
             />
           ))}
       </div>
-      <button
-        type="button"
-        onClick={() => setThemePreset(current === DEFAULT_THEME_ID ? null : current)}
-        className={cn(
-          "mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-2xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
-          siteWidePreset && siteWidePreset === current
-            ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
-            : "border-border text-muted-foreground hover:text-foreground",
-        )}
-        title="Apply this theme to every page of the app, including the navigation"
-      >
-        <LayoutGrid className="h-3 w-3" aria-hidden />
-        {siteWidePreset && siteWidePreset === current ? "Applied site-wide" : "Apply site-wide"}
-      </button>
+      {/* Its own labelled group: this reaches beyond the Studio into the whole
+          app, so it must not read as part of the Studio-only tile grid. */}
+      <div className="mt-3 border-t border-border/60 pt-3">
+        <p className="t-label mb-1.5">App-wide</p>
+        <p className="mb-1.5 text-2xs leading-snug text-muted-foreground-subtle">
+          Apply this theme to every page of the app, including the navigation.
+        </p>
+        <button
+          type="button"
+          onClick={() => setThemePreset(current === DEFAULT_THEME_ID ? null : current)}
+          className={cn(
+            "flex w-full items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-2xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--user-accent,var(--ring))] focus-visible:ring-offset-1",
+            siteWidePreset && siteWidePreset === current
+              ? "border-[var(--user-accent-border)] bg-[var(--user-accent-subtle)] text-foreground"
+              : "border-border text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <LayoutGrid className="h-3 w-3" aria-hidden />
+          {siteWidePreset && siteWidePreset === current ? "Applied site-wide" : "Apply site-wide"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -592,6 +592,13 @@ actions). Contrast on the Studio view (P3) is also fixed. Verified by
 
 ## What this audit did not cover
 
+> Covered since: the sections below were exercised by
+> `scripts/qa-studio-blindspots.mjs` (2026-09-28). Reordering is checked
+> through the accessible Move controls, dark-mode contrast is measured with a
+> proper oklch/oklab-aware probe, and the community-template
+> publish/unpublish round trip is verified end to end — which surfaced and
+> fixed a stale Unpublish affordance on just-unpublished templates.
+
 - Published-page rendering inside the `/u/<handle>` preview iframe beyond its
   geometry.
 - Drag-and-drop reordering, resize handles, and the snap indicator (exercised by

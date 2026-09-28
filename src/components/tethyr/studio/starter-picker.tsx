@@ -649,8 +649,10 @@ function MyTemplateChip({
   onUse?: (template: CommunityTemplate) => void;
 }) {
   const deleteTemplate = useDeleteTemplate();
-  // Published templates can be unpublished; private forks only offer apply.
-  const canUnpublish = template.forkedFromId === null;
+  // Published templates can be unpublished; private forks and layouts whose
+  // flag has since flipped (e.g. just unpublished in another surface) only
+  // offer apply.
+  const canUnpublish = template.forkedFromId === null && template.isTemplate;
   return (
     <li className="shrink-0">
       <div

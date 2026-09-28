@@ -35,6 +35,8 @@ export interface CommunityTemplate {
   creatorDisplayName: string | null;
   /** Whether this layout is one of the member's own (creator or fork owner). */
   isMine: boolean;
+  /** Whether the layout is currently published to the community directory. */
+  isTemplate: boolean;
   /** When this layout is a fork: the id of the template it was forked from. */
   forkedFromId: string | null;
   usageCount: number;
@@ -50,7 +52,7 @@ interface CreatorJoin {
 }
 
 const TEMPLATE_SELECT =
-  "id, name, description, category, sections, theme_id, created_by, usage_count, fork_count, updated_at";
+  "id, name, description, category, sections, theme_id, created_by, is_template, usage_count, fork_count, updated_at";
 
 function mapLayoutRow(
   row: Pick<
@@ -62,6 +64,7 @@ function mapLayoutRow(
     | "sections"
     | "theme_id"
     | "created_by"
+    | "is_template"
     | "usage_count"
     | "fork_count"
     | "updated_at"
@@ -80,6 +83,7 @@ function mapLayoutRow(
     creatorHandle: creator?.handle ?? null,
     creatorDisplayName: creator?.display_name ?? null,
     isMine: currentUserId != null && row.created_by === currentUserId,
+    isTemplate: row.is_template,
     forkedFromId: null,
     usageCount: row.usage_count ?? 0,
     forkCount: row.fork_count ?? 0,

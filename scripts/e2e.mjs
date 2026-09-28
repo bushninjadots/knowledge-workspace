@@ -36,6 +36,7 @@ const SUITE = [
   ["studio-parity", "qa-studio-parity.mjs"],
   ["studio-builder", "qa-studio.mjs"],
   ["studio-view", "qa-studio-view.mjs"],
+  ["studio-blindspots", "qa-studio-blindspots.mjs"],
   ["avatar-shape", "qa-avatar-shape.mjs"],
   ["explore-overlay", "qa-explore-overlay.mjs"],
   ["project-loop", "qa-project-loop.mjs"],

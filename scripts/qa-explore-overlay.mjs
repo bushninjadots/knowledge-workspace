@@ -39,13 +39,28 @@ for (let attempt = 0; attempt < 3 && !loggedIn; attempt++) {
 if (!loggedIn) throw new Error(`login failed; still on ${page.url()}`);
 log("login", true, "→ /dashboard");
 
+// The card can paint before the SPA attaches handlers — the dev server
+// transforms modules on demand, so a harness that ran just before this one
+// can delay hydration past the first paint. Click until the overlay opens
+// (same bounded-retry shape as the login loop above).
+const openOverlayFrom = async (cardLoc) => {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await cardLoc.click();
+    const dlg = page.getByRole("dialog");
+    const opened = await dlg
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+    if (opened) return dlg;
+  }
+  throw new Error("overlay did not open after 3 clicks (hydration race?)");
+};
+
 // Explore → Projects tab → open the quick-look overlay from a card.
 await page.goto(`${BASE}/explore`, { waitUntil: "domcontentloaded" });
 const card = page.locator('button[aria-label^="View "]').first();
 await card.waitFor({ state: "visible", timeout: 20000 });
-await card.click();
-const overlay = page.getByRole("dialog");
-await overlay.waitFor({ state: "visible", timeout: 10000 });
+const overlay = await openOverlayFrom(card);
 const overlayTitle = (await overlay.getByRole("heading").first().innerText()).trim();
 log("overlay opens from card", true, overlayTitle);
 
@@ -80,9 +95,7 @@ await page.goBack();
 await page.waitForTimeout(1500);
 const reopenCard = page.locator('button[aria-label^="View "]').first();
 await reopenCard.waitFor({ state: "visible", timeout: 20000 });
-await reopenCard.click();
-const reopenOverlay = page.getByRole("dialog");
-await reopenOverlay.waitFor({ state: "visible", timeout: 10000 });
+const reopenOverlay = await openOverlayFrom(reopenCard);
 await reopenOverlay.getByRole("button", { name: "View Project" }).click();
 await page.waitForURL(/\/projects\//, { timeout: 20000 });
 await page.waitForTimeout(2000);
@@ -93,9 +106,18 @@ log(
 );
 
 // Deep link: /explore?project=<id> reopens the shared project's preview.
+// One reload retry: a cold module transform can outlast the first wait.
 await page.goto(`${BASE}/explore?project=${projectId}`, { waitUntil: "domcontentloaded" });
-const deepOverlay = page.getByRole("dialog");
-await deepOverlay.waitFor({ state: "visible", timeout: 15000 });
+let deepOverlay = page.getByRole("dialog");
+const deepSeen = await deepOverlay
+  .waitFor({ state: "visible", timeout: 15000 })
+  .then(() => true)
+  .catch(() => false);
+if (!deepSeen) {
+  await page.reload({ waitUntil: "domcontentloaded" });
+  deepOverlay = page.getByRole("dialog");
+  await deepOverlay.waitFor({ state: "visible", timeout: 15000 });
+}
 const deepTitle = (await deepOverlay.getByRole("heading").first().innerText()).trim();
 log("deep link reopens preview", deepTitle === overlayTitle, deepTitle);
 

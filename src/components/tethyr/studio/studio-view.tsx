@@ -34,12 +34,7 @@ import { useTheme as useAppTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { blockFrameStyle, normalizeStudioConfig } from "@/lib/studio-config";
 import { useCreatePage, usePublishPage } from "@/hooks/use-page-editor";
-import {
-  nextSteps,
-  setupCompletenessPercent,
-  showcaseCompletenessPercent,
-  type Section,
-} from "@/lib/profile-completeness";
+import { setupCompletenessPercent, showcaseCompletenessPercent } from "@/lib/profile-completeness";
 import { shouldRenderSectionInView } from "@/lib/studio-visibility";
 import { BlockRenderer } from "@/components/tethyr/page/block-renderer";
 import { SECTION_GRID, colStartClass, spanClass } from "@/components/tethyr/page/page-layout";
@@ -143,10 +138,6 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
   );
   const showcasePercent = useMemo(
     () => (me ? showcaseCompletenessPercent(completenessInput) : 0),
-    [me, completenessInput],
-  );
-  const studioSteps = useMemo(
-    () => (me ? nextSteps(completenessInput, 4) : []),
     [me, completenessInput],
   );
 
@@ -330,6 +321,8 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 hasBanner={!!me?.profile?.banner_url}
                 published={page?.status === "published"}
                 isPublishing={publishPage.isPending}
+                setup={setupPercent}
+                showcase={showcasePercent}
                 onChooseFeel={() => navigate({ to: "/studio" })}
                 onAddProject={() => setProjectDialogOpen(true)}
                 onCompleteProfile={onCompleteProfile}
@@ -370,13 +363,6 @@ export function StudioView({ userId, profile, onBack, onCompleteProfile }: Studi
                 </div>
               )}
             </div>
-            <StudioNextStepsRail
-              setup={setupPercent}
-              showcase={showcasePercent}
-              items={studioSteps}
-              onCompleteProfile={onCompleteProfile}
-              onOpenEditor={() => navigate({ to: "/studio" })}
-            />
           </div>
         )}
       </main>
@@ -460,58 +446,6 @@ function StudioPublishStrip({
  *  completeness model; every row routes into the setup form, which is the same
  *  surface the top bar already opens. Hidden below 2xl so the canvas keeps its
  *  configured width on smaller screens. */
-function StudioNextStepsRail({
-  setup,
-  showcase,
-  items,
-  onCompleteProfile,
-  onOpenEditor,
-}: {
-  setup: number;
-  showcase: number;
-  items: Section[];
-  onCompleteProfile?: () => void;
-  onOpenEditor: () => void;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <aside className="sticky top-6 hidden w-72 shrink-0 2xl:block">
-      <div className="rounded-xl border border-border/60 bg-surface/60 p-4">
-        <header className="flex items-center justify-between">
-          <span className="t-label">Studio steps</span>
-          <span className="text-xs text-muted-foreground">
-            {items.length}
-            {items.length === 1 ? " step" : " steps"} left
-          </span>
-        </header>
-        <div className="mt-3 space-y-2">
-          <CompletenessBar label="Setup" value={setup} />
-          <CompletenessBar label="Showcase" value={showcase} />
-        </div>
-        <ul className="mt-3 space-y-1 border-t border-border/40 pt-3">
-          {items.map((step) => (
-            <li key={step.key}>
-              <button
-                type="button"
-                onClick={onCompleteProfile}
-                className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-lift hover:bg-[var(--user-accent-subtle,var(--surface-elevated))]"
-              >
-                <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="text-xs leading-snug text-foreground/90">{step.label}</span>
-                <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-fade group-hover:opacity-60" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <Button variant="ghost" size="sm" className="mt-3 w-full" onClick={onOpenEditor}>
-          <Pencil className="h-3 w-3" />
-          Open Customize
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
 function CompletenessBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-2">
@@ -780,6 +714,8 @@ function StudioOnboardingChecklist({
   hasBanner,
   published,
   isPublishing,
+  setup,
+  showcase,
   onChooseFeel,
   onAddProject,
   onCompleteProfile,
@@ -792,6 +728,8 @@ function StudioOnboardingChecklist({
   hasBanner: boolean;
   published: boolean;
   isPublishing: boolean;
+  setup: number;
+  showcase: number;
   onChooseFeel: () => void;
   onAddProject: () => void;
   onCompleteProfile?: () => void;
@@ -867,6 +805,12 @@ function StudioOnboardingChecklist({
       <p className="mt-1 text-2xs text-muted-foreground-subtle">
         A few quick wins to make your Studio a place you'd be happy to share.
       </p>
+      {/* Absorbed from the 2xl-only steps rail, so completeness reads in the
+          same surface as the steps it measures. */}
+      <div className="mt-3 space-y-2">
+        <CompletenessBar label="Setup" value={setup} />
+        <CompletenessBar label="Showcase" value={showcase} />
+      </div>
       <ul className="mt-3 space-y-1">
         {steps.map((step) => (
           <li key={step.key}>
