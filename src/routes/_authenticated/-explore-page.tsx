@@ -700,6 +700,14 @@ export function ExplorePage() {
             </div>
           </section>
 
+          <div className="mb-4 max-w-2xl">
+            <p className="section-label">Find your next connection</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Browse the work people are making, meet collaborators, or find an open role to join.
+              Start with one of the three paths below.
+            </p>
+          </div>
+
           {/* Tab bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <SegmentedControl
@@ -732,6 +740,7 @@ export function ExplorePage() {
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search roles, skills, or projects…"
+                    aria-label="Search roles, skills, or projects"
                     className="border-0 bg-transparent focus-visible:ring-0"
                   />
                   <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-border/60" />
@@ -1072,6 +1081,7 @@ export function ExplorePage() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search by name, handle, craft…"
+                  aria-label="Search people by name, handle, or craft"
                   className="border-0 bg-transparent focus-visible:ring-0"
                 />
               </div>
