@@ -19,8 +19,12 @@ export function BlurUpImage({
     >
       <span
         aria-hidden="true"
+        // Decorative placeholder: never a click target. Without this it sits
+        // above interactive siblings until the image loads and can swallow
+        // their clicks (qa-explore-overlay caught it intercepting the overlay's
+        // View Project button).
         className={cn(
-          "absolute inset-0 bg-surface-sunken transition-opacity duration-300 ease-out",
+          "pointer-events-none absolute inset-0 bg-surface-sunken transition-opacity duration-300 ease-out",
           loaded ? "opacity-0" : "opacity-100",
         )}
       />

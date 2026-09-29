@@ -27,7 +27,11 @@ export function CoverGradient({
   if (!coverUrl) return <ProjectCoverFallback />;
 
   return (
-    <div className="absolute inset-0 bg-surface-sunken">
+    // Non-interactive: this layer exists to paint a cover (or its placeholder);
+    // siblings like the status badges and the View Project button are the real
+    // targets. BlurUpImage's placeholder span is pointer-events-none as well,
+    // so the whole cover stack passes clicks through.
+    <div className="pointer-events-none absolute inset-0 bg-surface-sunken">
       <BlurUpImage
         src={coverUrl}
         alt=""
