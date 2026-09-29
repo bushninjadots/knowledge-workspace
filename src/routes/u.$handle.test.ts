@@ -19,6 +19,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
+import { notFound } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 const from = vi.fn();
@@ -112,6 +113,23 @@ describe("/u/$handle loader degradation", () => {
     });
 
     expect(data).toBeNull();
+  });
+
+  it("re-throws notFound — a missing person is a 404, not a soft 200", async () => {
+    // fetchPublicProfile throws notFound() for a handle with no row. The
+    // degradation catch must pass that through: swallowing it turned every
+    // bad handle into a 200 that renders an empty identity page.
+    from.mockImplementation(() => {
+      throw notFound();
+    });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    await expect(
+      routeOptions.loader({
+        params: { handle: "never-existed" },
+        context: { queryClient: client },
+      }),
+    ).rejects.toThrow();
   });
 });
 

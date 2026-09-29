@@ -1,4 +1,4 @@
-import { notFound, useParams } from "@tanstack/react-router";
+import { Link, notFound, useParams } from "@tanstack/react-router";
 import { useTeam } from "@/hooks/use-teams";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamPage } from "@/components/tethyr/team/team-page";
@@ -36,8 +36,24 @@ export function TeamRoute() {
     );
   }
 
+  // An unreadable roster (outage, key-free runner) degrades to a quiet
+  // inline state at 200 — throwing here turned an SSR outage into a 500
+  // whose only content was the generic error page. A crew that genuinely
+  // does not exist still gets the router's 404 below.
   if (isError) {
-    throw new Error("Team failed to load");
+    return (
+      <Shell>
+        <div className="flex min-h-screen items-center justify-center bg-background px-4">
+          <div className="max-w-md text-center">
+            <h1 className="text-xl font-semibold text-foreground">This crew couldn't be loaded</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Please try again in a moment.</p>
+            <Link to="/teams" className="mt-4 inline-block text-sm text-primary hover:underline">
+              Back to crews
+            </Link>
+          </div>
+        </div>
+      </Shell>
+    );
   }
   if (!data) throw notFound();
 

@@ -1,4 +1,4 @@
-import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { createFileRoute, isNotFound, lazyRouteComponent } from "@tanstack/react-router";
 // Public-facing Studio at /u/:handle. Anyone can view — even signed-out —
 // because profiles and contribution surfaces are public. The owner can edit
 // the public Studio arrangement when viewing their own handle.
@@ -27,7 +27,13 @@ export const Route = createFileRoute("/u/$handle")({
         staleTime: 60_000,
         retry: false,
       })
-      .catch(() => null),
+      .catch((error: unknown) => {
+        // A missing person is a fact (the router's 404 page), not an outage —
+        // only an unreadable catalog degrades to the soft page. Swallowing
+        // notFound here turned every bad handle into a 200.
+        if (isNotFound(error)) throw error;
+        return null;
+      }),
   // Optional, not defaulted: a default inserts `embed=false` into the search
   // output of every param-less request, and the router then rewrites the URL
   // to match — a 307 hop on every profile visit and a crawler round-trip that
